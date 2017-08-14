@@ -13,4 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#!/bin/bash
+
 python3 "${KOKORO_GFILE_DIR}/trampoline_v1.py"
