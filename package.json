@@ -68,6 +68,8 @@
     "through2": "^2.0.0"
   },
   "devDependencies": {
+    "jsdoc": "^3.5.4",
+    "jsdoc-baseline": "https://github.com/hegemonic/baseline/tarball/master",
     "mocha": "^3.0.1",
     "normalize-newline": "^2.0.0",
     "prop-assign": "^1.0.0",
@@ -78,6 +80,7 @@
     "uuid": "^3.0.1"
   },
   "scripts": {
+    "docs": "node_modules/.bin/jsdoc -c .jsdoc.js",
     "publish-module": "node ../../scripts/publish.js storage",
     "test": "mocha test/*.js",
     "system-test": "mocha system-test/*.js --no-timeouts --bail"
