@@ -554,7 +554,7 @@ Bucket.prototype.deleteFiles = function(query, callback) {
 /**
  * Delete one or more labels from this bucket.
  *
- * @param {string=|string[]=} labels - The labels to delete. If no labels are
+ * @param {string|string[]} labels - The labels to delete. If no labels are
  *     provided, all of the labels are removed.
  * @param {function} callback - The callback function.
  * @param {?error} callback.err - An error returned while making this request.

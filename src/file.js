@@ -1208,7 +1208,7 @@ File.prototype.getMetadata = function(options, callback) {
  *     members.
  *
  * @param {object} options - Configuration object.
- * @param {array|array[]=} options.equals - Array of request parameters and
+ * @param {array|array[]} options.equals - Array of request parameters and
  *     their expected value (e.g. [['$<field>', '<value>']]). Values are
  *     translated into equality constraints in the conditions field of the
  *     policy document (e.g. ['eq', '$<field>', '<value>']). If only one
@@ -1216,7 +1216,7 @@ File.prototype.getMetadata = function(options, callback) {
  *     dimensional array (e.g. ['$<field>', '<value>']).
  * @param {*} options.expires - A timestamp when this policy will expire. Any
  *     value given is passed to `new Date()`.
- * @param {array|array[]=} options.startsWith - Array of request parameters and
+ * @param {array|array[]} options.startsWith - Array of request parameters and
  *     their expected prefixes (e.g. [['$<field>', '<value>']). Values are
  *     translated into starts-with constraints in the conditions field of the
  *     policy document (e.g. ['starts-with', '$<field>', '<value>']). If only
