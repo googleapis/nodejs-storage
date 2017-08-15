@@ -2,68 +2,70 @@
 env:
   node: true
   es6: true
+  mocha: true
 parserOptions:
   emcaVersion: 6
   sourceType: module
+plugins:
+  - mocha
 root: true
 rules:
-  array-bracket-spacing: [2, never]
-  block-spacing: [2, never]
-  brace-style: [2, stroustrup]
-  camelcase: 2
-  comma-dangle: [2, always-multiline]
-  constructor-super: 2
-  curly: 2
-  eol-last: 2
-  eqeqeq: 2
-  indent: [2, 2]
-  key-spacing: 2
-  keyword-spacing: 2
-  linebreak-style: [2, unix]
+  array-bracket-spacing: [1, never]
+  block-spacing: [1, never]
+  brace-style: [1, stroustrup]
+  camelcase: 1
+  comma-dangle: [1, always-multiline]
+  constructor-super: 1
+  curly: 1
+  eol-last: 1
+  eqeqeq: 1
+  indent: [1, 2]
+  key-spacing: 1
+  keyword-spacing: 1
+  linebreak-style: [1, unix]
   lines-around-comment:
-    - 2
+    - 1
     - allowArrayStart: true
       allowBlockStart: true
       allowObjectStart: true
       beforeBlockComment: true
       beforeLineComment: true
-  max-len: [2, 79]
-  newline-before-return: 2
-  no-bitwise: 2
-  no-cond-assign: 2
-  no-confusing-arrow: 2
-  no-const-assign: 2
-  no-dupe-class-members: 2
-  no-implicit-coercion: 2
-  no-plusplus: 2
-  no-shadow: 2
-  no-shadow-restricted-names: 2
-  no-ternary: 2
-  no-this-before-super: 2
-  no-undef: 2
-  no-unused-vars: 2
-  # no-warning-comments: 1
-  no-whitespace-before-property: 2
-  object-curly-spacing: [2, never]
-  one-var: [2, never]
-  padded-blocks: [2, never]
+  max-len: [1, 79]
+  newline-before-return: 1
+  no-bitwise: 1
+  no-cond-assign: 1
+  no-confusing-arrow: 1
+  no-const-assign: 1
+  no-dupe-class-members: 1
+  no-implicit-coercion: 1
+  no-plusplus: 1
+  no-shadow: 1
+  no-shadow-restricted-names: 1
+  no-ternary: 1
+  no-this-before-super: 1
+  no-undef: 1
+  no-unused-vars: 1
+  no-whitespace-before-property: 1
+  object-curly-spacing: [1, never]
+  one-var: [1, never]
+  padded-blocks: [1, never]
   quote-props:
-    - 2
+    - 1
     - consistent-as-needed
     - keywords: true
-  quotes: [2, single, avoid-escape]
+  quotes: [1, single, avoid-escape]
   require-jsdoc:
-    - 2
+    - 1
     - require:
         ClassDeclaration: true
         FunctionDeclaration: true
         MethodDefinition: true
-  semi: [2, always]
-  space-before-blocks: 2
-  space-in-parens: 2
-  space-infix-ops: 2
-  spaced-comment: 2
-  strict: 2
-  template-curly-spacing: 2
-  wrap-iife: [2, inside]
-  yoda: [2, never]
+  semi: [1, always]
+  space-before-blocks: 1
+  space-in-parens: 1
+  space-infix-ops: 1
+  spaced-comment: 1
+  strict: 1
+  template-curly-spacing: 1
+  wrap-iife: [1, inside]
+  yoda: [1, never]

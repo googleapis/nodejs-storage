@@ -70,6 +70,8 @@
   "devDependencies": {
     "async": "^2.5.0",
     "codecov": "^2.3.0",
+    "eslint": "^4.4.1",
+    "eslint-plugin-mocha": "^4.11.0",
     "extend": "^3.0.1",
     "intelli-espower-loader": "^1.0.1",
     "jsdoc": "^3.5.4",
@@ -87,6 +89,7 @@
   },
   "scripts": {
     "docs": "node_modules/.bin/jsdoc -c .jsdoc.js",
+    "lint": "node_modules/.bin/eslint -c .eslint.yml src/ system-test/ test/",
     "publish-module": "node ../../scripts/publish.js storage",
     "test": "nyc --reporter=lcov mocha --require intelli-espower-loader --no-timeouts test/*.js && nyc report",
     "test-no-cover": "node_modules/.bin/mocha test/*.js --no-timeouts",
