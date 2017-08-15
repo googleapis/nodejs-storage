@@ -1,0 +1,69 @@
+---
+env:
+  node: true
+  es6: true
+parserOptions:
+  emcaVersion: 6
+  sourceType: module
+root: true
+rules:
+  array-bracket-spacing: [2, never]
+  block-spacing: [2, never]
+  brace-style: [2, stroustrup]
+  camelcase: 2
+  comma-dangle: [2, always-multiline]
+  constructor-super: 2
+  curly: 2
+  eol-last: 2
+  eqeqeq: 2
+  indent: [2, 2]
+  key-spacing: 2
+  keyword-spacing: 2
+  linebreak-style: [2, unix]
+  lines-around-comment:
+    - 2
+    - allowArrayStart: true
+      allowBlockStart: true
+      allowObjectStart: true
+      beforeBlockComment: true
+      beforeLineComment: true
+  max-len: [2, 79]
+  newline-before-return: 2
+  no-bitwise: 2
+  no-cond-assign: 2
+  no-confusing-arrow: 2
+  no-const-assign: 2
+  no-dupe-class-members: 2
+  no-implicit-coercion: 2
+  no-plusplus: 2
+  no-shadow: 2
+  no-shadow-restricted-names: 2
+  no-ternary: 2
+  no-this-before-super: 2
+  no-undef: 2
+  no-unused-vars: 2
+  # no-warning-comments: 1
+  no-whitespace-before-property: 2
+  object-curly-spacing: [2, never]
+  one-var: [2, never]
+  padded-blocks: [2, never]
+  quote-props:
+    - 2
+    - consistent-as-needed
+    - keywords: true
+  quotes: [2, single, avoid-escape]
+  require-jsdoc:
+    - 2
+    - require:
+        ClassDeclaration: true
+        FunctionDeclaration: true
+        MethodDefinition: true
+  semi: [2, always]
+  space-before-blocks: 2
+  space-in-parens: 2
+  space-infix-ops: 2
+  spaced-comment: 2
+  strict: 2
+  template-curly-spacing: 2
+  wrap-iife: [2, inside]
+  yoda: [2, never]
