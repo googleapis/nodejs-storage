@@ -1,6 +1,6 @@
 ## Google Cloud Storage: Node.js Client
 
-[![CircleCI](https://circleci.com/gh/GoogleCloudPlatform/google-cloud-node-storage.svg?style=svg)](https://circleci.com/gh/GoogleCloudPlatform/google-cloud-node-storage)
+[![CircleCI](https://circleci.com/gh/GoogleCloudPlatform/google-cloud-node-storage.svg?style=shield)](https://circleci.com/gh/GoogleCloudPlatform/google-cloud-node-storage)
 [![codecov](https://codecov.io/gh/GoogleCloudPlatform/google-cloud-node-storage/branch/repo-migration/graph/badge.svg)](https://codecov.io/gh/GoogleCloudPlatform/google-cloud-node-storage)
 
 Google Cloud Storage allows world-wide storage and retrieval of any amount
