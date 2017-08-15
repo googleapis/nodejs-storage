@@ -30,7 +30,8 @@ var through = require('through2');
 var tmp = require('tmp');
 var uuid = require('uuid');
 
-var env = require('../../../system-test/env.js');
+var secrets = process.env.KOKORO_GFILE_DIR || __dirname;
+var env = require(`${secrets}/secrets.js`);
 var util = require('@google-cloud/common').util;
 
 var Storage = require('../');
