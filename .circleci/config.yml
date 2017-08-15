@@ -1,6 +1,13 @@
 ---
 version: 2.0
-
+workflows:
+  version: 2
+  tests:
+    jobs:
+      - node4
+      - node6
+      - node7
+      - node8
 jobs:
   node4:
     docker:
@@ -65,12 +72,3 @@ jobs:
           name: Submit coverage data to codecov.
           command: node_modules/.bin/codecov
     working_directory: /var/code/nodejs/storage/
-
-workflows:
-  version: 2
-  tests:
-    jobs:
-      - node4
-      - node6
-      - node7
-      - node8
