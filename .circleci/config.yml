@@ -72,3 +72,29 @@ jobs:
           name: Submit coverage data to codecov.
           command: node_modules/.bin/codecov
     working_directory: /var/code/nodejs/storage/
+
+  lint:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+          name: Install modules and dependencies.
+          command: npm install
+      - run:
+          name: Run ESLint.
+          command: npm run lint
+    working_directory: /var/code/nodejs/storage/
+
+  docs:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+          name: Install modules and dependencies.
+          command: npm install
+      - run:
+          name: Build documentation.
+          command: npm run docs
+    working_directory: /var/code/nodejs/storage/
