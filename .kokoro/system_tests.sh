@@ -15,5 +15,7 @@
 
 #!/bin/bash
 
+cd github/google-cloud-node-storage/
+
 npm install
 npm run system-test
