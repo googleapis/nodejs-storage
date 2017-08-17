@@ -7,3 +7,5 @@ packages/google-cloud/README.md
 packages/*/AUTHORS
 packages/*/CONTRIBUTORS
 packages/*/COPYING
+system-test/secrets.js
+system-test/*key.json
