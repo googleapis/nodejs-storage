@@ -93,7 +93,7 @@
     "publish-module": "node ../../scripts/publish.js storage",
     "test": "nyc --reporter=lcov mocha --require intelli-espower-loader --no-timeouts test/*.js && nyc report",
     "test-no-cover": "node_modules/.bin/mocha test/*.js --no-timeouts",
-    "system-test": "node_modules/.bin/mocha system-test/*.js --no-timeouts --bail"
+    "system-test": "node_modules/.bin/mocha system-test/*.js --no-timeouts"
   },
   "license": "Apache-2.0",
   "engines": {
