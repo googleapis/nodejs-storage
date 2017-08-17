@@ -904,7 +904,7 @@ describe('storage', function() {
             async.series([
               function(next) {
                 testFunction({}, function(err) {
-                  assert(err.message.includes(failureMessage));
+                  assert(err.message.indexOf(failureMessage) > -1);
                   next();
                 });
               },
@@ -1131,7 +1131,7 @@ describe('storage', function() {
       var file = bucket.file('hi.jpg');
       file.download(function(err) {
         assert.strictEqual(err.code, 404);
-        assert(err.message.includes('Not Found'));
+        assert(err.message.indexOf('Not Found') > -1);
         done();
       });
     });
@@ -1328,10 +1328,10 @@ describe('storage', function() {
 
       it('should not download from the unencrypted file', function(done) {
         unencryptedFile.download(function(err) {
-          assert(err.message.includes([
+          assert(err.message.indexOf([
             'The target object is encrypted by a',
             'customer-supplied encryption key.'
-          ].join(' ')));
+          ].join(' ')) > -1);
           done();
         });
       });
