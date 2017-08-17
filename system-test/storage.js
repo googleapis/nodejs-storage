@@ -1131,7 +1131,7 @@ describe('storage', function() {
       var file = bucket.file('hi.jpg');
       file.download(function(err) {
         assert.strictEqual(err.code, 404);
-        assert.strictEqual(err.message, 'Not Found');
+        assert(err.message.includes('Not Found'));
         done();
       });
     });
@@ -1328,10 +1328,10 @@ describe('storage', function() {
 
       it('should not download from the unencrypted file', function(done) {
         unencryptedFile.download(function(err) {
-          assert.strictEqual(err.message, [
+          assert(err.message.includes([
             'The target object is encrypted by a',
             'customer-supplied encryption key.'
-          ].join(' '));
+          ].join(' ')));
           done();
         });
       });
