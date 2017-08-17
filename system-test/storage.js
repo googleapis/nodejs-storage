@@ -878,7 +878,7 @@ describe('storage', function() {
 
               policy.bindings.push({
                 role: 'roles/storage.admin',
-                members: [`serviceAccount:${clientEmail}`]
+                members: [`serviceAccount:${clientEmail}`],
               });
 
               return bucket.iam.setPolicy(policy);
