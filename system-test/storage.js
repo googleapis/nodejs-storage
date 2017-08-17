@@ -1426,6 +1426,10 @@ describe('storage', function() {
         },
 
         function(next) {
+          file.setStorageClass('standard', next);
+        },
+
+        function(next) {
           file.getMetadata(function(err, metadata) {
             assert.ifError(err);
             assert.strictEqual(metadata.storageClass, 'STANDARD');
