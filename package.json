@@ -89,12 +89,13 @@
   },
   "scripts": {
     "docs": "node_modules/.bin/jsdoc -c .jsdoc.js",
-    "lint": "node_modules/.bin/eslint -c .eslint.yml src/ system-test/ test/",
+    "lint": "node_modules/.bin/eslint src/ system-test/ test/",
     "publish-module": "node ../../scripts/publish.js storage",
     "test": "nyc --reporter=lcov mocha --require intelli-espower-loader --no-timeouts test/*.js && nyc report",
     "test-no-cover": "node_modules/.bin/mocha test/*.js --no-timeouts",
     "system-test": "node_modules/.bin/mocha system-test/*.js --no-timeouts"
   },
+  "eslintConfig": ".eslintrc.yaml",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=4.0.0"
