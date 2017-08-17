@@ -904,7 +904,7 @@ describe('storage', function() {
             async.series([
               function(next) {
                 testFunction({}, function(err) {
-                  assert.strictEqual(err.message, failureMessage);
+                  assert(err.message.includes(failureMessage));
                   next();
                 });
               },
