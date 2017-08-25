@@ -19,3 +19,4 @@ cd github/google-cloud-node-storage/
 
 npm install
 npm run system-test
+npm run samples-test

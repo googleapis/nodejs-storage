@@ -1,37 +1,25 @@
 <img src="https://avatars2.githubusercontent.com/u/2810941?v=3&s=96" alt="Google Cloud Platform logo" title="Google Cloud Platform" align="right" height="96" width="96"/>
 
-# Google Cloud Storage Node.js Samples
+# Google Cloud Storage: Node.js Samples
 
-[![Build](https://storage.googleapis.com/cloud-docs-samples-badges/GoogleCloudPlatform/nodejs-docs-samples/nodejs-docs-samples-storage.svg)]()
+[![Build](https://storage.googleapis.com/.svg)]()
 
 [Cloud Storage](https://cloud.google.com/storage/docs) allows world-wide storage and retrieval of any amount of data at any time. You can use Google Cloud Storage for a range of scenarios including serving website content, storing data for archival and disaster recovery, or distributing large data objects to users via direct download.
 
 ## Table of Contents
 
-* [Setup](#setup)
+* [Before you begin](#before-you-begin)
 * [Samples](#samples)
   * [ACL (Access Control Lists)](#acl-access-control-lists)
   * [Buckets](#buckets)
   * [Encryption](#encryption)
   * [Files](#files)
-  * [Storage Transfer API](#storage-transfer-api)
-* [Running the tests](#running-the-tests)
 
-## Setup
+## Before you begin
 
-1.  Read [Prerequisites][prereq] and [How to run a sample][run] first.
-1.  Install dependencies:
-
-    With **npm**:
-
-        npm install
-
-    With **yarn**:
-
-        yarn install
-
-[prereq]: ../README.md#prerequisites
-[run]: ../README.md#how-to-run-a-sample
+Before running the samples, make sure you've followed the steps in the
+[Before you begin section](../README.md#before-you-begin) of the client
+library's README.
 
 ## Samples
 
@@ -174,41 +162,3 @@ For more information, see https://cloud.google.com/storage/docs
 
 [files_3_docs]: https://cloud.google.com/storage/docs
 [files_3_code]: files.js
-
-### Storage Transfer API
-
-View the [documentation][transfer_4_docs] or the [source code][transfer_4_code].
-
-__Usage:__ `node transfer.js --help`
-
-```
-Commands:
-  jobs <cmd> [args]        Run a job command.
-  operations <cmd> [args]  Run an operation command.
-
-Options:
-  --help  Show help                                                                        [boolean]
-
-Examples:
-  node transfer.js jobs --help        Show job commands.
-  node transfer.js operations --help  Show operations commands.
-
-For more information, see https://cloud.google.com/storage/transfer
-```
-
-[transfer_4_docs]: https://cloud.google.com/storage/transfer
-[transfer_4_code]: transfer.js
-
-## Running the tests
-
-1.  Set the **GCLOUD_PROJECT** and **GOOGLE_APPLICATION_CREDENTIALS** environment variables.
-
-1.  Run the tests:
-
-    With **npm**:
-
-        npm test
-
-    With **yarn**:
-
-        yarn test
