@@ -135,6 +135,12 @@ jobs:
                 -out .circleci/key.json \
                 -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
       - run:
+          name: Decrypt credentials for the second project (storage specific).
+          command: |
+            openssl aes-256-cbc -d -in .circleci/no-whitelist-key.json.enc \
+                -out .circleci/no-whitelist-key.json \
+                -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
+      - run:
           name: Install modules and dependencies.
           command: npm install
       - run:
