@@ -133,7 +133,7 @@ jobs:
           command: |
             openssl aes-256-cbc -d -in .circleci/key.json.enc \
                 -out .circleci/key.json \
-                -k ${SYSTEM_TESTS_ENCRYPTION_KEY}
+                -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
       - run:
           name: Install modules and dependencies.
           command: npm install
