@@ -1,4 +1,19 @@
 ---
+&unit_tests
+  steps:
+    - checkout
+    - run:
+        name: Install modules and dependencies.
+        command: npm install
+    - run:
+        name: Run unit tests.
+        command: npm test
+    - run:
+        name: Submit coverage data to codecov.
+        command: node_modules/.bin/codecov
+  working_directory: /var/code/nodejs/storage/
+
+
 version: 2.0
 workflows:
   version: 2
@@ -36,66 +51,19 @@ jobs:
   node4:
     docker:
       - image: node:4
-    steps:
-      - checkout
-      - run:
-          name: Install modules and dependencies.
-          command: npm install
-      - run:
-          name: Run unit tests.
-          command: npm test
-      - run:
-          name: Submit coverage data to codecov.
-          command: node_modules/.bin/codecov
-    working_directory: /var/code/nodejs/storage/
-
+    <<: *unit_tests
   node6:
     docker:
       - image: node:6
-    steps:
-      - checkout
-      - run:
-          name: Install modules and dependencies.
-          command: npm install
-      - run:
-          name: Run unit tests.
-          command: npm test
-      - run:
-          name: Submit coverage data to codecov.
-          command: node_modules/.bin/codecov
-    working_directory: /var/code/nodejs/storage/
-
+    <<: *unit_tests
   node7:
     docker:
       - image: node:7
-    steps:
-      - checkout
-      - run:
-          name: Install modules and dependencies.
-          command: npm install
-      - run:
-          name: Run unit tests.
-          command: npm test
-      - run:
-          name: Submit coverage data to codecov.
-          command: node_modules/.bin/codecov
-    working_directory: /var/code/nodejs/storage/
-
+    <<: *unit_tests
   node8:
     docker:
       - image: node:8
-    steps:
-      - checkout
-      - run:
-          name: Install modules and dependencies.
-          command: npm install
-      - run:
-          name: Run unit tests.
-          command: npm test
-      - run:
-          name: Submit coverage data to codecov.
-          command: node_modules/.bin/codecov
-    working_directory: /var/code/nodejs/storage/
+    <<: *unit_tests
 
   lint:
     docker:
