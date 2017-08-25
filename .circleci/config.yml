@@ -10,6 +10,28 @@ workflows:
       - node8
       - lint
       - docs
+      - system_tests:
+          requires:
+            - node4
+            - node6
+            - node7
+            - node8
+            - lint
+            - docs
+          filters:
+            branches:
+              only: repo_migration
+            tags:
+              only: /^v[\d.]+$/
+      - deploy:
+          requires:
+            - system_tests
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[\d.]+$/
+
 jobs:
   node4:
     docker:
@@ -99,4 +121,39 @@ jobs:
       - run:
           name: Build documentation.
           command: npm run docs
+    working_directory: /var/code/nodejs/storage/
+
+  system_tests:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+          name: Decrypt credentials.
+          command: |
+            openssl aes-256-cbc -d -in .circleci/key.json.enc \
+                -out .circleci/key.json \
+                -k ${SYSTEM_TESTS_ENCRYPTION_KEY}
+      - run:
+          name: Install modules and dependencies.
+          command: npm install
+      - run:
+          name: Run system tests.
+          command: npm run system-test
+          environment:
+            GOOGLE_APPLICATION_CREDENTIALS: .circleci/key.json
+      - run:
+          name: Remove unencrypted key.
+          command: rm .circleci/key.json
+          when: always
+    working_directory: /var/code/nodejs/storage/
+
+  deploy:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+         name: Publish the module to npm.
+         command: npm publish
     working_directory: /var/code/nodejs/storage/
