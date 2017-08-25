@@ -2,6 +2,8 @@
 
 # Google Cloud Storage: Node.js Client
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/GoogleCloudPlatform/google-cloud-node-storage.svg)](https://greenkeeper.io/)
+
 [![Release quality](https://img.shields.io/badge/Release%20quality-General%20Availability%20(GA)-brightgreen.svg?style&#x3D;flat)](https://cloud.google.com/terms/launch-stages)
 [![CircleCI](https://img.shields.io/circleci/project/github/GoogleCloudPlatform/google-cloud-node-storage.svg?style=flat)](https://circleci.com/gh/GoogleCloudPlatform/google-cloud-node-storage)
 [![codecov](https://img.shields.io/codecov/c/github/GoogleCloudPlatform/google-cloud-node-storage/repo-migration.svg?style=flat)](https://codecov.io/gh/GoogleCloudPlatform/google-cloud-node-storage)
