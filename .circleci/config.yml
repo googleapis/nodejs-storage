@@ -20,7 +20,7 @@ workflows:
             - docs
           filters:
             branches:
-              only: repo_migration
+              only: repo-migration
             tags:
               only: /^v[\d.]+$/
       - deploy:
