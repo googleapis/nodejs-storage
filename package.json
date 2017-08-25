@@ -40,7 +40,7 @@
     "CONTRIBUTORS",
     "COPYING"
   ],
-  "repository": "googlecloudplatform/google-cloud-node",
+  "repository": "googlecloudplatform/google-cloud-node-storage",
   "keywords": [
     "google apis client",
     "google api client",
