@@ -97,7 +97,7 @@ jobs:
           command: npm run docs
     working_directory: /var/code/nodejs/storage/
 
-  system_tests:
+  sample_tests:
     docker:
       - image: node:8
     steps:
@@ -109,7 +109,30 @@ jobs:
                 -out .circleci/key.json \
                 -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
       - run:
-          name: Decrypt credentials for the second project (storage specific).
+          name: Install modules and dependencies.
+          command: npm install
+      - run:
+          name: Run sample tests.
+          command: npm run samples-test
+          environment:
+            GOOGLE_APPLICATION_CREDENTIALS: .circleci/key.json
+      - run:
+          name: Remove unencrypted key.
+          command: rm .circleci/key.json
+          when: always
+    working_directory: /var/code/nodejs/storage/
+
+  system_tests:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+          name: Decrypt credentials.
+          command: |
+            openssl aes-256-cbc -d -in .circleci/key.json.enc \
+                -out .circleci/key.json \
+                -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
           command: |
             openssl aes-256-cbc -d -in .circleci/no-whitelist-key.json.enc \
                 -out .circleci/no-whitelist-key.json \
