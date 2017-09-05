@@ -121,8 +121,8 @@ jobs:
                 -out .circleci/key.json \
                 -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
       - run:
-          name: Install modules and dependencies.
-          command: npm install
+          name: Install the @google-cloud/storage module.
+          command: npm install .
       - run:
           name: Run sample tests.
           command: npm run samples-test
