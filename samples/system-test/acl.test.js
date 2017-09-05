@@ -49,59 +49,59 @@ test.after.always(async (t) => {
 });
 
 test(`should print acl for a bucket`, async (t) => {
-  const output = await tools.runAsync(`${cmd} print-bucket-acl ${bucketName}`, cwd);
-  t.true(output.includes(`OWNER: project-editors-`));
-  t.true(output.includes(`OWNER: project-owners-`));
-  t.true(output.includes(`READER: project-viewers-`));
+  const results = await tools.runAsyncWithIO(`${cmd} print-bucket-acl ${bucketName}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`OWNER: project-editors-`));
+  t.regex(results.stdout + results.stderr, new RegExp(`OWNER: project-owners-`));
+  t.regex(results.stdout + results.stderr, new RegExp(`READER: project-viewers-`));
 });
 
 test(`should print acl for a file`, async (t) => {
-  const output = await tools.runAsync(`${cmd} print-file-acl ${bucketName} ${fileName}`, cwd);
-  t.true(output.includes(`OWNER: project-editors-`));
-  t.true(output.includes(`OWNER: project-owners-`));
-  t.true(output.includes(`READER: project-viewers-`));
+  const results = await tools.runAsyncWithIO(`${cmd} print-file-acl ${bucketName} ${fileName}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`OWNER: project-editors-`));
+  t.regex(results.stdout + results.stderr, new RegExp(`OWNER: project-owners-`));
+  t.regex(results.stdout + results.stderr, new RegExp(`READER: project-viewers-`));
 });
 
 test.serial(`should print a user's acl for a bucket`, async (t) => {
   await bucket.acl.readers.addUser(userEmail);
-  const output = await tools.runAsync(`${cmd} print-bucket-acl-for-user ${bucketName} ${userEmail}`, cwd);
-  t.is(output, `READER: user-${userEmail}`);
+  const results = await tools.runAsyncWithIO(`${cmd} print-bucket-acl-for-user ${bucketName} ${userEmail}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`READER: user-${userEmail}`));
   await bucket.acl.readers.deleteUser(userEmail);
 });
 
 test.serial(`should add a user as an owner on a bucket`, async (t) => {
-  const output = await tools.runAsync(`${cmd} add-bucket-owner ${bucketName} ${userEmail}`, cwd);
-  t.is(output, `Added user ${userEmail} as an owner on bucket ${bucketName}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} add-bucket-owner ${bucketName} ${userEmail}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`Added user ${userEmail} as an owner on bucket ${bucketName}.`));
 });
 
 test.serial(`should remove a user from a bucket`, async (t) => {
-  const output = await tools.runAsync(`${cmd} remove-bucket-owner ${bucketName} ${userEmail}`, cwd);
-  t.is(output, `Removed user ${userEmail} from bucket ${bucketName}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} remove-bucket-owner ${bucketName} ${userEmail}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`Removed user ${userEmail} from bucket ${bucketName}.`));
 });
 
 test.serial(`should add a user as a default owner on a bucket`, async (t) => {
-  const output = await tools.runAsync(`${cmd} add-bucket-default-owner ${bucketName} ${userEmail}`, cwd);
-  t.is(output, `Added user ${userEmail} as an owner on bucket ${bucketName}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} add-bucket-default-owner ${bucketName} ${userEmail}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`Added user ${userEmail} as an owner on bucket ${bucketName}.`));
 });
 
 test.serial(`should remove a default user from a bucket`, async (t) => {
-  const output = await tools.runAsync(`${cmd} remove-bucket-default-owner ${bucketName} ${userEmail}`, cwd);
-  t.is(output, `Removed user ${userEmail} from bucket ${bucketName}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} remove-bucket-default-owner ${bucketName} ${userEmail}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`Removed user ${userEmail} from bucket ${bucketName}.`));
 });
 
 test.serial(`should print a user's acl for a file`, async (t) => {
   await bucket.file(fileName).acl.readers.addUser(userEmail);
-  const output = await tools.runAsync(`${cmd} print-file-acl-for-user ${bucketName} ${fileName} ${userEmail}`, cwd);
-  t.is(output, `READER: user-${userEmail}`);
+  const results = await tools.runAsyncWithIO(`${cmd} print-file-acl-for-user ${bucketName} ${fileName} ${userEmail}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`READER: user-${userEmail}`));
   await bucket.file(fileName).acl.readers.deleteUser(userEmail);
 });
 
 test.serial(`should add a user as an owner on a bucket`, async (t) => {
-  const output = await tools.runAsync(`${cmd} add-file-owner ${bucketName} ${fileName} ${userEmail}`, cwd);
-  t.is(output, `Added user ${userEmail} as an owner on file ${fileName}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} add-file-owner ${bucketName} ${fileName} ${userEmail}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`Added user ${userEmail} as an owner on file ${fileName}.`));
 });
 
 test.serial(`should remove a user from a bucket`, async (t) => {
-  const output = await tools.runAsync(`${cmd} remove-file-owner ${bucketName} ${fileName} ${userEmail}`, cwd);
-  t.is(output, `Removed user ${userEmail} from file ${fileName}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} remove-file-owner ${bucketName} ${fileName} ${userEmail}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`Removed user ${userEmail} from file ${fileName}.`));
 });
