@@ -122,7 +122,7 @@ jobs:
                 -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
       - run:
           name: Install the @google-cloud/storage module.
-          command: npm install .
+          command: cd samples/ && npm install
       - run:
           name: Run sample tests.
           command: npm run samples-test
