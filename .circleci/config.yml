@@ -12,6 +12,7 @@ unit_tests: &unit_tests
     - run:
         name: Submit coverage data to codecov.
         command: node_modules/.bin/codecov
+        when: always
   working_directory: /var/code/nodejs/storage/
 
 
