@@ -44,8 +44,6 @@ workflows:
           filters:
             branches:
               only: repo-migration
-            tags:
-              only: /^v[\d.]+$/
       - sample_tests:
           requires:
             - lint
@@ -53,15 +51,17 @@ workflows:
           filters:
             branches:
               only: repo-migration
-            tags:
-              only: /^v[\d.]+$/
-      - deploy:
+      - tag:
           requires:
             - system_tests
             - sample_tests
           filters:
             branches:
-              ignore: /.*/
+              only: master
+  publish:
+    jobs:
+      - publish:
+          filters:
             tags:
               only: /^v[\d.]+$/
 
@@ -165,7 +165,24 @@ jobs:
           when: always
     working_directory: /var/code/nodejs/storage/
 
-  deploy:
+  tag:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+          name: Tag the release if necessary.
+          command: |
+            export _VERSION = $(cat package.json | grep '"version"' | grep -o -P "[\\d.]+")
+            if git tag --list | grep "v${_VERSION}" ; then
+              echo "This tag already exists. Doing nothing."
+            else
+              git tag v${_VERSION}
+              git push --tags
+            fi
+    working_directory: /var/code/nodejs/storage/
+
+  publish:
     docker:
       - image: node:8
     steps:
