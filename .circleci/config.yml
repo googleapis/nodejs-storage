@@ -135,6 +135,7 @@ jobs:
           name: Run sample tests.
           command: npm run samples-test
           environment:
+            GCLOUD_PROJECT: long-door-651
             GOOGLE_APPLICATION_CREDENTIALS: .circleci/key.json
       - run:
           name: Remove unencrypted key.
