@@ -127,10 +127,13 @@ jobs:
           command: |
             npm install
             npm link
+      - run:
+          name: Link the module being tested to the samples.
+          command: |
             cd samples/
             npm install
             npm link @google-cloud/storage
-            cd ..
+            cd ..          
       - run:
           name: Run sample tests.
           command: npm run samples-test
