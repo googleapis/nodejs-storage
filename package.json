@@ -73,10 +73,8 @@
   },
   "devDependencies": {
     "@google-cloud/nodejs-repo-tools": "^2.0.0-beta.6",
-    "async": "^2.5.0",
     "ava": "^0.22.0",
     "codecov": "^2.3.0",
-    "extend": "^3.0.1",
     "intelli-espower-loader": "^1.0.1",
     "jsdoc": "^3.5.4",
     "jsdoc-baseline": "https://github.com/hegemonic/baseline/tarball/master",
