@@ -1,4 +1,5 @@
 ---
+# "Include" for unit tests definition.
 unit_tests: &unit_tests
   steps:
     - checkout
@@ -44,9 +45,19 @@ workflows:
               only: repo-migration
             tags:
               only: /^v[\d.]+$/
+      - sample_tests:
+          requires:
+            - lint
+            - docs
+          filters:
+            branches:
+              only: repo-migration
+            tags:
+              only: /^v[\d.]+$/
       - deploy:
           requires:
             - system_tests
+            - sample_tests
           filters:
             branches:
               ignore: /.*/
