@@ -17,7 +17,7 @@
 
 cd github/google-cloud-node-storage/
 
-# Each of these steps should match the `system_tests` job in
+# Each of these steps should match the `sample_tests` job in
 # `.circleci/config.yml`. Failure to keep these in sync will probably
 # result in failed test runs in Kokoro.
 
@@ -26,16 +26,17 @@ openssl aes-256-cbc -d -in .circleci/key.json.enc \
   -out .circleci/key.json \
   -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
 
-# Decrypt second account credentials (storage-specific).
-openssl aes-256-cbc -d -in .circleci/no-whitelist-key.json.enc \
-  -out .circleci/no-whitelist-key.json \
-  -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
-
-# Install modules and dependencies.
+# Install and link the module.
 npm install
+npm link
 
-# Run system tests.
-GCN_STORAGE_2ND_PROJECT_ID=gcloud-node-whitelist-ci-tests \
-  GCN_STORAGE_2ND_PROJECT_KEY=.circleci/no-whitelist-key.json \
-  GOOGLE_APPLICATION_CREDENTIALS=.circleci/key.json \
-  npm run system-test
+# Link the module being tested to the samples.
+cd samples/
+npm install
+npm link @google-cloud/storage
+cd ..
+
+# Run sample tests.
+GCLOUD_PROJECT=long-door-651 \
+  GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/.circleci/key.json \
+  npm run samples-test
