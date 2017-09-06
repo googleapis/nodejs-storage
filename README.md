@@ -2,11 +2,10 @@
 
 # Google Cloud Storage: Node.js Client
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/GoogleCloudPlatform/google-cloud-node-storage.svg)](https://greenkeeper.io/)
-
-[![Release quality](https://img.shields.io/badge/Release%20quality-General%20Availability%20(GA)-brightgreen.svg?style&#x3D;flat)](https://cloud.google.com/terms/launch-stages)
+[![Release quality](https://img.shields.io/badge/Release%20quality-General%20Availability%20%28GA%29-brightgreen.svg?style&#x3D;flat)](https://cloud.google.com/terms/launch-stages)
 [![CircleCI](https://img.shields.io/circleci/project/github/GoogleCloudPlatform/google-cloud-node-storage.svg?style=flat)](https://circleci.com/gh/GoogleCloudPlatform/google-cloud-node-storage)
 [![codecov](https://img.shields.io/codecov/c/github/GoogleCloudPlatform/google-cloud-node-storage/repo-migration.svg?style=flat)](https://codecov.io/gh/GoogleCloudPlatform/google-cloud-node-storage)
+[![Greenkeeper badge](https://badges.greenkeeper.io/GoogleCloudPlatform/google-cloud-node-storage.svg)](https://greenkeeper.io/)
 
 > Node.js idiomatic client for [Cloud Storage][product-docs].
 
@@ -41,7 +40,7 @@ Google APIs Client Libraries, in [Client Libraries Explained][explained].
 
 1.  Select or create a Cloud Platform project.
 
-    [Go to the projects page][console]
+    [Go to the projects page][projects]
 
 1.  Enable billing for your project.
 
@@ -54,7 +53,7 @@ Google APIs Client Libraries, in [Client Libraries Explained][explained].
 1.  [Set up authentication with a service account][auth] so you can access the
     API from your local workstation.
 
-[console]: https://console.cloud.google.com/
+[projects]: https://console.cloud.google.com/project
 [billing]: https://support.google.com/cloud/answer/6293499#enable-billing
 [enable_api]: https://console.cloud.google.com/flows/enableapi?apiid=storage-api.googleapis.com
 [auth]: https://cloud.google.com/docs/authentication/getting-started
@@ -65,57 +64,59 @@ Google APIs Client Libraries, in [Client Libraries Explained][explained].
 
 ### Using the client library
 
-    // Imports the Google Cloud client library
-    const Storage = require('@google-cloud/storage');
-    
-    // Your Google Cloud Platform project ID
-    const projectId = 'YOUR_PROJECT_ID';
-    
-    // Instantiates a client
-    const storage = Storage({
-      projectId: projectId
-    });
-    
-    // The name for the new bucket
-    const bucketName = 'my-new-bucket';
-    
-    // Creates the new bucket
-    storage.createBucket(bucketName)
-      .then(() => {
-        console.log(`Bucket ${bucketName} created.`);
-      })
-      .catch((err) => {
-        console.error('ERROR:', err);
-      });
+```js
+// Imports the Google Cloud client library
+const Storage = require('@google-cloud/storage');
+
+// Your Google Cloud Platform project ID
+const projectId = 'YOUR_PROJECT_ID';
+
+// Instantiates a client
+const storage = Storage({
+  projectId: projectId
+});
+
+// The name for the new bucket
+const bucketName = 'my-new-bucket';
+
+// Creates the new bucket
+storage.createBucket(bucketName)
+  .then(() => {
+    console.log(`Bucket ${bucketName} created.`);
+  })
+  .catch((err) => {
+    console.error('ERROR:', err);
+  });
+```
 
 ## Samples
 
-Samples are in the [`samples/`](samples) directory. The samples' `README.md`
+Samples are in the [`samples/`](https://github.com/blob/master/samples) directory. The samples' `README.md`
 has instructions for running the samples.
 
 ### ACL (Access Control Lists)
 View the [documentation][acl_0_docs] or the [source code][acl_0_code].
 
 [acl_0_docs]: https://cloud.google.com/storage/docs/access-control/create-manage-lists
-[acl_0_code]: samples/acl.js
+[acl_0_code]: https://github.com/GoogleCloudPlatform/google-cloud-node-storage/blob/master/samples/acl.js
 
 ### Buckets
 View the [documentation][buckets_1_docs] or the [source code][buckets_1_code].
 
 [buckets_1_docs]: https://cloud.google.com/storage/docs
-[buckets_1_code]: samples/buckets.js
+[buckets_1_code]: https://github.com/GoogleCloudPlatform/google-cloud-node-storage/blob/master/samples/buckets.js
 
 ### Encryption
 View the [documentation][encryption_2_docs] or the [source code][encryption_2_code].
 
 [encryption_2_docs]: https://cloud.google.com/storage/docs
-[encryption_2_code]: samples/encryption.js
+[encryption_2_code]: https://github.com/GoogleCloudPlatform/google-cloud-node-storage/blob/master/samples/encryption.js
 
 ### Files
 View the [documentation][files_3_docs] or the [source code][files_3_code].
 
 [files_3_docs]: https://cloud.google.com/storage/docs
-[files_3_code]: samples/files.js
+[files_3_code]: https://github.com/GoogleCloudPlatform/google-cloud-node-storage/blob/master/samples/files.js
 
 ## Versioning
 
@@ -155,5 +156,5 @@ Apache Version 2.0
 
 See [LICENSE](LICENSE)
 
-[client-docs]: https://googlecloudplatform.github.io/google-cloud-node/#/docs/storage
+[client-docs]: https://cloud.google.com/storage/docs/reference/nodejs/
 [product-docs]: https://cloud.google.com/storage/docs

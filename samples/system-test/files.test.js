@@ -59,28 +59,28 @@ test.beforeEach(tools.stubConsole);
 test.afterEach.always(tools.restoreConsole);
 
 test.serial(`should upload a file`, async (t) => {
-  const output = await tools.runAsync(`${cmd} upload ${bucketName} ${filePath}`, cwd);
-  t.is(output, `${filePath} uploaded to ${bucketName}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} upload ${bucketName} ${filePath}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`${filePath} uploaded to ${bucketName}.`));
   const [exists] = await bucket.file(fileName).exists();
   t.true(exists);
 });
 
 test.serial(`should download a file`, async (t) => {
-  const output = await tools.runAsync(`${cmd} download ${bucketName} ${fileName} ${downloadFilePath}`, cwd);
-  t.is(output, `gs://${bucketName}/${fileName} downloaded to ${downloadFilePath}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} download ${bucketName} ${fileName} ${downloadFilePath}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`gs://${bucketName}/${fileName} downloaded to ${downloadFilePath}.`));
   t.notThrows(() => fs.statSync(downloadFilePath));
 });
 
 test.serial(`should move a file`, async (t) => {
-  const output = await tools.runAsync(`${cmd} move ${bucketName} ${fileName} ${movedFileName}`, cwd);
-  t.is(output, `gs://${bucketName}/${fileName} moved to gs://${bucketName}/${movedFileName}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} move ${bucketName} ${fileName} ${movedFileName}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`gs://${bucketName}/${fileName} moved to gs://${bucketName}/${movedFileName}.`));
   const [exists] = await bucket.file(movedFileName).exists();
   t.true(exists);
 });
 
 test.serial(`should copy a file`, async (t) => {
-  const output = await tools.runAsync(`${cmd} copy ${bucketName} ${movedFileName} ${bucketName} ${copiedFileName}`, cwd);
-  t.is(output, `gs://${bucketName}/${movedFileName} copied to gs://${bucketName}/${copiedFileName}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} copy ${bucketName} ${movedFileName} ${bucketName} ${copiedFileName}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`gs://${bucketName}/${movedFileName} copied to gs://${bucketName}/${copiedFileName}.`));
   const [exists] = await bucket.file(copiedFileName).exists();
   t.true(exists);
 });
@@ -88,43 +88,47 @@ test.serial(`should copy a file`, async (t) => {
 test.serial(`should list files`, async (t) => {
   t.plan(0);
   await tools.tryTest(async (assert) => {
-    const output = await tools.runAsync(`${cmd} list ${bucketName}`, cwd);
-    assert(output.includes(`Files:`));
-    assert(output.includes(movedFileName));
-    assert(output.includes(copiedFileName));
+    const results = await tools.runAsyncWithIO(`${cmd} list ${bucketName}`, cwd);
+    const output = results.stdout + results.stderr;
+    assert(output.includes(`Files:`), `"${output}" should include "Files:"`);
+    assert(output.includes(movedFileName), `"${output}" should include "${movedFileName}"`);
+    assert(output.includes(copiedFileName), `"${output}" should include "${copiedFileName}"`);
   }).start();
 });
 
 test.serial(`should list files by a prefix`, async (t) => {
-  let output = await tools.runAsync(`${cmd} list ${bucketName} test "/"`, cwd);
-  t.true(output.includes(`Files:`));
-  t.true(output.includes(movedFileName));
-  t.true(output.includes(copiedFileName));
-  output = await tools.runAsync(`${cmd} list ${bucketName} foo`, cwd);
-  t.true(output.includes(`Files:`));
+  let results = await tools.runAsyncWithIO(`${cmd} list ${bucketName} test "/"`, cwd);
+  let output = results.stdout + results.stderr;
+  t.regex(output, new RegExp(`Files:`));
+  t.regex(output, new RegExp(movedFileName));
+  t.regex(output, new RegExp(copiedFileName));
+  results = await tools.runAsyncWithIO(`${cmd} list ${bucketName} foo`, cwd);
+  output = results.stdout + results.stderr;
+  t.regex(output, new RegExp(`Files:`));
   t.false(output.includes(movedFileName));
   t.false(output.includes(copiedFileName));
 });
 
 test.serial(`should make a file public`, async (t) => {
-  const output = await tools.runAsync(`${cmd} make-public ${bucketName} ${copiedFileName}`, cwd);
-  t.is(output, `gs://${bucketName}/${copiedFileName} is now public.`);
+  const results = await tools.runAsyncWithIO(`${cmd} make-public ${bucketName} ${copiedFileName}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`gs://${bucketName}/${copiedFileName} is now public.`));
 });
 
 test.serial(`should generate a signed URL for a file`, async (t) => {
-  const output = await tools.runAsync(`${cmd} generate-signed-url ${bucketName} ${copiedFileName}`, cwd);
-  t.true(output.includes(`The signed url for ${copiedFileName} is `));
+  const results = await tools.runAsyncWithIO(`${cmd} generate-signed-url ${bucketName} ${copiedFileName}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`The signed url for ${copiedFileName} is `));
 });
 
 test.serial(`should get metadata for a file`, async (t) => {
-  const output = await tools.runAsync(`${cmd} get-metadata ${bucketName} ${copiedFileName}`, cwd);
-  t.true(output.includes(`File: ${copiedFileName}`));
-  t.true(output.includes(`Bucket: ${bucketName}`));
+  const results = await tools.runAsyncWithIO(`${cmd} get-metadata ${bucketName} ${copiedFileName}`, cwd);
+  const output = results.stdout + results.stderr;
+  t.regex(output, new RegExp(`File: ${copiedFileName}`));
+  t.regex(output, new RegExp(`Bucket: ${bucketName}`));
 });
 
 test.serial(`should delete a file`, async (t) => {
-  const output = await tools.runAsync(`${cmd} delete ${bucketName} ${copiedFileName}`, cwd);
-  t.is(output, `gs://${bucketName}/${copiedFileName} deleted.`);
+  const results = await tools.runAsyncWithIO(`${cmd} delete ${bucketName} ${copiedFileName}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`gs://${bucketName}/${copiedFileName} deleted.`));
   const [exists] = await bucket.file(copiedFileName).exists();
   t.false(exists);
 });

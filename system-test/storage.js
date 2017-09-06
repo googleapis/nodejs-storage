@@ -30,8 +30,6 @@ var through = require('through2');
 var tmp = require('tmp');
 var uuid = require('uuid');
 
-var secrets = process.env.KOKORO_GFILE_DIR || __dirname;
-var env = require(`${secrets}/secrets.js`);
 var util = require('@google-cloud/common').util;
 
 var Storage = require('../');
@@ -41,7 +39,7 @@ var File = Storage.File;
 describe('storage', function() {
   var TESTS_PREFIX = 'gcloud-tests-';
 
-  var storage = new Storage(env);
+  var storage = new Storage({});
   var bucket = storage.bucket(generateName());
 
   var FILES = {
@@ -767,7 +765,7 @@ describe('storage', function() {
   });
 
   describe('requester pays', function() {
-    var HAS_2ND_PROJECT = is.defined(env.nonWhitelistProjectId);
+    var HAS_2ND_PROJECT = is.defined(process.env.GCN_STORAGE_2ND_PROJECT_ID);
     var bucket;
 
     before(function(done) {
@@ -794,8 +792,8 @@ describe('storage', function() {
     // the perspective of another project.
     (HAS_2ND_PROJECT ? describe : describe.skip)('existing bucket', function() {
       var storageNonWhitelist = new Storage({
-        projectId: env.nonWhitelistProjectId,
-        keyFilename: env.nonWhitelistKeyFilename
+        projectId: process.env.GCN_STORAGE_2ND_PROJECT_ID,
+        keyFilename: process.env.GCN_STORAGE_2ND_PROJECT_KEY,
       });
       var bucket; // the source bucket, which will have requesterPays enabled.
       var bucketNonWhitelist; // the bucket object from the requesting user.
@@ -859,7 +857,7 @@ describe('storage', function() {
       describe('methods that accept userProject', function() {
         var file;
         var USER_PROJECT_OPTIONS = {
-          userProject: env.nonWhitelistProjectId
+          userProject: process.env.GCN_STORAGE_2ND_PROJECT_ID
         };
 
         // This acts as a test for the following methods:
@@ -873,8 +871,17 @@ describe('storage', function() {
             .then(() => bucket.iam.getPolicy())
             .then(data => {
               var policy = data[0];
-              var clientEmail = require(env.nonWhitelistKeyFilename)
-                .client_email;
+            
+              // Allow an absolute or relative path (from project root)
+              // for the key file.
+              var key2 = process.env.GCN_STORAGE_2ND_PROJECT_KEY;
+              if (key2 && key2.charAt(0) === '.') {
+                key2 = `${__dirname}/../${key2}`;
+              }
+            
+              // Get the service account for the "second" account (the
+              // one that will read the requester pays file).
+              var clientEmail = require(key2).client_email;
 
               policy.bindings.push({
                 role: 'roles/storage.admin',
@@ -1673,11 +1680,6 @@ describe('storage', function() {
     var file;
 
     before(function(done) {
-      if (!env.credentials && !env.keyFilename) {
-        this.skip();
-        return;
-      }
-
       file = bucket.file('LogoToSign.jpg');
       fs.createReadStream(FILES.logo.path)
         .pipe(file.createWriteStream())
@@ -1720,11 +1722,6 @@ describe('storage', function() {
     var file;
 
     before(function(done) {
-      if (!env.credentials && !env.keyFilename) {
-        this.skip();
-        return;
-      }
-
       file = bucket.file('LogoToSign.jpg');
       fs.createReadStream(FILES.logo.path)
         .pipe(file.createWriteStream())

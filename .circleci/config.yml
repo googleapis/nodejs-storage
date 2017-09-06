@@ -1,4 +1,20 @@
 ---
+# "Include" for unit tests definition.
+unit_tests: &unit_tests
+  steps:
+    - checkout
+    - run:
+        name: Install modules and dependencies.
+        command: npm install
+    - run:
+        name: Run unit tests.
+        command: npm test
+    - run:
+        name: Submit coverage data to codecov.
+        command: node_modules/.bin/codecov
+        when: always
+
+
 version: 2.0
 workflows:
   version: 2
@@ -8,72 +24,65 @@ workflows:
       - node6
       - node7
       - node8
-      - lint
-      - docs
+      - lint:
+          requires:
+            - node4
+            - node6
+            - node7
+            - node8
+      - docs:
+          requires:
+            - node4
+            - node6
+            - node7
+            - node8
+      - system_tests:
+          requires:
+            - lint
+            - docs
+          filters:
+            branches:
+              only: repo-migration
+      - sample_tests:
+          requires:
+            - lint
+            - docs
+          filters:
+            branches:
+              only: repo-migration
+      - tag:
+          requires:
+            - system_tests
+            - sample_tests
+          filters:
+            branches:
+              only: master
+  publish:
+    jobs:
+      - publish:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v[\d.]+$/
+
 jobs:
   node4:
     docker:
       - image: node:4
-    steps:
-      - checkout
-      - run:
-          name: Install modules and dependencies.
-          command: npm install
-      - run:
-          name: Run unit tests.
-          command: npm test
-      - run:
-          name: Submit coverage data to codecov.
-          command: node_modules/.bin/codecov
-    working_directory: /var/code/nodejs/storage/
-
+    <<: *unit_tests
   node6:
     docker:
       - image: node:6
-    steps:
-      - checkout
-      - run:
-          name: Install modules and dependencies.
-          command: npm install
-      - run:
-          name: Run unit tests.
-          command: npm test
-      - run:
-          name: Submit coverage data to codecov.
-          command: node_modules/.bin/codecov
-    working_directory: /var/code/nodejs/storage/
-
+    <<: *unit_tests
   node7:
     docker:
       - image: node:7
-    steps:
-      - checkout
-      - run:
-          name: Install modules and dependencies.
-          command: npm install
-      - run:
-          name: Run unit tests.
-          command: npm test
-      - run:
-          name: Submit coverage data to codecov.
-          command: node_modules/.bin/codecov
-    working_directory: /var/code/nodejs/storage/
-
+    <<: *unit_tests
   node8:
     docker:
       - image: node:8
-    steps:
-      - checkout
-      - run:
-          name: Install modules and dependencies.
-          command: npm install
-      - run:
-          name: Run unit tests.
-          command: npm test
-      - run:
-          name: Submit coverage data to codecov.
-          command: node_modules/.bin/codecov
-    working_directory: /var/code/nodejs/storage/
+    <<: *unit_tests
 
   lint:
     docker:
@@ -86,7 +95,6 @@ jobs:
       - run:
           name: Run ESLint.
           command: npm run lint
-    working_directory: /var/code/nodejs/storage/
 
   docs:
     docker:
@@ -99,4 +107,94 @@ jobs:
       - run:
           name: Build documentation.
           command: npm run docs
-    working_directory: /var/code/nodejs/storage/
+
+  sample_tests:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+          name: Decrypt credentials.
+          command: |
+            openssl aes-256-cbc -d -in .circleci/key.json.enc \
+                -out .circleci/key.json \
+                -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
+      - run:
+          name: Install and link the module.
+          command: |
+            npm install
+            npm link
+      - run:
+          name: Link the module being tested to the samples.
+          command: |
+            cd samples/
+            npm install
+            npm link @google-cloud/storage
+            cd ..          
+      - run:
+          name: Run sample tests.
+          command: npm run samples-test
+          environment:
+            GCLOUD_PROJECT: long-door-651
+            GOOGLE_APPLICATION_CREDENTIALS: .circleci/key.json
+      - run:
+          name: Remove unencrypted key.
+          command: rm .circleci/key.json
+          when: always
+
+  system_tests:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+          name: Decrypt credentials.
+          command: |
+            openssl aes-256-cbc -d -in .circleci/key.json.enc \
+                -out .circleci/key.json \
+                -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
+      - run:
+          name: Decrypt second account credentials (storage-specific).
+          command: |
+            openssl aes-256-cbc -d -in .circleci/no-whitelist-key.json.enc \
+                -out .circleci/no-whitelist-key.json \
+                -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
+      - run:
+          name: Install modules and dependencies.
+          command: npm install
+      - run:
+          name: Run system tests.
+          command: npm run system-test
+          environment:
+            GCN_STORAGE_2ND_PROJECT_ID: gcloud-node-whitelist-ci-tests
+            GCN_STORAGE_2ND_PROJECT_KEY: .circleci/no-whitelist-key.json
+            GOOGLE_APPLICATION_CREDENTIALS: .circleci/key.json
+      - run:
+          name: Remove unencrypted key.
+          command: rm .circleci/key.json
+          when: always
+
+  tag:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+          name: Tag the release if necessary.
+          command: |
+            export _VERSION = $(cat package.json | grep '"version"' | grep -o -P "[\\d.]+")
+            if git tag --list | grep "v${_VERSION}" ; then
+              echo "This tag already exists. Doing nothing."
+            else
+              git tag v${_VERSION}
+              git push --tags
+            fi
+
+  publish:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+         name: Publish the module to npm.
+         command: npm publish

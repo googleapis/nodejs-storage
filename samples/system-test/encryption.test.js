@@ -43,7 +43,7 @@ test.after.always(async () => {
     // Delete the downloaded file
     fs.unlinkSync(downloadFilePath);
   } catch (err) {
-    console.log(err);
+    // Swallow error
   }
   // Try deleting all files twice, just to make sure
   try {
@@ -61,22 +61,23 @@ test.beforeEach(tools.stubConsole);
 test.afterEach.always(tools.restoreConsole);
 
 test.serial(`should generate a key`, async (t) => {
-  const output = await tools.runAsync(`${cmd} generate-encryption-key`, cwd);
-  t.true(output.includes(`Base 64 encoded encryption key:`));
+  const results = await tools.runAsyncWithIO(`${cmd} generate-encryption-key`, cwd);
+  const output = results.stdout + results.stderr;
+  t.regex(output, new RegExp(`Base 64 encoded encryption key:`));
   const test = /^Base 64 encoded encryption key: (.+)$/;
   key = output.match(test)[1];
 });
 
 test.serial(`should upload a file`, async (t) => {
-  const output = await tools.runAsync(`${cmd} upload ${bucketName} ${filePath} ${fileName} ${key}`, cwd);
-  t.is(output, `File ${filePath} uploaded to gs://${bucketName}/${fileName}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} upload ${bucketName} ${filePath} ${fileName} ${key}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`File ${filePath} uploaded to gs://${bucketName}/${fileName}.`));
   const [exists] = await bucket.file(fileName).exists();
   t.true(exists);
 });
 
 test.serial(`should download a file`, async (t) => {
-  const output = await tools.runAsync(`${cmd} download ${bucketName} ${fileName} ${downloadFilePath} ${key}`, cwd);
-  t.is(output, `File ${fileName} downloaded to ${downloadFilePath}.`);
+  const results = await tools.runAsyncWithIO(`${cmd} download ${bucketName} ${fileName} ${downloadFilePath} ${key}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`File ${fileName} downloaded to ${downloadFilePath}.`));
   t.notThrows(() => {
     fs.statSync(downloadFilePath);
   });

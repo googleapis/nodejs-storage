@@ -37,8 +37,8 @@ test.beforeEach(tools.stubConsole);
 test.afterEach.always(tools.restoreConsole);
 
 test.serial(`should create a bucket`, async (t) => {
-  const output = await tools.runAsync(`${cmd} create ${bucketName}`, cwd);
-  t.is(output, `Bucket ${bucketName} created.`);
+  const results = await tools.runAsyncWithIO(`${cmd} create ${bucketName}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`Bucket ${bucketName} created.`));
   const [exists] = await bucket.exists();
   t.true(exists);
 });
@@ -46,15 +46,16 @@ test.serial(`should create a bucket`, async (t) => {
 test.serial(`should list buckets`, async (t) => {
   t.plan(0);
   await tools.tryTest(async (assert) => {
-    const output = await tools.runAsync(`${cmd} list`, cwd);
-    assert(output.includes(`Buckets:`));
-    assert(output.includes(bucketName));
+    const results = await tools.runAsyncWithIO(`${cmd} list`, cwd);
+    const output = results.stdout + results.stderr;
+    assert(output.includes(`Buckets:`), `"${output}" should include "Buckets:"`);
+    assert(output.includes(bucketName), `"${output}" should include "${bucketName}"`);
   }).start();
 });
 
 test.serial(`should delete a bucket`, async (t) => {
-  const output = await tools.runAsync(`${cmd} delete ${bucketName}`, cwd);
-  t.is(output, `Bucket ${bucketName} deleted.`);
+  const results = await tools.runAsyncWithIO(`${cmd} delete ${bucketName}`, cwd);
+  t.regex(results.stdout + results.stderr, new RegExp(`Bucket ${bucketName} deleted.`));
   const [exists] = await bucket.exists();
   t.false(exists);
 });
