@@ -29,7 +29,7 @@ const cmd = `node iam.js`;
 const roleName = `roles/storage.objectViewer`;
 
 function escape (s) {
-  return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+  return s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
 test.before(tools.checkCredentials);
