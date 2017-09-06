@@ -871,8 +871,17 @@ describe('storage', function() {
             .then(() => bucket.iam.getPolicy())
             .then(data => {
               var policy = data[0];
-              var clientEmail = require(process.env.GCN_STORAGE_2ND_PROJECT_KEY)
-                .client_email;
+            
+              // Allow an absolute or relative path (from project root)
+              // for the key file.
+              var key2 = process.env.GCN_STORAGE_2ND_PROJECT_KEY;
+              if (key2 && key2.charAt(0) === '.') {
+                key2 = `${__dirname}/../${key2}`;
+              }
+            
+              // Get the service account for the "second" account (the
+              // one that will read the requester pays file).
+              var clientEmail = require(key2).client_email;
 
               policy.bindings.push({
                 role: 'roles/storage.admin',
