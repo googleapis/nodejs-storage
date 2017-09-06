@@ -13,7 +13,6 @@ unit_tests: &unit_tests
         name: Submit coverage data to codecov.
         command: node_modules/.bin/codecov
         when: always
-  working_directory: /var/code/nodejs/storage/
 
 
 version: 2.0
@@ -96,7 +95,6 @@ jobs:
       - run:
           name: Run ESLint.
           command: npm run lint
-    working_directory: /var/code/nodejs/storage/
 
   docs:
     docker:
@@ -109,7 +107,6 @@ jobs:
       - run:
           name: Build documentation.
           command: npm run docs
-    working_directory: /var/code/nodejs/storage/
 
   sample_tests:
     docker:
@@ -144,7 +141,6 @@ jobs:
           name: Remove unencrypted key.
           command: rm .circleci/key.json
           when: always
-    working_directory: /var/code/nodejs/storage/
 
   system_tests:
     docker:
@@ -175,7 +171,6 @@ jobs:
           name: Remove unencrypted key.
           command: rm .circleci/key.json
           when: always
-    working_directory: /var/code/nodejs/storage/
 
   tag:
     docker:
@@ -192,7 +187,6 @@ jobs:
               git tag v${_VERSION}
               git push --tags
             fi
-    working_directory: /var/code/nodejs/storage/
 
   publish:
     docker:
@@ -202,4 +196,3 @@ jobs:
       - run:
          name: Publish the module to npm.
          command: npm publish
-    working_directory: /var/code/nodejs/storage/
