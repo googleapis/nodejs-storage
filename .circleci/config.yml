@@ -166,6 +166,8 @@ jobs:
           name: Run system tests.
           command: npm run system-test
           environment:
+            GCN_STORAGE_2ND_PROJECT_ID: gcloud-node-whitelist-ci-tests
+            GCN_STORAGE_2ND_PROJECT_KEY: .circleci/no-whitelist-key.json
             GOOGLE_APPLICATION_CREDENTIALS: .circleci/key.json
       - run:
           name: Remove unencrypted key.
