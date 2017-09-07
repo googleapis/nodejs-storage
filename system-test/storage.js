@@ -883,7 +883,7 @@ describe('storage', function() {
               // one that will read the requester pays file).
               var clientEmail = require(key2).client_email;
 
-              var roles = ['roles/storage.admin', 'storage.buckets.delete'];
+              var roles = ['roles/storage.admin', 'roles/editor'];
               for (let role of roles) {
                 policy.bindings.push({
                   role: role,
