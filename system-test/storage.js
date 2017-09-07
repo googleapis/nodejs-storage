@@ -854,7 +854,7 @@ describe('storage', function() {
         });
       });
 
-      describe.skip('methods that accept userProject', function() {
+      describe('methods that accept userProject', function() {
         var file;
         var USER_PROJECT_OPTIONS = {
           userProject: process.env.GCN_STORAGE_2ND_PROJECT_ID
