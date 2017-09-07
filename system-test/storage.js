@@ -854,7 +854,7 @@ describe('storage', function() {
         });
       });
 
-      describe('methods that accept userProject', function() {
+      describe.skip('methods that accept userProject', function() {
         var file;
         var USER_PROJECT_OPTIONS = {
           userProject: process.env.GCN_STORAGE_2ND_PROJECT_ID
@@ -871,14 +871,14 @@ describe('storage', function() {
             .then(() => bucket.iam.getPolicy())
             .then(data => {
               var policy = data[0];
-            
+
               // Allow an absolute or relative path (from project root)
               // for the key file.
               var key2 = process.env.GCN_STORAGE_2ND_PROJECT_KEY;
               if (key2 && key2.charAt(0) === '.') {
                 key2 = `${__dirname}/../${key2}`;
               }
-            
+
               // Get the service account for the "second" account (the
               // one that will read the requester pays file).
               var clientEmail = require(key2).client_email;
