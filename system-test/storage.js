@@ -883,10 +883,13 @@ describe('storage', function() {
               // one that will read the requester pays file).
               var clientEmail = require(key2).client_email;
 
-              policy.bindings.push({
-                role: 'roles/storage.admin',
-                members: [`serviceAccount:${clientEmail}`],
-              });
+              var roles = ['roles/storage.admin', 'storage.buckets.delete'];
+              for (let role of roles) {
+                policy.bindings.push({
+                  role: role,
+                  members: [`serviceAccount:${clientEmail}`],
+                });
+              }
 
               return bucket.iam.setPolicy(policy);
             })
