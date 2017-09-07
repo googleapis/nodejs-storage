@@ -15,6 +15,8 @@
 
 #!/bin/bash
 
+SYSTEM_TESTS_ENCRYPTION_KEY=$(cat $KOKORO_GFILE_DIR/SYSTEM_TESTS_ENCRYPTION_KEY)
+
 cd github/google-cloud-node-storage/
 
 # Each of these steps should match the `system_tests` job in
