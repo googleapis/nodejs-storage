@@ -3,5 +3,6 @@ articles:
   - Overview: README.md
 branches:
   - master
+  - repo-migration
 dir: src
 packageJson: package.json
