@@ -2,10 +2,10 @@
 
 # Google Cloud Storage: Node.js Client
 
-[![Release quality](https://img.shields.io/badge/Release%20quality-General%20Availability%20%28GA%29-brightgreen.svg?style&#x3D;flat)](https://cloud.google.com/terms/launch-stages)
-[![CircleCI](https://img.shields.io/circleci/project/github/GoogleCloudPlatform/google-cloud-node-storage.svg?style=flat)](https://circleci.com/gh/GoogleCloudPlatform/google-cloud-node-storage)
-[![codecov](https://img.shields.io/codecov/c/github/GoogleCloudPlatform/google-cloud-node-storage/repo-migration.svg?style=flat)](https://codecov.io/gh/GoogleCloudPlatform/google-cloud-node-storage)
-[![Greenkeeper badge](https://badges.greenkeeper.io/GoogleCloudPlatform/google-cloud-node-storage.svg)](https://greenkeeper.io/)
+[![release level](https://img.shields.io/badge/release%20level-general%20availability%20%28GA%29-brightgreen.svg?style&#x3D;flat)](https://cloud.google.com/terms/launch-stages)
+[![CircleCI](https://img.shields.io/circleci/project/github/googleapis/nodejs-storage.svg?style=flat)](https://circleci.com/gh/googleapis/nodejs-storage)
+[![AppVeyor](https://ci.appveyor.com/api/projects/status/github/googleapis/nodejs-storage?svg=true)](https://ci.appveyor.com/project/googleapis/nodejs-storage)
+[![codecov](https://img.shields.io/codecov/c/github/googleapis/nodejs-storage/repo-migration.svg?style=flat)](https://codecov.io/gh/googleapis/nodejs-storage)
 
 > Node.js idiomatic client for [Cloud Storage][product-docs].
 
@@ -98,51 +98,41 @@ has instructions for running the samples.
 View the [documentation][acl_0_docs] or the [source code][acl_0_code].
 
 [acl_0_docs]: https://cloud.google.com/storage/docs/access-control/create-manage-lists
-[acl_0_code]: https://github.com/GoogleCloudPlatform/google-cloud-node-storage/blob/master/samples/acl.js
+[acl_0_code]: https://github.com/googleapis/nodejs-storage/blob/master/samples/acl.js
 
 ### Buckets
 View the [documentation][buckets_1_docs] or the [source code][buckets_1_code].
 
 [buckets_1_docs]: https://cloud.google.com/storage/docs
-[buckets_1_code]: https://github.com/GoogleCloudPlatform/google-cloud-node-storage/blob/master/samples/buckets.js
+[buckets_1_code]: https://github.com/googleapis/nodejs-storage/blob/master/samples/buckets.js
 
 ### Encryption
 View the [documentation][encryption_2_docs] or the [source code][encryption_2_code].
 
 [encryption_2_docs]: https://cloud.google.com/storage/docs
-[encryption_2_code]: https://github.com/GoogleCloudPlatform/google-cloud-node-storage/blob/master/samples/encryption.js
+[encryption_2_code]: https://github.com/googleapis/nodejs-storage/blob/master/samples/encryption.js
 
 ### Files
 View the [documentation][files_3_docs] or the [source code][files_3_code].
 
 [files_3_docs]: https://cloud.google.com/storage/docs
-[files_3_code]: https://github.com/GoogleCloudPlatform/google-cloud-node-storage/blob/master/samples/files.js
+[files_3_code]: https://github.com/googleapis/nodejs-storage/blob/master/samples/files.js
 
 ## Versioning
 
 This library follows [Semantic Versioning](http://semver.org/).
 
-Please note it is currently under active development. Any release versioned
-`0.x.y` is subject to backwards-incompatible changes at any time.
-
-**GA**: Libraries defined at the **General Availability (GA)** quality level are
-stable. The code surface will not change in backwards-incompatible ways unless
-absolutely necessary (e.g. because of critical security issues) or with an
-extensive deprecation period. Issues and requests against **GA** libraries are
-addressed with the highest priority.
+This library is considered to be **General Availability (GA)**. This means it
+is stable; the code surface will not change in backwards-incompatible ways
+unless absolutely necessary (e.g. because of critical security issues) or with
+an extensive deprecation period. Issues and requests against **GA** libraries
+are addressed with the highest priority.
 
 Please note that the auto-generated portions of the **GA** libraries (the ones
 in modules such as `v1` or `v2`) are considered to be of **Beta** quality, even
 if the libraries that wrap them are **GA**.
 
-**Beta**: Libraries defined at the **Beta** quality level are expected to be
-mostly stable, while we work towards their release candidate. We will address
-issues and requests with a higher priority.
-
-**Alpha**: Libraries defined at the **Alpha** quality level are still a
-work-in-progress and are more likely to get backwards-incompatible updates.
-
-See also: [Google Cloud Platform Launch Stages][launch_stages]
+More Information: [Google Cloud Platform Launch Stages][launch_stages]
 
 [launch_stages]: https://cloud.google.com/terms/launch-stages
 
