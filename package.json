@@ -78,7 +78,7 @@
     "intelli-espower-loader": "^1.0.1",
     "jsdoc": "^3.5.4",
     "jsdoc-baseline": "https://github.com/hegemonic/baseline/tarball/master",
-    "mocha": "^3.5.0",
+    "mocha": "^3.5.3",
     "normalize-newline": "^3.0.0",
     "nyc": "^11.1.0",
     "power-assert": "^1.4.4",
