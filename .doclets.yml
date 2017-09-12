@@ -1,6 +1,6 @@
 ---
 articles:
-  - Overview: README.md
+  - storage: README.md
 branches:
   - master
   - repo-migration
