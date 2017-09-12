@@ -43,6 +43,8 @@ workflows:
           filters:
             branches:
               only: repo-migration
+            tags:
+              only: /^v[\d.]+$/
       - sample_tests:
           requires:
             - lint
@@ -50,16 +52,12 @@ workflows:
           filters:
             branches:
               only: repo-migration
-      - tag:
+            tags:
+              only: /^v[\d.]+$/
+      - publish:
           requires:
             - system_tests
             - sample_tests
-          filters:
-            branches:
-              only: master
-  publish:
-    jobs:
-      - publish:
           filters:
             branches:
               ignore: /.*/
@@ -93,7 +91,7 @@ jobs:
           name: Install modules and dependencies.
           command: npm install
       - run:
-          name: Run ESLint.
+          name: Run linting.
           command: npm run lint
 
   docs:
