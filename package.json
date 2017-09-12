@@ -75,6 +75,7 @@
     "@google-cloud/nodejs-repo-tools": "^2.0.0-beta.6",
     "ava": "^0.22.0",
     "codecov": "^2.3.0",
+    "ink-docstrap": "^1.3.0",
     "intelli-espower-loader": "^1.0.1",
     "jsdoc": "^3.5.4",
     "jsdoc-baseline": "https://github.com/hegemonic/baseline/tarball/master",

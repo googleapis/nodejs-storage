@@ -1,8 +1,0 @@
----
-articles:
-  - storage: README.md
-branches:
-  - master
-  - repo-migration
-dir: src
-packageJson: package.json

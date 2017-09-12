@@ -20,7 +20,7 @@ module.exports = {
   opts: {
     readme: 'README.md',
     package: 'package.json',
-    template: 'node_modules/jsdoc-baseline/'
+    template: 'node_modules/ink-docstrap/template',
   },
   plugins: [
     'plugins/markdown'
@@ -33,8 +33,10 @@ module.exports = {
     includePattern: '\\.js$'
   },
   templates: {
-    baseline: {
-      sourceFiles: false
-    }
-  }
+    copyright: 'Copyright 2017 Google, Inc.',
+    includeDate: false,
+    sourceFiles: false,
+    systemName: 'storage',
+    theme: 'lumen',
+  },
 };

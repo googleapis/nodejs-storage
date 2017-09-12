@@ -64,7 +64,7 @@ Google APIs Client Libraries, in [Client Libraries Explained][explained].
 
 ### Using the client library
 
-```js
+```javascript
 // Imports the Google Cloud client library
 const Storage = require('@google-cloud/storage');
 
