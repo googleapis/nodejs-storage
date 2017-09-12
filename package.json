@@ -94,6 +94,7 @@
   },
   "scripts": {
     "docs": "node_modules/.bin/jsdoc -c .jsdoc.js",
+    "lint": "npm run samples-lint",
     "test": "nyc --reporter=lcov mocha --require intelli-espower-loader --no-timeouts test/*.js && nyc report",
     "test-no-cover": "node_modules/.bin/mocha test/*.js --no-timeouts",
     "samples-lint": "repo-tools lint 'samples/**/*.js'",
