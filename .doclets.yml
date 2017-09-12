@@ -1,0 +1,7 @@
+---
+articles:
+  - Overview: README.md
+branches:
+  - master
+dir: src
+packageJson: package.json
