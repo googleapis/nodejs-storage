@@ -1151,7 +1151,7 @@ describe('storage', function() {
         gzip: true
       };
 
-      var expectedContents = fs.readFileSync(FILES.html.path, 'utf-8');
+      var expectedContents = fs.readFileSync(FILES.html.path, 'utf-8');``
 
       bucket.upload(FILES.html.path, options, function(err, file) {
         assert.ifError(err);
@@ -1178,11 +1178,24 @@ describe('storage', function() {
       bucket.upload(FILES.gzip.path, options, function(err, file) {
         assert.ifError(err);
 
-        file.download(function(err, contents) {
-          assert.ifError(err);
+        // Sometimes this file is not found immediately; include some
+        // retry to attempt to make the test less flaky.
+        var attempt = 0;
+        var downloadCallback = (err, contents) => {
+          // If we got an error, gracefully retry a few times.
+          if (err) {
+            attempt += 1;
+            if (attempt >= 5) {
+              return assert.ifError(err);
+            }
+            return file.download(downloadCallback);
+          }
+
+          // Ensure the contents match.
           assert.strictEqual(contents.toString(), expectedContents);
           file.delete(done);
-        });
+        }
+        file.download(downloadCallback);
       });
     });
 
