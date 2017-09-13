@@ -1164,7 +1164,7 @@ describe('storage', function() {
       });
     });
 
-    it('should upload a gzipped file and download it', function(done) {
+    it.skip('should upload a gzipped file and download it', function(done) {
       var options = {
         metadata: {
           contentEncoding: 'gzip'
