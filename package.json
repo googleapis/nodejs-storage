@@ -86,6 +86,7 @@
     "propprop": "^0.3.0",
     "proxyquire": "^1.7.10",
     "request": "^2.70.0",
+    "semistandard": "^11.0.0",
     "sinon": "^3.2.1",
     "tmp": "^0.0.33",
     "uuid": "^3.0.1"

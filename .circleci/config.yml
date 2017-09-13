@@ -54,13 +54,24 @@ workflows:
               only: repo-migration
             tags:
               only: /^v[\d.]+$/
-      - publish:
+      - publish_npm:
           requires:
             - system_tests
             - sample_tests
           filters:
             branches:
               ignore: /.*/
+            tags:
+              only: /^v[\d.]+$/
+      - publish_docs:
+          requires:
+            - system_tests
+            - sample_tests
+          filters:
+            branches:
+              only:
+                - master
+                - refresh-docs
             tags:
               only: /^v[\d.]+$/
 
@@ -96,7 +107,7 @@ jobs:
 
   docs:
     docker:
-      - image: node:8.4
+      - image: node:8
     steps:
       - checkout
       - run:
@@ -173,23 +184,7 @@ jobs:
           command: rm .circleci/key.json
           when: always
 
-  tag:
-    docker:
-      - image: node:8
-    steps:
-      - checkout
-      - run:
-          name: Tag the release if necessary.
-          command: |
-            export _VERSION = $(cat package.json | grep '"version"' | grep -o -P "[\\d.]+")
-            if git tag --list | grep "v${_VERSION}" ; then
-              echo "This tag already exists. Doing nothing."
-            else
-              git tag v${_VERSION}
-              git push --tags
-            fi
-
-  publish:
+  publish_npm:
     docker:
       - image: node:8
     steps:
@@ -197,3 +192,13 @@ jobs:
       - run:
          name: Publish the module to npm.
          command: npm publish
+
+  publish_docs:
+    docker:
+      - image: node:8
+    steps:
+      - checkout
+      - run:
+          name: Publish the docs.
+          command: .circleci/publish_docs.sh
+    working_directory: /var/code/npm_module/
