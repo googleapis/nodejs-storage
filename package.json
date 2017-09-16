@@ -40,7 +40,7 @@
     "CONTRIBUTORS",
     "COPYING"
   ],
-  "repository": "googlecloudplatform/google-cloud-node-storage",
+  "repository": "googleapis/nodejs-storage",
   "keywords": [
     "google apis client",
     "google api client",
@@ -72,7 +72,7 @@
     "through2": "^2.0.0"
   },
   "devDependencies": {
-    "@google-cloud/nodejs-repo-tools": "^2.0.0-beta.8",
+    "@google-cloud/nodejs-repo-tools": "^2.0.0-beta.12",
     "ava": "^0.22.0",
     "codecov": "^2.3.0",
     "ink-docstrap": "https://github.com/docstrap/docstrap/tarball/master",
@@ -96,7 +96,7 @@
     "lint": "npm run samples-lint",
     "test": "nyc --reporter=lcov mocha --require intelli-espower-loader --no-timeouts test/*.js && nyc report",
     "test-no-cover": "node_modules/.bin/mocha test/*.js --no-timeouts",
-    "samples-lint": "repo-tools lint 'samples/**/*.js'",
+    "samples-lint": "repo-tools lint -- 'samples/**/*.js'",
     "samples-test": "ava -T 20s --verbose samples/system-test/*.test.js",
     "system-test": "node_modules/.bin/mocha system-test/*.js --no-timeouts",
     "all-test": "npm test && npm run samples-test && npm run system-test",

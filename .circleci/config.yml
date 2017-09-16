@@ -103,7 +103,7 @@ jobs:
           command: npm install
       - run:
           name: Run linting.
-          command: npm run samples-lint
+          command: npm run lint
 
   docs:
     docker:

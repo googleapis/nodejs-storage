@@ -323,8 +323,8 @@ function addFileOwner (bucketName, filename, userEmail) {
   // [END storage_add_file_owner]
 }
 
-// [START storage_remove_file_owner]
 function removeFileOwner (bucketName, filename, userEmail) {
+  // [START storage_remove_file_owner]
   // Imports the Google Cloud client library
   const Storage = require('@google-cloud/storage');
 
@@ -355,8 +355,8 @@ function removeFileOwner (bucketName, filename, userEmail) {
     .catch((err) => {
       console.error('ERROR:', err);
     });
+  // [END storage_remove_file_owner]
 }
-// [END storage_remove_file_owner]
 
 const cli = require(`yargs`)
   .demand(1)
