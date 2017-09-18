@@ -18,9 +18,12 @@
 
 module.exports = {
   opts: {
-    readme: 'README.md',
-    package: 'package.json',
-    template: 'node_modules/ink-docstrap/template',
+    readme: './README.md',
+    package: './package.json',
+    template: './node_modules/ink-docstrap/template',
+    recurse: true,
+    verbose: true,
+    destination: './docs/'
   },
   plugins: [
     'plugins/markdown'
@@ -37,6 +40,6 @@ module.exports = {
     includeDate: false,
     sourceFiles: false,
     systemName: 'storage',
-    theme: 'lumen',
-  },
+    theme: 'lumen'
+  }
 };

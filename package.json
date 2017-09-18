@@ -72,7 +72,7 @@
     "through2": "^2.0.0"
   },
   "devDependencies": {
-    "@google-cloud/nodejs-repo-tools": "^2.0.0-beta.6",
+    "@google-cloud/nodejs-repo-tools": "^2.0.0-beta.8",
     "ava": "^0.22.0",
     "codecov": "^2.3.0",
     "ink-docstrap": "https://github.com/docstrap/docstrap/tarball/master",
