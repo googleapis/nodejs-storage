@@ -16,6 +16,7 @@
 
 'use strict';
 
+var Buffer = require('safe-buffer').Buffer;
 var common = require('@google-cloud/common');
 var concat = require('concat-stream');
 var createErrorClass = require('create-error-class');
@@ -1209,7 +1210,7 @@ File.prototype.exists = function(options, callback) {
 File.prototype.setEncryptionKey = function(encryptionKey) {
   this.encryptionKey = encryptionKey;
 
-  encryptionKey = new Buffer(encryptionKey).toString('base64');
+  encryptionKey = Buffer.from(encryptionKey).toString('base64');
   var hash = crypto
     .createHash('sha256')
     .update(encryptionKey, 'base64')
@@ -1492,7 +1493,7 @@ File.prototype.getSignedPolicy = function(options, callback) {
 
     var sign = crypto.createSign('RSA-SHA256');
     var policyString = JSON.stringify(policy);
-    var policyBase64 = new Buffer(policyString).toString('base64');
+    var policyBase64 = Buffer.from(policyString).toString('base64');
 
     sign.update(policyBase64);
 
