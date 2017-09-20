@@ -298,22 +298,25 @@ Acl.prototype.add = function(options, callback) {
     query.generation = options.generation;
   }
 
-  this.request({
-    method: 'POST',
-    uri: '',
-    qs: query,
-    json: {
-      entity: options.entity,
-      role: options.role.toUpperCase()
-    }
-  }, function(err, resp) {
-    if (err) {
-      callback(err, null, resp);
-      return;
-    }
+  this.request(
+    {
+      method: 'POST',
+      uri: '',
+      qs: query,
+      json: {
+        entity: options.entity,
+        role: options.role.toUpperCase(),
+      },
+    },
+    function(err, resp) {
+      if (err) {
+        callback(err, null, resp);
+        return;
+      }
 
-    callback(null, self.makeAclObject_(resp), resp);
-  });
+      callback(null, self.makeAclObject_(resp), resp);
+    }
+  );
 };
 
 /**
@@ -384,13 +387,16 @@ Acl.prototype.delete = function(options, callback) {
     query.generation = options.generation;
   }
 
-  this.request({
-    method: 'DELETE',
-    uri: '/' + encodeURIComponent(options.entity),
-    qs: query
-  }, function(err, resp) {
-    callback(err, resp);
-  });
+  this.request(
+    {
+      method: 'DELETE',
+      uri: '/' + encodeURIComponent(options.entity),
+      qs: query,
+    },
+    function(err, resp) {
+      callback(err, resp);
+    }
+  );
 };
 
 /**
@@ -490,25 +496,28 @@ Acl.prototype.get = function(options, callback) {
     }
   }
 
-  this.request({
-    uri: path,
-    qs: query,
-  }, function(err, resp) {
-    if (err) {
-      callback(err, null, resp);
-      return;
+  this.request(
+    {
+      uri: path,
+      qs: query,
+    },
+    function(err, resp) {
+      if (err) {
+        callback(err, null, resp);
+        return;
+      }
+
+      var results;
+
+      if (resp.items) {
+        results = arrify(resp.items).map(self.makeAclObject_);
+      } else {
+        results = self.makeAclObject_(resp);
+      }
+
+      callback(null, results, resp);
     }
-
-    var results;
-
-    if (resp.items) {
-      results = arrify(resp.items).map(self.makeAclObject_);
-    } else {
-      results = self.makeAclObject_(resp);
-    }
-
-    callback(null, results, resp);
-  });
+  );
 };
 
 /**
@@ -575,21 +584,24 @@ Acl.prototype.update = function(options, callback) {
     query.generation = options.generation;
   }
 
-  this.request({
-    method: 'PUT',
-    uri: '/' + encodeURIComponent(options.entity),
-    qs: query,
-    json: {
-      role: options.role.toUpperCase()
-    }
-  }, function(err, resp) {
-    if (err) {
-      callback(err, null, resp);
-      return;
-    }
+  this.request(
+    {
+      method: 'PUT',
+      uri: '/' + encodeURIComponent(options.entity),
+      qs: query,
+      json: {
+        role: options.role.toUpperCase(),
+      },
+    },
+    function(err, resp) {
+      if (err) {
+        callback(err, null, resp);
+        return;
+      }
 
-    callback(null, self.makeAclObject_(resp), resp);
-  });
+      callback(null, self.makeAclObject_(resp), resp);
+    }
+  );
 };
 
 /**
@@ -600,7 +612,7 @@ Acl.prototype.update = function(options, callback) {
 Acl.prototype.makeAclObject_ = function(accessControlObject) {
   var obj = {
     entity: accessControlObject.entity,
-    role: accessControlObject.role
+    role: accessControlObject.role,
   };
 
   if (accessControlObject.projectTeam) {
@@ -654,10 +666,7 @@ function AclRoleAccessorMethods() {
   AclRoleAccessorMethods.roles.forEach(this._assignAccessMethods.bind(this));
 }
 
-AclRoleAccessorMethods.accessMethods = [
-  'add',
-  'delete'
-];
+AclRoleAccessorMethods.accessMethods = ['add', 'delete'];
 
 AclRoleAccessorMethods.entities = [
   // Special entity groups that do not require further specification.
@@ -668,14 +677,10 @@ AclRoleAccessorMethods.entities = [
   'domain-',
   'group-',
   'project-',
-  'user-'
+  'user-',
 ];
 
-AclRoleAccessorMethods.roles = [
-  'OWNER',
-  'READER',
-  'WRITER'
-];
+AclRoleAccessorMethods.roles = ['OWNER', 'READER', 'WRITER'];
 
 AclRoleAccessorMethods.prototype._assignAccessMethods = function(role) {
   var self = this;
@@ -709,10 +714,12 @@ AclRoleAccessorMethods.prototype._assignAccessMethods = function(role) {
           callback = entityId;
         }
 
-        var args = [{
-          entity: apiEntity,
-          role: role
-        }];
+        var args = [
+          {
+            entity: apiEntity,
+            role: role,
+          },
+        ];
 
         if (is.fn(callback)) {
           args.push(callback);

@@ -91,7 +91,7 @@ function File(bucket, name, options) {
 
   Object.defineProperty(this, 'name', {
     enumerable: true,
-    value: name.replace(/^\/+/, '') // Remove leading slashes.
+    value: name.replace(/^\/+/, ''), // Remove leading slashes.
   });
 
   var generation = parseInt(options.generation, 10);
@@ -99,14 +99,14 @@ function File(bucket, name, options) {
   if (!isNaN(generation)) {
     this.generation = generation;
     this.requestQueryObject = {
-      generation: this.generation
+      generation: this.generation,
     };
   }
 
   common.ServiceObject.call(this, {
     parent: bucket,
     baseUrl: '/o',
-    id: encodeURIComponent(this.name)
+    id: encodeURIComponent(this.name),
   });
 
   if (options.encryptionKey) {
@@ -157,7 +157,7 @@ function File(bucket, name, options) {
    */
   this.acl = new Acl({
     request: this.request.bind(this),
-    pathPrefix: '/acl'
+    pathPrefix: '/acl',
   });
 }
 
@@ -309,8 +309,10 @@ File.prototype.copy = function(destination, options, callback) {
       destBucket = this.bucket;
       destName = destination;
     }
-  } else if (destination.constructor &&
-        destination.constructor.name === 'Bucket') {
+  } else if (
+    destination.constructor &&
+    destination.constructor.name === 'Bucket'
+  ) {
     destBucket = destination;
     destName = this.name;
   } else if (destination instanceof File) {
@@ -335,27 +337,30 @@ File.prototype.copy = function(destination, options, callback) {
 
   newFile = newFile || destBucket.file(destName);
 
-  this.request({
-    method: 'POST',
-    uri: format('/rewriteTo/b/{bucketName}/o/{fileName}', {
-      bucketName: destBucket.name,
-      fileName: encodeURIComponent(destName)
-    }),
-    qs: query,
-    json: options
-  }, function(err, resp) {
-    if (err) {
-      callback(err, null, resp);
-      return;
-    }
+  this.request(
+    {
+      method: 'POST',
+      uri: format('/rewriteTo/b/{bucketName}/o/{fileName}', {
+        bucketName: destBucket.name,
+        fileName: encodeURIComponent(destName),
+      }),
+      qs: query,
+      json: options,
+    },
+    function(err, resp) {
+      if (err) {
+        callback(err, null, resp);
+        return;
+      }
 
-    if (resp.rewriteToken) {
-      self.copy(newFile, { token: resp.rewriteToken }, callback);
-      return;
-    }
+      if (resp.rewriteToken) {
+        self.copy(newFile, {token: resp.rewriteToken}, callback);
+        return;
+      }
 
-    callback(null, newFile, resp);
-  });
+      callback(null, newFile, resp);
+    }
+  );
 };
 
 /**
@@ -481,8 +486,8 @@ File.prototype.createReadStream = function(options) {
       uri: '',
       gzip: true,
       qs: {
-        alt: 'media'
-      }
+        alt: 'media',
+      },
     };
 
     if (self.generation) {
@@ -498,7 +503,7 @@ File.prototype.createReadStream = function(options) {
       var end = is.number(options.end) ? options.end : '';
 
       reqOpts.headers = {
-        Range: 'bytes=' + (tailRequest ? end : start + '-' + end)
+        Range: 'bytes=' + (tailRequest ? end : start + '-' + end),
       };
     }
 
@@ -517,10 +522,12 @@ File.prototype.createReadStream = function(options) {
         requestStream.unpipe(throughStream);
 
         // Get error message from the body.
-        res.pipe(concat(function(body) {
-          err.message = body.toString();
-          throughStream.destroy(err);
-        }));
+        res.pipe(
+          concat(function(body) {
+            err.message = body.toString();
+            throughStream.destroy(err);
+          })
+        );
 
         return;
       }
@@ -528,7 +535,7 @@ File.prototype.createReadStream = function(options) {
       if (!rangeRequest) {
         validateStream = hashStreamValidation({
           crc32c: crc32c,
-          md5: md5
+          md5: md5,
         });
 
         res.pipe(validateStream).on('data', common.util.noop);
@@ -559,7 +566,7 @@ File.prototype.createReadStream = function(options) {
 
       var hashes = {
         crc32c: self.metadata.crc32c,
-        md5: self.metadata.md5Hash
+        md5: self.metadata.md5Hash,
       };
 
       // If we're doing validation, assume the worst-- a data integrity
@@ -579,19 +586,23 @@ File.prototype.createReadStream = function(options) {
       }
 
       if (md5 && !hashes.md5) {
-        var hashError = new Error([
-          'MD5 verification was specified, but is not available for the',
-          'requested object. MD5 is not available for composite objects.'
-        ].join(' '));
+        var hashError = new Error(
+          [
+            'MD5 verification was specified, but is not available for the',
+            'requested object. MD5 is not available for composite objects.',
+          ].join(' ')
+        );
         hashError.code = 'MD5_NOT_AVAILABLE';
 
         throughStream.destroy(hashError);
       } else if (failed) {
-        var mismatchError = new Error([
-          'The downloaded data did not match the data from the server.',
-          'To be sure the content is the same, you should download the',
-          'file again.'
-        ].join(' '));
+        var mismatchError = new Error(
+          [
+            'The downloaded data did not match the data from the server.',
+            'To be sure the content is the same, you should download the',
+            'file again.',
+          ].join(' ')
+        );
         mismatchError.code = 'CONTENT_DOWNLOAD_MISMATCH';
 
         throughStream.destroy(mismatchError);
@@ -707,18 +718,21 @@ File.prototype.createResumableUpload = function(options, callback) {
     options = {};
   }
 
-  resumableUpload.createURI({
-    authClient: this.bucket.storage.authClient,
-    bucket: this.bucket.name,
-    file: this.name,
-    generation: this.generation,
-    metadata: options.metadata,
-    origin: options.origin,
-    predefinedAcl: options.predefinedAcl,
-    private: options.private,
-    public: options.public,
-    userProject: options.userProject
-  }, callback);
+  resumableUpload.createURI(
+    {
+      authClient: this.bucket.storage.authClient,
+      bucket: this.bucket.name,
+      file: this.name,
+      generation: this.generation,
+      metadata: options.metadata,
+      origin: options.origin,
+      predefinedAcl: options.predefinedAcl,
+      private: options.private,
+      public: options.public,
+      userProject: options.userProject,
+    },
+    callback
+  );
 };
 
 /**
@@ -860,7 +874,7 @@ File.prototype.createWriteStream = function(options) {
 
   var self = this;
 
-  options = extend({ metadata: {} }, options);
+  options = extend({metadata: {}}, options);
 
   var gzip = options.gzip;
 
@@ -883,16 +897,18 @@ File.prototype.createWriteStream = function(options) {
   // checksum value on the returned metadata from the API.
   var validateStream = hashStreamValidation({
     crc32c: crc32c,
-    md5: md5
+    md5: md5,
   });
 
   var fileWriteStream = duplexify();
 
-  var stream = streamEvents(pumpify([
-    gzip ? zlib.createGzip() : through(),
-    validateStream,
-    fileWriteStream
-  ]));
+  var stream = streamEvents(
+    pumpify([
+      gzip ? zlib.createGzip() : through(),
+      validateStream,
+      fileWriteStream,
+    ])
+  );
 
   // Wait until we've received data to determine what upload technique to use.
   stream.on('writing', function() {
@@ -947,20 +963,20 @@ File.prototype.createWriteStream = function(options) {
             'successful. To be sure the content is the same, you should try',
             'removing the file manually, then uploading the file again.',
             '\n\nThe delete attempt failed with this message:',
-            '\n\n  ' + err.message
+            '\n\n  ' + err.message,
           ].join(' ');
         } else if (md5 && !metadata.md5Hash) {
           code = 'MD5_NOT_AVAILABLE';
           message = [
             'MD5 verification was specified, but is not available for the',
-            'requested object. MD5 is not available for composite objects.'
+            'requested object. MD5 is not available for composite objects.',
           ].join(' ');
         } else {
           code = 'FILE_NO_UPLOAD';
           message = [
             'The uploaded data did not match the data from the server. As a',
             'precaution, the file has been deleted. To be sure the content',
-            'is the same, you should try uploading the file again.'
+            'is the same, you should try uploading the file again.',
           ].join(' ');
         }
 
@@ -1106,9 +1122,7 @@ File.prototype.download = function(options, callback) {
       .on('error', callback)
       .on('finish', callback);
   } else {
-    fileStream
-      .on('error', callback)
-      .pipe(concat(callback.bind(null, null)));
+    fileStream.on('error', callback).pipe(concat(callback.bind(null, null)));
   }
 };
 
@@ -1196,7 +1210,8 @@ File.prototype.setEncryptionKey = function(encryptionKey) {
   this.encryptionKey = encryptionKey;
 
   encryptionKey = new Buffer(encryptionKey).toString('base64');
-  var hash = crypto.createHash('sha256')
+  var hash = crypto
+    .createHash('sha256')
     .update(encryptionKey, 'base64')
     .digest('base64');
 
@@ -1207,7 +1222,7 @@ File.prototype.setEncryptionKey = function(encryptionKey) {
       reqOpts.headers['x-goog-encryption-key'] = encryptionKey;
       reqOpts.headers['x-goog-encryption-key-sha256'] = hash;
       return reqOpts;
-    }
+    },
   });
 
   return this;
@@ -1399,8 +1414,8 @@ File.prototype.getSignedPolicy = function(options, callback) {
   var conditions = [
     ['eq', '$key', this.name],
     {
-      bucket: this.bucket.name
-    }
+      bucket: this.bucket.name,
+    },
   ];
 
   if (is.array(options.equals)) {
@@ -1429,19 +1444,19 @@ File.prototype.getSignedPolicy = function(options, callback) {
 
   if (options.acl) {
     conditions.push({
-      acl: options.acl
+      acl: options.acl,
     });
   }
 
   if (options.successRedirect) {
     conditions.push({
-      success_action_redirect: options.successRedirect
+      success_action_redirect: options.successRedirect,
     });
   }
 
   if (options.successStatus) {
     conditions.push({
-      success_action_status: options.successStatus
+      success_action_status: options.successStatus,
     });
   }
 
@@ -1456,7 +1471,7 @@ File.prototype.getSignedPolicy = function(options, callback) {
 
   var policy = {
     expiration: expires.toISOString(),
-    conditions: conditions
+    conditions: conditions,
   };
 
   this.storage.getCredentials(function(err, credentials) {
@@ -1468,7 +1483,7 @@ File.prototype.getSignedPolicy = function(options, callback) {
     if (!credentials.private_key) {
       var errorMessage = [
         'Could not find a `private_key`.',
-        'Please verify you are authorized with this property available.'
+        'Please verify you are authorized with this property available.',
       ].join(' ');
 
       callback(new SigningError(errorMessage));
@@ -1486,7 +1501,7 @@ File.prototype.getSignedPolicy = function(options, callback) {
     callback(null, {
       string: policyString,
       base64: policyBase64,
-      signature: signature
+      signature: signature,
     });
   });
 };
@@ -1611,7 +1626,7 @@ File.prototype.getSignedUrl = function(config, callback) {
   config.action = {
     read: 'GET',
     write: 'PUT',
-    delete: 'DELETE'
+    delete: 'DELETE',
   }[config.action];
 
   var name = encodeURIComponent(this.name);
@@ -1627,7 +1642,7 @@ File.prototype.getSignedUrl = function(config, callback) {
     if (!credentials.private_key || !credentials.client_email) {
       var errorMessage = [
         'Could not find a `private_key` or `client_email`.',
-        'Please verify you are authorized with these credentials available.'
+        'Please verify you are authorized with these credentials available.',
       ].join(' ');
 
       callback(new SigningError(errorMessage));
@@ -1646,27 +1661,29 @@ File.prototype.getSignedUrl = function(config, callback) {
     }
 
     var sign = crypto.createSign('RSA-SHA256');
-    sign.update([
-      config.action,
-      (config.contentMd5 || ''),
-      (config.contentType || ''),
-      expiresInSeconds,
-      extensionHeadersString + config.resource
-    ].join('\n'));
+    sign.update(
+      [
+        config.action,
+        config.contentMd5 || '',
+        config.contentType || '',
+        expiresInSeconds,
+        extensionHeadersString + config.resource,
+      ].join('\n')
+    );
     var signature = sign.sign(credentials.private_key, 'base64');
 
     var responseContentType;
     if (is.string(config.responseType)) {
       responseContentType =
-        '&response-content-type=' +
-        encodeURIComponent(config.responseType);
+        '&response-content-type=' + encodeURIComponent(config.responseType);
     }
 
     var responseContentDisposition;
     if (is.string(config.promptSaveAs)) {
       responseContentDisposition =
         '&response-content-disposition=attachment; filename="' +
-        encodeURIComponent(config.promptSaveAs) + '"';
+        encodeURIComponent(config.promptSaveAs) +
+        '"';
     }
     if (is.string(config.responseDisposition)) {
       responseContentDisposition =
@@ -1682,7 +1699,7 @@ File.prototype.getSignedUrl = function(config, callback) {
       sig: '&Signature=' + encodeURIComponent(signature),
       type: responseContentType || '',
       disp: responseContentDisposition || '',
-      gen: self.generation ? '&generation=' + self.generation : ''
+      gen: self.generation ? '&generation=' + self.generation : '',
     });
 
     callback(null, signedUrl);
@@ -1743,19 +1760,23 @@ File.prototype.makePrivate = function(options, callback) {
   }
 
   var query = {
-    predefinedAcl: options.strict ? 'private' : 'projectPrivate'
+    predefinedAcl: options.strict ? 'private' : 'projectPrivate',
   };
 
   if (options.userProject) {
     query.userProject = options.userProject;
   }
 
-  this.setMetadata({
-    // You aren't allowed to set both predefinedAcl & acl properties on a file,
-    // so acl must explicitly be nullified, destroying all previous acls on the
-    // file.
-    acl: null
-  }, query, callback);
+  this.setMetadata(
+    {
+      // You aren't allowed to set both predefinedAcl & acl properties on a file,
+      // so acl must explicitly be nullified, destroying all previous acls on the
+      // file.
+      acl: null,
+    },
+    query,
+    callback
+  );
 };
 
 /**
@@ -1797,12 +1818,15 @@ File.prototype.makePrivate = function(options, callback) {
 File.prototype.makePublic = function(callback) {
   callback = callback || common.util.noop;
 
-  this.acl.add({
-    entity: 'allUsers',
-    role: 'READER'
-  }, function(err, resp) {
-    callback(err, resp);
-  });
+  this.acl.add(
+    {
+      entity: 'allUsers',
+      role: 'READER',
+    },
+    function(err, resp) {
+      callback(err, resp);
+    }
+  );
 };
 
 /**
@@ -2152,9 +2176,12 @@ File.prototype.setStorageClass = function(storageClass, options, callback) {
 File.prototype.startResumableUpload_ = function(dup, options) {
   var self = this;
 
-  options = extend({
-    metadata: {}
-  }, options);
+  options = extend(
+    {
+      metadata: {},
+    },
+    options
+  );
 
   var uploadStream = resumableUpload({
     authClient: this.storage.authClient,
@@ -2168,7 +2195,7 @@ File.prototype.startResumableUpload_ = function(dup, options) {
     private: options.private,
     public: options.public,
     uri: options.uri,
-    userProject: options.userProject
+    userProject: options.userProject,
   });
 
   uploadStream
@@ -2198,18 +2225,21 @@ File.prototype.startResumableUpload_ = function(dup, options) {
 File.prototype.startSimpleUpload_ = function(dup, options) {
   var self = this;
 
-  options = extend({
-    metadata: {}
-  }, options);
+  options = extend(
+    {
+      metadata: {},
+    },
+    options
+  );
 
   var reqOpts = {
     qs: {
-      name: self.name
+      name: self.name,
     },
     uri: format('{uploadBaseUrl}/{bucket}/o', {
       uploadBaseUrl: STORAGE_UPLOAD_BASE_URL,
-      bucket: self.bucket.name
-    })
+      bucket: self.bucket.name,
+    }),
   };
 
   if (is.defined(this.generation)) {
@@ -2242,7 +2272,7 @@ File.prototype.startSimpleUpload_ = function(dup, options) {
       });
     },
     metadata: options.metadata,
-    request: reqOpts
+    request: reqOpts,
   });
 };
 
@@ -2252,7 +2282,7 @@ File.prototype.startSimpleUpload_ = function(dup, options) {
  * that a callback is omitted.
  */
 common.util.promisifyAll(File, {
-  exclude: ['setEncryptionKey']
+  exclude: ['setEncryptionKey'],
 });
 
 /**

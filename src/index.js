@@ -92,10 +92,8 @@ function Storage(options) {
   var config = {
     baseUrl: 'https://www.googleapis.com/storage/v1',
     projectIdRequired: false,
-    scopes: [
-      'https://www.googleapis.com/auth/devstorage.full_control'
-    ],
-    packageJson: require('../package.json')
+    scopes: ['https://www.googleapis.com/auth/devstorage.full_control'],
+    packageJson: require('../package.json'),
   };
 
   common.Service.call(this, config, options);
@@ -161,7 +159,7 @@ util.inherits(Storage, common.Service);
 Storage.acl = {
   OWNER_ROLE: 'OWNER',
   READER_ROLE: 'READER',
-  WRITER_ROLE: 'WRITER'
+  WRITER_ROLE: 'WRITER',
 };
 
 /**
@@ -307,7 +305,7 @@ Storage.prototype.createBucket = function(name, metadata, callback) {
   }
 
   var body = extend({}, metadata, {
-    name: name
+    name: name,
   });
 
   var storageClasses = {
@@ -315,7 +313,7 @@ Storage.prototype.createBucket = function(name, metadata, callback) {
     dra: 'DURABLE_REDUCED_AVAILABILITY',
     multiRegional: 'MULTI_REGIONAL',
     nearline: 'NEARLINE',
-    regional: 'REGIONAL'
+    regional: 'REGIONAL',
   };
 
   Object.keys(storageClasses).forEach(function(storageClass) {
@@ -327,29 +325,32 @@ Storage.prototype.createBucket = function(name, metadata, callback) {
 
   if (body.requesterPays) {
     body.billing = {
-      requesterPays: body.requesterPays
+      requesterPays: body.requesterPays,
     };
     delete body.requesterPays;
   }
 
-  this.request({
-    method: 'POST',
-    uri: '/b',
-    qs: {
-      project: this.projectId
+  this.request(
+    {
+      method: 'POST',
+      uri: '/b',
+      qs: {
+        project: this.projectId,
+      },
+      json: body,
     },
-    json: body
-  }, function(err, resp) {
-    if (err) {
-      callback(err, null, resp);
-      return;
+    function(err, resp) {
+      if (err) {
+        callback(err, null, resp);
+        return;
+      }
+
+      var bucket = self.bucket(name);
+      bucket.metadata = resp;
+
+      callback(null, bucket, resp);
     }
-
-    var bucket = self.bucket(name);
-    bucket.metadata = resp;
-
-    callback(null, bucket, resp);
-  });
+  );
 };
 
 /**
@@ -436,28 +437,31 @@ Storage.prototype.getBuckets = function(query, callback) {
 
   query.project = query.project || this.projectId;
 
-  this.request({
-    uri: '/b',
-    qs: query
-  }, function(err, resp) {
-    if (err) {
-      callback(err, null, null, resp);
-      return;
+  this.request(
+    {
+      uri: '/b',
+      qs: query,
+    },
+    function(err, resp) {
+      if (err) {
+        callback(err, null, null, resp);
+        return;
+      }
+
+      var buckets = arrify(resp.items).map(function(bucket) {
+        var bucketInstance = self.bucket(bucket.id);
+        bucketInstance.metadata = bucket;
+        return bucketInstance;
+      });
+
+      var nextQuery = null;
+      if (resp.nextPageToken) {
+        nextQuery = extend({}, query, {pageToken: resp.nextPageToken});
+      }
+
+      callback(null, buckets, nextQuery, resp);
     }
-
-    var buckets = arrify(resp.items).map(function(bucket) {
-      var bucketInstance = self.bucket(bucket.id);
-      bucketInstance.metadata = bucket;
-      return bucketInstance;
-    });
-
-    var nextQuery = null;
-    if (resp.nextPageToken) {
-      nextQuery = extend({}, query, { pageToken: resp.nextPageToken });
-    }
-
-    callback(null, buckets, nextQuery, resp);
-  });
+  );
 };
 
 /**
@@ -501,7 +505,7 @@ common.paginator.extend(Storage, 'getBuckets');
  * that a callback is omitted.
  */
 common.util.promisifyAll(Storage, {
-  exclude: ['bucket', 'channel']
+  exclude: ['bucket', 'channel'],
 });
 
 /**
