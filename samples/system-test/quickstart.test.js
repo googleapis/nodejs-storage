@@ -33,34 +33,35 @@ test.after.always(async () => {
   } catch (err) {} // ignore error
 });
 
-test.cb(`should create a bucket`, (t) => {
+test.cb(`should create a bucket`, t => {
   const expectedBucketName = `my-new-bucket`;
 
   const storageMock = {
-    createBucket: (_bucketName) => {
+    createBucket: _bucketName => {
       t.is(_bucketName, expectedBucketName);
 
-      return bucket.create()
-        .then(([bucket]) => {
-          t.not(bucket, undefined);
-          t.is(bucket.name, bucketName);
+      return bucket.create().then(([bucket]) => {
+        t.not(bucket, undefined);
+        t.is(bucket.name, bucketName);
 
-          setTimeout(() => {
-            try {
-              t.true(console.log.calledOnce);
-              t.deepEqual(console.log.firstCall.args, [`Bucket ${expectedBucketName} created.`]);
-              t.end();
-            } catch (err) {
-              t.end(err);
-            }
-          }, 200);
+        setTimeout(() => {
+          try {
+            t.true(console.log.calledOnce);
+            t.deepEqual(console.log.firstCall.args, [
+              `Bucket ${expectedBucketName} created.`,
+            ]);
+            t.end();
+          } catch (err) {
+            t.end(err);
+          }
+        }, 200);
 
-          return [bucket];
-        });
-    }
+        return [bucket];
+      });
+    },
   };
 
   proxyquire(`../quickstart`, {
-    '@google-cloud/storage': sinon.stub().returns(storageMock)
+    '@google-cloud/storage': sinon.stub().returns(storageMock),
   });
 });

@@ -28,30 +28,43 @@ const userEmail = `test@example.com`;
 const cmd = `node iam.js`;
 const roleName = `roles/storage.objectViewer`;
 
-function escape (s) {
+function escape(s) {
   return s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
 test.before(tools.checkCredentials);
-test.before(async (t) => {
+test.before(async t => {
   await bucket.create();
 });
 
-test.after.always(async (t) => {
+test.after.always(async t => {
   try {
     await bucket.delete();
   } catch (err) {} // ignore error
 });
 
-test.serial(`should add multiple members to a role on a bucket`, async (t) => {
-  const results = await tools.runAsyncWithIO(`${cmd} add-members ${bucketName} ${roleName} "user:${userEmail}"`, cwd);
+test.serial(`should add multiple members to a role on a bucket`, async t => {
+  const results = await tools.runAsyncWithIO(
+    `${cmd} add-members ${bucketName} ${roleName} "user:${userEmail}"`,
+    cwd
+  );
   const output = results.stdout + results.stderr;
-  t.regex(output, new RegExp(escape(`Added the following member(s) with role ${roleName} to ${bucketName}:`)));
+  t.regex(
+    output,
+    new RegExp(
+      escape(
+        `Added the following member(s) with role ${roleName} to ${bucketName}:`
+      )
+    )
+  );
   t.regex(output, new RegExp(`user:${userEmail}`));
 });
 
-test.serial(`should list members of a role on a bucket`, async (t) => {
-  const results = await tools.runAsyncWithIO(`${cmd} view-members ${bucketName} "user:${userEmail}"`, cwd);
+test.serial(`should list members of a role on a bucket`, async t => {
+  const results = await tools.runAsyncWithIO(
+    `${cmd} view-members ${bucketName} "user:${userEmail}"`,
+    cwd
+  );
   const output = results.stdout + results.stderr;
   t.regex(output, new RegExp(`Roles for bucket ${bucketName}:`));
   t.regex(output, new RegExp(`Role: ${roleName}`));
@@ -59,9 +72,22 @@ test.serial(`should list members of a role on a bucket`, async (t) => {
   t.regex(output, new RegExp(`user:${userEmail}`));
 });
 
-test.serial(`should remove multiple members from a role on a bucket`, async (t) => {
-  const results = await tools.runAsyncWithIO(`${cmd} remove-members ${bucketName} ${roleName} "user:${userEmail}"`, cwd);
-  const output = results.stdout + results.stderr;
-  t.regex(output, new RegExp(escape(`Removed the following member(s) with role ${roleName} from ${bucketName}:`)));
-  t.regex(output, new RegExp(`user:${userEmail}`));
-});
+test.serial(
+  `should remove multiple members from a role on a bucket`,
+  async t => {
+    const results = await tools.runAsyncWithIO(
+      `${cmd} remove-members ${bucketName} ${roleName} "user:${userEmail}"`,
+      cwd
+    );
+    const output = results.stdout + results.stderr;
+    t.regex(
+      output,
+      new RegExp(
+        escape(
+          `Removed the following member(s) with role ${roleName} from ${bucketName}:`
+        )
+      )
+    );
+    t.regex(output, new RegExp(`user:${userEmail}`));
+  }
+);
