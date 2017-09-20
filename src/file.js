@@ -64,7 +64,7 @@ var STORAGE_UPLOAD_BASE_URL = 'https://www.googleapis.com/upload/storage/v1/b';
  * @const {RegExp}
  * @private
  */
-var GS_URL_REGEXP = /^gs\:\/\/([a-z0-9_\.\-]+)\/(.+)$/;
+var GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
 
 /**
  * A File object is created from your {@link Bucket} object using
