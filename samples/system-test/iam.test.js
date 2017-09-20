@@ -33,11 +33,11 @@ function escape(s) {
 }
 
 test.before(tools.checkCredentials);
-test.before(async t => {
+test.before(async () => {
   await bucket.create();
 });
 
-test.after.always(async t => {
+test.after.always(async () => {
   try {
     await bucket.delete();
   } catch (err) {} // ignore error

@@ -17,6 +17,7 @@
 'use strict';
 
 var assert = require('assert');
+var Buffer = require('safe-buffer').Buffer;
 var crypto = require('crypto');
 var duplexify;
 var extend = require('extend');
@@ -57,7 +58,7 @@ var fakeUtil = extend({}, util, {
   },
 });
 
-var REQUEST_DEFAULT_CONF;
+var REQUEST_DEFAULT_CONF; // eslint-disable-line no-unused-vars
 var requestCached = request;
 var requestOverride;
 function fakeRequest() {
@@ -2828,7 +2829,7 @@ describe('File', function() {
     });
 
     it('should push the correct request interceptor', function(done) {
-      var base64Key = new Buffer(KEY).toString('base64');
+      var base64Key = Buffer.from(KEY).toString('base64');
       var base64KeyHash = crypto.createHash('sha256');
       base64KeyHash.update(base64Key, 'base64');
 

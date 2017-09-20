@@ -30,12 +30,12 @@ const filePath = path.join(__dirname, `../resources`, fileName);
 const cmd = `node acl.js`;
 
 test.before(tools.checkCredentials);
-test.before(async t => {
+test.before(async () => {
   await bucket.create();
   await bucket.upload(filePath);
 });
 
-test.after.always(async t => {
+test.after.always(async () => {
   // Try deleting all files twice
   try {
     await bucket.deleteFiles({force: true});
