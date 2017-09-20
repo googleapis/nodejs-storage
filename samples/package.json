@@ -14,6 +14,16 @@
   "dependencies": {
     "@google-cloud/storage": "1.2.1",
     "safe-buffer": "5.1.1",
+    "uuid": "^3.1.0",
     "yargs": "8.0.2"
+  },
+  "devDependencies": {
+    "@google-cloud/nodejs-repo-tools": "^1.4.17",
+    "ava": "^0.22.0",
+    "proxyquire": "^1.8.0",
+    "sinon": "^3.3.0"
+  },
+  "scripts": {
+    "test": "ava -T 20s --verbose system-test/*.test.js"
   }
 }
