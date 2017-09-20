@@ -18,6 +18,7 @@
 
 var assert = require('assert');
 var async = require('async');
+var Buffer = require('safe-buffer').Buffer;
 var crypto = require('crypto');
 var extend = require('extend');
 var fs = require('fs');
@@ -1191,7 +1192,7 @@ describe('storage', function() {
 
       writeStream.on('error', done);
       writeStream.on('finish', function() {
-        var data = new Buffer('');
+        var data = Buffer.from('');
 
         file
           .createReadStream()
