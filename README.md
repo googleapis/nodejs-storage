@@ -6,7 +6,6 @@
 [![CircleCI](https://img.shields.io/circleci/project/github/googleapis/nodejs-storage.svg?style=flat)](https://circleci.com/gh/googleapis/nodejs-storage)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/googleapis/nodejs-storage?svg=true)](https://ci.appveyor.com/project/googleapis/nodejs-storage)
 [![codecov](https://img.shields.io/codecov/c/github/googleapis/nodejs-storage/repo-migration.svg?style=flat)](https://codecov.io/gh/googleapis/nodejs-storage)
-[![Greenkeeper badge](https://badges.greenkeeper.io/googleapis/nodejs-storage.svg)](https://greenkeeper.io/)
 
 > Node.js idiomatic client for [Cloud Storage][product-docs].
 
@@ -70,18 +69,19 @@ const projectId = 'YOUR_PROJECT_ID';
 
 // Instantiates a client
 const storage = Storage({
-  projectId: projectId
+  projectId: projectId,
 });
 
 // The name for the new bucket
 const bucketName = 'my-new-bucket';
 
 // Creates the new bucket
-storage.createBucket(bucketName)
+storage
+  .createBucket(bucketName)
   .then(() => {
     console.log(`Bucket ${bucketName} created.`);
   })
-  .catch((err) => {
+  .catch(err => {
     console.error('ERROR:', err);
   });
 ```

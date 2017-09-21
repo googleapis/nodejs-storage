@@ -79,9 +79,12 @@ function Iam(bucket) {
  * Example of retrieving a bucket's IAM policy:
  */
 Iam.prototype.getPolicy = function(callback) {
-  this.request_({
-    uri: '/iam'
-  }, callback);
+  this.request_(
+    {
+      uri: '/iam',
+    },
+    callback
+  );
 };
 
 /**
@@ -145,13 +148,19 @@ Iam.prototype.setPolicy = function(policy, callback) {
     throw new Error('A policy object is required.');
   }
 
-  this.request_({
-    method: 'PUT',
-    uri: '/iam',
-    json: extend({
-      resourceId: this.resourceId_
-    }, policy)
-  }, callback);
+  this.request_(
+    {
+      method: 'PUT',
+      uri: '/iam',
+      json: extend(
+        {
+          resourceId: this.resourceId_,
+        },
+        policy
+      ),
+    },
+    callback
+  );
 };
 
 /**
@@ -223,27 +232,30 @@ Iam.prototype.testPermissions = function(permissions, callback) {
 
   permissions = arrify(permissions);
 
-  this.request_({
-    uri: '/iam/testPermissions',
-    qs: {
-      permissions: permissions
+  this.request_(
+    {
+      uri: '/iam/testPermissions',
+      qs: {
+        permissions: permissions,
+      },
+      useQuerystring: true,
     },
-    useQuerystring: true
-  }, function(err, resp) {
-    if (err) {
-      callback(err, null, resp);
-      return;
+    function(err, resp) {
+      if (err) {
+        callback(err, null, resp);
+        return;
+      }
+
+      var availablePermissions = arrify(resp.permissions);
+
+      var permissionsHash = permissions.reduce(function(acc, permission) {
+        acc[permission] = availablePermissions.indexOf(permission) > -1;
+        return acc;
+      }, {});
+
+      callback(null, permissionsHash, resp);
     }
-
-    var availablePermissions = arrify(resp.permissions);
-
-    var permissionsHash = permissions.reduce(function(acc, permission) {
-      acc[permission] = availablePermissions.indexOf(permission) > -1;
-      return acc;
-    }, {});
-
-    callback(null, permissionsHash, resp);
-  });
+  );
 };
 
 /*! Developer Documentation

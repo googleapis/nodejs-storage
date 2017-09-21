@@ -23,7 +23,7 @@
 
 'use strict';
 
-function createBucket (bucketName) {
+function createBucket(bucketName) {
   // [START storage_create_bucket]
   // Imports the Google Cloud client library
   const Storage = require('@google-cloud/storage');
@@ -40,13 +40,13 @@ function createBucket (bucketName) {
     .then(() => {
       console.log(`Bucket ${bucketName} created.`);
     })
-    .catch((err) => {
+    .catch(err => {
       console.error('ERROR:', err);
     });
   // [END storage_create_bucket]
 }
 
-function listBuckets () {
+function listBuckets() {
   // [START storage_list_buckets]
   // Imports the Google Cloud client library
   const Storage = require('@google-cloud/storage');
@@ -57,21 +57,21 @@ function listBuckets () {
   // Lists all buckets in the current project
   storage
     .getBuckets()
-    .then((results) => {
+    .then(results => {
       const buckets = results[0];
 
       console.log('Buckets:');
-      buckets.forEach((bucket) => {
+      buckets.forEach(bucket => {
         console.log(bucket.name);
       });
     })
-    .catch((err) => {
+    .catch(err => {
       console.error('ERROR:', err);
     });
   // [END storage_list_buckets]
 }
 
-function deleteBucket (bucketName) {
+function deleteBucket(bucketName) {
   // [START storage_delete_bucket]
   // Imports the Google Cloud client library
   const Storage = require('@google-cloud/storage');
@@ -89,7 +89,7 @@ function deleteBucket (bucketName) {
     .then(() => {
       console.log(`Bucket ${bucketName} deleted.`);
     })
-    .catch((err) => {
+    .catch(err => {
       console.error('ERROR:', err);
     });
   // [END storage_delete_bucket]
@@ -97,25 +97,17 @@ function deleteBucket (bucketName) {
 
 const cli = require(`yargs`)
   .demand(1)
-  .command(
-    `create <bucket>`,
-    `Creates a new bucket.`,
-    {},
-    (opts) => createBucket(opts.bucket)
+  .command(`create <bucket>`, `Creates a new bucket.`, {}, opts =>
+    createBucket(opts.bucket)
   )
-  .command(
-    `list`,
-    `Lists all buckets in the current project.`,
-    {},
-    listBuckets
+  .command(`list`, `Lists all buckets in the current project.`, {}, listBuckets)
+  .command(`delete <bucket>`, `Deletes a bucket.`, {}, opts =>
+    deleteBucket(opts.bucket)
   )
-  .command(
-    `delete <bucket>`,
-    `Deletes a bucket.`,
-    {},
-    (opts) => deleteBucket(opts.bucket)
+  .example(
+    `node $0 create my-bucket`,
+    `Creates a new bucket named "my-bucket".`
   )
-  .example(`node $0 create my-bucket`, `Creates a new bucket named "my-bucket".`)
   .example(`node $0 list`, `Lists all buckets in the current project.`)
   .example(`node $0 delete my-bucket`, `Deletes a bucket named "my-bucket".`)
   .wrap(120)

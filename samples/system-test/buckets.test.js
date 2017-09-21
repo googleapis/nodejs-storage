@@ -36,26 +36,46 @@ test.after.always(async () => {
 test.beforeEach(tools.stubConsole);
 test.afterEach.always(tools.restoreConsole);
 
-test.serial(`should create a bucket`, async (t) => {
-  const results = await tools.runAsyncWithIO(`${cmd} create ${bucketName}`, cwd);
-  t.regex(results.stdout + results.stderr, new RegExp(`Bucket ${bucketName} created.`));
+test.serial(`should create a bucket`, async t => {
+  const results = await tools.runAsyncWithIO(
+    `${cmd} create ${bucketName}`,
+    cwd
+  );
+  t.regex(
+    results.stdout + results.stderr,
+    new RegExp(`Bucket ${bucketName} created.`)
+  );
   const [exists] = await bucket.exists();
   t.true(exists);
 });
 
-test.serial(`should list buckets`, async (t) => {
+test.serial(`should list buckets`, async t => {
   t.plan(0);
-  await tools.tryTest(async (assert) => {
-    const results = await tools.runAsyncWithIO(`${cmd} list`, cwd);
-    const output = results.stdout + results.stderr;
-    assert(output.includes(`Buckets:`), `"${output}" should include "Buckets:"`);
-    assert(output.includes(bucketName), `"${output}" should include "${bucketName}"`);
-  }).start();
+  await tools
+    .tryTest(async assert => {
+      const results = await tools.runAsyncWithIO(`${cmd} list`, cwd);
+      const output = results.stdout + results.stderr;
+      assert(
+        output.includes(`Buckets:`),
+        `"${output}" should include "Buckets:"`
+      );
+      assert(
+        output.includes(bucketName),
+        `"${output}" should include "${bucketName}"`
+      );
+    })
+    .start();
 });
 
-test.serial(`should delete a bucket`, async (t) => {
-  const results = await tools.runAsyncWithIO(`${cmd} delete ${bucketName}`, cwd);
-  t.regex(results.stdout + results.stderr, new RegExp(`Bucket ${bucketName} deleted.`));
+test.serial(`should delete a bucket`, async t => {
+  const results = await tools.runAsyncWithIO(
+    `${cmd} delete ${bucketName}`,
+    cwd
+  );
+  t.regex(
+    results.stdout + results.stderr,
+    new RegExp(`Bucket ${bucketName} deleted.`)
+  );
   const [exists] = await bucket.exists();
   t.false(exists);
 });

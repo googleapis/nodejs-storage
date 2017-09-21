@@ -14,6 +14,24 @@
   "dependencies": {
     "@google-cloud/storage": "1.2.1",
     "safe-buffer": "5.1.1",
+    "uuid": "3.1.0",
     "yargs": "8.0.2"
+  },
+  "devDependencies": {
+    "@google-cloud/nodejs-repo-tools": "2.0.0-beta.12",
+    "ava": "0.22.0",
+    "nyc": "11.1.0",
+    "proxyquire": "1.8.0",
+    "sinon": "3.3.0"
+  },
+  "nyc": {
+    "exclude": [
+      "**/*.test.js"
+    ]
+  },
+  "scripts": {
+    "ava": "ava -T 20s --verbose system-test/*.test.js",
+    "cover": "nyc --reporter=lcov --cache ava -T 20s --verbose system-test/*.test.js && nyc report",
+    "test": "repo-tools test run --cmd npm -- run cover"
   }
 }

@@ -44,7 +44,7 @@ function Channel(storage, id, resourceId) {
 
     methods: {
       // Only need `request`.
-    }
+    },
   };
 
   common.ServiceObject.call(this, config);
@@ -89,13 +89,16 @@ util.inherits(Channel, common.ServiceObject);
 Channel.prototype.stop = function(callback) {
   callback = callback || common.util.noop;
 
-  this.request({
-    method: 'POST',
-    uri: '/stop',
-    json: this.metadata
-  }, function(err, apiResponse) {
-    callback(err, apiResponse);
-  });
+  this.request(
+    {
+      method: 'POST',
+      uri: '/stop',
+      json: this.metadata,
+    },
+    function(err, apiResponse) {
+      callback(err, apiResponse);
+    }
+  );
 };
 
 /*! Developer Documentation

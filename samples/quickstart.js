@@ -24,18 +24,19 @@ const projectId = 'YOUR_PROJECT_ID';
 
 // Instantiates a client
 const storage = Storage({
-  projectId: projectId
+  projectId: projectId,
 });
 
 // The name for the new bucket
 const bucketName = 'my-new-bucket';
 
 // Creates the new bucket
-storage.createBucket(bucketName)
+storage
+  .createBucket(bucketName)
   .then(() => {
     console.log(`Bucket ${bucketName} created.`);
   })
-  .catch((err) => {
+  .catch(err => {
     console.error('ERROR:', err);
   });
 // [END storage_quickstart]

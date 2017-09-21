@@ -79,7 +79,7 @@ function Bucket(storage, name) {
      *   var apiResponse = data[1];
      * });
      */
-    create: true
+    create: true,
   };
 
   common.ServiceObject.call(this, {
@@ -87,7 +87,7 @@ function Bucket(storage, name) {
     baseUrl: '/b',
     id: name,
     createMethod: storage.createBucket.bind(storage),
-    methods: methods
+    methods: methods,
   });
 
   /**
@@ -185,12 +185,12 @@ function Bucket(storage, name) {
    */
   this.acl = new Acl({
     request: this.request.bind(this),
-    pathPrefix: '/acl'
+    pathPrefix: '/acl',
   });
 
   this.acl.default = new Acl({
     request: this.request.bind(this),
-    pathPrefix: '/defaultObjectAcl'
+    pathPrefix: '/defaultObjectAcl',
   });
 
   /**
@@ -321,39 +321,43 @@ Bucket.prototype.combine = function(sources, destination, options, callback) {
       destination.metadata.contentType = destinationContentType;
     } else {
       throw new Error(
-        'A content type could not be detected for the destination file.');
+        'A content type could not be detected for the destination file.'
+      );
     }
   }
 
   // Make the request from the destination File object.
-  destination.request({
-    method: 'POST',
-    uri: '/compose',
-    json: {
-      destination: {
-        contentType: destination.metadata.contentType
+  destination.request(
+    {
+      method: 'POST',
+      uri: '/compose',
+      json: {
+        destination: {
+          contentType: destination.metadata.contentType,
+        },
+        sourceObjects: sources.map(function(source) {
+          var sourceObject = {
+            name: source.name,
+          };
+
+          if (source.metadata && source.metadata.generation) {
+            sourceObject.generation = source.metadata.generation;
+          }
+
+          return sourceObject;
+        }),
       },
-      sourceObjects: sources.map(function(source) {
-        var sourceObject = {
-          name: source.name
-        };
-
-        if (source.metadata && source.metadata.generation) {
-          sourceObject.generation = source.metadata.generation;
-        }
-
-        return sourceObject;
-      })
+      qs: options,
     },
-    qs: options
-  }, function(err, resp) {
-    if (err) {
-      callback(err, null, resp);
-      return;
-    }
+    function(err, resp) {
+      if (err) {
+        callback(err, null, resp);
+        return;
+      }
 
-    callback(null, destination, resp);
-  });
+      callback(null, destination, resp);
+    }
+  );
 
   function convertToFile(file) {
     if (file instanceof File) {
@@ -434,27 +438,33 @@ Bucket.prototype.createChannel = function(id, config, options, callback) {
     options = {};
   }
 
-  this.request({
-    method: 'POST',
-    uri: '/o/watch',
-    json: extend({
-      id: id,
-      type: 'web_hook'
-    }, config),
-    qs: options
-  }, function(err, apiResponse) {
-    if (err) {
-      callback(err, null, apiResponse);
-      return;
+  this.request(
+    {
+      method: 'POST',
+      uri: '/o/watch',
+      json: extend(
+        {
+          id: id,
+          type: 'web_hook',
+        },
+        config
+      ),
+      qs: options,
+    },
+    function(err, apiResponse) {
+      if (err) {
+        callback(err, null, apiResponse);
+        return;
+      }
+
+      var resourceId = apiResponse.resourceId;
+      var channel = self.storage.channel(id, resourceId);
+
+      channel.metadata = apiResponse;
+
+      callback(null, channel, apiResponse);
     }
-
-    var resourceId = apiResponse.resourceId;
-    var channel = self.storage.channel(id, resourceId);
-
-    channel.metadata = apiResponse;
-
-    callback(null, channel, apiResponse);
-  });
+  );
 };
 
 /**
@@ -500,11 +510,14 @@ Bucket.prototype.delete = function(options, callback) {
     options = {};
   }
 
-  this.request({
-    method: 'DELETE',
-    uri: '',
-    qs: options
-  }, callback || common.util.noop);
+  this.request(
+    {
+      method: 'DELETE',
+      uri: '',
+      qs: options,
+    },
+    callback || common.util.noop
+  );
 };
 
 /**
@@ -743,11 +756,14 @@ Bucket.prototype.deleteLabels = function(labels, callback) {
  * });
  */
 Bucket.prototype.disableRequesterPays = function(callback) {
-  this.setMetadata({
-    billing: {
-      requesterPays: false
-    }
-  }, callback || common.util.noop);
+  this.setMetadata(
+    {
+      billing: {
+        requesterPays: false,
+      },
+    },
+    callback || common.util.noop
+  );
 };
 
 /**
@@ -792,11 +808,14 @@ Bucket.prototype.disableRequesterPays = function(callback) {
  * });
  */
 Bucket.prototype.enableRequesterPays = function(callback) {
-  this.setMetadata({
-    billing: {
-      requesterPays: true
-    }
-  }, callback || common.util.noop);
+  this.setMetadata(
+    {
+      billing: {
+        requesterPays: true,
+      },
+    },
+    callback || common.util.noop
+  );
 };
 
 /**
@@ -1083,37 +1102,40 @@ Bucket.prototype.getFiles = function(query, callback) {
     query = {};
   }
 
-  this.request({
-    uri: '/o',
-    qs: query
-  }, function(err, resp) {
-    if (err) {
-      callback(err, null, null, resp);
-      return;
-    }
-
-    var files = arrify(resp.items).map(function(file) {
-      var options = {};
-
-      if (query.versions) {
-        options.generation = file.generation;
+  this.request(
+    {
+      uri: '/o',
+      qs: query,
+    },
+    function(err, resp) {
+      if (err) {
+        callback(err, null, null, resp);
+        return;
       }
 
-      var fileInstance = self.file(file.name, options);
-      fileInstance.metadata = file;
+      var files = arrify(resp.items).map(function(file) {
+        var options = {};
 
-      return fileInstance;
-    });
+        if (query.versions) {
+          options.generation = file.generation;
+        }
 
-    var nextQuery = null;
-    if (resp.nextPageToken) {
-      nextQuery = extend({}, query, {
-        pageToken: resp.nextPageToken
+        var fileInstance = self.file(file.name, options);
+        fileInstance.metadata = file;
+
+        return fileInstance;
       });
-    }
 
-    callback(null, files, nextQuery, resp);
-  });
+      var nextQuery = null;
+      if (resp.nextPageToken) {
+        nextQuery = extend({}, query, {
+          pageToken: resp.nextPageToken,
+        });
+      }
+
+      callback(null, files, nextQuery, resp);
+    }
+  );
 };
 
 /**
@@ -1252,19 +1274,22 @@ Bucket.prototype.getMetadata = function(options, callback) {
     options = {};
   }
 
-  this.request({
-    uri: '',
-    qs: options
-  }, function(err, resp) {
-    if (err) {
-      callback(err, null, resp);
-      return;
+  this.request(
+    {
+      uri: '',
+      qs: options,
+    },
+    function(err, resp) {
+      if (err) {
+        callback(err, null, resp);
+        return;
+      }
+
+      self.metadata = resp;
+
+      callback(null, self.metadata, resp);
     }
-
-    self.metadata = resp;
-
-    callback(null, self.metadata, resp);
-  });
+  );
 };
 
 /**
@@ -1368,18 +1393,22 @@ Bucket.prototype.makePrivate = function(options, callback) {
 
   function setPredefinedAcl(done) {
     var query = {
-      predefinedAcl: 'projectPrivate'
+      predefinedAcl: 'projectPrivate',
     };
 
     if (options.userProject) {
       query.userProject = options.userProject;
     }
 
-    self.setMetadata({
-      // You aren't allowed to set both predefinedAcl & acl properties on a
-      // bucket so acl must explicitly be nullified.
-      acl: null
-    }, query, done);
+    self.setMetadata(
+      {
+        // You aren't allowed to set both predefinedAcl & acl properties on a
+        // bucket so acl must explicitly be nullified.
+        acl: null,
+      },
+      query,
+      done
+    );
   }
 
   function makeFilesPrivate(done) {
@@ -1486,25 +1515,30 @@ Bucket.prototype.makePublic = function(options, callback) {
   options = options || {};
   options.public = true;
 
-  async.series([
-    addAclPermissions,
-    addDefaultAclPermissions,
-    makeFilesPublic
-  ], callback);
+  async.series(
+    [addAclPermissions, addDefaultAclPermissions, makeFilesPublic],
+    callback
+  );
 
   function addAclPermissions(done) {
     // Allow reading bucket contents while preserving original permissions.
-    self.acl.add({
-      entity: 'allUsers',
-      role: 'READER'
-    }, done);
+    self.acl.add(
+      {
+        entity: 'allUsers',
+        role: 'READER',
+      },
+      done
+    );
   }
 
   function addDefaultAclPermissions(done) {
-    self.acl.default.add({
-      entity: 'allUsers',
-      role: 'READER'
-    }, done);
+    self.acl.default.add(
+      {
+        entity: 'allUsers',
+        role: 'READER',
+      },
+      done
+    );
   }
 
   function makeFilesPublic(done) {
@@ -1638,21 +1672,24 @@ Bucket.prototype.setMetadata = function(metadata, options, callback) {
 
   callback = callback || common.util.noop;
 
-  this.request({
-    method: 'PATCH',
-    uri: '',
-    json: metadata,
-    qs: options
-  }, function(err, resp) {
-    if (err) {
-      callback(err, resp);
-      return;
+  this.request(
+    {
+      method: 'PATCH',
+      uri: '',
+      json: metadata,
+      qs: options,
+    },
+    function(err, resp) {
+      if (err) {
+        callback(err, resp);
+        return;
+      }
+
+      self.metadata = resp;
+
+      callback(null, resp);
     }
-
-    self.metadata = resp;
-
-    callback(null, resp);
-  });
+  );
 };
 
 /**
@@ -1700,7 +1737,7 @@ Bucket.prototype.setStorageClass = function(storageClass, options, callback) {
     })
     .toUpperCase();
 
-  this.setMetadata({ storageClass }, options, callback);
+  this.setMetadata({storageClass}, options, callback);
 };
 
 /**
@@ -1904,9 +1941,12 @@ Bucket.prototype.upload = function(localPath, options, callback) {
     options = {};
   }
 
-  options = extend({
-    metadata: {}
-  }, options);
+  options = extend(
+    {
+      metadata: {},
+    },
+    options
+  );
 
   var newFile;
   if (options.destination instanceof File) {
@@ -1914,12 +1954,12 @@ Bucket.prototype.upload = function(localPath, options, callback) {
   } else if (is.string(options.destination)) {
     // Use the string as the name of the file.
     newFile = this.file(options.destination, {
-      encryptionKey: options.encryptionKey
+      encryptionKey: options.encryptionKey,
     });
   } else {
     // Resort to using the name of the incoming file.
     newFile = this.file(path.basename(localPath), {
-      encryptionKey: options.encryptionKey
+      encryptionKey: options.encryptionKey,
     });
   }
 
@@ -1946,7 +1986,8 @@ Bucket.prototype.upload = function(localPath, options, callback) {
   }
 
   function upload() {
-    fs.createReadStream(localPath)
+    fs
+      .createReadStream(localPath)
       .pipe(newFile.createWriteStream(options))
       .on('error', function(err) {
         callback(err);
@@ -2036,7 +2077,7 @@ common.paginator.extend(Bucket, 'getFiles');
  * that a callback is omitted.
  */
 common.util.promisifyAll(Bucket, {
-  exclude: ['file']
+  exclude: ['file'],
 });
 
 /**
