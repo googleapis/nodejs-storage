@@ -2,12 +2,11 @@
 
 # Google Cloud Storage: Node.js Client
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/googleapis/nodejs-storage.svg)](https://greenkeeper.io/)
-
 [![release level](https://img.shields.io/badge/release%20level-general%20availability%20%28GA%29-brightgreen.svg?style&#x3D;flat)](https://cloud.google.com/terms/launch-stages)
 [![CircleCI](https://img.shields.io/circleci/project/github/googleapis/nodejs-storage.svg?style=flat)](https://circleci.com/gh/googleapis/nodejs-storage)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/googleapis/nodejs-storage?svg=true)](https://ci.appveyor.com/project/googleapis/nodejs-storage)
 [![codecov](https://img.shields.io/codecov/c/github/googleapis/nodejs-storage/repo-migration.svg?style=flat)](https://codecov.io/gh/googleapis/nodejs-storage)
+[![Greenkeeper badge](https://badges.greenkeeper.io/googleapis/nodejs-storage.svg)](https://greenkeeper.io/)
 
 > Node.js idiomatic client for [Cloud Storage][product-docs].
 
