@@ -43,8 +43,7 @@ Commands:
   remove-file-owner <bucketName> <fileName> <userEmail>        Removes a user from the ACL of a file.
 
 Options:
-  --version  Show version number                                                                               [boolean]
-  --help     Show help                                                                                         [boolean]
+  --help  Show help                                                                                            [boolean]
 
 Examples:
   node acl.js print-bucket-acl my-bucket
@@ -77,8 +76,7 @@ Commands:
   delete <bucket>  Deletes a bucket.
 
 Options:
-  --version  Show version number                                                                               [boolean]
-  --help     Show help                                                                                         [boolean]
+  --help  Show help                                                                                            [boolean]
 
 Examples:
   node buckets.js create my-bucket  Creates a new bucket named "my-bucket".
@@ -105,8 +103,7 @@ Commands:
   rotate <bucketName> <fileName> <oldkey> <newKey>          Rotates encryption keys for a file.
 
 Options:
-  --version  Show version number                                                                               [boolean]
-  --help     Show help                                                                                         [boolean]
+  --help  Show help                                                                                            [boolean]
 
 Examples:
   node encryption.js generate-encryption-key                    Generate a sample encryption key.
@@ -145,8 +142,7 @@ Commands:
   <destFileName>
 
 Options:
-  --version  Show version number                                                                               [boolean]
-  --help     Show help                                                                                         [boolean]
+  --help  Show help                                                                                            [boolean]
 
 Examples:
   node files.js list my-bucket                                  Lists files in "my-bucket".
