@@ -192,13 +192,3 @@ jobs:
       - run:
          name: Publish the module to npm.
          command: npm publish
-
-  publish_docs:
-    docker:
-      - image: node:8
-    steps:
-      - checkout
-      - run:
-          name: Publish the docs.
-          command: .circleci/publish_docs.sh
-    working_directory: /var/code/npm_module/
