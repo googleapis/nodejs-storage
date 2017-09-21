@@ -1,5 +1,5 @@
-/*!
- * Copyright 2014 Google Inc. All Rights Reserved.
+/**
+ * Copyright 2014-2017 Google Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*!
- * @module storage/bucket
- */
-
 'use strict';
 
 var arrify = require('arrify');
@@ -30,22 +26,8 @@ var mime = require('mime-types');
 var path = require('path');
 var util = require('util');
 
-/**
- * @type {module:storage/acl}
- * @private
- */
 var Acl = require('./acl.js');
-
-/**
- * @type {module:storage/file}
- * @private
- */
 var File = require('./file.js');
-
-/**
- * @type {module:storage/iam}
- * @private
- */
 var Iam = require('./iam.js');
 
 /**
@@ -60,31 +42,32 @@ var RESUMABLE_THRESHOLD = 5000000;
 /**
  * Create a Bucket object to interact with a Cloud Storage bucket.
  *
- * @constructor
- * @alias module:storage/bucket
+ * @class
+ * @hideconstructor
  *
- * @param {object} options - Configuration options.
- * @param {string} options.bucketName - Name of the bucket.
- * @param {string=} options.keyFilename - Full path to the JSON key downloaded
- *     from the Google Developers Console. Alternatively, you may provide a
- *     `credentials` object.
- * @param {object=} options.credentials - Credentials object, used in place of
- *     a `keyFilename`.
+ * @param {Storage} storage A {@link Storage} instance.
+ * @param {string} name The name of the bucket.
  *
  * @example
- * var bucket = gcs.bucket('albums');
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
  */
 function Bucket(storage, name) {
   var methods = {
     /**
      * Create a bucket.
      *
-     * @param {object=} config - See {module:storage#createBucket}.
+     * @method Bucket#create
+     * @param {Storage~CreateBucketRequest} [metadata] Metadata to set for the bucket.
+     * @param {Storage~CreateBucketCallback} [callback] Callback function.
+     * @returns {Promise<Storage~CreateBucketResponse>}
      *
      * @example
-     * bucket.create(function(err, zone, apiResponse) {
+     * var storage = require('@google-cloud/storage')();
+     * var bucket = storage.bucket('albums');
+     * bucket.create(function(err, bucket, apiResponse) {
      *   if (!err) {
-     *     // The zone was created successfully.
+     *     // The bucket was created successfully.
      *   }
      * });
      *
@@ -92,7 +75,7 @@ function Bucket(storage, name) {
      * // If the callback is omitted, we'll return a Promise.
      * //-
      * bucket.create().then(function(data) {
-     *   var zone = data[0];
+     *   var bucket = data[0];
      *   var apiResponse = data[1];
      * });
      */
@@ -107,7 +90,18 @@ function Bucket(storage, name) {
     methods: methods
   });
 
+  /**
+   * The bucket's name.
+   * @name Bucket#name
+   * @type {string}
+   */
   this.name = name;
+  /**
+   * A reference to the {@link Storage} associated with this {@link Bucket}
+   * instance.
+   * @name Bucket#storage
+   * @type {string}
+   */
   this.storage = storage;
 
   /**
@@ -129,22 +123,30 @@ function Bucket(storage, name) {
    * for all created files. Default ACLs specify permissions that all new
    * objects added to the bucket will inherit by default. You can add, delete,
    * get, and update entities and permissions for these as well with
-   * {module:storage/bucket#acl.default}.
+   * {@link Bucket#acl.default}.
    *
-   * @resource [About Access Control Lists]{@link http://goo.gl/6qBBPO}
-   * @resource [Default ACLs]{@link https://cloud.google.com/storage/docs/access-control/lists#default}
+   * @see [About Access Control Lists]{@link http://goo.gl/6qBBPO}
+   * @see [Default ACLs]{@link https://cloud.google.com/storage/docs/access-control/lists#default}
    *
-   * @mixes module:storage/acl
+   * @name Bucket#acl
+   * @mixes Acl
+   * @property {Acl} default Cloud Storage Buckets have
+   * [default ACLs](https://cloud.google.com/storage/docs/access-control/lists#default)
+   * for all created files. You can add, delete, get, and update entities and
+   * permissions for these as well. The method signatures and examples are all
+   * the same, after only prefixing the method call with `default`.
    *
    * @example
+   * var storage = require('@google-cloud/storage')();
+   *
    * //-
    * // Make a bucket's contents publicly readable.
    * //-
-   * var myBucket = gcs.bucket('my-bucket');
+   * var myBucket = storage.bucket('my-bucket');
    *
    * var options = {
    *   entity: 'allUsers',
-   *   role: gcs.acl.READER_ROLE
+   *   role: storage.acl.READER_ROLE
    * };
    *
    * myBucket.acl.add(options, function(err, aclObject) {});
@@ -156,21 +158,36 @@ function Bucket(storage, name) {
    *   var aclObject = data[0];
    *   var apiResponse = data[1];
    * });
+   *
+   * @example <caption>include:samples/acl.js</caption>
+   * region_tag:storage_print_bucket_acl
+   * Example of printing a bucket's ACL:
+   *
+   * @example <caption>include:samples/acl.js</caption>
+   * region_tag:storage_print_bucket_acl_for_user
+   * Example of printing a bucket's ACL for a specific user:
+   *
+   * @example <caption>include:samples/acl.js</caption>
+   * region_tag:storage_add_bucket_owner
+   * Example of adding an owner to a bucket:
+   *
+   * @example <caption>include:samples/acl.js</caption>
+   * region_tag:storage_remove_bucket_owner
+   * Example of removing an owner from a bucket:
+   *
+   * @example <caption>include:samples/acl.js</caption>
+   * region_tag:storage_add_bucket_default_owner
+   * Example of adding a default owner to a bucket:
+   *
+   * @example <caption>include:samples/acl.js</caption>
+   * region_tag:storage_remove_bucket_default_owner
+   * Example of removing a default owner from a bucket:
    */
   this.acl = new Acl({
     request: this.request.bind(this),
     pathPrefix: '/acl'
   });
 
-  /**
-   * Cloud Storage Buckets have [default ACLs](https://cloud.google.com/storage/docs/access-control/lists#default)
-   * for all created files. You can add, delete, get, and update entities and
-   * permissions for these as well. The method signatures and examples are all
-   * the same, after only prefixing the method call with `default`.
-   *
-   * @mixes module:storage/acl
-   * @alias acl.default
-   */
   this.acl.default = new Acl({
     request: this.request.bind(this),
     pathPrefix: '/defaultObjectAcl'
@@ -179,13 +196,17 @@ function Bucket(storage, name) {
   /**
    * Get and set IAM policies for your bucket.
    *
-   * @mixes module:storage/iam
+   * @name Bucket#iam
+   * @mixes Iam
    *
-   * @resource [Cloud Storage IAM Management](https://cloud.google.com/storage/docs/access-control/iam#short_title_iam_management)
-   * @resource [Granting, Changing, and Revoking Access](https://cloud.google.com/iam/docs/granting-changing-revoking-access)
-   * @resource [IAM Roles](https://cloud.google.com/iam/docs/understanding-roles)
+   * @see [Cloud Storage IAM Management](https://cloud.google.com/storage/docs/access-control/iam#short_title_iam_management)
+   * @see [Granting, Changing, and Revoking Access](https://cloud.google.com/iam/docs/granting-changing-revoking-access)
+   * @see [IAM Roles](https://cloud.google.com/iam/docs/understanding-roles)
    *
    * @example
+   * var storage = require('@google-cloud/storage')();
+   * var bucket = storage.bucket('albums');
+   *
    * //-
    * // Get the IAM policy for your bucket.
    * //-
@@ -200,6 +221,18 @@ function Bucket(storage, name) {
    *   var policy = data[0];
    *   var apiResponse = data[1];
    * });
+   *
+   * @example <caption>include:samples/iam.js</caption>
+   * region_tag:view_bucket_iam_members
+   * Example of retrieving a bucket's IAM policy:
+   *
+   * @example <caption>include:samples/iam.js</caption>
+   * region_tag:add_bucket_iam_member
+   * Example of adding to a bucket's IAM policy:
+   *
+   * @example <caption>include:samples/iam.js</caption>
+   * region_tag:remove_bucket_iam_member
+   * Example of removing from a bucket's IAM policy:
    */
   this.iam = new Iam(this);
 }
@@ -207,30 +240,40 @@ function Bucket(storage, name) {
 util.inherits(Bucket, common.ServiceObject);
 
 /**
+ * @typedef {array} CombineResponse
+ * @property {File} 0 The new {@link File}.
+ * @property {object} 1 The full API response.
+ */
+/**
+ * @callback CombineCallback
+ * @param {?Error} err Request error, if any.
+ * @param {File} newFile The new {@link File}.
+ * @param {object} apiResponse The full API response.
+ */
+/**
  * Combine multiple files into one new file.
  *
- * @resource [Objects: compose API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/compose}
+ * @see [Objects: compose API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/compose}
  *
  * @throws {Error} if a non-array is provided as sources argument.
  * @throws {Error} if less than two sources are provided.
  * @throws {Error} if no destination is provided.
  * @throws {Error} if content type can't be determined for the destination file.
  *
- * @param {string[]|module:storage/file} sources - The source files that will be
+ * @param {string[]|File[]} sources The source files that will be
  *     combined.
- * @param {string|module:storage/file} destination - The file you would like the
+ * @param {string|File} destination The file you would like the
  *     source files combined into.
- * @param {object=} options - Configuration object.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function=} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request
- * @param {module:storage/file} callback.newFile - The combined file.
- * @param {object} callback.apiResponse - The full API response.
+ * @param {CombineCallback} [callback] Callback function.
+ * @returns {Promise<CombineResponse>}
  *
  * @example
- * var logBucket = gcs.bucket('log-bucket');
+ * var storage = require('@google-cloud/storage')();
+ * var logBucket = storage.bucket('log-bucket');
  *
  * var sources = [
  *   logBucket.file('2013-logs.txt'),
@@ -322,29 +365,39 @@ Bucket.prototype.combine = function(sources, destination, options, callback) {
 };
 
 /**
+ * @typedef {array} CreateChannelResponse
+ * @property {object} 0 The full API response.
+ * @property {Channel} 1 The new {@link Channel}.
+ */
+/**
+ * @callback CreateChannelCallback
+ * @param {?Error} err Request error, if any.
+ * @param {Channel} channel The new {@link Channel}.
+ * @param {object} apiResponse The full API response.
+ */
+/**
  * Create a channel that will be notified when objects in this bucket changes.
  *
  * @throws {Error} If an ID is not provided.
  * @throws {Error} If an address is not provided.
  *
- * @resource [Objects: watchAll API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll}
+ * @see [Objects: watchAll API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll}
  *
- * @param {string} id - The ID of the channel to create.
- * @param {object} config - See a
+ * @param {string} id The ID of the channel to create.
+ * @param {object} config See a
  *     [Objects: watchAll request body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
- * @param {string} config.address - The address where notifications are
+ * @param {string} config.address The address where notifications are
  *     delivered for this channel.
- * @param {object=} options - Configuration object.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request
- * @param {module:storage/channel} callback.channel - The created Channel
- *     object.
- * @param {object} callback.apiResponse - The full API response.
+ * @param {CreateChannelCallback} [callback] Callback function.
+ * @returns {Promise<CreateChannelResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
  * var id = 'new-channel-id';
  *
  * var config = {
@@ -405,20 +458,29 @@ Bucket.prototype.createChannel = function(id, config, options, callback) {
 };
 
 /**
+ * @typedef {array} DeleteBucketResponse
+ * @property {object} 0 The full API response.
+ */
+/**
+ * @callback DeleteBucketCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+/**
  * Delete the bucket.
  *
- * @resource [Buckets: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/delete}
+ * @see [Buckets: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/delete}
  *
- * @param {object=} options - Configuration object.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
- *     set this value to the project which should be billed for this operation.
- * @param {function=} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this
- *     request.
- * @param {object} callback.apiResponse - The full API response.
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}), set this
+ *     value to the project which should be billed for this operation.
+ * @param {DeleteBucketCallback} [callback] Callback function.
+ * @returns {Promise<DeleteBucketResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
  * bucket.delete(function(err, apiResponse) {});
  *
  * //-
@@ -427,6 +489,10 @@ Bucket.prototype.createChannel = function(id, config, options, callback) {
  * bucket.delete().then(function(data) {
  *   var apiResponse = data[0];
  * });
+ *
+ * @example <caption>include:samples/buckets.js</caption>
+ * region_tag:storage_delete_bucket
+ * Another example:
  */
 Bucket.prototype.delete = function(options, callback) {
   if (is.fn(options)) {
@@ -442,6 +508,12 @@ Bucket.prototype.delete = function(options, callback) {
 };
 
 /**
+ * @callback DeleteFilesCallback
+ * @param {?Error|?Error[]} err Request error, if any, or array of errors from
+ *     files that were not able to be deleted.
+ * @param {object} apiResponse The full API response.
+ */
+/**
  * Iterate over the bucket's files, calling `file.delete()` on each.
  *
  * <strong>This is not an atomic request.</strong> A delete attempt will be made
@@ -454,22 +526,24 @@ Bucket.prototype.delete = function(options, callback) {
  * be processed.
  *
  * The `query` object passed as the first argument will also be passed to
- * {module:storage/bucket#getFiles}.
+ * {@link Bucket#getFiles}.
  *
- * @resource [Objects: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/delete}
+ * @see [Objects: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/delete}
  *
- * @param {object=} query - Query object. See {module:storage/bucket#getFiles}
+ * @param {object} [query] Query object. See {@link Bucket#getFiles}
  *     for all of the supported properties.
- * @param {boolean} query.force - Suppress errors until all files have been
+ * @param {boolean} [query.force] Suppress errors until all files have been
  *     processed.
- * @param {boolean} query.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {boolean} [query.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function} callback - The callback function.
- * @param {?error|?error[]} callback.err - An API error or array of errors from
- *     files that were not able to be deleted.
+ * @param {DeleteFilesCallback} [callback] Callback function.
+ * @returns {Promise}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * //-
  * // Delete all of the files in the bucket.
  * //-
@@ -488,7 +562,7 @@ Bucket.prototype.delete = function(options, callback) {
  *
  * //-
  * // The first argument to this method acts as a query to
- * // {module:storage/bucket#getFiles}. As an example, you can delete files
+ * // {@link Bucket#getFiles}. As an example, you can delete files
  * // which match a prefix.
  * //-
  * bucket.deleteFiles({
@@ -550,26 +624,36 @@ Bucket.prototype.deleteFiles = function(query, callback) {
   });
 };
 
-
+/**
+ * @typedef {array} DeleteLabelsResponse
+ * @property {object} 0 The full API response.
+ */
+/**
+ * @callback DeleteLabelsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
 /**
  * Delete one or more labels from this bucket.
  *
- * @param {string|string[]} labels - The labels to delete. If no labels are
+ * @param {string|string[]} labels The labels to delete. If no labels are
  *     provided, all of the labels are removed.
- * @param {function} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request.
- * @param {object} callback.metadata - The bucket's metadata.
+ * @param {DeleteLabelsCallback} [callback] Callback function.
+ * @returns {Promise<DeleteLabelsResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * //-
  * // Delete all of the labels from this bucket.
  * //-
- * bucket.deleteLabels(function(err, metadata) {});
+ * bucket.deleteLabels(function(err, apiResponse) {});
  *
  * //-
  * // Delete a single label.
  * //-
- * bucket.deleteLabels('labelone', function(err, metadata) {});
+ * bucket.deleteLabels('labelone', function(err, apiResponse) {});
  *
  * //-
  * // Delete a specific set of labels.
@@ -577,13 +661,13 @@ Bucket.prototype.deleteFiles = function(query, callback) {
  * bucket.deleteLabels([
  *   'labelone',
  *   'labeltwo'
- * ], function(err, metadata) {});
+ * ], function(err, apiResponse) {});
  *
  * //-
  * // If the callback is omitted, we'll return a Promise.
  * //-
  * bucket.deleteLabels().then(function(data) {
- *   var metadata = data[0];
+ *   var apiResponse = data[0];
  * });
  */
 Bucket.prototype.deleteLabels = function(labels, callback) {
@@ -620,6 +704,15 @@ Bucket.prototype.deleteLabels = function(labels, callback) {
 };
 
 /**
+ * @typedef {array} DisableRequesterPaysResponse
+ * @property {object} 0 The full API response.
+ */
+/**
+ * @callback DisableRequesterPaysCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+/**
  * <div class="notice">
  *   <strong>Early Access Testers Only</strong>
  *   <p>
@@ -629,12 +722,14 @@ Bucket.prototype.deleteLabels = function(labels, callback) {
  *
  * Disable `requesterPays` functionality from this bucket.
  *
- * @param {function=} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request.
- * @param {object} callback.apiResponse - The full API response.
+ * @param {DisableRequesterPaysCallback} [callback] Callback function.
+ * @returns {Promise<DisableRequesterPaysCallback>}
  *
  * @example
- * bucket.disableRequesterPays(function(err) {
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
+ * bucket.disableRequesterPays(function(err, apiResponse) {
  *   if (!err) {
  *     // requesterPays functionality disabled successfully.
  *   }
@@ -656,6 +751,15 @@ Bucket.prototype.disableRequesterPays = function(callback) {
 };
 
 /**
+ * @typedef {array} EnableRequesterPaysResponse
+ * @property {object} 0 The full API response.
+ */
+/**
+ * @callback EnableRequesterPaysCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+/**
  * <div class="notice">
  *   <strong>Early Access Testers Only</strong>
  *   <p>
@@ -667,12 +771,14 @@ Bucket.prototype.disableRequesterPays = function(callback) {
  * bucket owner, to have the requesting user assume the charges for the access
  * to your bucket and its contents.
  *
- * @param {function=} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request.
- * @param {object} callback.apiResponse - The full API response.
+ * @param {EnableRequesterPaysCallback} [callback] Callback function.
+ * @returns {Promise<EnableRequesterPaysResponse>}
  *
  * @example
- * bucket.enableRequesterPays(function(err) {
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
+ * bucket.enableRequesterPays(function(err, apiResponse) {
  *   if (!err) {
  *     // requesterPays functionality enabled successfully.
  *   }
@@ -694,18 +800,28 @@ Bucket.prototype.enableRequesterPays = function(callback) {
 };
 
 /**
+ * @typedef {array} BucketExistsResponse
+ * @property {boolean} 0 Whether the {@link Bucket} exists.
+ */
+/**
+ * @callback BucketExistsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {boolean} exists Whether the {@link Bucket} exists.
+ */
+/**
  * Check if the bucket exists.
  *
- * @param {options=} options - Configuration object.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this
- *     request.
- * @param {boolean} callback.exists - Whether the bucket exists or not.
+ * @param {BucketExistsCallback} [callback] Callback function.
+ * @returns {Promise<BucketExistsResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * bucket.exists(function(err, exists) {});
  *
  * //-
@@ -739,18 +855,20 @@ Bucket.prototype.exists = function(options, callback) {
 };
 
 /**
- * Create a File object. See {module:storage/file} to see how to handle
+ * Create a {@link File} object. See {@link File} to see how to handle
  * the different use cases you may have.
  *
- * @param {string} name - The name of the file in this bucket.
- * @param {object=} options - Configuration options.
- * @param {string|number} options.generation - Only use a specific revision of
+ * @param {string} name The name of the file in this bucket.
+ * @param {object} [options] Configuration options.
+ * @param {string|number} [options.generation] Only use a specific revision of
  *     this file.
- * @param {string} options.key - A custom encryption key. See
+ * @param {string} [options.key] A custom encryption key. See
  *     [Customer-supplied Encryption Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
- * @return {module:storage/file}
+ * @returns {File}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
  * var file = bucket.file('my-existing-file.png');
  */
 Bucket.prototype.file = function(name, options) {
@@ -762,6 +880,17 @@ Bucket.prototype.file = function(name, options) {
 };
 
 /**
+ * @typedef {array} GetBucketResponse
+ * @property {Bucket} 0 The {@link Bucket}.
+ * @property {object} 1 The full API response.
+ */
+/**
+ * @callback GetBucketCallback
+ * @param {?Error} err Request error, if any.
+ * @param {Bucket} bucket The {@link Bucket}.
+ * @param {object} apiResponse The full API response.
+ */
+/**
  * Get a bucket if it exists.
  *
  * You may optionally use this to "get or create" an object by providing an
@@ -769,14 +898,19 @@ Bucket.prototype.file = function(name, options) {
  * normally required for the `create` method must be contained within this
  * object as well.
  *
- * @param {options=} options - Configuration object.
- * @param {boolean} options.autoCreate - Automatically create the object if
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.autoCreate] Automatically create the object if
  *     it does not exist. Default: `false`
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
- *     set this value to the project which should be billed for this operation.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}), set this
+ *     value to the project which should be billed for this operation.
+ * @param {GetBucketCallback} [callback] Callback function.
+ * @returns {Promise<GetBucketResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * bucket.get(function(err, bucket, apiResponse) {
  *   // `bucket.metadata` has been populated.
  * });
@@ -840,36 +974,53 @@ Bucket.prototype.get = function(options, callback) {
 };
 
 /**
- * Get File objects for the files currently in the bucket.
+ * Query object for listing files.
  *
- * @resource [Objects: list API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/list}
- *
- * @param {object=} query - Query object.
- * @param {boolean} query.autoPaginate - Have pagination handled automatically.
+ * @typedef {object} GetFilesRequest
+ * @property {boolean} [autoPaginate] Have pagination handled automatically.
  *     Default: true.
- * @param {string} query.delimiter - Results will contain only objects whose
+ * @property {string} [delimiter] Results will contain only objects whose
  *     names, aside from the prefix, do not contain delimiter. Objects whose
  *     names, aside from the prefix, contain delimiter will have their name
  *     truncated after the delimiter, returned in `apiResponse.prefixes`.
  *     Duplicate prefixes are omitted.
- * @param {string} query.prefix - Filter results to objects whose names begin
+ * @property {string} [prefix] Filter results to objects whose names begin
  *     with this prefix.
- * @param {number} query.maxApiCalls - Maximum number of API calls to make.
- * @param {number} query.maxResults - Maximum number of items plus prefixes to
+ * @property {number} [maxApiCalls] Maximum number of API calls to make.
+ * @property {number} [maxResults] Maximum number of items plus prefixes to
  *     return.
- * @param {string} query.pageToken - A previously-returned page token
+ * @property {string} [pageToken] A previously-returned page token
  *     representing part of the larger set of results to view.
- * @param {boolean} query.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @property {boolean} [userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {boolean} query.versions - If true, returns File objects scoped to
+ * @property {boolean} [versions] If true, returns File objects scoped to
  *     their versions.
- * @param {function=} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request
- * @param {module:storage/file[]} callback.files - List of files.
- * @param {object} callback.apiResponse - The full API response.
+ */
+/**
+ * @typedef {array} GetFilesResponse
+ * @property {File[]} 0 Array of {@link File} instances.
+ * @property {object} 1 The full API response.
+ */
+/**
+ * @callback GetFilesCallback
+ * @param {?Error} err Request error, if any.
+ * @param {File[]} files Array of {@link File} instances.
+ * @param {object} apiResponse The full API response.
+ */
+/**
+ * Get {@link File} objects for the files currently in the bucket.
+ *
+ * @see [Objects: list API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/list}
+ *
+ * @param {GetFilesRequest} [query] Query object for listing files.
+ * @param {GetFilesCallback} [callback] Callback function.
+ * @returns {Promise<GetFilesResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * bucket.getFiles(function(err, files) {
  *   if (!err) {
  *     // files is an array of File objects.
@@ -915,6 +1066,14 @@ Bucket.prototype.get = function(options, callback) {
  * bucket.getFiles().then(function(data) {
  *   var files = data[0];
  * });
+ *
+ * @example <caption>include:samples/files.js</caption>
+ * region_tag:storage_list_files
+ * Another example:
+ *
+ * @example <caption>include:samples/files.js</caption>
+ * region_tag:storage_list_files_with_prefix
+ * Example of listing files, filtered by a prefix:
  */
 Bucket.prototype.getFiles = function(query, callback) {
   var self = this;
@@ -958,14 +1117,17 @@ Bucket.prototype.getFiles = function(query, callback) {
 };
 
 /**
- * Get {module:storage/file} objects for the files currently in the bucket as a
+ * Get {@link File} objects for the files currently in the bucket as a
  * readable object stream.
  *
- * @param {object=} query - Configuration object. See
- *     {module:storage/bucket#getFiles} for a complete list of options.
- * @return {stream}
+ * @method Bucket#getFilesStream
+ * @param {GetFilesRequest} [query] Query object for listing files.
+ * @returns {ReadableStream} A readable stream that emits {@link File} instances.
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * bucket.getFilesStream()
  *   .on('error', console.error)
  *   .on('data', function(file) {
@@ -987,17 +1149,28 @@ Bucket.prototype.getFiles = function(query, callback) {
 Bucket.prototype.getFilesStream = common.paginator.streamify('getFiles');
 
 /**
- * Get the labels from this bucket.
+ * @typedef {array} GetLabelsResponse
+ * @property {object} 0 Object of labels currently set on this bucket.
+ */
+/**
+ * @callback GetLabelsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} labels Object of labels currently set on this bucket.
+ */
+/**
+ * Get the labels currently set on this bucket.
  *
- * @param {object=} options - Configuration object.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request.
- * @param {object} callback.labels - The labels currently set on this bucket.
+ * @param {GetLabelsCallback} [callback] Callback function.
+ * @returns {Promise<GetLabelsCallback>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * bucket.getLabels(function(err, labels) {
  *   if (err) {
  *     // Error handling omitted.
@@ -1033,23 +1206,34 @@ Bucket.prototype.getLabels = function(options, callback) {
 };
 
 /**
+ * @typedef {array} GetBucketMetadataResponse
+ * @property {object} 0 The bucket metadata.
+ * @property {object} 1 The full API response.
+ */
+/**
+ * @callback GetBucketMetadataCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} files The bucket metadata.
+ * @param {object} apiResponse The full API response.
+ */
+/**
  * Get the bucket's metadata.
  *
- * To set metadata, see {module:storage/bucket#setMetadata}.
+ * To set metadata, see {@link Bucket#setMetadata}.
  *
- * @resource [Buckets: get API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/get}
+ * @see [Buckets: get API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/get}
  *
- * @param {object=} options - Configuration object.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function=} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this
- *     request.
- * @param {object} callback.metadata - The bucket's metadata.
- * @param {object} callback.apiResponse - The full API response.
+ * @param {GetBucketMetadataCallback} [callback] Callback function.
+ * @returns {Promise<GetBucketMetadataResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * bucket.getMetadata(function(err, metadata, apiResponse) {});
  *
  * //-
@@ -1084,11 +1268,20 @@ Bucket.prototype.getMetadata = function(options, callback) {
 };
 
 /**
+ * @typedef {array} MakeBucketPrivateResponse
+ * @property {File[]} 0 List of files made private.
+ */
+/**
+ * @callback MakeBucketPrivateCallback
+ * @param {?Error} err Request error, if any.
+ * @param {File[]} files List of files made private.
+ */
+/**
  * Make the bucket listing private.
  *
  * You may also choose to make the contents of the bucket private by specifying
  * `includeFiles: true`. This will automatically run
- * {module:storage/file#makePrivate} for every file in the bucket.
+ * {@link File#makePrivate} for every file in the bucket.
  *
  * When specifying `includeFiles: true`, use `force: true` to delay execution of
  * your callback until all files have been processed. By default, the callback
@@ -1099,21 +1292,23 @@ Bucket.prototype.getMetadata = function(options, callback) {
  * NOTE: This may cause the process to be long-running and use a high number of
  * requests. Use with caution.
  *
- * @resource [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
+ * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
  *
- * @param {object=} options - The configuration object.
- * @param {boolean} options.includeFiles - Make each file in the bucket private.
- *     Default: `false`.
- * @param {boolean} options.force - Queue errors occurred while making files
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.includeFiles=false] Make each file in the bucket
+ *     private.
+ * @param {boolean} [options.force] Queue errors occurred while making files
  *     private until all files have been processed.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request
- * @param {module:storage/file[]} callback.files - List of files made private.
+ * @param {MakeBucketPrivateCallback} [callback] Callback function.
+ * @returns {Promise<MakeBucketPrivateResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * //-
  * // Make the bucket private.
  * //-
@@ -1198,11 +1393,20 @@ Bucket.prototype.makePrivate = function(options, callback) {
 };
 
 /**
+ * @typedef {array} MakeBucketPublicResponse
+ * @property {File[]} 0 List of files made public.
+ */
+/**
+ * @callback MakeBucketPublicCallback
+ * @param {?Error} err Request error, if any.
+ * @param {File[]} files List of files made public.
+ */
+/**
  * Make the bucket publicly readable.
  *
  * You may also choose to make the contents of the bucket publicly readable by
  * specifying `includeFiles: true`. This will automatically run
- * {module:storage/file#makePublic} for every file in the bucket.
+ * {@link File#makePublic} for every file in the bucket.
  *
  * When specifying `includeFiles: true`, use `force: true` to delay execution of
  * your callback until all files have been processed. By default, the callback
@@ -1213,18 +1417,20 @@ Bucket.prototype.makePrivate = function(options, callback) {
  * NOTE: This may cause the process to be long-running and use a high number of
  * requests. Use with caution.
  *
- * @resource [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
+ * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
  *
- * @param {object=} options - The configuration object.
- * @param {boolean} options.includeFiles - Make each file in the bucket publicly
- *     readable. Default: `false`.
- * @param {boolean} options.force - Queue errors occurred while making files
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.includeFiles=false] Make each file in the bucket
+ *     publicly readable.
+ * @param {boolean} [options.force] Queue errors occurred while making files
  *     public until all files have been processed.
- * @param {function} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request
- * @param {module:storage/file[]} callback.files - List of files made public.
+ * @param {MakeBucketPublicCallback} [callback] Callback function.
+ * @returns {Promise<MakeBucketPublicResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * //-
  * // Make the bucket publicly readable.
  * //-
@@ -1312,22 +1518,33 @@ Bucket.prototype.makePublic = function(options, callback) {
 };
 
 /**
+ * @typedef {array} SetLabelsResponse
+ * @property {object} 0 The bucket metadata.
+ */
+/**
+ * @callback SetLabelsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} metadata The bucket metadata.
+ */
+/**
  * Set labels on the bucket.
  *
- * This makes an underlying call to {module:storage/bucket#setMetadata}, which
+ * This makes an underlying call to {@link Bucket#setMetadata}, which
  * is a PATCH request. This means an individual label can be overwritten, but
  * unmentioned labels will not be touched.
  *
- * @param {type} labels - Labels to set on the bucket.
- * @param {object=} options - Configuration object.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {object<string, string>} labels Labels to set on the bucket.
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function=} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request.
- * @param {object} callback.metadata - The bucket's metadata.
+ * @param {SetLabelsCallback} [callback] Callback function.
+ * @returns {Promise<SetLabelsResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * var labels = {
  *   labelone: 'labelonevalue',
  *   labeltwo: 'labeltwovalue'
@@ -1358,20 +1575,31 @@ Bucket.prototype.setLabels = function(labels, options, callback) {
 };
 
 /**
+ * @typedef {array} SetBucketMetadataResponse
+ * @property {object} 0 The bucket metadata.
+ */
+/**
+ * @callback SetBucketMetadataCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} metadata The bucket metadata.
+ */
+/**
  * Set the bucket's metadata.
  *
- * @resource [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
+ * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
  *
- * @param {object} metadata - The metadata you wish to set.
- * @param {object=} options - Configuration object.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {object<string, *>} metadata The metadata you wish to set.
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function=} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request.
- * @param {object} callback.apiResponse - The full API response.
+ * @param {SetBucketMetadataCallback} [callback] Callback function.
+ * @returns {Promise<SetBucketMetadataResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * //-
  * // Set website metadata field on the bucket.
  * //-
@@ -1428,21 +1656,28 @@ Bucket.prototype.setMetadata = function(metadata, options, callback) {
 };
 
 /**
+ * @callback SetStorageClassCallback
+ * @param {?Error} err Request error, if any.
+ */
+/**
  * Set the default storage class for new files in this bucket.
  *
- * @resource [Storage Classes]{@link https://cloud.google.com/storage/docs/storage-classes}
+ * @see [Storage Classes]{@link https://cloud.google.com/storage/docs/storage-classes}
  *
- * @param {string} storageClass - The new storage class. (`multi_regional`,
+ * @param {string} storageClass The new storage class. (`multi_regional`,
  *     `regional`, `standard`, `nearline`, `coldline`, or
  *     `durable_reduced_availability`)
- * @param {object=} options - Configuration object.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {object} [options] Configuration options.
+ * @param {boolean} [options.userProject] - If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request.
+ * @param {SetStorageClassCallback} [callback] Callback function.
+ * @returns {Promise}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * bucket.setStorageClass('regional', function(err, apiResponse) {
  *   if (err) {
  *     // Error handling omitted.
@@ -1469,8 +1704,19 @@ Bucket.prototype.setStorageClass = function(storageClass, options, callback) {
 };
 
 /**
+ * @typedef {array} UploadResponse
+ * @property {object} 0 The uploaded {@link File}.
+ * @property {object} 1 The full API response.
+ */
+/**
+ * @callback UploadCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} metadata The uploaded {@link File}.
+ * @param {object} apiResponse The full API response.
+ */
+/**
  * Upload a file to the bucket. This is a convenience method that wraps
- * {module:storage/file#createWriteStream}.
+ * {@link File#createWriteStream}.
  *
  * You can specify whether or not an upload is resumable by setting
  * `options.resumable`. *Resumable uploads are enabled by default if your input
@@ -1481,27 +1727,27 @@ Bucket.prototype.setStorageClass = function(storageClass, options, callback) {
  *
  *     $ npm install --save fast-crc32c
  *
- * @resource [Upload Options (Simple or Resumable)]{@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload#uploads}
- * @resource [Objects: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert}
+ * @see [Upload Options (Simple or Resumable)]{@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload#uploads}
+ * @see [Objects: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert}
  *
- * @param {string} localPath - The fully qualified path to the file you wish to
+ * @param {string} localPath The fully qualified path to the file you wish to
  *     upload to your bucket.
- * @param {object=} options - Configuration options.
- * @param {string|module:storage/file} options.destination - The place to save
+ * @param {object} [options] Configuration options.
+ * @param {string|File} [options.destination] The place to save
  *     your file. If given a string, the file will be uploaded to the bucket
  *     using the string as a filename. When given a File object, your local file
  *     will be uploaded to the File object's bucket and under the File object's
  *     name. Lastly, when this argument is omitted, the file is uploaded to your
  *     bucket using the name of the local file.
- * @param {string} options.encryptionKey - A custom encryption key. See
+ * @param {string} [options.encryptionKey] A custom encryption key. See
  *     [Customer-supplied Encryption Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
- * @param {boolean} options.gzip - Automatically gzip the file. This will set
+ * @param {boolean} [options.gzip] Automatically gzip the file. This will set
  *     `options.metadata.contentEncoding` to `gzip`.
- * @param {object} options.metadata - See an
+ * @param {object} [options.metadata] See an
  *     [Objects: insert request body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON).
- * @param {string} options.offset - The starting byte of the upload stream, for
+ * @param {string} [options.offset] The starting byte of the upload stream, for
  *     resuming an interrupted upload. Defaults to 0.
- * @param {string} options.predefinedAcl - Apply a predefined set of access
+ * @param {string} [options.predefinedAcl] Apply a predefined set of access
  *     controls to this object.
  *
  *     Acceptable values are:
@@ -1521,28 +1767,29 @@ Bucket.prototype.setStorageClass = function(storageClass, options, callback) {
  *
  *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers` get
  *       `READER` access.
- * @param {boolean} options.private - Make the uploaded file private. (Alias for
+ * @param {boolean} [options.private] Make the uploaded file private. (Alias for
  *     `options.predefinedAcl = 'private'`)
- * @param {boolean} options.public - Make the uploaded file public. (Alias for
+ * @param {boolean} [options.public] Make the uploaded file public. (Alias for
  *     `options.predefinedAcl = 'publicRead'`)
- * @param {boolean} options.resumable - Force a resumable upload. (default:
+ * @param {boolean} [options.resumable] Force a resumable upload. (default:
  *     true for files larger than 5 MB).
- * @param {string} options.uri - The URI for an already-created resumable
- *     upload. See {module:storage/file#createResumableUpload}.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {string} [options.uri] The URI for an already-created resumable
+ *     upload. See {@link File#createResumableUpload}.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {string|boolean} options.validation - Possible values: `"md5"`,
+ * @param {string|boolean} [options.validation] Possible values: `"md5"`,
  *     `"crc32c"`, or `false`. By default, data integrity is validated with an
  *     MD5 checksum for maximum reliability. CRC32c will provide better
  *     performance with less reliability. You may also choose to skip validation
  *     completely, however this is **not recommended**.
- * @param {function} callback - The callback function.
- * @param {?error} callback.err - An error returned while making this request
- * @param {module:storage/file} callback.file - The uploaded File.
- * @param {object} callback.apiResponse - The full API response.
+ * @param {UploadCallback} [callback] Callback function.
+ * @returns {Promise<UploadResponse>}
  *
  * @example
+ * var storage = require('@google-cloud/storage')();
+ * var bucket = storage.bucket('albums');
+ *
  * //-
  * // The easiest way to upload a file.
  * //-
@@ -1589,7 +1836,7 @@ Bucket.prototype.setStorageClass = function(storageClass, options, callback) {
  * });
  *
  * //-
- * // You may also re-use a File object, {module:storage/file}, that references
+ * // You may also re-use a File object, {File}, that references
  * // the file you wish to create or overwrite.
  * //-
  * var options = {
@@ -1638,6 +1885,14 @@ Bucket.prototype.setStorageClass = function(storageClass, options, callback) {
  * bucket.upload('local-image.png').then(function(data) {
  *   var file = data[0];
  * });
+ *
+ * @example <caption>include:samples/files.js</caption>
+ * region_tag:storage_upload_file
+ * Another example:
+ *
+ * @example <caption>include:samples/encryption.js</caption>
+ * region_tag:storage_upload_encrypted_file
+ * Example of uploading an encrypted file:
  */
 Bucket.prototype.upload = function(localPath, options, callback) {
   if (global.GCLOUD_SANDBOX_ENV) {
@@ -1712,15 +1967,15 @@ Bucket.prototype.upload = function(localPath, options, callback) {
  *
  * @private
  *
- * @param {object} options - Configuration object.
- * @param {boolean} options.force - Suppress errors until all files have been
+ * @param {object} options] Configuration options.
+ * @param {boolean} [options.force] Suppress errors until all files have been
  *     processed.
- * @param {boolean} options.private - Make files private.
- * @param {boolean} options.public - Make files public.
- * @param {boolean} options.userProject - If this bucket has `requesterPays`
- *     functionality enabled (see {module:storage/bucket#enableRequesterPays}),
+ * @param {boolean} [options.private] Make files private.
+ * @param {boolean} [options.public] Make files public.
+ * @param {boolean} [options.userProject] If this bucket has `requesterPays`
+ *     functionality enabled (see {@link Bucket#enableRequesterPays}),
  *     set this value to the project which should be billed for this operation.
- * @param {function} callback - The callback function.
+ * @param {function} callback Callback function.
  */
 Bucket.prototype.makeAllFilesPublicPrivate_ = function(options, callback) {
   var MAX_PARALLEL_LIMIT = 10;
@@ -1784,4 +2039,9 @@ common.util.promisifyAll(Bucket, {
   exclude: ['file']
 });
 
+/**
+ * Reference to the {@link Bucket} class.
+ * @name module:@google-cloud/storage.Bucket
+ * @see Bucket
+ */
 module.exports = Bucket;

@@ -2,7 +2,7 @@
 **/node_modules
 .coverage
 .nyc_output
-out/
+docs/
 packages/google-cloud/README.md
 packages/*/AUTHORS
 packages/*/CONTRIBUTORS

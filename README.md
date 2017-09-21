@@ -27,10 +27,6 @@ Google APIs Client Libraries, in [Client Libraries Explained][explained].
   * [Installing the client library](#installing-the-client-library)
   * [Using the client library](#using-the-client-library)
 * [Samples](#samples)
-  * [ACL (Access Control Lists)](#acl-access-control-lists)
-  * [Buckets](#buckets)
-  * [Encryption](#encryption)
-  * [Files](#files)
 * [Versioning](#versioning)
 * [Contributing](#contributing)
 * [License](#license)
@@ -95,29 +91,12 @@ storage.createBucket(bucketName)
 Samples are in the [`samples/`](https://github.com/blob/master/samples) directory. The samples' `README.md`
 has instructions for running the samples.
 
-### ACL (Access Control Lists)
-View the [documentation][acl_0_docs] or the [source code][acl_0_code].
-
-[acl_0_docs]: https://cloud.google.com/storage/docs/access-control/create-manage-lists
-[acl_0_code]: https://github.com/googleapis/nodejs-storage/blob/master/samples/acl.js
-
-### Buckets
-View the [documentation][buckets_1_docs] or the [source code][buckets_1_code].
-
-[buckets_1_docs]: https://cloud.google.com/storage/docs
-[buckets_1_code]: https://github.com/googleapis/nodejs-storage/blob/master/samples/buckets.js
-
-### Encryption
-View the [documentation][encryption_2_docs] or the [source code][encryption_2_code].
-
-[encryption_2_docs]: https://cloud.google.com/storage/docs
-[encryption_2_code]: https://github.com/googleapis/nodejs-storage/blob/master/samples/encryption.js
-
-### Files
-View the [documentation][files_3_docs] or the [source code][files_3_code].
-
-[files_3_docs]: https://cloud.google.com/storage/docs
-[files_3_code]: https://github.com/googleapis/nodejs-storage/blob/master/samples/files.js
+| Sample                      | Documentation                      | Source Code                       |
+| --------------------------- | ---------------------------------- | --------------------------------- |
+| ACL (Access Control Lists) | [documentation](https://cloud.google.com/storage/docs/access-control/create-manage-lists) | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/acl.js) |
+| Buckets | [documentation](https://cloud.google.com/storage/docs) | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/buckets.js) |
+| Encryption | [documentation](https://cloud.google.com/storage/docs) | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/encryption.js) |
+| Files | [documentation](https://cloud.google.com/storage/docs) | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/files.js) |
 
 ## Versioning
 
@@ -147,5 +126,5 @@ Apache Version 2.0
 
 See [LICENSE](LICENSE)
 
-[client-docs]: https://cloud.google.com/storage/docs/reference/nodejs/
+[client-docs]: https://cloud.google.com/nodejs/docs/reference/storage/latest/
 [product-docs]: https://cloud.google.com/storage/docs
