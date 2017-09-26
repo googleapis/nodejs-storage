@@ -36,6 +36,7 @@ var util = require('@google-cloud/common').util;
 var Storage = require('../');
 var Bucket = Storage.Bucket;
 var File = Storage.File;
+var PubSub = require('@google-cloud/pubsub');
 
 describe('storage', function() {
   var TESTS_PREFIX = 'gcloud-tests-';
@@ -1948,6 +1949,74 @@ describe('storage', function() {
 
         assert.strictEqual(policyJson.expiration, expectedExpiration);
         done();
+      });
+    });
+  });
+
+  describe('notifications', function() {
+    var topic;
+
+    before(function(done) {
+      var pubsub = new PubSub({});
+
+      topic = pubsub.topic(generateName());
+
+      topic.create(function(err) {
+        if (err) {
+          done(err);
+          return;
+        }
+
+        topic.iam.setPolicy({
+          bindings: [{
+            role: 'roles/pubsub.editor',
+            members: ['allUsers']
+          }]
+        }, done)
+      });
+    });
+
+    after(function(done) {
+      topic.delete(done);
+    });
+
+    it('should create a notification', function(done) {
+      bucket.createNotification(topic, function(err, notification) {
+        assert.ifError(err);
+        assert(is.object(notification));
+        done();
+      });
+    });
+
+    it('should get an existing notification', function(done) {
+      var notification = bucket.notification('1');
+
+      notification.get(function(err) {
+        assert.ifError(err);
+        assert(!is.empty(notification.metadata));
+        done();
+      });
+    });
+
+    it('should get a list of notifications', function(done) {
+      bucket.getNotifications(function(err, notifications) {
+        assert.ifError(err);
+        assert.strictEqual(notifications.length, 1);
+        done();
+      });
+    });
+
+    it('should delete a notification', function(done) {
+      var notification = bucket.notification('1');
+
+      notification.delete(function(err) {
+        assert.ifError(err);
+
+        bucket.getNotifications(function(err, notifications) {
+          assert.ifError(err);
+          assert.strictEqual(notifications.length, 0);
+          done();
+        });
       });
     });
   });
