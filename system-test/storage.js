@@ -714,7 +714,6 @@ describe('storage', function() {
 
     it('should allow changing the storage class', function(done) {
       var bucket = storage.bucket(generateName());
-      var file = bucket.file(generateName());
 
       async.series(
         [

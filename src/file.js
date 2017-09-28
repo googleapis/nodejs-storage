@@ -575,7 +575,6 @@ File.prototype.createReadStream = function(options) {
           .pipe(throughStreams[0])
           .pipe(throughStream, {end: false});
       } else {
-        console.log('both!');
         rawResponseStream
           .pipe(pumpify.obj(throughStreams))
           .pipe(throughStream, {end: false});

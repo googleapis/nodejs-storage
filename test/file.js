@@ -490,7 +490,7 @@ describe('File', function() {
       return FakeRequest;
     }
 
-    function getFakeSuccessfulRequest(data, fakeResponse) {
+    function getFakeSuccessfulRequest(data) {
       var FakeRequest = getFakeRequest(data);
 
       function FakeSuccessfulRequest(req) {
@@ -610,7 +610,7 @@ describe('File', function() {
     });
 
     it('should end request stream on error', function(done) {
-      file.requestStream = getFakeSuccessfulRequest('body', {body: null});
+      file.requestStream = getFakeSuccessfulRequest('body');
 
       var readStream = file.createReadStream();
 
@@ -903,7 +903,7 @@ describe('File', function() {
       });
 
       it('should validate with crc32c', function(done) {
-        file.requestStream = getFakeSuccessfulRequest(data, {});
+        file.requestStream = getFakeSuccessfulRequest(data);
 
         file
           .createReadStream({validation: 'crc32c'})
@@ -913,7 +913,7 @@ describe('File', function() {
       });
 
       it('should emit an error if crc32c validation fails', function(done) {
-        file.requestStream = getFakeSuccessfulRequest('bad-data', {});
+        file.requestStream = getFakeSuccessfulRequest('bad-data');
 
         fakeValidationStream.test = function() {
           return false;
@@ -929,7 +929,7 @@ describe('File', function() {
       });
 
       it('should validate with md5', function(done) {
-        file.requestStream = getFakeSuccessfulRequest(data, {});
+        file.requestStream = getFakeSuccessfulRequest(data);
 
         fakeValidationStream.test = function() {
           return true;
@@ -943,7 +943,7 @@ describe('File', function() {
       });
 
       it('should emit an error if md5 validation fails', function(done) {
-        file.requestStream = getFakeSuccessfulRequest('bad-data', {});
+        file.requestStream = getFakeSuccessfulRequest('bad-data');
 
         fakeValidationStream.test = function() {
           return false;
@@ -966,7 +966,7 @@ describe('File', function() {
           callback();
         };
 
-        file.requestStream = getFakeSuccessfulRequest(data, {});
+        file.requestStream = getFakeSuccessfulRequest(data);
 
         file
           .createReadStream()
@@ -978,7 +978,7 @@ describe('File', function() {
       });
 
       it('should ignore a data mismatch if validation: false', function(done) {
-        file.requestStream = getFakeSuccessfulRequest(data, {});
+        file.requestStream = getFakeSuccessfulRequest(data);
 
         fakeValidationStream.test = function() {
           return false;
@@ -999,7 +999,7 @@ describe('File', function() {
         });
 
         it('should destroy after failed validation', function(done) {
-          file.requestStream = getFakeSuccessfulRequest('bad-data', {});
+          file.requestStream = getFakeSuccessfulRequest('bad-data');
 
           var readStream = file.createReadStream({validation: 'md5'});
           readStream.destroy = function(err) {
@@ -1017,7 +1017,7 @@ describe('File', function() {
             callback();
           };
 
-          file.requestStream = getFakeSuccessfulRequest('bad-data', {});
+          file.requestStream = getFakeSuccessfulRequest('bad-data');
 
           var readStream = file.createReadStream({validation: 'md5'});
           readStream.destroy = function(err) {
@@ -1091,7 +1091,7 @@ describe('File', function() {
       });
 
       it('should end the through stream', function(done) {
-        file.requestStream = getFakeSuccessfulRequest('body', {body: null});
+        file.requestStream = getFakeSuccessfulRequest('body');
 
         var readStream = file.createReadStream({start: 100});
         readStream.end = done;
