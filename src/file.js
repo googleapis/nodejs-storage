@@ -511,7 +511,7 @@ File.prototype.createReadStream = function(options) {
       reqOpts.headers.Range = `bytes=${tailRequest ? end : `${start}-${end}`}`;
     }
 
-    var requestStream = self
+    self
       .requestStream(reqOpts)
       .on('error', err => {
         throughStream.destroy(err);

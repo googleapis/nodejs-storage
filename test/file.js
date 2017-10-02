@@ -448,8 +448,6 @@ describe('File', function() {
 
   describe('createReadStream', function() {
     function getFakeRequest(data) {
-      var aborted = false;
-      var destroyed = false;
       var requestOptions;
 
       function FakeRequest(_requestOptions) {
