@@ -522,16 +522,6 @@ File.prototype.createReadStream = function(options) {
       })
       .resume();
 
-    throughStream.on('error', () => {
-      // An error can occur before the request stream has been created
-      // (during authentication)
-      if (requestStream.abort) {
-        requestStream.abort();
-      }
-
-      requestStream.destroy();
-    });
-
     // We listen to the response event from the request stream so that we can...
     //
     //   1) Intercept any data from going to the user if an error occurred.

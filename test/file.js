@@ -466,25 +466,11 @@ describe('File', function() {
           }
           this.push(null);
         };
-
-        this.abort = function() {
-          aborted = true;
-        };
-
-        this.destroy = function() {
-          destroyed = true;
-        };
       }
       nodeutil.inherits(FakeRequest, stream.Readable);
 
       FakeRequest.getRequestOptions = function() {
         return requestOptions;
-      };
-      FakeRequest.wasRequestAborted = function() {
-        return aborted;
-      };
-      FakeRequest.wasRequestDestroyed = function() {
-        return destroyed;
       };
 
       return FakeRequest;
@@ -607,43 +593,6 @@ describe('File', function() {
       };
 
       file.createReadStream(options).resume();
-    });
-
-    it('should end request stream on error', function(done) {
-      file.requestStream = getFakeSuccessfulRequest('body');
-
-      var readStream = file.createReadStream();
-
-      readStream.emit('reading');
-      readStream.emit('response');
-
-      // Let the error handler from createReadStream assign.
-      setImmediate(function() {
-        readStream.emit('error');
-        assert(file.requestStream.wasRequestAborted());
-        assert(file.requestStream.wasRequestDestroyed());
-        done();
-      });
-    });
-
-    it('should confirm the abort method exists', function(done) {
-      var reqStream = through();
-
-      file.requestStream = function() {
-        return reqStream;
-      };
-
-      var readStream = file.createReadStream();
-
-      readStream.emit('reading');
-      readStream.emit('response');
-
-      setImmediate(function() {
-        assert.doesNotThrow(function() {
-          reqStream.emit('error', new Error('Error.'));
-          setImmediate(done);
-        });
-      });
     });
 
     describe('authenticating', function() {
@@ -868,36 +817,6 @@ describe('File', function() {
           .on('error', function(err) {
             assert.strictEqual(err, error);
             done();
-          })
-          .resume();
-      });
-
-      it('should destroy the stream on error', function(done) {
-        var rawResponseStream = through();
-        var error = new Error('Error.');
-
-        file.requestStream = getFakeSuccessfulRequest('data');
-
-        handleRespOverride = function(err, resp, body, callback) {
-          callback(error, null, rawResponseStream);
-
-          setImmediate(function() {
-            rawResponseStream.end();
-          });
-        };
-
-        file
-          .createReadStream({validation: 'crc32c'})
-          .on('error', function(err) {
-            assert.strictEqual(err, error);
-
-            setImmediate(function() {
-              assert.strictEqual(
-                file.requestStream.wasRequestDestroyed(),
-                true
-              );
-              done();
-            });
           })
           .resume();
       });
