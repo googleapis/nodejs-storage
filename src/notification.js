@@ -221,7 +221,7 @@ Notification.prototype.get = function(options, callback) {
       if (err.code === 404 && autoCreate) {
         var args = [];
 
-        if (is.empty(options)) {
+        if (!is.empty(options)) {
           args.push(options);
         }
 
