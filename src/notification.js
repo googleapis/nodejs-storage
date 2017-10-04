@@ -82,7 +82,33 @@ function Notification(bucket, id) {
     create: true,
 
     /**
+     * @typedef {array} NotificationExistsResponse
+     * @property {boolean} 0 Whether the notification exists or not.
+     */
+    /**
+     * @callback NotificationExistsCallback
+     * @param {?Error} err Request error, if any.
+     * @param {boolean} exists Whether the notification exists or not.
+     */
+    /**
+     * Check if the notification exists.
      *
+     * @param {NotificationExistsCallback} [callback] Callback function.
+     * @returns {Promise<NotificationExistsResponse>}
+     *
+     * @example
+     * var storage = require('@google-cloud/storage')();
+     * var myBucket = storage.bucket('my-bucket');
+     * var notification = myBucket.notification('1');
+     *
+     * notification.exists(function(err, exists) {});
+     *
+     * //-
+     * // If the callback is omitted, we'll return a Promise.
+     * //-
+     * notification.exists().then(function(data) {
+     *   var exists = data[0];
+     * });
      */
     exists: true
   };
