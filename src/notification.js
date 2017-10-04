@@ -79,7 +79,12 @@ function Notification(bucket, id) {
      *   var apiResponse = data[1];
      * });
      */
-    create: true
+    create: true,
+
+    /**
+     *
+     */
+    exists: true
   };
 
   common.ServiceObject.call(this, {

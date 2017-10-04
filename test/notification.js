@@ -75,7 +75,11 @@ describe('Notification', function() {
       assert.strictEqual(calledWith.parent, BUCKET);
       assert.strictEqual(calledWith.baseUrl, '/notificationConfigs');
       assert.strictEqual(calledWith.id, ID);
-      assert.deepEqual(calledWith.methods, { create: true });
+
+      assert.deepEqual(calledWith.methods, {
+        create: true,
+        exists: true
+      });
     });
 
     it('should use Bucket#createNotification for the createMethod', function() {
