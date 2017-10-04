@@ -1955,29 +1955,30 @@ describe('storage', function() {
 
   describe('notifications', function() {
     var topic;
+    var subscription;
 
-    before(function(done) {
+    before(function() {
       var pubsub = new PubSub({});
 
       topic = pubsub.topic(generateName());
+      subscription = topic.subscription(generateName());
 
-      topic.create(function(err) {
-        if (err) {
-          done(err);
-          return;
-        }
-
-        topic.iam.setPolicy({
+      return topic.create().then(function() {
+        return topic.iam.setPolicy({
           bindings: [{
             role: 'roles/pubsub.editor',
             members: ['allUsers']
           }]
-        }, done)
+        });
+      }).then(function() {
+        return subscription.create();
       });
     });
 
-    after(function(done) {
-      topic.delete(done);
+    after(function() {
+      return subscription.delete().then(function() {
+        return topic.delete();
+      });
     });
 
     it('should create a notification', function(done) {
@@ -2003,6 +2004,22 @@ describe('storage', function() {
         assert.ifError(err);
         assert.strictEqual(notifications.length, 1);
         done();
+      });
+    });
+
+    it('should emit events to a subscription', function(done) {
+      subscription
+        .on('error', done)
+        .on('message', function(message) {
+          var attrs = message.attributes;
+          assert.strictEqual(attrs.eventType, 'OBJECT_FINALIZE');
+          done();
+        });
+
+      bucket.upload(FILES.logo.path, function(err) {
+        if (err) {
+          done(err);
+        }
       });
     });
 
