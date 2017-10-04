@@ -60,9 +60,9 @@ function Bucket(storage, name) {
      * Create a bucket.
      *
      * @method Bucket#create
-     * @param {Storage~CreateBucketRequest} [metadata] Metadata to set for the bucket.
-     * @param {Storage~CreateBucketCallback} [callback] Callback function.
-     * @returns {Promise<Storage~CreateBucketResponse>}
+     * @param {CreateBucketRequest} [metadata] Metadata to set for the bucket.
+     * @param {CreateBucketCallback} [callback] Callback function.
+     * @returns {Promise<CreateBucketResponse>}
      *
      * @example
      * var storage = require('@google-cloud/storage')();

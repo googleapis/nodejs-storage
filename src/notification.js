@@ -54,10 +54,10 @@ function Notification(bucket, id) {
      *     - `projects/grape-spaceship-123/topics/my-topic`
      *
      *     - `my-topic`
-     * @param {Bucket~CreateNotificationRequest} [options] Metadata to set for
+     * @param {CreateNotificationRequest} [options] Metadata to set for
      *     the notification.
-     * @param {Bucket~CreateNotificationCallback} [callback] Callback function.
-     * @returns {Promise<Bucket~CreateNotificationResponse>}
+     * @param {CreateNotificationCallback} [callback] Callback function.
+     * @returns {Promise<CreateNotificationResponse>}
      * @throws {Error} If a valid topic is not provided.
      *
      * @example
