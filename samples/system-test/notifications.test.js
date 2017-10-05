@@ -34,6 +34,14 @@ const cmd = `node notifications.js`;
 test.before(async () => {
   await bucket.create();
   await topic.create();
+  await topic.iam.setPolicy({
+    bindings: [
+      {
+        role: 'roles/pubsub.editor',
+        members: ['allUsers'],
+      },
+    ],
+  });
 });
 
 test.after.always(async () => {
@@ -63,10 +71,13 @@ test.serial(`should create a notification`, async t => {
 });
 
 test.serial(`should list notifications`, async t => {
-  t.plan(2);
+  t.plan(0);
   await tools
     .tryTest(async assert => {
-      const results = await tools.runAsyncWithIO(`${cmd} list`, cwd);
+      const results = await tools.runAsyncWithIO(
+        `${cmd} list ${bucketName}`,
+        cwd
+      );
       const output = results.stdout + results.stderr;
       assert(
         output.includes(`Notifications:`),
@@ -81,24 +92,21 @@ test.serial(`should list notifications`, async t => {
 });
 
 test.serial('should get metadata', async t => {
-  t.plan(17);
+  t.plan(0);
   await tools
     .tryTest(async assert => {
       const metadata = await notification.getMetadata();
-      const results = await tools.runAsyncWithIO(`${cmd} get-metadata`, cwd);
-      const output = results.stdout + results.stderr;
-      assert(
-        output.includes(`ID:`),
-        `"${output}" should include "ID:"`
+      const results = await tools.runAsyncWithIO(
+        `${cmd} get-metadata ${bucketName} ${notificationId}`,
+        cwd
       );
+      const output = results.stdout + results.stderr;
+      assert(output.includes(`ID:`), `"${output}" should include "ID:"`);
       assert(
         output.includes(metadata.id),
         `"${output}" should include "${metadata.id}"`
       );
-      assert(
-        output.includes(`Topic:`),
-        `"${output}" should include "Topic:"`
-      );
+      assert(output.includes(`Topic:`), `"${output}" should include "Topic:"`);
       assert(
         output.includes(metadata.topic),
         `"${output}" should include "${metadata.topic}"`
@@ -135,10 +143,7 @@ test.serial('should get metadata', async t => {
         output.includes(metadata.object_name_prefix),
         `"${output}" should include "${metadata.object_name_prefix}"`
       );
-      assert(
-        output.includes(`Etag:`),
-        `"${output}" should include "Etag:"`
-      );
+      assert(output.includes(`Etag:`), `"${output}" should include "Etag:"`);
       assert(
         output.includes(`Self Link:`),
         `"${output}" should include "Self Link:"`
@@ -147,10 +152,7 @@ test.serial('should get metadata', async t => {
         output.includes(metadata.selfLink),
         `"${output}" should include "${metadata.selfLink}"`
       );
-      assert(
-        output.includes(`Kind:`),
-        `"${output}" should include "Kind:"`
-      );
+      assert(output.includes(`Kind:`), `"${output}" should include "Kind:"`);
       assert(
         output.includes(metadata.kind),
         `"${output}" should include "${metadata.kind}"`
@@ -159,9 +161,9 @@ test.serial('should get metadata', async t => {
     .start();
 });
 
-test.serial('should delete a bucket', async t => {
+test.serial('should delete a notification', async t => {
   const results = await tools.runAsyncWithIO(
-    `${cmd} delete ${notificationId}`,
+    `${cmd} delete ${bucketName} ${notificationId}`,
     cwd
   );
   t.regex(

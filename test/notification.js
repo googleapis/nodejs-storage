@@ -31,11 +31,11 @@ util.inherits(FakeServiceObject, common.ServiceObject);
 
 var promisified = false;
 var fakeUtil = extend({}, common.util, {
-  promisifyAll: function(Class, options) {
+  promisifyAll: function(Class) {
     if (Class.name === 'Notification') {
       promisified = true;
     }
-  }
+  },
 });
 
 describe('Notification', function() {
@@ -43,7 +43,7 @@ describe('Notification', function() {
   var notification;
 
   var BUCKET = {
-    createNotification: fakeUtil.noop
+    createNotification: fakeUtil.noop,
   };
 
   var ID = '123';
@@ -52,8 +52,8 @@ describe('Notification', function() {
     Notification = proxyquire('../src/notification.js', {
       '@google-cloud/common': {
         ServiceObject: FakeServiceObject,
-        util: fakeUtil
-      }
+        util: fakeUtil,
+      },
     });
   });
 
@@ -78,7 +78,7 @@ describe('Notification', function() {
 
       assert.deepEqual(calledWith.methods, {
         create: true,
-        exists: true
+        exists: true,
       });
     });
 
@@ -89,13 +89,20 @@ describe('Notification', function() {
         bind: function(context) {
           assert.strictEqual(context, BUCKET);
           return bound;
-        }
+        },
       };
 
       var notification = new Notification(BUCKET, ID);
       var calledWith = notification.calledWith_[0];
 
       assert.strictEqual(calledWith.createMethod, bound);
+    });
+
+    it('should convert number IDs to strings', function() {
+      var notification = new Notification(BUCKET, 1);
+      var calledWith = notification.calledWith_[0];
+
+      assert.strictEqual(calledWith.id, '1');
     });
   });
 

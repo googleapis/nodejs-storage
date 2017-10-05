@@ -25,7 +25,7 @@ var nodeutil = require('util');
 var path = require('path');
 var propAssign = require('prop-assign');
 var proxyquire = require('proxyquire');
-var pubsub = require('@google-cloud/pubsub')({ projectId: '{{projectId}}' });
+var pubsub = require('@google-cloud/pubsub')({projectId: '{{projectId}}'});
 var request = require('request');
 var ServiceObject = require('@google-cloud/common').ServiceObject;
 var snakeize = require('snakeize');
@@ -141,7 +141,7 @@ describe('Bucket', function() {
       './acl.js': FakeAcl,
       './file.js': FakeFile,
       './iam.js': FakeIam,
-      './notification.js': FakeNotification
+      './notification.js': FakeNotification,
     });
   });
 
@@ -549,8 +549,8 @@ describe('Bucket', function() {
   describe('createNotification', function() {
     var PUBSUB_SERVICE_PATH = '//pubsub.googleapis.com/';
     var TOPIC = 'my-topic';
-    var FULL_TOPIC_NAME = PUBSUB_SERVICE_PATH +
-      'projects/{{projectId}}/topics/' + TOPIC;
+    var FULL_TOPIC_NAME =
+      PUBSUB_SERVICE_PATH + 'projects/{{projectId}}/topics/' + TOPIC;
 
     it('should throw an error if a valid topic is not provided', function() {
       assert.throws(function() {
@@ -560,9 +560,9 @@ describe('Bucket', function() {
 
     it('should make the correct request', function(done) {
       var topic = 'projects/my-project/topics/my-topic';
-      var options = { payloadFormat: 'NONE' };
+      var options = {payloadFormat: 'NONE'};
       var expectedTopic = PUBSUB_SERVICE_PATH + topic;
-      var expectedJson = extend({ topic: expectedTopic }, snakeize(options));
+      var expectedJson = extend({topic: expectedTopic}, snakeize(options));
 
       bucket.request = function(reqOpts) {
         assert.strictEqual(reqOpts.method, 'POST');
@@ -607,7 +607,7 @@ describe('Bucket', function() {
     it('should optionally accept options', function(done) {
       var expectedJson = {
         topic: FULL_TOPIC_NAME,
-        payload_format: 'JSON_API_V1'
+        payload_format: 'JSON_API_V1',
       };
 
       bucket.request = function(reqOpts) {
@@ -636,7 +636,7 @@ describe('Bucket', function() {
 
     it('should return a notification object', function(done) {
       var fakeId = '123';
-      var response = { id: fakeId };
+      var response = {id: fakeId};
       var fakeNotification = {};
 
       bucket.request = function(reqOpts, callback) {
@@ -1441,8 +1441,8 @@ describe('Bucket', function() {
     });
 
     it('should return a list of notification objects', function(done) {
-      var fakeItems = [{ id: '1' }, { id: '2' }, { id: '3' }];
-      var response = { items: fakeItems };
+      var fakeItems = [{id: '1'}, {id: '2'}, {id: '3'}];
+      var response = {items: fakeItems};
 
       bucket.request = function(reqOpts, callback) {
         callback(null, response);
@@ -1617,6 +1617,12 @@ describe('Bucket', function() {
   });
 
   describe('notification', function() {
+    it('should throw an error if an id is not provided', function() {
+      assert.throws(function() {
+        bucket.notification();
+      }, /You must supply a notification ID\./);
+    });
+
     it('should return a Notification object', function() {
       var fakeId = '123';
       var notification = bucket.notification(fakeId);

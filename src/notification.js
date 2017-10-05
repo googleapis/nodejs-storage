@@ -110,15 +110,15 @@ function Notification(bucket, id) {
      *   var exists = data[0];
      * });
      */
-    exists: true
+    exists: true,
   };
 
   common.ServiceObject.call(this, {
     parent: bucket,
     baseUrl: '/notificationConfigs',
-    id: id,
+    id: id.toString(),
     createMethod: bucket.createNotification.bind(bucket),
-    methods: methods
+    methods: methods,
   });
 }
 
@@ -166,14 +166,14 @@ util.inherits(Notification, common.ServiceObject);
 Notification.prototype.delete = function(options, callback) {
   if (is.fn(options)) {
     callback = options;
-    options = {}
+    options = {};
   }
 
   this.request(
     {
       method: 'DELETE',
       uri: '',
-      qs: options
+      qs: options,
     },
     callback || common.util.noop
   );
@@ -323,7 +323,7 @@ Notification.prototype.getMetadata = function(options, callback) {
   this.request(
     {
       uri: '',
-      qs: options
+      qs: options,
     },
     function(err, resp) {
       if (err) {

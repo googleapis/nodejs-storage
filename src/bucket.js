@@ -571,7 +571,7 @@ Bucket.prototype.createNotification = function(topic, options, callback) {
     throw new Error('A valid topic name is required.');
   }
 
-  var body = extend({ topic: topic }, options);
+  var body = extend({topic: topic}, options);
 
   if (body.topic.indexOf('projects') !== 0) {
     body.topic = 'projects/{{projectId}}/topics/' + body.topic;
@@ -587,7 +587,7 @@ Bucket.prototype.createNotification = function(topic, options, callback) {
     {
       method: 'POST',
       uri: '/notificationConfigs',
-      json: snakeize(body)
+      json: snakeize(body),
     },
     function(err, apiResponse) {
       if (err) {
@@ -1498,7 +1498,7 @@ Bucket.prototype.getNotifications = function(options, callback) {
   this.request(
     {
       uri: '/notificationConfigs',
-      qs: options
+      qs: options,
     },
     function(err, resp) {
       if (err) {
@@ -1789,6 +1789,10 @@ Bucket.prototype.makePublic = function(options, callback) {
  * var notification = bucket.notification('1');
  */
 Bucket.prototype.notification = function(id) {
+  if (!id) {
+    throw new Error('You must supply a notification ID.');
+  }
+
   return new Notification(this, id);
 };
 

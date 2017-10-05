@@ -1963,16 +1963,21 @@ describe('storage', function() {
       topic = pubsub.topic(generateName());
       subscription = topic.subscription(generateName());
 
-      return topic.create().then(function() {
-        return topic.iam.setPolicy({
-          bindings: [{
-            role: 'roles/pubsub.editor',
-            members: ['allUsers']
-          }]
+      return topic
+        .create()
+        .then(function() {
+          return topic.iam.setPolicy({
+            bindings: [
+              {
+                role: 'roles/pubsub.editor',
+                members: ['allUsers'],
+              },
+            ],
+          });
+        })
+        .then(function() {
+          return subscription.create();
         });
-      }).then(function() {
-        return subscription.create();
-      });
     });
 
     after(function() {
@@ -1999,6 +2004,16 @@ describe('storage', function() {
       });
     });
 
+    it('should get a notifications metadata', function(done) {
+      var notification = bucket.notification('1');
+
+      notification.getMetadata(function(err, metadata) {
+        assert.ifError(err);
+        assert(is.object(metadata));
+        done();
+      });
+    });
+
     it('should get a list of notifications', function(done) {
       bucket.getNotifications(function(err, notifications) {
         assert.ifError(err);
@@ -2008,13 +2023,11 @@ describe('storage', function() {
     });
 
     it('should emit events to a subscription', function(done) {
-      subscription
-        .on('error', done)
-        .on('message', function(message) {
-          var attrs = message.attributes;
-          assert.strictEqual(attrs.eventType, 'OBJECT_FINALIZE');
-          done();
-        });
+      subscription.on('error', done).on('message', function(message) {
+        var attrs = message.attributes;
+        assert.strictEqual(attrs.eventType, 'OBJECT_FINALIZE');
+        done();
+      });
 
       bucket.upload(FILES.logo.path, function(err) {
         if (err) {
