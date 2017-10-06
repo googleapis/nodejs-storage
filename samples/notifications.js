@@ -80,7 +80,7 @@ function listNotifications(bucketName) {
 }
 
 function getMetadata(bucketName, notificationId) {
-  // [START storage_delete_notification]
+  // [START storage_notifications_get_metadata]
   // Imports the Google Cloud client library
   const Storage = require('@google-cloud/storage');
 
@@ -114,7 +114,7 @@ function getMetadata(bucketName, notificationId) {
     .catch(err => {
       console.error('ERROR:', err);
     });
-  // [END storage_get_metadata]
+  // [END storage_notifications_get_metadata]
 }
 
 function deleteNotification(bucketName, notificationId) {

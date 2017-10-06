@@ -19,18 +19,19 @@
 var arrify = require('arrify');
 var assert = require('assert');
 var async = require('async');
+var common = require('@google-cloud/common');
 var extend = require('extend');
 var mime = require('mime-types');
 var nodeutil = require('util');
 var path = require('path');
 var propAssign = require('prop-assign');
 var proxyquire = require('proxyquire');
-var pubsub = require('@google-cloud/pubsub')({projectId: '{{projectId}}'});
 var request = require('request');
-var ServiceObject = require('@google-cloud/common').ServiceObject;
 var snakeize = require('snakeize');
 var stream = require('stream');
 var util = require('@google-cloud/common').util;
+
+var ServiceObject = common.ServiceObject;
 
 function FakeFile(bucket, name, options) {
   var self = this;
@@ -552,6 +553,14 @@ describe('Bucket', function() {
     var FULL_TOPIC_NAME =
       PUBSUB_SERVICE_PATH + 'projects/{{projectId}}/topics/' + TOPIC;
 
+    function FakeTopic(name) {
+      this.name = 'projects/grape-spaceship-123/topics/' + name;
+    }
+
+    beforeEach(function() {
+      fakeUtil.isCustomType = common.util.isCustomType;
+    });
+
     it('should throw an error if a valid topic is not provided', function() {
       assert.throws(function() {
         bucket.createNotification();
@@ -585,14 +594,21 @@ describe('Bucket', function() {
     });
 
     it('should accept a topic object', function(done) {
-      var topic = pubsub.topic(TOPIC);
+      var fakeTopic = new FakeTopic('my-topic');
+      var expectedTopicName = PUBSUB_SERVICE_PATH + fakeTopic.name;
+
+      fakeUtil.isCustomType = function(topic, type) {
+        assert.strictEqual(topic, fakeTopic);
+        assert.strictEqual(type, 'pubsub/topic');
+        return true;
+      };
 
       bucket.request = function(reqOpts) {
-        assert.strictEqual(reqOpts.json.topic, FULL_TOPIC_NAME);
+        assert.strictEqual(reqOpts.json.topic, expectedTopicName);
         done();
       };
 
-      bucket.createNotification(topic, {}, assert.ifError);
+      bucket.createNotification(fakeTopic, {}, assert.ifError);
     });
 
     it('should set a default payload format', function(done) {

@@ -493,13 +493,13 @@ Bucket.prototype.createChannel = function(id, config, options, callback) {
  */
 /**
  * @typedef {array} CreateNotificationResponse
- * @property {Notification} 0 The new {@link Notification}
+ * @property {Notification} 0 The new {@link Notification}.
  * @property {object} 1 The full API response.
  */
 /**
  * @callback CreateNotificationCallback
  * @param {?Error} err Request error, if any.
- * @param {Notification} notification The new {@link Notification}
+ * @param {Notification} notification The new {@link Notification}.
  * @param {object} apiResponse The full API response.
  */
 /**
@@ -563,7 +563,7 @@ Bucket.prototype.createNotification = function(topic, options, callback) {
     options = {};
   }
 
-  if (is.object(topic)) {
+  if (is.object(topic) && common.util.isCustomType(topic, 'pubsub/topic')) {
     topic = topic.name;
   }
 
