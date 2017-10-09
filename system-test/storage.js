@@ -1953,6 +1953,7 @@ describe('storage', function() {
   describe('notifications', function() {
     var topic;
     var subscription;
+    var notification;
 
     before(function() {
       var pubsub = new PubSub({});
@@ -1974,26 +1975,36 @@ describe('storage', function() {
         })
         .then(function() {
           return subscription.create();
+        })
+        .then(function() {
+          return bucket.createNotification(topic, {
+            eventTypes: ['OBJECT_FINALIZE'],
+          });
+        })
+        .then(function(data) {
+          notification = data[0];
         });
     });
 
     after(function() {
-      return subscription.delete().then(function() {
-        return topic.delete();
-      });
-    });
-
-    it('should create a notification', function(done) {
-      bucket.createNotification(topic, function(err, notification) {
-        assert.ifError(err);
-        assert(is.object(notification));
-        done();
-      });
+      return subscription
+        .delete()
+        .then(function() {
+          return topic.delete();
+        })
+        .then(function() {
+          return bucket.getNotifications();
+        })
+        .then(function(data) {
+          return Promise.all(
+            data[0].map(function(notification) {
+              return notification.delete();
+            })
+          );
+        });
     });
 
     it('should get an existing notification', function(done) {
-      var notification = bucket.notification('1');
-
       notification.get(function(err) {
         assert.ifError(err);
         assert(!is.empty(notification.metadata));
@@ -2002,11 +2013,27 @@ describe('storage', function() {
     });
 
     it('should get a notifications metadata', function(done) {
-      var notification = bucket.notification('1');
-
       notification.getMetadata(function(err, metadata) {
         assert.ifError(err);
         assert(is.object(metadata));
+        done();
+      });
+    });
+
+    it('should tell us if a notification exists', function(done) {
+      notification.exists(function(err, exists) {
+        assert.ifError(err);
+        assert(exists);
+        done();
+      });
+    });
+
+    it('should tell us if a notification does not exist', function(done) {
+      var notification = bucket.notification('123');
+
+      notification.exists(function(err, exists) {
+        assert.ifError(err);
+        assert.strictEqual(exists, false);
         done();
       });
     });
@@ -2033,18 +2060,28 @@ describe('storage', function() {
       });
     });
 
-    it('should delete a notification', function(done) {
-      var notification = bucket.notification('1');
+    it('should delete a notification', function() {
+      var notificationCount = 0;
+      var notification;
 
-      notification.delete(function(err) {
-        assert.ifError(err);
-
-        bucket.getNotifications(function(err, notifications) {
-          assert.ifError(err);
-          assert.strictEqual(notifications.length, 0);
-          done();
+      return bucket
+        .createNotification(topic, {
+          eventTypes: ['OBJECT_DELETE'],
+        })
+        .then(function(data) {
+          notification = data[0];
+          return bucket.getNotifications();
+        })
+        .then(function(data) {
+          notificationCount = data[0].length;
+          return notification.delete();
+        })
+        .then(function() {
+          return bucket.getNotifications();
+        })
+        .then(function(data) {
+          assert.strictEqual(data[0].length, notificationCount - 1);
         });
-      });
     });
   });
 
