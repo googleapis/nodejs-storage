@@ -14,6 +14,7 @@
   * [Buckets](#buckets)
   * [Encryption](#encryption)
   * [Files](#files)
+  * [Notifications](#notifications)
   * [Requester Pays](#requester-pays)
 
 ## Before you begin
@@ -26,7 +27,7 @@ library's README.
 
 ### ACL (Access Control Lists)
 
-View the [documentation][acl_0_docs] or the [source code][acl_0_code].
+View the [source code][acl_0_code].
 
 __Usage:__ `node acl.js --help`
 
@@ -67,7 +68,7 @@ For more information, see https://cloud.google.com/storage/docs/access-control/c
 
 ### Buckets
 
-View the [documentation][buckets_1_docs] or the [source code][buckets_1_code].
+View the [source code][buckets_1_code].
 
 __Usage:__ `node buckets.js --help`
 
@@ -94,7 +95,7 @@ For more information, see https://cloud.google.com/storage/docs
 
 ### Encryption
 
-View the [documentation][encryption_2_docs] or the [source code][encryption_2_code].
+View the [source code][encryption_2_code].
 
 __Usage:__ `node encryption.js --help`
 
@@ -126,7 +127,7 @@ For more information, see https://cloud.google.com/storage/docs
 
 ### Files
 
-View the [documentation][files_3_docs] or the [source code][files_3_code].
+View the [source code][files_3_code].
 
 __Usage:__ `node files.js --help`
 
@@ -168,9 +169,38 @@ For more information, see https://cloud.google.com/storage/docs
 [files_3_docs]: https://cloud.google.com/storage/docs
 [files_3_code]: files.js
 
+### Notifications
+
+View the [source code][notifications_4_code].
+
+__Usage:__ `node notifications.js --help`
+
+```
+Commands:
+  create <bucketName> <topic>                 Creates a new notification
+  list <bucketName>                           Lists notifications for a given bucket.
+  get-metadata <bucketName> <notificationId>  Gets metadata for a notification.
+  delete <bucketName> <notificationId>        Deletes a notification from a bucket.
+
+Options:
+  --version  Show version number                                                                               [boolean]
+  --help     Show help                                                                                         [boolean]
+
+Examples:
+  node notifications.js create my-bucket my-topic  Creates a notification subscription.
+  node notifications.js list my-bucket             Lists notifications associated with "my-bucket".
+  node notifications.js get-metadata my-bucket 1   Gets the metadata for notification "1" attached to "my-bucket".
+  node notifications.js delete my-bucket 1         Deletes the notification "1" from "my-bucket".
+
+For more information, see https://cloud.google.com/storage/docs
+```
+
+[notifications_4_docs]: https://cloud.google.com/storage/docs
+[notifications_4_code]: notifications.js
+
 ### Requester Pays
 
-View the [documentation][requesterPays_4_docs] or the [source code][requesterPays_4_code].
+View the [source code][requesterPays_5_code].
 
 __Usage:__ `node requesterPays.js --help`
 
@@ -199,5 +229,5 @@ Examples:
 For more information, see https://cloud.google.com/storage/docs
 ```
 
-[requesterPays_4_docs]: https://cloud.google.com/storage/docs
-[requesterPays_4_code]: requesterPays.js
+[requesterPays_5_docs]: https://cloud.google.com/storage/docs
+[requesterPays_5_code]: requesterPays.js

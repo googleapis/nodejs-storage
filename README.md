@@ -5,7 +5,7 @@
 [![release level](https://img.shields.io/badge/release%20level-general%20availability%20%28GA%29-brightgreen.svg?style&#x3D;flat)](https://cloud.google.com/terms/launch-stages)
 [![CircleCI](https://img.shields.io/circleci/project/github/googleapis/nodejs-storage.svg?style=flat)](https://circleci.com/gh/googleapis/nodejs-storage)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/googleapis/nodejs-storage?svg=true)](https://ci.appveyor.com/project/googleapis/nodejs-storage)
-[![codecov](https://img.shields.io/codecov/c/github/googleapis/nodejs-storage/repo-migration.svg?style=flat)](https://codecov.io/gh/googleapis/nodejs-storage)
+[![codecov](https://img.shields.io/codecov/c/github/googleapis/nodejs-storage/master.svg?style=flat)](https://codecov.io/gh/googleapis/nodejs-storage)
 
 > Node.js idiomatic client for [Cloud Storage][product-docs].
 
@@ -21,7 +21,7 @@ Google APIs Client Libraries, in [Client Libraries Explained][explained].
 
 **Table of contents:**
 
-* [QuickStart](#quickstart)
+* [Quickstart](#quickstart)
   * [Before you begin](#before-you-begin)
   * [Installing the client library](#installing-the-client-library)
   * [Using the client library](#using-the-client-library)
@@ -91,13 +91,17 @@ storage
 Samples are in the [`samples/`](https://github.com/blob/master/samples) directory. The samples' `README.md`
 has instructions for running the samples.
 
-| Sample                      | Documentation                      | Source Code                       |
-| --------------------------- | ---------------------------------- | --------------------------------- |
-| ACL (Access Control Lists) | [documentation](https://cloud.google.com/storage/docs/access-control/create-manage-lists) | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/acl.js) |
-| Buckets | [documentation](https://cloud.google.com/storage/docs) | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/buckets.js) |
-| Encryption | [documentation](https://cloud.google.com/storage/docs) | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/encryption.js) |
-| Files | [documentation](https://cloud.google.com/storage/docs) | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/files.js) |
-| Requester Pays | [documentation](https://cloud.google.com/storage/docs) | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/requesterPays.js) |
+| Sample                      | Source Code                       |
+| --------------------------- | --------------------------------- |
+| ACL (Access Control Lists) | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/acl.js) |
+| Buckets | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/buckets.js) |
+| Encryption | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/encryption.js) |
+| Files | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/files.js) |
+| Notifications | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/notifications.js) |
+| Requester Pays | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/requesterPays.js) |
+
+The [Cloud Storage Node.js Client API Reference][client-docs] documentation
+also contains samples.
 
 ## Versioning
 
