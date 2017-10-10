@@ -1483,7 +1483,7 @@ Bucket.prototype.getMetadata = function(options, callback) {
  *   var apiResponse = data[1];
  * });
  *
- * @example <caption>include:samples/buckets.js</caption>
+ * @example <caption>include:samples/notifications.js</caption>
  * region_tag:storage_list_notifications
  * Another example:
  */
