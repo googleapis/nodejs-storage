@@ -26,6 +26,7 @@ var mime = require('mime-types');
 var path = require('path');
 var snakeize = require('snakeize');
 var util = require('util');
+var request = require('request');
 
 var Acl = require('./acl.js');
 var File = require('./file.js');
@@ -2209,10 +2210,14 @@ Bucket.prototype.setUserProject = function(userProject) {
  * region_tag:storage_upload_encrypted_file
  * Example of uploading an encrypted file:
  */
-Bucket.prototype.upload = function(localPath, options, callback) {
+Bucket.prototype.upload = function(pathString, options, callback) {
   if (global.GCLOUD_SANDBOX_ENV) {
     return;
   }
+
+  var isURL =
+    !fs.existsSync(path.basename(pathString)) &&
+    /^(http|https):/.test(pathString);
 
   if (is.fn(options)) {
     callback = options;
@@ -2236,22 +2241,26 @@ Bucket.prototype.upload = function(localPath, options, callback) {
     });
   } else {
     // Resort to using the name of the incoming file.
-    newFile = this.file(path.basename(localPath), {
+    newFile = this.file(path.basename(pathString), {
       encryptionKey: options.encryptionKey,
     });
   }
 
-  var contentType = mime.contentType(path.basename(localPath));
+  var contentType = mime.contentType(path.basename(pathString));
 
   if (contentType && !options.metadata.contentType) {
     options.metadata.contentType = contentType;
   }
 
   if (is.boolean(options.resumable)) {
-    upload();
-  } else {
+    if (isURL) {
+      uploadFromURL();
+    } else {
+      upload();
+    }
+  } else if (!isURL) {
     // Determine if the upload should be resumable if it's over the threshold.
-    fs.stat(localPath, function(err, fd) {
+    fs.stat(pathString, function(err, fd) {
       if (err) {
         callback(err);
         return;
@@ -2261,11 +2270,24 @@ Bucket.prototype.upload = function(localPath, options, callback) {
 
       upload();
     });
+  } else if (isURL) {
+    uploadFromURL();
   }
 
   function upload() {
     fs
-      .createReadStream(localPath)
+      .createReadStream(pathString)
+      .pipe(newFile.createWriteStream(options))
+      .on('error', function(err) {
+        callback(err);
+      })
+      .on('finish', function() {
+        callback(null, newFile);
+      });
+  }
+
+  function uploadFromURL() {
+    request(pathString)
       .pipe(newFile.createWriteStream(options))
       .on('error', function(err) {
         callback(err);
