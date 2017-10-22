@@ -27,6 +27,7 @@ var path = require('path');
 var snakeize = require('snakeize');
 var util = require('util');
 var request = require('request');
+var url = require('url');
 
 var Acl = require('./acl.js');
 var File = require('./file.js');
@@ -2241,7 +2242,11 @@ Bucket.prototype.upload = function(pathString, options, callback) {
     });
   } else {
     // Resort to using the name of the incoming file.
-    newFile = this.file(path.basename(pathString), {
+    var destination = path.basename(pathString);
+    if (isURL) {
+      destination = new url.parse(pathString).pathname;
+    }
+    newFile = this.file(destination, {
       encryptionKey: options.encryptionKey,
     });
   }
