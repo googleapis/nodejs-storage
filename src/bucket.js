@@ -2048,7 +2048,7 @@ Bucket.prototype.setUserProject = function(userProject) {
  * @see [Upload Options (Simple or Resumable)]{@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload#uploads}
  * @see [Objects: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert}
  *
- * @param {string} localPath The fully qualified path to the file you wish to
+ * @param {string} path The fully qualified path or url to the file you wish to
  *     upload to your bucket.
  * @param {object} [options] Configuration options.
  * @param {string|File} [options.destination] The place to save
@@ -2056,7 +2056,7 @@ Bucket.prototype.setUserProject = function(userProject) {
  *     using the string as a filename. When given a File object, your local file
  *     will be uploaded to the File object's bucket and under the File object's
  *     name. Lastly, when this argument is omitted, the file is uploaded to your
- *     bucket using the name of the local file.
+ *     bucket using the name of the local file or the path of the url relative to it's domain.
  * @param {string} [options.encryptionKey] A custom encryption key. See
  *     [Customer-supplied Encryption Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
  * @param {boolean} [options.gzip] Automatically gzip the file. This will set
@@ -2113,6 +2113,15 @@ Bucket.prototype.setUserProject = function(userProject) {
  * bucket.upload('/local/path/image.png', function(err, file, apiResponse) {
  *   // Your bucket now contains:
  *   // - "image.png" (with the contents of `/local/path/image.png')
+ *
+ *   // `file` is an instance of a File object that refers to your new file.
+ * });
+ * 
+ * //or
+ * 
+ * bucket.upload('https://example.com/images/image.png', function(err, file, apiResponse) {
+ *   // Your bucket now contains:
+ *   // - "image.png" (with the contents of `/images/image.png')
  *
  *   // `file` is an instance of a File object that refers to your new file.
  * });
