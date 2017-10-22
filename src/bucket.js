@@ -2292,7 +2292,11 @@ Bucket.prototype.upload = function(pathString, options, callback) {
   }
 
   function uploadFromURL() {
-    request(pathString)
+    request
+      .get(pathString)
+      .on('error', function(err) {
+        callback(err);
+      })
       .pipe(newFile.createWriteStream(options))
       .on('error', function(err) {
         callback(err);

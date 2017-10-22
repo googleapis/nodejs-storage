@@ -1892,6 +1892,10 @@ describe('Bucket', function() {
     var basename = 'testfile.json';
     var filepath = path.join(__dirname, 'testdata/' + basename);
     var textFilepath = path.join(__dirname, 'testdata/textfile.txt');
+    var urlBasename =
+      '/googleapis/nodejs-storage/blob/master/test/testdata/testfile.json';
+    var urlpath = 'https://github.com' + urlBasename;
+    var fakeurlpath = 'http://fake.fake/fake.jpg';
     var metadata = {
       metadata: {
         a: 'b',
@@ -1917,6 +1921,15 @@ describe('Bucket', function() {
         assert.ifError(err);
         assert.equal(file.bucket.name, bucket.name);
         assert.equal(file.name, basename);
+        done();
+      });
+    });
+
+    it('should accept a url path & cb', function(done) {
+      bucket.upload(urlpath, function(err, file) {
+        assert.ifError(err);
+        assert.equal(file.bucket.name, bucket.name);
+        assert.equal(file.name, urlBasename);
         done();
       });
     });
@@ -2001,6 +2014,13 @@ describe('Bucket', function() {
       });
     });
 
+    it('should execute callback with error if url not found', function(done) {
+      bucket.upload(fakeurlpath, function(err) {
+        assert.strictEqual(err.code, 'ENOTFOUND');
+        done();
+      });
+    });
+
     it('should guess at the content type', function(done) {
       var fakeFile = new FakeFile(bucket, 'file-name');
       var options = {destination: fakeFile};
@@ -2015,6 +2035,22 @@ describe('Bucket', function() {
         return ws;
       };
       bucket.upload(filepath, options, assert.ifError);
+    });
+
+    it('should guess at the content type when passed url', function(done) {
+      var fakeFile = new FakeFile(bucket, 'file-name');
+      var options = {destination: fakeFile};
+      fakeFile.createWriteStream = function(options) {
+        var ws = new stream.Writable();
+        ws.write = util.noop;
+        setImmediate(function() {
+          var expectedContentType = 'application/json; charset=utf-8';
+          assert.equal(options.metadata.contentType, expectedContentType);
+          done();
+        });
+        return ws;
+      };
+      bucket.upload(urlpath, options, assert.ifError);
     });
 
     it('should guess at the charset', function(done) {
@@ -2046,6 +2082,21 @@ describe('Bucket', function() {
         return ws;
       };
       bucket.upload(filepath, options, assert.ifError);
+    });
+
+    it('should force a resumable upload with url', function(done) {
+      var fakeFile = new FakeFile(bucket, 'file-name');
+      var options = {destination: fakeFile, resumable: true};
+      fakeFile.createWriteStream = function(options_) {
+        var ws = new stream.Writable();
+        ws.write = util.noop;
+        setImmediate(function() {
+          assert.strictEqual(options_.resumable, options.resumable);
+          done();
+        });
+        return ws;
+      };
+      bucket.upload(urlpath, options, assert.ifError);
     });
 
     it('should allow overriding content type', function(done) {
@@ -2097,6 +2148,24 @@ describe('Bucket', function() {
         return ws;
       };
       bucket.upload(filepath, options, function(err) {
+        assert.equal(err, error);
+        done();
+      });
+    });
+
+    it('should execute callback on error when passed url', function(done) {
+      var error = new Error('Error.');
+      var fakeFile = new FakeFile(bucket, 'file-name');
+      var options = {destination: fakeFile};
+      fakeFile.createWriteStream = function() {
+        var ws = new stream.Writable();
+        setImmediate(function() {
+          ws.emit('error', error);
+          ws.end();
+        });
+        return ws;
+      };
+      bucket.upload(urlpath, options, function(err) {
         assert.equal(err, error);
         done();
       });
