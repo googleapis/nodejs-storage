@@ -337,7 +337,7 @@ Storage.prototype.createBucket = function(name, metadata, callback) {
   }
 
   var query = {
-    project: this.projectId
+    project: this.projectId,
   };
 
   if (body.userProject) {

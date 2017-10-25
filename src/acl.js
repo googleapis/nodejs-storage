@@ -18,6 +18,7 @@
 
 var arrify = require('arrify');
 var common = require('@google-cloud/common');
+var extend = require('extend');
 var is = require('is');
 var util = require('util');
 
@@ -740,10 +741,13 @@ AclRoleAccessorMethods.prototype._assignAccessMethods = function(role) {
           callback = entityId;
         }
 
-        options = extend({
-          entity: apiEntity,
-          role: role,
-        }, options);
+        options = extend(
+          {
+            entity: apiEntity,
+            role: role,
+          },
+          options
+        );
 
         var args = [options];
 

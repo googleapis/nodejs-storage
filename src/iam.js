@@ -93,7 +93,7 @@ Iam.prototype.getPolicy = function(options, callback) {
   this.request_(
     {
       uri: '/iam',
-      qs: options
+      qs: options,
     },
     callback
   );
@@ -259,9 +259,12 @@ Iam.prototype.testPermissions = function(permissions, options, callback) {
     options = {};
   }
 
-  options = extend({
-    permissions: arrify(permissions)
-  }, options);
+  options = extend(
+    {
+      permissions: arrify(permissions),
+    },
+    options
+  );
 
   this.request_(
     {

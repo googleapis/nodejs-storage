@@ -357,10 +357,14 @@ File.prototype.copy = function(destination, options, callback) {
       }
 
       if (resp.rewriteToken) {
-        self.copy(newFile, {
-          token: resp.rewriteToken,
-          userProject: query.userProject
-        }, callback);
+        self.copy(
+          newFile,
+          {
+            token: resp.rewriteToken,
+            userProject: query.userProject,
+          },
+          callback
+        );
         return;
       }
 
@@ -593,7 +597,7 @@ File.prototype.createReadStream = function(options) {
 
       if (!refreshedMetadata) {
         refreshedMetadata = true;
-        self.getMetadata({ userProject: options.userProject }, onComplete);
+        self.getMetadata({userProject: options.userProject}, onComplete);
         return;
       }
 
@@ -1993,7 +1997,7 @@ File.prototype.move = function(destination, options, callback) {
  */
 File.prototype.request = function(reqOpts, callback) {
   if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
-    reqOpts.qs = extend(reqOpts.qs, { userProject: this.userProject });
+    reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
   }
 
   return common.ServiceObject.prototype.request.call(this, reqOpts, callback);

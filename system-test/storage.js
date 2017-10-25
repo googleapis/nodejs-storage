@@ -46,7 +46,7 @@ describe('storage', function() {
   var bucket = storage.bucket(generateName());
 
   var pubsub = new PubSub({
-    projectId: process.env.PROJECT_ID
+    projectId: process.env.PROJECT_ID,
   });
   var topic;
 
@@ -95,7 +95,7 @@ describe('storage', function() {
           return;
         }
 
-        async.eachLimit(buckets, 10, deleteBucket, function(err) {
+        async.eachLimit(buckets, 10, deleteBucket, function() {
           topic.delete(done);
         });
       }
@@ -1005,10 +1005,6 @@ describe('storage', function() {
               [
                 function(next) {
                   testFunction({}, function(err) {
-                    var hasFailure = err.message.indexOf(failureMessage) > -1;
-                    if (!hasFailure) {
-                      console.log(err);
-                    }
                     assert(err.message.indexOf(failureMessage) > -1);
                     next();
                   });
@@ -1055,7 +1051,10 @@ describe('storage', function() {
         it(
           'bucket#createNotification',
           doubleTest(function(options, done) {
-            bucketNonWhitelist.createNotification(topic.name, options, function(err, _notification) {
+            bucketNonWhitelist.createNotification(topic.name, options, function(
+              err,
+              _notification
+            ) {
               notification = _notification;
               done(err);
             });
@@ -1212,22 +1211,28 @@ describe('storage', function() {
         it(
           'acl#add',
           doubleTest(function(options, done) {
-            options = extend({
-              entity: USER_ACCOUNT,
-              role: storage.acl.OWNER_ROLE,
-            }, options);
+            options = extend(
+              {
+                entity: USER_ACCOUNT,
+                role: storage.acl.OWNER_ROLE,
+              },
+              options
+            );
 
-            bucketNonWhitelist.acl.add(options, done)
+            bucketNonWhitelist.acl.add(options, done);
           })
         );
 
         it(
           'acl#update',
           doubleTest(function(options, done) {
-            options = extend({
-              entity: USER_ACCOUNT,
-              role: storage.acl.WRITER_ROLE,
-            }, options);
+            options = extend(
+              {
+                entity: USER_ACCOUNT,
+                role: storage.acl.WRITER_ROLE,
+              },
+              options
+            );
 
             bucketNonWhitelist.acl.update(options, done);
           })
@@ -1236,9 +1241,12 @@ describe('storage', function() {
         it(
           'acl#get',
           doubleTest(function(options, done) {
-            options = extend({
-              entity: USER_ACCOUNT
-            }, options);
+            options = extend(
+              {
+                entity: USER_ACCOUNT,
+              },
+              options
+            );
 
             bucketNonWhitelist.acl.get(options, done);
           })
@@ -1247,9 +1255,12 @@ describe('storage', function() {
         it(
           'acl#delete',
           doubleTest(function(options, done) {
-            options = extend({
-              entity: USER_ACCOUNT
-            }, options);
+            options = extend(
+              {
+                entity: USER_ACCOUNT,
+              },
+              options
+            );
 
             bucketNonWhitelist.acl.delete(options, done);
           })
@@ -1273,7 +1284,7 @@ describe('storage', function() {
 
               policy.bindings.push({
                 role: 'roles/storage.objectViewer',
-                members: ['allUsers']
+                members: ['allUsers'],
               });
 
               bucketNonWhitelist.iam.setPolicy(policy, options, done);

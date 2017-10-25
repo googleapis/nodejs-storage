@@ -603,7 +603,7 @@ Bucket.prototype.createNotification = function(topic, options, callback) {
       method: 'POST',
       uri: '/notificationConfigs',
       json: snakeize(body),
-      qs: query
+      qs: query,
     },
     function(err, apiResponse) {
       if (err) {
@@ -1813,7 +1813,7 @@ Bucket.prototype.notification = function(id) {
  */
 Bucket.prototype.request = function(reqOpts, callback) {
   if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
-    reqOpts.qs = extend(reqOpts.qs, { userProject: userProject });
+    reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
   }
 
   return common.ServiceObject.prototype.request.call(this, reqOpts, callback);
