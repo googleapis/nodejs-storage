@@ -39,10 +39,16 @@ var File = Storage.File;
 var PubSub = require('@google-cloud/pubsub');
 
 describe('storage', function() {
+  var USER_ACCOUNT = 'user-spsawchuk@gmail.com';
   var TESTS_PREFIX = 'gcloud-tests-';
 
   var storage = new Storage({});
   var bucket = storage.bucket(generateName());
+
+  var pubsub = new PubSub({
+    projectId: process.env.PROJECT_ID
+  });
+  var topic;
 
   var FILES = {
     logo: {
@@ -59,8 +65,23 @@ describe('storage', function() {
     },
   };
 
-  before(function(done) {
-    bucket.create(done);
+  before(function() {
+    return bucket
+      .create()
+      .then(function() {
+        return pubsub.createTopic(generateName());
+      })
+      .then(function(data) {
+        topic = data[0];
+        return topic.iam.setPolicy({
+          bindings: [
+            {
+              role: 'roles/pubsub.editor',
+              members: ['allUsers'],
+            },
+          ],
+        });
+      });
   });
 
   after(function(done) {
@@ -74,14 +95,14 @@ describe('storage', function() {
           return;
         }
 
-        async.eachLimit(buckets, 10, deleteBucket, done);
+        async.eachLimit(buckets, 10, deleteBucket, function(err) {
+          topic.delete(done);
+        });
       }
     );
   });
 
   describe('acls', function() {
-    var USER_ACCOUNT = 'user-spsawchuk@gmail.com';
-
     describe('buckets', function() {
       it('should get access controls', function(done) {
         bucket.acl.get(function(err, accessControls) {
@@ -925,6 +946,8 @@ describe('storage', function() {
 
       describe('methods that accept userProject', function() {
         var file;
+        var notification;
+
         var USER_PROJECT_OPTIONS = {
           userProject: process.env.GCN_STORAGE_2ND_PROJECT_ID,
         };
@@ -982,6 +1005,10 @@ describe('storage', function() {
               [
                 function(next) {
                   testFunction({}, function(err) {
+                    var hasFailure = err.message.indexOf(failureMessage) > -1;
+                    if (!hasFailure) {
+                      console.log(err);
+                    }
                     assert(err.message.indexOf(failureMessage) > -1);
                     next();
                   });
@@ -1026,6 +1053,16 @@ describe('storage', function() {
         });
 
         it(
+          'bucket#createNotification',
+          doubleTest(function(options, done) {
+            bucketNonWhitelist.createNotification(topic.name, options, function(err, _notification) {
+              notification = _notification;
+              done(err);
+            });
+          })
+        );
+
+        it(
           'bucket#exists',
           doubleTest(function(options, done) {
             bucketNonWhitelist.exists(options, done);
@@ -1043,6 +1080,13 @@ describe('storage', function() {
           'bucket#getMetadata',
           doubleTest(function(options, done) {
             bucketNonWhitelist.get(options, done);
+          })
+        );
+
+        it(
+          'bucket#getNotifications',
+          doubleTest(function(options, done) {
+            bucketNonWhitelist.getNotifications(options, done);
           })
         );
 
@@ -1162,6 +1206,107 @@ describe('storage', function() {
           'file#setStorageClass',
           doubleTest(function(options, done) {
             file.setStorageClass('multi-regional', options, done);
+          })
+        );
+
+        it(
+          'acl#add',
+          doubleTest(function(options, done) {
+            options = extend({
+              entity: USER_ACCOUNT,
+              role: storage.acl.OWNER_ROLE,
+            }, options);
+
+            bucketNonWhitelist.acl.add(options, done)
+          })
+        );
+
+        it(
+          'acl#update',
+          doubleTest(function(options, done) {
+            options = extend({
+              entity: USER_ACCOUNT,
+              role: storage.acl.WRITER_ROLE,
+            }, options);
+
+            bucketNonWhitelist.acl.update(options, done);
+          })
+        );
+
+        it(
+          'acl#get',
+          doubleTest(function(options, done) {
+            options = extend({
+              entity: USER_ACCOUNT
+            }, options);
+
+            bucketNonWhitelist.acl.get(options, done);
+          })
+        );
+
+        it(
+          'acl#delete',
+          doubleTest(function(options, done) {
+            options = extend({
+              entity: USER_ACCOUNT
+            }, options);
+
+            bucketNonWhitelist.acl.delete(options, done);
+          })
+        );
+
+        it(
+          'iam#getPolicy',
+          doubleTest(function(options, done) {
+            bucketNonWhitelist.iam.getPolicy(options, done);
+          })
+        );
+
+        it(
+          'iam#setPolicy',
+          doubleTest(function(options, done) {
+            bucket.iam.getPolicy(function(err, policy) {
+              if (err) {
+                done(err);
+                return;
+              }
+
+              policy.bindings.push({
+                role: 'roles/storage.objectViewer',
+                members: ['allUsers']
+              });
+
+              bucketNonWhitelist.iam.setPolicy(policy, options, done);
+            });
+          })
+        );
+
+        it(
+          'iam#testPermissions',
+          doubleTest(function(options, done) {
+            var tests = ['storage.buckets.delete'];
+            bucketNonWhitelist.iam.testPermissions(tests, options, done);
+          })
+        );
+
+        it(
+          'notification#get',
+          doubleTest(function(options, done) {
+            notification.get(options, done);
+          })
+        );
+
+        it(
+          'notification#getMetadata',
+          doubleTest(function(options, done) {
+            notification.getMetadata(options, done);
+          })
+        );
+
+        it(
+          'notification#delete',
+          doubleTest(function(options, done) {
+            notification.delete(options, done);
           })
         );
       });
@@ -1951,47 +2096,25 @@ describe('storage', function() {
   });
 
   describe('notifications', function() {
-    var topic;
-    var subscription;
     var notification;
+    var subscription;
 
     before(function() {
-      var pubsub = new PubSub({});
-
-      topic = pubsub.topic(generateName());
-      subscription = topic.subscription(generateName());
-
-      return topic
-        .create()
-        .then(function() {
-          return topic.iam.setPolicy({
-            bindings: [
-              {
-                role: 'roles/pubsub.editor',
-                members: ['allUsers'],
-              },
-            ],
-          });
-        })
-        .then(function() {
-          return subscription.create();
-        })
-        .then(function() {
-          return bucket.createNotification(topic, {
-            eventTypes: ['OBJECT_FINALIZE'],
-          });
+      return bucket
+        .createNotification(topic, {
+          eventTypes: ['OBJECT_FINALIZE'],
         })
         .then(function(data) {
           notification = data[0];
+          subscription = topic.subscription(generateName());
+
+          return subscription.create();
         });
     });
 
     after(function() {
       return subscription
         .delete()
-        .then(function() {
-          return topic.delete();
-        })
         .then(function() {
           return bucket.getNotifications();
         })
