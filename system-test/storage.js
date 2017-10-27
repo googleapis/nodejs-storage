@@ -40,7 +40,7 @@ var PubSub = require('@google-cloud/pubsub');
 
 describe('storage', function() {
   var USER_ACCOUNT = 'user-spsawchuk@gmail.com';
-  var TESTS_PREFIX = 'gcloud-tests-';
+  var TESTS_PREFIX = 'gcloud-storage-tests-';
 
   var storage = new Storage({});
   var bucket = storage.bucket(generateName());
@@ -85,21 +85,7 @@ describe('storage', function() {
   });
 
   after(function(done) {
-    storage.getBuckets(
-      {
-        prefix: TESTS_PREFIX,
-      },
-      function(err, buckets) {
-        if (err) {
-          done(err);
-          return;
-        }
-
-        async.eachLimit(buckets, 10, deleteBucket, function() {
-          topic.delete(done);
-        });
-      }
-    );
+    async.parallel([deleteAllBuckets, deleteAllTopics], done);
   });
 
   describe('acls', function() {
@@ -2250,7 +2236,42 @@ describe('storage', function() {
     file.delete(callback);
   }
 
+  function deleteTopic(topic, callback) {
+    topic.delete(callback);
+  }
+
   function generateName() {
     return TESTS_PREFIX + uuid.v1();
+  }
+
+  function deleteAllBuckets(callback) {
+    storage.getBuckets(
+      {
+        prefix: TESTS_PREFIX,
+      },
+      function(err, buckets) {
+        if (err) {
+          callback(err);
+          return;
+        }
+
+        async.eachLimit(buckets, 10, deleteBucket, callback);
+      }
+    );
+  }
+
+  function deleteAllTopics(callback) {
+    pubsub.getTopics(function(err, topics) {
+      if (err) {
+        callback(err);
+        return;
+      }
+
+      topics = topics.filter(function(topic) {
+        return topic.name.indexOf(TESTS_PREFIX) > -1;
+      });
+
+      async.eachLimit(topics, 10, deleteTopic, callback);
+    });
   }
 });
