@@ -357,14 +357,15 @@ File.prototype.copy = function(destination, options, callback) {
       }
 
       if (resp.rewriteToken) {
-        self.copy(
-          newFile,
-          {
-            token: resp.rewriteToken,
-            userProject: query.userProject,
-          },
-          callback
-        );
+        var options = {
+          token: resp.rewriteToken,
+        };
+
+        if (query.userProject) {
+          options.userProject = query.userProject;
+        }
+
+        self.copy(newFile, options, callback);
         return;
       }
 
