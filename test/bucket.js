@@ -180,18 +180,21 @@ describe('Bucket', function() {
         _request = Bucket.prototype.request;
       });
 
-      after(function() {
-        Bucket.prototype.request = _request;
-      });
-
-      it('should create an ACL object', function() {
+      beforeEach(function() {
         Bucket.prototype.request = {
           bind: function(context) {
             return context;
           },
         };
 
-        var bucket = new Bucket(STORAGE, BUCKET_NAME);
+        bucket = new Bucket(STORAGE, BUCKET_NAME);
+      });
+
+      after(function() {
+        Bucket.prototype.request = _request;
+      });
+
+      it('should create an ACL object', function() {
         assert.deepEqual(bucket.acl.calledWith_[0], {
           request: bucket,
           pathPrefix: '/acl',
@@ -199,13 +202,6 @@ describe('Bucket', function() {
       });
 
       it('should create a default ACL object', function() {
-        Bucket.prototype.request = {
-          bind: function(context) {
-            return context;
-          },
-        };
-
-        var bucket = new Bucket(STORAGE, BUCKET_NAME);
         assert.deepEqual(bucket.acl.default.calledWith_[0], {
           request: bucket,
           pathPrefix: '/defaultObjectAcl',
