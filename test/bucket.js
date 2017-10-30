@@ -182,8 +182,8 @@ describe('Bucket', function() {
 
       beforeEach(function() {
         Bucket.prototype.request = {
-          bind: function(context) {
-            return context;
+          bind: function(ctx) {
+            return ctx;
           },
         };
 
