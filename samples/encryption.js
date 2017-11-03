@@ -122,13 +122,34 @@ function downloadEncryptedFile(bucketName, srcFilename, destFilename, key) {
   // [END storage_download_encrypted_file]
 }
 
-// [START storage_rotate_encryption_key]
-function rotateEncryptionKey() {
-  throw new Error(
-    'This is currently not available using the Cloud Client Library.'
-  );
+function rotateEncryptionKey(bucketName, fileName, oldKey, newKey) {
+  // [START storage_rotate_encryption_key]
+  // Imports the Google Cloud client library
+  const Storage = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const fileName = 'Nome of a file in the bucket, e.g. my-file';
+
+  storage
+    .bucket(bucketName)
+    .file(fileName, {
+      encryptionKey: Buffer.from(oldKey, 'base64'),
+    })
+    .rotateEncryptionKey(Buffer.from(newKey, 'base64'))
+    .then(() => {
+      console.log(`Encryption key rotated successfully.`);
+    })
+    .catch(err => {
+      console.error('ERROR:', err);
+    });
+  // [END storage_rotate_encryption_key]
 }
-// [END storage_rotate_encryption_key]
 
 require(`yargs`)
   .demand(1)
@@ -163,10 +184,16 @@ require(`yargs`)
       )
   )
   .command(
-    `rotate <bucketName> <fileName> <oldkey> <newKey>`,
+    `rotate <bucketName> <fileName> <oldKey> <newKey>`,
     `Rotates encryption keys for a file.`,
     {},
-    rotateEncryptionKey
+    opts =>
+      rotateEncryptionKey(
+        opts.bucketName,
+        opts.fileName,
+        opts.oldKey,
+        opts.newKey
+      )
   )
   .example(
     `node $0 generate-encryption-key`,

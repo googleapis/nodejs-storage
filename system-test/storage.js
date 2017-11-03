@@ -1747,6 +1747,19 @@ describe('storage', function() {
           done();
         });
       });
+
+      it('should rotate encryption keys', function(done) {
+        var newEncryptionKey = crypto.randomBytes(32);
+
+        file.rotateEncryptionKey(newEncryptionKey, function(err) {
+          assert.ifError(err);
+          file.download(function(err, contents) {
+            assert.ifError(err);
+            assert.strictEqual(contents.toString(), 'secret data');
+            done();
+          });
+        });
+      });
     });
 
     it('should copy an existing file', function(done) {
