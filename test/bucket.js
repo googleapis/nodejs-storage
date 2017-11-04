@@ -1929,7 +1929,7 @@ describe('Bucket', function() {
       bucket.upload(urlpath, function(err, file) {
         assert.ifError(err);
         assert.equal(file.bucket.name, bucket.name);
-        assert.equal(file.name, urlBasename);
+        assert.equal(file.name, 'testfile.json');
         done();
       });
     });
