@@ -2267,11 +2267,7 @@ Bucket.prototype.upload = function(pathString, options, callback) {
   }
 
   if (is.boolean(options.resumable)) {
-    if (isURL) {
-      uploadFromURL();
-    } else {
-      upload();
-    }
+    upload();
   } else if (!isURL) {
     // Determine if the upload should be resumable if it's over the threshold.
     fs.stat(pathString, function(err, fd) {
@@ -2284,32 +2280,23 @@ Bucket.prototype.upload = function(pathString, options, callback) {
 
       upload();
     });
-  } else if (isURL) {
-    uploadFromURL();
+  } else {
+    upload();
   }
 
   function upload() {
-    fs
-      .createReadStream(pathString)
-      .pipe(newFile.createWriteStream(options))
-      .on('error', function(err) {
-        callback(err);
-      })
-      .on('finish', function() {
-        callback(null, newFile);
-      });
-  }
+    var sourceStream;
 
-  function uploadFromURL() {
-    request
-      .get(pathString)
-      .on('error', function(err) {
-        callback(err);
-      })
+    if (isURL) {
+      sourceStream = request.get(pathString);
+    } else {
+      sourceStream = fs.createReadStream(pathString);
+    }
+
+    sourceStream
+      .on('error', callback)
       .pipe(newFile.createWriteStream(options))
-      .on('error', function(err) {
-        callback(err);
-      })
+      .on('error', callback)
       .on('finish', function() {
         callback(null, newFile);
       });
