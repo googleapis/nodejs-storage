@@ -2225,9 +2225,7 @@ Bucket.prototype.upload = function(pathString, options, callback) {
     return;
   }
 
-  var isURL =
-    !fs.existsSync(path.basename(pathString)) &&
-    /^(http|https):/.test(pathString);
+  var isURL = /^(http|https):/.test(pathString);
 
   if (is.fn(options)) {
     callback = options;
@@ -2253,7 +2251,7 @@ Bucket.prototype.upload = function(pathString, options, callback) {
     // Resort to using the name of the incoming file.
     var destination = path.basename(pathString);
     if (isURL) {
-      destination = new url.parse(pathString).pathname;
+      destination = path.basename(new url.parse(pathString).pathname);
     }
     newFile = this.file(destination, {
       encryptionKey: options.encryptionKey,
