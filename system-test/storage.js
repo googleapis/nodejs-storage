@@ -110,7 +110,7 @@ describe('storage', function() {
           process.env.GOOGLE_APPLICATION_CREDENTIALS;
         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-        storageWithoutAuth = require('@google-cloud/storage')();
+        storageWithoutAuth = require('../')();
 
         done();
       });
