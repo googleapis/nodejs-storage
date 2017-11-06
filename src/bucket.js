@@ -27,7 +27,6 @@ var path = require('path');
 var snakeize = require('snakeize');
 var util = require('util');
 var request = require('request');
-var url = require('url');
 
 var Acl = require('./acl.js');
 var File = require('./file.js');
@@ -2048,8 +2047,8 @@ Bucket.prototype.setUserProject = function(userProject) {
  * @see [Upload Options (Simple or Resumable)]{@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload#uploads}
  * @see [Objects: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert}
  *
- * @param {string} path The fully qualified path or url to the file you wish to
- *     upload to your bucket.
+ * @param {string} pathString The fully qualified path or url to the file you
+ *     wish to upload to your bucket.
  * @param {object} [options] Configuration options.
  * @param {string|File} [options.destination] The place to save
  *     your file. If given a string, the file will be uploaded to the bucket
@@ -2108,7 +2107,7 @@ Bucket.prototype.setUserProject = function(userProject) {
  * var bucket = storage.bucket('albums');
  *
  * //-
- * // The easiest way to upload a file.
+ * // Upload a file from a local path.
  * //-
  * bucket.upload('/local/path/image.png', function(err, file, apiResponse) {
  *   // Your bucket now contains:
@@ -2116,12 +2115,14 @@ Bucket.prototype.setUserProject = function(userProject) {
  *
  *   // `file` is an instance of a File object that refers to your new file.
  * });
- * 
- * //or
- * 
+ *
+ * //-
+ * // You can also upload a file from a URL.
+ * //-
+ *
  * bucket.upload('https://example.com/images/image.png', function(err, file, apiResponse) {
  *   // Your bucket now contains:
- *   // - "image.png" (with the contents of `/images/image.png')
+ *   // - "image.png"
  *
  *   // `file` is an instance of a File object that refers to your new file.
  * });
@@ -2250,9 +2251,6 @@ Bucket.prototype.upload = function(pathString, options, callback) {
   } else {
     // Resort to using the name of the incoming file.
     var destination = path.basename(pathString);
-    if (isURL) {
-      destination = path.basename(new url.parse(pathString).pathname);
-    }
     newFile = this.file(destination, {
       encryptionKey: options.encryptionKey,
     });
@@ -2266,7 +2264,22 @@ Bucket.prototype.upload = function(pathString, options, callback) {
 
   if (is.boolean(options.resumable)) {
     upload();
-  } else if (!isURL) {
+  } else if (isURL) {
+    request.head(pathString, function(err, resp) {
+      if (err) {
+        callback(err);
+        return;
+      }
+
+      var contentLength = resp.headers['content-length'];
+
+      if (is.number(contentLength)) {
+        options.resumable = contentLength > RESUMABLE_THRESHOLD;
+      }
+
+      upload();
+    });
+  } else {
     // Determine if the upload should be resumable if it's over the threshold.
     fs.stat(pathString, function(err, fd) {
       if (err) {
@@ -2278,8 +2291,6 @@ Bucket.prototype.upload = function(pathString, options, callback) {
 
       upload();
     });
-  } else {
-    upload();
   }
 
   function upload() {

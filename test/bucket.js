@@ -29,6 +29,7 @@ var proxyquire = require('proxyquire');
 var request = require('request');
 var snakeize = require('snakeize');
 var stream = require('stream');
+var through = require('through2');
 var util = require('@google-cloud/common').util;
 
 var ServiceObject = common.ServiceObject;
@@ -68,6 +69,12 @@ fakeRequest.defaults = function() {
   // Ignore the default values, so we don't have to test for them in every API
   // call.
   return fakeRequest;
+};
+fakeRequest.get = function() {
+  return (requestOverride.get || fakeRequest).apply(null, arguments);
+};
+fakeRequest.head = function() {
+  return (requestOverride.head || fakeRequest).apply(null, arguments);
 };
 
 var eachLimitOverride;
@@ -1888,14 +1895,11 @@ describe('Bucket', function() {
     });
   });
 
-  describe('upload', function() {
+  describe.only('upload', function() {
     var basename = 'testfile.json';
     var filepath = path.join(__dirname, 'testdata/' + basename);
     var textFilepath = path.join(__dirname, 'testdata/textfile.txt');
-    var urlBasename =
-      '/googleapis/nodejs-storage/blob/master/test/testdata/testfile.json';
-    var urlpath = 'https://github.com' + urlBasename;
-    var fakeurlpath = 'http://fake.fake/fake.jpg';
+    var urlPath = 'http://www.example.com/image.jpg';
     var metadata = {
       metadata: {
         a: 'b',
@@ -1904,6 +1908,20 @@ describe('Bucket', function() {
     };
 
     beforeEach(function() {
+      requestOverride = util.noop;
+      requestOverride.get = function() {
+        var requestStream = through();
+
+        setImmediate(function() {
+          requestStream.end();
+        });
+
+        return requestStream;
+      };
+      requestOverride.head = function(uri, callback) {
+        callback(null, {headers: {}});
+      };
+
       bucket.file = function(name, metadata) {
         return new FakeFile(bucket, name, metadata);
       };
@@ -1926,10 +1944,10 @@ describe('Bucket', function() {
     });
 
     it('should accept a url path & cb', function(done) {
-      bucket.upload(urlpath, function(err, file) {
+      bucket.upload(urlPath, function(err, file) {
         assert.ifError(err);
         assert.equal(file.bucket.name, bucket.name);
-        assert.equal(file.name, 'testfile.json');
+        assert.equal(file.name, path.basename(urlPath));
         done();
       });
     });
@@ -2015,8 +2033,14 @@ describe('Bucket', function() {
     });
 
     it('should execute callback with error if url not found', function(done) {
-      bucket.upload(fakeurlpath, function(err) {
-        assert.strictEqual(err.code, 'ENOTFOUND');
+      var error = new Error('Error.');
+
+      requestOverride.head = function(url, callback) {
+        callback(error);
+      };
+
+      bucket.upload('http://not-real-url', function(err) {
+        assert.strictEqual(err, error);
         done();
       });
     });
@@ -2035,22 +2059,6 @@ describe('Bucket', function() {
         return ws;
       };
       bucket.upload(filepath, options, assert.ifError);
-    });
-
-    it('should guess at the content type when passed url', function(done) {
-      var fakeFile = new FakeFile(bucket, 'file-name');
-      var options = {destination: fakeFile};
-      fakeFile.createWriteStream = function(options) {
-        var ws = new stream.Writable();
-        ws.write = util.noop;
-        setImmediate(function() {
-          var expectedContentType = 'application/json; charset=utf-8';
-          assert.equal(options.metadata.contentType, expectedContentType);
-          done();
-        });
-        return ws;
-      };
-      bucket.upload(urlpath, options, assert.ifError);
     });
 
     it('should guess at the charset', function(done) {
@@ -2096,7 +2104,53 @@ describe('Bucket', function() {
         });
         return ws;
       };
-      bucket.upload(urlpath, options, assert.ifError);
+      bucket.upload(urlPath, options, assert.ifError);
+    });
+
+    it('should set resumable to true from contentLength', function(done) {
+      requestOverride.head = function(url, callback) {
+        callback(null, {
+          headers: {
+            'content-length': 5000001,
+          },
+        });
+      };
+
+      var fakeFile = new FakeFile(bucket, 'file-name');
+      fakeFile.createWriteStream = function(options) {
+        var ws = new stream.Writable();
+        ws.write = util.noop;
+        setImmediate(function() {
+          assert.strictEqual(options.resumable, true);
+          done();
+        });
+        return ws;
+      };
+
+      bucket.upload(urlPath, {destination: fakeFile}, assert.ifError);
+    });
+
+    it('should set resumable to false from contentLength', function(done) {
+      requestOverride.head = function(url, callback) {
+        callback(null, {
+          headers: {
+            'content-length': 1001,
+          },
+        });
+      };
+
+      var fakeFile = new FakeFile(bucket, 'file-name');
+      fakeFile.createWriteStream = function(options) {
+        var ws = new stream.Writable();
+        ws.write = util.noop;
+        setImmediate(function() {
+          assert.strictEqual(options.resumable, false);
+          done();
+        });
+        return ws;
+      };
+
+      bucket.upload(urlPath, {destination: fakeFile}, assert.ifError);
     });
 
     it('should allow overriding content type', function(done) {
@@ -2148,24 +2202,6 @@ describe('Bucket', function() {
         return ws;
       };
       bucket.upload(filepath, options, function(err) {
-        assert.equal(err, error);
-        done();
-      });
-    });
-
-    it('should execute callback on error when passed url', function(done) {
-      var error = new Error('Error.');
-      var fakeFile = new FakeFile(bucket, 'file-name');
-      var options = {destination: fakeFile};
-      fakeFile.createWriteStream = function() {
-        var ws = new stream.Writable();
-        setImmediate(function() {
-          ws.emit('error', error);
-          ws.end();
-        });
-        return ws;
-      };
-      bucket.upload(urlpath, options, function(err) {
         assert.equal(err, error);
         done();
       });
