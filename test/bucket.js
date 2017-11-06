@@ -30,7 +30,7 @@ var request = require('request');
 var snakeize = require('snakeize');
 var stream = require('stream');
 var through = require('through2');
-var util = require('@google-cloud/common').util;
+var util = common.util;
 
 var ServiceObject = common.ServiceObject;
 
@@ -1895,7 +1895,7 @@ describe('Bucket', function() {
     });
   });
 
-  describe.only('upload', function() {
+  describe('upload', function() {
     var basename = 'testfile.json';
     var filepath = path.join(__dirname, 'testdata/' + basename);
     var textFilepath = path.join(__dirname, 'testdata/textfile.txt');
