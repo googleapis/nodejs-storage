@@ -64,7 +64,7 @@ function uploadEncryptedFile(bucketName, srcFilename, destFilename, key) {
   // const destFilename = 'Remote destination for file, e.g. file_encrypted.txt';
 
   // See the "Generating your own encryption key" section above.
-  // const key = 'A customer-supplied key';
+  // const key = 'A base64 encoded customer-supplied key';
 
   const options = {
     // The path to which the file should be uploaded, e.g. "file_encrypted.txt"
@@ -106,7 +106,7 @@ function downloadEncryptedFile(bucketName, srcFilename, destFilename, key) {
   // const destFilename = 'Local destination for file, e.g. ./file.txt';
 
   // See the "Generating your own encryption key" section above.
-  // const key = 'A customer-supplied key';
+  // const key = 'A base64 encoded customer-supplied key';
 
   const options = {
     // The path to which the file should be downloaded, e.g. "./file.txt"
@@ -144,8 +144,8 @@ function rotateEncryptionKey(bucketName, fileName, oldKey, newKey) {
   // const fileName = 'Nome of a file in the bucket, e.g. my-file';
 
   // See the "Generating your own encryption key" section above.
-  // const oldKey = 'The current customer-supplied encryption key';
-  // const newKey = 'A new customer-supplied encryption key';
+  // const oldKey = 'The current base64 encoded customer-supplied encryption key';
+  // const newKey = 'A new base64 encoded customer-supplied encryption key';
 
   storage
     .bucket(bucketName)
