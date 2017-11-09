@@ -2120,7 +2120,7 @@ describe('storage', function() {
         .on('finish', done.bind(null, null));
     });
 
-    it('should create a signed read url', function(done) {
+    it.only('should create a signed read url', function(done) {
       file.getSignedUrl(
         {
           action: 'read',

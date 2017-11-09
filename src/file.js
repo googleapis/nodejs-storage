@@ -1666,76 +1666,71 @@ File.prototype.getSignedUrl = function(config, callback) {
   var host = config.cname || STORAGE_DOWNLOAD_BASE_URL + '/' + self.bucket.name;
   config.resource = '/' + this.bucket.name + '/' + name;
 
-  this.storage.getCredentials(function(err, credentials) {
+  var extensionHeadersString = '';
+
+  if (config.extensionHeaders) {
+    for (var headerName in config.extensionHeaders) {
+      extensionHeadersString += format('{name}:{value}\n', {
+        name: headerName,
+        value: config.extensionHeaders[headerName],
+      });
+    }
+  }
+
+  var blobToSign = [
+    config.action,
+    config.contentMd5 || '',
+    config.contentType || '',
+    expiresInSeconds,
+    extensionHeadersString + config.resource,
+  ].join('\n');
+
+  var authClient = this.storage.authClient;
+
+  authClient.getCredentials(function(err, credentials) {
     if (err) {
       callback(new SigningError(err.message));
       return;
     }
 
-    if (!credentials.private_key || !credentials.client_email) {
-      var errorMessage = [
-        'Could not find a `private_key` or `client_email`.',
-        'Please verify you are authorized with these credentials available.',
-      ].join(' ');
+    authClient.sign(blobToSign, function(err, signature) {
+      if (err) {
+        callback(new SigningError(err.message));
+        return;
+      };
 
-      callback(new SigningError(errorMessage));
-      return;
-    }
-
-    var extensionHeadersString = '';
-
-    if (config.extensionHeaders) {
-      for (var headerName in config.extensionHeaders) {
-        extensionHeadersString += format('{name}:{value}\n', {
-          name: headerName,
-          value: config.extensionHeaders[headerName],
-        });
+      var responseContentType;
+      if (is.string(config.responseType)) {
+        responseContentType =
+          '&response-content-type=' + encodeURIComponent(config.responseType);
       }
-    }
 
-    var sign = crypto.createSign('RSA-SHA256');
-    sign.update(
-      [
-        config.action,
-        config.contentMd5 || '',
-        config.contentType || '',
-        expiresInSeconds,
-        extensionHeadersString + config.resource,
-      ].join('\n')
-    );
-    var signature = sign.sign(credentials.private_key, 'base64');
+      var responseContentDisposition;
+      if (is.string(config.promptSaveAs)) {
+        responseContentDisposition =
+          '&response-content-disposition=attachment; filename="' +
+          encodeURIComponent(config.promptSaveAs) +
+          '"';
+      }
+      if (is.string(config.responseDisposition)) {
+        responseContentDisposition =
+          '&response-content-disposition=' +
+          encodeURIComponent(config.responseDisposition);
+      }
 
-    var responseContentType;
-    if (is.string(config.responseType)) {
-      responseContentType =
-        '&response-content-type=' + encodeURIComponent(config.responseType);
-    }
+      var signedUrl = format('{host}/{name}{id}{exp}{sig}{type}{disp}{gen}', {
+        host: host.replace(/[/]*$/, ''), // Remove trailing slashes.
+        name: name,
+        id: '?GoogleAccessId=' + credentials.client_email,
+        exp: '&Expires=' + expiresInSeconds,
+        sig: '&Signature=' + encodeURIComponent(signature),
+        type: responseContentType || '',
+        disp: responseContentDisposition || '',
+        gen: self.generation ? '&generation=' + self.generation : '',
+      });
 
-    var responseContentDisposition;
-    if (is.string(config.promptSaveAs)) {
-      responseContentDisposition =
-        '&response-content-disposition=attachment; filename="' +
-        encodeURIComponent(config.promptSaveAs) +
-        '"';
-    }
-    if (is.string(config.responseDisposition)) {
-      responseContentDisposition =
-        '&response-content-disposition=' +
-        encodeURIComponent(config.responseDisposition);
-    }
-
-    var signedUrl = format('{host}/{name}{id}{exp}{sig}{type}{disp}{gen}', {
-      host: host.replace(/[/]*$/, ''), // Remove trailing slashes.
-      name: name,
-      id: '?GoogleAccessId=' + credentials.client_email,
-      exp: '&Expires=' + expiresInSeconds,
-      sig: '&Signature=' + encodeURIComponent(signature),
-      type: responseContentType || '',
-      disp: responseContentDisposition || '',
-      gen: self.generation ? '&generation=' + self.generation : '',
+      callback(null, signedUrl);
     });
-
-    callback(null, signedUrl);
   });
 };
 
