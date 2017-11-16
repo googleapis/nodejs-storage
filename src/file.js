@@ -1503,33 +1503,17 @@ File.prototype.getSignedPolicy = function(options, callback) {
     conditions: conditions,
   };
 
-  this.storage.getCredentials(function(err, credentials) {
+  var policyString = JSON.stringify(policy);
+
+  this.storage.authClient.sign(policyString, function(err, signature) {
     if (err) {
       callback(new SigningError(err.message));
       return;
     }
 
-    if (!credentials.private_key) {
-      var errorMessage = [
-        'Could not find a `private_key`.',
-        'Please verify you are authorized with this property available.',
-      ].join(' ');
-
-      callback(new SigningError(errorMessage));
-      return;
-    }
-
-    var sign = crypto.createSign('RSA-SHA256');
-    var policyString = JSON.stringify(policy);
-    var policyBase64 = Buffer.from(policyString).toString('base64');
-
-    sign.update(policyBase64);
-
-    var signature = sign.sign(credentials.private_key, 'base64');
-
     callback(null, {
       string: policyString,
-      base64: policyBase64,
+      base64: Buffer.from(policyString).toString('base64'),
       signature: signature,
     });
   });
@@ -1687,50 +1671,43 @@ File.prototype.getSignedUrl = function(config, callback) {
 
   var authClient = this.storage.authClient;
 
-  authClient.getCredentials(function(err, credentials) {
+  authClient.sign(blobToSign, function(err, signature) {
     if (err) {
       callback(new SigningError(err.message));
       return;
     }
 
-    authClient.sign(blobToSign, function(err, signature) {
-      if (err) {
-        callback(new SigningError(err.message));
-        return;
-      };
+    var responseContentType;
+    if (is.string(config.responseType)) {
+      responseContentType =
+        '&response-content-type=' + encodeURIComponent(config.responseType);
+    }
 
-      var responseContentType;
-      if (is.string(config.responseType)) {
-        responseContentType =
-          '&response-content-type=' + encodeURIComponent(config.responseType);
-      }
+    var responseContentDisposition;
+    if (is.string(config.promptSaveAs)) {
+      responseContentDisposition =
+        '&response-content-disposition=attachment; filename="' +
+        encodeURIComponent(config.promptSaveAs) +
+        '"';
+    }
+    if (is.string(config.responseDisposition)) {
+      responseContentDisposition =
+        '&response-content-disposition=' +
+        encodeURIComponent(config.responseDisposition);
+    }
 
-      var responseContentDisposition;
-      if (is.string(config.promptSaveAs)) {
-        responseContentDisposition =
-          '&response-content-disposition=attachment; filename="' +
-          encodeURIComponent(config.promptSaveAs) +
-          '"';
-      }
-      if (is.string(config.responseDisposition)) {
-        responseContentDisposition =
-          '&response-content-disposition=' +
-          encodeURIComponent(config.responseDisposition);
-      }
-
-      var signedUrl = format('{host}/{name}{id}{exp}{sig}{type}{disp}{gen}', {
-        host: host.replace(/[/]*$/, ''), // Remove trailing slashes.
-        name: name,
-        id: '?GoogleAccessId=' + credentials.client_email,
-        exp: '&Expires=' + expiresInSeconds,
-        sig: '&Signature=' + encodeURIComponent(signature),
-        type: responseContentType || '',
-        disp: responseContentDisposition || '',
-        gen: self.generation ? '&generation=' + self.generation : '',
-      });
-
-      callback(null, signedUrl);
+    var signedUrl = format('{host}/{name}{id}{exp}{sig}{type}{disp}{gen}', {
+      host: host.replace(/[/]*$/, ''), // Remove trailing slashes.
+      name: name,
+      id: '?GoogleAccessId=' + authClient.credentials.client_email,
+      exp: '&Expires=' + expiresInSeconds,
+      sig: '&Signature=' + encodeURIComponent(signature),
+      type: responseContentType || '',
+      disp: responseContentDisposition || '',
+      gen: self.generation ? '&generation=' + self.generation : '',
     });
+
+    callback(null, signedUrl);
   });
 };
 
