@@ -585,9 +585,7 @@ File.prototype.createReadStream = function(options) {
         rawResponseStream = rawResponseStream.pipe(pumpify.obj(throughStreams));
       }
 
-      rawResponseStream
-        .on('end', onComplete)
-        .pipe(throughStream, {end: false});
+      rawResponseStream.on('end', onComplete).pipe(throughStream, {end: false});
     }
 
     // This is hooked to the `complete` event from the request stream. This is
