@@ -2099,6 +2099,8 @@ Bucket.prototype.setUserProject = function(userProject) {
  *     MD5 checksum for maximum reliability. CRC32c will provide better
  *     performance with less reliability. You may also choose to skip validation
  *     completely, however this is **not recommended**.
+ * @param {object} [options.request] When `pathString` is an URL additional
+ *     options for HTTP request could be provided here.
  * @param {UploadCallback} [callback] Callback function.
  * @returns {Promise<UploadResponse>}
  *
@@ -2213,6 +2215,15 @@ Bucket.prototype.setUserProject = function(userProject) {
  *   var file = data[0];
  * });
  *
+ * //-
+ * // Additional options for download request could be provided.
+ * //-
+ * var requestOptions = { headers: { 'User-Agent': 'curl/7.54.0' } }
+ * bucket.upload('https://example.com/images/image.png', { request: requestOptions }, function() {
+ *   // Custom `User-Agent` header will be set for download request
+ * })
+ *
+ *
  * @example <caption>include:samples/files.js</caption>
  * region_tag:storage_upload_file
  * Another example:
@@ -2240,6 +2251,10 @@ Bucket.prototype.upload = function(pathString, options, callback) {
     options
   );
 
+  var requestOptions = Object.assign({
+    url: pathString
+  }, options.request)
+
   var newFile;
   if (options.destination instanceof File) {
     newFile = options.destination;
@@ -2265,7 +2280,7 @@ Bucket.prototype.upload = function(pathString, options, callback) {
   if (is.boolean(options.resumable)) {
     upload();
   } else if (isURL) {
-    request.head(pathString, function(err, resp) {
+    request.head(requestOptions, function(err, resp) {
       if (err) {
         callback(err);
         return;
@@ -2297,7 +2312,7 @@ Bucket.prototype.upload = function(pathString, options, callback) {
     var sourceStream;
 
     if (isURL) {
-      sourceStream = request.get(pathString);
+      sourceStream = request.get(requestOptions);
     } else {
       sourceStream = fs.createReadStream(pathString);
     }
