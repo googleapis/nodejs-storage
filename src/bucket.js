@@ -2099,8 +2099,9 @@ Bucket.prototype.setUserProject = function(userProject) {
  *     MD5 checksum for maximum reliability. CRC32c will provide better
  *     performance with less reliability. You may also choose to skip validation
  *     completely, however this is **not recommended**.
- * @param {object} [options.request] When `pathString` is an URL additional
+ * @param {object} [options.requestOptions] When `pathString` is an URL additional
  *     options for HTTP request could be provided here.
+ * @see [`request` options list](https://github.com/request/request#requestoptions-callback)
  * @param {UploadCallback} [callback] Callback function.
  * @returns {Promise<UploadResponse>}
  *
@@ -2218,8 +2219,9 @@ Bucket.prototype.setUserProject = function(userProject) {
  * //-
  * // Additional options for download request could be provided.
  * //-
- * var requestOptions = { headers: { 'User-Agent': 'curl/7.54.0' } }
- * bucket.upload('https://example.com/images/image.png', { request: requestOptions }, function() {
+ * bucket.upload('https://example.com/images/image.png', {
+ *   requestOptions: { headers: { 'User-Agent': 'curl/7.54.0' } }
+ * }, function() {
  *   // Custom `User-Agent` header will be set for download request
  * })
  *
@@ -2253,7 +2255,7 @@ Bucket.prototype.upload = function(pathString, options, callback) {
 
   var requestOptions = Object.assign({
     url: pathString
-  }, options.request)
+  }, options.requestOptions)
 
   var newFile;
   if (options.destination instanceof File) {
