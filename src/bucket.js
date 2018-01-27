@@ -2253,9 +2253,12 @@ Bucket.prototype.upload = function(pathString, options, callback) {
     options
   );
 
-  var requestOptions = Object.assign({
-    url: pathString
-  }, options.requestOptions)
+  var requestOptions = Object.assign(
+    {
+      url: pathString,
+    },
+    options.requestOptions
+  );
 
   var newFile;
   if (options.destination instanceof File) {
