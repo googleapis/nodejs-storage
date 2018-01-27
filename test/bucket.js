@@ -1952,6 +1952,25 @@ describe('Bucket', function() {
       });
     });
 
+    it('should accept a url, custom request options & cb', function() {
+      var defaultRequestHandler = requestOverride.get;
+      requestOverride.get = function(options) {
+        assert.deepEqual(options, { url: urlPath, followAllRedirects: true });
+        return defaultRequestHandler();
+      };
+      var options = {
+        requestOptions: {
+          followAllRedirects: true
+        }
+      };
+      bucket.upload(urlPath, options, function(err, file) {
+        assert.ifError(err);
+        assert.equal(file.bucket.name, bucket.name);
+        assert.equal(file.name, path.basename(urlPath));
+        done();
+      });
+    });
+
     it('should accept a path, metadata, & cb', function(done) {
       var options = {
         metadata: metadata,
