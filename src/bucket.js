@@ -2099,8 +2099,8 @@ Bucket.prototype.setUserProject = function(userProject) {
  *     MD5 checksum for maximum reliability. CRC32c will provide better
  *     performance with less reliability. You may also choose to skip validation
  *     completely, however this is **not recommended**.
- * @param {object} [options.requestOptions] When `pathString` is an URL additional
- *     [options for HTTP request](https://github.com/request/request#requestoptions-callback)
+ * @param {object} [options.requestOptions] When `pathString` is a URL,
+ *     additional [options for HTTP request](https://github.com/request/request#requestoptions-callback)
  *     could be provided here.
  * @param {UploadCallback} [callback] Callback function.
  * @returns {Promise<UploadResponse>}
