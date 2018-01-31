@@ -2220,9 +2220,14 @@ Bucket.prototype.setUserProject = function(userProject) {
  * // Additional options for download request could be provided.
  * //-
  * bucket.upload('https://example.com/images/image.png', {
- *   requestOptions: { headers: { 'User-Agent': 'curl/7.54.0' } }
+ *   requestOptions: {
+ *     headers: {
+ *       'User-Agent': 'curl/7.54.0'
+ *     }
+ *   }
  * }, function() {
- *   // Custom `User-Agent` header will be set for download request
+ *   // Custom `User-Agent` header will be used for the download request of
+ *   // "https://example.com/images/image.png".
  * })
  *
  *
