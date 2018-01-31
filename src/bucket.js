@@ -2100,8 +2100,8 @@ Bucket.prototype.setUserProject = function(userProject) {
  *     performance with less reliability. You may also choose to skip validation
  *     completely, however this is **not recommended**.
  * @param {object} [options.requestOptions] When `pathString` is an URL additional
- *     options for HTTP request could be provided here.
- * @see [`request` options list](https://github.com/request/request#requestoptions-callback)
+ *     [options for HTTP request](https://github.com/request/request#requestoptions-callback)
+ *     could be provided here.
  * @param {UploadCallback} [callback] Callback function.
  * @returns {Promise<UploadResponse>}
  *
