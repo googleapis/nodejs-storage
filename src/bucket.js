@@ -2225,11 +2225,10 @@ Bucket.prototype.setUserProject = function(userProject) {
  *       'User-Agent': 'curl/7.54.0'
  *     }
  *   }
- * }, function() {
+ * }, function(err, newFile) {
  *   // Custom `User-Agent` header will be used for the download request of
  *   // "https://example.com/images/image.png".
- * })
- *
+ * });
  *
  * @example <caption>include:samples/files.js</caption>
  * region_tag:storage_upload_file
