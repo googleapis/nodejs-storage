@@ -2139,7 +2139,7 @@ describe('File', function() {
 
     it('should set correct settings if resumable', function(done) {
       var config = extend({}, CONFIG, {
-        action: 'resumable'
+        action: 'resumable',
       });
 
       BUCKET.storage.authClient.sign = function(blobToSign) {
