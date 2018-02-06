@@ -1550,7 +1550,7 @@ File.prototype.getSignedPolicy = function(options, callback) {
  *
  * @param {object} config Configuration object.
  * @param {string} config.action "read" (HTTP: GET), "write" (HTTP: PUT), or
- *     "delete" (HTTP: DELETE).
+ *     "delete" (HTTP: DELETE), "resumable" (HTTP: POST).
  * @param {string} [config.cname] The cname for this bucket, i.e.,
  *     "https://cdn.example.com".
  * @param {string} [config.contentMd5] The MD5 digest value in base64. If you
@@ -1657,6 +1657,7 @@ File.prototype.getSignedUrl = function(config, callback) {
     read: 'GET',
     write: 'PUT',
     delete: 'DELETE',
+    resumable: 'POST',
   }[config.action];
 
   var name = encodeURIComponent(this.name);
@@ -1664,6 +1665,12 @@ File.prototype.getSignedUrl = function(config, callback) {
   config.resource = '/' + this.bucket.name + '/' + name;
 
   var extensionHeadersString = '';
+
+  if (config.action === 'POST') {
+    config.extensionHeaders = extend({}, config.extensionHeaders, {
+      'x-goog-resumable': 'start',
+    });
+  }
 
   if (config.extensionHeaders) {
     for (var headerName in config.extensionHeaders) {
