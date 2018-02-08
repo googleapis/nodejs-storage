@@ -34,6 +34,8 @@ var streamEvents = require('stream-events');
 var through = require('through2');
 var util = require('util');
 var zlib = require('zlib');
+var mime = require('mime');
+var compressible = require('compressible');
 
 var Acl = require('./acl.js');
 
@@ -786,8 +788,12 @@ File.prototype.createResumableUpload = function(options, callback) {
  * @see [Objects: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert}
  *
  * @param {object} [options] Configuration options.
- * @param {boolean} [options.gzip] Automatically gzip the file. This will set
- *     `options.metadata.contentEncoding` to `gzip`.
+ * @param {string|boolean} [options.gzip] If true utomatically gzip the file,
+ * if set to `'auto'` will choose whether to gzip based on content-type. This
+ * will set `options.metadata.contentEncoding` to `gzip` if necessary.
+ * @param {string} [options.contentType] Shortcut to set
+ * options.metadata.contentType, can be set to `'auto'` to automatically set
+ * the contentType based on the file name.
  * @param {object} [options.metadata] See the examples below or
  *     [Objects: insert request body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON)
  *     for more details.
@@ -898,8 +904,21 @@ File.prototype.createWriteStream = function(options) {
 
   options = extend({metadata: {}}, options);
 
-  var gzip = options.gzip;
+  if (options.contentType) {
+    options.metadata.contentType = options.contentType;
+    if (options.metadata.contentType === 'auto') {
+      options.metadata.contentType = mime.getType(this.name);
+    }
+  }
 
+  var gzip = options.gzip;
+  if (gzip === 'auto') {
+    if (options.metadata.contentType) {
+      gzip = compressible(options.metadata.contentType);
+    } else {
+      gzip = false;
+    }
+  }
   if (gzip) {
     options.metadata.contentEncoding = 'gzip';
   }

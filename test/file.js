@@ -1246,6 +1246,70 @@ describe('File', function() {
       writable.write('data');
     });
 
+    it('should set metadata.contentEncoding with gzip auto and compresable', function(done) {
+      var writable = file.createWriteStream({
+        gzip: 'auto',
+        contentType: 'text/html',
+      });
+
+      file.startResumableUpload_ = function(stream, options) {
+        assert.strictEqual(options.metadata.contentEncoding, 'gzip');
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should not set metadata.contentEncoding with gzip auto and not set', function(done) {
+      var writable = file.createWriteStream({gzip: 'auto'});
+
+      file.startResumableUpload_ = function(stream, options) {
+        assert.notStrictEqual(options.metadata.contentEncoding, 'gzip');
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should not set metadata.contentEncoding with gzip auto and contentType not set auto', function(done) {
+      var writable = file.createWriteStream({
+        gzip: 'auto',
+        contentType: 'auto',
+      });
+
+      file.startResumableUpload_ = function(stream, options) {
+        assert.notStrictEqual(options.metadata.contentEncoding, 'gzip');
+        done();
+      };
+
+      writable.write('data');
+    });
+    it('should not set metadata.contentEncoding with gzip auto and set auto', function(done) {
+      var file = new File(BUCKET, 'file-name.html');
+      var writable = file.createWriteStream({
+        gzip: 'auto',
+        contentType: 'auto',
+      });
+
+      file.startResumableUpload_ = function(stream, options) {
+        assert.strictEqual(options.metadata.contentEncoding, 'gzip');
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should set metadata.contentType', function(done) {
+      var writable = file.createWriteStream({contentType: 'auto'});
+
+      file.startResumableUpload_ = function(stream, options) {
+        assert.strictEqual(options.metadata.contentType, 'image/png');
+        done();
+      };
+
+      writable.write('data');
+    });
+
     it('should re-emit response event', function(done) {
       var writable = file.createWriteStream();
       var resp = {};
