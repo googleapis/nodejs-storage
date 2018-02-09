@@ -1235,7 +1235,30 @@ describe('File', function() {
       writable.write('data');
     });
 
-    it('should set metadata.contentEncoding with gzip', function(done) {
+    it('should alias contentType to metadata object', function(done) {
+      var contentType = 'text/html';
+      var writable = file.createWriteStream({contentType});
+
+      file.startResumableUpload_ = function(stream, options) {
+        assert.strictEqual(options.metadata.contentType, contentType);
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should detect contentType with contentType:auto', function(done) {
+      var writable = file.createWriteStream({contentType: 'auto'});
+
+      file.startResumableUpload_ = function(stream, options) {
+        assert.strictEqual(options.metadata.contentType, 'image/png');
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should set encoding with gzip:true', function(done) {
       var writable = file.createWriteStream({gzip: true});
 
       file.startResumableUpload_ = function(stream, options) {
@@ -1246,10 +1269,10 @@ describe('File', function() {
       writable.write('data');
     });
 
-    it('should set metadata.contentEncoding with gzip auto and compresable', function(done) {
+    it('should set encoding with gzip:auto & compressible', function(done) {
       var writable = file.createWriteStream({
         gzip: 'auto',
-        contentType: 'text/html',
+        contentType: 'text/html', // (compressible)
       });
 
       file.startResumableUpload_ = function(stream, options) {
@@ -1260,50 +1283,11 @@ describe('File', function() {
       writable.write('data');
     });
 
-    it('should not set metadata.contentEncoding with gzip auto and not set', function(done) {
+    it('should not set encoding with gzip:auto & non-compressible', function(done) {
       var writable = file.createWriteStream({gzip: 'auto'});
 
       file.startResumableUpload_ = function(stream, options) {
-        assert.notStrictEqual(options.metadata.contentEncoding, 'gzip');
-        done();
-      };
-
-      writable.write('data');
-    });
-
-    it('should not set metadata.contentEncoding with gzip auto and contentType not set auto', function(done) {
-      var writable = file.createWriteStream({
-        gzip: 'auto',
-        contentType: 'auto',
-      });
-
-      file.startResumableUpload_ = function(stream, options) {
-        assert.notStrictEqual(options.metadata.contentEncoding, 'gzip');
-        done();
-      };
-
-      writable.write('data');
-    });
-    it('should not set metadata.contentEncoding with gzip auto and set auto', function(done) {
-      var file = new File(BUCKET, 'file-name.html');
-      var writable = file.createWriteStream({
-        gzip: 'auto',
-        contentType: 'auto',
-      });
-
-      file.startResumableUpload_ = function(stream, options) {
-        assert.strictEqual(options.metadata.contentEncoding, 'gzip');
-        done();
-      };
-
-      writable.write('data');
-    });
-
-    it('should set metadata.contentType', function(done) {
-      var writable = file.createWriteStream({contentType: 'auto'});
-
-      file.startResumableUpload_ = function(stream, options) {
-        assert.strictEqual(options.metadata.contentType, 'image/png');
+        assert.strictEqual(options.metadata.contentEncoding, undefined);
         done();
       };
 
