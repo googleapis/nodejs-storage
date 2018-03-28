@@ -1984,16 +1984,20 @@ describe('storage', function() {
         var originalFile = NEW_FILES[0];
         var cloneFiles = NEW_FILES.slice(1);
 
-        bucket.upload(FILES.logo.path, {
-          destination: originalFile
-        }, function(err) {
-          if (err) {
-            done(err);
-            return;
-          }
+        bucket.upload(
+          FILES.logo.path,
+          {
+            destination: originalFile,
+          },
+          function(err) {
+            if (err) {
+              done(err);
+              return;
+            }
 
-          async.each(cloneFiles, originalFile.copy.bind(originalFile), done);
-        });
+            async.each(cloneFiles, originalFile.copy.bind(originalFile), done);
+          }
+        );
       });
     });
 
