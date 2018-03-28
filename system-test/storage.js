@@ -35,7 +35,6 @@ var util = require('@google-cloud/common').util;
 
 var Storage = require('../');
 var Bucket = Storage.Bucket;
-var File = Storage.File;
 var PubSub = require('@google-cloud/pubsub');
 
 describe('storage', function() {
@@ -2019,7 +2018,7 @@ describe('storage', function() {
       bucket
         .getFilesStream()
         .on('error', done)
-        .on('data', function(file) {
+        .on('data', function() {
           numFilesEmitted++;
         })
         .on('end', function() {
@@ -2042,7 +2041,7 @@ describe('storage', function() {
       bucket
         .getFilesStream({directory: DIRECTORY_NAME})
         .on('error', done)
-        .on('data', function(file) {
+        .on('data', function() {
           numFilesEmitted++;
         })
         .on('end', function() {
