@@ -30,26 +30,31 @@ var hashStreamValidation = require('hash-stream-validation');
 var is = require('is');
 var mime = require('mime');
 var once = require('once');
+var os = require('os');
 var pumpify = require('pumpify');
 var resumableUpload = require('gcs-resumable-upload');
 var streamEvents = require('stream-events');
 var through = require('through2');
 var util = require('util');
+var xdgBasedir = require('xdg-basedir');
 var zlib = require('zlib');
+var url = require('url');
 
 var Acl = require('./acl.js');
+
+/**
+ * Custom error type for errors related to creating a resumable upload.
+ *
+ * @private
+ */
+var ResumableUploadError = createErrorClass('ResumableUploadError');
 
 /**
  * Custom error type for errors related to getting signed errors and policies.
  *
  * @private
- *
- * @param {string} message - Custom error message.
- * @returns {Error}
  */
-var SigningError = createErrorClass('SigningError', function(message) {
-  this.message = message;
-});
+var SigningError = createErrorClass('SigningError');
 
 /**
  * @const {string}
@@ -192,6 +197,8 @@ util.inherits(File, common.ServiceObject);
  * @param {string|Bucket|File} destination Destination file.
  * @param {object} [options] Configuration options. See an
  *     [Object resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
+ * @param {string} [options.keepAcl] Retain the ACL for the new file.
+ * @param {string} [options.predefinedAcl] Set the ACL for the new file.
  * @param {string} [options.token] A previously-returned `rewriteToken` from an
  *     unfinished rewrite request.
  * @param {string} [options.userProject] The ID of the project which will be
@@ -769,6 +776,12 @@ File.prototype.createResumableUpload = function(options, callback) {
  * Resumable uploads are automatically enabled and must be shut off explicitly
  * by setting `options.resumable` to `false`.
  *
+ * Resumable uploads require write access to the $HOME directory. Through
+ * [`config-store`](http://www.gitnpm.com/configstore), some metadata is stored.
+ * By default, if the directory is not writable, we will fall back to a simple
+ * upload. However, if you explicitly request a resumable upload, and we cannot
+ * write to the config directory, we will return a `ResumableUploadError`.
+ *
  * <p class="notice">
  *   There is some overhead when using a resumable upload that can cause
  *   noticeable performance degradation while uploading a series of small files.
@@ -955,9 +968,34 @@ File.prototype.createWriteStream = function(options) {
   stream.on('writing', function() {
     if (options.resumable === false) {
       self.startSimpleUpload_(fileWriteStream, options);
-    } else {
-      self.startResumableUpload_(fileWriteStream, options);
+      return;
     }
+
+    // Same as configstore:
+    // https://github.com/yeoman/configstore/blob/f09f067e50e6a636cfc648a6fc36a522062bd49d/index.js#L11
+    var configDir = xdgBasedir.config || os.tmpdir();
+
+    fs.access(configDir, fs.W_OK, function(err) {
+      if (err) {
+        if (options.resumable) {
+          var error = new ResumableUploadError(
+            [
+              'A resumable upload could not be performed. The directory,',
+              `${configDir}, is not writable. You may try another upload,`,
+              'this time setting `options.resumable` to `false`.',
+            ].join(' ')
+          );
+          stream.destroy(error);
+          return;
+        }
+
+        // User didn't care, resumable or not. Fall back to simple upload.
+        self.startSimpleUpload_(fileWriteStream, options);
+        return;
+      }
+
+      self.startResumableUpload_(fileWriteStream, options);
+    });
   });
 
   fileWriteStream.on('response', stream.emit.bind(stream, 'response'));
@@ -1680,7 +1718,6 @@ File.prototype.getSignedUrl = function(config, callback) {
   }[config.action];
 
   var name = encodeURIComponent(this.name);
-  var host = config.cname || STORAGE_DOWNLOAD_BASE_URL + '/' + self.bucket.name;
   config.resource = '/' + this.bucket.name + '/' + name;
 
   var extensionHeadersString = '';
@@ -1716,34 +1753,34 @@ File.prototype.getSignedUrl = function(config, callback) {
       return;
     }
 
-    var responseContentType;
+    var query = {
+      GoogleAccessId: authClient.credentials.client_email,
+      Expires: expiresInSeconds,
+      Signature: signature,
+    };
+
     if (is.string(config.responseType)) {
-      responseContentType =
-        '&response-content-type=' + encodeURIComponent(config.responseType);
+      query['response-content-type'] = config.responseType;
     }
 
-    var responseContentDisposition;
     if (is.string(config.promptSaveAs)) {
-      responseContentDisposition =
-        '&response-content-disposition=attachment; filename="' +
-        encodeURIComponent(config.promptSaveAs) +
-        '"';
+      query['response-content-disposition'] =
+        'attachment; filename="' + config.promptSaveAs + '"';
     }
     if (is.string(config.responseDisposition)) {
-      responseContentDisposition =
-        '&response-content-disposition=' +
-        encodeURIComponent(config.responseDisposition);
+      query['response-content-disposition'] = config.responseDisposition;
     }
 
-    var signedUrl = format('{host}/{name}{id}{exp}{sig}{type}{disp}{gen}', {
-      host: host.replace(/[/]*$/, ''), // Remove trailing slashes.
-      name: name,
-      id: '?GoogleAccessId=' + authClient.credentials.client_email,
-      exp: '&Expires=' + expiresInSeconds,
-      sig: '&Signature=' + encodeURIComponent(signature),
-      type: responseContentType || '',
-      disp: responseContentDisposition || '',
-      gen: self.generation ? '&generation=' + self.generation : '',
+    if (self.generation) {
+      query.generation = self.generation;
+    }
+
+    var parsedHost = url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
+    var signedUrl = url.format({
+      protocol: parsedHost.protocol,
+      hostname: parsedHost.hostname,
+      pathname: self.bucket.name + '/' + name,
+      query: query,
     });
 
     callback(null, signedUrl);
