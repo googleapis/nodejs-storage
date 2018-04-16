@@ -2033,7 +2033,7 @@ describe('storage', function() {
       });
     });
 
-    it.only('should get files from a directory as a stream', function(done) {
+    it('should get files from a directory as a stream', function(done) {
       var numFilesEmitted = 0;
 
       bucket
