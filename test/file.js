@@ -2693,7 +2693,7 @@ describe('File', function() {
       });
 
       it('should not delete if copy fails', function(done) {
-        const deleteCalled = false;
+        let deleteCalled = false;
         file.copy = function(destination, options, callback) {
           callback(new Error('Error.'));
         };

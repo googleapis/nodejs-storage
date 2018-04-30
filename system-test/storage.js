@@ -678,11 +678,11 @@ describe('storage', function() {
           bucket.iam.setPolicy(policy, function(err, newPolicy) {
             assert.ifError(err);
 
-            const legacyBucketReaderBinding = newPolicy.bindings.filter(function(
-              binding
-            ) {
-              return binding.role === 'roles/storage.legacyBucketReader';
-            })[0];
+            const legacyBucketReaderBinding = newPolicy.bindings.filter(
+              function(binding) {
+                return binding.role === 'roles/storage.legacyBucketReader';
+              }
+            )[0];
 
             assert(legacyBucketReaderBinding.members.includes('allUsers'));
 
@@ -1054,7 +1054,7 @@ describe('storage', function() {
 
               // Allow an absolute or relative path (from project root)
               // for the key file.
-              const key2 = process.env.GCN_STORAGE_2ND_PROJECT_KEY;
+              let key2 = process.env.GCN_STORAGE_2ND_PROJECT_KEY;
               if (key2 && key2.charAt(0) === '.') {
                 key2 = `${__dirname}/../${key2}`;
               }
@@ -1120,7 +1120,9 @@ describe('storage', function() {
             assert.ifError(err);
 
             const sourceFiles = files.map(prop('file'));
-            const destinationFile = bucketNonWhitelist.file('file-one-n-two.txt');
+            const destinationFile = bucketNonWhitelist.file(
+              'file-one-n-two.txt'
+            );
 
             bucketNonWhitelist.combine(
               sourceFiles,
