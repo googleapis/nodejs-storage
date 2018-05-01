@@ -387,7 +387,9 @@ describe('File', function() {
 
       it('should allow a string', function(done) {
         const newFileName = 'new-file-name.png';
-        const expectedPath = `/rewriteTo/b/${file.bucket.name}/o/${newFileName}`;
+        const expectedPath = `/rewriteTo/b/${
+          file.bucket.name
+        }/o/${newFileName}`;
         assertPathEquals(file, expectedPath, done);
         file.copy(newFileName);
       });
