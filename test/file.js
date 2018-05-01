@@ -21,7 +21,6 @@ const Buffer = require('safe-buffer').Buffer;
 const crypto = require('crypto');
 let duplexify;
 const extend = require('extend');
-const format = require('string-format-obj');
 const fs = require('fs');
 const nodeutil = require('util');
 const proxyquire = require('proxyquire');

@@ -24,7 +24,6 @@ const createErrorClass = require('create-error-class');
 const crypto = require('crypto');
 const duplexify = require('duplexify');
 const extend = require('extend');
-const format = require('string-format-obj');
 const fs = require('fs');
 const hashStreamValidation = require('hash-stream-validation');
 const is = require('is');
