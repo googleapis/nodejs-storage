@@ -1229,13 +1229,6 @@ describe('storage', function() {
         );
 
         it(
-          'file#createResumableUpload',
-          doubleTest(function(options, done) {
-            file.createResumableUpload(options, done);
-          })
-        );
-
-        it(
           'file#download',
           doubleTest(function(options, done) {
             file.download(options, done);
@@ -1282,7 +1275,7 @@ describe('storage', function() {
               }
 
               // Re-create the file. The tests need it.
-              file.save('newcontent', done);
+              file.save('newcontent', options, done);
             });
           })
         );
@@ -1382,14 +1375,6 @@ describe('storage', function() {
 
               bucketNonWhitelist.iam.setPolicy(policy, options, done);
             });
-          })
-        );
-
-        it(
-          'iam#testPermissions',
-          doubleTest(function(options, done) {
-            const tests = ['storage.buckets.delete'];
-            bucketNonWhitelist.iam.testPermissions(tests, options, done);
           })
         );
 
