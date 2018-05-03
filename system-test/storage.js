@@ -1950,10 +1950,7 @@ describe('storage', function() {
                 projectIdRegExp,
                 ''
               );
-              let expectedKmsKeyName = kmsKeyName.replace(
-                projectIdRegExp,
-                ''
-              );
+              let expectedKmsKeyName = kmsKeyName.replace(projectIdRegExp, '');
 
               // Upstream attaches a version.
               expectedKmsKeyName = `${expectedKmsKeyName}/cryptoKeyVersions/1`;
