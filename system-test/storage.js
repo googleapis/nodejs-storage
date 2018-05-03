@@ -1796,16 +1796,20 @@ describe('storage', function() {
       let serviceAccountEmail;
       const keyRingId = generateName();
       const cryptoKeyId = generateName();
+
+      const BUCKET_LOCATION = 'us-central1';
+      let bucket;
+
       let kmsKeyName;
 
       const keyRingsBaseUrl = `https://cloudkms.googleapis.com/v1/projects/${
         storage.projectId
-      }/locations/global/keyRings`;
+      }/locations/${BUCKET_LOCATION}/keyRings`;
 
       function generateKmsKeyName(cryptoKeyId) {
         return `projects/${
           storage.projectId
-        }/locations/global/keyRings/${keyRingId}/cryptoKeys/${cryptoKeyId}`;
+        }/locations/${BUCKET_LOCATION}/keyRings/${keyRingId}/cryptoKeys/${cryptoKeyId}`;
       }
 
       function createCryptoKey(cryptoKeyId, callback) {
@@ -1872,10 +1876,15 @@ describe('storage', function() {
       }
 
       before(function(done) {
+        bucket = storage.bucket(generateName(), {location: BUCKET_LOCATION});
         kmsKeyName = generateKmsKeyName(cryptoKeyId);
 
         async.series(
           [
+            function createBucket(next) {
+              bucket.create(next);
+            },
+
             function createKeyRing(next) {
               storage.request(
                 {
