@@ -2318,7 +2318,7 @@ File.prototype.startResumableUpload_ = function(dup, options) {
     options
   );
 
-  const uploadStream = resumableUpload({
+  const uploadStream = new resumableUpload.Upload({
     authClient: this.storage.authClient,
     bucket: this.bucket.name,
     file: this.name,
