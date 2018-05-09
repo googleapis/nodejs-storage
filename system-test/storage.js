@@ -1793,23 +1793,25 @@ describe('storage', function() {
     describe('kms keys', function() {
       const FILE_CONTENTS = 'secret data';
 
-      let serviceAccountEmail;
+      const BUCKET_LOCATION = 'us';
+      let PROJECT_ID;
+      let SERVICE_ACCOUNT_EMAIL;
+
       const keyRingId = generateName();
       const cryptoKeyId = generateName();
 
-      const BUCKET_LOCATION = 'us-central1';
       let bucket;
-
       let kmsKeyName;
+      let keyRingsBaseUrl;
 
-      const keyRingsBaseUrl = `https://cloudkms.googleapis.com/v1/projects/${
-        storage.projectId
-      }/locations/${BUCKET_LOCATION}/keyRings`;
+      function setProjectId(projectId) {
+        PROJECT_ID = projectId;
+        keyRingsBaseUrl = `https://cloudkms.googleapis.com/v1/projects/${PROJECT_ID}/locations/${BUCKET_LOCATION}/keyRings`;
+        kmsKeyName = generateKmsKeyName(cryptoKeyId);
+      }
 
       function generateKmsKeyName(cryptoKeyId) {
-        return `projects/${
-          storage.projectId
-        }/locations/${BUCKET_LOCATION}/keyRings/${keyRingId}/cryptoKeys/${cryptoKeyId}`;
+        return `projects/${PROJECT_ID}/locations/${BUCKET_LOCATION}/keyRings/${keyRingId}/cryptoKeys/${cryptoKeyId}`;
       }
 
       function createCryptoKey(cryptoKeyId, callback) {
@@ -1828,7 +1830,7 @@ describe('storage', function() {
             },
 
             function getServiceAccountEmail(next) {
-              if (serviceAccountEmail) {
+              if (SERVICE_ACCOUNT_EMAIL) {
                 setImmediate(next);
                 return;
               }
@@ -1844,7 +1846,7 @@ describe('storage', function() {
                     return;
                   }
 
-                  serviceAccountEmail = resp.email_address;
+                  SERVICE_ACCOUNT_EMAIL = resp.email_address;
 
                   next();
                 }
@@ -1861,7 +1863,7 @@ describe('storage', function() {
                       bindings: [
                         {
                           role: 'roles/cloudkms.cryptoKeyEncrypterDecrypter',
-                          members: `serviceAccount:${serviceAccountEmail}`,
+                          members: `serviceAccount:${SERVICE_ACCOUNT_EMAIL}`,
                         },
                       ],
                     },
@@ -1877,10 +1879,22 @@ describe('storage', function() {
 
       before(function(done) {
         bucket = storage.bucket(generateName(), {location: BUCKET_LOCATION});
-        kmsKeyName = generateKmsKeyName(cryptoKeyId);
 
         async.series(
           [
+            function getProjectId(next) {
+              storage.authClient.getProjectId(function(err, projectId) {
+                if (err) {
+                  next(err);
+                  return;
+                }
+
+                setProjectId(projectId);
+
+                next();
+              });
+            },
+
             function createBucket(next) {
               bucket.create(next);
             },
