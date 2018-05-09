@@ -1229,6 +1229,20 @@ describe('storage', function() {
         );
 
         it(
+          'file#createResumableUpload',
+          doubleTest(function(options, done) {
+            file.createResumableUpload(options, function(err, uri) {
+              assert.ifError(err);
+
+              file.createWriteStream({uri})
+                .on('error', done)
+                .on('finish', done)
+                .end('Test data');
+            });
+          })
+        );
+
+        it(
           'file#download',
           doubleTest(function(options, done) {
             file.download(options, done);
