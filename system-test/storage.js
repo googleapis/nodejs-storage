@@ -1234,7 +1234,8 @@ describe('storage', function() {
             file.createResumableUpload(options, function(err, uri) {
               assert.ifError(err);
 
-              file.createWriteStream({uri})
+              file
+                .createWriteStream({uri})
                 .on('error', done)
                 .on('finish', done)
                 .end('Test data');
