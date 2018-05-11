@@ -1393,6 +1393,16 @@ describe('storage', function() {
           })
         );
 
+        // @TODO: There may be a backend bug here.
+        // Reference: https://github.com/googleapis/nodejs-storage/pull/190#issuecomment-388475406
+        it.skip(
+          'iam#testPermissions',
+          doubleTest(function(options, done) {
+            const tests = ['storage.buckets.delete'];
+            bucketNonWhitelist.iam.testPermissions(tests, options, done);
+          })
+        );
+
         it(
           'notification#get',
           doubleTest(function(options, done) {
