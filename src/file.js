@@ -205,7 +205,7 @@ util.inherits(File, common.ServiceObject);
  * @param {string} [options.destinationKmsKeyName] Resource name of the Cloud
  *     KMS key, of the form
  *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
- *     that will be used to encrypt the object. Overrides the object metadata's
+ *     that will be used to encrypt the object. Overwrites the object metadata's
  *     `kms_key_name` value, if any.
  * @param {string} [options.keepAcl] Retain the ACL for the new file.
  * @param {string} [options.predefinedAcl] Set the ACL for the new file.
