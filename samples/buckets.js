@@ -114,6 +114,7 @@ function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
    * TODO(developer): Uncomment the following line before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const defaultKmsKeyName = 'KMS key resource id, e.g. my-key';
 
   // Enables a default KMS key for the bucket
   storage
