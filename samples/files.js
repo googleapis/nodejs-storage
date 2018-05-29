@@ -163,9 +163,7 @@ function uploadFileWithKmsKey(bucketName, filename, kmsKeyName) {
       kmsKeyName,
     })
     .then(() => {
-      console.log(
-        `${filename} uploaded to ${bucketName} using ${kmsKeyName}.`
-      );
+      console.log(`${filename} uploaded to ${bucketName} using ${kmsKeyName}.`);
     })
     .catch(err => {
       console.error('ERROR:', err);
