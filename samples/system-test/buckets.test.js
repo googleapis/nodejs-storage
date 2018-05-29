@@ -23,7 +23,7 @@ const uuid = require(`uuid`);
 
 const cwd = path.join(__dirname, `..`);
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
-const defaultKmsKeyName = `projects/rational-iris-202820/locations/asia/keyRings/my_asia_ring/cryptoKeys/my_key`;
+const defaultKmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA;
 const bucket = storage.bucket(bucketName);
 const cmd = `node buckets.js`;
 
