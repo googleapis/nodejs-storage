@@ -98,7 +98,7 @@ Options:
 Examples:
   node buckets.js create my-bucket                         Creates a new bucket named "my-bucket".
   node buckets.js list                                     Lists all buckets in the current project.
-  node buckets.js enable-default-kms-key my-bucket my-key
+  node buckets.js enable-default-kms-key my-bucket my-key  Sets the default KMS key for my-bucket.
   node buckets.js delete my-bucket                         Deletes a bucket named "my-bucket".
 
 For more information, see https://cloud.google.com/storage/docs

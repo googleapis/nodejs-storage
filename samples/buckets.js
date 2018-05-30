@@ -111,7 +111,7 @@ function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
   const storage = new Storage();
 
   /**
-   * TODO(developer): Uncomment the following line before running the sample.
+   * TODO(developer): Uncomment the following lines before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
   // const defaultKmsKeyName = 'KMS key resource id, e.g. my-key';
@@ -155,7 +155,10 @@ require(`yargs`)
     `Creates a new bucket named "my-bucket".`
   )
   .example(`node $0 list`, `Lists all buckets in the current project.`)
-  .example(`node $0 enable-default-kms-key my-bucket my-key`)
+  .example(
+    `node $0 enable-default-kms-key my-bucket my-key`,
+    `Sets the default KMS key for my-bucket.`
+  )
   .example(`node $0 delete my-bucket`, `Deletes a bucket named "my-bucket".`)
   .wrap(120)
   .recommendCommands()
