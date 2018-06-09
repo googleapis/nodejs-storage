@@ -2014,7 +2014,7 @@ describe('File', function() {
       BUCKET.storage.authClient = {
         sign: () => {
           return Promise.resolve('signature');
-        }
+        },
       };
     });
 
