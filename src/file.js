@@ -1784,41 +1784,44 @@ File.prototype.getSignedUrl = function(config, callback) {
   authClient
     .sign(blobToSign)
     .then(signature => {
-      const query = {
-        GoogleAccessId: authClient.credentials.client_email,
-        Expires: expiresInSeconds,
-        Signature: signature,
-      };
+      const credentials = authClient.getCredentials()
+        .then(credentials => {
+          const query = {
+            GoogleAccessId: credentials.client_email,
+            Expires: expiresInSeconds,
+            Signature: signature,
+          };
 
-      if (is.string(config.responseType)) {
-        query['response-content-type'] = config.responseType;
-      }
+          if (is.string(config.responseType)) {
+            query['response-content-type'] = config.responseType;
+          }
 
-      if (is.string(config.promptSaveAs)) {
-        query['response-content-disposition'] =
-          'attachment; filename="' + config.promptSaveAs + '"';
-      }
-      if (is.string(config.responseDisposition)) {
-        query['response-content-disposition'] = config.responseDisposition;
-      }
+          if (is.string(config.promptSaveAs)) {
+            query['response-content-disposition'] =
+              'attachment; filename="' + config.promptSaveAs + '"';
+          }
+          if (is.string(config.responseDisposition)) {
+            query['response-content-disposition'] = config.responseDisposition;
+          }
 
-      if (self.generation) {
-        query.generation = self.generation;
-      }
+          if (self.generation) {
+            query.generation = self.generation;
+          }
 
-      const parsedHost = url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
-      const signedUrl = url.format({
-        protocol: parsedHost.protocol,
-        hostname: parsedHost.hostname,
-        pathname: self.bucket.name + '/' + name,
-        query: query,
+          const parsedHost = url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
+          const signedUrl = url.format({
+            protocol: parsedHost.protocol,
+            hostname: parsedHost.hostname,
+            pathname: self.bucket.name + '/' + name,
+            query: query,
+          });
+
+          callback(null, signedUrl);
+        });
+      })
+      .catch(err => {
+        callback(new SigningError(err.message));
       });
-
-      callback(null, signedUrl);
-    })
-    .catch(err => {
-      callback(new SigningError(err.message));
-    });
 };
 
 /**
