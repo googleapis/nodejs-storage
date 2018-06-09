@@ -2353,8 +2353,10 @@ describe('File', function() {
 
     beforeEach(function() {
       BUCKET.storage.authClient = {
-        credentials: {
-          client_email: 'client-email',
+        getCredentials: function() {
+          return Promise.resolve({
+            client_email: 'client-email',
+          });
         },
         sign: function() {
           return Promise.resolve('signature');
