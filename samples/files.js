@@ -131,7 +131,18 @@ function uploadFile(bucketName, filename) {
   // Uploads a local file to the bucket
   storage
     .bucket(bucketName)
-    .upload(filename)
+    .upload(filename, {
+       // Support for HTTP requests made with `Accept-Encoding: gzip`.
+      gzip: true,
+      metadata: {
+        metadata: {
+          // Enable long-lived HTTP caching headers.
+          // Use only if the contents of the file will never change.
+          // (If the contents will change, use max-age=0.)
+          'Cache-Control': 'max-age=31536000'
+        },
+      }
+    })
     .then(() => {
       console.log(`${filename} uploaded to ${bucketName}.`);
     })
