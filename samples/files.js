@@ -132,16 +132,16 @@ function uploadFile(bucketName, filename) {
   storage
     .bucket(bucketName)
     .upload(filename, {
-       // Support for HTTP requests made with `Accept-Encoding: gzip`.
+       // Support for HTTP requests made with `Accept-Encoding: gzip`
       gzip: true,
       metadata: {
         metadata: {
           // Enable long-lived HTTP caching headers.
           // Use only if the contents of the file will never change.
           // (If the contents will change, use max-age=0.)
-          'Cache-Control': 'max-age=31536000'
+          'Cache-Control': 'max-age=31536000',
         },
-      }
+      },
     })
     .then(() => {
       console.log(`${filename} uploaded to ${bucketName}.`);
