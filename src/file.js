@@ -569,8 +569,7 @@ class File extends common.ServiceObject {
         }`;
       }
 
-      this
-        .requestStream(reqOpts)
+      this.requestStream(reqOpts)
         .on('error', err => {
           throughStream.destroy(err);
         })
@@ -591,7 +590,7 @@ class File extends common.ServiceObject {
         if (err) {
           // Get error message from the body.
           rawResponseStream.pipe(
-            concat((body) => {
+            concat(body => {
               err.message = body.toString();
               throughStream.destroy(err);
             })
@@ -628,12 +627,12 @@ class File extends common.ServiceObject {
           throughStream,
           {end: false}
         );
-      }
+      };
 
       // This is hooked to the `complete` event from the request stream. This is
       // our chance to validate the data and let the user know if anything went
       // wrong.
-      const onComplete = (err) => {
+      const onComplete = err => {
         if (err) {
           throughStream.destroy(err);
           return;
@@ -695,8 +694,8 @@ class File extends common.ServiceObject {
         } else {
           throughStream.end();
         }
-      }
-    }
+      };
+    };
 
     throughStream.on('reading', makeRequest);
 
@@ -1064,7 +1063,7 @@ class File extends common.ServiceObject {
       }
 
       if (failed) {
-        this.delete((err) => {
+        this.delete(err => {
           let code;
           let message;
 
@@ -1330,12 +1329,13 @@ class File extends common.ServiceObject {
       .digest('base64');
 
     this.encryptionKeyInterceptor = {
-      request: (reqOpts) => {
+      request: reqOpts => {
         reqOpts.headers = reqOpts.headers || {};
         reqOpts.headers['x-goog-encryption-algorithm'] = 'AES256';
         reqOpts.headers['x-goog-encryption-key'] = this.encryptionKeyBase64;
-        reqOpts.headers['x-goog-encryption-key-sha256'] =
-          this.encryptionKeyHash;
+        reqOpts.headers[
+          'x-goog-encryption-key-sha256'
+        ] = this.encryptionKeyHash;
         return reqOpts;
       },
     };
@@ -1546,7 +1546,7 @@ class File extends common.ServiceObject {
       if (!is.array(options.equals[0])) {
         options.equals = [options.equals];
       }
-      options.equals.forEach((condition) => {
+      options.equals.forEach(condition => {
         if (!is.array(condition) || condition.length !== 2) {
           throw new Error('Equals condition must be an array of 2 elements.');
         }
@@ -1558,7 +1558,7 @@ class File extends common.ServiceObject {
       if (!is.array(options.startsWith[0])) {
         options.startsWith = [options.startsWith];
       }
-      options.startsWith.forEach((condition) => {
+      options.startsWith.forEach(condition => {
         if (!is.array(condition) || condition.length !== 2) {
           throw new Error(
             'StartsWith condition must be an array of 2 elements.'
@@ -2080,11 +2080,7 @@ class File extends common.ServiceObject {
 
     callback = callback || common.util.noop;
 
-    this.copy(destination, options, (
-      err,
-      destinationFile,
-      apiResponse
-    ) => {
+    this.copy(destination, options, (err, destinationFile, apiResponse) => {
       if (err) {
         callback(err, null, apiResponse);
         return;
@@ -2386,10 +2382,10 @@ class File extends common.ServiceObject {
     });
 
     uploadStream
-      .on('response', (resp) => {
+      .on('response', resp => {
         dup.emit('response', resp);
       })
-      .on('metadata', (metadata) => {
+      .on('metadata', metadata => {
         this.metadata = metadata;
       })
       .on('finish', () => {
@@ -2445,7 +2441,7 @@ class File extends common.ServiceObject {
     }
 
     common.util.makeWritableStream(dup, {
-      makeAuthenticatedRequest: (reqOpts) => {
+      makeAuthenticatedRequest: reqOpts => {
         this.request(reqOpts, (err, body, resp) => {
           if (err) {
             dup.destroy(err);
