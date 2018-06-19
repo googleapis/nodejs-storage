@@ -299,8 +299,6 @@ class File extends common.ServiceObject {
    * Another example:
    */
   copy(destination, options, callback) {
-    const self = this;
-
     const noDestinationError = new Error(
       'Destination file should have a name.'
     );
@@ -415,7 +413,7 @@ class File extends common.ServiceObject {
             options.destinationKmsKeyName = query.destinationKmsKeyName;
           }
 
-          self.copy(newFile, options, callback);
+          this.copy(newFile, options, callback);
           return;
         }
 
@@ -512,7 +510,6 @@ class File extends common.ServiceObject {
   createReadStream(options) {
     options = options || {};
 
-    const self = this;
     const rangeRequest = is.number(options.start) || is.number(options.end);
     const tailRequest = options.end < 0;
 
@@ -555,8 +552,8 @@ class File extends common.ServiceObject {
         },
       };
 
-      if (self.generation) {
-        reqOpts.qs.generation = self.generation;
+      if (this.generation) {
+        reqOpts.qs.generation = this.generation;
       }
 
       if (options.userProject) {
@@ -572,7 +569,7 @@ class File extends common.ServiceObject {
         }`;
       }
 
-      self
+      this
         .requestStream(reqOpts)
         .on('error', err => {
           throughStream.destroy(err);
@@ -649,13 +646,13 @@ class File extends common.ServiceObject {
 
         if (!refreshedMetadata) {
           refreshedMetadata = true;
-          self.getMetadata({userProject: options.userProject}, onComplete);
+          this.getMetadata({userProject: options.userProject}, onComplete);
           return;
         }
 
         const hashes = {
-          crc32c: self.metadata.crc32c,
-          md5: self.metadata.md5Hash,
+          crc32c: this.metadata.crc32c,
+          md5: this.metadata.md5Hash,
         };
 
         // If we're doing validation, assume the worst-- a data integrity
@@ -953,8 +950,6 @@ class File extends common.ServiceObject {
   createWriteStream(options) {
     options = options || {};
 
-    const self = this;
-
     options = extend({metadata: {}}, options);
 
     if (options.contentType) {
@@ -1006,7 +1001,7 @@ class File extends common.ServiceObject {
     // Wait until we've received data to determine what upload technique to use.
     stream.on('writing', () => {
       if (options.resumable === false) {
-        self.startSimpleUpload_(fileWriteStream, options);
+        this.startSimpleUpload_(fileWriteStream, options);
         return;
       }
 
@@ -1029,11 +1024,11 @@ class File extends common.ServiceObject {
           }
 
           // User didn't care, resumable or not. Fall back to simple upload.
-          self.startSimpleUpload_(fileWriteStream, options);
+          this.startSimpleUpload_(fileWriteStream, options);
           return;
         }
 
-        self.startResumableUpload_(fileWriteStream, options);
+        this.startResumableUpload_(fileWriteStream, options);
       });
     });
 
@@ -1051,7 +1046,7 @@ class File extends common.ServiceObject {
 
     // Compare our hashed version vs the completed upload's version.
     fileWriteStream.on('complete', () => {
-      const metadata = self.metadata;
+      const metadata = this.metadata;
 
       // If we're doing validation, assume the worst-- a data integrity mismatch.
       // If not, these tests won't be performed, and we can assume the best.
@@ -1069,7 +1064,7 @@ class File extends common.ServiceObject {
       }
 
       if (failed) {
-        self.delete((err) => {
+        this.delete((err) => {
           let code;
           let message;
 
@@ -1326,8 +1321,6 @@ class File extends common.ServiceObject {
    * Example of downloading an encrypted file:
    */
   setEncryptionKey(encryptionKey) {
-    const self = this;
-
     this.encryptionKey = encryptionKey;
     this.encryptionKeyBase64 = Buffer.from(encryptionKey).toString('base64');
 
@@ -1340,9 +1333,9 @@ class File extends common.ServiceObject {
       request: (reqOpts) => {
         reqOpts.headers = reqOpts.headers || {};
         reqOpts.headers['x-goog-encryption-algorithm'] = 'AES256';
-        reqOpts.headers['x-goog-encryption-key'] = self.encryptionKeyBase64;
+        reqOpts.headers['x-goog-encryption-key'] = this.encryptionKeyBase64;
         reqOpts.headers['x-goog-encryption-key-sha256'] =
-          self.encryptionKeyHash;
+          this.encryptionKeyHash;
         return reqOpts;
       },
     };
@@ -1746,7 +1739,6 @@ class File extends common.ServiceObject {
    * Another example:
    */
   getSignedUrl(config, callback) {
-    const self = this;
     const expires = new Date(config.expires);
     const expiresInSeconds = Math.round(expires / 1000); // The API expects seconds.
 
@@ -1813,8 +1805,8 @@ class File extends common.ServiceObject {
             query['response-content-disposition'] = config.responseDisposition;
           }
 
-          if (self.generation) {
-            query.generation = self.generation;
+          if (this.generation) {
+            query.generation = this.generation;
           }
 
           const parsedHost = url.parse(
@@ -1823,7 +1815,7 @@ class File extends common.ServiceObject {
           const signedUrl = url.format({
             protocol: parsedHost.protocol,
             hostname: parsedHost.hostname,
-            pathname: self.bucket.name + '/' + name,
+            pathname: this.bucket.name + '/' + name,
             query: query,
           });
 
@@ -2081,8 +2073,6 @@ class File extends common.ServiceObject {
    * Another example:
    */
   move(destination, options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -2100,7 +2090,7 @@ class File extends common.ServiceObject {
         return;
       }
 
-      self.delete(options, (err, apiResponse) => {
+      this.delete(options, (err, apiResponse) => {
         callback(err, destinationFile, apiResponse);
       });
     });
@@ -2318,8 +2308,6 @@ class File extends common.ServiceObject {
    * file.setStorageClass('regional').then(function() {});
    */
   setStorageClass(storageClass, options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -2341,7 +2329,7 @@ class File extends common.ServiceObject {
         return;
       }
 
-      self.metadata = file.metadata;
+      this.metadata = file.metadata;
 
       callback(null, apiResponse);
     });
@@ -2374,8 +2362,6 @@ class File extends common.ServiceObject {
    * @private
    */
   startResumableUpload_(dup, options) {
-    const self = this;
-
     options = extend(
       {
         metadata: {},
@@ -2404,7 +2390,7 @@ class File extends common.ServiceObject {
         dup.emit('response', resp);
       })
       .on('metadata', (metadata) => {
-        self.metadata = metadata;
+        this.metadata = metadata;
       })
       .on('finish', () => {
         dup.emit('complete');
@@ -2424,8 +2410,6 @@ class File extends common.ServiceObject {
    * @private
    */
   startSimpleUpload_(dup, options) {
-    const self = this;
-
     options = extend(
       {
         metadata: {},
@@ -2435,9 +2419,9 @@ class File extends common.ServiceObject {
 
     const reqOpts = {
       qs: {
-        name: self.name,
+        name: this.name,
       },
-      uri: `${STORAGE_UPLOAD_BASE_URL}/${self.bucket.name}/o`,
+      uri: `${STORAGE_UPLOAD_BASE_URL}/${this.bucket.name}/o`,
     };
 
     if (is.defined(this.generation)) {
@@ -2462,13 +2446,13 @@ class File extends common.ServiceObject {
 
     common.util.makeWritableStream(dup, {
       makeAuthenticatedRequest: (reqOpts) => {
-        self.request(reqOpts, (err, body, resp) => {
+        this.request(reqOpts, (err, body, resp) => {
           if (err) {
             dup.destroy(err);
             return;
           }
 
-          self.metadata = body;
+          this.metadata = body;
           dup.emit('response', resp);
           dup.emit('complete');
         });
