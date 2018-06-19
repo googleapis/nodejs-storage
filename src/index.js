@@ -85,28 +85,31 @@ const File = require('./file.js');
  *
  * @param {ClientConfig} [options] Configuration options.
  */
-function Storage(options) {
-  if (!(this instanceof Storage)) {
-    return new Storage(options);
+class Storage extends common.Service {
+  constructor(options) {
+    options = common.util.normalizeArguments(this, options);
+
+    const config = {
+      baseUrl: 'https://www.googleapis.com/storage/v1',
+      projectIdRequired: false,
+      scopes: [
+        'https://www.googleapis.com/auth/iam',
+        'https://www.googleapis.com/auth/cloud-platform',
+        'https://www.googleapis.com/auth/devstorage.full_control',
+      ],
+      packageJson: require('../package.json'),
+    };
+
+    super(config, options);
   }
-
-  options = common.util.normalizeArguments(this, options);
-
-  const config = {
-    baseUrl: 'https://www.googleapis.com/storage/v1',
-    projectIdRequired: false,
-    scopes: [
-      'https://www.googleapis.com/auth/iam',
-      'https://www.googleapis.com/auth/cloud-platform',
-      'https://www.googleapis.com/auth/devstorage.full_control',
-    ],
-    packageJson: require('../package.json'),
-  };
-
-  common.Service.call(this, config, options);
 }
 
-util.inherits(Storage, common.Service);
+// Allow creating a `Storage` instance without using the `new` keyword. (#173)
+Storage = new Proxy(Storage, {
+  apply(target, thisArg, argumentsList) {
+    return new target(...argumentsList);
+  },
+});
 
 /**
  * Cloud Storage uses access control lists (ACLs) to manage object and
