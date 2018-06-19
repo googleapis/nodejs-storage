@@ -34,7 +34,6 @@ const pumpify = require('pumpify');
 const resumableUpload = require('gcs-resumable-upload');
 const streamEvents = require('stream-events');
 const through = require('through2');
-const util = require('util');
 const xdgBasedir = require('xdg-basedir');
 const zlib = require('zlib');
 const url = require('url');
