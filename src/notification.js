@@ -239,7 +239,7 @@ class Notification extends common.ServiceObject {
       }
 
       callback(null, notification, apiResponse);
-    }
+    };
 
     this.getMetadata(options, (err, metadata) => {
       if (err) {
