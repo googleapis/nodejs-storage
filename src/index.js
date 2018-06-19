@@ -87,8 +87,6 @@ const File = require('./file.js');
  */
 class Storage extends common.Service {
   constructor(options) {
-    options = common.util.normalizeArguments(this, options);
-
     const config = {
       baseUrl: 'https://www.googleapis.com/storage/v1',
       projectIdRequired: false,
