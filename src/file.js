@@ -396,7 +396,7 @@ class File extends common.ServiceObject {
         json: options,
         headers: headers,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
@@ -543,7 +543,7 @@ class File extends common.ServiceObject {
 
     // Authenticate the request, then pipe the remote API request to the stream
     // returned to the user.
-    function makeRequest() {
+    const makeRequest = () => {
       const reqOpts = {
         forever: false,
         uri: '',
@@ -590,11 +590,11 @@ class File extends common.ServiceObject {
       //      which will return the bytes from the source without decompressing
       //      gzip'd content. We then send it through decompressed, if applicable,
       //      to the user.
-      function onResponse(err, body, rawResponseStream) {
+      const onResponse = (err, body, rawResponseStream) => {
         if (err) {
           // Get error message from the body.
           rawResponseStream.pipe(
-            concat(function(body) {
+            concat((body) => {
               err.message = body.toString();
               throughStream.destroy(err);
             })
@@ -636,7 +636,7 @@ class File extends common.ServiceObject {
       // This is hooked to the `complete` event from the request stream. This is
       // our chance to validate the data and let the user know if anything went
       // wrong.
-      function onComplete(err) {
+      const onComplete = (err) => {
         if (err) {
           throughStream.destroy(err);
           return;
@@ -1004,7 +1004,7 @@ class File extends common.ServiceObject {
     );
 
     // Wait until we've received data to determine what upload technique to use.
-    stream.on('writing', function() {
+    stream.on('writing', () => {
       if (options.resumable === false) {
         self.startSimpleUpload_(fileWriteStream, options);
         return;
@@ -1014,7 +1014,7 @@ class File extends common.ServiceObject {
       // https://github.com/yeoman/configstore/blob/f09f067e50e6a636cfc648a6fc36a522062bd49d/index.js#L11
       const configDir = xdgBasedir.config || os.tmpdir();
 
-      fs.access(configDir, fs.W_OK, function(err) {
+      fs.access(configDir, fs.W_OK, err => {
         if (err) {
           if (options.resumable) {
             const error = new ResumableUploadError(
@@ -1045,12 +1045,12 @@ class File extends common.ServiceObject {
     //
     // Reference for tracking when we can use a non-hack solution:
     // https://github.com/nodejs/node/pull/2314
-    fileWriteStream.on('prefinish', function() {
+    fileWriteStream.on('prefinish', () => {
       stream.cork();
     });
 
     // Compare our hashed version vs the completed upload's version.
-    fileWriteStream.on('complete', function() {
+    fileWriteStream.on('complete', () => {
       const metadata = self.metadata;
 
       // If we're doing validation, assume the worst-- a data integrity mismatch.
@@ -1069,7 +1069,7 @@ class File extends common.ServiceObject {
       }
 
       if (failed) {
-        self.delete(function(err) {
+        self.delete((err) => {
           let code;
           let message;
 
@@ -1337,7 +1337,7 @@ class File extends common.ServiceObject {
       .digest('base64');
 
     this.encryptionKeyInterceptor = {
-      request: function(reqOpts) {
+      request: (reqOpts) => {
         reqOpts.headers = reqOpts.headers || {};
         reqOpts.headers['x-goog-encryption-algorithm'] = 'AES256';
         reqOpts.headers['x-goog-encryption-key'] = self.encryptionKeyBase64;
@@ -1553,7 +1553,7 @@ class File extends common.ServiceObject {
       if (!is.array(options.equals[0])) {
         options.equals = [options.equals];
       }
-      options.equals.forEach(function(condition) {
+      options.equals.forEach((condition) => {
         if (!is.array(condition) || condition.length !== 2) {
           throw new Error('Equals condition must be an array of 2 elements.');
         }
@@ -1565,7 +1565,7 @@ class File extends common.ServiceObject {
       if (!is.array(options.startsWith[0])) {
         options.startsWith = [options.startsWith];
       }
-      options.startsWith.forEach(function(condition) {
+      options.startsWith.forEach((condition) => {
         if (!is.array(condition) || condition.length !== 2) {
           throw new Error(
             'StartsWith condition must be an array of 2 elements.'
@@ -1951,7 +1951,7 @@ class File extends common.ServiceObject {
         entity: 'allUsers',
         role: 'READER',
       },
-      function(err, resp) {
+      (err, resp) => {
         callback(err, resp);
       }
     );
@@ -2090,17 +2090,17 @@ class File extends common.ServiceObject {
 
     callback = callback || common.util.noop;
 
-    this.copy(destination, options, function(
+    this.copy(destination, options, (
       err,
       destinationFile,
       apiResponse
-    ) {
+    ) => {
       if (err) {
         callback(err, null, apiResponse);
         return;
       }
 
-      self.delete(options, function(err, apiResponse) {
+      self.delete(options, (err, apiResponse) => {
         callback(err, destinationFile, apiResponse);
       });
     });
@@ -2330,12 +2330,12 @@ class File extends common.ServiceObject {
     // In case we get input like `storageClass`, convert to `storage_class`.
     options.storageClass = storageClass
       .replace(/-/g, '_')
-      .replace(/([a-z])([A-Z])/g, function(_, low, up) {
+      .replace(/([a-z])([A-Z])/g, (_, low, up) => {
         return low + '_' + up;
       })
       .toUpperCase();
 
-    this.copy(this, options, function(err, file, apiResponse) {
+    this.copy(this, options, (err, file, apiResponse) => {
       if (err) {
         callback(err, apiResponse);
         return;
@@ -2400,13 +2400,13 @@ class File extends common.ServiceObject {
     });
 
     uploadStream
-      .on('response', function(resp) {
+      .on('response', (resp) => {
         dup.emit('response', resp);
       })
-      .on('metadata', function(metadata) {
+      .on('metadata', (metadata) => {
         self.metadata = metadata;
       })
-      .on('finish', function() {
+      .on('finish', () => {
         dup.emit('complete');
       });
 
@@ -2461,8 +2461,8 @@ class File extends common.ServiceObject {
     }
 
     common.util.makeWritableStream(dup, {
-      makeAuthenticatedRequest: function(reqOpts) {
-        self.request(reqOpts, function(err, body, resp) {
+      makeAuthenticatedRequest: (reqOpts) => {
+        self.request(reqOpts, (err, body, resp) => {
           if (err) {
             dup.destroy(err);
             return;
