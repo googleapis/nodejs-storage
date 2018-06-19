@@ -352,8 +352,6 @@ class Bucket extends common.ServiceObject {
       throw new Error('A destination file must be specified.');
     }
 
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -364,7 +362,7 @@ class Bucket extends common.ServiceObject {
         return file;
       }
 
-      return self.file(file);
+      return this.file(file);
     };
 
     sources = sources.map(convertToFile);
@@ -467,8 +465,6 @@ class Bucket extends common.ServiceObject {
    * });
    */
   createChannel(id, config, options, callback) {
-    const self = this;
-
     if (!is.string(id)) {
       throw new Error('An ID is required to create a channel.');
     }
@@ -502,7 +498,7 @@ class Bucket extends common.ServiceObject {
         }
 
         const resourceId = apiResponse.resourceId;
-        const channel = self.storage.channel(id, resourceId);
+        const channel = this.storage.channel(id, resourceId);
 
         channel.metadata = apiResponse;
 
@@ -597,8 +593,6 @@ class Bucket extends common.ServiceObject {
    * Another example:
    */
   createNotification(topic, options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -644,7 +638,7 @@ class Bucket extends common.ServiceObject {
           return;
         }
 
-        const notification = self.notification(apiResponse.id);
+        const notification = this.notification(apiResponse.id);
 
         notification.metadata = apiResponse;
 
@@ -868,8 +862,6 @@ class Bucket extends common.ServiceObject {
    * });
    */
   deleteLabels(labels, callback) {
-    const self = this;
-
     if (is.fn(labels)) {
       callback = labels;
       labels = [];
@@ -883,7 +875,7 @@ class Bucket extends common.ServiceObject {
         return nullLabelMap;
       }, {});
 
-      self.setLabels(nullLabelMap, callback);
+      this.setLabels(nullLabelMap, callback);
     };
 
     if (labels.length === 0) {
@@ -1137,8 +1129,6 @@ class Bucket extends common.ServiceObject {
    * });
    */
   get(options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1152,7 +1142,7 @@ class Bucket extends common.ServiceObject {
     const onCreate = (err, bucket, apiResponse) => {
       if (err) {
         if (err.code === 409) {
-          self.get(options, callback);
+          this.get(options, callback);
           return;
         }
 
@@ -1174,7 +1164,7 @@ class Bucket extends common.ServiceObject {
 
           args.push(onCreate);
 
-          self.create.apply(self, args);
+          this.create.apply(this, args);
           return;
         }
 
@@ -1182,7 +1172,7 @@ class Bucket extends common.ServiceObject {
         return;
       }
 
-      callback(null, self, metadata);
+      callback(null, this, metadata);
     });
   }
 
@@ -1288,8 +1278,6 @@ class Bucket extends common.ServiceObject {
    * Example of listing files, filtered by a prefix:
    */
   getFiles(query, callback) {
-    const self = this;
-
     if (!callback) {
       callback = query;
       query = {};
@@ -1324,7 +1312,7 @@ class Bucket extends common.ServiceObject {
             options.kmsKeyName = file.kmsKeyName;
           }
 
-          const fileInstance = self.file(file.name, options);
+          const fileInstance = this.file(file.name, options);
           fileInstance.metadata = file;
 
           return fileInstance;
@@ -1441,8 +1429,6 @@ class Bucket extends common.ServiceObject {
    * Example of retrieving the requester pays status of a bucket:
    */
   getMetadata(options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1459,9 +1445,9 @@ class Bucket extends common.ServiceObject {
           return;
         }
 
-        self.metadata = resp;
+        this.metadata = resp;
 
-        callback(null, self.metadata, resp);
+        callback(null, this.metadata, resp);
       }
     );
   }
@@ -1512,8 +1498,6 @@ class Bucket extends common.ServiceObject {
    * Another example:
    */
   getNotifications(options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1531,7 +1515,7 @@ class Bucket extends common.ServiceObject {
         }
 
         const notifications = arrify(resp.items).map(notification => {
-          const notificationInstance = self.notification(notification.id);
+          const notificationInstance = this.notification(notification.id);
           notificationInstance.metadata = notification;
           return notificationInstance;
         });
@@ -1627,8 +1611,6 @@ class Bucket extends common.ServiceObject {
    * });
    */
   makePrivate(options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1646,7 +1628,7 @@ class Bucket extends common.ServiceObject {
         query.userProject = options.userProject;
       }
 
-      self.setMetadata(
+      this.setMetadata(
         {
           // You aren't allowed to set both predefinedAcl & acl properties on a
           // bucket so acl must explicitly be nullified.
@@ -1663,7 +1645,7 @@ class Bucket extends common.ServiceObject {
         return;
       }
 
-      self.makeAllFilesPublicPrivate_(options, done);
+      this.makeAllFilesPublicPrivate_(options, done);
     };
 
     async.series([setPredefinedAcl, makeFilesPrivate], callback);
@@ -1753,8 +1735,6 @@ class Bucket extends common.ServiceObject {
    * });
    */
   makePublic(options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1765,7 +1745,7 @@ class Bucket extends common.ServiceObject {
 
     const addAclPermissions = done => {
       // Allow reading bucket contents while preserving original permissions.
-      self.acl.add(
+      this.acl.add(
         {
           entity: 'allUsers',
           role: 'READER',
@@ -1775,7 +1755,7 @@ class Bucket extends common.ServiceObject {
     };
 
     const addDefaultAclPermissions = done => {
-      self.acl.default.add(
+      this.acl.default.add(
         {
           entity: 'allUsers',
           role: 'READER',
@@ -1790,7 +1770,7 @@ class Bucket extends common.ServiceObject {
         return;
       }
 
-      self.makeAllFilesPublicPrivate_(options, done);
+      this.makeAllFilesPublicPrivate_(options, done);
     };
 
     async.series(
@@ -1953,8 +1933,6 @@ class Bucket extends common.ServiceObject {
    * });
    */
   setMetadata(metadata, options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1975,7 +1953,7 @@ class Bucket extends common.ServiceObject {
           return;
         }
 
-        self.metadata = resp;
+        this.metadata = resp;
 
         callback(null, resp);
       }
