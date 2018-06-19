@@ -359,6 +359,14 @@ class Bucket extends common.ServiceObject {
       options = {};
     }
 
+    const convertToFile = file => {
+      if (file instanceof File) {
+        return file;
+      }
+
+      return self.file(file);
+    };
+
     sources = sources.map(convertToFile);
     destination = convertToFile(destination);
     callback = callback || common.util.noop;
@@ -380,7 +388,7 @@ class Bucket extends common.ServiceObject {
           destination: {
             contentType: destination.metadata.contentType,
           },
-          sourceObjects: sources.map(function(source) {
+          sourceObjects: sources.map(source => {
             const sourceObject = {
               name: source.name,
             };
@@ -394,7 +402,7 @@ class Bucket extends common.ServiceObject {
         },
         qs: options,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
@@ -403,14 +411,6 @@ class Bucket extends common.ServiceObject {
         callback(null, destination, resp);
       }
     );
-
-    function convertToFile(file) {
-      if (file instanceof File) {
-        return file;
-      }
-
-      return self.file(file);
-    }
   }
 
   /**
@@ -495,7 +495,7 @@ class Bucket extends common.ServiceObject {
         ),
         qs: options,
       },
-      function(err, apiResponse) {
+      (err, apiResponse) => {
         if (err) {
           callback(err, null, apiResponse);
           return;
@@ -638,7 +638,7 @@ class Bucket extends common.ServiceObject {
         json: snakeize(body),
         qs: query,
       },
-      function(err, apiResponse) {
+      (err, apiResponse) => {
         if (err) {
           callback(err, null, apiResponse);
           return;
@@ -786,14 +786,14 @@ class Bucket extends common.ServiceObject {
     const MAX_PARALLEL_LIMIT = 10;
     const errors = [];
 
-    this.getFiles(query, function(err, files) {
+    this.getFiles(query, (err, files) => {
       if (err) {
         callback(err);
         return;
       }
 
-      function deleteFile(file, callback) {
-        file.delete(query, function(err) {
+      const deleteFile = (file, callback) => {
+        file.delete(query, err => {
           if (err) {
             if (query.force) {
               errors.push(err);
@@ -807,10 +807,10 @@ class Bucket extends common.ServiceObject {
 
           callback();
         });
-      }
+      };
 
       // Iterate through each file and attempt to delete it.
-      async.eachLimit(files, MAX_PARALLEL_LIMIT, deleteFile, function(err) {
+      async.eachLimit(files, MAX_PARALLEL_LIMIT, deleteFile, err => {
         if (err || errors.length > 0) {
           callback(err || errors);
           return;
@@ -877,8 +877,17 @@ class Bucket extends common.ServiceObject {
 
     labels = arrify(labels);
 
+    const deleteLabels = labels => {
+      const nullLabelMap = labels.reduce((nullLabelMap, labelKey) => {
+        nullLabelMap[labelKey] = null;
+        return nullLabelMap;
+      }, {});
+
+      self.setLabels(nullLabelMap, callback);
+    };
+
     if (labels.length === 0) {
-      this.getLabels(function(err, labels) {
+      this.getLabels((err, labels) => {
         if (err) {
           callback(err);
           return;
@@ -888,15 +897,6 @@ class Bucket extends common.ServiceObject {
       });
     } else {
       deleteLabels(labels);
-    }
-
-    function deleteLabels(labels) {
-      const nullLabelMap = labels.reduce(function(nullLabelMap, labelKey) {
-        nullLabelMap[labelKey] = null;
-        return nullLabelMap;
-      }, {});
-
-      self.setLabels(nullLabelMap, callback);
     }
   }
 
@@ -1049,7 +1049,7 @@ class Bucket extends common.ServiceObject {
 
     options = options || {};
 
-    this.get(options, function(err) {
+    this.get(options, err => {
       if (err) {
         if (err.code === 404) {
           callback(null, false);
@@ -1149,7 +1149,7 @@ class Bucket extends common.ServiceObject {
     const autoCreate = options.autoCreate;
     delete options.autoCreate;
 
-    function onCreate(err, bucket, apiResponse) {
+    const onCreate = (err, bucket, apiResponse) => {
       if (err) {
         if (err.code === 409) {
           self.get(options, callback);
@@ -1161,9 +1161,9 @@ class Bucket extends common.ServiceObject {
       }
 
       callback(null, bucket, apiResponse);
-    }
+    };
 
-    this.getMetadata(options, function(err, metadata) {
+    this.getMetadata(options, (err, metadata) => {
       if (err) {
         if (err.code === 404 && autoCreate) {
           const args = [];
@@ -1307,13 +1307,13 @@ class Bucket extends common.ServiceObject {
         uri: '/o',
         qs: query,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, null, resp);
           return;
         }
 
-        const files = arrify(resp.items).map(function(file) {
+        const files = arrify(resp.items).map(file => {
           const options = {};
 
           if (query.versions) {
@@ -1388,7 +1388,7 @@ class Bucket extends common.ServiceObject {
       options = {};
     }
 
-    this.getMetadata(options, function(err, metadata) {
+    this.getMetadata(options, (err, metadata) => {
       if (err) {
         callback(err);
         return;
@@ -1453,7 +1453,7 @@ class Bucket extends common.ServiceObject {
         uri: '',
         qs: options,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
@@ -1524,13 +1524,13 @@ class Bucket extends common.ServiceObject {
         uri: '/notificationConfigs',
         qs: options,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
         }
 
-        const notifications = arrify(resp.items).map(function(notification) {
+        const notifications = arrify(resp.items).map(notification => {
           const notificationInstance = self.notification(notification.id);
           notificationInstance.metadata = notification;
           return notificationInstance;
@@ -1637,9 +1637,7 @@ class Bucket extends common.ServiceObject {
     options = options || {};
     options.private = true;
 
-    async.series([setPredefinedAcl, makeFilesPrivate], callback);
-
-    function setPredefinedAcl(done) {
+    const setPredefinedAcl = done => {
       const query = {
         predefinedAcl: 'projectPrivate',
       };
@@ -1657,16 +1655,18 @@ class Bucket extends common.ServiceObject {
         query,
         done
       );
-    }
+    };
 
-    function makeFilesPrivate(done) {
+    const makeFilesPrivate = done => {
       if (!options.includeFiles) {
         done();
         return;
       }
 
       self.makeAllFilesPublicPrivate_(options, done);
-    }
+    };
+
+    async.series([setPredefinedAcl, makeFilesPrivate], callback);
   }
 
   /**
@@ -1763,12 +1763,7 @@ class Bucket extends common.ServiceObject {
     options = options || {};
     options.public = true;
 
-    async.series(
-      [addAclPermissions, addDefaultAclPermissions, makeFilesPublic],
-      callback
-    );
-
-    function addAclPermissions(done) {
+    const addAclPermissions = done => {
       // Allow reading bucket contents while preserving original permissions.
       self.acl.add(
         {
@@ -1777,9 +1772,9 @@ class Bucket extends common.ServiceObject {
         },
         done
       );
-    }
+    };
 
-    function addDefaultAclPermissions(done) {
+    const addDefaultAclPermissions = done => {
       self.acl.default.add(
         {
           entity: 'allUsers',
@@ -1787,16 +1782,21 @@ class Bucket extends common.ServiceObject {
         },
         done
       );
-    }
+    };
 
-    function makeFilesPublic(done) {
+    const makeFilesPublic = done => {
       if (!options.includeFiles) {
         done();
         return;
       }
 
       self.makeAllFilesPublicPrivate_(options, done);
-    }
+    };
+
+    async.series(
+      [addAclPermissions, addDefaultAclPermissions, makeFilesPublic],
+      callback
+    );
   }
 
   /**
@@ -1969,7 +1969,7 @@ class Bucket extends common.ServiceObject {
         json: metadata,
         qs: options,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, resp);
           return;
@@ -2021,7 +2021,7 @@ class Bucket extends common.ServiceObject {
     // In case we get input like `storageClass`, convert to `storage_class`.
     storageClass = storageClass
       .replace(/-/g, '_')
-      .replace(/([a-z])([A-Z])/g, function(_, low, up) {
+      .replace(/([a-z])([A-Z])/g, (_, low, up) => {
         return low + '_' + up;
       })
       .toUpperCase();
@@ -2319,7 +2319,7 @@ class Bucket extends common.ServiceObject {
     if (is.boolean(options.resumable)) {
       upload();
     } else if (isURL) {
-      request.head(requestOptions, function(err, resp) {
+      request.head(requestOptions, (err, resp) => {
         if (err) {
           callback(err);
           return;
@@ -2335,7 +2335,7 @@ class Bucket extends common.ServiceObject {
       });
     } else {
       // Determine if the upload should be resumable if it's over the threshold.
-      fs.stat(pathString, function(err, fd) {
+      fs.stat(pathString, (err, fd) => {
         if (err) {
           callback(err);
           return;
@@ -2360,7 +2360,7 @@ class Bucket extends common.ServiceObject {
         .on('error', callback)
         .pipe(newFile.createWriteStream(options))
         .on('error', callback)
-        .on('finish', function() {
+        .on('finish', () => {
           callback(null, newFile, newFile.metadata);
         });
     }
@@ -2390,20 +2390,14 @@ class Bucket extends common.ServiceObject {
     const errors = [];
     const updatedFiles = [];
 
-    this.getFiles(options, function(err, files) {
+    this.getFiles(options, (err, files) => {
       if (err) {
         callback(err);
         return;
       }
 
-      function processFile(file, callback) {
-        if (options.public) {
-          file.makePublic(processedCallback);
-        } else if (options.private) {
-          file.makePrivate(options, processedCallback);
-        }
-
-        function processedCallback(err) {
+      const processFile = (file, callback) => {
+        const processedCallback = err => {
           if (err) {
             if (options.force) {
               errors.push(err);
@@ -2417,11 +2411,17 @@ class Bucket extends common.ServiceObject {
 
           updatedFiles.push(file);
           callback();
+        };
+
+        if (options.public) {
+          file.makePublic(processedCallback);
+        } else if (options.private) {
+          file.makePrivate(options, processedCallback);
         }
-      }
+      };
 
       // Iterate through each file and make it public or private.
-      async.eachLimit(files, MAX_PARALLEL_LIMIT, processFile, function(err) {
+      async.eachLimit(files, MAX_PARALLEL_LIMIT, processFile, err => {
         if (err || errors.length > 0) {
           callback(err || errors, updatedFiles);
           return;
