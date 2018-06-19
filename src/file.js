@@ -96,88 +96,87 @@ const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
  *
  * const file = myBucket.file('my-file');
  */
-function File(bucket, name, options) {
-  options = options || {};
+class File extends common.ServiceObject {
+  constructor(bucket, name, options) {
+    name = name.replace(/^\/+/, '');
 
-  this.bucket = bucket;
-  this.storage = bucket.parent;
+    super({
+      parent: bucket,
+      baseUrl: '/o',
+      id: encodeURIComponent(name),
+    });
 
-  this.kmsKeyName = options.kmsKeyName;
-  this.userProject = options.userProject || bucket.userProject;
+    options = options || {};
 
-  Object.defineProperty(this, 'name', {
-    enumerable: true,
-    value: name.replace(/^\/+/, ''), // Remove leading slashes.
-  });
+    this.bucket = bucket;
+    this.storage = bucket.parent;
 
-  const generation = parseInt(options.generation, 10);
+    this.kmsKeyName = options.kmsKeyName;
+    this.userProject = options.userProject || bucket.userProject;
 
-  if (!isNaN(generation)) {
-    this.generation = generation;
-    this.requestQueryObject = {
-      generation: this.generation,
-    };
+    this.name = name;
+
+    const generation = parseInt(options.generation, 10);
+
+    if (!isNaN(generation)) {
+      this.generation = generation;
+      this.requestQueryObject = {
+        generation: this.generation,
+      };
+    }
+
+    if (options.encryptionKey) {
+      this.setEncryptionKey(options.encryptionKey);
+    }
+
+    /**
+     * Cloud Storage uses access control lists (ACLs) to manage object and
+     * bucket access. ACLs are the mechanism you use to share objects with other
+     * users and allow other users to access your buckets and objects.
+     *
+     * An ACL consists of one or more entries, where each entry grants permissions
+     * to an entity. Permissions define the actions that can be performed against
+     * an object or bucket (for example, `READ` or `WRITE`); the entity defines
+     * who the permission applies to (for example, a specific user or group of
+     * users).
+     *
+     * The `acl` object on a File instance provides methods to get you a list of
+     * the ACLs defined on your bucket, as well as set, update, and delete them.
+     *
+     * @see [About Access Control lists]{@link http://goo.gl/6qBBPO}
+     *
+     * @name File#acl
+     * @mixes Acl
+     *
+     * @example
+     * const storage = require('@google-cloud/storage')();
+     * const myBucket = storage.bucket('my-bucket');
+     *
+     * const file = myBucket.file('my-file');
+     * //-
+     * // Make a file publicly readable.
+     * //-
+     * const options = {
+     *   entity: 'allUsers',
+     *   role: storage.acl.READER_ROLE
+     * };
+     *
+     * file.acl.add(options, function(err, aclObject) {});
+     *
+     * //-
+     * // If the callback is omitted, we'll return a Promise.
+     * //-
+     * file.acl.add(options).then(function(data) {
+     *   const aclObject = data[0];
+     *   const apiResponse = data[1];
+     * });
+     */
+    this.acl = new Acl({
+      request: this.request.bind(this),
+      pathPrefix: '/acl',
+    });
   }
-
-  common.ServiceObject.call(this, {
-    parent: bucket,
-    baseUrl: '/o',
-    id: encodeURIComponent(this.name),
-  });
-
-  if (options.encryptionKey) {
-    this.setEncryptionKey(options.encryptionKey);
-  }
-
-  /**
-   * Cloud Storage uses access control lists (ACLs) to manage object and
-   * bucket access. ACLs are the mechanism you use to share objects with other
-   * users and allow other users to access your buckets and objects.
-   *
-   * An ACL consists of one or more entries, where each entry grants permissions
-   * to an entity. Permissions define the actions that can be performed against
-   * an object or bucket (for example, `READ` or `WRITE`); the entity defines
-   * who the permission applies to (for example, a specific user or group of
-   * users).
-   *
-   * The `acl` object on a File instance provides methods to get you a list of
-   * the ACLs defined on your bucket, as well as set, update, and delete them.
-   *
-   * @see [About Access Control lists]{@link http://goo.gl/6qBBPO}
-   *
-   * @name File#acl
-   * @mixes Acl
-   *
-   * @example
-   * const storage = require('@google-cloud/storage')();
-   * const myBucket = storage.bucket('my-bucket');
-   *
-   * const file = myBucket.file('my-file');
-   * //-
-   * // Make a file publicly readable.
-   * //-
-   * const options = {
-   *   entity: 'allUsers',
-   *   role: storage.acl.READER_ROLE
-   * };
-   *
-   * file.acl.add(options, function(err, aclObject) {});
-   *
-   * //-
-   * // If the callback is omitted, we'll return a Promise.
-   * //-
-   * file.acl.add(options).then(function(data) {
-   *   const aclObject = data[0];
-   *   const apiResponse = data[1];
-   * });
-   */
-  this.acl = new Acl({
-    request: this.request.bind(this),
-    pathPrefix: '/acl',
-  });
 }
-
-util.inherits(File, common.ServiceObject);
 
 /**
  * @typedef {array} CopyResponse
