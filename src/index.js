@@ -19,7 +19,6 @@
 const arrify = require('arrify');
 const common = require('@google-cloud/common');
 const extend = require('extend');
-const util = require('util');
 
 const Bucket = require('./bucket.js');
 const Channel = require('./channel.js');
@@ -446,10 +445,11 @@ class Storage extends common.Service {
         callback(null, buckets, nextQuery, resp);
       }
     );
-  };
+  }
 }
 
 // Allow creating a `Storage` instance without using the `new` keyword. (#173)
+// eslint-disable-next-line no-class-assign
 Storage = new Proxy(Storage, {
   apply(target, thisArg, argumentsList) {
     return new target(...argumentsList);
