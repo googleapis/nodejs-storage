@@ -99,6 +99,43 @@ class Storage extends common.Service {
     };
 
     super(config, options);
+
+    /**
+     * Reference to {@link Storage.acl}.
+     *
+     * @name Storage#acl
+     * @see Storage.acl
+     */
+    this.acl = Storage.acl;
+
+    /**
+     * Get {@link Bucket} objects for all of the buckets in your project as
+     * a readable object stream.
+     *
+     * @method Storage#getBucketsStream
+     * @param {GetBucketsRequest} [query] Query object for listing buckets.
+     * @returns {ReadableStream} A readable stream that emits {@link Bucket} instances.
+     *
+     * @example
+     * storage.getBucketsStream()
+     *   .on('error', console.error)
+     *   .on('data', function(bucket) {
+     *     // bucket is a Bucket object.
+     *   })
+     *   .on('end', function() {
+     *     // All buckets retrieved.
+     *   });
+     *
+     * //-
+     * // If you anticipate many results, you can end a stream early to prevent
+     * // unnecessary processing and API requests.
+     * //-
+     * storage.getBucketsStream()
+     *   .on('data', function(bucket) {
+     *     this.end();
+     *   });
+     */
+    this.getBucketsStream = common.paginator.streamify('getBuckets');
   }
 
   /**
@@ -479,43 +516,6 @@ Storage.acl = {
   READER_ROLE: 'READER',
   WRITER_ROLE: 'WRITER',
 };
-
-/**
- * Reference to {@link Storage.acl}.
- *
- * @name Storage#acl
- * @see Storage.acl
- */
-Storage.prototype.acl = Storage.acl;
-
-/**
- * Get {@link Bucket} objects for all of the buckets in your project as
- * a readable object stream.
- *
- * @method Storage#getBucketsStream
- * @param {GetBucketsRequest} [query] Query object for listing buckets.
- * @returns {ReadableStream} A readable stream that emits {@link Bucket} instances.
- *
- * @example
- * storage.getBucketsStream()
- *   .on('error', console.error)
- *   .on('data', function(bucket) {
- *     // bucket is a Bucket object.
- *   })
- *   .on('end', function() {
- *     // All buckets retrieved.
- *   });
- *
- * //-
- * // If you anticipate many results, you can end a stream early to prevent
- * // unnecessary processing and API requests.
- * //-
- * storage.getBucketsStream()
- *   .on('data', function(bucket) {
- *     this.end();
- *   });
- */
-Storage.prototype.getBucketsStream = common.paginator.streamify('getBuckets');
 
 /*! Developer Documentation
  *
