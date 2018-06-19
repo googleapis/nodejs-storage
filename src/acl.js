@@ -42,16 +42,14 @@ class AclRoleAccessorMethods {
   }
 
   _assignAccessMethods(role) {
-    const self = this;
-
     const accessMethods = AclRoleAccessorMethods.accessMethods;
     const entities = AclRoleAccessorMethods.entities;
     const roleGroup = role.toLowerCase() + 's';
 
-    this[roleGroup] = entities.reduce(function(acc, entity) {
+    this[roleGroup] = entities.reduce((acc, entity) => {
       const isPrefix = entity.charAt(entity.length - 1) === '-';
 
-      accessMethods.forEach(function(accessMethod) {
+      accessMethods.forEach((accessMethod) => {
         let method = accessMethod + entity[0].toUpperCase() + entity.substr(1);
 
         if (isPrefix) {
@@ -60,7 +58,7 @@ class AclRoleAccessorMethods {
 
         // Wrap the parent accessor method (e.g. `add` or `delete`) to avoid the
         // more complex API of specifying an `entity` and `role`.
-        acc[method] = function(entityId, options, callback) {
+        acc[method] = (entityId, options, callback) => {
           let apiEntity;
 
           if (is.fn(options)) {
@@ -92,7 +90,7 @@ class AclRoleAccessorMethods {
             args.push(callback);
           }
 
-          return self[accessMethod].apply(self, args);
+          return this[accessMethod].apply(this, args);
         };
       });
 
@@ -387,8 +385,6 @@ class Acl extends AclRoleAccessorMethods {
    * Example of adding a default owner to a bucket:
    */
   add(options, callback) {
-    const self = this;
-
     const query = {};
 
     if (options.generation) {
@@ -409,13 +405,13 @@ class Acl extends AclRoleAccessorMethods {
           role: options.role.toUpperCase(),
         },
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
         }
 
-        callback(null, self.makeAclObject_(resp), resp);
+        callback(null, this.makeAclObject_(resp), resp);
       }
     );
   }
@@ -497,7 +493,7 @@ class Acl extends AclRoleAccessorMethods {
         uri: '/' + encodeURIComponent(options.entity),
         qs: query,
       },
-      function(err, resp) {
+      (err, resp) => {
         callback(err, resp);
       }
     );
@@ -587,7 +583,6 @@ class Acl extends AclRoleAccessorMethods {
    * Example of printing a bucket's ACL for a specific user:
    */
   get(options, callback) {
-    const self = this;
     let path = '';
     const query = {};
 
@@ -611,7 +606,7 @@ class Acl extends AclRoleAccessorMethods {
         uri: path,
         qs: query,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
@@ -620,9 +615,9 @@ class Acl extends AclRoleAccessorMethods {
         let results;
 
         if (resp.items) {
-          results = arrify(resp.items).map(self.makeAclObject_);
+          results = arrify(resp.items).map(this.makeAclObject_);
         } else {
-          results = self.makeAclObject_(resp);
+          results = this.makeAclObject_(resp);
         }
 
         callback(null, results, resp);
@@ -688,8 +683,6 @@ class Acl extends AclRoleAccessorMethods {
    * });
    */
   update(options, callback) {
-    const self = this;
-
     const query = {};
 
     if (options.generation) {
@@ -709,13 +702,13 @@ class Acl extends AclRoleAccessorMethods {
           role: options.role.toUpperCase(),
         },
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
         }
 
-        callback(null, self.makeAclObject_(resp), resp);
+        callback(null, this.makeAclObject_(resp), resp);
       }
     );
   }
