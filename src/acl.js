@@ -49,7 +49,7 @@ class AclRoleAccessorMethods {
     this[roleGroup] = entities.reduce((acc, entity) => {
       const isPrefix = entity.charAt(entity.length - 1) === '-';
 
-      accessMethods.forEach((accessMethod) => {
+      accessMethods.forEach(accessMethod => {
         let method = accessMethod + entity[0].toUpperCase() + entity.substr(1);
 
         if (isPrefix) {
