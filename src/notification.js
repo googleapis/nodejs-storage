@@ -219,8 +219,6 @@ class Notification extends common.ServiceObject {
    * });
    */
   get(options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -229,10 +227,10 @@ class Notification extends common.ServiceObject {
     const autoCreate = options.autoCreate;
     delete options.autoCreate;
 
-    function onCreate(err, notification, apiResponse) {
+    const onCreate = (err, notification, apiResponse) => {
       if (err) {
         if (err.code === 409) {
-          self.get(options, callback);
+          this.get(options, callback);
           return;
         }
 
@@ -243,7 +241,7 @@ class Notification extends common.ServiceObject {
       callback(null, notification, apiResponse);
     }
 
-    this.getMetadata(options, function(err, metadata) {
+    this.getMetadata(options, (err, metadata) => {
       if (err) {
         if (err.code === 404 && autoCreate) {
           const args = [];
@@ -254,7 +252,7 @@ class Notification extends common.ServiceObject {
 
           args.push(onCreate);
 
-          self.create.apply(self, args);
+          this.create.apply(this, args);
           return;
         }
 
@@ -262,7 +260,7 @@ class Notification extends common.ServiceObject {
         return;
       }
 
-      callback(null, self, metadata);
+      callback(null, this, metadata);
     });
   }
 
@@ -308,8 +306,6 @@ class Notification extends common.ServiceObject {
    * Another example:
    */
   getMetadata(options, callback) {
-    const self = this;
-
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -320,15 +316,15 @@ class Notification extends common.ServiceObject {
         uri: '',
         qs: options,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
         }
 
-        self.metadata = resp;
+        this.metadata = resp;
 
-        callback(null, self.metadata, resp);
+        callback(null, this.metadata, resp);
       }
     );
   }
