@@ -269,8 +269,6 @@ class Storage extends common.Service {
    * Another example:
    */
   createBucket(name, metadata, callback) {
-    const self = this;
-
     if (!name) {
       throw new Error('A name is required to create a bucket.');
     }
@@ -292,7 +290,7 @@ class Storage extends common.Service {
       regional: 'REGIONAL',
     };
 
-    Object.keys(storageClasses).forEach(function(storageClass) {
+    Object.keys(storageClasses).forEach((storageClass) => {
       if (body[storageClass]) {
         body.storageClass = storageClasses[storageClass];
         delete body[storageClass];
@@ -322,13 +320,13 @@ class Storage extends common.Service {
         qs: query,
         json: body,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
         }
 
-        const bucket = self.bucket(name);
+        const bucket = this.bucket(name);
         bucket.metadata = resp;
 
         callback(null, bucket, resp);
@@ -411,8 +409,6 @@ class Storage extends common.Service {
    * Another example:
    */
   getBuckets(query, callback) {
-    const self = this;
-
     if (!callback) {
       callback = query;
       query = {};
@@ -425,14 +421,14 @@ class Storage extends common.Service {
         uri: '/b',
         qs: query,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, null, resp);
           return;
         }
 
-        const buckets = arrify(resp.items).map(function(bucket) {
-          const bucketInstance = self.bucket(bucket.id);
+        const buckets = arrify(resp.items).map((bucket) => {
+          const bucketInstance = this.bucket(bucket.id);
           bucketInstance.metadata = bucket;
           return bucketInstance;
         });
