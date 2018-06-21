@@ -290,7 +290,7 @@ class Storage extends common.Service {
       regional: 'REGIONAL',
     };
 
-    Object.keys(storageClasses).forEach((storageClass) => {
+    Object.keys(storageClasses).forEach(storageClass => {
       if (body[storageClass]) {
         body.storageClass = storageClasses[storageClass];
         delete body[storageClass];
@@ -427,7 +427,7 @@ class Storage extends common.Service {
           return;
         }
 
-        const buckets = arrify(resp.items).map((bucket) => {
+        const buckets = arrify(resp.items).map(bucket => {
           const bucketInstance = this.bucket(bucket.id);
           bucketInstance.metadata = bucket;
           return bucketInstance;
