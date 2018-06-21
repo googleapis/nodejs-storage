@@ -1811,7 +1811,7 @@ class Bucket extends common.ServiceObject {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
       reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
     }
-    return common.ServiceObject.prototype.request.call(this, reqOpts, callback);
+    return super.request(reqOpts, callback);
   }
 
   /**
