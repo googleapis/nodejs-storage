@@ -38,7 +38,7 @@ import xdgBasedir from 'xdg-basedir';
 import zlib from 'zlib';
 import url from 'url';
 
-import Acl from './acl.js';
+import Acl from './acl';
 
 /**
  * Custom error type for errors related to creating a resumable upload.

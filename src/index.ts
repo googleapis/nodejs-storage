@@ -20,9 +20,9 @@ import arrify from 'arrify';
 import common from '@google-cloud/common';
 import extend from 'extend';
 
-import Bucket from './bucket.js';
-import Channel from './channel.js';
-import File from './file.js';
+import Bucket from './bucket';
+import Channel from './channel';
+import File from './file';
 
 /**
  * @typedef {object} ClientConfig

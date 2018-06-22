@@ -27,10 +27,10 @@ import path from 'path';
 import snakeize from 'snakeize';
 import request from 'request';
 
-import Acl from './acl.js';
-import File from './file.js';
-import Iam from './iam.js';
-import Notification from './notification.js';
+import Acl from './acl';
+import File from './file';
+import Iam from './iam';
+import Notification from './notification';
 
 /**
  * The size of a file (in bytes) must be greater than this number to
