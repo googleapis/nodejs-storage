@@ -228,7 +228,7 @@ class AclRoleAccessorMethods {
           options = extend(
             {
               entity: apiEntity,
-              role: role,
+              role,
             },
             options
           );

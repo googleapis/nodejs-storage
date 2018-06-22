@@ -279,7 +279,7 @@ class Storage extends common.Service {
     }
 
     const body = extend({}, metadata, {
-      name: name,
+      name,
     });
 
     const storageClasses = {

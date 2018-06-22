@@ -118,7 +118,7 @@ class Notification extends common.ServiceObject {
       baseUrl: '/notificationConfigs',
       id: id.toString(),
       createMethod: bucket.createNotification.bind(bucket),
-      methods: methods,
+      methods,
     });
   }
 

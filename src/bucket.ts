@@ -96,7 +96,7 @@ class Bucket extends common.ServiceObject {
       baseUrl: '/b',
       id: name,
       createMethod: storage.createBucket.bind(storage),
-      methods: methods,
+      methods,
     });
 
     /**
@@ -484,7 +484,7 @@ class Bucket extends common.ServiceObject {
         uri: '/o/watch',
         json: extend(
           {
-            id: id,
+            id,
             type: 'web_hook',
           },
           config
@@ -606,7 +606,7 @@ class Bucket extends common.ServiceObject {
       throw new Error('A valid topic name is required.');
     }
 
-    const body = extend({topic: topic}, options);
+    const body = extend({topic}, options);
 
     if (body.topic.indexOf('projects') !== 0) {
       body.topic = 'projects/{{projectId}}/topics/' + body.topic;

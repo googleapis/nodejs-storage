@@ -392,7 +392,7 @@ class File extends common.ServiceObject {
         )}`,
         qs: query,
         json: options,
-        headers: headers,
+        headers,
       },
       (err, resp) => {
         if (err) {
@@ -983,8 +983,8 @@ class File extends common.ServiceObject {
     // Collect data as it comes in to store in a hash. This is compared to the
     // checksum value on the returned metadata from the API.
     const validateStream = hashStreamValidation({
-      crc32c: crc32c,
-      md5: md5,
+      crc32c,
+      md5,
     });
 
     const fileWriteStream = duplexify();
@@ -1599,7 +1599,7 @@ class File extends common.ServiceObject {
 
     const policy = {
       expiration: expires.toISOString(),
-      conditions: conditions,
+      conditions,
     };
 
     const policyString = JSON.stringify(policy);
@@ -1610,7 +1610,7 @@ class File extends common.ServiceObject {
         callback(null, {
           string: policyString,
           base64: policyBase64,
-          signature: signature,
+          signature,
         });
       },
       err => {
@@ -1816,7 +1816,7 @@ class File extends common.ServiceObject {
             protocol: parsedHost.protocol,
             hostname: parsedHost.hostname,
             pathname: config.cname ? name : this.bucket.name + '/' + name,
-            query: query,
+            query,
           });
 
           callback(null, signedUrl);
