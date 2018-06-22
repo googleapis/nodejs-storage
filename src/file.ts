@@ -20,7 +20,6 @@ import { Buffer } from 'safe-buffer';
 import common from '@google-cloud/common';
 import compressible from 'compressible';
 import concat from 'concat-stream';
-import createErrorClass from 'create-error-class';
 import crypto from 'crypto';
 import duplexify from 'duplexify';
 import extend from 'extend';
@@ -45,14 +44,14 @@ import Acl from './acl';
  *
  * @private
  */
-const ResumableUploadError = createErrorClass('ResumableUploadError');
+class ResumableUploadError extends Error { }
 
 /**
  * Custom error type for errors related to getting signed errors and policies.
  *
  * @private
  */
-const SigningError = createErrorClass('SigningError');
+class SigningError extends Error { }
 
 /**
  * @const {string}
