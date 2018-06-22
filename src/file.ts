@@ -1767,7 +1767,7 @@ class File extends common.ServiceObject {
     }
 
     if (config.extensionHeaders) {
-      for (const headerName in config.extensionHeaders) {
+      for (const headerName of Object.keys(config.extensionHeaders)) {
         extensionHeadersString += `${headerName}:${
           config.extensionHeaders[headerName]
         }\n`;
