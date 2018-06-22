@@ -62,7 +62,14 @@
     "samples-test": "npm link && cd samples/ && npm link @google-cloud/storage && npm test && cd ../",
     "system-test": "repo-tools test run --cmd mocha -- system-test/ --timeout 600000",
     "all-test": "npm test && npm run system-test && npm run samples-test",
-    "generate-scaffolding": "repo-tools generate all && repo-tools generate lib_samples_readme -l samples/ --config ../.cloud-repo-tools.json"
+    "generate-scaffolding": "repo-tools generate all && repo-tools generate lib_samples_readme -l samples/ --config ../.cloud-repo-tools.json",
+    "check": "gts check",
+    "clean": "gts clean",
+    "compile": "tsc -p .",
+    "fix": "gts fix",
+    "prepare": "npm run compile",
+    "pretest": "npm run compile",
+    "posttest": "npm run check"
   },
   "dependencies": {
     "@google-cloud/common": "^0.20.0",
@@ -108,6 +115,8 @@
     "proxyquire": "^2.0.0",
     "semistandard": "^12.0.0",
     "tmp": "^0.0.33",
-    "uuid": "^3.1.0"
+    "uuid": "^3.1.0",
+    "gts": "^0.7.1",
+    "typescript": "~2.8.0"
   }
 }
