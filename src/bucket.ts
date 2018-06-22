@@ -16,21 +16,21 @@
 
 'use strict';
 
-const arrify = require('arrify');
-const async = require('async');
-const common = require('@google-cloud/common');
-const extend = require('extend');
-const fs = require('fs');
-const is = require('is');
-const mime = require('mime-types');
-const path = require('path');
-const snakeize = require('snakeize');
-const request = require('request');
+import arrify from 'arrify';
+import async from 'async';
+import common from '@google-cloud/common';
+import extend from 'extend';
+import fs from 'fs';
+import is from 'is';
+import mime from 'mime-types';
+import path from 'path';
+import snakeize from 'snakeize';
+import request from 'request';
 
-const Acl = require('./acl.js');
-const File = require('./file.js');
-const Iam = require('./iam.js');
-const Notification = require('./notification.js');
+import Acl from './acl.js';
+import File from './file.js';
+import Iam from './iam.js';
+import Notification from './notification.js';
 
 /**
  * The size of a file (in bytes) must be greater than this number to

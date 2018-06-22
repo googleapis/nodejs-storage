@@ -16,13 +16,13 @@
 
 'use strict';
 
-const arrify = require('arrify');
-const common = require('@google-cloud/common');
-const extend = require('extend');
+import arrify from 'arrify';
+import common from '@google-cloud/common';
+import extend from 'extend';
 
-const Bucket = require('./bucket.js');
-const Channel = require('./channel.js');
-const File = require('./file.js');
+import Bucket from './bucket.js';
+import Channel from './channel.js';
+import File from './file.js';
 
 /**
  * @typedef {object} ClientConfig
