@@ -37,7 +37,7 @@ import xdgBasedir from 'xdg-basedir';
 import zlib from 'zlib';
 import url from 'url';
 
-import Acl from './acl';
+import { Acl } from './acl';
 
 /**
  * Custom error type for errors related to creating a resumable upload.
@@ -2472,4 +2472,4 @@ common.util.promisifyAll(File, {
  * @name module:@google-cloud/storage.File
  * @see File
  */
-module.exports = File;
+export { File };

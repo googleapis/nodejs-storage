@@ -112,4 +112,4 @@ common.util.promisifyAll(Channel);
  * @name module:@google-cloud/storage.Channel
  * @see Channel
  */
-module.exports = Channel;
+export { Channel };
