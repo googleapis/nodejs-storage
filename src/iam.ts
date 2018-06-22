@@ -273,7 +273,7 @@ class Iam {
         qs: options,
         useQuerystring: true,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
@@ -281,7 +281,7 @@ class Iam {
 
         const availablePermissions = arrify(resp.permissions);
 
-        const permissionsHash = permissions.reduce(function(acc, permission) {
+        const permissionsHash = permissions.reduce((acc, permission) => {
           acc[permission] = availablePermissions.indexOf(permission) > -1;
           return acc;
         }, {});

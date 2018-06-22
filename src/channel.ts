@@ -93,7 +93,7 @@ class Channel extends common.ServiceObject {
         uri: '/stop',
         json: this.metadata,
       },
-      function(err, apiResponse) {
+      (err, apiResponse) => {
         callback(err, apiResponse);
       }
     );
