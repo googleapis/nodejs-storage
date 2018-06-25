@@ -299,4 +299,4 @@ class Iam {
  */
 common.util.promisifyAll(Iam);
 
-export { Iam };
+module.exports = Iam;

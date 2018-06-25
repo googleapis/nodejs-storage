@@ -342,4 +342,4 @@ common.util.promisifyAll(Notification);
  * @name module:@google-cloud/storage.Notification
  * @see Notification
  */
-export { Notification };
+module.exports = Notification;
