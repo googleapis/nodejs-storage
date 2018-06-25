@@ -38,7 +38,10 @@ import is from 'is';
  * // bucket.iam
  */
 class Iam {
-  constructor(bucket) {
+  private request_: typeof Bucket.prototype.request;
+  private resourceId_: string;
+
+  constructor(bucket: Bucket) {
     this.request_ = bucket.request.bind(bucket);
     this.resourceId_ = 'buckets/' + bucket.id;
   }
