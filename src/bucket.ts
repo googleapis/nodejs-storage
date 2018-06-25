@@ -16,21 +16,21 @@
 
 'use strict';
 
-const arrify = require('arrify');
-const async = require('async');
-const common = require('@google-cloud/common');
-const extend = require('extend');
-const fs = require('fs');
-const is = require('is');
-const mime = require('mime-types');
-const path = require('path');
-const snakeize = require('snakeize');
-const request = require('request');
+import arrify from 'arrify';
+import async from 'async';
+import common from '@google-cloud/common';
+import extend from 'extend';
+import fs from 'fs';
+import is from 'is';
+import mime from 'mime-types';
+import path from 'path';
+import snakeize from 'snakeize';
+import request from 'request';
 
-const Acl = require('./acl.js');
-const File = require('./file.js');
-const Iam = require('./iam.js');
-const Notification = require('./notification.js');
+import Acl from './acl';
+import File from './file';
+import Iam from './iam';
+import Notification from './notification';
 
 /**
  * The size of a file (in bytes) must be greater than this number to
@@ -96,7 +96,7 @@ class Bucket extends common.ServiceObject {
       baseUrl: '/b',
       id: name,
       createMethod: storage.createBucket.bind(storage),
-      methods: methods,
+      methods,
     });
 
     /**
@@ -484,7 +484,7 @@ class Bucket extends common.ServiceObject {
         uri: '/o/watch',
         json: extend(
           {
-            id: id,
+            id,
             type: 'web_hook',
           },
           config
@@ -606,7 +606,7 @@ class Bucket extends common.ServiceObject {
       throw new Error('A valid topic name is required.');
     }
 
-    const body = extend({topic: topic}, options);
+    const body = extend({topic}, options);
 
     if (body.topic.indexOf('projects') !== 0) {
       body.topic = 'projects/{{projectId}}/topics/' + body.topic;

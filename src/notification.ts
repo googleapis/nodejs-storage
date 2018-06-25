@@ -16,8 +16,8 @@
 
 'use strict';
 
-const common = require('@google-cloud/common');
-const is = require('is');
+import common from '@google-cloud/common';
+import is from 'is';
 
 /**
  * A Notification object is created from your {@link Bucket} object using
@@ -118,7 +118,7 @@ class Notification extends common.ServiceObject {
       baseUrl: '/notificationConfigs',
       id: id.toString(),
       createMethod: bucket.createNotification.bind(bucket),
-      methods: methods,
+      methods,
     });
   }
 

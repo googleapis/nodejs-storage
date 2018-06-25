@@ -16,7 +16,7 @@
 
 'use strict';
 
-const common = require('@google-cloud/common');
+import common from '@google-cloud/common';
 
 /**
  * Create a channel object to interact with a Cloud Storage channel.
@@ -93,7 +93,7 @@ class Channel extends common.ServiceObject {
         uri: '/stop',
         json: this.metadata,
       },
-      function(err, apiResponse) {
+      (err, apiResponse) => {
         callback(err, apiResponse);
       }
     );

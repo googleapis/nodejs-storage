@@ -62,7 +62,13 @@
     "samples-test": "npm link && cd samples/ && npm link @google-cloud/storage && npm test && cd ../",
     "system-test": "repo-tools test run --cmd mocha -- system-test/ --timeout 600000",
     "all-test": "npm test && npm run system-test && npm run samples-test",
-    "generate-scaffolding": "repo-tools generate all && repo-tools generate lib_samples_readme -l samples/ --config ../.cloud-repo-tools.json"
+    "generate-scaffolding": "repo-tools generate all && repo-tools generate lib_samples_readme -l samples/ --config ../.cloud-repo-tools.json",
+    "check": "gts check",
+    "clean": "gts clean",
+    "compile": "tsc -p .",
+    "fix": "gts fix",
+    "prepare": "npm run compile",
+    "pretest": "npm run compile"
   },
   "dependencies": {
     "@google-cloud/common": "^0.20.0",
@@ -90,11 +96,24 @@
   "devDependencies": {
     "@google-cloud/nodejs-repo-tools": "^2.2.3",
     "@google-cloud/pubsub": "*",
+    "@types/arrify": "^1.0.4",
+    "@types/async": "^2.0.49",
+    "@types/compressible": "^2.0.0",
+    "@types/concat-stream": "^1.6.0",
+    "@types/extend": "^3.0.0",
+    "@types/is": "0.0.20",
+    "@types/mime": "^2.0.0",
+    "@types/mime-types": "^2.1.0",
+    "@types/once": "^1.4.0",
+    "@types/pumpify": "^1.4.1",
+    "@types/through2": "^2.0.33",
+    "@types/xdg-basedir": "^2.0.0",
     "codecov": "^3.0.0",
     "eslint": "^4.7.1",
     "eslint-config-prettier": "^2.5.0",
     "eslint-plugin-node": "^6.0.0",
     "eslint-plugin-prettier": "^2.3.1",
+    "gts": "^0.7.1",
     "ink-docstrap": "https://github.com/docstrap/docstrap/tarball/master",
     "intelli-espower-loader": "^1.0.1",
     "jsdoc": "^3.5.4",
@@ -108,6 +127,7 @@
     "proxyquire": "^2.0.0",
     "semistandard": "^12.0.0",
     "tmp": "^0.0.33",
+    "typescript": "^2.9.2",
     "uuid": "^3.1.0"
   }
 }

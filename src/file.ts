@@ -16,43 +16,42 @@
 
 'use strict';
 
-const Buffer = require('safe-buffer').Buffer;
-const common = require('@google-cloud/common');
-const compressible = require('compressible');
-const concat = require('concat-stream');
-const createErrorClass = require('create-error-class');
-const crypto = require('crypto');
-const duplexify = require('duplexify');
-const extend = require('extend');
-const fs = require('fs');
-const hashStreamValidation = require('hash-stream-validation');
-const is = require('is');
-const mime = require('mime');
-const once = require('once');
-const os = require('os');
-const pumpify = require('pumpify');
-const resumableUpload = require('gcs-resumable-upload');
-const streamEvents = require('stream-events');
-const through = require('through2');
-const xdgBasedir = require('xdg-basedir');
-const zlib = require('zlib');
-const url = require('url');
+import { Buffer } from 'safe-buffer';
+import common from '@google-cloud/common';
+import compressible from 'compressible';
+import concat from 'concat-stream';
+import crypto from 'crypto';
+import duplexify from 'duplexify';
+import extend from 'extend';
+import fs from 'fs';
+import hashStreamValidation from 'hash-stream-validation';
+import is from 'is';
+import mime from 'mime';
+import once from 'once';
+import os from 'os';
+import pumpify from 'pumpify';
+import resumableUpload from 'gcs-resumable-upload';
+import streamEvents from 'stream-events';
+import through from 'through2';
+import xdgBasedir from 'xdg-basedir';
+import zlib from 'zlib';
+import url from 'url';
 
-const Acl = require('./acl.js');
+import Acl from './acl';
 
 /**
  * Custom error type for errors related to creating a resumable upload.
  *
  * @private
  */
-const ResumableUploadError = createErrorClass('ResumableUploadError');
+class ResumableUploadError extends Error { }
 
 /**
  * Custom error type for errors related to getting signed errors and policies.
  *
  * @private
  */
-const SigningError = createErrorClass('SigningError');
+class SigningError extends Error { }
 
 /**
  * @const {string}
@@ -392,7 +391,7 @@ class File extends common.ServiceObject {
         )}`,
         qs: query,
         json: options,
-        headers: headers,
+        headers,
       },
       (err, resp) => {
         if (err) {
@@ -983,8 +982,8 @@ class File extends common.ServiceObject {
     // Collect data as it comes in to store in a hash. This is compared to the
     // checksum value on the returned metadata from the API.
     const validateStream = hashStreamValidation({
-      crc32c: crc32c,
-      md5: md5,
+      crc32c,
+      md5,
     });
 
     const fileWriteStream = duplexify();
@@ -1599,7 +1598,7 @@ class File extends common.ServiceObject {
 
     const policy = {
       expiration: expires.toISOString(),
-      conditions: conditions,
+      conditions,
     };
 
     const policyString = JSON.stringify(policy);
@@ -1610,7 +1609,7 @@ class File extends common.ServiceObject {
         callback(null, {
           string: policyString,
           base64: policyBase64,
-          signature: signature,
+          signature,
         });
       },
       err => {
@@ -1767,7 +1766,7 @@ class File extends common.ServiceObject {
     }
 
     if (config.extensionHeaders) {
-      for (const headerName in config.extensionHeaders) {
+      for (const headerName of Object.keys(config.extensionHeaders)) {
         extensionHeadersString += `${headerName}:${
           config.extensionHeaders[headerName]
         }\n`;
@@ -1816,7 +1815,7 @@ class File extends common.ServiceObject {
             protocol: parsedHost.protocol,
             hostname: parsedHost.hostname,
             pathname: config.cname ? name : this.bucket.name + '/' + name,
-            query: query,
+            query,
           });
 
           callback(null, signedUrl);

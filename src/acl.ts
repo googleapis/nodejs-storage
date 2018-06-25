@@ -16,10 +16,10 @@
 
 'use strict';
 
-const arrify = require('arrify');
-const common = require('@google-cloud/common');
-const extend = require('extend');
-const is = require('is');
+import arrify from 'arrify';
+import common from '@google-cloud/common';
+import extend from 'extend';
+import is from 'is';
 
 /**
  * Attach functionality to a {@link Storage.acl} instance. This will add an
@@ -228,7 +228,7 @@ class AclRoleAccessorMethods {
           options = extend(
             {
               entity: apiEntity,
-              role: role,
+              role,
             },
             options
           );

@@ -16,10 +16,10 @@
 
 'use strict';
 
-const arrify = require('arrify');
-const common = require('@google-cloud/common');
-const extend = require('extend');
-const is = require('is');
+import arrify from 'arrify';
+import common from '@google-cloud/common';
+import extend from 'extend';
+import is from 'is';
 
 /**
  * Get and set IAM policies for your Cloud Storage bucket.
@@ -273,7 +273,7 @@ class Iam {
         qs: options,
         useQuerystring: true,
       },
-      function(err, resp) {
+      (err, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
@@ -281,7 +281,7 @@ class Iam {
 
         const availablePermissions = arrify(resp.permissions);
 
-        const permissionsHash = permissions.reduce(function(acc, permission) {
+        const permissionsHash = permissions.reduce((acc, permission) => {
           acc[permission] = availablePermissions.indexOf(permission) > -1;
           return acc;
         }, {});
