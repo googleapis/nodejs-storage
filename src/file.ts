@@ -36,7 +36,10 @@ import through from 'through2';
 import xdgBasedir from 'xdg-basedir';
 import zlib from 'zlib';
 import url from 'url';
+import r from 'request';
 
+import Storage from './index';
+import Bucket from './bucket';
 import Acl from './acl';
 
 /**
@@ -95,6 +98,16 @@ const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
  * const file = myBucket.file('my-file');
  */
 class File extends common.ServiceObject {
+  bucket: Bucket;
+  storage: Storage;
+  kmsKeyName: string;
+  userProject: string;
+  name: string;
+  protected encryptionKey: string | Buffer;
+  protected encryptionKeyBase64: string;
+  protected encryptionKeyHash: string;
+  protected encryptionKeyInterceptor: { request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri };
+
   constructor(bucket, name, options) {
     name = name.replace(/^\/+/, '');
 

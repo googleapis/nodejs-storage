@@ -106,6 +106,7 @@
     "@types/mime-types": "^2.1.0",
     "@types/once": "^1.4.0",
     "@types/pumpify": "^1.4.1",
+    "@types/request": "^2.47.1",
     "@types/through2": "^2.0.33",
     "@types/xdg-basedir": "^2.0.0",
     "codecov": "^3.0.0",
