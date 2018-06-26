@@ -244,7 +244,7 @@ class Notification extends common.ServiceObject {
     this.getMetadata(options, (err, metadata) => {
       if (err) {
         if (err.code === 404 && autoCreate) {
-          const args = [];
+          const args = [] as any[];
 
           if (!is.empty(options)) {
             args.push(options);
