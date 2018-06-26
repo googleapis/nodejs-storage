@@ -103,10 +103,12 @@ class File extends common.ServiceObject {
   kmsKeyName: string;
   userProject: string;
   name: string;
-  protected encryptionKey: string | Buffer;
-  protected encryptionKeyBase64: string;
-  protected encryptionKeyHash: string;
-  protected encryptionKeyInterceptor: { request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri };
+  generation: number;
+  requestQueryObject: { generation: number };
+  private encryptionKey: string | Buffer;
+  private encryptionKeyBase64: string;
+  private encryptionKeyHash: string;
+  private encryptionKeyInterceptor: { request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri };
 
   constructor(bucket, name, options) {
     name = name.replace(/^\/+/, '');
