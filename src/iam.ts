@@ -21,6 +21,8 @@ import common from '@google-cloud/common';
 import extend from 'extend';
 import is from 'is';
 
+import Bucket from './bucket';
+
 /**
  * Get and set IAM policies for your Cloud Storage bucket.
  *
