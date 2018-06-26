@@ -21,6 +21,8 @@ import common from '@google-cloud/common';
 import extend from 'extend';
 import is from 'is';
 
+import Bucket from './bucket';
+
 /**
  * Get and set IAM policies for your Cloud Storage bucket.
  *
@@ -38,7 +40,10 @@ import is from 'is';
  * // bucket.iam
  */
 class Iam {
-  constructor(bucket) {
+  private request_: typeof Bucket.prototype.request;
+  private resourceId_: string;
+
+  constructor(bucket: Bucket) {
     this.request_ = bucket.request.bind(bucket);
     this.resourceId_ = 'buckets/' + bucket.id;
   }
