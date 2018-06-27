@@ -27,7 +27,7 @@ import path from 'path';
 import snakeize from 'snakeize';
 import request from 'request';
 
-import {Storage} from './index';
+import Storage from './index';
 import {Acl} from './acl';
 import {File} from './file';
 import {Iam} from './iam';

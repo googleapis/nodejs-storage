@@ -39,7 +39,7 @@ import zlib from 'zlib';
 import url from 'url';
 import r from 'request';
 
-import {Storage} from './index';
+import Storage from './index';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 

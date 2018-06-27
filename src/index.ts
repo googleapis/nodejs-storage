@@ -683,4 +683,4 @@ Storage.File = File;
  * region_tag:storage_quickstart
  * Full quickstart example:
  */
-module.exports = Storage;
+export = Storage;
