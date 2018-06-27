@@ -404,7 +404,7 @@ class Storage extends common.Service {
 
     const query = {
       project: this.projectId,
-    };
+    } as any;
 
     if (body.userProject) {
       query.userProject = body.userProject;

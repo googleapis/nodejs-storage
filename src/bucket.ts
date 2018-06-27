@@ -403,7 +403,7 @@ class Bucket extends common.ServiceObject {
           sourceObjects: sources.map(source => {
             const sourceObject = {
               name: source.name,
-            };
+            } as any;
 
             if (source.metadata && source.metadata.generation) {
               sourceObject.generation = source.metadata.generation;
@@ -632,7 +632,7 @@ class Bucket extends common.ServiceObject {
       body.payloadFormat = 'JSON_API_V1';
     }
 
-    const query = {};
+    const query = {} as any;
 
     if (body.userProject) {
       query.userProject = body.userProject;
@@ -789,10 +789,10 @@ class Bucket extends common.ServiceObject {
       query = {};
     }
 
-    query = query || {};
+    query = query || {} as any;
 
     const MAX_PARALLEL_LIMIT = 10;
-    const errors = [];
+    const errors = [] as Error[];
 
     this.getFiles(query, (err, files) => {
       if (err) {
@@ -801,7 +801,7 @@ class Bucket extends common.ServiceObject {
       }
 
       const deleteFile = (file, callback) => {
-        file.delete(query, err => {
+        file.delete(query, (err: Error) => {
           if (err) {
             if (query.force) {
               errors.push(err);
@@ -1170,7 +1170,7 @@ class Bucket extends common.ServiceObject {
     this.getMetadata(options, (err, metadata) => {
       if (err) {
         if (err.code === 404 && autoCreate) {
-          const args = [];
+          const args = [] as any[];
 
           if (!is.empty(options)) {
             args.push(options);
@@ -1316,7 +1316,7 @@ class Bucket extends common.ServiceObject {
         }
 
         const files = arrify(resp.items).map(file => {
-          const options = {};
+          const options = {} as any;
 
           if (query.versions) {
             options.generation = file.generation;
@@ -1636,7 +1636,7 @@ class Bucket extends common.ServiceObject {
     const setPredefinedAcl = done => {
       const query = {
         predefinedAcl: 'projectPrivate',
-      };
+      } as any;
 
       if (options.userProject) {
         query.userProject = options.userProject;
@@ -2259,7 +2259,7 @@ class Bucket extends common.ServiceObject {
    * Example of uploading an encrypted file:
    */
   upload(pathString, options, callback) {
-    if (global.GCLOUD_SANDBOX_ENV) {
+    if ((global as any).GCLOUD_SANDBOX_ENV) {
       return;
     }
 
@@ -2379,8 +2379,8 @@ class Bucket extends common.ServiceObject {
    */
   makeAllFilesPublicPrivate_(options, callback) {
     const MAX_PARALLEL_LIMIT = 10;
-    const errors = [];
-    const updatedFiles = [];
+    const errors = [] as Error[];
+    const updatedFiles = [] as File[];
 
     this.getFiles(options, (err, files) => {
       if (err) {
@@ -2388,7 +2388,7 @@ class Bucket extends common.ServiceObject {
         return;
       }
 
-      const processFile = (file, callback) => {
+      const processFile = (file: File, callback) => {
         const processedCallback = err => {
           if (err) {
             if (options.force) {

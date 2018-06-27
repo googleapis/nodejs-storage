@@ -31,6 +31,7 @@ import once from 'once';
 import os from 'os';
 import pumpify from 'pumpify';
 import resumableUpload from 'gcs-resumable-upload';
+import { Stream } from 'stream';
 import streamEvents from 'stream-events';
 import through from 'through2';
 import xdgBasedir from 'xdg-basedir';
@@ -359,7 +360,7 @@ class File extends common.ServiceObject {
       throw noDestinationError;
     }
 
-    const query = {};
+    const query = {} as any;
     if (is.defined(this.generation)) {
       query.sourceGeneration = this.generation;
     }
@@ -420,7 +421,7 @@ class File extends common.ServiceObject {
         if (resp.rewriteToken) {
           const options = {
             token: resp.rewriteToken,
-          };
+          } as any;
 
           if (query.userProject) {
             options.userProject = query.userProject;
@@ -563,10 +564,10 @@ class File extends common.ServiceObject {
         uri: '',
         headers: {
           'Accept-Encoding': 'gzip',
-        },
+        } as any,
         qs: {
           alt: 'media',
-        },
+        } as any,
       };
 
       if (this.generation) {
@@ -621,7 +622,7 @@ class File extends common.ServiceObject {
 
         const shouldRunValidation = !rangeRequest && (crc32c || md5);
 
-        const throughStreams = [];
+        const throughStreams = [] as Stream[];
 
         if (shouldRunValidation) {
           validateStream = hashStreamValidation({crc32c, md5});
@@ -667,8 +668,8 @@ class File extends common.ServiceObject {
         }
 
         const hashes = {
-          crc32c: this.metadata.crc32c,
-          md5: this.metadata.md5Hash,
+          crc32c: (this.metadata as any).crc32c,
+          md5: (this.metadata as any).md5Hash,
         };
 
         // If we're doing validation, assume the worst-- a data integrity
@@ -1025,7 +1026,7 @@ class File extends common.ServiceObject {
       // https://github.com/yeoman/configstore/blob/f09f067e50e6a636cfc648a6fc36a522062bd49d/index.js#L11
       const configDir = xdgBasedir.config || os.tmpdir();
 
-      fs.access(configDir, fs.W_OK, err => {
+      fs.access(configDir, (fs as any).W_OK, err => {
         if (err) {
           if (options.resumable) {
             const error = new ResumableUploadError(
@@ -1062,7 +1063,7 @@ class File extends common.ServiceObject {
 
     // Compare our hashed version vs the completed upload's version.
     fileWriteStream.on('complete', () => {
-      const metadata = this.metadata;
+      const metadata = this.metadata as any;
 
       // If we're doing validation, assume the worst-- a data integrity mismatch.
       // If not, these tests won't be performed, and we can assume the best.
@@ -1557,7 +1558,7 @@ class File extends common.ServiceObject {
       {
         bucket: this.bucket.name,
       },
-    ];
+    ] as any[];
 
     if (is.array(options.equals)) {
       if (!is.array(options.equals[0])) {
@@ -1808,7 +1809,7 @@ class File extends common.ServiceObject {
             GoogleAccessId: credentials.client_email,
             Expires: expiresInSeconds,
             Signature: signature,
-          };
+          } as any;
 
           if (is.string(config.responseType)) {
             query['response-content-type'] = config.responseType;
@@ -1898,7 +1899,7 @@ class File extends common.ServiceObject {
 
     const query = {
       predefinedAcl: options.strict ? 'private' : 'projectPrivate',
-    };
+    } as any;
 
     if (options.userProject) {
       query.userProject = options.userProject;
@@ -1955,7 +1956,7 @@ class File extends common.ServiceObject {
   makePublic(callback) {
     callback = callback || common.util.noop;
 
-    this.acl.add(
+    (this.acl as any).add(
       {
         entity: 'allUsers',
         role: 'READER',
@@ -2433,7 +2434,7 @@ class File extends common.ServiceObject {
     const reqOpts = {
       qs: {
         name: this.name,
-      },
+      } as any,
       uri: `${STORAGE_UPLOAD_BASE_URL}/${this.bucket.name}/o`,
     };
 

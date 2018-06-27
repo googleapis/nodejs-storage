@@ -387,8 +387,8 @@ class Acl extends AclRoleAccessorMethods {
    * region_tag:storage_add_bucket_default_owner
    * Example of adding a default owner to a bucket:
    */
-  add(options, callback) {
-    const query = {};
+  add(options: any, callback) {
+    const query: any = {};
 
     if (options.generation) {
       query.generation = options.generation;
@@ -479,8 +479,8 @@ class Acl extends AclRoleAccessorMethods {
    * region_tag:storage_remove_file_owner
    * Example of removing an owner from a bucket:
    */
-  delete(options, callback) {
-    const query = {};
+  delete(options: any, callback) {
+    const query: any = {};
 
     if (options.generation) {
       query.generation = options.generation;
@@ -585,9 +585,9 @@ class Acl extends AclRoleAccessorMethods {
    * region_tag:storage_print_bucket_acl_for_user
    * Example of printing a bucket's ACL for a specific user:
    */
-  get(options, callback) {
+  get(options: any, callback) {
     let path = '';
-    const query = {};
+    const query: any = {};
 
     if (is.fn(options)) {
       callback = options;
@@ -685,8 +685,8 @@ class Acl extends AclRoleAccessorMethods {
    *   const apiResponse = data[1];
    * });
    */
-  update(options, callback) {
-    const query = {};
+  update(options: any, callback) {
+    const query: any = {};
 
     if (options.generation) {
       query.generation = options.generation;
@@ -722,7 +722,7 @@ class Acl extends AclRoleAccessorMethods {
    * @private
    */
   makeAclObject_(accessControlObject) {
-    const obj = {
+    const obj: any = {
       entity: accessControlObject.entity,
       role: accessControlObject.role,
     };
