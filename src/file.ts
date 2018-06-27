@@ -16,7 +16,7 @@
 
 'use strict';
 
-import { Buffer } from 'safe-buffer';
+import {Buffer} from 'safe-buffer';
 import common from '@google-cloud/common';
 import compressible from 'compressible';
 import concat from 'concat-stream';
@@ -31,7 +31,7 @@ import once from 'once';
 import os from 'os';
 import pumpify from 'pumpify';
 import resumableUpload from 'gcs-resumable-upload';
-import { Stream } from 'stream';
+import {Stream} from 'stream';
 import streamEvents from 'stream-events';
 import through from 'through2';
 import xdgBasedir from 'xdg-basedir';
@@ -39,23 +39,23 @@ import zlib from 'zlib';
 import url from 'url';
 import r from 'request';
 
-import Storage from './index';
-import Bucket from './bucket';
-import Acl from './acl';
+import {Storage} from './index';
+import {Bucket} from './bucket';
+import {Acl} from './acl';
 
 /**
  * Custom error type for errors related to creating a resumable upload.
  *
  * @private
  */
-class ResumableUploadError extends Error { }
+class ResumableUploadError extends Error {}
 
 /**
  * Custom error type for errors related to getting signed errors and policies.
  *
  * @private
  */
-class SigningError extends Error { }
+class SigningError extends Error {}
 
 /**
  * @const {string}
@@ -149,12 +149,14 @@ class File extends common.ServiceObject {
   userProject: string;
   name: string;
   generation: number;
-  requestQueryObject: { generation: number };
+  requestQueryObject: {generation: number};
 
   private encryptionKey: string | Buffer;
   private encryptionKeyBase64: string;
   private encryptionKeyHash: string;
-  private encryptionKeyInterceptor: { request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri };
+  private encryptionKeyInterceptor: {
+    request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri;
+  };
 
   constructor(bucket, name, options) {
     name = name.replace(/^\/+/, '');
@@ -2491,4 +2493,4 @@ common.util.promisifyAll(File, {
  * @name module:@google-cloud/storage.File
  * @see File
  */
-export { File };
+export {File};
