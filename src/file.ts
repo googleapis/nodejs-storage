@@ -1558,7 +1558,7 @@ class File extends common.ServiceObject {
       {
         bucket: this.bucket.name,
       },
-    ];
+    ] as any[];
 
     if (is.array(options.equals)) {
       if (!is.array(options.equals[0])) {
