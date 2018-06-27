@@ -2491,4 +2491,4 @@ common.util.promisifyAll(File, {
  * @name module:@google-cloud/storage.File
  * @see File
  */
-module.exports = File;
+export { File };

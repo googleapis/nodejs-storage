@@ -2445,4 +2445,4 @@ common.util.promisifyAll(Bucket, {
  * @name module:@google-cloud/storage.Bucket
  * @see Bucket
  */
-module.exports = Bucket;
+export { Bucket };
