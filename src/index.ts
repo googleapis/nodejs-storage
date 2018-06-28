@@ -627,33 +627,6 @@ common.util.promisifyAll(Storage, {
 });
 
 /**
- * {@link Bucket} class.
- *
- * @name Storage.Bucket
- * @see Bucket
- * @type {Constructor}
- */
-Storage.Bucket = Bucket;
-
-/**
- * {@link Channel} class.
- *
- * @name Storage.Channel
- * @see Channel
- * @type {Constructor}
- */
-Storage.Channel = Channel;
-
-/**
- * {@link File} class.
- *
- * @name Storage.File
- * @see File
- * @type {Constructor}
- */
-Storage.File = File;
-
-/**
  * The default export of the `@google-cloud/storage` package is the
  * {@link Storage} class, which also serves as a factory function which produces
  * {@link Storage} instances.
