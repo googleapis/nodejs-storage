@@ -148,13 +148,13 @@ class File extends common.ServiceObject {
   kmsKeyName: string;
   userProject: string;
   name: string;
-  generation: number;
-  requestQueryObject: {generation: number};
+  generation?: number;
+  requestQueryObject?: {generation: number};
 
-  private encryptionKey: string | Buffer;
-  private encryptionKeyBase64: string;
-  private encryptionKeyHash: string;
-  private encryptionKeyInterceptor: {
+  private encryptionKey?: string | Buffer;
+  private encryptionKeyBase64?: string;
+  private encryptionKeyHash?: string;
+  private encryptionKeyInterceptor?: {
     request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri;
   };
 
