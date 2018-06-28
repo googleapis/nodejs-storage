@@ -236,7 +236,7 @@ class Bucket extends common.ServiceObject {
    */
   getFilesStream: Function;
 
-  constructor(storage, name, options) {
+  constructor(storage, name, options?) {
     options = options || {};
 
     name = name.replace(/^gs:\/\//, '');

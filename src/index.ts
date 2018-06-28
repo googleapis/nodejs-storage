@@ -253,7 +253,7 @@ class Storage extends common.Service {
    * const albums = storage.bucket('albums');
    * const photos = storage.bucket('photos');
    */
-  bucket(name, options) {
+  bucket(name, options?) {
     if (!name) {
       throw new Error('A bucket name is needed to use Cloud Storage.');
     }
