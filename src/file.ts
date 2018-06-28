@@ -1548,7 +1548,7 @@ class File extends common.ServiceObject {
   getSignedPolicy(options, callback) {
     const expires = new Date(options.expires);
 
-    if (expires < Date.now()) {
+    if (expires.valueOf() < Date.now()) {
       throw new Error('An expiration date cannot be in the past.');
     }
 
@@ -1758,12 +1758,13 @@ class File extends common.ServiceObject {
    * Another example:
    */
   getSignedUrl(config, callback) {
-    const expires = new Date(config.expires);
-    const expiresInSeconds = Math.round(expires / 1000); // The API expects seconds.
+    const expiresInMSeconds = new Date(config.expires).valueOf();
 
-    if (expires < Date.now()) {
+    if (expiresInMSeconds < Date.now()) {
       throw new Error('An expiration date cannot be in the past.');
     }
+
+    const expiresInSeconds = Math.round(expiresInMSeconds / 1000); // The API expects seconds.
 
     config = extend({}, config);
 
