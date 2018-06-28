@@ -760,6 +760,7 @@ common.util.promisifyAll(Acl, {
   exclude: ['request'],
 });
 
-module.exports = Acl;
-
-module.exports.AclRoleAccessorMethods = AclRoleAccessorMethods;
+export {
+  Acl,
+  AclRoleAccessorMethods,
+};

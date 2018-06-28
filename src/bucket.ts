@@ -28,10 +28,10 @@ import snakeize from 'snakeize';
 import request from 'request';
 
 import Storage from './index';
-import Acl from './acl';
-import File from './file';
-import Iam from './iam';
-import Notification from './notification';
+import {Acl} from './acl';
+import {File} from './file';
+import {Iam} from './iam';
+import {Notification} from './notification';
 
 /**
  * The size of a file (in bytes) must be greater than this number to
@@ -2445,4 +2445,4 @@ common.util.promisifyAll(Bucket, {
  * @name module:@google-cloud/storage.Bucket
  * @see Bucket
  */
-module.exports = Bucket;
+export {Bucket};

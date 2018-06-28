@@ -21,7 +21,7 @@ import common from '@google-cloud/common';
 import extend from 'extend';
 import is from 'is';
 
-import Bucket from './bucket';
+import {Bucket} from './bucket';
 
 /**
  * Get and set IAM policies for your Cloud Storage bucket.
@@ -304,4 +304,4 @@ class Iam {
  */
 common.util.promisifyAll(Iam);
 
-module.exports = Iam;
+export {Iam};

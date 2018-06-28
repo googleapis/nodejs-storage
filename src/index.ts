@@ -20,9 +20,9 @@ import arrify from 'arrify';
 import common from '@google-cloud/common';
 import extend from 'extend';
 
-import Bucket from './bucket';
-import Channel from './channel';
-import File from './file';
+import {Bucket} from './bucket';
+import {Channel} from './channel';
+import {File} from './file';
 
 /**
  * @typedef {object} ClientConfig
@@ -683,4 +683,4 @@ Storage.File = File;
  * region_tag:storage_quickstart
  * Full quickstart example:
  */
-module.exports = Storage;
+export = Storage;
