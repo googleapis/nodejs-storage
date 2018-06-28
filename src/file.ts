@@ -29,7 +29,7 @@ import is from 'is';
 import mime from 'mime';
 import once from 'once';
 import os from 'os';
-import pumpify from 'pumpify';
+const pumpify = require('pumpify');
 import resumableUpload from 'gcs-resumable-upload';
 import {Stream, Duplex} from 'stream';
 import streamEvents from 'stream-events';
