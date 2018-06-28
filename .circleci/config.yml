@@ -78,6 +78,9 @@ jobs:
             npm install
           environment:
             NPM_CONFIG_PREFIX: /home/node/.npm-global
+      - run: &compile_typescript
+          name: Compile typescript to javascript
+          command: npm run compile
       - run:
           name: Run unit tests.
           command: npm test
@@ -102,6 +105,7 @@ jobs:
     steps:
       - checkout
       - run: *remove_package_lock
+      - run: *compile_typescript
       - run: *npm_install_and_link
       - run: &samples_npm_install_and_link
           name: Link the module being tested to the samples.
@@ -113,7 +117,7 @@ jobs:
             NPM_CONFIG_PREFIX: /home/node/.npm-global
       - run:
           name: Run linting.
-          command: npm run lint
+          command: npm run check
           environment:
             NPM_CONFIG_PREFIX: /home/node/.npm-global
   docs:
@@ -140,6 +144,7 @@ jobs:
             openssl aes-256-cbc -d -in .circleci/key.json.enc \
                 -out .circleci/key.json \
                 -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
+      - run: *compile_typescript
       - run: *npm_install_and_link
       - run: *samples_npm_install_and_link
       - run:
@@ -173,6 +178,7 @@ jobs:
             openssl aes-256-cbc -d -in .circleci/no-whitelist-key.json.enc \
                 -out .circleci/no-whitelist-key.json \
                 -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
+      - run: *compile_typescript
       - run: *npm_install_and_link
       - run:
           name: Run system tests.
@@ -191,10 +197,10 @@ jobs:
         user: node
     steps:
       - checkout
+      - run: *compile_typescript
       - run:
           name: Set NPM authentication.
           command: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc'
       - run:
           name: Publish the module to npm.
           command: npm publish
-
