@@ -306,7 +306,7 @@ class AclRoleAccessorMethods {
  * @param {object} options Configuration options.
  */
 class Acl extends AclRoleAccessorMethods {
-  default: Acl;
+  default?: Acl;
   pathPrefix;
   request_;
 
