@@ -27,7 +27,6 @@ import path from 'path';
 import snakeize from 'snakeize';
 import request from 'request';
 
-import Storage from './index';
 import {Acl} from './acl';
 import {File} from './file';
 import {Iam} from './iam';
@@ -71,7 +70,7 @@ class Bucket extends common.ServiceObject {
    * @name Bucket#storage
    * @type {string}
    */
-  storage: Storage;
+  storage: any;
 
   /**
    * A user project to apply to each request from this bucket.

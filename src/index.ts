@@ -542,14 +542,6 @@ class Storage extends common.Service {
   }
 }
 
-// Allow creating a `Storage` instance without using the `new` keyword. (#173)
-// eslint-disable-next-line no-class-assign
-Storage = new Proxy(Storage, {
-  apply(target, thisArg, argumentsList) {
-    return new target(...argumentsList);
-  },
-});
-
 /**
  * Cloud Storage uses access control lists (ACLs) to manage object and
  * bucket access. ACLs are the mechanism you use to share objects with other
@@ -656,4 +648,10 @@ common.util.promisifyAll(Storage, {
  * region_tag:storage_quickstart
  * Full quickstart example:
  */
-export = Storage;
+// Allow creating a `Storage` instance without using the `new` keyword. (#173)
+// eslint-disable-next-line no-class-assign
+export = new Proxy(Storage, {
+  apply(target, thisArg, argumentsList) {
+    return new target(...argumentsList);
+  },
+});

@@ -39,7 +39,6 @@ import zlib from 'zlib';
 import url from 'url';
 import r from 'request';
 
-import Storage from './index';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 
@@ -144,7 +143,7 @@ class File extends common.ServiceObject {
   acl: Acl;
 
   bucket: Bucket;
-  storage: Storage;
+  storage: any;
   kmsKeyName: string;
   userProject: string;
   name: string;
