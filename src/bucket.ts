@@ -1769,7 +1769,7 @@ class Bucket extends common.ServiceObject {
     };
 
     const addDefaultAclPermissions = done => {
-      this.acl.default.add(
+      this.acl.default!.add(
         {
           entity: 'allUsers',
           role: 'READER',
