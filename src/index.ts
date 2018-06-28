@@ -649,7 +649,6 @@ common.util.promisifyAll(Storage, {
  * Full quickstart example:
  */
 // Allow creating a `Storage` instance without using the `new` keyword. (#173)
-// eslint-disable-next-line no-class-assign
 export = new Proxy(Storage, {
   apply(target, thisArg, [options]) {
     return new target(options);
