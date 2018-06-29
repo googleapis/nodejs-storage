@@ -16,11 +16,11 @@
 
 'use strict';
 
-const assert = require('assert');
-const common = require('@google-cloud/common');
-const extend = require('extend');
-const proxyquire = require('proxyquire');
-const util = require('util');
+import assert from 'assert';
+import common from '@google-cloud/common';
+import extend from 'extend';
+import proxyquire from 'proxyquire';
+import util from 'util';
 
 function FakeServiceObject() {
   this.calledWith_ = arguments;
@@ -29,18 +29,17 @@ function FakeServiceObject() {
 
 util.inherits(FakeServiceObject, common.ServiceObject);
 
-let promisified = false;
-const fakeUtil = extend({}, common.util, {
-  promisifyAll: function(Class) {
-    if (Class.name === 'Notification') {
-      promisified = true;
-    }
-  },
-});
-
 describe('Notification', function() {
   let Notification;
   let notification;
+  let promisified = false;
+  const fakeUtil = extend({}, common.util, {
+    promisifyAll: function(Class) {
+      if (Class.name === 'Notification') {
+        promisified = true;
+      }
+    },
+  });
 
   const BUCKET = {
     createNotification: fakeUtil.noop,
