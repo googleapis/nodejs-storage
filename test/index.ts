@@ -16,13 +16,12 @@
 
 'use strict';
 
-const arrify = require('arrify');
-const assert = require('assert');
-const extend = require('extend');
-const nodeutil = require('util');
-const proxyquire = require('proxyquire');
-const Service = require('@google-cloud/common').Service;
-const util = require('@google-cloud/common').util;
+import arrify from 'arrify';
+import assert from 'assert';
+import extend from 'extend';
+import nodeutil from 'util';
+import proxyquire from 'proxyquire';
+import { Service, util } from '@google-cloud/common';
 
 function FakeChannel() {
   this.calledWith_ = arguments;
