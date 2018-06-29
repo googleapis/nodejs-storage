@@ -22,6 +22,7 @@ import extend from 'extend';
 import proxyquire from 'proxyquire';
 import { util } from '@google-cloud/common';
 
+let Acl;
 describe('storage/acl', function() {
   let promisified = false;
   const fakeUtil = extend({}, util, {
@@ -33,7 +34,6 @@ describe('storage/acl', function() {
   });
 
   const Storage = require('../');
-  let Acl;
   let acl;
 
   const ERROR = new Error('Error.');
