@@ -16,11 +16,11 @@
 
 'use strict';
 
-const assert = require('assert');
-const async = require('async');
-const extend = require('extend');
-const proxyquire = require('proxyquire');
-const util = require('@google-cloud/common').util;
+import assert from 'assert';
+import async from 'async';
+import extend from 'extend';
+import proxyquire from 'proxyquire';
+import { util } from '@google-cloud/common';
 
 let promisified = false;
 const fakeUtil = extend({}, util, {
