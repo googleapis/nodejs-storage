@@ -119,7 +119,7 @@ class Notification extends common.ServiceObject {
       id: id.toString(),
       createMethod: bucket.createNotification.bind(bucket),
       methods,
-    });
+    } as any);
   }
 
   /**
@@ -160,7 +160,7 @@ class Notification extends common.ServiceObject {
    * region_tag:storage_delete_notification
    * Another example:
    */
-  delete(options, callback) {
+  delete(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -218,7 +218,7 @@ class Notification extends common.ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  get(options, callback) {
+  get(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -305,7 +305,7 @@ class Notification extends common.ServiceObject {
    * region_tag:storage_notifications_get_metadata
    * Another example:
    */
-  getMetadata(options, callback) {
+  getMetadata(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};

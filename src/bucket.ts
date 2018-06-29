@@ -27,7 +27,6 @@ import path from 'path';
 import snakeize from 'snakeize';
 import request from 'request';
 
-import Storage from './index';
 import {Acl} from './acl';
 import {File} from './file';
 import {Iam} from './iam';
@@ -71,7 +70,7 @@ class Bucket extends common.ServiceObject {
    * @name Bucket#storage
    * @type {string}
    */
-  storage: Storage;
+  storage: any;
 
   /**
    * A user project to apply to each request from this bucket.
@@ -236,7 +235,7 @@ class Bucket extends common.ServiceObject {
    */
   getFilesStream: Function;
 
-  constructor(storage, name, options) {
+  constructor(storage, name, options?) {
     options = options || {};
 
     name = name.replace(/^gs:\/\//, '');
@@ -276,7 +275,7 @@ class Bucket extends common.ServiceObject {
       id: name,
       createMethod: storage.createBucket.bind(storage),
       methods,
-    });
+    } as any);
 
     this.name = name;
 
@@ -697,7 +696,7 @@ class Bucket extends common.ServiceObject {
    * region_tag:storage_delete_bucket
    * Another example:
    */
-  delete(options, callback) {
+  delete(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -875,7 +874,7 @@ class Bucket extends common.ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  deleteLabels(labels, callback) {
+  deleteLabels(labels, callback?) {
     if (is.fn(labels)) {
       callback = labels;
       labels = [];
@@ -1005,7 +1004,7 @@ class Bucket extends common.ServiceObject {
    * region_tag:storage_enable_requester_pays
    * Example of enabling requester pays:
    */
-  enableRequesterPays(callback) {
+  enableRequesterPays(callback?) {
     this.setMetadata(
       {
         billing: {
@@ -1047,7 +1046,7 @@ class Bucket extends common.ServiceObject {
    *   const exists = data[0];
    * });
    */
-  exists(options, callback) {
+  exists(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1091,7 +1090,7 @@ class Bucket extends common.ServiceObject {
    * const bucket = storage.bucket('albums');
    * const file = bucket.file('my-existing-file.png');
    */
-  file(name, options) {
+  file(name, options?) {
     if (!name) {
       throw Error('A file name must be specified.');
     }
@@ -1142,7 +1141,7 @@ class Bucket extends common.ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  get(options, callback) {
+  get(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1384,7 +1383,7 @@ class Bucket extends common.ServiceObject {
    *   const labels = data[0];
    * });
    */
-  getLabels(options, callback) {
+  getLabels(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1442,7 +1441,7 @@ class Bucket extends common.ServiceObject {
    * region_tag:storage_get_requester_pays_status
    * Example of retrieving the requester pays status of a bucket:
    */
-  getMetadata(options, callback) {
+  getMetadata(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1769,7 +1768,7 @@ class Bucket extends common.ServiceObject {
     };
 
     const addDefaultAclPermissions = done => {
-      this.acl.default.add(
+      this.acl.default!.add(
         {
           entity: 'allUsers',
           role: 'READER',
@@ -1821,7 +1820,9 @@ class Bucket extends common.ServiceObject {
    * @param {object} reqOpts - The request options.
    * @param {function} callback - The callback function.
    */
-  request(reqOpts, callback) {
+  request(reqOpts): Promise<request.Response>;
+  request(reqOpts, callback): void;
+  request(reqOpts, callback?): void|Promise<request.Response> {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
       reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
     }
@@ -1873,7 +1874,7 @@ class Bucket extends common.ServiceObject {
    *   const metadata = data[0];
    * });
    */
-  setLabels(labels, options, callback) {
+  setLabels(labels, options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1946,7 +1947,7 @@ class Bucket extends common.ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  setMetadata(metadata, options, callback) {
+  setMetadata(metadata, options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};

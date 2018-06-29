@@ -253,7 +253,7 @@ class Storage extends common.Service {
    * const albums = storage.bucket('albums');
    * const photos = storage.bucket('photos');
    */
-  bucket(name, options) {
+  bucket(name, options?) {
     if (!name) {
       throw new Error('A bucket name is needed to use Cloud Storage.');
     }
@@ -542,14 +542,6 @@ class Storage extends common.Service {
   }
 }
 
-// Allow creating a `Storage` instance without using the `new` keyword. (#173)
-// eslint-disable-next-line no-class-assign
-Storage = new Proxy(Storage, {
-  apply(target, thisArg, argumentsList) {
-    return new target(...argumentsList);
-  },
-});
-
 /**
  * Cloud Storage uses access control lists (ACLs) to manage object and
  * bucket access. ACLs are the mechanism you use to share objects with other
@@ -627,33 +619,6 @@ common.util.promisifyAll(Storage, {
 });
 
 /**
- * {@link Bucket} class.
- *
- * @name Storage.Bucket
- * @see Bucket
- * @type {Constructor}
- */
-Storage.Bucket = Bucket;
-
-/**
- * {@link Channel} class.
- *
- * @name Storage.Channel
- * @see Channel
- * @type {Constructor}
- */
-Storage.Channel = Channel;
-
-/**
- * {@link File} class.
- *
- * @name Storage.File
- * @see File
- * @type {Constructor}
- */
-Storage.File = File;
-
-/**
  * The default export of the `@google-cloud/storage` package is the
  * {@link Storage} class, which also serves as a factory function which produces
  * {@link Storage} instances.
@@ -683,4 +648,9 @@ Storage.File = File;
  * region_tag:storage_quickstart
  * Full quickstart example:
  */
-export = Storage;
+// Allow creating a `Storage` instance without using the `new` keyword. (#173)
+export = new Proxy(Storage, {
+  apply(target, thisArg, [options]) {
+    return new target(options);
+  },
+});

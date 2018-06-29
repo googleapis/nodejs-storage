@@ -29,9 +29,9 @@ import is from 'is';
 import mime from 'mime';
 import once from 'once';
 import os from 'os';
-import pumpify from 'pumpify';
+const pumpify = require('pumpify');
 import resumableUpload from 'gcs-resumable-upload';
-import {Stream} from 'stream';
+import {Stream, Duplex} from 'stream';
 import streamEvents from 'stream-events';
 import through from 'through2';
 import xdgBasedir from 'xdg-basedir';
@@ -39,7 +39,6 @@ import zlib from 'zlib';
 import url from 'url';
 import r from 'request';
 
-import Storage from './index';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 
@@ -144,17 +143,17 @@ class File extends common.ServiceObject {
   acl: Acl;
 
   bucket: Bucket;
-  storage: Storage;
+  storage: any;
   kmsKeyName: string;
   userProject: string;
   name: string;
-  generation: number;
-  requestQueryObject: {generation: number};
+  generation?: number;
+  requestQueryObject?: {generation: number};
 
-  private encryptionKey: string | Buffer;
-  private encryptionKeyBase64: string;
-  private encryptionKeyHash: string;
-  private encryptionKeyInterceptor: {
+  private encryptionKey?: string | Buffer;
+  private encryptionKeyBase64?: string;
+  private encryptionKeyHash?: string;
+  private encryptionKeyInterceptor?: {
     request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri;
   };
 
@@ -318,7 +317,7 @@ class File extends common.ServiceObject {
    * region_tag:storage_copy_file
    * Another example:
    */
-  copy(destination, options, callback) {
+  copy(destination, options, callback?) {
     const noDestinationError = new Error(
       'Destination file should have a name.'
     );
@@ -398,9 +397,9 @@ class File extends common.ServiceObject {
     if (query.destinationKmsKeyName) {
       this.kmsKeyName = query.destinationKmsKeyName;
 
-      const keyIndex = this.interceptors.indexOf(this.encryptionKeyInterceptor);
+      const keyIndex = (this as any).interceptors.indexOf(this.encryptionKeyInterceptor);
       if (keyIndex > -1) {
-        this.interceptors.splice(keyIndex, 1);
+        (this as any).interceptors.splice(keyIndex, 1);
       }
     }
 
@@ -534,7 +533,7 @@ class File extends common.ServiceObject {
     const tailRequest = options.end < 0;
 
     let validateStream; // Created later, if necessary.
-    const throughStream = streamEvents(through());
+    const throughStream = streamEvents(through()) as Duplex;
 
     let crc32c = true;
     let md5 = false;
@@ -696,7 +695,7 @@ class File extends common.ServiceObject {
               'MD5 verification was specified, but is not available for the',
               'requested object. MD5 is not available for composite objects.',
             ].join(' ')
-          );
+          ) as any;
           hashError.code = 'MD5_NOT_AVAILABLE';
 
           throughStream.destroy(hashError);
@@ -707,7 +706,7 @@ class File extends common.ServiceObject {
               'To be sure the content is the same, you should download the',
               'file again.',
             ].join(' ')
-          );
+          ) as any;
           mismatchError.code = 'CONTENT_DOWNLOAD_MISMATCH';
 
           throughStream.destroy(mismatchError);
@@ -808,7 +807,7 @@ class File extends common.ServiceObject {
         bucket: this.bucket.name,
         file: this.name,
         generation: this.generation,
-        key: this.encryptionKey,
+        key: this.encryptionKey as any,
         kmsKeyName: this.kmsKeyName,
         metadata: options.metadata,
         offset: options.offset,
@@ -1015,7 +1014,7 @@ class File extends common.ServiceObject {
         validateStream,
         fileWriteStream,
       ])
-    );
+    ) as Duplex;
 
     // Wait until we've received data to determine what upload technique to use.
     stream.on('writing', () => {
@@ -1112,7 +1111,7 @@ class File extends common.ServiceObject {
             ].join(' ');
           }
 
-          const error = new Error(message);
+          const error = new Error(message) as any;
           error.code = code;
           error.errors = [err];
 
@@ -1166,7 +1165,7 @@ class File extends common.ServiceObject {
    * region_tag:storage_delete_file
    * Another example:
    */
-  delete(options, callback) {
+  delete(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1174,7 +1173,7 @@ class File extends common.ServiceObject {
 
     options = extend({}, this.requestQueryObject, options);
 
-    this.parent.delete.call(this, options, callback);
+    (this.parent as any).delete.call(this, options, callback);
   }
 
   /**
@@ -1293,8 +1292,8 @@ class File extends common.ServiceObject {
    *   const exists = data[0];
    * });
    */
-  exists(options, callback) {
-    this.parent.exists.call(this, options, callback);
+  exists(options, callback?) {
+    (this.parent as any).exists.call(this, options, callback);
   }
 
   /**
@@ -1345,7 +1344,7 @@ class File extends common.ServiceObject {
 
     this.encryptionKeyHash = crypto
       .createHash('sha256')
-      .update(this.encryptionKeyBase64, 'base64')
+      .update(this.encryptionKeyBase64, 'base64' as any)
       .digest('base64');
 
     this.encryptionKeyInterceptor = {
@@ -1360,7 +1359,7 @@ class File extends common.ServiceObject {
       },
     };
 
-    this.interceptors.push(this.encryptionKeyInterceptor);
+    (this as any).interceptors.push(this.encryptionKeyInterceptor);
 
     return this;
   }
@@ -1403,8 +1402,8 @@ class File extends common.ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  get(options, callback) {
-    this.parent.get.call(this, options, callback);
+  get(options, callback?) {
+    (this.parent as any).get.call(this, options, callback);
   }
 
   /**
@@ -1449,7 +1448,7 @@ class File extends common.ServiceObject {
    * region_tag:storage_get_metadata
    * Another example:
    */
-  getMetadata(options, callback) {
+  getMetadata(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1457,7 +1456,7 @@ class File extends common.ServiceObject {
 
     options = extend({}, this.requestQueryObject, options);
 
-    this.parent.getMetadata.call(this, options, callback);
+    (this.parent as any).getMetadata.call(this, options, callback);
   }
 
   /**
@@ -1549,7 +1548,7 @@ class File extends common.ServiceObject {
   getSignedPolicy(options, callback) {
     const expires = new Date(options.expires);
 
-    if (expires < Date.now()) {
+    if (expires.valueOf() < Date.now()) {
       throw new Error('An expiration date cannot be in the past.');
     }
 
@@ -1759,12 +1758,13 @@ class File extends common.ServiceObject {
    * Another example:
    */
   getSignedUrl(config, callback) {
-    const expires = new Date(config.expires);
-    const expiresInSeconds = Math.round(expires / 1000); // The API expects seconds.
+    const expiresInMSeconds = new Date(config.expires).valueOf();
 
-    if (expires < Date.now()) {
+    if (expiresInMSeconds < Date.now()) {
       throw new Error('An expiration date cannot be in the past.');
     }
+
+    const expiresInSeconds = Math.round(expiresInMSeconds / 1000); // The API expects seconds.
 
     config = extend({}, config);
 
@@ -2120,7 +2120,9 @@ class File extends common.ServiceObject {
    * @param {object} reqOpts - The request options.
    * @param {function} callback - The callback function.
    */
-  request(reqOpts, callback) {
+  request(reqOpts): Promise<r.Response>;
+  request(reqOpts, callback): void;
+  request(reqOpts, callback?): void|Promise<r.Response> {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
       reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
     }
@@ -2153,7 +2155,7 @@ class File extends common.ServiceObject {
       };
     }
 
-    const newFile = this.bucket.file(this.id, options);
+    const newFile = this.bucket.file((this as any).id, options);
     this.copy(newFile, callback);
   }
 
@@ -2275,7 +2277,7 @@ class File extends common.ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  setMetadata(metadata, options, callback) {
+  setMetadata(metadata, options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -2283,7 +2285,7 @@ class File extends common.ServiceObject {
 
     options = extend({}, this.requestQueryObject, options);
 
-    this.parent.setMetadata.call(this, metadata, options, callback);
+    (this.parent as any).setMetadata.call(this, metadata, options, callback);
   }
 
   /**
@@ -2390,7 +2392,7 @@ class File extends common.ServiceObject {
       bucket: this.bucket.name,
       file: this.name,
       generation: this.generation,
-      key: this.encryptionKey,
+      key: this.encryptionKey as any,
       kmsKeyName: this.kmsKeyName,
       metadata: options.metadata,
       offset: options.offset,
