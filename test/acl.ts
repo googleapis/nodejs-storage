@@ -22,19 +22,18 @@ import extend from 'extend';
 import proxyquire from 'proxyquire';
 import { util } from '@google-cloud/common';
 
-let promisified = false;
-const fakeUtil = extend({}, util, {
-  promisifyAll: function(Class) {
-    if (Class.name === 'Acl') {
-      promisified = true;
-    }
-  },
-});
-
-const Storage = require('../');
-let Acl;
-
 describe('storage/acl', function() {
+  let promisified = false;
+  const fakeUtil = extend({}, util, {
+    promisifyAll: function(Class) {
+      if (Class.name === 'Acl') {
+        promisified = true;
+      }
+    },
+  });
+
+  const Storage = require('../');
+  let Acl;
   let acl;
 
   const ERROR = new Error('Error.');
