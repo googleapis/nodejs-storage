@@ -20,12 +20,11 @@
 
 'use strict';
 
-const assert = require('assert');
-const extend = require('extend');
-const nodeutil = require('util');
-const proxyquire = require('proxyquire');
-const ServiceObject = require('@google-cloud/common').ServiceObject;
-const util = require('@google-cloud/common').util;
+import assert from 'assert';
+import extend from 'extend';
+import nodeutil from 'util';
+import proxyquire from 'proxyquire';
+import { ServiceObject, util } from '@google-cloud/common';
 
 let promisified = false;
 const fakeUtil = extend({}, util, {
