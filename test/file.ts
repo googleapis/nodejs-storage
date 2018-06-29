@@ -16,22 +16,21 @@
 
 'use strict';
 
-const assert = require('assert');
-const Buffer = require('safe-buffer').Buffer;
-const crypto = require('crypto');
+import assert from 'assert';
+import { Buffer } from 'safe-buffer';
+import crypto from 'crypto';
 let duplexify;
-const extend = require('extend');
-const fs = require('fs');
-const nodeutil = require('util');
-const proxyquire = require('proxyquire');
-const request = require('request');
-const ServiceObject = require('@google-cloud/common').ServiceObject;
-const stream = require('stream');
-const through = require('through2');
-const tmp = require('tmp');
-const url = require('url');
-const util = require('@google-cloud/common').util;
-const zlib = require('zlib');
+import extend from 'extend';
+import fs from 'fs';
+import nodeutil from 'util';
+import proxyquire from 'proxyquire';
+import request from 'request';
+import stream from 'stream';
+import through from 'through2';
+import tmp from 'tmp';
+import url from 'url';
+import { ServiceObject, util } from '@google-cloud/common';
+import zlib from 'zlib';
 
 const Bucket = require('../src/bucket.js');
 
