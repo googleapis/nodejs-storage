@@ -16,25 +16,24 @@
 
 'use strict';
 
-const assert = require('assert');
-const extend = require('extend');
-const proxyquire = require('proxyquire');
-const util = require('@google-cloud/common').util;
-
-let promisified = false;
-const fakeUtil = extend({}, util, {
-  promisifyAll: function(Class) {
-    if (Class.name === 'Iam') {
-      promisified = true;
-    }
-  },
-});
+import assert from 'assert';
+import extend from 'extend';
+import proxyquire from 'proxyquire';
+import { util } from '@google-cloud/common';
 
 describe('storage/iam', function() {
   let Iam;
   let iam;
 
   let BUCKET_INSTANCE;
+  let promisified = false;
+  const fakeUtil = extend({}, util, {
+    promisifyAll: function(Class) {
+      if (Class.name === 'Iam') {
+        promisified = true;
+      }
+    },
+  });
 
   before(function() {
     Iam = proxyquire('../src/iam.js', {

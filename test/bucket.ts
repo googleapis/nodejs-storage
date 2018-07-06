@@ -16,23 +16,20 @@
 
 'use strict';
 
-const arrify = require('arrify');
-const assert = require('assert');
-const async = require('async');
-const common = require('@google-cloud/common');
-const extend = require('extend');
-const mime = require('mime-types');
-const nodeutil = require('util');
-const path = require('path');
-const propAssign = require('prop-assign');
-const proxyquire = require('proxyquire');
-const request = require('request');
-const snakeize = require('snakeize');
-const stream = require('stream');
-const through = require('through2');
-const util = common.util;
-
-const ServiceObject = common.ServiceObject;
+import arrify from 'arrify';
+import assert from 'assert';
+import async from 'async';
+import common, { ServiceObject, util } from '@google-cloud/common';
+import extend from 'extend';
+import mime from 'mime-types';
+import nodeutil from 'util';
+import path from 'path';
+import propAssign from 'prop-assign';
+import proxyquire from 'proxyquire';
+import request from 'request';
+import snakeize from 'snakeize';
+import stream from 'stream';
+import through from 'through2';
 
 function FakeFile(bucket, name, options) {
   const self = this;
