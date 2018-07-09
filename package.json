@@ -55,7 +55,7 @@
   ],
   "scripts": {
     "docs": "jsdoc -c .jsdoc.js",
-    "lint": "eslint src/ samples/ system-test/ test/",
+    "lint": "eslint samples/ system-test/ && gts check",
     "cover": "nyc --reporter=lcov mocha --require intelli-espower-loader build/test/*.js && nyc report",
     "test-no-cover": "mocha build/test/",
     "test": "npm run cover",
