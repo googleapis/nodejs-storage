@@ -632,73 +632,79 @@ describe('File', function() {
     function getFakeRequest(data?) {
       let requestOptions;
 
-      function FakeRequest(_requestOptions?) {
-        if (!(this instanceof FakeRequest)) {
-          return new FakeRequest(_requestOptions);
+      class FakeRequest extends stream.Readable {
+        constructor(_requestOptions?) {
+          super();
+          requestOptions = _requestOptions;
+          this._read = function () {
+            if (data) {
+              this.push(data);
+            }
+            this.push(null);
+          };
         }
 
-        requestOptions = _requestOptions;
-
-        stream.Readable.call(this);
-        this._read = function() {
-          if (data) {
-            this.push(data);
-          }
-          this.push(null);
-        };
+        getRequestOptions() {
+          return requestOptions;
+        }
       }
-      nodeutil.inherits(FakeRequest, stream.Readable);
 
-      (FakeRequest as any).getRequestOptions = function() {
-        return requestOptions;
-      };
-
-      return FakeRequest;
+      // Return a Proxy of FakeRequest which can be instantiated
+      // without new.
+      return new Proxy(FakeRequest, {
+        apply(target, _, argumentsList) {
+          return new target(...argumentsList);
+        },
+      });
     }
 
     function getFakeSuccessfulRequest(data) {
       const FakeRequest = getFakeRequest(data);
 
-      function FakeSuccessfulRequest(req) {
-        if (!(this instanceof FakeSuccessfulRequest)) {
-          return new FakeSuccessfulRequest(req);
+      class FakeSuccessfulRequest extends FakeRequest {
+        constructor(req?) {
+          super(req);
+
+          const self = this;
+
+          setImmediate(function () {
+            const stream = new FakeRequest();
+            self.emit('response', stream);
+          });
         }
-
-        FakeRequest.apply(this, arguments);
-
-        const self = this;
-
-        setImmediate(function() {
-          const stream = new FakeRequest();
-          self.emit('response', stream);
-        });
       }
-      nodeutil.inherits(FakeSuccessfulRequest, FakeRequest);
-      extend(FakeSuccessfulRequest, FakeRequest);
 
-      return FakeSuccessfulRequest;
+      // Return a Proxy of FakeSuccessfulRequest which can be instantiated
+      // without new.
+      return new Proxy(FakeSuccessfulRequest, {
+        apply(target, _, argumentsList) {
+          return new target(...argumentsList);
+        },
+      });
     }
 
     function getFakeFailedRequest(error) {
       const FakeRequest = getFakeRequest();
 
-      function FakeFailedRequest() {
-        if (!(this instanceof FakeFailedRequest)) {
-          return new FakeFailedRequest();
+      class FakeFailedRequest extends FakeRequest {
+        constructor(_req?) {
+          super(_req);
+
+          const self = this;
+
+          setImmediate(function () {
+            self.emit('error', error);
+          });
         }
-
-        FakeRequest.apply(this, arguments);
-
-        const self = this;
-
-        setImmediate(function() {
-          self.emit('error', error);
-        });
       }
-      nodeutil.inherits(FakeFailedRequest, FakeRequest);
-      extend(FakeFailedRequest, FakeRequest);
 
-      return FakeFailedRequest;
+      // Return a Proxy of FakeFailedRequest which can be instantiated
+      // without new.
+      return new Proxy(FakeFailedRequest, {
+        apply(target, _, argumentsList) {
+          return new target(...argumentsList);
+        },
+      });
     }
 
     beforeEach(function() {
