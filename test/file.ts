@@ -66,7 +66,7 @@ let requestOverride;
 function fakeRequest() {
   return (requestOverride || requestCached).apply(null, arguments);
 }
-fakeRequest.defaults = function(defaultConfiguration) {
+(fakeRequest as any).defaults = function(defaultConfiguration) {
   // Ignore the default values, so we don't have to test for them in every API
   // call.
   REQUEST_DEFAULT_CONF = defaultConfiguration;
@@ -92,7 +92,7 @@ function fakeResumableUpload() {
     return resumableUploadOverride || resumableUpload;
   };
 }
-fakeResumableUpload.createURI = function() {
+(fakeResumableUpload as any).createURI = function() {
   let createURI = resumableUpload.createURI;
 
   if (resumableUploadOverride && resumableUploadOverride.createURI) {
@@ -101,7 +101,7 @@ fakeResumableUpload.createURI = function() {
 
   return createURI.apply(null, arguments);
 };
-fakeResumableUpload.upload = function() {
+(fakeResumableUpload as any).upload = function() {
   let upload = resumableUpload.upload;
   if (resumableUploadOverride && resumableUploadOverride.upload) {
     upload = resumableUploadOverride.upload;
@@ -629,82 +629,88 @@ describe('File', function() {
   });
 
   describe('createReadStream', function() {
-    function getFakeRequest(data) {
+    function getFakeRequest(data?) {
       let requestOptions;
 
-      function FakeRequest(_requestOptions) {
-        if (!(this instanceof FakeRequest)) {
-          return new FakeRequest(_requestOptions);
+      class FakeRequest extends stream.Readable {
+        constructor(_requestOptions?) {
+          super();
+          requestOptions = _requestOptions;
+          this._read = function () {
+            if (data) {
+              this.push(data);
+            }
+            this.push(null);
+          };
         }
 
-        requestOptions = _requestOptions;
-
-        stream.Readable.call(this);
-        this._read = function() {
-          if (data) {
-            this.push(data);
-          }
-          this.push(null);
-        };
+        getRequestOptions() {
+          return requestOptions;
+        }
       }
-      nodeutil.inherits(FakeRequest, stream.Readable);
 
-      FakeRequest.getRequestOptions = function() {
-        return requestOptions;
-      };
-
-      return FakeRequest;
+      // Return a Proxy of FakeRequest which can be instantiated
+      // without new.
+      return new Proxy(FakeRequest, {
+        apply(target, _, argumentsList) {
+          return new target(...argumentsList);
+        },
+      });
     }
 
     function getFakeSuccessfulRequest(data) {
       const FakeRequest = getFakeRequest(data);
 
-      function FakeSuccessfulRequest(req) {
-        if (!(this instanceof FakeSuccessfulRequest)) {
-          return new FakeSuccessfulRequest(req);
+      class FakeSuccessfulRequest extends FakeRequest {
+        constructor(req?) {
+          super(req);
+
+          const self = this;
+
+          setImmediate(function () {
+            const stream = new FakeRequest();
+            self.emit('response', stream);
+          });
         }
-
-        FakeRequest.apply(this, arguments);
-
-        const self = this;
-
-        setImmediate(function() {
-          const stream = new FakeRequest();
-          self.emit('response', stream);
-        });
       }
-      nodeutil.inherits(FakeSuccessfulRequest, FakeRequest);
-      extend(FakeSuccessfulRequest, FakeRequest);
 
-      return FakeSuccessfulRequest;
+      // Return a Proxy of FakeSuccessfulRequest which can be instantiated
+      // without new.
+      return new Proxy(FakeSuccessfulRequest, {
+        apply(target, _, argumentsList) {
+          return new target(...argumentsList);
+        },
+      });
     }
 
     function getFakeFailedRequest(error) {
       const FakeRequest = getFakeRequest();
 
-      function FakeFailedRequest() {
-        if (!(this instanceof FakeFailedRequest)) {
-          return new FakeFailedRequest();
+      class FakeFailedRequest extends FakeRequest {
+        constructor(_req?) {
+          super(_req);
+
+          const self = this;
+
+          setImmediate(function () {
+            self.emit('error', error);
+          });
         }
-
-        FakeRequest.apply(this, arguments);
-
-        const self = this;
-
-        setImmediate(function() {
-          self.emit('error', error);
-        });
       }
-      nodeutil.inherits(FakeFailedRequest, FakeRequest);
-      extend(FakeFailedRequest, FakeRequest);
 
-      return FakeFailedRequest;
+      // Return a Proxy of FakeFailedRequest which can be instantiated
+      // without new.
+      return new Proxy(FakeFailedRequest, {
+        apply(target, _, argumentsList) {
+          return new target(...argumentsList);
+        },
+      });
     }
 
     beforeEach(function() {
       handleRespOverride = function(err, res, body, callback) {
         const rawResponseStream = through();
-        rawResponseStream.toJSON = function() {
+        (rawResponseStream as any).toJSON = function() {
           return {headers: {}};
         };
         callback(null, null, rawResponseStream);
@@ -930,7 +936,7 @@ describe('File', function() {
       beforeEach(function() {
         handleRespOverride = function(err, res, body, callback) {
           const rawResponseStream = through();
-          rawResponseStream.toJSON = function() {
+          (rawResponseStream as any).toJSON = function() {
             return {
               headers: {
                 'content-encoding': 'gzip',
@@ -1291,7 +1297,7 @@ describe('File', function() {
     const METADATA = {a: 'b', c: 'd'};
 
     beforeEach(function() {
-      fakeFs.access = function(dir, check, callback) {
+      (fakeFs as any).access = function(dir, check, callback) {
         // Assume that the required config directory is writable.
         callback();
       };
@@ -1357,7 +1363,7 @@ describe('File', function() {
 
       xdgConfigOverride = fakeDir;
 
-      fakeFs.access = function(dir) {
+      (fakeFs as any).access = function(dir) {
         assert.strictEqual(dir, fakeDir);
         done();
       };
@@ -1374,7 +1380,7 @@ describe('File', function() {
         return fakeDir;
       };
 
-      fakeFs.access = function(dir) {
+      (fakeFs as any).access = function(dir) {
         assert.strictEqual(dir, fakeDir);
         done();
       };
@@ -1385,7 +1391,7 @@ describe('File', function() {
     it('should fail if resumable requested but not writable', function(done) {
       const error = new Error('Error.');
 
-      fakeFs.access = function(dir, check, callback) {
+      (fakeFs as any).access = function(dir, check, callback) {
         callback(error);
       };
 
@@ -1424,7 +1430,7 @@ describe('File', function() {
         done();
       };
 
-      fakeFs.access = function(dir, check, callback) {
+      (fakeFs as any).access = function(dir, check, callback) {
         callback(new Error('Error.'));
       };
 
@@ -2458,7 +2464,7 @@ describe('File', function() {
       const file = new File(BUCKET, 'name', {generation: generation});
 
       file.getSignedUrl(CONFIG, function(err, signedUrl) {
-        assert(signedUrl.indexOf(encodeURIComponent(generation)) > -1);
+        assert(signedUrl.indexOf(encodeURIComponent(generation.toString())) > -1);
         done();
       });
     });
@@ -2557,7 +2563,7 @@ describe('File', function() {
     describe('expires', function() {
       it('should accept Date objects', function(done) {
         const expires = new Date(Date.now() + 1000 * 60);
-        const expectedExpires = Math.round(expires / 1000);
+        const expectedExpires = Math.round(expires.valueOf() / 1000);
 
         file.getSignedUrl(
           {
@@ -2575,7 +2581,7 @@ describe('File', function() {
 
       it('should accept numbers', function(done) {
         const expires = Date.now() + 1000 * 60;
-        const expectedExpires = Math.round(new Date(expires) / 1000);
+        const expectedExpires = Math.round(new Date(expires).valueOf() / 1000);
 
         file.getSignedUrl(
           {
@@ -2593,7 +2599,7 @@ describe('File', function() {
 
       it('should accept strings', function(done) {
         const expires = '12-12-2099';
-        const expectedExpires = Math.round(new Date(expires) / 1000);
+        const expectedExpires = Math.round(new Date(expires).valueOf() / 1000);
 
         file.getSignedUrl(
           {
@@ -3173,10 +3179,10 @@ describe('File', function() {
 
   describe('setEncryptionKey', function() {
     const KEY = crypto.randomBytes(32);
-    const KEY_BASE64 = Buffer.from(KEY).toString('base64');
+    const KEY_BASE64 = Buffer.from(KEY as any).toString('base64');
     const KEY_HASH = crypto
       .createHash('sha256')
-      .update(KEY_BASE64, 'base64')
+      .update(KEY_BASE64, 'base64' as any)
       .digest('base64');
     let _file;
 

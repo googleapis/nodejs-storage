@@ -31,7 +31,7 @@ import snakeize from 'snakeize';
 import stream from 'stream';
 import through from 'through2';
 
-function FakeFile(bucket, name, options) {
+function FakeFile(bucket, name, options?) {
   const self = this;
 
   this.calledWith_ = arguments;
@@ -44,7 +44,7 @@ function FakeFile(bucket, name, options) {
   this.createWriteStream = function(options) {
     self.metadata = options.metadata;
     const ws = new stream.Writable();
-    ws.write = function() {
+    (ws as any).write = function() {
       ws.emit('complete');
       ws.end();
     };
@@ -62,15 +62,15 @@ let requestOverride;
 function fakeRequest() {
   return (requestOverride || requestCached).apply(null, arguments);
 }
-fakeRequest.defaults = function() {
+(fakeRequest as any).defaults = function() {
   // Ignore the default values, so we don't have to test for them in every API
   // call.
   return fakeRequest;
 };
-fakeRequest.get = function() {
+(fakeRequest as any).get = function() {
   return (requestOverride.get || fakeRequest).apply(null, arguments);
 };
-fakeRequest.head = function() {
+(fakeRequest as any).head = function() {
   return (requestOverride.head || fakeRequest).apply(null, arguments);
 };
 
@@ -1959,9 +1959,9 @@ describe('Bucket', function() {
     });
 
     it('should return early in snippet sandbox', function() {
-      global.GCLOUD_SANDBOX_ENV = true;
+      (global as any).GCLOUD_SANDBOX_ENV = true;
       const returnValue = bucket.upload(filepath, assert.ifError);
-      delete global.GCLOUD_SANDBOX_ENV;
+      delete (global as any).GCLOUD_SANDBOX_ENV;
       assert.strictEqual(returnValue, undefined);
     });
 
@@ -2106,7 +2106,7 @@ describe('Bucket', function() {
       const options = {destination: fakeFile};
       fakeFile.createWriteStream = function(options) {
         const ws = new stream.Writable();
-        ws.write = util.noop;
+        (ws as any).write = util.noop;
         setImmediate(function() {
           const expectedContentType = 'application/json; charset=utf-8';
           assert.equal(options.metadata.contentType, expectedContentType);
@@ -2122,7 +2122,7 @@ describe('Bucket', function() {
       const options = {destination: fakeFile};
       fakeFile.createWriteStream = function(options) {
         const ws = new stream.Writable();
-        ws.write = util.noop;
+        (ws as any).write = util.noop;
         setImmediate(function() {
           const expectedContentType = 'text/plain; charset=utf-8';
           assert.equal(options.metadata.contentType, expectedContentType);
@@ -2138,7 +2138,7 @@ describe('Bucket', function() {
       const options = {destination: fakeFile, resumable: true};
       fakeFile.createWriteStream = function(options_) {
         const ws = new stream.Writable();
-        ws.write = util.noop;
+        (ws as any).write = util.noop;
         setImmediate(function() {
           assert.strictEqual(options_.resumable, options.resumable);
           done();
@@ -2153,7 +2153,7 @@ describe('Bucket', function() {
       const options = {destination: fakeFile, resumable: true};
       fakeFile.createWriteStream = function(options_) {
         const ws = new stream.Writable();
-        ws.write = util.noop;
+        (ws as any).write = util.noop;
         setImmediate(function() {
           assert.strictEqual(options_.resumable, options.resumable);
           done();
@@ -2175,7 +2175,7 @@ describe('Bucket', function() {
       const fakeFile = new FakeFile(bucket, 'file-name');
       fakeFile.createWriteStream = function(options) {
         const ws = new stream.Writable();
-        ws.write = util.noop;
+        (ws as any).write = util.noop;
         setImmediate(function() {
           assert.strictEqual(options.resumable, true);
           done();
@@ -2198,7 +2198,7 @@ describe('Bucket', function() {
       const fakeFile = new FakeFile(bucket, 'file-name');
       fakeFile.createWriteStream = function(options) {
         const ws = new stream.Writable();
-        ws.write = util.noop;
+        (ws as any).write = util.noop;
         setImmediate(function() {
           assert.strictEqual(options.resumable, false);
           done();
@@ -2215,7 +2215,7 @@ describe('Bucket', function() {
       const options = {destination: fakeFile, metadata: metadata};
       fakeFile.createWriteStream = function(options) {
         const ws = new stream.Writable();
-        ws.write = util.noop;
+        (ws as any).write = util.noop;
         setImmediate(function() {
           assert.equal(options.metadata.contentType, metadata.contentType);
           done();
@@ -2234,7 +2234,7 @@ describe('Bucket', function() {
       };
       fakeFile.createWriteStream = function(options_) {
         const ws = new stream.Writable();
-        ws.write = util.noop;
+        (ws as any).write = util.noop;
         setImmediate(function() {
           assert.strictEqual(options_.a, options.a);
           assert.strictEqual(options_.c, options.c);
