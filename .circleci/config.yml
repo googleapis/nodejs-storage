@@ -78,9 +78,6 @@ jobs:
             npm install
           environment:
             NPM_CONFIG_PREFIX: /home/node/.npm-global
-      - run: &compile_typescript
-          name: Compile typescript to javascript
-          command: npm run compile
       - run:
           name: Run unit tests.
           command: npm test
@@ -106,7 +103,6 @@ jobs:
       - checkout
       - run: *remove_package_lock
       - run: *npm_install_and_link
-      - run: *compile_typescript
       - run: &samples_npm_install_and_link
           name: Link the module being tested to the samples.
           command: |
@@ -145,7 +141,6 @@ jobs:
                 -out .circleci/key.json \
                 -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
       - run: *npm_install_and_link
-      - run: *compile_typescript
       - run: *samples_npm_install_and_link
       - run:
           name: Run sample tests.
@@ -179,7 +174,6 @@ jobs:
                 -out .circleci/no-whitelist-key.json \
                 -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
       - run: *npm_install_and_link
-      - run: *compile_typescript
       - run:
           name: Run system tests.
           command: npm run system-test
@@ -198,7 +192,6 @@ jobs:
     steps:
       - checkout
       - run: *npm_install_and_link
-      - run: *compile_typescript
       - run:
           name: Set NPM authentication.
           command: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc'
