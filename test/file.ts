@@ -2458,7 +2458,7 @@ describe('File', function() {
       const file = new File(BUCKET, 'name', {generation: generation});
 
       file.getSignedUrl(CONFIG, function(err, signedUrl) {
-        assert(signedUrl.indexOf(encodeURIComponent(generation)) > -1);
+        assert(signedUrl.indexOf(encodeURIComponent(generation.toString())) > -1);
         done();
       });
     });
@@ -2557,7 +2557,7 @@ describe('File', function() {
     describe('expires', function() {
       it('should accept Date objects', function(done) {
         const expires = new Date(Date.now() + 1000 * 60);
-        const expectedExpires = Math.round(expires / 1000);
+        const expectedExpires = Math.round(expires.valueOf() / 1000);
 
         file.getSignedUrl(
           {
@@ -2575,7 +2575,7 @@ describe('File', function() {
 
       it('should accept numbers', function(done) {
         const expires = Date.now() + 1000 * 60;
-        const expectedExpires = Math.round(new Date(expires) / 1000);
+        const expectedExpires = Math.round(new Date(expires).valueOf() / 1000);
 
         file.getSignedUrl(
           {
@@ -2593,7 +2593,7 @@ describe('File', function() {
 
       it('should accept strings', function(done) {
         const expires = '12-12-2099';
-        const expectedExpires = Math.round(new Date(expires) / 1000);
+        const expectedExpires = Math.round(new Date(expires).valueOf() / 1000);
 
         file.getSignedUrl(
           {
