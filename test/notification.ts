@@ -89,7 +89,7 @@ describe('Notification', function() {
           assert.strictEqual(context, BUCKET);
           return bound;
         },
-      };
+      } as any;
 
       const notification = new Notification(BUCKET, ID);
       const calledWith = notification.calledWith_[0];
