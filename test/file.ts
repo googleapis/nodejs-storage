@@ -66,7 +66,7 @@ let requestOverride;
 function fakeRequest() {
   return (requestOverride || requestCached).apply(null, arguments);
 }
-fakeRequest.defaults = function(defaultConfiguration) {
+(fakeRequest as any).defaults = function(defaultConfiguration) {
   // Ignore the default values, so we don't have to test for them in every API
   // call.
   REQUEST_DEFAULT_CONF = defaultConfiguration;
@@ -92,7 +92,7 @@ function fakeResumableUpload() {
     return resumableUploadOverride || resumableUpload;
   };
 }
-fakeResumableUpload.createURI = function() {
+(fakeResumableUpload as any).createURI = function() {
   let createURI = resumableUpload.createURI;
 
   if (resumableUploadOverride && resumableUploadOverride.createURI) {
@@ -101,7 +101,7 @@ fakeResumableUpload.createURI = function() {
 
   return createURI.apply(null, arguments);
 };
-fakeResumableUpload.upload = function() {
+(fakeResumableUpload as any).upload = function() {
   let upload = resumableUpload.upload;
   if (resumableUploadOverride && resumableUploadOverride.upload) {
     upload = resumableUploadOverride.upload;
@@ -629,10 +629,10 @@ describe('File', function() {
   });
 
   describe('createReadStream', function() {
-    function getFakeRequest(data) {
+    function getFakeRequest(data?) {
       let requestOptions;
 
-      function FakeRequest(_requestOptions) {
+      function FakeRequest(_requestOptions?) {
         if (!(this instanceof FakeRequest)) {
           return new FakeRequest(_requestOptions);
         }
@@ -649,7 +649,7 @@ describe('File', function() {
       }
       nodeutil.inherits(FakeRequest, stream.Readable);
 
-      FakeRequest.getRequestOptions = function() {
+      (FakeRequest as any).getRequestOptions = function() {
         return requestOptions;
       };
 
@@ -704,7 +704,7 @@ describe('File', function() {
     beforeEach(function() {
       handleRespOverride = function(err, res, body, callback) {
         const rawResponseStream = through();
-        rawResponseStream.toJSON = function() {
+        (rawResponseStream as any).toJSON = function() {
           return {headers: {}};
         };
         callback(null, null, rawResponseStream);
@@ -930,7 +930,7 @@ describe('File', function() {
       beforeEach(function() {
         handleRespOverride = function(err, res, body, callback) {
           const rawResponseStream = through();
-          rawResponseStream.toJSON = function() {
+          (rawResponseStream as any).toJSON = function() {
             return {
               headers: {
                 'content-encoding': 'gzip',
@@ -1291,7 +1291,7 @@ describe('File', function() {
     const METADATA = {a: 'b', c: 'd'};
 
     beforeEach(function() {
-      fakeFs.access = function(dir, check, callback) {
+      (fakeFs as any).access = function(dir, check, callback) {
         // Assume that the required config directory is writable.
         callback();
       };
@@ -1357,7 +1357,7 @@ describe('File', function() {
 
       xdgConfigOverride = fakeDir;
 
-      fakeFs.access = function(dir) {
+      (fakeFs as any).access = function(dir) {
         assert.strictEqual(dir, fakeDir);
         done();
       };
@@ -1374,7 +1374,7 @@ describe('File', function() {
         return fakeDir;
       };
 
-      fakeFs.access = function(dir) {
+      (fakeFs as any).access = function(dir) {
         assert.strictEqual(dir, fakeDir);
         done();
       };
@@ -1385,7 +1385,7 @@ describe('File', function() {
     it('should fail if resumable requested but not writable', function(done) {
       const error = new Error('Error.');
 
-      fakeFs.access = function(dir, check, callback) {
+      (fakeFs as any).access = function(dir, check, callback) {
         callback(error);
       };
 
@@ -1424,7 +1424,7 @@ describe('File', function() {
         done();
       };
 
-      fakeFs.access = function(dir, check, callback) {
+      (fakeFs as any).access = function(dir, check, callback) {
         callback(new Error('Error.'));
       };
 
@@ -3173,10 +3173,10 @@ describe('File', function() {
 
   describe('setEncryptionKey', function() {
     const KEY = crypto.randomBytes(32);
-    const KEY_BASE64 = Buffer.from(KEY).toString('base64');
+    const KEY_BASE64 = Buffer.from(KEY as any).toString('base64');
     const KEY_HASH = crypto
       .createHash('sha256')
-      .update(KEY_BASE64, 'base64')
+      .update(KEY_BASE64, 'base64' as any)
       .digest('base64');
     let _file;
 
