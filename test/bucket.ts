@@ -83,7 +83,7 @@ fakeAsync.eachLimit = function() {
 
 let promisified = false;
 const fakeUtil = extend({}, util, {
-  promisifyAll: function(Class, options) {
+  promisifyAll(Class, options) {
     if (Class.name !== 'Bucket') {
       return;
     }
@@ -95,7 +95,7 @@ const fakeUtil = extend({}, util, {
 
 let extended = false;
 const fakePaginator = {
-  extend: function(Class, methods) {
+  extend(Class, methods) {
     if (Class.name !== 'Bucket') {
       return;
     }
@@ -105,7 +105,7 @@ const fakePaginator = {
     assert.deepEqual(methods, ['getFiles']);
     extended = true;
   },
-  streamify: function(methodName) {
+  streamify(methodName) {
     return methodName;
   },
 };
@@ -193,7 +193,7 @@ describe('Bucket', function() {
 
       beforeEach(function() {
         Bucket.prototype.request = {
-          bind: function(ctx) {
+          bind(ctx) {
             return ctx;
           },
         };
@@ -223,7 +223,7 @@ describe('Bucket', function() {
     it('should inherit from ServiceObject', function(done) {
       const storageInstance = extend({}, STORAGE, {
         createBucket: {
-          bind: function(context) {
+          bind(context) {
             assert.strictEqual(context, storageInstance);
             done();
           },
@@ -1291,7 +1291,7 @@ describe('Bucket', function() {
     });
 
     it('should set kmsKeyName on file', function(done) {
-      var kmsKeyName = 'kms-key-name';
+      let kmsKeyName = 'kms-key-name';
 
       bucket.request = function(reqOpts, callback) {
         callback(null, {
@@ -2006,7 +2006,7 @@ describe('Bucket', function() {
 
     it('should accept a path, metadata, & cb', function(done) {
       const options = {
-        metadata: metadata,
+        metadata,
         encryptionKey: 'key',
         kmsKeyName: 'kms-key-name',
       };
@@ -2041,7 +2041,7 @@ describe('Bucket', function() {
       const newFileName = 'new-file-name.png';
       const options = {
         destination: newFileName,
-        metadata: metadata,
+        metadata,
         encryptionKey: 'key',
         kmsKeyName: 'kms-key-name',
       };
@@ -2074,7 +2074,7 @@ describe('Bucket', function() {
       fakeFile.isSameFile = function() {
         return true;
       };
-      const options = {destination: fakeFile, metadata: metadata};
+      const options = {destination: fakeFile, metadata};
       bucket.upload(filepath, options, function(err, file) {
         assert.ifError(err);
         assert(file.isSameFile());
@@ -2214,7 +2214,7 @@ describe('Bucket', function() {
     it('should allow overriding content type', function(done) {
       const fakeFile = new FakeFile(bucket, 'file-name');
       const metadata = {contentType: 'made-up-content-type'};
-      const options = {destination: fakeFile, metadata: metadata};
+      const options = {destination: fakeFile, metadata};
       fakeFile.createWriteStream = function(options) {
         const ws = new stream.Writable();
         (ws as any).write = util.noop;
