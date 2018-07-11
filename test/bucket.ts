@@ -136,7 +136,9 @@ describe('Bucket', function() {
 
   before(function() {
     Bucket = proxyquire('../src/bucket.js', {
-      async: fakeAsync,
+      async: {
+        default: fakeAsync
+      },
       request: fakeRequest,
       '@google-cloud/common': {
         ServiceObject: FakeServiceObject,
