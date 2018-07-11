@@ -57,7 +57,7 @@
     "docs": "jsdoc -c .jsdoc.js",
     "lint": "eslint samples/ system-test/ && gts check",
     "cover": "nyc --reporter=lcov mocha --require intelli-espower-loader build/test/*.js && nyc report",
-    "test-no-cover": "mocha build/test/",
+    "test-no-cover": "npm run pretest && mocha build/test/",
     "test": "npm run cover",
     "samples-test": "npm link && cd samples/ && npm link @google-cloud/storage && npm test && cd ../",
     "system-test": "mocha system-test/ --timeout 600000",
