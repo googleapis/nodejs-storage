@@ -578,7 +578,7 @@ describe('Bucket', function() {
     }
 
     beforeEach(function() {
-      fakeUtil.isCustomType = common.util.isCustomType;
+      fakeUtil.isCustomType = util.isCustomType;
     });
 
     it('should throw an error if a valid topic is not provided', function() {
