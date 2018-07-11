@@ -83,7 +83,7 @@ jobs:
           command: npm test
       - run:
           name: Submit coverage data to codecov.
-          command: node_modules/.bin/codecov
+          command: npm run codecov
           when: always
   node8:
     docker:
