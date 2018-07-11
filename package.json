@@ -70,6 +70,11 @@
     "fix": "gts fix",
     "prepare": "npm run compile"
   },
+  "nyc": {
+    "exclude": [
+      "build/test"
+    ]
+  },
   "dependencies": {
     "@google-cloud/common": "^0.20.0",
     "arrify": "^1.0.0",
