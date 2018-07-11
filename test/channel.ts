@@ -24,7 +24,7 @@ import assert from 'assert';
 import extend from 'extend';
 import nodeutil from 'util';
 import proxyquire from 'proxyquire';
-import { ServiceObject, util } from '@google-cloud/common';
+import {ServiceObject, util} from '@google-cloud/common';
 
 let promisified = false;
 const fakeUtil = extend({}, util, {
@@ -56,7 +56,7 @@ describe('Channel', function() {
         ServiceObject: FakeServiceObject,
         util: fakeUtil,
       },
-    });
+    }).Channel;
   });
 
   beforeEach(function() {
