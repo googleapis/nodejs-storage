@@ -53,7 +53,7 @@ describe('Notification', function() {
         ServiceObject: FakeServiceObject,
         util: fakeUtil,
       },
-    });
+    }).Notification;
   });
 
   beforeEach(function() {
