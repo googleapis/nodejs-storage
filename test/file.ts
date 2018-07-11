@@ -144,7 +144,9 @@ describe('File', function() {
         util: fakeUtil,
       },
       fs: fakeFs,
-      'gcs-resumable-upload': fakeResumableUpload,
+      'gcs-resumable-upload': {
+        default: fakeResumableUpload,
+      },
       'hash-stream-validation': fakeHashStreamValidation,
       os: fakeOs,
       request: fakeRequest,
