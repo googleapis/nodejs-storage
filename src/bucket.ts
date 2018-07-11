@@ -18,7 +18,7 @@
 
 import arrify from 'arrify';
 import async from 'async';
-import common from '@google-cloud/common';
+import {paginator, ServiceObject, util} from '@google-cloud/common';
 import extend from 'extend';
 import fs from 'fs';
 import is from 'is';
@@ -56,7 +56,7 @@ const RESUMABLE_THRESHOLD = 5000000;
  * const storage = require('@google-cloud/storage')();
  * const bucket = storage.bucket('albums');
  */
-class Bucket extends common.ServiceObject {
+class Bucket extends ServiceObject {
   /**
    * The bucket's name.
    * @name Bucket#name
@@ -295,7 +295,7 @@ class Bucket extends common.ServiceObject {
 
     this.iam = new Iam(this);
 
-    this.getFilesStream = common.paginator.streamify('getFiles');
+    this.getFilesStream = paginator.streamify('getFiles');
   }
 
   /**
@@ -380,7 +380,7 @@ class Bucket extends common.ServiceObject {
 
     sources = sources.map(convertToFile);
     destination = convertToFile(destination);
-    callback = callback || common.util.noop;
+    callback = callback || util.noop;
 
     if (!destination.metadata.contentType) {
       const destinationContentType = mime.contentType(destination.name);
@@ -611,7 +611,7 @@ class Bucket extends common.ServiceObject {
       options = {};
     }
 
-    if (is.object(topic) && common.util.isCustomType(topic, 'pubsub/topic')) {
+    if (is.object(topic) && util.isCustomType(topic, 'pubsub/topic')) {
       topic = topic.name;
     }
 
@@ -708,7 +708,7 @@ class Bucket extends common.ServiceObject {
         uri: '',
         qs: options,
       },
-      callback || common.util.noop
+      callback || util.noop
     );
   }
 
@@ -955,7 +955,7 @@ class Bucket extends common.ServiceObject {
           requesterPays: false,
         },
       },
-      callback || common.util.noop
+      callback || util.noop
     );
   }
 
@@ -1011,7 +1011,7 @@ class Bucket extends common.ServiceObject {
           requesterPays: true,
         },
       },
-      callback || common.util.noop
+      callback || util.noop
     );
   }
 
@@ -1880,7 +1880,7 @@ class Bucket extends common.ServiceObject {
       options = {};
     }
 
-    callback = callback || common.util.noop;
+    callback = callback || util.noop;
 
     this.setMetadata({labels}, options, callback);
   }
@@ -1953,7 +1953,7 @@ class Bucket extends common.ServiceObject {
       options = {};
     }
 
-    callback = callback || common.util.noop;
+    callback = callback || util.noop;
 
     this.request(
       {
@@ -2430,14 +2430,14 @@ class Bucket extends common.ServiceObject {
  *
  * These methods can be auto-paginated.
  */
-common.paginator.extend(Bucket, 'getFiles');
+paginator.extend(Bucket, 'getFiles');
 
 /*! Developer Documentation
  *
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-common.util.promisifyAll(Bucket, {
+util.promisifyAll(Bucket, {
   exclude: ['request', 'file', 'notification'],
 });
 

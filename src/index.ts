@@ -17,7 +17,7 @@
 'use strict';
 
 import arrify from 'arrify';
-import common from '@google-cloud/common';
+import {paginator, Service, util} from '@google-cloud/common';
 import extend from 'extend';
 
 import {Bucket} from './bucket';
@@ -84,7 +84,7 @@ import {File} from './file';
  *
  * @param {ClientConfig} [options] Configuration options.
  */
-class Storage extends common.Service {
+class Storage extends Service {
   /**
    * {@link Bucket} class.
    *
@@ -232,7 +232,7 @@ class Storage extends common.Service {
      */
     this.acl = Storage.acl;
 
-    this.getBucketsStream = common.paginator.streamify('getBuckets');
+    this.getBucketsStream = paginator.streamify('getBuckets');
   }
 
   /**
@@ -607,14 +607,14 @@ Storage.acl = {
  *
  * These methods can be auto-paginated.
  */
-common.paginator.extend(Storage, 'getBuckets');
+paginator.extend(Storage, 'getBuckets');
 
 /*! Developer Documentation
  *
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-common.util.promisifyAll(Storage, {
+util.promisifyAll(Storage, {
   exclude: ['bucket', 'channel'],
 });
 
