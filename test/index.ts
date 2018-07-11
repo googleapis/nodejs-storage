@@ -71,7 +71,7 @@ describe('Storage', function() {
   let Bucket;
 
   before(function() {
-    Storage = proxyquire('../', {
+    Storage = proxyquire('../src', {
       '@google-cloud/common': {
         Service: FakeService,
         paginator: fakePaginator,
