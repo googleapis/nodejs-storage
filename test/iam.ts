@@ -40,7 +40,7 @@ describe('storage/iam', function() {
       '@google-cloud/common': {
         util: fakeUtil,
       },
-    });
+    }).Iam;
   });
 
   beforeEach(function() {
