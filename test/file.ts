@@ -644,7 +644,7 @@ describe('File', function() {
           };
         }
 
-        getRequestOptions() {
+        static getRequestOptions() {
           return requestOptions;
         }
       }
