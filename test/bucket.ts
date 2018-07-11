@@ -143,11 +143,11 @@ describe('Bucket', function() {
         paginator: fakePaginator,
         util: fakeUtil,
       },
-      './acl.js': FakeAcl,
-      './file.js': FakeFile,
-      './iam.js': FakeIam,
-      './notification.js': FakeNotification,
-    });
+      './acl.js': { Acl: FakeAcl },
+      './file.js': { File: FakeFile },
+      './iam.js': { Iam: FakeIam },
+      './notification.js': { Notification: FakeNotification },
+    }).Bucket;
   });
 
   beforeEach(function() {
