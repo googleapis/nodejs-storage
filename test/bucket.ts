@@ -19,7 +19,7 @@
 import arrify from 'arrify';
 import assert from 'assert';
 import async from 'async';
-import common, { ServiceObject, util } from '@google-cloud/common';
+import {ServiceObject, util} from '@google-cloud/common';
 import extend from 'extend';
 import mime from 'mime-types';
 import nodeutil from 'util';
@@ -136,18 +136,20 @@ describe('Bucket', function() {
 
   before(function() {
     Bucket = proxyquire('../src/bucket.js', {
-      async: fakeAsync,
+      async: {
+        default: fakeAsync
+      },
       request: fakeRequest,
       '@google-cloud/common': {
         ServiceObject: FakeServiceObject,
         paginator: fakePaginator,
         util: fakeUtil,
       },
-      './acl.js': FakeAcl,
-      './file.js': FakeFile,
-      './iam.js': FakeIam,
-      './notification.js': FakeNotification,
-    });
+      './acl.js': { Acl: FakeAcl },
+      './file.js': { File: FakeFile },
+      './iam.js': { Iam: FakeIam },
+      './notification.js': { Notification: FakeNotification },
+    }).Bucket;
   });
 
   beforeEach(function() {
@@ -578,7 +580,7 @@ describe('Bucket', function() {
     }
 
     beforeEach(function() {
-      fakeUtil.isCustomType = common.util.isCustomType;
+      fakeUtil.isCustomType = util.isCustomType;
     });
 
     it('should throw an error if a valid topic is not provided', function() {
@@ -1928,8 +1930,8 @@ describe('Bucket', function() {
 
   describe('upload', function() {
     const basename = 'testfile.json';
-    const filepath = path.join(__dirname, 'testdata/' + basename);
-    const textFilepath = path.join(__dirname, 'testdata/textfile.txt');
+    const filepath = path.join(__dirname, '../../test/testdata/' + basename);
+    const textFilepath = path.join(__dirname, '../../test/testdata/textfile.txt');
     const urlPath = 'http://www.example.com/image.jpg';
     const metadata = {
       metadata: {
