@@ -32,7 +32,7 @@ import url from 'url';
 import { ServiceObject, util } from '@google-cloud/common';
 import zlib from 'zlib';
 
-const Bucket = require('../src/bucket.js');
+const {Bucket} = require('../src/bucket.js');
 
 let promisified = false;
 let makeWritableStreamOverride;
@@ -144,12 +144,14 @@ describe('File', function() {
         util: fakeUtil,
       },
       fs: fakeFs,
-      'gcs-resumable-upload': fakeResumableUpload,
+      'gcs-resumable-upload': {
+        default: fakeResumableUpload,
+      },
       'hash-stream-validation': fakeHashStreamValidation,
       os: fakeOs,
       request: fakeRequest,
       'xdg-basedir': fakeXdgBasedir,
-    });
+    }).File;
     duplexify = require('duplexify');
   });
 
@@ -644,7 +646,7 @@ describe('File', function() {
           };
         }
 
-        getRequestOptions() {
+        static getRequestOptions() {
           return requestOptions;
         }
       }
