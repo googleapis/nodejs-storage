@@ -17,7 +17,7 @@
 'use strict';
 
 import {Buffer} from 'safe-buffer';
-import common from '@google-cloud/common';
+import {ServiceObject, util} from '@google-cloud/common';
 import compressible from 'compressible';
 import concat from 'concat-stream';
 import crypto from 'crypto';
@@ -97,7 +97,7 @@ const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
  *
  * const file = myBucket.file('my-file');
  */
-class File extends common.ServiceObject {
+class File extends ServiceObject {
   /**
    * Cloud Storage uses access control lists (ACLs) to manage object and
    * bucket access. ACLs are the mechanism you use to share objects with other
@@ -332,7 +332,7 @@ class File extends common.ServiceObject {
     }
 
     options = extend(true, {}, options);
-    callback = callback || common.util.noop;
+    callback = callback || util.noop;
 
     let destBucket;
     let destName;
@@ -594,7 +594,7 @@ class File extends common.ServiceObject {
         })
         .on('response', res => {
           throughStream.emit('response', res);
-          common.util.handleResp(null, res, null, onResponse);
+          util.handleResp(null, res, null, onResponse);
         })
         .resume();
 
@@ -1956,7 +1956,7 @@ class File extends common.ServiceObject {
    * Another example:
    */
   makePublic(callback) {
-    callback = callback || common.util.noop;
+    callback = callback || util.noop;
 
     (this.acl as any).add(
       {
@@ -2098,7 +2098,7 @@ class File extends common.ServiceObject {
       options = {};
     }
 
-    callback = callback || common.util.noop;
+    callback = callback || util.noop;
 
     this.copy(destination, options, (err, destinationFile, apiResponse) => {
       if (err) {
@@ -2462,7 +2462,7 @@ class File extends common.ServiceObject {
       reqOpts.qs.predefinedAcl = 'publicRead';
     }
 
-    common.util.makeWritableStream(dup, {
+    util.makeWritableStream(dup, {
       makeAuthenticatedRequest: reqOpts => {
         this.request(reqOpts, (err, body, resp) => {
           if (err) {
@@ -2486,7 +2486,7 @@ class File extends common.ServiceObject {
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-common.util.promisifyAll(File, {
+util.promisifyAll(File, {
   exclude: ['request', 'setEncryptionKey'],
 });
 

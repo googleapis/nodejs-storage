@@ -16,7 +16,7 @@
 
 'use strict';
 
-import common from '@google-cloud/common';
+import {ServiceObject, util} from '@google-cloud/common';
 
 /**
  * Create a channel object to interact with a Cloud Storage channel.
@@ -32,7 +32,7 @@ import common from '@google-cloud/common';
  * const storage = require('@google-cloud/storage')();
  * const channel = storage.channel('id', 'resource-id');
  */
-class Channel extends common.ServiceObject {
+class Channel extends ServiceObject {
   constructor(storage, id, resourceId) {
     const config = {
       parent: storage,
@@ -88,7 +88,7 @@ class Channel extends common.ServiceObject {
    * });
    */
   stop(callback) {
-    callback = callback || common.util.noop;
+    callback = callback || util.noop;
 
     this.request(
       {
@@ -108,7 +108,7 @@ class Channel extends common.ServiceObject {
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-common.util.promisifyAll(Channel);
+util.promisifyAll(Channel);
 
 /**
  * Reference to the {@link Channel} class.

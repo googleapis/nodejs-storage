@@ -16,7 +16,7 @@
 
 'use strict';
 
-import common from '@google-cloud/common';
+import {ServiceObject, util} from '@google-cloud/common';
 import is from 'is';
 
 /**
@@ -38,7 +38,7 @@ import is from 'is';
  *
  * const notification = myBucket.notification('1');
  */
-class Notification extends common.ServiceObject {
+class Notification extends ServiceObject {
   constructor(bucket, id) {
     const methods = {
       /**
@@ -172,7 +172,7 @@ class Notification extends common.ServiceObject {
         uri: '',
         qs: options,
       },
-      callback || common.util.noop
+      callback || util.noop
     );
   }
 
@@ -335,7 +335,7 @@ class Notification extends common.ServiceObject {
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-common.util.promisifyAll(Notification);
+util.promisifyAll(Notification);
 
 /**
  * Reference to the {@link Notification} class.
