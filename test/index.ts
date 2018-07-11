@@ -77,7 +77,7 @@ describe('Storage', function() {
         paginator: fakePaginator,
         util: fakeUtil,
       },
-      './channel.js': FakeChannel,
+      './channel.js': {Channel: FakeChannel},
     });
     Bucket = Storage.Bucket;
   });
