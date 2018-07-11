@@ -77,7 +77,7 @@ describe('Storage', function() {
         paginator: fakePaginator,
         util: fakeUtil,
       },
-      './channel.js': FakeChannel,
+      './channel.js': {Channel: FakeChannel},
     });
     Bucket = Storage.Bucket;
   });
@@ -119,7 +119,7 @@ describe('Storage', function() {
         'https://www.googleapis.com/auth/cloud-platform',
         'https://www.googleapis.com/auth/devstorage.full_control',
       ]);
-      assert.deepEqual(calledWith.packageJson, require('../package.json'));
+      assert.deepEqual(calledWith.packageJson, require('../../package.json'));
     });
   });
 

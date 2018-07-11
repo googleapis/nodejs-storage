@@ -219,7 +219,7 @@ class Storage extends Service {
         'https://www.googleapis.com/auth/cloud-platform',
         'https://www.googleapis.com/auth/devstorage.full_control',
       ],
-      packageJson: require('../package.json'),
+      packageJson: require('../../package.json'),
     };
 
     super(config, options);
