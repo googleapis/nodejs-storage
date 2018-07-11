@@ -23,6 +23,7 @@ import proxyquire from 'proxyquire';
 import { util } from '@google-cloud/common';
 
 let Acl;
+let AclRoleAccessorMethods;
 describe('storage/acl', function() {
   let promisified = false;
   const fakeUtil = extend({}, util, {
@@ -43,11 +44,13 @@ describe('storage/acl', function() {
   const ENTITY = 'user-user@example.com';
 
   before(function() {
-    Acl = proxyquire('../src/acl.js', {
+    const aclModule = proxyquire('../src/acl.js', {
       '@google-cloud/common': {
         util: fakeUtil,
       },
     });
+    Acl = aclModule.Acl;
+    AclRoleAccessorMethods = aclModule.AclRoleAccessorMethods;
   });
 
   beforeEach(function() {
@@ -489,7 +492,7 @@ describe('storage/AclRoleAccessorMethods', function() {
   let aclEntity;
 
   beforeEach(function() {
-    aclEntity = new Acl.AclRoleAccessorMethods();
+    aclEntity = new AclRoleAccessorMethods();
   });
 
   describe('initialization', function() {
