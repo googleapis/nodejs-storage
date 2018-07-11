@@ -33,7 +33,7 @@ describe('storage/acl', function() {
     },
   });
 
-  const Storage = require('../');
+  const Storage = require('../src');
   let acl;
 
   const ERROR = new Error('Error.');
