@@ -54,21 +54,21 @@
     "greenkeeper[bot] <greenkeeper[bot]@users.noreply.github.com>"
   ],
   "scripts": {
+    "codecov": "nyc report --reporter=json && codecov -f .coverage/*.json",
     "docs": "jsdoc -c .jsdoc.js",
-    "lint": "eslint samples/ system-test/ && gts check",
-    "cover": "nyc --reporter=lcov mocha --require intelli-espower-loader build/test/*.js && nyc report",
-    "test-no-cover": "mocha build/test/",
-    "test": "npm run cover",
-    "samples-test": "npm link && cd samples/ && npm link @google-cloud/storage && npm test && cd ../",
-    "system-test": "mocha system-test/ --timeout 600000",
-    "all-test": "npm test && npm run system-test && npm run samples-test",
     "generate-scaffolding": "repo-tools generate all && repo-tools generate lib_samples_readme -l samples/ --config ../.cloud-repo-tools.json",
+    "system-test": "mocha system-test/ --timeout 600000",
+    "test-only": "nyc mocha build/test",
+    "test": "npm run test-only",
+    "pretest-only": "npm run compile",
+    "lint": "eslint samples/ system-test/ && gts check",
+    "samples-test": "npm link && cd samples/ && npm link ../ & npm test && cd ../",
+    "all-test": "npm test && npm run system-test && npm run samples-test",
     "check": "gts check",
     "clean": "gts clean",
     "compile": "tsc -p .",
     "fix": "gts fix",
-    "prepare": "npm run compile",
-    "pretest": "npm run compile"
+    "prepare": "npm run compile"
   },
   "dependencies": {
     "@google-cloud/common": "^0.20.0",
@@ -118,6 +118,7 @@
     "eslint-plugin-node": "^6.0.0",
     "eslint-plugin-prettier": "^2.3.1",
     "gts": "^0.7.1",
+    "hard-rejection": "^1.0.0",
     "ink-docstrap": "https://github.com/docstrap/docstrap/tarball/master",
     "intelli-espower-loader": "^1.0.1",
     "jsdoc": "^3.5.4",
@@ -130,6 +131,7 @@
     "propprop": "^0.3.0",
     "proxyquire": "^2.0.0",
     "semistandard": "^12.0.0",
+    "source-map-support": "^0.5.6",
     "tmp": "^0.0.33",
     "typescript": "^2.9.2",
     "uuid": "^3.1.0"
