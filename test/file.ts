@@ -32,7 +32,7 @@ import url from 'url';
 import { ServiceObject, util } from '@google-cloud/common';
 import zlib from 'zlib';
 
-const Bucket = require('../src/bucket.js');
+const {Bucket} = require('../src/bucket.js');
 
 let promisified = false;
 let makeWritableStreamOverride;
@@ -149,7 +149,7 @@ describe('File', function() {
       os: fakeOs,
       request: fakeRequest,
       'xdg-basedir': fakeXdgBasedir,
-    });
+    }).File;
     duplexify = require('duplexify');
   });
 

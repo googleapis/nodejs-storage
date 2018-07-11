@@ -47,14 +47,18 @@ import {Acl} from './acl';
  *
  * @private
  */
-class ResumableUploadError extends Error {}
+class ResumableUploadError extends Error {
+  name = 'ResumableUploadError';
+}
 
 /**
  * Custom error type for errors related to getting signed errors and policies.
  *
  * @private
  */
-class SigningError extends Error {}
+class SigningError extends Error {
+  name = 'SigningError';
+}
 
 /**
  * @const {string}
