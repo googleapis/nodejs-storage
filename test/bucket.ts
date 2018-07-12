@@ -83,6 +83,7 @@ fakeAsync.eachLimit = () => {
 
 let promisified = false;
 const fakeUtil = extend({}, util, {
+  // tslint:disable-next-line:variable-name
   promisifyAll(Class, options) {
     if (Class.name !== 'Bucket') {
       return;
@@ -95,6 +96,7 @@ const fakeUtil = extend({}, util, {
 
 let extended = false;
 const fakePaginator = {
+  // tslint:disable-next-line:variable-name
   extend(Class, methods) {
     if (Class.name !== 'Bucket') {
       return;
@@ -126,6 +128,7 @@ function FakeServiceObject() {
 nodeutil.inherits(FakeServiceObject, ServiceObject);
 
 describe('Bucket', () => {
+  // tslint:disable-next-line:variable-name
   let Bucket;
   let bucket;
 

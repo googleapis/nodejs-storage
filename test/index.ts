@@ -36,6 +36,7 @@ nodeutil.inherits(FakeService, Service);
 
 let extended = false;
 const fakePaginator = {
+  // tslint:disable-next-line:variable-name
   extend(Class, methods) {
     if (Class.name !== 'Storage') {
       return;
@@ -53,6 +54,7 @@ const fakePaginator = {
 
 let promisified = false;
 const fakeUtil = extend({}, util, {
+  // tslint:disable-next-line:variable-name
   promisifyAll(Class, options) {
     if (Class.name !== 'Storage') {
       return;
@@ -66,8 +68,10 @@ const originalFakeUtil = extend(true, {}, fakeUtil);
 
 describe('Storage', () => {
   const PROJECT_ID = 'project-id';
+  // tslint:disable-next-line:variable-name
   let Storage;
   let storage;
+  // tslint:disable-next-line:variable-name
   let Bucket;
 
   before(() => {
