@@ -21,7 +21,7 @@ import assert from 'assert';
 import extend from 'extend';
 import nodeutil from 'util';
 import proxyquire from 'proxyquire';
-import {Service, util} from '@google-cloud/common';
+import { Service, util } from '@google-cloud/common';
 
 function FakeChannel() {
   this.calledWith_ = arguments;
@@ -77,14 +77,14 @@ describe('Storage', () => {
         paginator: fakePaginator,
         util: fakeUtil,
       },
-      './channel.js': {Channel: FakeChannel},
+      './channel.js': { Channel: FakeChannel },
     });
     Bucket = Storage.Bucket;
   });
 
   beforeEach(() => {
     extend(fakeUtil, originalFakeUtil);
-    storage = new Storage({projectId: PROJECT_ID});
+    storage = new Storage({ projectId: PROJECT_ID });
   });
 
   describe('instantiation', () => {
@@ -102,7 +102,7 @@ describe('Storage', () => {
 
     it('should work without new', () => {
       assert.doesNotThrow(() => {
-        Storage({projectId: PROJECT_ID});
+        Storage({ projectId: PROJECT_ID });
       });
     });
 
@@ -164,8 +164,8 @@ describe('Storage', () => {
 
   describe('createBucket', () => {
     const BUCKET_NAME = 'new-bucket-name';
-    const METADATA = {a: 'b', c: {d: 'e'}};
-    const BUCKET = {name: BUCKET_NAME};
+    const METADATA = { a: 'b', c: { d: 'e' } };
+    const BUCKET = { name: BUCKET_NAME };
 
     it('should make correct API request', done => {
       storage.request = (reqOpts, callback) => {
@@ -182,7 +182,7 @@ describe('Storage', () => {
 
     it('should accept a name, metadata, and callback', done => {
       storage.request = (reqOpts, callback) => {
-        assert.deepEqual(reqOpts.json, extend(METADATA, {name: BUCKET_NAME}));
+        assert.deepEqual(reqOpts.json, extend(METADATA, { name: BUCKET_NAME }));
         callback(null, METADATA);
       };
       storage.bucket = name => {
@@ -248,7 +248,7 @@ describe('Storage', () => {
     });
 
     it('should execute callback with apiResponse', done => {
-      const resp = {success: true};
+      const resp = { success: true };
       storage.request = (reqOpts, callback) => {
         callback(null, resp);
       };
@@ -265,7 +265,7 @@ describe('Storage', () => {
           done();
         };
 
-        storage.createBucket(BUCKET_NAME, {coldline: true}, assert.ifError);
+        storage.createBucket(BUCKET_NAME, { coldline: true }, assert.ifError);
       });
 
       it('should expand metadata.dra', done => {
@@ -275,7 +275,7 @@ describe('Storage', () => {
           done();
         };
 
-        storage.createBucket(BUCKET_NAME, {dra: true}, assert.ifError);
+        storage.createBucket(BUCKET_NAME, { dra: true }, assert.ifError);
       });
 
       it('should expand metadata.multiRegional', done => {
@@ -299,7 +299,7 @@ describe('Storage', () => {
           done();
         };
 
-        storage.createBucket(BUCKET_NAME, {nearline: true}, assert.ifError);
+        storage.createBucket(BUCKET_NAME, { nearline: true }, assert.ifError);
       });
 
       it('should expand metadata.regional', done => {
@@ -308,7 +308,7 @@ describe('Storage', () => {
           done();
         };
 
-        storage.createBucket(BUCKET_NAME, {regional: true}, assert.ifError);
+        storage.createBucket(BUCKET_NAME, { regional: true }, assert.ifError);
       });
     });
 
@@ -331,7 +331,7 @@ describe('Storage', () => {
     it('should get buckets without a query', done => {
       storage.request = reqOpts => {
         assert.strictEqual(reqOpts.uri, '/b');
-        assert.deepEqual(reqOpts.qs, {project: storage.projectId});
+        assert.deepEqual(reqOpts.qs, { project: storage.projectId });
         done();
       };
       storage.getBuckets(util.noop);
@@ -347,7 +347,7 @@ describe('Storage', () => {
         });
         done();
       };
-      storage.getBuckets({maxResults: 5, pageToken: token}, util.noop);
+      storage.getBuckets({ maxResults: 5, pageToken: token }, util.noop);
     });
 
     it('should execute callback with error', done => {
@@ -370,9 +370,9 @@ describe('Storage', () => {
     it('should return nextQuery if more results exist', () => {
       const token = 'next-page-token';
       storage.request = (reqOpts, callback) => {
-        callback(null, {nextPageToken: token, items: []});
+        callback(null, { nextPageToken: token, items: [] });
       };
-      storage.getBuckets({maxResults: 5}, (err, results, nextQuery) => {
+      storage.getBuckets({ maxResults: 5 }, (err, results, nextQuery) => {
         assert.equal(nextQuery.pageToken, token);
         assert.strictEqual(nextQuery.maxResults, 5);
       });
@@ -380,16 +380,16 @@ describe('Storage', () => {
 
     it('should return null nextQuery if there are no more results', () => {
       storage.request = (reqOpts, callback) => {
-        callback(null, {items: []});
+        callback(null, { items: [] });
       };
-      storage.getBuckets({maxResults: 5}, (err, results, nextQuery) => {
+      storage.getBuckets({ maxResults: 5 }, (err, results, nextQuery) => {
         assert.strictEqual(nextQuery, null);
       });
     });
 
     it('should return Bucket objects', done => {
       storage.request = (reqOpts, callback) => {
-        callback(null, {items: [{id: 'fake-bucket-name'}]});
+        callback(null, { items: [{ id: 'fake-bucket-name' }] });
       };
       storage.getBuckets((err, buckets) => {
         assert.ifError(err);
@@ -399,7 +399,7 @@ describe('Storage', () => {
     });
 
     it('should return apiResponse', done => {
-      const resp = {items: [{id: 'fake-bucket-name'}]};
+      const resp = { items: [{ id: 'fake-bucket-name' }] };
       storage.request = (reqOpts, callback) => {
         callback(null, resp);
       };
@@ -418,7 +418,7 @@ describe('Storage', () => {
         },
       };
       storage.request = (reqOpts, callback) => {
-        callback(null, {items: [bucketMetadata]});
+        callback(null, { items: [bucketMetadata] });
       };
       storage.getBuckets((err, buckets) => {
         assert.ifError(err);
