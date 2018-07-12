@@ -36,7 +36,7 @@ nodeutil.inherits(FakeService, Service);
 
 let extended = false;
 const fakePaginator = {
-  extend: function(Class, methods) {
+  extend(Class, methods) {
     if (Class.name !== 'Storage') {
       return;
     }
@@ -46,14 +46,14 @@ const fakePaginator = {
     assert.deepEqual(methods, ['getBuckets']);
     extended = true;
   },
-  streamify: function(methodName) {
+  streamify(methodName) {
     return methodName;
   },
 };
 
 let promisified = false;
 const fakeUtil = extend({}, util, {
-  promisifyAll: function(Class, options) {
+  promisifyAll(Class, options) {
     if (Class.name !== 'Storage') {
       return;
     }

@@ -28,7 +28,7 @@ describe('storage/iam', function() {
   let BUCKET_INSTANCE;
   let promisified = false;
   const fakeUtil = extend({}, util, {
-    promisifyAll: function(Class) {
+    promisifyAll(Class) {
       if (Class.name === 'Iam') {
         promisified = true;
       }
@@ -221,7 +221,7 @@ describe('storage/iam', function() {
 
       const expectedQuery = extend(
         {
-          permissions: permissions,
+          permissions,
         },
         options
       );

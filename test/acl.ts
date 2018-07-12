@@ -27,7 +27,7 @@ let AclRoleAccessorMethods;
 describe('storage/acl', function() {
   let promisified = false;
   const fakeUtil = extend({}, util, {
-    promisifyAll: function(Class) {
+    promisifyAll(Class) {
       if (Class.name === 'Acl') {
         promisified = true;
       }
@@ -242,7 +242,7 @@ describe('storage/acl', function() {
           done();
         };
 
-        acl.get({generation: generation}, assert.ifError);
+        acl.get({generation}, assert.ifError);
       });
 
       it('should pass an array of acl objects to the callback', function(done) {
@@ -296,7 +296,7 @@ describe('storage/acl', function() {
           done();
         };
 
-        acl.get({entity: ENTITY, generation: generation}, assert.ifError);
+        acl.get({entity: ENTITY, generation}, assert.ifError);
       });
 
       it('should set the userProject', function(done) {
@@ -456,7 +456,7 @@ describe('storage/acl', function() {
       const apiResponse = {
         entity: ENTITY,
         role: ROLE,
-        projectTeam: projectTeam,
+        projectTeam,
         extra: 'ignored',
         things: true,
       };
@@ -464,7 +464,7 @@ describe('storage/acl', function() {
       assert.deepEqual(acl.makeAclObject_(apiResponse), {
         entity: ENTITY,
         role: ROLE,
-        projectTeam: projectTeam,
+        projectTeam,
       });
     });
   });
@@ -474,7 +474,7 @@ describe('storage/acl', function() {
       const uri = '/uri';
 
       const reqOpts = {
-        uri: uri,
+        uri,
       };
 
       acl.request_ = function(reqOpts_, callback) {
@@ -536,7 +536,7 @@ describe('storage/AclRoleAccessorMethods', function() {
       aclEntity.add = function(options, callback) {
         assert.deepEqual(options, {
           entity: 'user-' + userName,
-          role: role,
+          role,
         });
 
         callback();
@@ -545,7 +545,7 @@ describe('storage/AclRoleAccessorMethods', function() {
       aclEntity.delete = function(options, callback) {
         assert.deepEqual(options, {
           entity: 'allUsers',
-          role: role,
+          role,
         });
 
         callback();

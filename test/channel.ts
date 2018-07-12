@@ -28,7 +28,7 @@ import {ServiceObject, util} from '@google-cloud/common';
 
 let promisified = false;
 const fakeUtil = extend({}, util, {
-  promisifyAll: function(Class) {
+  promisifyAll(Class) {
     if (Class.name === 'Channel') {
       promisified = true;
     }

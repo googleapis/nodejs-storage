@@ -34,7 +34,7 @@ describe('Notification', function() {
   let notification;
   let promisified = false;
   const fakeUtil = extend({}, util, {
-    promisifyAll: function(Class) {
+    promisifyAll(Class) {
       if (Class.name === 'Notification') {
         promisified = true;
       }
@@ -85,7 +85,7 @@ describe('Notification', function() {
       const bound = function() {};
 
       BUCKET.createNotification = {
-        bind: function(context) {
+        bind(context) {
           assert.strictEqual(context, BUCKET);
           return bound;
         },

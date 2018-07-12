@@ -38,16 +38,16 @@ let promisified = false;
 let makeWritableStreamOverride;
 let handleRespOverride;
 const fakeUtil = extend({}, util, {
-  handleResp: function() {
+  handleResp() {
     (handleRespOverride || util.handleResp).apply(null, arguments);
   },
 
-  makeWritableStream: function() {
+  makeWritableStream() {
     const args = arguments;
     (makeWritableStreamOverride || util.makeWritableStream).apply(null, args);
   },
 
-  promisifyAll: function(Class, options) {
+  promisifyAll(Class, options) {
     if (Class.name !== 'File') {
       return;
     }
@@ -164,14 +164,14 @@ describe('File', function() {
     STORAGE = {
       createBucket: util.noop,
       request: util.noop,
-      makeAuthenticatedRequest: function(req, callback) {
+      makeAuthenticatedRequest(req, callback) {
         if (callback) {
           (callback.onAuthenticated || callback)(null, req);
         } else {
           return (requestOverride || requestCached)(req);
         }
       },
-      bucket: function(name) {
+      bucket(name) {
         return new Bucket(this, name);
       },
     };
@@ -1244,7 +1244,7 @@ describe('File', function() {
   describe('createResumableUpload', function() {
     it('should not require options', function(done) {
       resumableUploadOverride = {
-        createURI: function(opts, callback) {
+        createURI(opts, callback) {
           assert.strictEqual(opts.metadata, undefined);
           callback();
         },
@@ -1270,7 +1270,7 @@ describe('File', function() {
       file.kmsKeyName = 'kms-key-name';
 
       resumableUploadOverride = {
-        createURI: function(opts, callback) {
+        createURI(opts, callback) {
           const bucket = file.bucket;
           const storage = bucket.storage;
 
@@ -2118,7 +2118,7 @@ describe('File', function() {
       file.getSignedPolicy(
         {
           expires: Date.now() + 2000,
-          successStatus: successStatus,
+          successStatus,
         },
         function(err, signedPolicy) {
           assert.ifError(err);
@@ -2141,7 +2141,7 @@ describe('File', function() {
 
         file.getSignedPolicy(
           {
-            expires: expires,
+            expires,
           },
           function(err, policy) {
             assert.ifError(err);
@@ -2157,7 +2157,7 @@ describe('File', function() {
 
         file.getSignedPolicy(
           {
-            expires: expires,
+            expires,
           },
           function(err, policy) {
             assert.ifError(err);
@@ -2173,7 +2173,7 @@ describe('File', function() {
 
         file.getSignedPolicy(
           {
-            expires: expires,
+            expires,
           },
           function(err, policy) {
             assert.ifError(err);
@@ -2190,7 +2190,7 @@ describe('File', function() {
         assert.throws(function() {
           file.getSignedPolicy(
             {
-              expires: expires,
+              expires,
             },
             function() {}
           );
@@ -2360,12 +2360,12 @@ describe('File', function() {
 
     beforeEach(function() {
       BUCKET.storage.authClient = {
-        getCredentials: function() {
+        getCredentials() {
           return Promise.resolve({
             client_email: 'client-email',
           });
         },
-        sign: function() {
+        sign() {
           return Promise.resolve('signature');
         },
       };
@@ -2463,7 +2463,7 @@ describe('File', function() {
 
     it('should add generation parameter', function(done) {
       const generation = 10003320000;
-      const file = new File(BUCKET, 'name', {generation: generation});
+      const file = new File(BUCKET, 'name', {generation});
 
       file.getSignedUrl(CONFIG, function(err, signedUrl) {
         assert(signedUrl.indexOf(encodeURIComponent(generation.toString())) > -1);
@@ -2570,7 +2570,7 @@ describe('File', function() {
         file.getSignedUrl(
           {
             action: 'read',
-            expires: expires,
+            expires,
           },
           function(err, signedUrl) {
             assert.ifError(err);
@@ -2588,7 +2588,7 @@ describe('File', function() {
         file.getSignedUrl(
           {
             action: 'read',
-            expires: expires,
+            expires,
           },
           function(err, signedUrl) {
             assert.ifError(err);
@@ -2606,7 +2606,7 @@ describe('File', function() {
         file.getSignedUrl(
           {
             action: 'read',
-            expires: expires,
+            expires,
           },
           function(err, signedUrl) {
             assert.ifError(err);
@@ -2624,7 +2624,7 @@ describe('File', function() {
           file.getSignedUrl(
             {
               action: 'read',
-              expires: expires,
+              expires,
             },
             function() {}
           );
@@ -2649,7 +2649,7 @@ describe('File', function() {
           {
             action: 'read',
             expires: Date.now() + 2000,
-            extensionHeaders: extensionHeaders,
+            extensionHeaders,
           },
           assert.ifError
         );
@@ -3248,7 +3248,7 @@ describe('File', function() {
         file.kmsKeyName = 'kms-key-name';
 
         resumableUploadOverride = {
-          upload: function(opts) {
+          upload(opts) {
             const bucket = file.bucket;
             const storage = bucket.storage;
             const authClient = storage.makeAuthenticatedRequest.authClient;
@@ -3279,7 +3279,7 @@ describe('File', function() {
         const uploadStream = through();
 
         resumableUploadOverride = {
-          upload: function() {
+          upload() {
             setImmediate(function() {
               uploadStream.emit('response', resp);
             });
@@ -3300,7 +3300,7 @@ describe('File', function() {
         const uploadStream = through();
 
         resumableUploadOverride = {
-          upload: function() {
+          upload() {
             setImmediate(function() {
               uploadStream.emit('metadata', metadata);
 
@@ -3322,7 +3322,7 @@ describe('File', function() {
         dup.on('complete', done);
 
         resumableUploadOverride = {
-          upload: function() {
+          upload() {
             const uploadStream = new stream.Transform();
             setImmediate(function() {
               uploadStream.end();
@@ -3344,7 +3344,7 @@ describe('File', function() {
         };
 
         resumableUploadOverride = {
-          upload: function() {
+          upload() {
             return uploadStream;
           },
         };
