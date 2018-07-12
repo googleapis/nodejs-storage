@@ -67,18 +67,18 @@ function fakeRequest() {
   // call.
   return fakeRequest;
 };
-(fakeRequest as any).get = () => {
-  return (requestOverride.get || fakeRequest).apply(null, arguments);
+(fakeRequest as any).get = (...args) => {
+  return (requestOverride.get || fakeRequest).apply(null, args);
 };
-(fakeRequest as any).head = () => {
-  return (requestOverride.head || fakeRequest).apply(null, arguments);
+(fakeRequest as any).head = (...args) => {
+  return (requestOverride.head || fakeRequest).apply(null, args);
 };
 
 let eachLimitOverride;
 
 const fakeAsync = extend({}, async);
-fakeAsync.eachLimit = () => {
-  (eachLimitOverride || async.eachLimit).apply(null, arguments);
+fakeAsync.eachLimit = (...args) => {
+  (eachLimitOverride || async.eachLimit).apply(null, args);
 };
 
 let promisified = false;
@@ -1769,11 +1769,13 @@ describe('Bucket', () => {
     it('should call ServiceObject#request correctly', done => {
       const options = {};
 
-      FakeServiceObject.prototype.request = (reqOpts, callback) => {
-        assert.strictEqual(this, bucket);
-        assert.strictEqual(reqOpts, options);
-        callback(); // done fn
-      };
+      extend(FakeServiceObject.prototype, {
+        request(reqOpts, callback) {
+          assert.strictEqual(this, bucket);
+          assert.strictEqual(reqOpts, options);
+          callback(); // done fn
+        },
+      });
 
       bucket.request(options, done);
     });
