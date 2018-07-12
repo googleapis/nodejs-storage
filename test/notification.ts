@@ -17,7 +17,7 @@
 'use strict';
 
 import assert from 'assert';
-import { ServiceObject, util } from '@google-cloud/common';
+import {ServiceObject, util} from '@google-cloud/common';
 import extend from 'extend';
 import proxyquire from 'proxyquire';
 import nodeUtil from 'util';
@@ -29,7 +29,7 @@ function FakeServiceObject() {
 
 nodeUtil.inherits(FakeServiceObject, ServiceObject);
 
-describe('Notification', () => {
+describe('Notification', function() {
   let Notification;
   let notification;
   let promisified = false;
@@ -47,7 +47,7 @@ describe('Notification', () => {
 
   const ID = '123';
 
-  before(() => {
+  before(function() {
     Notification = proxyquire('../src/notification.js', {
       '@google-cloud/common': {
         ServiceObject: FakeServiceObject,
@@ -56,17 +56,17 @@ describe('Notification', () => {
     }).Notification;
   });
 
-  beforeEach(() => {
-    BUCKET.createNotification = fakeUtil.noop = () => { };
+  beforeEach(function() {
+    BUCKET.createNotification = fakeUtil.noop = function() {};
     notification = new Notification(BUCKET, ID);
   });
 
-  describe('instantiation', () => {
-    it('should promisify all the things', () => {
+  describe('instantiation', function() {
+    it('should promisify all the things', function() {
       assert(promisified);
     });
 
-    it('should inherit from ServiceObject', () => {
+    it('should inherit from ServiceObject', function() {
       assert(notification instanceof FakeServiceObject);
 
       const calledWith = notification.calledWith_[0];
@@ -81,8 +81,8 @@ describe('Notification', () => {
       });
     });
 
-    it('should use Bucket#createNotification for the createMethod', () => {
-      const bound = () => { };
+    it('should use Bucket#createNotification for the createMethod', function() {
+      const bound = function() {};
 
       BUCKET.createNotification = {
         bind(context) {
@@ -97,7 +97,7 @@ describe('Notification', () => {
       assert.strictEqual(calledWith.createMethod, bound);
     });
 
-    it('should convert number IDs to strings', () => {
+    it('should convert number IDs to strings', function() {
       const notification = new Notification(BUCKET, 1);
       const calledWith = notification.calledWith_[0];
 
@@ -105,11 +105,11 @@ describe('Notification', () => {
     });
   });
 
-  describe('delete', () => {
-    it('should make the correct request', done => {
+  describe('delete', function() {
+    it('should make the correct request', function(done) {
       const options = {};
 
-      notification.request = (reqOpts, callback) => {
+      notification.request = function(reqOpts, callback) {
         assert.strictEqual(reqOpts.method, 'DELETE');
         assert.strictEqual(reqOpts.uri, '');
         assert.strictEqual(reqOpts.qs, options);
@@ -119,8 +119,8 @@ describe('Notification', () => {
       notification.delete(options, done);
     });
 
-    it('should optionally accept options', done => {
-      notification.request = (reqOpts, callback) => {
+    it('should optionally accept options', function(done) {
+      notification.request = function(reqOpts, callback) {
         assert.deepEqual(reqOpts.qs, {});
         callback(); // the done fn
       };
@@ -128,10 +128,10 @@ describe('Notification', () => {
       notification.delete(done);
     });
 
-    it('should optionally accept a callback', done => {
+    it('should optionally accept a callback', function(done) {
       fakeUtil.noop = done;
 
-      notification.request = (reqOpts, callback) => {
+      notification.request = function(reqOpts, callback) {
         callback(); // the done fn
       };
 
@@ -139,19 +139,19 @@ describe('Notification', () => {
     });
   });
 
-  describe('get', () => {
-    it('should get the metadata', done => {
-      notification.getMetadata = () => {
+  describe('get', function() {
+    it('should get the metadata', function(done) {
+      notification.getMetadata = function() {
         done();
       };
 
       notification.get(assert.ifError);
     });
 
-    it('should accept an options object', done => {
+    it('should accept an options object', function(done) {
       const options = {};
 
-      notification.getMetadata = options_ => {
+      notification.getMetadata = function(options_) {
         assert.strictEqual(options_, options);
         done();
       };
@@ -159,15 +159,15 @@ describe('Notification', () => {
       notification.get(options, assert.ifError);
     });
 
-    it('should execute callback with error & metadata', done => {
+    it('should execute callback with error & metadata', function(done) {
       const error = new Error('Error.');
       const metadata = {};
 
-      notification.getMetadata = (options, callback) => {
+      notification.getMetadata = function(options, callback) {
         callback(error, metadata);
       };
 
-      notification.get((err, instance, metadata_) => {
+      notification.get(function(err, instance, metadata_) {
         assert.strictEqual(err, error);
         assert.strictEqual(instance, null);
         assert.strictEqual(metadata_, metadata);
@@ -176,14 +176,14 @@ describe('Notification', () => {
       });
     });
 
-    it('should execute callback with instance & metadata', done => {
+    it('should execute callback with instance & metadata', function(done) {
       const metadata = {};
 
-      notification.getMetadata = (options, callback) => {
+      notification.getMetadata = function(options, callback) {
         callback(null, metadata);
       };
 
-      notification.get((err, instance, metadata_) => {
+      notification.get(function(err, instance, metadata_) {
         assert.ifError(err);
 
         assert.strictEqual(instance, notification);
@@ -193,28 +193,28 @@ describe('Notification', () => {
       });
     });
 
-    describe('autoCreate', () => {
+    describe('autoCreate', function() {
       let AUTO_CREATE_CONFIG;
 
-      const ERROR = { code: 404 };
+      const ERROR = {code: 404};
       const METADATA = {};
 
-      beforeEach(() => {
+      beforeEach(function() {
         AUTO_CREATE_CONFIG = {
           autoCreate: true,
         };
 
-        notification.getMetadata = (options, callback) => {
+        notification.getMetadata = function(options, callback) {
           callback(ERROR, METADATA);
         };
       });
 
-      it('should pass config to create if it was provided', done => {
+      it('should pass config to create if it was provided', function(done) {
         const config = extend({}, AUTO_CREATE_CONFIG, {
           maxResults: 5,
         });
 
-        notification.create = config_ => {
+        notification.create = function(config_) {
           assert.strictEqual(config_, config);
           done();
         };
@@ -222,21 +222,21 @@ describe('Notification', () => {
         notification.get(config, assert.ifError);
       });
 
-      it('should pass only a callback to create if no config', done => {
-        notification.create = callback => {
+      it('should pass only a callback to create if no config', function(done) {
+        notification.create = function(callback) {
           callback(); // done()
         };
 
         notification.get(AUTO_CREATE_CONFIG, done);
       });
 
-      describe('error', () => {
-        it('should execute callback with error & API response', done => {
+      describe('error', function() {
+        it('should execute callback with error & API response', function(done) {
           const error = new Error('Error.');
           const apiResponse = {};
 
-          notification.create = callback => {
-            notification.get = (config, callback) => {
+          notification.create = function(callback) {
+            notification.get = function(config, callback) {
               assert.deepEqual(config, {});
               callback(); // done()
             };
@@ -244,7 +244,7 @@ describe('Notification', () => {
             callback(error, null, apiResponse);
           };
 
-          notification.get(AUTO_CREATE_CONFIG, (err, instance, resp) => {
+          notification.get(AUTO_CREATE_CONFIG, function(err, instance, resp) {
             assert.strictEqual(err, error);
             assert.strictEqual(instance, null);
             assert.strictEqual(resp, apiResponse);
@@ -252,13 +252,13 @@ describe('Notification', () => {
           });
         });
 
-        it('should refresh the metadata after a 409', done => {
+        it('should refresh the metadata after a 409', function(done) {
           const error = {
             code: 409,
           };
 
-          notification.create = callback => {
-            notification.get = (config, callback) => {
+          notification.create = function(callback) {
+            notification.get = function(config, callback) {
               assert.deepEqual(config, {});
               callback(); // done()
             };
@@ -272,11 +272,11 @@ describe('Notification', () => {
     });
   });
 
-  describe('getMetadata', () => {
-    it('should make the correct request', done => {
+  describe('getMetadata', function() {
+    it('should make the correct request', function(done) {
       const options = {};
 
-      notification.request = reqOpts => {
+      notification.request = function(reqOpts) {
         assert.strictEqual(reqOpts.uri, '');
         assert.strictEqual(reqOpts.qs, options);
         done();
@@ -285,8 +285,8 @@ describe('Notification', () => {
       notification.getMetadata(options, assert.ifError);
     });
 
-    it('should optionally accept options', done => {
-      notification.request = reqOpts => {
+    it('should optionally accept options', function(done) {
+      notification.request = function(reqOpts) {
         assert.deepEqual(reqOpts.qs, {});
         done();
       };
@@ -294,15 +294,15 @@ describe('Notification', () => {
       notification.getMetadata(assert.ifError);
     });
 
-    it('should return any errors to the callback', done => {
+    it('should return any errors to the callback', function(done) {
       const error = new Error('err');
       const response = {};
 
-      notification.request = (reqOpts, callback) => {
+      notification.request = function(reqOpts, callback) {
         callback(error, response);
       };
 
-      notification.getMetadata((err, metadata, resp) => {
+      notification.getMetadata(function(err, metadata, resp) {
         assert.strictEqual(err, error);
         assert.strictEqual(metadata, null);
         assert.strictEqual(resp, response);
@@ -310,14 +310,14 @@ describe('Notification', () => {
       });
     });
 
-    it('should set and return the metadata', done => {
+    it('should set and return the metadata', function(done) {
       const response = {};
 
-      notification.request = (reqOpts, callback) => {
+      notification.request = function(reqOpts, callback) {
         callback(null, response);
       };
 
-      notification.getMetadata((err, metadata, resp) => {
+      notification.getMetadata(function(err, metadata, resp) {
         assert.ifError(err);
         assert.strictEqual(metadata, response);
         assert.strictEqual(notification.metadata, response);
