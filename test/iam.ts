@@ -60,10 +60,12 @@ describe('storage/iam', () => {
     });
 
     it('should localize the request function', done => {
-      BUCKET_INSTANCE.request = callback => {
-        assert.strictEqual(this, BUCKET_INSTANCE);
-        callback(); // done()
-      };
+      extend(BUCKET_INSTANCE, {
+        request(callback) {
+          assert.strictEqual(this, BUCKET_INSTANCE);
+          callback(); // done()
+        },
+      });
 
       const iam = new Iam(BUCKET_INSTANCE);
       iam.request_(done);

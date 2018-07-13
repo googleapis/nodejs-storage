@@ -93,21 +93,21 @@ function fakeResumableUpload() {
     return resumableUploadOverride || resumableUpload;
   };
 }
-(fakeResumableUpload as any).createURI = () => {
+(fakeResumableUpload as any).createURI = (...args) => {
   let createURI = resumableUpload.createURI;
 
   if (resumableUploadOverride && resumableUploadOverride.createURI) {
     createURI = resumableUploadOverride.createURI;
   }
 
-  return createURI.apply(null, arguments);
+  return createURI.apply(null, args);
 };
-(fakeResumableUpload as any).upload = () => {
+(fakeResumableUpload as any).upload = (...args) => {
   let upload = resumableUpload.upload;
   if (resumableUploadOverride && resumableUploadOverride.upload) {
     upload = resumableUploadOverride.upload;
   }
-  return upload.apply(null, arguments);
+  return upload.apply(null, args);
 };
 
 function FakeServiceObject() {
@@ -1760,11 +1760,13 @@ describe('File', () => {
 
   describe('delete', () => {
     it('should make the correct request', done => {
-      file.parent.delete = (options, callback) => {
-        assert.strictEqual(this, file);
-        assert.deepEqual(options, {});
-        callback(); // done()
-      };
+      extend(file.parent, {
+        delete(options, callback) {
+          assert.strictEqual(this, file);
+          assert.deepEqual(options, {});
+          callback(); // done()
+        },
+      });
 
       file.delete(done);
     });
@@ -1853,10 +1855,12 @@ describe('File', () => {
     });
 
     it('should only execute callback once', done => {
-      fileReadStream._read = () => {
-        this.emit('error', new Error('Error.'));
-        this.emit('error', new Error('Error.'));
-      };
+      extend(fileReadStream, {
+        _read() {
+          this.emit('error', new Error('Error.'));
+          this.emit('error', new Error('Error.'));
+        },
+      });
 
       file.download(() => {
         done();
@@ -1867,10 +1871,12 @@ describe('File', () => {
       it('should buffer a file into memory if no destination', done => {
         const fileContents = 'abcdefghijklmnopqrstuvwxyz';
 
-        fileReadStream._read = () => {
-          this.push(fileContents);
-          this.push(null);
-        };
+        extend(fileReadStream, {
+          _read() {
+            this.push(fileContents);
+            this.push(null);
+          },
+        });
 
         file.download((err, remoteFileContents) => {
           assert.ifError(err);
@@ -1883,9 +1889,11 @@ describe('File', () => {
       it('should execute callback with error', done => {
         const error = new Error('Error.');
 
-        fileReadStream._read = () => {
-          this.emit('error', error);
-        };
+        extend(fileReadStream, {
+          _read() {
+            this.emit('error', error);
+          }
+        });
 
         file.download(err => {
           assert.equal(err, error);
@@ -1902,10 +1910,12 @@ describe('File', () => {
 
           const fileContents = 'abcdefghijklmnopqrstuvwxyz';
 
-          fileReadStream._read = () => {
-            this.push(fileContents);
-            this.push(null);
-          };
+          extend(fileReadStream, {
+            _read() {
+              this.push(fileContents);
+              this.push(null);
+            },
+          });
 
           file.download({ destination: tmpFilePath }, err => {
             assert.ifError(err);
@@ -1927,9 +1937,11 @@ describe('File', () => {
 
           const error = new Error('Error.');
 
-          fileReadStream._read = () => {
-            this.emit('error', error);
-          };
+          extend(fileReadStream, {
+            _read() {
+              this.emit('error', error);
+            },
+          });
 
           file.download({ destination: tmpFilePath }, err => {
             assert.equal(err, error);
@@ -1968,11 +1980,13 @@ describe('File', () => {
 
   describe('getMetadata', () => {
     it('should make the correct request', done => {
-      file.parent.getMetadata = (options, callback) => {
-        assert.strictEqual(this, file);
-        assert.deepEqual(options, {});
-        callback(); // done()
-      };
+      extend(file.parent, {
+        getMetadata(options, callback) {
+          assert.strictEqual(this, file);
+          assert.deepEqual(options, {});
+          callback(); // done()
+        },
+      });
 
       file.getMetadata(done);
     });
@@ -2800,10 +2814,12 @@ describe('File', () => {
         file.copy = (destination, options, callback) => {
           callback(null);
         };
-        file.delete = () => {
-          assert.equal(this, file);
-          done();
-        };
+        extend(file, {
+          delete() {
+            assert.equal(this, file);
+            done();
+          },
+        });
         file.move('new-filename');
       });
 
@@ -2903,11 +2919,13 @@ describe('File', () => {
     it('should call ServiceObject#request correctly', done => {
       const options = {};
 
-      FakeServiceObject.prototype.request = (reqOpts, callback) => {
-        assert.strictEqual(this, file);
-        assert.strictEqual(reqOpts, options);
-        callback(); // done fn
-      };
+      extend(FakeServiceObject.prototype, {
+        request(reqOpts, callback) {
+          assert.strictEqual(this, file);
+          assert.strictEqual(reqOpts, options);
+          callback(); // done fn
+        },
+      });
 
       file.request(options, done);
     });
@@ -3030,11 +3048,13 @@ describe('File', () => {
     it('should make the correct request', done => {
       const metadata = {};
 
-      file.parent.setMetadata = (metadata, options, callback) => {
-        assert.strictEqual(this, file);
-        assert.deepEqual(options, {});
-        callback(); // done()
-      };
+      extend(file.parent, {
+        setMetadata(metadata, options, callback) {
+          assert.strictEqual(this, file);
+          assert.deepEqual(options, {});
+          callback(); // done()
+        },
+      });
 
       file.setMetadata(metadata, done);
     });

@@ -583,8 +583,8 @@ describe('storage/AclRoleAccessorMethods', () => {
     });
 
     it('should not pass in the callback if undefined', done => {
-      aclEntity.add = () => {
-        assert.strictEqual(arguments.length, 1);
+      aclEntity.add = (...args) => {
+        assert.strictEqual(args.length, 1);
         done();
       };
 
