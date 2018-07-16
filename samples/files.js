@@ -389,7 +389,12 @@ function moveFile(bucketName, srcFilename, destFilename) {
   // [END storage_move_file]
 }
 
-function moveFileBetweenBuckets(bucketName, srcFilename, destBucketName, destFilename) {
+function moveFileBetweenBuckets(
+  bucketName,
+  srcFilename,
+  destBucketName,
+  destFilename
+) {
   // [START storage_move_file_between_buckets]
   // Imports the Google Cloud client library
   const Storage = require('@google-cloud/storage');
@@ -404,7 +409,7 @@ function moveFileBetweenBuckets(bucketName, srcFilename, destBucketName, destFil
   // const srcFilename = 'File to move, e.g. file.txt';
   // const destBucketName = 'Name of destination bucket to move to, e.g. my-other-bucket'
   // const destFilename = 'Destination for file, e.g. moved.txt';
-  // 
+  //
 
   // Moves the file to a different bucket
   storage
@@ -521,7 +526,7 @@ require(`yargs`)
     `move <bucketName> <srcFilename> <destBucketName> <destFileName>`,
     `Moves a file to a different bucket.`,
     {},
-    opts => 
+    opts =>
       moveFileBetweenBuckets(
         opts.bucketName,
         opts.srcFilename,
