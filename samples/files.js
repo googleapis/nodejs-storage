@@ -406,7 +406,7 @@ function moveFileBetweenBuckets(bucketName, srcFilename, destBucketName, destFil
   // const destFilename = 'Destination for file, e.g. moved.txt';
   // 
 
-  // Moves the file within the bucket
+  // Moves the file to a different bucket
   storage
     .bucket(bucketName)
     .file(srcFilename)
