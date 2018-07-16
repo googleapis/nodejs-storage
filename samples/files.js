@@ -521,7 +521,13 @@ require(`yargs`)
     `move <bucketName> <srcFilename> <destBucketName> <destFileName>`,
     `Moves a file to a different bucket.`,
     {},
-    opts => moveFileBetweenBuckets(opts.bucketName, opts.srcFilename, opts.destBucketName, opts.destFileName)
+    opts => 
+      moveFileBetweenBuckets(
+        opts.bucketName,
+        opts.srcFilename,
+        opts.destBucketName,
+        opts.destFileName
+      )
   )
   .command(
     `copy <srcBucketName> <srcFileName> <destBucketName> <destFileName>`,
