@@ -2071,6 +2071,10 @@ class File extends common.ServiceObject {
    * @example <caption>include:samples/files.js</caption>
    * region_tag:storage_move_file
    * Another example:
+   *
+   * @example <caption>include:samples/files.js</caption>
+   * region:tag:storage_move_file_between_buckets
+   * Example of moving between buckets:
    */
   move(destination, options, callback) {
     if (is.fn(options)) {
