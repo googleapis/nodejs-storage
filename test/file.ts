@@ -47,6 +47,7 @@ const fakeUtil = extend({}, util, {
     (makeWritableStreamOverride || util.makeWritableStream).apply(null, args);
   },
 
+  // tslint:disable-next-line:variable-name
   promisifyAll(Class, options) {
     if (Class.name !== 'File') {
       return;
@@ -128,6 +129,7 @@ Object.defineProperty(fakeXdgBasedir, 'config', {
 });
 
 describe('File', () => {
+  // tslint:disable-next-line:variable-name
   let File;
   let file;
 
@@ -661,6 +663,7 @@ describe('File', () => {
     }
 
     function getFakeSuccessfulRequest(data) {
+      // tslint:disable-next-line:variable-name
       const FakeRequest = getFakeRequest(data);
 
       class FakeSuccessfulRequest extends FakeRequest {
@@ -686,6 +689,7 @@ describe('File', () => {
     }
 
     function getFakeFailedRequest(error) {
+      // tslint:disable-next-line:variable-name
       const FakeRequest = getFakeRequest();
 
       class FakeFailedRequest extends FakeRequest {

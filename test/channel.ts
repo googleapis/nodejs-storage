@@ -28,6 +28,7 @@ import { ServiceObject, util } from '@google-cloud/common';
 
 let promisified = false;
 const fakeUtil = extend({}, util, {
+  // tslint:disable-next-line:variable-name
   promisifyAll(Class) {
     if (Class.name === 'Channel') {
       promisified = true;
@@ -47,6 +48,7 @@ describe('Channel', () => {
   const ID = 'channel-id';
   const RESOURCE_ID = 'resource-id';
 
+  // tslint:disable-next-line:variable-name
   let Channel;
   let channel;
 

@@ -22,11 +22,14 @@ import extend from 'extend';
 import proxyquire from 'proxyquire';
 import { util } from '@google-cloud/common';
 
+// tslint:disable-next-line:variable-name
 let Acl;
+// tslint:disable-next-line:variable-name
 let AclRoleAccessorMethods;
 describe('storage/acl', () => {
   let promisified = false;
   const fakeUtil = extend({}, util, {
+    // tslint:disable-next-line:variable-name
     promisifyAll(Class) {
       if (Class.name === 'Acl') {
         promisified = true;
@@ -34,6 +37,7 @@ describe('storage/acl', () => {
     },
   });
 
+  // tslint:disable-next-line:variable-name
   const Storage = require('../src');
   let acl;
 

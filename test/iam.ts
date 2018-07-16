@@ -22,12 +22,14 @@ import proxyquire from 'proxyquire';
 import { util } from '@google-cloud/common';
 
 describe('storage/iam', () => {
+  // tslint:disable-next-line:variable-name
   let Iam;
   let iam;
 
   let BUCKET_INSTANCE;
   let promisified = false;
   const fakeUtil = extend({}, util, {
+    // tslint:disable-next-line:variable-name
     promisifyAll(Class) {
       if (Class.name === 'Iam') {
         promisified = true;

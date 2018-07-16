@@ -30,10 +30,12 @@ function FakeServiceObject() {
 nodeUtil.inherits(FakeServiceObject, ServiceObject);
 
 describe('Notification', () => {
+  // tslint:disable-next-line:variable-name
   let Notification;
   let notification;
   let promisified = false;
   const fakeUtil = extend({}, util, {
+    // tslint:disable-next-line:variable-name
     promisifyAll(Class) {
       if (Class.name === 'Notification') {
         promisified = true;
