@@ -194,7 +194,7 @@ describe('File', function() {
     });
 
     it('should assign file name', function() {
-      assert.equal(file.name, FILE_NAME);
+      assert.strictEqual(file.name, FILE_NAME);
     });
 
     it('should assign the bucket instance', function() {
@@ -218,7 +218,7 @@ describe('File', function() {
 
     it('should accept specifying a generation', function() {
       const file = new File(BUCKET, 'name', {generation: 2});
-      assert.equal(file.generation, 2);
+      assert.strictEqual(file.generation, 2);
     });
 
     it('should build a requestQueryObject from generation', function() {
@@ -604,8 +604,8 @@ describe('File', function() {
         const newFilename = 'new-filename';
         file.copy(newFilename, function(err, copiedFile) {
           assert.ifError(err);
-          assert.equal(copiedFile.bucket.name, BUCKET.name);
-          assert.equal(copiedFile.name, newFilename);
+          assert.strictEqual(copiedFile.bucket.name, BUCKET.name);
+          assert.strictEqual(copiedFile.name, newFilename);
           done();
         });
       });
@@ -613,8 +613,8 @@ describe('File', function() {
       it('should create new file on the destination bucket', function(done) {
         file.copy(BUCKET, function(err, copiedFile) {
           assert.ifError(err);
-          assert.equal(copiedFile.bucket.name, BUCKET.name);
-          assert.equal(copiedFile.name, file.name);
+          assert.strictEqual(copiedFile.bucket.name, BUCKET.name);
+          assert.strictEqual(copiedFile.name, file.name);
           done();
         });
       });
@@ -754,7 +754,7 @@ describe('File', function() {
       const versionedFile = new File(BUCKET, 'file.txt', {generation: 1});
 
       versionedFile.requestStream = function(rOpts) {
-        assert.equal(rOpts.qs.generation, 1);
+        assert.strictEqual(rOpts.qs.generation, 1);
         setImmediate(done);
         return duplexify();
       };
@@ -817,7 +817,7 @@ describe('File', function() {
           file
             .createReadStream()
             .once('error', function(err) {
-              assert.equal(err, ERROR);
+              assert.strictEqual(err, ERROR);
               done();
             })
             .resume();
@@ -1153,7 +1153,7 @@ describe('File', function() {
 
         file.requestStream = function(opts) {
           setImmediate(function() {
-            assert.equal(opts.headers.Range, 'bytes=' + startOffset + '-');
+            assert.strictEqual(opts.headers.Range, 'bytes=' + startOffset + '-');
             done();
           });
           return duplexify();
@@ -1167,7 +1167,7 @@ describe('File', function() {
 
         file.requestStream = function(opts) {
           setImmediate(function() {
-            assert.equal(opts.headers.Range, 'bytes=0-' + endOffset);
+            assert.strictEqual(opts.headers.Range, 'bytes=0-' + endOffset);
             done();
           });
           return duplexify();
@@ -1183,7 +1183,7 @@ describe('File', function() {
         file.requestStream = function(opts) {
           setImmediate(function() {
             const expectedRange = 'bytes=' + startOffset + '-' + endOffset;
-            assert.equal(opts.headers.Range, expectedRange);
+            assert.strictEqual(opts.headers.Range, expectedRange);
             done();
           });
           return duplexify();
@@ -1199,7 +1199,7 @@ describe('File', function() {
         file.requestStream = function(opts) {
           setImmediate(function() {
             const expectedRange = 'bytes=0-0';
-            assert.equal(opts.headers.Range, expectedRange);
+            assert.strictEqual(opts.headers.Range, expectedRange);
             done();
           });
           return duplexify();
@@ -1223,7 +1223,7 @@ describe('File', function() {
 
         file.requestStream = function(opts) {
           setImmediate(function() {
-            assert.equal(opts.headers.Range, 'bytes=' + endOffset);
+            assert.strictEqual(opts.headers.Range, 'bytes=' + endOffset);
             done();
           });
           return duplexify();
@@ -1594,7 +1594,7 @@ describe('File', function() {
         writable.end();
 
         writable.on('error', function(err) {
-          assert.equal(err.code, 'FILE_NO_UPLOAD');
+          assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
           done();
         });
       });
@@ -1633,7 +1633,7 @@ describe('File', function() {
         writable.end();
 
         writable.on('error', function(err) {
-          assert.equal(err.code, 'FILE_NO_UPLOAD');
+          assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
           done();
         });
       });
@@ -1656,7 +1656,7 @@ describe('File', function() {
         writable.end();
 
         writable.on('error', function(err) {
-          assert.equal(err.code, 'FILE_NO_UPLOAD');
+          assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
           done();
         });
       });
@@ -1714,7 +1714,7 @@ describe('File', function() {
         writable.end();
 
         writable.on('error', function(err) {
-          assert.equal(err.code, 'MD5_NOT_AVAILABLE');
+          assert.strictEqual(err.code, 'MD5_NOT_AVAILABLE');
           done();
         });
       });
@@ -1739,7 +1739,7 @@ describe('File', function() {
         writable.end();
 
         writable.on('error', function(err) {
-          assert.equal(err.code, 'FILE_NO_UPLOAD_DELETE');
+          assert.strictEqual(err.code, 'FILE_NO_UPLOAD_DELETE');
           assert(err.message.indexOf(deleteErrorMessage) > -1);
           done();
         });
@@ -1864,7 +1864,7 @@ describe('File', function() {
         file.download(function(err, remoteFileContents) {
           assert.ifError(err);
 
-          assert.equal(fileContents, remoteFileContents);
+          assert.strictEqual(fileContents, remoteFileContents);
           done();
         });
       });
@@ -1877,7 +1877,7 @@ describe('File', function() {
         };
 
         file.download(function(err) {
-          assert.equal(err, error);
+          assert.strictEqual(err, error);
           done();
         });
       });
@@ -1902,7 +1902,7 @@ describe('File', function() {
             fs.readFile(tmpFilePath, function(err, tmpFileContents) {
               assert.ifError(err);
 
-              assert.equal(fileContents, tmpFileContents);
+              assert.strictEqual(fileContents, tmpFileContents);
               done();
             });
           });
@@ -1921,7 +1921,7 @@ describe('File', function() {
           };
 
           file.download({destination: tmpFilePath}, function(err) {
-            assert.equal(err, error);
+            assert.strictEqual(err, error);
             done();
           });
         });
@@ -2027,9 +2027,9 @@ describe('File', function() {
 
       file.getSignedPolicy(CONFIG, function(err, signedPolicy) {
         assert.ifError(err);
-        assert.equal(typeof signedPolicy.string, 'string');
-        assert.equal(typeof signedPolicy.base64, 'string');
-        assert.equal(typeof signedPolicy.signature, 'string');
+        assert.strictEqual(typeof signedPolicy.string, 'string');
+        assert.strictEqual(typeof signedPolicy.base64, 'string');
+        assert.strictEqual(typeof signedPolicy.signature, 'string');
         done();
       });
     });
@@ -2381,14 +2381,14 @@ describe('File', function() {
 
       file.getSignedUrl(CONFIG, function(err, signedUrl) {
         assert.ifError(err);
-        assert.equal(typeof signedUrl, 'string');
+        assert.strictEqual(typeof signedUrl, 'string');
         const expires = Math.round(CONFIG.expires / 1000);
         const expected =
           'https://storage.googleapis.com/bucket-name/file-name.png?' +
           'GoogleAccessId=client-email&Expires=' +
           expires +
           '&Signature=signature';
-        assert.equal(signedUrl, expected);
+        assert.strictEqual(signedUrl, expected);
         done();
       });
     });
@@ -2479,7 +2479,7 @@ describe('File', function() {
             expires +
             '&Signature=signature';
 
-          assert.equal(signedUrl, expected);
+          assert.strictEqual(signedUrl, expected);
           done();
         });
       });
@@ -2568,7 +2568,7 @@ describe('File', function() {
           function(err, signedUrl) {
             assert.ifError(err);
             const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.equal(expires_, expectedExpires);
+            assert.strictEqual(expires_, expectedExpires);
             done();
           }
         );
@@ -2586,7 +2586,7 @@ describe('File', function() {
           function(err, signedUrl) {
             assert.ifError(err);
             const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.equal(expires_, expectedExpires);
+            assert.strictEqual(expires_, expectedExpires);
             done();
           }
         );
@@ -2604,7 +2604,7 @@ describe('File', function() {
           function(err, signedUrl) {
             assert.ifError(err);
             const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.equal(expires_, expectedExpires);
+            assert.strictEqual(expires_, expectedExpires);
             done();
           }
         );
@@ -2778,7 +2778,7 @@ describe('File', function() {
           callback(error);
         };
         file.move('new-filename', function(err) {
-          assert.equal(err, error);
+          assert.strictEqual(err, error);
           done();
         });
       });
@@ -2790,7 +2790,7 @@ describe('File', function() {
           callback(null);
         };
         file.delete = function() {
-          assert.equal(this, file);
+          assert.strictEqual(this, file);
           done();
         };
         file.move('new-filename');
@@ -2805,7 +2805,7 @@ describe('File', function() {
           deleteCalled = true;
         };
         file.move('new-filename', function() {
-          assert.equal(deleteCalled, false);
+          assert.strictEqual(deleteCalled, false);
           done();
         });
       });
@@ -2834,7 +2834,7 @@ describe('File', function() {
           callback(error);
         };
         file.move('new-filename', function(err) {
-          assert.equal(err, error);
+          assert.strictEqual(err, error);
           done();
         });
       });
@@ -3404,7 +3404,7 @@ describe('File', function() {
       const versionedFile = new File(BUCKET, 'new-file.txt', {generation: 1});
 
       makeWritableStreamOverride = function(stream, options) {
-        assert.equal(options.request.qs.ifGenerationMatch, 1);
+        assert.strictEqual(options.request.qs.ifGenerationMatch, 1);
         done();
       };
 
@@ -3428,7 +3428,7 @@ describe('File', function() {
       };
 
       makeWritableStreamOverride = function(stream, options_) {
-        assert.equal(options_.request.qs.userProject, options.userProject);
+        assert.strictEqual(options_.request.qs.userProject, options.userProject);
         done();
       };
 

@@ -43,7 +43,7 @@ const fakePaginator = {
     }
 
     methods = arrify(methods);
-    assert.equal(Class.name, 'Storage');
+    assert.strictEqual(Class.name, 'Storage');
     assert.deepEqual(methods, ['getBuckets']);
     extended = true;
   },
@@ -135,7 +135,7 @@ describe('Storage', function() {
       const newBucketName = 'new-bucket-name';
       const bucket = storage.bucket(newBucketName);
       assert(bucket instanceof Bucket);
-      assert.equal(bucket.name, newBucketName);
+      assert.strictEqual(bucket.name, newBucketName);
     });
 
     it('should optionally accept options', function() {
@@ -187,7 +187,7 @@ describe('Storage', function() {
         callback(null, METADATA);
       };
       storage.bucket = function(name) {
-        assert.equal(name, BUCKET_NAME);
+        assert.strictEqual(name, BUCKET_NAME);
         return BUCKET;
       };
       storage.createBucket(BUCKET_NAME, METADATA, function(err) {
@@ -243,7 +243,7 @@ describe('Storage', function() {
         callback(error);
       };
       storage.createBucket(BUCKET_NAME, function(err) {
-        assert.equal(err, error);
+        assert.strictEqual(err, error);
         done();
       });
     });
@@ -254,7 +254,7 @@ describe('Storage', function() {
         callback(null, resp);
       };
       storage.createBucket(BUCKET_NAME, function(err, bucket, apiResponse) {
-        assert.equal(resp, apiResponse);
+        assert.strictEqual(resp, apiResponse);
         done();
       });
     });
@@ -374,7 +374,7 @@ describe('Storage', function() {
         callback(null, {nextPageToken: token, items: []});
       };
       storage.getBuckets({maxResults: 5}, function(err, results, nextQuery) {
-        assert.equal(nextQuery.pageToken, token);
+        assert.strictEqual(nextQuery.pageToken, token);
         assert.strictEqual(nextQuery.maxResults, 5);
       });
     });

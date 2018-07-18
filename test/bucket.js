@@ -104,7 +104,7 @@ const fakePaginator = {
     }
 
     methods = arrify(methods);
-    assert.equal(Class.name, 'Bucket');
+    assert.strictEqual(Class.name, 'Bucket');
     assert.deepEqual(methods, ['getFiles']);
     extended = true;
   },
@@ -766,7 +766,7 @@ describe('Bucket', function() {
 
     it('should process 10 files at a time', function(done) {
       eachLimitOverride = function(arr, limit) {
-        assert.equal(limit, 10);
+        assert.strictEqual(limit, 10);
         done();
       };
 
@@ -796,7 +796,7 @@ describe('Bucket', function() {
 
       bucket.deleteFiles(query, function(err) {
         assert.ifError(err);
-        assert.equal(timesCalled, files.length);
+        assert.strictEqual(timesCalled, files.length);
         done();
       });
     });
@@ -1062,7 +1062,7 @@ describe('Bucket', function() {
     });
 
     it('should pass filename to File object', function() {
-      assert.equal(file.calledWith_[1], FILE_NAME);
+      assert.strictEqual(file.calledWith_[1], FILE_NAME);
     });
 
     it('should pass configuration object to File', function() {
@@ -1248,7 +1248,7 @@ describe('Bucket', function() {
         callback(null, {nextPageToken: token, items: []});
       };
       bucket.getFiles({maxResults: 5}, function(err, results, nextQuery) {
-        assert.equal(nextQuery.pageToken, token);
+        assert.strictEqual(nextQuery.pageToken, token);
         assert.strictEqual(nextQuery.maxResults, 5);
       });
     });
@@ -1271,7 +1271,7 @@ describe('Bucket', function() {
       bucket.getFiles(function(err, files) {
         assert.ifError(err);
         assert(files[0] instanceof FakeFile);
-        assert.equal(typeof files[0].calledWith_[2].generation, 'undefined');
+        assert.strictEqual(typeof files[0].calledWith_[2].generation, 'undefined');
         done();
       });
     });
@@ -1286,7 +1286,7 @@ describe('Bucket', function() {
       bucket.getFiles({versions: true}, function(err, files) {
         assert.ifError(err);
         assert(files[0] instanceof FakeFile);
-        assert.equal(files[0].calledWith_[2].generation, 1);
+        assert.strictEqual(files[0].calledWith_[2].generation, 1);
         done();
       });
     });
@@ -1619,7 +1619,7 @@ describe('Bucket', function() {
       };
 
       bucket.makePrivate(function(err) {
-        assert.equal(err, error);
+        assert.strictEqual(err, error);
         done();
       });
     });
@@ -1638,15 +1638,15 @@ describe('Bucket', function() {
       let didMakeFilesPublic = false;
 
       bucket.acl.add = function(opts, callback) {
-        assert.equal(opts.entity, 'allUsers');
-        assert.equal(opts.role, 'READER');
+        assert.strictEqual(opts.entity, 'allUsers');
+        assert.strictEqual(opts.role, 'READER');
         didSetAcl = true;
         callback();
       };
 
       bucket.acl.default.add = function(opts, callback) {
-        assert.equal(opts.entity, 'allUsers');
-        assert.equal(opts.role, 'READER');
+        assert.strictEqual(opts.entity, 'allUsers');
+        assert.strictEqual(opts.role, 'READER');
         didSetDefaultAcl = true;
         callback();
       };
@@ -1697,7 +1697,7 @@ describe('Bucket', function() {
       };
 
       bucket.makePublic(function(err) {
-        assert.equal(err, error);
+        assert.strictEqual(err, error);
         done();
       });
     });
@@ -1971,8 +1971,8 @@ describe('Bucket', function() {
     it('should accept a path & cb', function(done) {
       bucket.upload(filepath, function(err, file) {
         assert.ifError(err);
-        assert.equal(file.bucket.name, bucket.name);
-        assert.equal(file.name, basename);
+        assert.strictEqual(file.bucket.name, bucket.name);
+        assert.strictEqual(file.name, basename);
         done();
       });
     });
@@ -1980,8 +1980,8 @@ describe('Bucket', function() {
     it('should accept a url path & cb', function(done) {
       bucket.upload(urlPath, function(err, file) {
         assert.ifError(err);
-        assert.equal(file.bucket.name, bucket.name);
-        assert.equal(file.name, path.basename(urlPath));
+        assert.strictEqual(file.bucket.name, bucket.name);
+        assert.strictEqual(file.name, path.basename(urlPath));
         done();
       });
     });
@@ -2013,7 +2013,7 @@ describe('Bucket', function() {
       };
       bucket.upload(filepath, options, function(err, file) {
         assert.ifError(err);
-        assert.equal(file.bucket.name, bucket.name);
+        assert.strictEqual(file.bucket.name, bucket.name);
         assert.deepEqual(file.metadata, metadata);
         assert.strictEqual(file.options.encryptionKey, options.encryptionKey);
         assert.strictEqual(file.options.kmsKeyName, options.kmsKeyName);
@@ -2030,8 +2030,8 @@ describe('Bucket', function() {
       };
       bucket.upload(filepath, options, function(err, file) {
         assert.ifError(err);
-        assert.equal(file.bucket.name, bucket.name);
-        assert.equal(file.name, newFileName);
+        assert.strictEqual(file.bucket.name, bucket.name);
+        assert.strictEqual(file.name, newFileName);
         assert.strictEqual(file.options.encryptionKey, options.encryptionKey);
         assert.strictEqual(file.options.kmsKeyName, options.kmsKeyName);
         done();
@@ -2048,8 +2048,8 @@ describe('Bucket', function() {
       };
       bucket.upload(filepath, options, function(err, file) {
         assert.ifError(err);
-        assert.equal(file.bucket.name, bucket.name);
-        assert.equal(file.name, newFileName);
+        assert.strictEqual(file.bucket.name, bucket.name);
+        assert.strictEqual(file.name, newFileName);
         assert.deepEqual(file.metadata, metadata);
         assert.strictEqual(file.options.encryptionKey, options.encryptionKey);
         assert.strictEqual(file.options.kmsKeyName, options.kmsKeyName);
@@ -2112,7 +2112,7 @@ describe('Bucket', function() {
         ws.write = util.noop;
         setImmediate(function() {
           const expectedContentType = 'application/json; charset=utf-8';
-          assert.equal(options.metadata.contentType, expectedContentType);
+          assert.strictEqual(options.metadata.contentType, expectedContentType);
           done();
         });
         return ws;
@@ -2128,7 +2128,7 @@ describe('Bucket', function() {
         ws.write = util.noop;
         setImmediate(function() {
           const expectedContentType = 'text/plain; charset=utf-8';
-          assert.equal(options.metadata.contentType, expectedContentType);
+          assert.strictEqual(options.metadata.contentType, expectedContentType);
           done();
         });
         return ws;
@@ -2220,7 +2220,7 @@ describe('Bucket', function() {
         const ws = new stream.Writable();
         ws.write = util.noop;
         setImmediate(function() {
-          assert.equal(options.metadata.contentType, metadata.contentType);
+          assert.strictEqual(options.metadata.contentType, metadata.contentType);
           done();
         });
         return ws;
@@ -2302,7 +2302,7 @@ describe('Bucket', function() {
 
     it('should process 10 files at a time', function(done) {
       eachLimitOverride = function(arr, limit) {
-        assert.equal(limit, 10);
+        assert.strictEqual(limit, 10);
         done();
       };
 
@@ -2329,7 +2329,7 @@ describe('Bucket', function() {
 
       bucket.makeAllFilesPublicPrivate_({public: true}, function(err) {
         assert.ifError(err);
-        assert.equal(timesCalled, files.length);
+        assert.strictEqual(timesCalled, files.length);
         done();
       });
     });
@@ -2353,7 +2353,7 @@ describe('Bucket', function() {
 
       bucket.makeAllFilesPublicPrivate_(options, function(err) {
         assert.ifError(err);
-        assert.equal(timesCalled, files.length);
+        assert.strictEqual(timesCalled, files.length);
         done();
       });
     });
@@ -2366,7 +2366,7 @@ describe('Bucket', function() {
       };
 
       bucket.makeAllFilesPublicPrivate_({}, function(err) {
-        assert.equal(err, error);
+        assert.strictEqual(err, error);
         done();
       });
     });
@@ -2385,7 +2385,7 @@ describe('Bucket', function() {
       };
 
       bucket.makeAllFilesPublicPrivate_({public: true}, function(err) {
-        assert.equal(err, error);
+        assert.strictEqual(err, error);
         done();
       });
     });
