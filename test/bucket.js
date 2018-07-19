@@ -1271,7 +1271,10 @@ describe('Bucket', function() {
       bucket.getFiles(function(err, files) {
         assert.ifError(err);
         assert(files[0] instanceof FakeFile);
-        assert.strictEqual(typeof files[0].calledWith_[2].generation, 'undefined');
+        assert.strictEqual(
+          typeof files[0].calledWith_[2].generation,
+          'undefined'
+        );
         done();
       });
     });
@@ -2220,7 +2223,10 @@ describe('Bucket', function() {
         const ws = new stream.Writable();
         ws.write = util.noop;
         setImmediate(function() {
-          assert.strictEqual(options.metadata.contentType, metadata.contentType);
+          assert.strictEqual(
+            options.metadata.contentType,
+            metadata.contentType
+          );
           done();
         });
         return ws;

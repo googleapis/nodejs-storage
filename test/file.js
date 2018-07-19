@@ -1153,7 +1153,10 @@ describe('File', function() {
 
         file.requestStream = function(opts) {
           setImmediate(function() {
-            assert.strictEqual(opts.headers.Range, 'bytes=' + startOffset + '-');
+            assert.strictEqual(
+              opts.headers.Range,
+              'bytes=' + startOffset + '-'
+            );
             done();
           });
           return duplexify();
@@ -3428,7 +3431,10 @@ describe('File', function() {
       };
 
       makeWritableStreamOverride = function(stream, options_) {
-        assert.strictEqual(options_.request.qs.userProject, options.userProject);
+        assert.strictEqual(
+          options_.request.qs.userProject,
+          options.userProject
+        );
         done();
       };
 

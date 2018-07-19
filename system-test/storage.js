@@ -204,7 +204,10 @@ describe('storage', function() {
                   },
                   function(err, accessControl) {
                     assert.ifError(err);
-                    assert.strictEqual(accessControl.role, storage.acl.READER_ROLE);
+                    assert.strictEqual(
+                      accessControl.role,
+                      storage.acl.READER_ROLE
+                    );
 
                     bucket.acl.default.delete({entity: USER_ACCOUNT}, done);
                   }
@@ -1639,7 +1642,10 @@ describe('storage', function() {
 
           file.getMetadata(function(err, metadata) {
             assert.ifError(err);
-            assert.strictEqual(metadata.contentType, options.metadata.contentType);
+            assert.strictEqual(
+              metadata.contentType,
+              options.metadata.contentType
+            );
             file.delete(done);
           });
         });
