@@ -44,12 +44,11 @@ function FakeFile(bucket, name, options?) {
   this.createWriteStream = options => {
     self.metadata = options.metadata;
     const ws = new stream.Writable();
-    extend(ws, {
-      write() {
-        ws.emit('complete');
-        ws.end();
-      },
-    });
+    ws.write = () => {
+      ws.emit('complete');
+      ws.end();
+      return true;
+    }
     return ws;
   };
 }
@@ -2122,9 +2121,7 @@ describe('Bucket', () => {
       const options = { destination: fakeFile };
       fakeFile.createWriteStream = options => {
         const ws = new stream.Writable();
-        extend(ws, {
-          write: util.noop,
-        });
+        ws.write = () => true;
         setImmediate(() => {
           const expectedContentType = 'application/json; charset=utf-8';
           assert.equal(options.metadata.contentType, expectedContentType);
@@ -2140,7 +2137,7 @@ describe('Bucket', () => {
       const options = { destination: fakeFile };
       fakeFile.createWriteStream = options => {
         const ws = new stream.Writable();
-        extend(ws, { write: util.noop });
+        ws.write = () => true;
         setImmediate(() => {
           const expectedContentType = 'text/plain; charset=utf-8';
           assert.equal(options.metadata.contentType, expectedContentType);
@@ -2156,7 +2153,7 @@ describe('Bucket', () => {
       const options = { destination: fakeFile, resumable: true };
       fakeFile.createWriteStream = options_ => {
         const ws = new stream.Writable();
-        extend(ws, { write: util.noop });
+        ws.write = () => true;
         setImmediate(() => {
           assert.strictEqual(options_.resumable, options.resumable);
           done();
@@ -2171,7 +2168,7 @@ describe('Bucket', () => {
       const options = { destination: fakeFile, resumable: true };
       fakeFile.createWriteStream = options_ => {
         const ws = new stream.Writable();
-        extend(ws, { write: util.noop });
+        ws.write = () => true;
         setImmediate(() => {
           assert.strictEqual(options_.resumable, options.resumable);
           done();
@@ -2193,7 +2190,7 @@ describe('Bucket', () => {
       const fakeFile = new FakeFile(bucket, 'file-name');
       fakeFile.createWriteStream = options => {
         const ws = new stream.Writable();
-        extend(ws, { write: util.noop });
+        ws.write = () => true;
         setImmediate(() => {
           assert.strictEqual(options.resumable, true);
           done();
@@ -2216,7 +2213,7 @@ describe('Bucket', () => {
       const fakeFile = new FakeFile(bucket, 'file-name');
       fakeFile.createWriteStream = options => {
         const ws = new stream.Writable();
-        extend(ws, { write: util.noop });
+        ws.write = () => true;
         setImmediate(() => {
           assert.strictEqual(options.resumable, false);
           done();
@@ -2233,7 +2230,7 @@ describe('Bucket', () => {
       const options = { destination: fakeFile, metadata };
       fakeFile.createWriteStream = options => {
         const ws = new stream.Writable();
-        extend(ws, { write: util.noop });
+        ws.write = () => true;
         setImmediate(() => {
           assert.equal(options.metadata.contentType, metadata.contentType);
           done();
@@ -2252,7 +2249,7 @@ describe('Bucket', () => {
       };
       fakeFile.createWriteStream = options_ => {
         const ws = new stream.Writable();
-        extend(ws, { write: util.noop });
+        ws.write = () => true;
         setImmediate(() => {
           assert.strictEqual(options_.a, options.a);
           assert.strictEqual(options_.c, options.c);
