@@ -2568,7 +2568,7 @@ describe('File', function() {
           function(err, signedUrl) {
             assert.ifError(err);
             const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.strictEqual(expires_, expectedExpires);
+            assert.strictEqual(expires_, expectedExpires.toString());
             done();
           }
         );
@@ -2586,7 +2586,7 @@ describe('File', function() {
           function(err, signedUrl) {
             assert.ifError(err);
             const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.strictEqual(expires_, expectedExpires);
+            assert.strictEqual(expires_, expectedExpires.toString());
             done();
           }
         );
@@ -2604,7 +2604,7 @@ describe('File', function() {
           function(err, signedUrl) {
             assert.ifError(err);
             const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.strictEqual(expires_, expectedExpires);
+            assert.strictEqual(expires_, expectedExpires.toString());
             done();
           }
         );
