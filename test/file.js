@@ -1864,7 +1864,7 @@ describe('File', function() {
         file.download(function(err, remoteFileContents) {
           assert.ifError(err);
 
-          assert.strictEqual(fileContents, remoteFileContents);
+          assert.strictEqual(fileContents, remoteFileContents.toString());
           done();
         });
       });
@@ -1902,7 +1902,7 @@ describe('File', function() {
             fs.readFile(tmpFilePath, function(err, tmpFileContents) {
               assert.ifError(err);
 
-              assert.strictEqual(fileContents, tmpFileContents);
+              assert.strictEqual(fileContents, tmpFileContents.toString());
               done();
             });
           });
