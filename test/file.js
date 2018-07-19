@@ -833,7 +833,10 @@ describe('File', function() {
 
         file.requestStream = function() {
           setImmediate(function() {
-            assert.deepStrictEqual(requestOverride.getRequestOptions(), fakeRequest);
+            assert.deepStrictEqual(
+              requestOverride.getRequestOptions(),
+              fakeRequest
+            );
             done();
           });
 

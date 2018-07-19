@@ -92,7 +92,11 @@ const fakeUtil = extend({}, util, {
     }
 
     promisified = true;
-    assert.deepStrictEqual(options.exclude, ['request', 'file', 'notification']);
+    assert.deepStrictEqual(options.exclude, [
+      'request',
+      'file',
+      'notification',
+    ]);
   },
 });
 

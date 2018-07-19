@@ -120,7 +120,10 @@ describe('Storage', function() {
         'https://www.googleapis.com/auth/cloud-platform',
         'https://www.googleapis.com/auth/devstorage.full_control',
       ]);
-      assert.deepStrictEqual(calledWith.packageJson, require('../package.json'));
+      assert.deepStrictEqual(
+        calledWith.packageJson,
+        require('../package.json')
+      );
     });
   });
 
@@ -183,7 +186,10 @@ describe('Storage', function() {
 
     it('should accept a name, metadata, and callback', function(done) {
       storage.request = function(reqOpts, callback) {
-        assert.deepStrictEqual(reqOpts.json, extend(METADATA, {name: BUCKET_NAME}));
+        assert.deepStrictEqual(
+          reqOpts.json,
+          extend(METADATA, {name: BUCKET_NAME})
+        );
         callback(null, METADATA);
       };
       storage.bucket = function(name) {
