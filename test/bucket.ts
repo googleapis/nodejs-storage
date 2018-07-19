@@ -44,10 +44,12 @@ function FakeFile(bucket, name, options?) {
   this.createWriteStream = options => {
     self.metadata = options.metadata;
     const ws = new stream.Writable();
-    (ws as any).write = () => {
-      ws.emit('complete');
-      ws.end();
-    };
+    extend(ws, {
+      write() {
+        ws.emit('complete');
+        ws.end();
+      },
+    });
     return ws;
   };
 }
@@ -62,24 +64,32 @@ let requestOverride;
 function fakeRequest() {
   return (requestOverride || requestCached).apply(null, arguments);
 }
-(fakeRequest as any).defaults = () => {
-  // Ignore the default values, so we don't have to test for them in every API
-  // call.
-  return fakeRequest;
-};
-(fakeRequest as any).get = (...args) => {
-  return (requestOverride.get || fakeRequest).apply(null, args);
-};
-(fakeRequest as any).head = (...args) => {
-  return (requestOverride.head || fakeRequest).apply(null, args);
-};
+extend(fakeRequest, {
+  defaults() {
+    // Ignore the default values, so we don't have to test for them in every API
+    // call.
+    return fakeRequest;
+  },
+});
+extend(fakeRequest, {
+  get(...args) {
+    return (requestOverride.get || fakeRequest).apply(null, args);
+  },
+});
+extend(fakeRequest, {
+  head(...args) {
+    return (requestOverride.head || fakeRequest).apply(null, args);
+  },
+});
 
 let eachLimitOverride;
 
-const fakeAsync = extend({}, async);
-fakeAsync.eachLimit = (...args) => {
-  (eachLimitOverride || async.eachLimit).apply(null, args);
-};
+const fakeAsync = extend({}, async, {
+  // Override async's eachLimit method.
+  eachLimit(...args) {
+    (eachLimitOverride || async.eachLimit).apply(null, args);
+  },
+});
 
 let promisified = false;
 const fakeUtil = extend({}, util, {
@@ -1965,9 +1975,9 @@ describe('Bucket', () => {
     });
 
     it('should return early in snippet sandbox', () => {
-      (global as any).GCLOUD_SANDBOX_ENV = true;
+      global['GCLOUD_SANDBOX_ENV'] = true;
       const returnValue = bucket.upload(filepath, assert.ifError);
-      delete (global as any).GCLOUD_SANDBOX_ENV;
+      delete global['GCLOUD_SANDBOX_ENV'];
       assert.strictEqual(returnValue, undefined);
     });
 
@@ -2112,7 +2122,9 @@ describe('Bucket', () => {
       const options = { destination: fakeFile };
       fakeFile.createWriteStream = options => {
         const ws = new stream.Writable();
-        (ws as any).write = util.noop;
+        extend(ws, {
+          write: util.noop,
+        });
         setImmediate(() => {
           const expectedContentType = 'application/json; charset=utf-8';
           assert.equal(options.metadata.contentType, expectedContentType);
@@ -2128,7 +2140,7 @@ describe('Bucket', () => {
       const options = { destination: fakeFile };
       fakeFile.createWriteStream = options => {
         const ws = new stream.Writable();
-        (ws as any).write = util.noop;
+        extend(ws, { write: util.noop });
         setImmediate(() => {
           const expectedContentType = 'text/plain; charset=utf-8';
           assert.equal(options.metadata.contentType, expectedContentType);
@@ -2144,7 +2156,7 @@ describe('Bucket', () => {
       const options = { destination: fakeFile, resumable: true };
       fakeFile.createWriteStream = options_ => {
         const ws = new stream.Writable();
-        (ws as any).write = util.noop;
+        extend(ws, { write: util.noop });
         setImmediate(() => {
           assert.strictEqual(options_.resumable, options.resumable);
           done();
@@ -2159,7 +2171,7 @@ describe('Bucket', () => {
       const options = { destination: fakeFile, resumable: true };
       fakeFile.createWriteStream = options_ => {
         const ws = new stream.Writable();
-        (ws as any).write = util.noop;
+        extend(ws, { write: util.noop });
         setImmediate(() => {
           assert.strictEqual(options_.resumable, options.resumable);
           done();
@@ -2181,7 +2193,7 @@ describe('Bucket', () => {
       const fakeFile = new FakeFile(bucket, 'file-name');
       fakeFile.createWriteStream = options => {
         const ws = new stream.Writable();
-        (ws as any).write = util.noop;
+        extend(ws, { write: util.noop });
         setImmediate(() => {
           assert.strictEqual(options.resumable, true);
           done();
@@ -2204,7 +2216,7 @@ describe('Bucket', () => {
       const fakeFile = new FakeFile(bucket, 'file-name');
       fakeFile.createWriteStream = options => {
         const ws = new stream.Writable();
-        (ws as any).write = util.noop;
+        extend(ws, { write: util.noop });
         setImmediate(() => {
           assert.strictEqual(options.resumable, false);
           done();
@@ -2221,7 +2233,7 @@ describe('Bucket', () => {
       const options = { destination: fakeFile, metadata };
       fakeFile.createWriteStream = options => {
         const ws = new stream.Writable();
-        (ws as any).write = util.noop;
+        extend(ws, { write: util.noop });
         setImmediate(() => {
           assert.equal(options.metadata.contentType, metadata.contentType);
           done();
@@ -2240,7 +2252,7 @@ describe('Bucket', () => {
       };
       fakeFile.createWriteStream = options_ => {
         const ws = new stream.Writable();
-        (ws as any).write = util.noop;
+        extend(ws, { write: util.noop });
         setImmediate(() => {
           assert.strictEqual(options_.a, options.a);
           assert.strictEqual(options_.c, options.c);
