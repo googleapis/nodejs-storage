@@ -279,7 +279,10 @@ describe('storage', function() {
           assert.ifError(err);
           bucket.acl.get({entity: 'allUsers'}, function(err, aclObject) {
             assert.ifError(err);
-            assert.deepStrictEqual(aclObject, {entity: 'allUsers', role: 'READER'});
+            assert.deepStrictEqual(aclObject, {
+              entity: 'allUsers',
+              role: 'READER',
+            });
             bucket.acl.delete({entity: 'allUsers'}, done);
           });
         });
@@ -470,7 +473,10 @@ describe('storage', function() {
           assert.ifError(err);
           file.acl.get({entity: 'allUsers'}, function(err, aclObject) {
             assert.ifError(err);
-            assert.deepStrictEqual(aclObject, {entity: 'allUsers', role: 'READER'});
+            assert.deepStrictEqual(aclObject, {
+              entity: 'allUsers',
+              role: 'READER',
+            });
             file.acl.delete({entity: 'allUsers'}, done);
           });
         });
@@ -2489,7 +2495,7 @@ describe('storage', function() {
           assert.strictEqual(files[0].name, files[1].name);
 
           // different generations.
-          assert.notEqual(
+          assert.notStrictEqual(
             files[0].metadata.generation,
             files[1].metadata.generation
           );
