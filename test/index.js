@@ -44,7 +44,7 @@ const fakePaginator = {
 
     methods = arrify(methods);
     assert.strictEqual(Class.name, 'Storage');
-    assert.deepEqual(methods, ['getBuckets']);
+    assert.deepStrictEqual(methods, ['getBuckets']);
     extended = true;
   },
   streamify: function(methodName) {
@@ -60,7 +60,7 @@ const fakeUtil = extend({}, util, {
     }
 
     promisified = true;
-    assert.deepEqual(options.exclude, ['bucket', 'channel']);
+    assert.deepStrictEqual(options.exclude, ['bucket', 'channel']);
   },
 });
 const originalFakeUtil = extend(true, {}, fakeUtil);
@@ -115,12 +115,15 @@ describe('Storage', function() {
       const baseUrl = 'https://www.googleapis.com/storage/v1';
       assert.strictEqual(calledWith.baseUrl, baseUrl);
       assert.strictEqual(calledWith.projectIdRequired, false);
-      assert.deepEqual(calledWith.scopes, [
+      assert.deepStrictEqual(calledWith.scopes, [
         'https://www.googleapis.com/auth/iam',
         'https://www.googleapis.com/auth/cloud-platform',
         'https://www.googleapis.com/auth/devstorage.full_control',
       ]);
-      assert.deepEqual(calledWith.packageJson, require('../package.json'));
+      assert.deepStrictEqual(
+        calledWith.packageJson,
+        require('../package.json')
+      );
     });
   });
 
@@ -183,7 +186,10 @@ describe('Storage', function() {
 
     it('should accept a name, metadata, and callback', function(done) {
       storage.request = function(reqOpts, callback) {
-        assert.deepEqual(reqOpts.json, extend(METADATA, {name: BUCKET_NAME}));
+        assert.deepStrictEqual(
+          reqOpts.json,
+          extend(METADATA, {name: BUCKET_NAME})
+        );
         callback(null, METADATA);
       };
       storage.bucket = function(name) {
@@ -231,8 +237,8 @@ describe('Storage', function() {
       };
       storage.createBucket(BUCKET_NAME, function(err, bucket) {
         assert.ifError(err);
-        assert.deepEqual(bucket, BUCKET);
-        assert.deepEqual(bucket.metadata, METADATA);
+        assert.deepStrictEqual(bucket, BUCKET);
+        assert.deepStrictEqual(bucket.metadata, METADATA);
         done();
       });
     });
@@ -332,7 +338,7 @@ describe('Storage', function() {
     it('should get buckets without a query', function(done) {
       storage.request = function(reqOpts) {
         assert.strictEqual(reqOpts.uri, '/b');
-        assert.deepEqual(reqOpts.qs, {project: storage.projectId});
+        assert.deepStrictEqual(reqOpts.qs, {project: storage.projectId});
         done();
       };
       storage.getBuckets(util.noop);
@@ -341,7 +347,7 @@ describe('Storage', function() {
     it('should get buckets with a query', function(done) {
       const token = 'next-page-token';
       storage.request = function(reqOpts) {
-        assert.deepEqual(reqOpts.qs, {
+        assert.deepStrictEqual(reqOpts.qs, {
           project: storage.projectId,
           maxResults: 5,
           pageToken: token,
@@ -405,7 +411,7 @@ describe('Storage', function() {
         callback(null, resp);
       };
       storage.getBuckets(function(err, buckets, nextQuery, apiResponse) {
-        assert.deepEqual(resp, apiResponse);
+        assert.deepStrictEqual(resp, apiResponse);
         done();
       });
     });
@@ -423,7 +429,7 @@ describe('Storage', function() {
       };
       storage.getBuckets(function(err, buckets) {
         assert.ifError(err);
-        assert.deepEqual(buckets[0].metadata, bucketMetadata);
+        assert.deepStrictEqual(buckets[0].metadata, bucketMetadata);
         done();
       });
     });

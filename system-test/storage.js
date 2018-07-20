@@ -279,7 +279,10 @@ describe('storage', function() {
           assert.ifError(err);
           bucket.acl.get({entity: 'allUsers'}, function(err, aclObject) {
             assert.ifError(err);
-            assert.deepEqual(aclObject, {entity: 'allUsers', role: 'READER'});
+            assert.deepStrictEqual(aclObject, {
+              entity: 'allUsers',
+              role: 'READER',
+            });
             bucket.acl.delete({entity: 'allUsers'}, done);
           });
         });
@@ -470,7 +473,10 @@ describe('storage', function() {
           assert.ifError(err);
           file.acl.get({entity: 'allUsers'}, function(err, aclObject) {
             assert.ifError(err);
-            assert.deepEqual(aclObject, {entity: 'allUsers', role: 'READER'});
+            assert.deepStrictEqual(aclObject, {
+              entity: 'allUsers',
+              role: 'READER',
+            });
             file.acl.delete({entity: 'allUsers'}, done);
           });
         });
@@ -553,7 +559,7 @@ describe('storage', function() {
 
             file.acl.get({entity: 'allUsers'}, function(err, aclObject) {
               assert.ifError(err);
-              assert.deepEqual(aclObject, {
+              assert.deepStrictEqual(aclObject, {
                 entity: 'allUsers',
                 role: 'READER',
               });
@@ -575,7 +581,7 @@ describe('storage', function() {
 
             file.acl.get({entity: 'allUsers'}, function(err, aclObject) {
               assert.ifError(err);
-              assert.deepEqual(aclObject, {
+              assert.deepStrictEqual(aclObject, {
                 entity: 'allUsers',
                 role: 'READER',
               });
@@ -653,7 +659,7 @@ describe('storage', function() {
         bucket.iam.getPolicy(function(err, policy) {
           assert.ifError(err);
 
-          assert.deepEqual(policy.bindings, [
+          assert.deepStrictEqual(policy.bindings, [
             {
               members: [
                 'projectEditor:' + PROJECT_ID,
@@ -705,7 +711,7 @@ describe('storage', function() {
         bucket.iam.testPermissions(testPermissions, function(err, permissions) {
           assert.ifError(err);
 
-          assert.deepEqual(permissions, {
+          assert.deepStrictEqual(permissions, {
             'storage.buckets.get': true,
             'storage.buckets.getIamPolicy': true,
           });
@@ -820,7 +826,7 @@ describe('storage', function() {
 
       bucket.setMetadata(metadata, function(err, meta) {
         assert.ifError(err);
-        assert.deepEqual(meta.website, metadata.website);
+        assert.deepStrictEqual(meta.website, metadata.website);
         done();
       });
     });
@@ -2489,7 +2495,7 @@ describe('storage', function() {
           assert.strictEqual(files[0].name, files[1].name);
 
           // different generations.
-          assert.notEqual(
+          assert.notStrictEqual(
             files[0].metadata.generation,
             files[1].metadata.generation
           );
