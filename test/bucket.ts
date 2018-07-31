@@ -31,6 +31,15 @@ import snakeize from 'snakeize';
 import stream from 'stream';
 import through from 'through2';
 
+interface RequestAPI extends request.RequestAPI<request.Request, request.CoreOptions, {}> { };
+
+interface RequestStub {
+  (...args): RequestAPI;
+  defaults?: () => RequestStub;
+  get?: typeof request.get;
+  head?: typeof request.head;
+}
+
 function FakeFile(bucket, name, options?) {
   const self = this;
 
@@ -60,35 +69,19 @@ function FakeNotification(bucket, id) {
 
 const requestCached = request;
 let requestOverride;
-function fakeRequest() {
-  return (requestOverride || requestCached).apply(null, arguments);
-}
-extend(fakeRequest, {
-  defaults() {
-    // Ignore the default values, so we don't have to test for them in every API
-    // call.
-    return fakeRequest;
-  },
-});
-extend(fakeRequest, {
-  get(...args) {
-    return (requestOverride.get || fakeRequest).apply(null, args);
-  },
-});
-extend(fakeRequest, {
-  head(...args) {
-    return (requestOverride.head || fakeRequest).apply(null, args);
-  },
-});
+const fakeRequest: RequestStub = (...args) => {
+  return (requestOverride || requestCached).apply(null, args);
+};
+
+fakeRequest.defaults = () => fakeRequest;
+fakeRequest.get = (...args) => (requestOverride.get || fakeRequest).apply(null, args);
+fakeRequest.head = (...args) => (requestOverride.head || fakeRequest).apply(null, args);
 
 let eachLimitOverride;
 
-const fakeAsync = extend({}, async, {
-  // Override async's eachLimit method.
-  eachLimit(...args) {
-    (eachLimitOverride || async.eachLimit).apply(null, args);
-  },
-});
+const fakeAsync = extend({}, async);
+fakeAsync.eachLimit = (...args) =>
+  (eachLimitOverride || async.eachLimit).apply(null, args);
 
 let promisified = false;
 const fakeUtil = extend({}, util, {

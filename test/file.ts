@@ -32,6 +32,15 @@ import url from 'url';
 import { ServiceObject, util } from '@google-cloud/common';
 import zlib from 'zlib';
 
+interface RequestAPI extends request.RequestAPI<request.Request, request.CoreOptions, {}> { };
+
+interface RequestStub {
+  (...args): RequestAPI;
+  defaults?: (...args) => RequestStub;
+  get?: typeof request.get;
+  head?: typeof request.head;
+}
+
 const { Bucket } = require('../src/bucket.js');
 
 let promisified = false;
@@ -64,17 +73,16 @@ const fakeFs = extend(true, {}, fsCached);
 let REQUEST_DEFAULT_CONF; // eslint-disable-line no-unused-vars
 const requestCached = request;
 let requestOverride;
-function fakeRequest() {
+const fakeRequest: RequestStub = (...args) => {
   return (requestOverride || requestCached).apply(null, arguments);
 }
-extend(fakeRequest, {
-  default(defaultConfiguration) {
-    // Ignore the default values, so we don't have to test for them in every API
-    // call.
-    REQUEST_DEFAULT_CONF = defaultConfiguration;
-    return fakeRequest;
-  }
-});
+
+fakeRequest.defaults = defaultConfiguration => {
+  // Ignore the default values, so we don't have to test for them in every API
+  // call.
+  REQUEST_DEFAULT_CONF = defaultConfiguration;
+  return fakeRequest;
+}
 
 let hashStreamValidationOverride;
 const hashStreamValidation = require('hash-stream-validation');
