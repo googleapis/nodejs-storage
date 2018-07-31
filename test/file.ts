@@ -67,12 +67,14 @@ let requestOverride;
 function fakeRequest() {
   return (requestOverride || requestCached).apply(null, arguments);
 }
-(fakeRequest as any).defaults = defaultConfiguration => {
-  // Ignore the default values, so we don't have to test for them in every API
-  // call.
-  REQUEST_DEFAULT_CONF = defaultConfiguration;
-  return fakeRequest;
-};
+extend(fakeRequest, {
+  default(defaultConfiguration) {
+    // Ignore the default values, so we don't have to test for them in every API
+    // call.
+    REQUEST_DEFAULT_CONF = defaultConfiguration;
+    return fakeRequest;
+  }
+});
 
 let hashStreamValidationOverride;
 const hashStreamValidation = require('hash-stream-validation');
@@ -93,22 +95,26 @@ function fakeResumableUpload() {
     return resumableUploadOverride || resumableUpload;
   };
 }
-(fakeResumableUpload as any).createURI = (...args) => {
-  let createURI = resumableUpload.createURI;
+extend(fakeResumableUpload, {
+  createURI(...args) {
+    let createURI = resumableUpload.createURI;
 
-  if (resumableUploadOverride && resumableUploadOverride.createURI) {
-    createURI = resumableUploadOverride.createURI;
-  }
+    if (resumableUploadOverride && resumableUploadOverride.createURI) {
+      createURI = resumableUploadOverride.createURI;
+    }
 
-  return createURI.apply(null, args);
-};
-(fakeResumableUpload as any).upload = (...args) => {
-  let upload = resumableUpload.upload;
-  if (resumableUploadOverride && resumableUploadOverride.upload) {
-    upload = resumableUploadOverride.upload;
+    return createURI.apply(null, args);
+  },
+});
+extend(fakeResumableUpload, {
+  upload(...args) {
+    let upload = resumableUpload.upload;
+    if (resumableUploadOverride && resumableUploadOverride.upload) {
+      upload = resumableUploadOverride.upload;
+    }
+    return upload.apply(null, args);
   }
-  return upload.apply(null, args);
-};
+});
 
 function FakeServiceObject() {
   this.calledWith_ = arguments;
@@ -716,9 +722,11 @@ describe('File', () => {
     beforeEach(() => {
       handleRespOverride = (err, res, body, callback) => {
         const rawResponseStream = through();
-        (rawResponseStream as any).toJSON = () => {
-          return { headers: {} };
-        };
+        extend(rawResponseStream, {
+          toJSON() {
+            return { headers: {} };
+          },
+        });
         callback(null, null, rawResponseStream);
         setImmediate(() => {
           rawResponseStream.end();
@@ -942,13 +950,15 @@ describe('File', () => {
       beforeEach(() => {
         handleRespOverride = (err, res, body, callback) => {
           const rawResponseStream = through();
-          (rawResponseStream as any).toJSON = () => {
-            return {
-              headers: {
-                'content-encoding': 'gzip',
-              },
-            };
-          };
+          extend(rawResponseStream, {
+            toJSON() {
+              return {
+                headers: {
+                  'content-encoding': 'gzip',
+                },
+              };
+            },
+          });
 
           callback(null, null, rawResponseStream);
 
@@ -1303,10 +1313,12 @@ describe('File', () => {
     const METADATA = { a: 'b', c: 'd' };
 
     beforeEach(() => {
-      (fakeFs as any).access = (dir, check, callback) => {
-        // Assume that the required config directory is writable.
-        callback();
-      };
+      extend(fakeFs, {
+        access(dir, check, callback) {
+          // Assume that the required config directory is writable.
+          callback();
+        },
+      });
     });
 
     it('should return a stream', () => {
@@ -1369,10 +1381,12 @@ describe('File', () => {
 
       xdgConfigOverride = fakeDir;
 
-      (fakeFs as any).access = dir => {
-        assert.strictEqual(dir, fakeDir);
-        done();
-      };
+      extend(fakeFs, {
+        access(dir) {
+          assert.strictEqual(dir, fakeDir);
+          done();
+        },
+      });
 
       file.createWriteStream({ resumable: true }).write('data');
     });
@@ -1386,10 +1400,12 @@ describe('File', () => {
         return fakeDir;
       };
 
-      (fakeFs as any).access = dir => {
-        assert.strictEqual(dir, fakeDir);
-        done();
-      };
+      extend(fakeFs, {
+        access(dir) {
+          assert.strictEqual(dir, fakeDir);
+          done();
+        },
+      });
 
       file.createWriteStream({ resumable: true }).write('data');
     });
@@ -1397,9 +1413,11 @@ describe('File', () => {
     it('should fail if resumable requested but not writable', done => {
       const error = new Error('Error.');
 
-      (fakeFs as any).access = (dir, check, callback) => {
-        callback(error);
-      };
+      extend(fakeFs, {
+        access(dir, check, callback) {
+          callback(error);
+        },
+      });
 
       const writable = file.createWriteStream({ resumable: true });
 
@@ -1436,9 +1454,11 @@ describe('File', () => {
         done();
       };
 
-      (fakeFs as any).access = (dir, check, callback) => {
-        callback(new Error('Error.'));
-      };
+      extend(fakeFs, {
+        access(dir, check, callback) {
+          callback(new Error('Error.'));
+        },
+      });
 
       file.createWriteStream(options).write('data');
     });

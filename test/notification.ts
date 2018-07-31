@@ -86,12 +86,12 @@ describe('Notification', () => {
     it('should use Bucket#createNotification for the createMethod', () => {
       const bound = () => { };
 
-      BUCKET.createNotification = {
+      extend(BUCKET.createNotification, {
         bind(context) {
           assert.strictEqual(context, BUCKET);
           return bound;
         },
-      } as any;
+      });
 
       const notification = new Notification(BUCKET, ID);
       const calledWith = notification.calledWith_[0];
