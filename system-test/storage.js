@@ -928,6 +928,138 @@ describe('storage', function() {
     });
   });
 
+  describe('bucket retention policies', function() {
+    const RETENTION_DURATION_SECONDS = 10;
+
+    describe('bucket', function() {
+      it('should create a bucket with a retention policy', function() {
+        const bucket = storage.bucket(generateName());
+
+        return bucket
+          .create({
+            retentionPolicy: {
+              retentionPeriod: RETENTION_DURATION_SECONDS,
+            },
+          })
+          .then(() => bucket.getMetadata())
+          .then(response => {
+            const metadata = response[0];
+
+            assert.strictEqual(
+              metadata.retentionPolicy.retentionPeriod,
+              `${RETENTION_DURATION_SECONDS}`
+            );
+          });
+      });
+
+      it('should set a retention policy', function() {
+        const bucket = storage.bucket(generateName());
+
+        return bucket
+          .create()
+          .then(() => bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS))
+          .then(() => bucket.getMetadata())
+          .then(response => {
+            const metadata = response[0];
+
+            assert.strictEqual(
+              metadata.retentionPolicy.retentionPeriod,
+              `${RETENTION_DURATION_SECONDS}`
+            );
+          });
+      });
+
+      it('should lock the retention period', function(done) {
+        const bucket = storage.bucket(generateName());
+
+        bucket
+          .create()
+          .then(() => bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS))
+          .then(() => bucket.lock())
+          .then(() => bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS / 2))
+          .catch(err => {
+            assert.strictEqual(err.code, 403);
+            done();
+          });
+      });
+
+      it('should remove a retention period', function() {
+        const bucket = storage.bucket(generateName());
+
+        return bucket
+          .create()
+          .then(() => bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS))
+          .then(() => bucket.removeRetentionPeriod())
+          .then(() => bucket.getMetadata())
+          .then(response => {
+            const metadata = response[0];
+
+            assert.strictEqual(metadata.retentionPolicy, undefined);
+          });
+      });
+    });
+
+    describe('file', function() {
+      const BUCKET = storage.bucket(generateName());
+      const FILE = BUCKET.file(generateName());
+
+      before(function() {
+        return BUCKET.create({
+          retentionPolicy: {
+            retentionPeriod: 1,
+          },
+        }).then(() => FILE.save('data'));
+      });
+
+      afterEach(function() {
+        return FILE.setMetadata({temporaryHold: null, eventBasedHold: null});
+      });
+
+      after(function() {
+        return FILE.delete();
+      });
+
+      it('should set and release an event-based hold', function() {
+        return FILE.hold()
+          .then(response => {
+            const metadata = response[0];
+
+            assert.strictEqual(metadata.eventBasedHold, true);
+          })
+          .then(() => FILE.release())
+          .then(() => FILE.getMetadata())
+          .then(response => {
+            const metadata = response[0];
+
+            assert.strictEqual(metadata.eventBasedHold, false);
+          });
+      });
+
+      it('should set and release a temporary hold', function() {
+        return FILE.hold({temporary: true})
+          .then(response => {
+            const metadata = response[0];
+
+            assert.strictEqual(metadata.temporaryHold, true);
+          })
+          .then(() => FILE.release({temporary: true}))
+          .then(() => FILE.getMetadata())
+          .then(response => {
+            const metadata = response[0];
+
+            assert.strictEqual(metadata.temporaryHold, false);
+          });
+      });
+
+      it('should get an expiration date', function() {
+        return FILE.getExpirationDate().then(response => {
+          const expirationDate = response[0];
+          assert(expirationDate instanceof Date);
+        });
+      });
+    });
+  });
+
   describe('requester pays', function() {
     const HAS_2ND_PROJECT = is.defined(process.env.GCN_STORAGE_2ND_PROJECT_ID);
     let bucket;

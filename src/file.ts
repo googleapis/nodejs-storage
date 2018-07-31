@@ -1501,6 +1501,50 @@ class File extends ServiceObject {
   }
 
   /**
+   * @typedef {array} GetExpirationDateResponse
+   * @property {date} 0 A Date object representing the earliest time this file's
+   *     retention policy will expire.
+   */
+  /**
+   * @callback GetExpirationDateCallback
+   * @param {?Error} err Request error, if any.
+   * @param {date} file A Date object representing the earliest time this file's
+   *     retention policy will expire.
+   */
+  /**
+   * Get a Date object representing the earliest time this file will expire.
+   *
+   * @param {GetExpirationDateCallback} [callback] Callback function.
+   * @returns {Promise<GetExpirationDateResponse>}
+   *
+   * @example
+   * const storage = require('@google-cloud/storage')();
+   * const myBucket = storage.bucket('my-bucket');
+   *
+   * const file = myBucket.file('my-file');
+   *
+   * file.getExpirationDate(function(err, expirationDate) {
+   *   // expirationDate is a Date object.
+   * });
+   */
+  getExpirationDate(callback) {
+    this.getMetadata((err, metadata, apiResponse) => {
+      if (err) {
+        callback(err, null, apiResponse);
+        return;
+      }
+
+      if (!metadata.retentionExpirationTime) {
+        const error = new Error('An expiration time is not available.');
+        callback(error, null, apiResponse);
+        return;
+      }
+
+      callback(null, new Date(metadata.retentionExpirationTime), apiResponse);
+    });
+  }
+
+  /**
    * @typedef {array} GetFileMetadataResponse
    * @property {object} 0 The {@link File} metadata.
    * @property {object} 1 The full API response.
@@ -1947,6 +1991,41 @@ class File extends ServiceObject {
   }
 
   /**
+   * Hold this file from its bucket's retention period configuration.
+   *
+   * By default, this will set an event-based hold. This is a way to retain
+   * objects until an event occurs, which is signified by the hold's release
+   * (i.e. this value is set to false (see @{link File#release})). After being
+   * released, this object will be subject to bucket-level retention (if any).
+   *
+   * Alternatively, you may set a temporary hold. This will follow the same
+   * behavior as an event-based hold, with the exception that the bucket's
+   * retention policy will not renew for this file from the time the hold is
+   * released.
+   *
+   * @param {object} [options] Configuration object.
+   * @param {boolean} [options.temporary=false] - Set a temporary hold.
+   * @param {SetFileMetadataCallback} [callback] Callback function.
+   * @returns {Promise<SetFileMetadataResponse>}
+   */
+  hold(options, callback) {
+    if (is.fn(options)) {
+      callback = options;
+      options = {};
+    }
+
+    const metadata = {};
+
+    if (options.temporary) {
+      metadata.temporaryHold = true;
+    } else {
+      metadata.eventBasedHold = true;
+    }
+
+    this.setMetadata(metadata, callback);
+  }
+
+  /**
    * @typedef {array} MakeFilePrivateResponse
    * @property {object} 0 The full API response.
    */
@@ -2214,6 +2293,31 @@ class File extends ServiceObject {
         callback(err, destinationFile, apiResponse);
       });
     });
+  }
+
+  /**
+   * Release this file from an event-based or temporary hold.
+   *
+   * @param {object} [options] Configuration object.
+   * @param {boolean} [options.temporary=false] - Release a temporary hold.
+   * @param {SetFileMetadataCallback} [callback] Callback function.
+   * @returns {Promise<SetFileMetadataResponse>}
+   */
+  release(options, callback) {
+    if (is.fn(options)) {
+      callback = options;
+      options = {};
+    }
+
+    const metadata = {};
+
+    if (options.temporary) {
+      metadata.temporaryHold = false;
+    } else {
+      metadata.eventBasedHold = false;
+    }
+
+    this.setMetadata(metadata, callback);
   }
 
   /**
