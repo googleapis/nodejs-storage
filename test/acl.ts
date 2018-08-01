@@ -16,10 +16,10 @@
 
 'use strict';
 
-import assert from 'assert';
-import async from 'async';
-import extend from 'extend';
-import proxyquire from 'proxyquire';
+import * as assert from 'assert';
+import * as async from 'async';
+import * as extend from 'extend';
+import * as proxyquire from 'proxyquire';
 import { util } from '@google-cloud/common';
 
 // tslint:disable-next-line:variable-name

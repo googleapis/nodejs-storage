@@ -16,11 +16,11 @@
 
 'use strict';
 
-import assert from 'assert';
+import * as assert from 'assert';
 import { ServiceObject, util } from '@google-cloud/common';
-import extend from 'extend';
-import proxyquire from 'proxyquire';
-import nodeUtil from 'util';
+import * as extend from 'extend';
+import * as proxyquire from 'proxyquire';
+import * as nodeUtil from 'util';
 
 function FakeServiceObject() {
   this.calledWith_ = arguments;
