@@ -32,7 +32,7 @@ import * as url from 'url';
 import { ServiceObject, util } from '@google-cloud/common';
 import * as zlib from 'zlib';
 
-interface RequestAPI extends request.RequestAPI<request.Request, request.CoreOptions, {}> { };
+interface RequestAPI extends request.RequestAPI<request.Request, request.CoreOptions, {}> { }
 
 interface RequestStub {
   (...args): RequestAPI;
@@ -75,14 +75,14 @@ const requestCached = request;
 let requestOverride;
 const fakeRequest: RequestStub = (...args) => {
   return (requestOverride || requestCached).apply(null, arguments);
-}
+};
 
 fakeRequest.defaults = defaultConfiguration => {
   // Ignore the default values, so we don't have to test for them in every API
   // call.
   REQUEST_DEFAULT_CONF = defaultConfiguration;
   return fakeRequest;
-}
+};
 
 let hashStreamValidationOverride;
 const hashStreamValidation = require('hash-stream-validation');

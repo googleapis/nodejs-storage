@@ -31,7 +31,7 @@ import * as snakeize from 'snakeize';
 import * as stream from 'stream';
 import * as through from 'through2';
 
-interface RequestAPI extends request.RequestAPI<request.Request, request.CoreOptions, {}> { };
+interface RequestAPI extends request.RequestAPI<request.Request, request.CoreOptions, {}> { }
 
 interface RequestStub {
   (...args): RequestAPI;
@@ -57,7 +57,7 @@ function FakeFile(bucket, name, options?) {
       ws.emit('complete');
       ws.end();
       return true;
-    }
+    };
     return ws;
   };
 }
