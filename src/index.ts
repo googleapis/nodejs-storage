@@ -16,9 +16,9 @@
 
 'use strict';
 
-import arrify from 'arrify';
+import * as arrify from 'arrify';
 import {paginator, Service, util} from '@google-cloud/common';
-import extend from 'extend';
+import * as extend from 'extend';
 
 import {Bucket} from './bucket';
 import {Channel} from './channel';

@@ -16,21 +16,21 @@
 
 'use strict';
 
-import assert from 'assert';
+import * as assert from 'assert';
 import { Buffer } from 'safe-buffer';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 let duplexify;
-import extend from 'extend';
-import fs from 'fs';
-import nodeutil from 'util';
-import proxyquire from 'proxyquire';
-import request from 'request';
-import stream from 'stream';
-import through from 'through2';
-import tmp from 'tmp';
-import url from 'url';
+import * as extend from 'extend';
+import * as fs from 'fs';
+import * as nodeutil from 'util';
+import * as proxyquire from 'proxyquire';
+import * as request from 'request';
+import * as stream from 'stream';
+import * as through from 'through2';
+import * as tmp from 'tmp';
+import * as url from 'url';
 import { ServiceObject, util } from '@google-cloud/common';
-import zlib from 'zlib';
+import * as zlib from 'zlib';
 
 interface RequestAPI extends request.RequestAPI<request.Request, request.CoreOptions, {}> { };
 
@@ -160,9 +160,7 @@ describe('File', () => {
         util: fakeUtil,
       },
       fs: fakeFs,
-      'gcs-resumable-upload': {
-        default: fakeResumableUpload,
-      },
+      'gcs-resumable-upload': fakeResumableUpload,
       'hash-stream-validation': fakeHashStreamValidation,
       os: fakeOs,
       request: fakeRequest,

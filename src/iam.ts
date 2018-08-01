@@ -16,10 +16,10 @@
 
 'use strict';
 
-import arrify from 'arrify';
+import * as arrify from 'arrify';
 import {util} from '@google-cloud/common';
-import extend from 'extend';
-import is from 'is';
+import * as extend from 'extend';
+import * as is from 'is';
 
 import {Bucket} from './bucket';
 

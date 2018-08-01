@@ -20,10 +20,10 @@
 
 'use strict';
 
-import assert from 'assert';
-import extend from 'extend';
-import nodeutil from 'util';
-import proxyquire from 'proxyquire';
+import * as assert from 'assert';
+import * as extend from 'extend';
+import * as nodeutil from 'util';
+import * as proxyquire from 'proxyquire';
 import { ServiceObject, util } from '@google-cloud/common';
 
 let promisified = false;
