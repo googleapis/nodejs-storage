@@ -16,20 +16,20 @@
 
 'use strict';
 
-import arrify from 'arrify';
-import assert from 'assert';
-import async from 'async';
+import * as arrify from 'arrify';
+import * as assert from 'assert';
+import * as async from 'async';
 import { ServiceObject, util } from '@google-cloud/common';
-import extend from 'extend';
-import mime from 'mime-types';
-import nodeutil from 'util';
-import path from 'path';
-import propAssign from 'prop-assign';
-import proxyquire from 'proxyquire';
-import request from 'request';
-import snakeize from 'snakeize';
-import stream from 'stream';
-import through from 'through2';
+import * as extend from 'extend';
+import * as mime from 'mime-types';
+import * as nodeutil from 'util';
+import * as path from 'path';
+import * as propAssign from 'prop-assign';
+import * as proxyquire from 'proxyquire';
+import * as request from 'request';
+import * as snakeize from 'snakeize';
+import * as stream from 'stream';
+import * as through from 'through2';
 
 interface RequestAPI extends request.RequestAPI<request.Request, request.CoreOptions, {}> { };
 
@@ -141,9 +141,7 @@ describe('Bucket', () => {
 
   before(() => {
     Bucket = proxyquire('../src/bucket.js', {
-      async: {
-        default: fakeAsync
-      },
+      async: fakeAsync,
       request: fakeRequest,
       '@google-cloud/common': {
         ServiceObject: FakeServiceObject,

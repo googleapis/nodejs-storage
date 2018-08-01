@@ -16,16 +16,16 @@
 
 'use strict';
 
-import arrify from 'arrify';
-import async from 'async';
+import * as arrify from 'arrify';
+import * as async from 'async';
 import {paginator, ServiceObject, util} from '@google-cloud/common';
-import extend from 'extend';
-import fs from 'fs';
-import is from 'is';
-import mime from 'mime-types';
-import path from 'path';
-import snakeize from 'snakeize';
-import request from 'request';
+import * as extend from 'extend';
+import * as fs from 'fs';
+import * as is from 'is';
+import * as mime from 'mime-types';
+import * as path from 'path';
+import * as snakeize from 'snakeize';
+import * as request from 'request';
 
 import {Acl} from './acl';
 import {File} from './file';

@@ -17,7 +17,7 @@
 'use strict';
 
 import {ServiceObject, util} from '@google-cloud/common';
-import is from 'is';
+import * as is from 'is';
 
 /**
  * A Notification object is created from your {@link Bucket} object using
