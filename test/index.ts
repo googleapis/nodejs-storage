@@ -82,7 +82,7 @@ describe('Storage', () => {
         util: fakeUtil,
       },
       './channel.js': { Channel: FakeChannel },
-    });
+    }).Storage;
     Bucket = Storage.Bucket;
   });
 
@@ -102,12 +102,6 @@ describe('Storage', () => {
 
     it('should promisify all the things', () => {
       assert(promisified);
-    });
-
-    it('should work without new', () => {
-      assert.doesNotThrow(() => {
-        Storage({ projectId: PROJECT_ID });
-      });
     });
 
     it('should inherit from Service', () => {
