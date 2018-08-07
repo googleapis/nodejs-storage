@@ -54,7 +54,8 @@ const RESUMABLE_THRESHOLD = 5000000;
  * @param {string} [options.userProject] User project.
  *
  * @example
- * const storage = require('@google-cloud/storage')();
+ * const {Storage} = require('@google-cloud/storage');
+ * const storage = new Storage();
  * const bucket = storage.bucket('albums');
  */
 class Bucket extends ServiceObject {
@@ -113,7 +114,8 @@ class Bucket extends ServiceObject {
    * the same, after only prefixing the method call with `default`.
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    *
    * //-
    * // Make a bucket's contents publicly readable.
@@ -172,7 +174,8 @@ class Bucket extends ServiceObject {
    * @see [IAM Roles](https://cloud.google.com/iam/docs/understanding-roles)
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * //-
@@ -213,7 +216,8 @@ class Bucket extends ServiceObject {
    * @returns {ReadableStream} A readable stream that emits {@link File} instances.
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * bucket.getFilesStream()
@@ -251,7 +255,8 @@ class Bucket extends ServiceObject {
        * @returns {Promise<CreateBucketResponse>}
        *
        * @example
-       * const storage = require('@google-cloud/storage')();
+       * const {Storage} = require('@google-cloud/storage');
+       * const storage = new Storage();
        * const bucket = storage.bucket('albums');
        * bucket.create(function(err, bucket, apiResponse) {
        *   if (!err) {
@@ -335,7 +340,6 @@ class Bucket extends ServiceObject {
    * @returns {Promise<CombineResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
    * const logBucket = storage.bucket('log-bucket');
    *
    * const sources = [
@@ -456,7 +460,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<CreateChannelResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    * const id = 'new-channel-id';
    *
@@ -574,7 +579,8 @@ class Bucket extends ServiceObject {
    * @see Notification#create
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const callback = function(err, notification, apiResponse) {
@@ -682,7 +688,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<DeleteBucketResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    * bucket.delete(function(err, apiResponse) {});
    *
@@ -746,7 +753,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * //-
@@ -847,7 +855,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<DeleteLabelsResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * //-
@@ -929,7 +938,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<DisableRequesterPaysCallback>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * bucket.disableRequesterPays(function(err, apiResponse) {
@@ -985,7 +995,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<EnableRequesterPaysResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * bucket.enableRequesterPays(function(err, apiResponse) {
@@ -1035,7 +1046,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<BucketExistsResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * bucket.exists(function(err, exists) {});
@@ -1087,7 +1099,8 @@ class Bucket extends ServiceObject {
    * @returns {File}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    * const file = bucket.file('my-existing-file.png');
    */
@@ -1127,7 +1140,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<GetBucketResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * bucket.get(function(err, bucket, apiResponse) {
@@ -1234,7 +1248,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<GetFilesResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * bucket.getFiles(function(err, files) {
@@ -1363,7 +1378,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<GetLabelsCallback>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * bucket.getLabels(function(err, labels) {
@@ -1425,7 +1441,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<GetBucketMetadataResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * bucket.getMetadata(function(err, metadata, apiResponse) {});
@@ -1490,7 +1507,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<GetNotificationsResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('my-bucket');
    *
    * bucket.getNotifications(function(err, notifications, apiResponse) {
@@ -1577,7 +1595,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<MakeBucketPrivateResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * //-
@@ -1701,7 +1720,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<MakeBucketPublicResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * //-
@@ -1801,7 +1821,8 @@ class Bucket extends ServiceObject {
    * @see Notification
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('my-bucket');
    * const notification = bucket.notification('1');
    */
@@ -1854,7 +1875,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<SetLabelsResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * const labels = {
@@ -1908,7 +1930,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<SetBucketMetadataResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * //-
@@ -1995,7 +2018,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * bucket.setStorageClass('regional', function(err, apiResponse) {
@@ -2030,7 +2054,8 @@ class Bucket extends ServiceObject {
    * @param {string} userProject The user project.
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * bucket.setUserProject('grape-spaceship-123');
@@ -2128,7 +2153,8 @@ class Bucket extends ServiceObject {
    * @returns {Promise<UploadResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
    * //-

@@ -26,7 +26,7 @@
 function listFiles(bucketName) {
   // [START storage_list_files]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -57,7 +57,7 @@ function listFiles(bucketName) {
 function listFilesByPrefix(bucketName, prefix, delimiter) {
   // [START storage_list_files_with_prefix]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -117,7 +117,7 @@ function listFilesByPrefix(bucketName, prefix, delimiter) {
 function uploadFile(bucketName, filename) {
   // [START storage_upload_file]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -144,7 +144,7 @@ function uploadFile(bucketName, filename) {
 function uploadFileWithKmsKey(bucketName, filename, kmsKeyName) {
   // [START storage_upload_with_kms_key]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -174,7 +174,7 @@ function uploadFileWithKmsKey(bucketName, filename, kmsKeyName) {
 function downloadFile(bucketName, srcFilename, destFilename) {
   // [START storage_download_file]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -210,7 +210,7 @@ function downloadFile(bucketName, srcFilename, destFilename) {
 function deleteFile(bucketName, filename) {
   // [START storage_delete_file]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -238,7 +238,7 @@ function deleteFile(bucketName, filename) {
 function getMetadata(bucketName, filename) {
   // [START storage_get_metadata]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -288,7 +288,7 @@ function getMetadata(bucketName, filename) {
 function makePublic(bucketName, filename) {
   // [START storage_make_public]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -316,7 +316,7 @@ function makePublic(bucketName, filename) {
 function generateSignedUrl(bucketName, filename) {
   // [START storage_generate_signed_url]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -352,7 +352,7 @@ function generateSignedUrl(bucketName, filename) {
 function moveFile(bucketName, srcFilename, destFilename) {
   // [START storage_move_file]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -383,7 +383,7 @@ function moveFile(bucketName, srcFilename, destFilename) {
 function copyFile(srcBucketName, srcFilename, destBucketName, destFilename) {
   // [START storage_copy_file]
   // Imports the Google Cloud client library
-  const Storage = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();

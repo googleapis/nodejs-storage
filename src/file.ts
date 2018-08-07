@@ -96,7 +96,8 @@ const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
  * @param {string} [options.userProject] The ID of the project which will be
  *     billed for all requests made from File object.
  * @example
- * const storage = require('@google-cloud/storage')();
+ * const {Storage} = require('@google-cloud/storage');
+ * const storage = new Storage();
  * const myBucket = storage.bucket('my-bucket');
  *
  * const file = myBucket.file('my-file');
@@ -122,7 +123,8 @@ class File extends ServiceObject {
    * @mixes Acl
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -237,7 +239,8 @@ class File extends ServiceObject {
    * @returns {Promise<CopyResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    *
    * //-
    * // You can pass in a variety of types for the destination.
@@ -491,7 +494,8 @@ class File extends ServiceObject {
    * // pipe its contents to a local file. This is effectively creating a local
    * // backup of your remote data.
    * //-
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('my-bucket');
    *
    * const fs = require('fs');
@@ -782,7 +786,8 @@ class File extends ServiceObject {
    * @returns {Promise<CreateResumableUploadResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -913,7 +918,8 @@ class File extends ServiceObject {
    *
    * @example
    * const fs = require('fs');
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -1152,7 +1158,8 @@ class File extends ServiceObject {
    * @returns {Promise<DeleteFileResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -1202,7 +1209,8 @@ class File extends ServiceObject {
    * @returns {Promise<DownloadResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -1282,7 +1290,8 @@ class File extends ServiceObject {
    * @returns {Promise<FileExistsResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -1310,7 +1319,8 @@ class File extends ServiceObject {
    *
    * @example
    * const crypto = require('crypto');
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const encryptionKey = crypto.randomBytes(32);
@@ -1389,7 +1399,8 @@ class File extends ServiceObject {
    * @returns {Promise<GetFileResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -1433,7 +1444,8 @@ class File extends ServiceObject {
    * @returns {Promise<GetFileMetadataResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -1523,7 +1535,8 @@ class File extends ServiceObject {
    * @returns {Promise<GetSignedPolicyResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -1697,7 +1710,8 @@ class File extends ServiceObject {
    * @returns {Promise<GetSignedUrlResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -1875,7 +1889,8 @@ class File extends ServiceObject {
    * @returns {Promise<MakeFilePrivateResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -1941,7 +1956,8 @@ class File extends ServiceObject {
    * @returns {Promise<MakeFilePublicResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -2010,7 +2026,8 @@ class File extends ServiceObject {
    * @returns {Promise<MoveResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * //-
    * // You can pass in a variety of types for the destination.
    * //
@@ -2189,7 +2206,8 @@ class File extends ServiceObject {
    * @returns {Promise}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -2248,7 +2266,8 @@ class File extends ServiceObject {
    * @returns {Promise<SetFileMetadataResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    *
    * const file = myBucket.file('my-file');
@@ -2363,7 +2382,8 @@ class File extends ServiceObject {
    * @param {string} userProject The user project.
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    * const file = bucket.file('my-file');
    *

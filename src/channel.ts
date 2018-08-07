@@ -29,7 +29,8 @@ import {ServiceObject, util} from '@google-cloud/common';
  * @param {string} resourceId The resource ID of the channel.
  *
  * @example
- * const storage = require('@google-cloud/storage')();
+ * const {Storage} = require('@google-cloud/storage');
+ * const storage = new Storage();
  * const channel = storage.channel('id', 'resource-id');
  */
 class Channel extends ServiceObject {
@@ -72,7 +73,8 @@ class Channel extends ServiceObject {
    * @returns {Promise<StopResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const channel = storage.channel('id', 'resource-id');
    * channel.stop(function(err, apiResponse) {
    *   if (!err) {
