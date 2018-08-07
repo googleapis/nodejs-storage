@@ -24,6 +24,11 @@ import {Bucket} from './bucket';
 import {Channel} from './channel';
 import {File} from './file';
 
+interface CreateBucketQuery {
+  project: string;
+  userProject: string;
+}
+
 /**
  * @typedef {object} ClientConfig
  * @property {string} [projectId] The project ID from the Google Developer's
@@ -408,7 +413,7 @@ class Storage extends Service {
 
     const query = {
       project: this.projectId,
-    } as any;
+    } as CreateBucketQuery;
 
     if (body.userProject) {
       query.userProject = body.userProject;
