@@ -17,6 +17,7 @@
 'use strict';
 
 import {ServiceObject, util} from '@google-cloud/common';
+import {promisifyAll} from '@google-cloud/promisify';
 
 /**
  * Create a channel object to interact with a Cloud Storage channel.
@@ -110,7 +111,7 @@ class Channel extends ServiceObject {
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-util.promisifyAll(Channel);
+promisifyAll(Channel);
 
 /**
  * Reference to the {@link Channel} class.

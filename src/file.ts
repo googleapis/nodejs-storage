@@ -18,6 +18,7 @@
 
 import {Buffer} from 'safe-buffer';
 import {ServiceObject, util} from '@google-cloud/common';
+import {promisifyAll} from '@google-cloud/promisify';
 import compressible = require('compressible');
 import concat = require('concat-stream');
 import * as crypto from 'crypto';
@@ -2510,7 +2511,7 @@ class File extends ServiceObject {
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-util.promisifyAll(File, {
+promisifyAll(File, {
   exclude: ['request', 'setEncryptionKey'],
 });
 

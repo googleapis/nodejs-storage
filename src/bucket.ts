@@ -18,7 +18,9 @@
 
 import * as arrify from 'arrify';
 import * as async from 'async';
-import {paginator, ServiceObject, util} from '@google-cloud/common';
+import {ServiceObject, util} from '@google-cloud/common';
+import {paginator} from '@google-cloud/paginator';
+import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
 import * as fs from 'fs';
 import * as is from 'is';
@@ -2464,7 +2466,7 @@ paginator.extend(Bucket, 'getFiles');
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-util.promisifyAll(Bucket, {
+promisifyAll(Bucket, {
   exclude: ['request', 'file', 'notification'],
 });
 

@@ -77,6 +77,8 @@
   },
   "dependencies": {
     "@google-cloud/common": "^0.21.0",
+    "@google-cloud/paginator": "^0.1.0",
+    "@google-cloud/promisify": "^0.3.0",
     "arrify": "^1.0.0",
     "async": "^2.0.1",
     "compressible": "^2.0.12",

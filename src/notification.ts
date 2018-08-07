@@ -17,6 +17,7 @@
 'use strict';
 
 import {ServiceObject, util} from '@google-cloud/common';
+import {promisifyAll} from '@google-cloud/promisify';
 import * as is from 'is';
 
 /**
@@ -341,7 +342,7 @@ class Notification extends ServiceObject {
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-util.promisifyAll(Notification);
+promisifyAll(Notification);
 
 /**
  * Reference to the {@link Notification} class.
