@@ -38,7 +38,7 @@ describe('storage/acl', () => {
   });
 
   // tslint:disable-next-line:variable-name
-  const Storage = require('../src');
+  const {Storage} = require('../src');
   let acl;
 
   const ERROR = new Error('Error.');
