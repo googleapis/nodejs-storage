@@ -55,7 +55,9 @@ const fakeUtil = extend({}, util, {
     const args = arguments;
     (makeWritableStreamOverride || util.makeWritableStream).apply(null, args);
   },
+});
 
+const fakePromisify = {
   // tslint:disable-next-line:variable-name
   promisifyAll(Class, options) {
     if (Class.name !== 'File') {
@@ -65,7 +67,7 @@ const fakeUtil = extend({}, util, {
     promisified = true;
     assert.deepEqual(options.exclude, ['request', 'setEncryptionKey']);
   },
-});
+}
 
 const fsCached = extend(true, {}, fs);
 const fakeFs = extend(true, {}, fsCached);
@@ -159,6 +161,7 @@ describe('File', () => {
         ServiceObject: FakeServiceObject,
         util: fakeUtil,
       },
+      '@google-cloud/promisify': fakePromisify,
       fs: fakeFs,
       'gcs-resumable-upload': fakeResumableUpload,
       'hash-stream-validation': fakeHashStreamValidation,

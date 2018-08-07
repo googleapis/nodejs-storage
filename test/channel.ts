@@ -27,14 +27,14 @@ import * as proxyquire from 'proxyquire';
 import { ServiceObject, util } from '@google-cloud/common';
 
 let promisified = false;
-const fakeUtil = extend({}, util, {
+const fakePromisify = {
   // tslint:disable-next-line:variable-name
   promisifyAll(Class) {
     if (Class.name === 'Channel') {
       promisified = true;
     }
   },
-});
+};
 
 function FakeServiceObject() {
   this.calledWith_ = arguments;
@@ -54,9 +54,9 @@ describe('Channel', () => {
 
   before(() => {
     Channel = proxyquire('../src/channel.js', {
+      '@google-cloud/promisify': fakePromisify,
       '@google-cloud/common': {
         ServiceObject: FakeServiceObject,
-        util: fakeUtil,
       },
     }).Channel;
   });

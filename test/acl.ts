@@ -28,14 +28,14 @@ let Acl;
 let AclRoleAccessorMethods;
 describe('storage/acl', () => {
   let promisified = false;
-  const fakeUtil = extend({}, util, {
+  const fakePromisify = {
     // tslint:disable-next-line:variable-name
     promisifyAll(Class) {
       if (Class.name === 'Acl') {
         promisified = true;
       }
     },
-  });
+  };
 
   // tslint:disable-next-line:variable-name
   const {Storage} = require('../src');
@@ -49,9 +49,7 @@ describe('storage/acl', () => {
 
   before(() => {
     const aclModule = proxyquire('../src/acl.js', {
-      '@google-cloud/common': {
-        util: fakeUtil,
-      },
+      '@google-cloud/promisify': fakePromisify,
     });
     Acl = aclModule.Acl;
     AclRoleAccessorMethods = aclModule.AclRoleAccessorMethods;
