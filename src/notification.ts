@@ -33,7 +33,8 @@ import * as is from 'is';
  * @param {string} id The ID of the notification.
  *
  * @example
- * const storage = require('@google-cloud/storage')();
+ * const {Storage} = require('@google-cloud/storage');
+ * const storage = new Storage();
  * const myBucket = storage.bucket('my-bucket');
  *
  * const notification = myBucket.notification('1');
@@ -61,7 +62,8 @@ class Notification extends ServiceObject {
        * @throws {Error} If a valid topic is not provided.
        *
        * @example
-       * const storage = require('@google-cloud/storage')();
+       * const {Storage} = require('@google-cloud/storage');
+       * const storage = new Storage();
        * const myBucket = storage.bucket('my-bucket');
        * const notification = myBucket.notification('1');
        *
@@ -97,7 +99,8 @@ class Notification extends ServiceObject {
        * @returns {Promise<NotificationExistsResponse>}
        *
        * @example
-       * const storage = require('@google-cloud/storage')();
+       * const {Storage} = require('@google-cloud/storage');
+       * const storage = new Storage();
        * const myBucket = storage.bucket('my-bucket');
        * const notification = myBucket.notification('1');
        *
@@ -143,7 +146,8 @@ class Notification extends ServiceObject {
    * @returns {Promise<DeleteNotificationResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    * const notification = myBucket.notification('1');
    *
@@ -202,7 +206,8 @@ class Notification extends ServiceObject {
    * @return {Promise<GetNotificationCallback>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    * const notification = myBucket.notification('1');
    *
@@ -287,7 +292,8 @@ class Notification extends ServiceObject {
    * @returns {Promise<GetNotificationMetadataResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    * const notification = myBucket.notification('1');
    *

@@ -72,11 +72,11 @@ import {File} from './file';
  * @hideconstructor
  *
  * @example <caption>Create a client that uses Application Default Credentials (ADC)</caption>
- * const Storage = require('@google-cloud/storage');
+ * const {Storage} = require('@google-cloud/storage');
  * const storage = new Storage();
  *
  * @example <caption>Create a client with explicit credentials</caption>
- * const Storage = require('@google-cloud/storage');
+ * storage');/storage');
  * const storage = new Storage({
  *   projectId: 'your-project-id',
  *   keyFilename: '/path/to/keyfile.json'
@@ -133,7 +133,8 @@ class Storage extends Service {
    * @property {string} WRITER_ROLE
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const albums = storage.bucket('albums');
    *
    * //-
@@ -249,7 +250,8 @@ class Storage extends Service {
    * @see Bucket
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const albums = storage.bucket('albums');
    * const photos = storage.bucket('photos');
    */
@@ -270,7 +272,8 @@ class Storage extends Service {
    * @see Channel
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const channel = storage.channel('id', 'resource-id');
    */
   channel(id, resourceId) {
@@ -323,7 +326,8 @@ class Storage extends Service {
    * @see Bucket#create
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const callback = function(err, bucket, apiResponse) {
    *   // `bucket` is a Bucket object.
    * };
@@ -465,7 +469,8 @@ class Storage extends Service {
    * @returns {Promise<GetBucketsResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * storage.getBuckets(function(err, buckets) {
    *   if (!err) {
    *     // buckets is an array of Bucket objects.

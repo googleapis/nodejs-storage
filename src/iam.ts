@@ -35,7 +35,8 @@ import {Bucket} from './bucket';
  *
  * @param {Bucket} bucket The parent instance.
  * @example
- * const storage = require('@google-cloud/storage')();
+ * const {Storage} = require('@google-cloud/storage');
+ * const storage = new Storage();
  * const bucket = storage.bucket('my-bucket');
  * // bucket.iam
  */
@@ -74,7 +75,8 @@ class Iam {
    * @see [Buckets: setIamPolicy API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/getIamPolicy}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('my-bucket');
    * bucket.iam.getPolicy(function(err, policy, apiResponse) {});
    *
@@ -134,7 +136,8 @@ class Iam {
    * @see [IAM Roles](https://cloud.google.com/iam/docs/understanding-roles)
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('my-bucket');
    *
    * const myPolicy = {
@@ -216,7 +219,8 @@ class Iam {
    * @see [Buckets: testIamPermissions API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/testIamPermissions}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const bucket = storage.bucket('my-bucket');
    *
    * //-
