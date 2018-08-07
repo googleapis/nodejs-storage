@@ -167,7 +167,7 @@ class Storage extends Service {
    *   const apiResponse = data[1];
    * });
    */
-  static acl: object = {
+  static acl = {
     OWNER_ROLE: 'OWNER',
     READER_ROLE: 'READER',
     WRITER_ROLE: 'WRITER',
@@ -542,67 +542,6 @@ class Storage extends Service {
   }
 }
 
-/**
- * Cloud Storage uses access control lists (ACLs) to manage object and
- * bucket access. ACLs are the mechanism you use to share objects with other
- * users and allow other users to access your buckets and objects.
- *
- * This object provides constants to refer to the three permission levels that
- * can be granted to an entity:
- *
- *   - `gcs.acl.OWNER_ROLE` - ("OWNER")
- *   - `gcs.acl.READER_ROLE` - ("READER")
- *   - `gcs.acl.WRITER_ROLE` - ("WRITER")
- *
- * @see [About Access Control Lists]{@link https://cloud.google.com/storage/docs/access-control/lists}
- *
- * @name Storage.acl
- * @type {object}
- * @property {string} OWNER_ROLE
- * @property {string} READER_ROLE
- * @property {string} WRITER_ROLE
- *
- * @example
- * const storage = require('@google-cloud/storage')();
- * const albums = storage.bucket('albums');
- *
- * //-
- * // Make all of the files currently in a bucket publicly readable.
- * //-
- * const options = {
- *   entity: 'allUsers',
- *   role: storage.acl.READER_ROLE
- * };
- *
- * albums.acl.add(options, function(err, aclObject) {});
- *
- * //-
- * // Make any new objects added to a bucket publicly readable.
- * //-
- * albums.acl.default.add(options, function(err, aclObject) {});
- *
- * //-
- * // Grant a user ownership permissions to a bucket.
- * //-
- * albums.acl.add({
- *   entity: 'user-useremail@example.com',
- *   role: storage.acl.OWNER_ROLE
- * }, function(err, aclObject) {});
- *
- * //-
- * // If the callback is omitted, we'll return a Promise.
- * //-
- * albums.acl.add(options).then(function(data) {
- *   const aclObject = data[0];
- *   const apiResponse = data[1];
- * });
- */
-Storage.acl = {
-  OWNER_ROLE: 'OWNER',
-  READER_ROLE: 'READER',
-  WRITER_ROLE: 'WRITER',
-};
-
 /*! Developer Documentation
  *
  * These methods can be auto-paginated.
@@ -619,9 +558,8 @@ util.promisifyAll(Storage, {
 });
 
 /**
- * The default export of the `@google-cloud/storage` package is the
- * {@link Storage} class, which also serves as a factory function which produces
- * {@link Storage} instances.
+ * The `@google-cloud/storage` package has a single named export which is the
+ * {@link Storage} (ES6) class, which should be instantiated with `new`.
  *
  * See {@link Storage} and {@link ClientConfig} for client methods and
  * configuration options.
@@ -633,7 +571,7 @@ util.promisifyAll(Storage, {
  * npm install --save @google-cloud/storage
  *
  * @example <caption>Import the client library</caption>
- * const Storage = require('@google-cloud/storage');
+ * const {Storage} = require('@google-cloud/storage');
  *
  * @example <caption>Create a client that uses <a href="https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application">Application Default Credentials (ADC)</a>:</caption>
  * const storage = new Storage();
@@ -648,9 +586,4 @@ util.promisifyAll(Storage, {
  * region_tag:storage_quickstart
  * Full quickstart example:
  */
-// Allow creating a `Storage` instance without using the `new` keyword. (#173)
-export = new Proxy(Storage, {
-  apply(target, thisArg, [options]) {
-    return new target(options);
-  },
-});
+export {Storage};

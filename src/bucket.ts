@@ -31,6 +31,7 @@ import {Acl} from './acl';
 import {File} from './file';
 import {Iam} from './iam';
 import {Notification} from './notification';
+import {Storage} from './index';
 
 /**
  * The size of a file (in bytes) must be greater than this number to
@@ -68,9 +69,9 @@ class Bucket extends ServiceObject {
    * A reference to the {@link Storage} associated with this {@link Bucket}
    * instance.
    * @name Bucket#storage
-   * @type {string}
+   * @type {Storage}
    */
-  storage: any;
+  storage: Storage;
 
   /**
    * A user project to apply to each request from this bucket.
