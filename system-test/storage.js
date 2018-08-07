@@ -2301,7 +2301,10 @@ describe('storage', function() {
           destinationFile.download(function(err, contents) {
             assert.ifError(err);
 
-            assert.strictEqual(contents.toString(), files.map(prop('contents')).join(''));
+            assert.strictEqual(
+              contents.toString(),
+              files.map(prop('contents')).join('')
+            );
 
             async.each(sourceFiles.concat([destinationFile]), deleteFile, done);
           });
