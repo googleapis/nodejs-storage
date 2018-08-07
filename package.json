@@ -76,7 +76,7 @@
     ]
   },
   "dependencies": {
-    "@google-cloud/common": "^0.20.3",
+    "@google-cloud/common": "^0.21.0",
     "arrify": "^1.0.0",
     "async": "^2.0.1",
     "compressible": "^2.0.12",
