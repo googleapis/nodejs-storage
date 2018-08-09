@@ -1801,7 +1801,7 @@ describe('storage', function() {
       });
     });
 
-    describe('kms keys', function() {
+    describe.only('kms keys', function() {
       const FILE_CONTENTS = 'secret data';
 
       const BUCKET_LOCATION = 'us';
@@ -1846,22 +1846,16 @@ describe('storage', function() {
                 return;
               }
 
-              storage.request(
-                {
-                  uri:
-                    'https://www.googleapis.com/storage/v1/projects/{{projectId}}/serviceAccount',
-                },
-                function(err, resp) {
-                  if (err) {
-                    next(err);
-                    return;
-                  }
-
-                  SERVICE_ACCOUNT_EMAIL = resp.email_address;
-
-                  next();
+              storage.getServiceAccount(function(err, serviceAccount) {
+                if (err) {
+                  next(err);
+                  return;
                 }
-              );
+
+                SERVICE_ACCOUNT_EMAIL = serviceAccount.emailAddress;
+
+                next();
+              });
             },
 
             function grantPermissionToServiceAccount(next) {
