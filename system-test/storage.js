@@ -1801,7 +1801,7 @@ describe('storage', function() {
       });
     });
 
-    describe.only('kms keys', function() {
+    describe('kms keys', function() {
       const FILE_CONTENTS = 'secret data';
 
       const BUCKET_LOCATION = 'us';
