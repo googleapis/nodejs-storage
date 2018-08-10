@@ -65,7 +65,7 @@ const fakePromisify = {
     }
 
     promisified = true;
-    assert.deepEqual(options.exclude, ['request', 'setEncryptionKey']);
+    assert.deepStrictEqual(options.exclude, ['request', 'setEncryptionKey']);
   },
 };
 
@@ -212,7 +212,7 @@ describe('File', () => {
     });
 
     it('should assign file name', () => {
-      assert.equal(file.name, FILE_NAME);
+      assert.strictEqual(file.name, FILE_NAME);
     });
 
     it('should assign the bucket instance', () => {
@@ -236,7 +236,7 @@ describe('File', () => {
 
     it('should accept specifying a generation', () => {
       const file = new File(BUCKET, 'name', { generation: 2 });
-      assert.equal(file.generation, 2);
+      assert.strictEqual(file.generation, 2);
     });
 
     it('should build a requestQueryObject from generation', () => {
@@ -539,7 +539,7 @@ describe('File', () => {
         file.request = (reqOpts, callback) => {
           file.copy = (newFile_, options, callback) => {
             assert.strictEqual(newFile_, newFile);
-            assert.deepEqual(options, { token: apiResponse.rewriteToken });
+            assert.deepStrictEqual(options, { token: apiResponse.rewriteToken });
             callback(); // done()
           };
 
@@ -613,7 +613,7 @@ describe('File', () => {
         const newFile = new File(BUCKET, 'new-file');
         file.copy(newFile, (err, copiedFile) => {
           assert.ifError(err);
-          assert.deepEqual(copiedFile, newFile);
+          assert.deepStrictEqual(copiedFile, newFile);
           done();
         });
       });
@@ -622,8 +622,8 @@ describe('File', () => {
         const newFilename = 'new-filename';
         file.copy(newFilename, (err, copiedFile) => {
           assert.ifError(err);
-          assert.equal(copiedFile.bucket.name, BUCKET.name);
-          assert.equal(copiedFile.name, newFilename);
+          assert.strictEqual(copiedFile.bucket.name, BUCKET.name);
+          assert.strictEqual(copiedFile.name, newFilename);
           done();
         });
       });
@@ -631,8 +631,8 @@ describe('File', () => {
       it('should create new file on the destination bucket', done => {
         file.copy(BUCKET, (err, copiedFile) => {
           assert.ifError(err);
-          assert.equal(copiedFile.bucket.name, BUCKET.name);
-          assert.equal(copiedFile.name, file.name);
+          assert.strictEqual(copiedFile.bucket.name, BUCKET.name);
+          assert.strictEqual(copiedFile.name, file.name);
           done();
         });
       });
@@ -640,7 +640,7 @@ describe('File', () => {
       it('should pass apiResponse into callback', done => {
         file.copy(BUCKET, (err, copiedFile, apiResponse) => {
           assert.ifError(err);
-          assert.deepEqual({ success: true }, apiResponse);
+          assert.deepStrictEqual({ success: true }, apiResponse);
           done();
         });
       });
@@ -782,7 +782,7 @@ describe('File', () => {
       const versionedFile = new File(BUCKET, 'file.txt', { generation: 1 });
 
       versionedFile.requestStream = rOpts => {
-        assert.equal(rOpts.qs.generation, 1);
+        assert.strictEqual(rOpts.qs.generation, 1);
         setImmediate(done);
         return duplexify();
       };
@@ -807,7 +807,7 @@ describe('File', () => {
     describe('authenticating', () => {
       it('should create an authenticated request', done => {
         file.requestStream = opts => {
-          assert.deepEqual(opts, {
+          assert.deepStrictEqual(opts, {
             forever: false,
             uri: '',
             headers: {
@@ -845,7 +845,7 @@ describe('File', () => {
           file
             .createReadStream()
             .once('error', err => {
-              assert.equal(err, ERROR);
+              assert.strictEqual(err, ERROR);
               done();
             })
             .resume();
@@ -861,7 +861,7 @@ describe('File', () => {
 
         file.requestStream = () => {
           setImmediate(() => {
-            assert.deepEqual(requestOverride.getRequestOptions(), fakeRequest);
+            assert.deepStrictEqual(requestOverride.getRequestOptions(), fakeRequest);
             done();
           });
 
@@ -914,7 +914,7 @@ describe('File', () => {
           file
             .createReadStream()
             .once('error', err => {
-              assert.deepEqual(err, ERROR);
+              assert.deepStrictEqual(err, ERROR);
               done();
             })
             .resume();
@@ -1183,7 +1183,7 @@ describe('File', () => {
 
         file.requestStream = opts => {
           setImmediate(() => {
-            assert.equal(opts.headers.Range, 'bytes=' + startOffset + '-');
+            assert.strictEqual(opts.headers.Range, 'bytes=' + startOffset + '-');
             done();
           });
           return duplexify();
@@ -1197,7 +1197,7 @@ describe('File', () => {
 
         file.requestStream = opts => {
           setImmediate(() => {
-            assert.equal(opts.headers.Range, 'bytes=0-' + endOffset);
+            assert.strictEqual(opts.headers.Range, 'bytes=0-' + endOffset);
             done();
           });
           return duplexify();
@@ -1213,7 +1213,7 @@ describe('File', () => {
         file.requestStream = opts => {
           setImmediate(() => {
             const expectedRange = 'bytes=' + startOffset + '-' + endOffset;
-            assert.equal(opts.headers.Range, expectedRange);
+            assert.strictEqual(opts.headers.Range, expectedRange);
             done();
           });
           return duplexify();
@@ -1229,7 +1229,7 @@ describe('File', () => {
         file.requestStream = opts => {
           setImmediate(() => {
             const expectedRange = 'bytes=0-0';
-            assert.equal(opts.headers.Range, expectedRange);
+            assert.strictEqual(opts.headers.Range, expectedRange);
             done();
           });
           return duplexify();
@@ -1253,7 +1253,7 @@ describe('File', () => {
 
         file.requestStream = opts => {
           setImmediate(() => {
-            assert.equal(opts.headers.Range, 'bytes=' + endOffset);
+            assert.strictEqual(opts.headers.Range, 'bytes=' + endOffset);
             done();
           });
           return duplexify();
@@ -1362,7 +1362,7 @@ describe('File', () => {
       const writable = file.createWriteStream(options);
 
       file.startSimpleUpload_ = (stream, options_) => {
-        assert.deepEqual(options_, options);
+        assert.deepStrictEqual(options_, options);
         done();
       };
 
@@ -1378,7 +1378,7 @@ describe('File', () => {
       const writable = file.createWriteStream(options);
 
       file.startResumableUpload_ = (stream, options_) => {
-        assert.deepEqual(options_, options);
+        assert.deepStrictEqual(options_, options);
         done();
       };
 
@@ -1459,7 +1459,7 @@ describe('File', () => {
       };
 
       file.startSimpleUpload_ = (stream, options_) => {
-        assert.deepEqual(options_, options);
+        assert.deepStrictEqual(options_, options);
         done();
       };
 
@@ -1478,7 +1478,7 @@ describe('File', () => {
       });
 
       file.startResumableUpload_ = (stream, options) => {
-        assert.deepEqual(options.metadata, METADATA);
+        assert.deepStrictEqual(options.metadata, METADATA);
         done();
       };
 
@@ -1634,7 +1634,7 @@ describe('File', () => {
         writable.end();
 
         writable.on('error', err => {
-          assert.equal(err.code, 'FILE_NO_UPLOAD');
+          assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
           done();
         });
       });
@@ -1673,7 +1673,7 @@ describe('File', () => {
         writable.end();
 
         writable.on('error', err => {
-          assert.equal(err.code, 'FILE_NO_UPLOAD');
+          assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
           done();
         });
       });
@@ -1696,7 +1696,7 @@ describe('File', () => {
         writable.end();
 
         writable.on('error', err => {
-          assert.equal(err.code, 'FILE_NO_UPLOAD');
+          assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
           done();
         });
       });
@@ -1754,7 +1754,7 @@ describe('File', () => {
         writable.end();
 
         writable.on('error', err => {
-          assert.equal(err.code, 'MD5_NOT_AVAILABLE');
+          assert.strictEqual(err.code, 'MD5_NOT_AVAILABLE');
           done();
         });
       });
@@ -1779,7 +1779,7 @@ describe('File', () => {
         writable.end();
 
         writable.on('error', err => {
-          assert.equal(err.code, 'FILE_NO_UPLOAD_DELETE');
+          assert.strictEqual(err.code, 'FILE_NO_UPLOAD_DELETE');
           assert(err.message.indexOf(deleteErrorMessage) > -1);
           done();
         });
@@ -1792,7 +1792,7 @@ describe('File', () => {
       extend(file.parent, {
         delete(options, callback) {
           assert.strictEqual(this, file);
-          assert.deepEqual(options, {});
+          assert.deepStrictEqual(options, {});
           callback(); // done()
         },
       });
@@ -1875,7 +1875,7 @@ describe('File', () => {
       const readOptions = { start: 100, end: 200 };
 
       file.createReadStream = options => {
-        assert.deepEqual(options, readOptions);
+        assert.deepStrictEqual(options, readOptions);
         done();
         return fileReadStream;
       };
@@ -1910,7 +1910,7 @@ describe('File', () => {
         file.download((err, remoteFileContents) => {
           assert.ifError(err);
 
-          assert.equal(fileContents, remoteFileContents);
+          assert.strictEqual(fileContents, remoteFileContents.toString());
           done();
         });
       });
@@ -1925,7 +1925,7 @@ describe('File', () => {
         });
 
         file.download(err => {
-          assert.equal(err, error);
+          assert.strictEqual(err, error);
           done();
         });
       });
@@ -1952,7 +1952,7 @@ describe('File', () => {
             fs.readFile(tmpFilePath, (err, tmpFileContents) => {
               assert.ifError(err);
 
-              assert.equal(fileContents, tmpFileContents);
+              assert.strictEqual(fileContents, tmpFileContents.toString());
               done();
             });
           });
@@ -1973,7 +1973,7 @@ describe('File', () => {
           });
 
           file.download({ destination: tmpFilePath }, err => {
-            assert.equal(err, error);
+            assert.strictEqual(err, error);
             done();
           });
         });
@@ -2012,7 +2012,7 @@ describe('File', () => {
       extend(file.parent, {
         getMetadata(options, callback) {
           assert.strictEqual(this, file);
-          assert.deepEqual(options, {});
+          assert.deepStrictEqual(options, {});
           callback(); // done()
         },
       });
@@ -2081,9 +2081,9 @@ describe('File', () => {
 
       file.getSignedPolicy(CONFIG, (err, signedPolicy) => {
         assert.ifError(err);
-        assert.equal(typeof signedPolicy.string, 'string');
-        assert.equal(typeof signedPolicy.base64, 'string');
-        assert.equal(typeof signedPolicy.signature, 'string');
+        assert.strictEqual(typeof signedPolicy.string, 'string');
+        assert.strictEqual(typeof signedPolicy.base64, 'string');
+        assert.strictEqual(typeof signedPolicy.signature, 'string');
         done();
       });
     });
@@ -2093,7 +2093,7 @@ describe('File', () => {
 
       file.getSignedPolicy(CONFIG, err => {
         assert.ifError(err);
-        assert.deepEqual(CONFIG, originalConfig);
+        assert.deepStrictEqual(CONFIG, originalConfig);
         done();
       });
     });
@@ -2435,14 +2435,14 @@ describe('File', () => {
 
       file.getSignedUrl(CONFIG, (err, signedUrl) => {
         assert.ifError(err);
-        assert.equal(typeof signedUrl, 'string');
+        assert.strictEqual(typeof signedUrl, 'string');
         const expires = Math.round(CONFIG.expires / 1000);
         const expected =
           'https://storage.googleapis.com/bucket-name/file-name.png?' +
           'GoogleAccessId=client-email&Expires=' +
           expires +
           '&Signature=signature';
-        assert.equal(signedUrl, expected);
+        assert.strictEqual(signedUrl, expected);
         done();
       });
     });
@@ -2452,7 +2452,7 @@ describe('File', () => {
 
       file.getSignedUrl(CONFIG, err => {
         assert.ifError(err);
-        assert.deepEqual(CONFIG, originalConfig);
+        assert.deepStrictEqual(CONFIG, originalConfig);
         done();
       });
     });
@@ -2533,7 +2533,7 @@ describe('File', () => {
             expires +
             '&Signature=signature';
 
-          assert.equal(signedUrl, expected);
+          assert.strictEqual(signedUrl, expected);
           done();
         });
       });
@@ -2622,7 +2622,7 @@ describe('File', () => {
           (err, signedUrl) => {
             assert.ifError(err);
             const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.equal(expires_, expectedExpires);
+            assert.strictEqual(expires_, expectedExpires.toString());
             done();
           }
         );
@@ -2640,7 +2640,7 @@ describe('File', () => {
           (err, signedUrl) => {
             assert.ifError(err);
             const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.equal(expires_, expectedExpires);
+            assert.strictEqual(expires_, expectedExpires.toString());
             done();
           }
         );
@@ -2658,7 +2658,7 @@ describe('File', () => {
           (err, signedUrl) => {
             assert.ifError(err);
             const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.equal(expires_, expectedExpires);
+            assert.strictEqual(expires_, expectedExpires.toString());
             done();
           }
         );
@@ -2739,7 +2739,7 @@ describe('File', () => {
     it('should make the file private to project by default', done => {
       file.setMetadata = (metadata, query) => {
         assert.deepStrictEqual(metadata, { acl: null });
-        assert.deepEqual(query, { predefinedAcl: 'projectPrivate' });
+        assert.deepStrictEqual(query, { predefinedAcl: 'projectPrivate' });
         done();
       };
 
@@ -2748,7 +2748,7 @@ describe('File', () => {
 
     it('should make the file private to user if strict = true', done => {
       file.setMetadata = (metadata, query) => {
-        assert.deepEqual(query, { predefinedAcl: 'private' });
+        assert.deepStrictEqual(query, { predefinedAcl: 'private' });
         done();
       };
 
@@ -2780,7 +2780,7 @@ describe('File', () => {
 
     it('should make the file public', done => {
       file.acl.add = options => {
-        assert.deepEqual(options, { entity: 'allUsers', role: 'READER' });
+        assert.deepStrictEqual(options, { entity: 'allUsers', role: 'READER' });
         done();
       };
 
@@ -2832,7 +2832,7 @@ describe('File', () => {
           callback(error);
         };
         file.move('new-filename', err => {
-          assert.equal(err, error);
+          assert.strictEqual(err, error);
           done();
         });
       });
@@ -2845,7 +2845,7 @@ describe('File', () => {
         };
         extend(file, {
           delete() {
-            assert.equal(this, file);
+            assert.strictEqual(this, file);
             done();
           },
         });
@@ -2861,7 +2861,7 @@ describe('File', () => {
           deleteCalled = true;
         };
         file.move('new-filename', () => {
-          assert.equal(deleteCalled, false);
+          assert.strictEqual(deleteCalled, false);
           done();
         });
       });
@@ -2890,7 +2890,7 @@ describe('File', () => {
           callback(error);
         };
         file.move('new-filename', err => {
-          assert.equal(err, error);
+          assert.strictEqual(err, error);
           done();
         });
       });
@@ -3028,7 +3028,7 @@ describe('File', () => {
 
     it('should not require options', done => {
       file.createWriteStream = options_ => {
-        assert.deepEqual(options_, {});
+        assert.deepStrictEqual(options_, {});
         setImmediate(done);
         return new stream.PassThrough();
       };
@@ -3080,7 +3080,7 @@ describe('File', () => {
       extend(file.parent, {
         setMetadata(metadata, options, callback) {
           assert.strictEqual(this, file);
-          assert.deepEqual(options, {});
+          assert.deepStrictEqual(options, {});
           callback(); // done()
         },
       });
@@ -3133,7 +3133,7 @@ describe('File', () => {
     it('should make the correct copy request', done => {
       file.copy = (newFile, options) => {
         assert.strictEqual(newFile, file);
-        assert.deepEqual(options, {
+        assert.deepStrictEqual(options, {
           storageClass: STORAGE_CLASS.toUpperCase(),
         });
         done();
@@ -3426,7 +3426,7 @@ describe('File', () => {
 
       makeWritableStreamOverride = (stream, options_) => {
         assert.strictEqual(options_.metadata, options.metadata);
-        assert.deepEqual(options_.request, {
+        assert.deepStrictEqual(options_.request, {
           qs: {
             name: file.name,
             predefinedAcl: options.predefinedAcl,
@@ -3464,7 +3464,7 @@ describe('File', () => {
       const versionedFile = new File(BUCKET, 'new-file.txt', { generation: 1 });
 
       makeWritableStreamOverride = (stream, options) => {
-        assert.equal(options.request.qs.ifGenerationMatch, 1);
+        assert.strictEqual(options.request.qs.ifGenerationMatch, 1);
         done();
       };
 
@@ -3488,7 +3488,7 @@ describe('File', () => {
       };
 
       makeWritableStreamOverride = (stream, options_) => {
-        assert.equal(options_.request.qs.userProject, options.userProject);
+        assert.strictEqual(options_.request.qs.userProject, options.userProject);
         done();
       };
 

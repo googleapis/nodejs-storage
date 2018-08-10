@@ -75,7 +75,7 @@ describe('storage/acl', () => {
       acl.request = reqOpts => {
         assert.strictEqual(reqOpts.method, 'POST');
         assert.strictEqual(reqOpts.uri, '');
-        assert.deepEqual(reqOpts.json, { entity: ENTITY, role: ROLE });
+        assert.deepStrictEqual(reqOpts.json, {entity: ENTITY, role: ROLE});
         done();
       };
 
@@ -116,8 +116,8 @@ describe('storage/acl', () => {
       const apiResponse = { entity: ENTITY, role: ROLE };
       const expectedAclObject = { entity: ENTITY, role: ROLE };
 
-      acl.makeAclObject_ = obj => {
-        assert.deepEqual(obj, apiResponse);
+      acl.makeAclObject_ = (obj) => {
+        assert.deepStrictEqual(obj, apiResponse);
         return expectedAclObject;
       };
 
@@ -127,7 +127,7 @@ describe('storage/acl', () => {
 
       acl.add({ entity: ENTITY, role: ROLE }, (err, aclObject) => {
         assert.ifError(err);
-        assert.deepEqual(aclObject, expectedAclObject);
+        assert.deepStrictEqual(aclObject, expectedAclObject);
         done();
       });
     });
@@ -137,8 +137,8 @@ describe('storage/acl', () => {
         callback(ERROR);
       };
 
-      acl.add({ entity: ENTITY, role: ROLE }, err => {
-        assert.deepEqual(err, ERROR);
+      acl.add({entity: ENTITY, role: ROLE}, (err) => {
+        assert.deepStrictEqual(err, ERROR);
         done();
       });
     });
@@ -150,8 +150,8 @@ describe('storage/acl', () => {
         callback(null, resp);
       };
 
-      acl.add({ entity: ENTITY, role: ROLE }, (err, acls, apiResponse) => {
-        assert.deepEqual(resp, apiResponse);
+      acl.add({entity: ENTITY, role: ROLE}, (err, acls, apiResponse) => {
+        assert.deepStrictEqual(resp, apiResponse);
         done();
       });
     });
@@ -203,8 +203,8 @@ describe('storage/acl', () => {
         callback(ERROR);
       };
 
-      acl.delete({ entity: ENTITY }, err => {
-        assert.deepEqual(err, ERROR);
+      acl.delete({entity: ENTITY}, (err) => {
+        assert.deepStrictEqual(err, ERROR);
         done();
       });
     });
@@ -216,8 +216,8 @@ describe('storage/acl', () => {
         callback(null, resp);
       };
 
-      acl.delete({ entity: ENTITY }, (err, apiResponse) => {
-        assert.deepEqual(resp, apiResponse);
+      acl.delete({entity: ENTITY}, (err, apiResponse) => {
+        assert.deepStrictEqual(resp, apiResponse);
         done();
       });
     });
@@ -272,7 +272,7 @@ describe('storage/acl', () => {
 
         acl.get((err, aclObjects) => {
           assert.ifError(err);
-          assert.deepEqual(aclObjects, expectedAclObjects);
+          assert.deepStrictEqual(aclObjects, expectedAclObjects);
           done();
         });
       });
@@ -329,7 +329,7 @@ describe('storage/acl', () => {
 
         acl.get({ entity: ENTITY }, (err, aclObject) => {
           assert.ifError(err);
-          assert.deepEqual(aclObject, expectedAclObject);
+          assert.deepStrictEqual(aclObject, expectedAclObject);
           done();
         });
       });
@@ -340,8 +340,8 @@ describe('storage/acl', () => {
         callback(ERROR);
       };
 
-      acl.get(err => {
-        assert.deepEqual(err, ERROR);
+      acl.get((err) => {
+        assert.deepStrictEqual(err, ERROR);
         done();
       });
     });
@@ -354,7 +354,7 @@ describe('storage/acl', () => {
       };
 
       acl.get((err, acls, apiResponse) => {
-        assert.deepEqual(resp, apiResponse);
+        assert.deepStrictEqual(resp, apiResponse);
         done();
       });
     });
@@ -365,7 +365,7 @@ describe('storage/acl', () => {
       acl.request = reqOpts => {
         assert.strictEqual(reqOpts.method, 'PUT');
         assert.strictEqual(reqOpts.uri, '/' + encodeURIComponent(ENTITY));
-        assert.deepEqual(reqOpts.json, { role: ROLE });
+        assert.deepStrictEqual(reqOpts.json, {role: ROLE});
 
         done();
       };
@@ -417,7 +417,7 @@ describe('storage/acl', () => {
 
       acl.update({ entity: ENTITY, role: ROLE }, (err, aclObject) => {
         assert.ifError(err);
-        assert.deepEqual(aclObject, expectedAclObject);
+        assert.deepStrictEqual(aclObject, expectedAclObject);
         done();
       });
     });
@@ -427,8 +427,8 @@ describe('storage/acl', () => {
         callback(ERROR);
       };
 
-      acl.update({ entity: ENTITY, role: ROLE }, err => {
-        assert.deepEqual(err, ERROR);
+      acl.update({entity: ENTITY, role: ROLE}, (err) => {
+        assert.deepStrictEqual(err, ERROR);
         done();
       });
     });
@@ -440,9 +440,9 @@ describe('storage/acl', () => {
         callback(null, resp);
       };
 
-      const config = { entity: ENTITY, role: ROLE };
+      const config = {entity: ENTITY, role: ROLE};
       acl.update(config, (err, acls, apiResponse) => {
-        assert.deepEqual(resp, apiResponse);
+        assert.deepStrictEqual(resp, apiResponse);
         done();
       });
     });
@@ -463,7 +463,7 @@ describe('storage/acl', () => {
         things: true,
       };
 
-      assert.deepEqual(acl.makeAclObject_(apiResponse), {
+      assert.deepStrictEqual(acl.makeAclObject_(apiResponse), {
         entity: ENTITY,
         role: ROLE,
         projectTeam,
@@ -520,13 +520,13 @@ describe('storage/AclRoleAccessorMethods', () => {
       ];
 
       const actualOwnersApi = Object.keys(aclEntity.owners);
-      assert.deepEqual(actualOwnersApi, expectedApi);
+      assert.deepStrictEqual(actualOwnersApi, expectedApi);
 
       const actualReadersApi = Object.keys(aclEntity.readers);
-      assert.deepEqual(actualReadersApi, expectedApi);
+      assert.deepStrictEqual(actualReadersApi, expectedApi);
 
       const actualWritersApi = Object.keys(aclEntity.writers);
-      assert.deepEqual(actualWritersApi, expectedApi);
+      assert.deepStrictEqual(actualWritersApi, expectedApi);
     });
   });
 
@@ -536,7 +536,7 @@ describe('storage/AclRoleAccessorMethods', () => {
       const role = 'fakerole';
 
       aclEntity.add = (options, callback) => {
-        assert.deepEqual(options, {
+        assert.deepStrictEqual(options, {
           entity: 'user-' + userName,
           role,
         });
@@ -545,7 +545,7 @@ describe('storage/AclRoleAccessorMethods', () => {
       };
 
       aclEntity.delete = (options, callback) => {
-        assert.deepEqual(options, {
+        assert.deepStrictEqual(options, {
           entity: 'allUsers',
           role,
         });
@@ -605,8 +605,8 @@ describe('storage/AclRoleAccessorMethods', () => {
         fakeOptions
       );
 
-      aclEntity.add = options => {
-        assert.deepEqual(options, expectedOptions);
+      aclEntity.add = (options) => {
+        assert.deepStrictEqual(options, expectedOptions);
         done();
       };
 

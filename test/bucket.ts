@@ -92,7 +92,11 @@ const fakePromisify = {
     }
 
     promisified = true;
-    assert.deepEqual(options.exclude, ['request', 'file', 'notification']);
+    assert.deepStrictEqual(options.exclude, [
+      'request',
+      'file',
+      'notification',
+    ]);
   },
 };
 
@@ -108,8 +112,8 @@ const fakePaginator = {
       }
 
       methods = arrify(methods);
-      assert.equal(Class.name, 'Bucket');
-      assert.deepEqual(methods, ['getFiles']);
+      assert.strictEqual(Class.name, 'Bucket');
+      assert.deepStrictEqual(methods, ['getFiles']);
       extended = true;
     },
     streamify(methodName) {
@@ -214,14 +218,14 @@ describe('Bucket', () => {
       });
 
       it('should create an ACL object', () => {
-        assert.deepEqual(bucket.acl.calledWith_[0], {
+        assert.deepStrictEqual(bucket.acl.calledWith_[0], {
           request: bucket,
           pathPrefix: '/acl',
         });
       });
 
       it('should create a default ACL object', () => {
-        assert.deepEqual(bucket.acl.default.calledWith_[0], {
+        assert.deepStrictEqual(bucket.acl.default.calledWith_[0], {
           request: bucket,
           pathPrefix: '/defaultObjectAcl',
         });
@@ -246,7 +250,7 @@ describe('Bucket', () => {
       assert.strictEqual(calledWith.parent, storageInstance);
       assert.strictEqual(calledWith.baseUrl, '/b');
       assert.strictEqual(calledWith.id, BUCKET_NAME);
-      assert.deepEqual(calledWith.methods, {
+      assert.deepStrictEqual(calledWith.methods, {
         create: true,
       });
     });
@@ -365,7 +369,7 @@ describe('Bucket', () => {
 
       destination.request = reqOpts => {
         assert.strictEqual(reqOpts.uri, '/compose');
-        assert.deepEqual(reqOpts.json, {
+        assert.deepStrictEqual(reqOpts.json, {
           destination: { contentType: mime.contentType(destination.name) },
           sourceObjects: [{ name: sources[0].name }, { name: sources[1].name }],
         });
@@ -396,7 +400,7 @@ describe('Bucket', () => {
       const destination = bucket.file('destination.txt');
 
       destination.request = reqOpts => {
-        assert.deepEqual(reqOpts.json.sourceObjects, [
+        assert.deepStrictEqual(reqOpts.json.sourceObjects, [
           { name: sources[0].name, generation: sources[0].metadata.generation },
           { name: sources[1].name, generation: sources[1].metadata.generation },
         ]);
@@ -499,8 +503,8 @@ describe('Bucket', () => {
           id: ID,
           type: 'web_hook',
         });
-        assert.deepEqual(reqOpts.json, expectedJson);
-        assert.deepEqual(config, originalConfig);
+        assert.deepStrictEqual(reqOpts.json, expectedJson);
+        assert.deepStrictEqual(config, originalConfig);
 
         done();
       };
@@ -606,7 +610,7 @@ describe('Bucket', () => {
       bucket.request = reqOpts => {
         assert.strictEqual(reqOpts.method, 'POST');
         assert.strictEqual(reqOpts.uri, '/notificationConfigs');
-        assert.deepEqual(reqOpts.json, expectedJson);
+        assert.deepStrictEqual(reqOpts.json, expectedJson);
         assert.notStrictEqual(reqOpts.json, options);
         done();
       };
@@ -657,7 +661,7 @@ describe('Bucket', () => {
       };
 
       bucket.request = reqOpts => {
-        assert.deepEqual(reqOpts.json, expectedJson);
+        assert.deepStrictEqual(reqOpts.json, expectedJson);
         done();
       };
 
@@ -722,7 +726,7 @@ describe('Bucket', () => {
       bucket.request = (reqOpts, callback) => {
         assert.strictEqual(reqOpts.method, 'DELETE');
         assert.strictEqual(reqOpts.uri, '');
-        assert.deepEqual(reqOpts.qs, {});
+        assert.deepStrictEqual(reqOpts.qs, {});
         callback(); // done()
       };
 
@@ -753,7 +757,7 @@ describe('Bucket', () => {
   describe('deleteFiles', () => {
     it('should accept only a callback', done => {
       bucket.getFiles = (query, callback) => {
-        assert.deepEqual(query, {});
+        assert.deepStrictEqual(query, {});
         callback(null, []);
       };
 
@@ -764,7 +768,7 @@ describe('Bucket', () => {
       const query = { a: 'b', c: 'd' };
 
       bucket.getFiles = query_ => {
-        assert.deepEqual(query_, query);
+        assert.deepStrictEqual(query_, query);
         done();
       };
 
@@ -773,7 +777,7 @@ describe('Bucket', () => {
 
     it('should process 10 files at a time', done => {
       eachLimitOverride = (arr, limit) => {
-        assert.equal(limit, 10);
+        assert.strictEqual(limit, 10);
         done();
       };
 
@@ -803,7 +807,7 @@ describe('Bucket', () => {
 
       bucket.deleteFiles(query, err => {
         assert.ifError(err);
-        assert.equal(timesCalled, files.length);
+        assert.strictEqual(timesCalled, files.length);
         done();
       });
     });
@@ -1065,15 +1069,15 @@ describe('Bucket', () => {
     });
 
     it('should pass bucket to File object', () => {
-      assert.deepEqual(file.calledWith_[0], bucket);
+      assert.deepStrictEqual(file.calledWith_[0], bucket);
     });
 
     it('should pass filename to File object', () => {
-      assert.equal(file.calledWith_[1], FILE_NAME);
+      assert.strictEqual(file.calledWith_[1], FILE_NAME);
     });
 
     it('should pass configuration object to File', () => {
-      assert.deepEqual(file.calledWith_[2], options);
+      assert.deepStrictEqual(file.calledWith_[2], options);
     });
   });
 
@@ -1175,7 +1179,7 @@ describe('Bucket', () => {
 
           bucket.create = callback => {
             bucket.get = (config, callback) => {
-              assert.deepEqual(config, {});
+              assert.deepStrictEqual(config, {});
               callback(); // done()
             };
 
@@ -1197,7 +1201,7 @@ describe('Bucket', () => {
 
           bucket.create = callback => {
             bucket.get = (config, callback) => {
-              assert.deepEqual(config, {});
+              assert.deepStrictEqual(config, {});
               callback(); // done()
             };
 
@@ -1214,7 +1218,7 @@ describe('Bucket', () => {
     it('should get files without a query', done => {
       bucket.request = reqOpts => {
         assert.strictEqual(reqOpts.uri, '/o');
-        assert.deepEqual(reqOpts.qs, {});
+        assert.deepStrictEqual(reqOpts.qs, {});
         done();
       };
 
@@ -1224,7 +1228,7 @@ describe('Bucket', () => {
     it('should get files with a query', done => {
       const token = 'next-page-token';
       bucket.request = reqOpts => {
-        assert.deepEqual(reqOpts.qs, { maxResults: 5, pageToken: token });
+        assert.deepStrictEqual(reqOpts.qs, { maxResults: 5, pageToken: token });
         done();
       };
       bucket.getFiles({ maxResults: 5, pageToken: token }, util.noop);
@@ -1255,7 +1259,7 @@ describe('Bucket', () => {
         callback(null, { nextPageToken: token, items: [] });
       };
       bucket.getFiles({ maxResults: 5 }, (err, results, nextQuery) => {
-        assert.equal(nextQuery.pageToken, token);
+        assert.strictEqual(nextQuery.pageToken, token);
         assert.strictEqual(nextQuery.maxResults, 5);
       });
     });
@@ -1278,7 +1282,10 @@ describe('Bucket', () => {
       bucket.getFiles((err, files) => {
         assert.ifError(err);
         assert(files[0] instanceof FakeFile);
-        assert.equal(typeof files[0].calledWith_[2].generation, 'undefined');
+        assert.strictEqual(
+          typeof files[0].calledWith_[2].generation,
+          'undefined'
+        );
         done();
       });
     });
@@ -1293,7 +1300,7 @@ describe('Bucket', () => {
       bucket.getFiles({ versions: true }, (err, files) => {
         assert.ifError(err);
         assert(files[0] instanceof FakeFile);
-        assert.equal(files[0].calledWith_[2].generation, 1);
+        assert.strictEqual(files[0].calledWith_[2].generation, 1);
         done();
       });
     });
@@ -1320,7 +1327,7 @@ describe('Bucket', () => {
         callback(null, resp);
       };
       bucket.getFiles((err, files, nextQuery, apiResponse) => {
-        assert.deepEqual(resp, apiResponse);
+        assert.deepStrictEqual(resp, apiResponse);
         done();
       });
     });
@@ -1356,7 +1363,7 @@ describe('Bucket', () => {
       };
       bucket.getFiles((err, files) => {
         assert.ifError(err);
-        assert.deepEqual(files[0].metadata, fileMetadata);
+        assert.deepStrictEqual(files[0].metadata, fileMetadata);
         done();
       });
     });
@@ -1432,7 +1439,7 @@ describe('Bucket', () => {
     it('should make the correct request', done => {
       bucket.request = reqOpts => {
         assert.strictEqual(reqOpts.uri, '');
-        assert.deepEqual(reqOpts.qs, {});
+        assert.deepStrictEqual(reqOpts.qs, {});
         done();
       };
 
@@ -1511,7 +1518,7 @@ describe('Bucket', () => {
 
     it('should optionally accept options', done => {
       bucket.request = reqOpts => {
-        assert.deepEqual(reqOpts.qs, {});
+        assert.deepStrictEqual(reqOpts.qs, {});
         done();
       };
 
@@ -1571,8 +1578,8 @@ describe('Bucket', () => {
       let didMakeFilesPrivate = false;
 
       bucket.setMetadata = (metadata, options, callback) => {
-        assert.deepEqual(metadata, { acl: null });
-        assert.deepEqual(options, { predefinedAcl: 'projectPrivate' });
+        assert.deepStrictEqual(metadata, { acl: null });
+        assert.deepStrictEqual(options, { predefinedAcl: 'projectPrivate' });
 
         didSetPredefinedAcl = true;
         callback();
@@ -1626,7 +1633,7 @@ describe('Bucket', () => {
       };
 
       bucket.makePrivate(err => {
-        assert.equal(err, error);
+        assert.strictEqual(err, error);
         done();
       });
     });
@@ -1645,15 +1652,15 @@ describe('Bucket', () => {
       let didMakeFilesPublic = false;
 
       bucket.acl.add = (opts, callback) => {
-        assert.equal(opts.entity, 'allUsers');
-        assert.equal(opts.role, 'READER');
+        assert.strictEqual(opts.entity, 'allUsers');
+        assert.strictEqual(opts.role, 'READER');
         didSetAcl = true;
         callback();
       };
 
       bucket.acl.default.add = (opts, callback) => {
-        assert.equal(opts.entity, 'allUsers');
-        assert.equal(opts.role, 'READER');
+        assert.strictEqual(opts.entity, 'allUsers');
+        assert.strictEqual(opts.role, 'READER');
         didSetDefaultAcl = true;
         callback();
       };
@@ -1703,7 +1710,7 @@ describe('Bucket', () => {
       };
 
       bucket.makePublic(err => {
-        assert.equal(err, error);
+        assert.strictEqual(err, error);
         done();
       });
     });
@@ -1822,7 +1829,7 @@ describe('Bucket', () => {
         assert.strictEqual(reqOpts.method, 'PATCH');
         assert.strictEqual(reqOpts.uri, '');
         assert.strictEqual(reqOpts.json, metadata);
-        assert.deepEqual(reqOpts.qs, {});
+        assert.deepStrictEqual(reqOpts.qs, {});
         done();
       };
 
@@ -1979,8 +1986,8 @@ describe('Bucket', () => {
     it('should accept a path & cb', done => {
       bucket.upload(filepath, (err, file) => {
         assert.ifError(err);
-        assert.equal(file.bucket.name, bucket.name);
-        assert.equal(file.name, basename);
+        assert.strictEqual(file.bucket.name, bucket.name);
+        assert.strictEqual(file.name, basename);
         done();
       });
     });
@@ -1988,15 +1995,15 @@ describe('Bucket', () => {
     it('should accept a url path & cb', done => {
       bucket.upload(urlPath, (err, file) => {
         assert.ifError(err);
-        assert.equal(file.bucket.name, bucket.name);
-        assert.equal(file.name, path.basename(urlPath));
+        assert.strictEqual(file.bucket.name, bucket.name);
+        assert.strictEqual(file.name, path.basename(urlPath));
         done();
       });
     });
 
     it('should accept a url, custom request options & cb', done => {
       requestOverride.get = options => {
-        assert.deepEqual(options, {
+        assert.deepStrictEqual(options, {
           url: urlPath,
           followAllRedirects: true,
         });
@@ -2021,8 +2028,8 @@ describe('Bucket', () => {
       };
       bucket.upload(filepath, options, (err, file) => {
         assert.ifError(err);
-        assert.equal(file.bucket.name, bucket.name);
-        assert.deepEqual(file.metadata, metadata);
+        assert.strictEqual(file.bucket.name, bucket.name);
+        assert.deepStrictEqual(file.metadata, metadata);
         assert.strictEqual(file.options.encryptionKey, options.encryptionKey);
         assert.strictEqual(file.options.kmsKeyName, options.kmsKeyName);
         done();
@@ -2038,8 +2045,8 @@ describe('Bucket', () => {
       };
       bucket.upload(filepath, options, (err, file) => {
         assert.ifError(err);
-        assert.equal(file.bucket.name, bucket.name);
-        assert.equal(file.name, newFileName);
+        assert.strictEqual(file.bucket.name, bucket.name);
+        assert.strictEqual(file.name, newFileName);
         assert.strictEqual(file.options.encryptionKey, options.encryptionKey);
         assert.strictEqual(file.options.kmsKeyName, options.kmsKeyName);
         done();
@@ -2056,9 +2063,9 @@ describe('Bucket', () => {
       };
       bucket.upload(filepath, options, (err, file) => {
         assert.ifError(err);
-        assert.equal(file.bucket.name, bucket.name);
-        assert.equal(file.name, newFileName);
-        assert.deepEqual(file.metadata, metadata);
+        assert.strictEqual(file.bucket.name, bucket.name);
+        assert.strictEqual(file.name, newFileName);
+        assert.deepStrictEqual(file.metadata, metadata);
         assert.strictEqual(file.options.encryptionKey, options.encryptionKey);
         assert.strictEqual(file.options.kmsKeyName, options.kmsKeyName);
         done();
@@ -2087,7 +2094,7 @@ describe('Bucket', () => {
       bucket.upload(filepath, options, (err, file) => {
         assert.ifError(err);
         assert(file.isSameFile());
-        assert.deepEqual(file.metadata, metadata);
+        assert.deepStrictEqual(file.metadata, metadata);
         done();
       });
     });
@@ -2120,7 +2127,7 @@ describe('Bucket', () => {
         ws.write = () => true;
         setImmediate(() => {
           const expectedContentType = 'application/json; charset=utf-8';
-          assert.equal(options.metadata.contentType, expectedContentType);
+          assert.strictEqual(options.metadata.contentType, expectedContentType);
           done();
         });
         return ws;
@@ -2136,7 +2143,7 @@ describe('Bucket', () => {
         ws.write = () => true;
         setImmediate(() => {
           const expectedContentType = 'text/plain; charset=utf-8';
-          assert.equal(options.metadata.contentType, expectedContentType);
+          assert.strictEqual(options.metadata.contentType, expectedContentType);
           done();
         });
         return ws;
@@ -2228,7 +2235,7 @@ describe('Bucket', () => {
         const ws = new stream.Writable();
         ws.write = () => true;
         setImmediate(() => {
-          assert.equal(options.metadata.contentType, metadata.contentType);
+          assert.strictEqual(options.metadata.contentType, metadata.contentType);
           done();
         });
         return ws;
@@ -2310,7 +2317,7 @@ describe('Bucket', () => {
 
     it('should process 10 files at a time', done => {
       eachLimitOverride = (arr, limit) => {
-        assert.equal(limit, 10);
+        assert.strictEqual(limit, 10);
         done();
       };
 
@@ -2337,7 +2344,7 @@ describe('Bucket', () => {
 
       bucket.makeAllFilesPublicPrivate_({ public: true }, err => {
         assert.ifError(err);
-        assert.equal(timesCalled, files.length);
+        assert.strictEqual(timesCalled, files.length);
         done();
       });
     });
@@ -2361,7 +2368,7 @@ describe('Bucket', () => {
 
       bucket.makeAllFilesPublicPrivate_(options, err => {
         assert.ifError(err);
-        assert.equal(timesCalled, files.length);
+        assert.strictEqual(timesCalled, files.length);
         done();
       });
     });
@@ -2374,7 +2381,7 @@ describe('Bucket', () => {
       };
 
       bucket.makeAllFilesPublicPrivate_({}, err => {
-        assert.equal(err, error);
+        assert.strictEqual(err, error);
         done();
       });
     });
@@ -2393,7 +2400,7 @@ describe('Bucket', () => {
       };
 
       bucket.makeAllFilesPublicPrivate_({ public: true }, err => {
-        assert.equal(err, error);
+        assert.strictEqual(err, error);
         done();
       });
     });
@@ -2416,7 +2423,7 @@ describe('Bucket', () => {
           public: true,
           force: true,
         }, errs => {
-          assert.deepEqual(errs, [error, error]);
+          assert.deepStrictEqual(errs, [error, error]);
           done();
         }
       );
@@ -2447,8 +2454,8 @@ describe('Bucket', () => {
           force: true,
         },
         (errs, files) => {
-          assert.deepEqual(errs, [error, error]);
-          assert.deepEqual(files, successFiles);
+          assert.deepStrictEqual(errs, [error, error]);
+          assert.deepStrictEqual(files, successFiles);
           done();
         }
       );

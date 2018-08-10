@@ -21,7 +21,6 @@
 'use strict';
 
 import * as assert from 'assert';
-import * as extend from 'extend';
 import * as nodeutil from 'util';
 import * as proxyquire from 'proxyquire';
 import { ServiceObject, util } from '@google-cloud/common';
@@ -74,7 +73,7 @@ describe('Channel', () => {
       assert.strictEqual(calledWith.parent, STORAGE);
       assert.strictEqual(calledWith.baseUrl, '/channels');
       assert.strictEqual(calledWith.id, '');
-      assert.deepEqual(calledWith.methods, {});
+      assert.deepStrictEqual(calledWith.methods, {});
     });
 
     it('should promisify all the things', () => {
@@ -82,7 +81,7 @@ describe('Channel', () => {
     });
 
     it('should set the default metadata', () => {
-      assert.deepEqual(channel.metadata, {
+      assert.deepStrictEqual(channel.metadata, {
         id: ID,
         resourceId: RESOURCE_ID,
       });
