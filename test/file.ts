@@ -67,7 +67,7 @@ const fakePromisify = {
     promisified = true;
     assert.deepEqual(options.exclude, ['request', 'setEncryptionKey']);
   },
-}
+};
 
 const fsCached = extend(true, {}, fs);
 const fakeFs = extend(true, {}, fsCached);
@@ -273,7 +273,7 @@ describe('File', () => {
         done();
       };
 
-      new File(BUCKET, FILE_NAME, { encryptionKey: key });
+      const _file = new File(BUCKET, FILE_NAME, { encryptionKey: key });
     });
 
     describe('userProject', () => {

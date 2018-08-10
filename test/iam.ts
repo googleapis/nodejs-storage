@@ -44,9 +44,11 @@ describe('storage/iam', () => {
   });
 
   beforeEach(() => {
+    const id = 'bucket-id';
     BUCKET_INSTANCE = {
-      id: 'bucket-id',
+      id,
       request: util.noop,
+      getId: () => id,
     };
 
     iam = new Iam(BUCKET_INSTANCE);

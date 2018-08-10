@@ -21,6 +21,17 @@ import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
 import * as is from 'is';
 
+interface AclQuery {
+  generation: number;
+  userProject: string;
+}
+
+interface AccessControlObject {
+  entity: string;
+  role: string;
+  projectTeam: string;
+}
+
 /**
  * Attach functionality to a {@link Storage.acl} instance. This will add an
  * object for each role group (owners, readers, and writers), with each object
@@ -388,8 +399,8 @@ class Acl extends AclRoleAccessorMethods {
    * region_tag:storage_add_bucket_default_owner
    * Example of adding a default owner to a bucket:
    */
-  add(options: any, callback) {
-    const query: any = {};
+  add(options, callback?) {
+    const query = {} as AclQuery;
 
     if (options.generation) {
       query.generation = options.generation;
@@ -411,11 +422,11 @@ class Acl extends AclRoleAccessorMethods {
       },
       (err, resp) => {
         if (err) {
-          callback(err, null, resp);
+          callback!(err, null, resp);
           return;
         }
 
-        callback(null, this.makeAclObject_(resp), resp);
+        callback!(null, this.makeAclObject_(resp), resp);
       }
     );
   }
@@ -480,8 +491,8 @@ class Acl extends AclRoleAccessorMethods {
    * region_tag:storage_remove_file_owner
    * Example of removing an owner from a bucket:
    */
-  delete(options: any, callback) {
-    const query: any = {};
+  delete(options, callback?) {
+    const query = {} as AclQuery;
 
     if (options.generation) {
       query.generation = options.generation;
@@ -498,7 +509,7 @@ class Acl extends AclRoleAccessorMethods {
         qs: query,
       },
       (err, resp) => {
-        callback(err, resp);
+        callback!(err, resp);
       }
     );
   }
@@ -586,9 +597,9 @@ class Acl extends AclRoleAccessorMethods {
    * region_tag:storage_print_bucket_acl_for_user
    * Example of printing a bucket's ACL for a specific user:
    */
-  get(options: any, callback) {
+  get(options, callback?) {
     let path = '';
-    const query: any = {};
+    const query = {} as AclQuery;
 
     if (is.fn(options)) {
       callback = options;
@@ -612,7 +623,7 @@ class Acl extends AclRoleAccessorMethods {
       },
       (err, resp) => {
         if (err) {
-          callback(err, null, resp);
+          callback!(err, null, resp);
           return;
         }
 
@@ -624,7 +635,7 @@ class Acl extends AclRoleAccessorMethods {
           results = this.makeAclObject_(resp);
         }
 
-        callback(null, results, resp);
+        callback!(null, results, resp);
       }
     );
   }
@@ -686,8 +697,8 @@ class Acl extends AclRoleAccessorMethods {
    *   const apiResponse = data[1];
    * });
    */
-  update(options: any, callback) {
-    const query: any = {};
+  update(options, callback?) {
+    const query = {} as AclQuery;
 
     if (options.generation) {
       query.generation = options.generation;
@@ -708,11 +719,11 @@ class Acl extends AclRoleAccessorMethods {
       },
       (err, resp) => {
         if (err) {
-          callback(err, null, resp);
+          callback!(err, null, resp);
           return;
         }
 
-        callback(null, this.makeAclObject_(resp), resp);
+        callback!(null, this.makeAclObject_(resp), resp);
       }
     );
   }
@@ -722,11 +733,11 @@ class Acl extends AclRoleAccessorMethods {
    *
    * @private
    */
-  makeAclObject_(accessControlObject) {
-    const obj: any = {
+  makeAclObject_(accessControlObject): AccessControlObject {
+    const obj = {
       entity: accessControlObject.entity,
       role: accessControlObject.role,
-    };
+    } as AccessControlObject;
 
     if (accessControlObject.projectTeam) {
       obj.projectTeam = accessControlObject.projectTeam;

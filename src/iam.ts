@@ -46,7 +46,7 @@ class Iam {
 
   constructor(bucket: Bucket) {
     this.request_ = bucket.request.bind(bucket);
-    this.resourceId_ = 'buckets/' + (bucket as any).id;
+    this.resourceId_ = 'buckets/' + bucket.getId();
   }
 
   /**

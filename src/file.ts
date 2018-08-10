@@ -40,6 +40,7 @@ import * as zlib from 'zlib';
 import * as url from 'url';
 import * as r from 'request';
 
+import {Storage} from '.';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 
@@ -79,6 +80,73 @@ const STORAGE_UPLOAD_BASE_URL =
  * @private
  */
 const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
+
+/**
+ * Options passed to the File constructor.
+ * @param {string} [encryptionKey] A custom encryption key.
+ * @param {number} [generation] Generation to scope the file to.
+ * @param {string} [kmsKeyName] Cloud KMS Key used to encrypt this
+ *     object, if the object is encrypted by such a key. Limited availability;
+ *     usable only by enabled projects.
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for all requests made from File object.
+ */
+export interface FileOptions {
+  encryptionKey?: string;
+  generation?: number|string;
+  kmsKeyName?: string;
+  userProject?: string;
+}
+
+/**
+ * @param {object} CopyOptions Configuration options. See an
+ *     [Object resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
+ * @param {string} [destinationKmsKeyName] Resource name of the Cloud
+ *     KMS key, of the form
+ *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
+ *     that will be used to encrypt the object. Overwrites the object metadata's
+ *     `kms_key_name` value, if any.
+ * @param {string} [keepAcl] Retain the ACL for the new file.
+ * @param {string} [predefinedAcl] Set the ACL for the new file.
+ * @param {string} [token] A previously-returned `rewriteToken` from an
+ *     unfinished rewrite request.
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface CopyOptions {
+  destinationKmsKeyName?: string;
+  keepAcl?: string;
+  predefinedAcl?: string;
+  token?: string;
+  userProject?: string;
+}
+
+interface CopyQuery {
+  sourceGeneration?: number;
+  rewriteToken?: string;
+  userProject?: string;
+  destinationKmsKeyName?: string;
+}
+
+interface FileQuery {
+  alt: string;
+  generation?: number;
+  userProject?: string;
+}
+
+interface SignedUrlQuery {
+  GoogleAccessId: string;
+  Expires: number;
+  Signature: string;
+  generation: number;
+  'response-content-type': string;
+  'response-content-disposition': string;
+}
+
+class RequestError extends Error {
+  code?: string;
+  errors?: Error[];
+}
 
 /**
  * A File object is created from your {@link Bucket} object using
@@ -150,8 +218,8 @@ class File extends ServiceObject {
   acl: Acl;
 
   bucket: Bucket;
-  storage: any;
-  kmsKeyName: string;
+  storage: Storage;
+  kmsKeyName?: string;
   userProject: string;
   name: string;
   generation?: number;
@@ -164,7 +232,7 @@ class File extends ServiceObject {
     request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri;
   };
 
-  constructor(bucket, name, options) {
+  constructor(bucket, name, options?: FileOptions) {
     name = name.replace(/^\/+/, '');
 
     super({
@@ -183,13 +251,20 @@ class File extends ServiceObject {
 
     this.name = name;
 
-    const generation = parseInt(options.generation, 10);
+    if (options.generation != null) {
+      let generation: number;
+      if (typeof options.generation === 'string') {
+        generation = Number(options.generation);
+      } else {
+        generation = options.generation;
+      }
 
-    if (!isNaN(generation)) {
-      this.generation = generation;
-      this.requestQueryObject = {
-        generation: this.generation,
-      };
+      if (!isNaN(generation)) {
+        this.generation = generation;
+        this.requestQueryObject = {
+          generation: this.generation,
+        };
+      }
     }
 
     if (options.encryptionKey) {
@@ -325,7 +400,7 @@ class File extends ServiceObject {
    * region_tag:storage_copy_file
    * Another example:
    */
-  copy(destination, options, callback?) {
+  copy(destination, options: CopyOptions, callback?) {
     const noDestinationError = new Error(
       'Destination file should have a name.'
     );
@@ -369,7 +444,7 @@ class File extends ServiceObject {
       throw noDestinationError;
     }
 
-    const query = {} as any;
+    const query = {} as CopyQuery;
     if (is.defined(this.generation)) {
       query.sourceGeneration = this.generation;
     }
@@ -405,9 +480,9 @@ class File extends ServiceObject {
     if (query.destinationKmsKeyName) {
       this.kmsKeyName = query.destinationKmsKeyName;
 
-      const keyIndex = (this as any).interceptors.indexOf(this.encryptionKeyInterceptor);
+      const keyIndex = this.interceptors.indexOf(this.encryptionKeyInterceptor!);
       if (keyIndex > -1) {
-        (this as any).interceptors.splice(keyIndex, 1);
+        this.interceptors.splice(keyIndex, 1);
       }
     }
 
@@ -430,7 +505,7 @@ class File extends ServiceObject {
         if (resp.rewriteToken) {
           const options = {
             token: resp.rewriteToken,
-          } as any;
+          } as CopyOptions;
 
           if (query.userProject) {
             options.userProject = query.userProject;
@@ -569,33 +644,38 @@ class File extends ServiceObject {
     // Authenticate the request, then pipe the remote API request to the stream
     // returned to the user.
     const makeRequest = () => {
-      const reqOpts = {
-        forever: false,
-        uri: '',
-        headers: {
-          'Accept-Encoding': 'gzip',
-        } as any,
-        qs: {
-          alt: 'media',
-        } as any,
-      };
+      const query = {
+        alt: 'media',
+      } as FileQuery;
 
       if (this.generation) {
-        reqOpts.qs.generation = this.generation;
+        query.generation = this.generation;
       }
 
       if (options.userProject) {
-        reqOpts.qs.userProject = options.userProject;
+        query.userProject = options.userProject;
       }
+
+      const headers = {
+        'Accept-Encoding': 'gzip',
+      } as r.Headers;
 
       if (rangeRequest) {
         const start = is.number(options.start) ? options.start : '0';
         const end = is.number(options.end) ? options.end : '';
 
-        reqOpts.headers.Range = `bytes=${
+        headers.Range = `bytes=${
           tailRequest ? end : `${start}-${end}`
         }`;
       }
+
+
+      const reqOpts = {
+        forever: false,
+        uri: '',
+        headers,
+        qs: query,
+      };
 
       this.requestStream(reqOpts)
         .on('error', err => {
@@ -678,8 +758,8 @@ class File extends ServiceObject {
         }
 
         const hashes = {
-          crc32c: (this.metadata as any).crc32c,
-          md5: (this.metadata as any).md5Hash,
+          crc32c: this.metadata.crc32c,
+          md5: this.metadata.md5Hash,
         };
 
         // If we're doing validation, assume the worst-- a data integrity
@@ -699,23 +779,23 @@ class File extends ServiceObject {
         }
 
         if (md5 && !hashes.md5) {
-          const hashError = new Error(
+          const hashError = new RequestError(
             [
               'MD5 verification was specified, but is not available for the',
               'requested object. MD5 is not available for composite objects.',
             ].join(' ')
-          ) as any;
+          );
           hashError.code = 'MD5_NOT_AVAILABLE';
 
           throughStream.destroy(hashError);
         } else if (failed) {
-          const mismatchError = new Error(
+          const mismatchError = new RequestError(
             [
               'The downloaded data did not match the data from the server.',
               'To be sure the content is the same, you should download the',
               'file again.',
             ].join(' ')
-          ) as any;
+          );
           mismatchError.code = 'CONTENT_DOWNLOAD_MISMATCH';
 
           throughStream.destroy(mismatchError);
@@ -1038,7 +1118,7 @@ class File extends ServiceObject {
       // https://github.com/yeoman/configstore/blob/f09f067e50e6a636cfc648a6fc36a522062bd49d/index.js#L11
       const configDir = xdgBasedir.config || os.tmpdir();
 
-      fs.access(configDir, (fs as any).W_OK, err => {
+      fs.access(configDir, fs.constants.W_OK, err => {
         if (err) {
           if (options.resumable) {
             const error = new ResumableUploadError(
@@ -1075,7 +1155,7 @@ class File extends ServiceObject {
 
     // Compare our hashed version vs the completed upload's version.
     fileWriteStream.on('complete', () => {
-      const metadata = this.metadata as any;
+      const metadata = this.metadata;
 
       // If we're doing validation, assume the worst-- a data integrity mismatch.
       // If not, these tests won't be performed, and we can assume the best.
@@ -1122,7 +1202,7 @@ class File extends ServiceObject {
             ].join(' ');
           }
 
-          const error = new Error(message) as any;
+          const error = new RequestError(message);
           error.code = code;
           error.errors = [err];
 
@@ -1374,7 +1454,7 @@ class File extends ServiceObject {
       },
     };
 
-    (this as any).interceptors.push(this.encryptionKeyInterceptor);
+    this.interceptors.push(this.encryptionKeyInterceptor!);
 
     return this;
   }
@@ -1577,7 +1657,7 @@ class File extends ServiceObject {
       {
         bucket: this.bucket.name,
       },
-    ] as any[];
+    ] as object[];
 
     if (is.array(options.equals)) {
       if (!is.array(options.equals[0])) {
@@ -1830,7 +1910,7 @@ class File extends ServiceObject {
             GoogleAccessId: credentials.client_email,
             Expires: expiresInSeconds,
             Signature: signature,
-          } as any;
+          } as SignedUrlQuery;
 
           if (is.string(config.responseType)) {
             query['response-content-type'] = config.responseType;
@@ -2177,7 +2257,7 @@ class File extends ServiceObject {
       };
     }
 
-    const newFile = this.bucket.file((this as any).id, options);
+    const newFile = this.bucket.file(this.id, options);
     this.copy(newFile, callback);
   }
 

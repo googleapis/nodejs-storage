@@ -588,7 +588,7 @@ describe('Bucket', () => {
     }
 
     beforeEach(() => {
-      fakeUtil.isCustomType = util.isCustomType
+      fakeUtil.isCustomType = util.isCustomType;
     });
 
     it('should throw an error if a valid topic is not provided', () => {
