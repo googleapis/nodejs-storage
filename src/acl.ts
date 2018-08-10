@@ -17,7 +17,7 @@
 'use strict';
 
 import * as arrify from 'arrify';
-import {util} from '@google-cloud/common';
+import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
 import * as is from 'is';
 
@@ -768,7 +768,7 @@ class Acl extends AclRoleAccessorMethods {
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-util.promisifyAll(Acl, {
+promisifyAll(Acl, {
   exclude: ['request'],
 });
 

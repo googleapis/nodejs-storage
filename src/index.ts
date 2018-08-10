@@ -17,7 +17,9 @@
 'use strict';
 
 import * as arrify from 'arrify';
-import {paginator, Service, util} from '@google-cloud/common';
+import {Service} from '@google-cloud/common';
+import {paginator} from '@google-cloud/paginator';
+import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
 
 import {Bucket} from './bucket';
@@ -563,7 +565,7 @@ paginator.extend(Storage, 'getBuckets');
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-util.promisifyAll(Storage, {
+promisifyAll(Storage, {
   exclude: ['bucket', 'channel'],
 });
 

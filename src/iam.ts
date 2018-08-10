@@ -17,7 +17,7 @@
 'use strict';
 
 import * as arrify from 'arrify';
-import {util} from '@google-cloud/common';
+import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
 import * as is from 'is';
 
@@ -306,6 +306,6 @@ class Iam {
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-util.promisifyAll(Iam);
+promisifyAll(Iam);
 
 export {Iam};
