@@ -28,20 +28,18 @@ describe('storage/iam', () => {
 
   let BUCKET_INSTANCE;
   let promisified = false;
-  const fakeUtil = extend({}, util, {
+  const fakePromisify = {
     // tslint:disable-next-line:variable-name
     promisifyAll(Class) {
       if (Class.name === 'Iam') {
         promisified = true;
       }
     },
-  });
+  };
 
   before(() => {
     Iam = proxyquire('../src/iam.js', {
-      '@google-cloud/common': {
-        util: fakeUtil,
-      },
+      '@google-cloud/promisify': fakePromisify,
     }).Iam;
   });
 

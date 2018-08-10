@@ -36,24 +36,26 @@ nodeutil.inherits(FakeService, Service);
 
 let extended = false;
 const fakePaginator = {
-  // tslint:disable-next-line:variable-name
-  extend(Class, methods) {
-    if (Class.name !== 'Storage') {
-      return;
-    }
+  paginator: {
+    // tslint:disable-next-line:variable-name
+    extend(Class, methods) {
+      if (Class.name !== 'Storage') {
+        return;
+      }
 
-    methods = arrify(methods);
-    assert.equal(Class.name, 'Storage');
-    assert.deepEqual(methods, ['getBuckets']);
-    extended = true;
-  },
-  streamify(methodName) {
-    return methodName;
+      methods = arrify(methods);
+      assert.equal(Class.name, 'Storage');
+      assert.deepEqual(methods, ['getBuckets']);
+      extended = true;
+    },
+    streamify(methodName) {
+      return methodName;
+    },
   },
 };
 
 let promisified = false;
-const fakeUtil = extend({}, util, {
+const fakePromisify = {
   // tslint:disable-next-line:variable-name
   promisifyAll(Class, options) {
     if (Class.name !== 'Storage') {
@@ -63,8 +65,7 @@ const fakeUtil = extend({}, util, {
     promisified = true;
     assert.deepEqual(options.exclude, ['bucket', 'channel']);
   },
-});
-const originalFakeUtil = extend(true, {}, fakeUtil);
+};
 
 describe('Storage', () => {
   const PROJECT_ID = 'project-id';
@@ -76,10 +77,10 @@ describe('Storage', () => {
 
   before(() => {
     Storage = proxyquire('../src', {
+      '@google-cloud/promisify': fakePromisify,
+      '@google-cloud/paginator': fakePaginator,
       '@google-cloud/common': {
         Service: FakeService,
-        paginator: fakePaginator,
-        util: fakeUtil,
       },
       './channel.js': { Channel: FakeChannel },
     }).Storage;
@@ -87,7 +88,6 @@ describe('Storage', () => {
   });
 
   beforeEach(() => {
-    extend(fakeUtil, originalFakeUtil);
     storage = new Storage({ projectId: PROJECT_ID });
   });
 

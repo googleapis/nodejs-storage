@@ -84,7 +84,7 @@ fakeAsync.eachLimit = (...args) =>
   (eachLimitOverride || async.eachLimit).apply(null, args);
 
 let promisified = false;
-const fakeUtil = extend({}, util, {
+const fakePromisify = {
   // tslint:disable-next-line:variable-name
   promisifyAll(Class, options) {
     if (Class.name !== 'Bucket') {
@@ -94,23 +94,27 @@ const fakeUtil = extend({}, util, {
     promisified = true;
     assert.deepEqual(options.exclude, ['request', 'file', 'notification']);
   },
-});
+};
+
+const fakeUtil = extend({}, util);
 
 let extended = false;
 const fakePaginator = {
-  // tslint:disable-next-line:variable-name
-  extend(Class, methods) {
-    if (Class.name !== 'Bucket') {
-      return;
-    }
+  paginator: {
+    // tslint:disable-next-line:variable-name
+    extend(Class, methods) {
+      if (Class.name !== 'Bucket') {
+        return;
+      }
 
-    methods = arrify(methods);
-    assert.equal(Class.name, 'Bucket');
-    assert.deepEqual(methods, ['getFiles']);
-    extended = true;
-  },
-  streamify(methodName) {
-    return methodName;
+      methods = arrify(methods);
+      assert.equal(Class.name, 'Bucket');
+      assert.deepEqual(methods, ['getFiles']);
+      extended = true;
+    },
+    streamify(methodName) {
+      return methodName;
+    },
   },
 };
 
@@ -143,9 +147,10 @@ describe('Bucket', () => {
     Bucket = proxyquire('../src/bucket.js', {
       async: fakeAsync,
       request: fakeRequest,
+      '@google-cloud/promisify': fakePromisify,
+      '@google-cloud/paginator': fakePaginator,
       '@google-cloud/common': {
         ServiceObject: FakeServiceObject,
-        paginator: fakePaginator,
         util: fakeUtil,
       },
       './acl.js': { Acl: FakeAcl },
@@ -583,7 +588,7 @@ describe('Bucket', () => {
     }
 
     beforeEach(() => {
-      fakeUtil.isCustomType = util.isCustomType;
+      fakeUtil.isCustomType = util.isCustomType
     });
 
     it('should throw an error if a valid topic is not provided', () => {

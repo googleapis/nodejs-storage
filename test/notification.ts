@@ -34,14 +34,15 @@ describe('Notification', () => {
   let Notification;
   let notification;
   let promisified = false;
-  const fakeUtil = extend({}, util, {
+  const fakeUtil = extend({}, util);
+  const fakePromisify = {
     // tslint:disable-next-line:variable-name
     promisifyAll(Class) {
       if (Class.name === 'Notification') {
         promisified = true;
       }
     },
-  });
+  };
 
   const BUCKET = {
     createNotification: fakeUtil.noop,
@@ -51,6 +52,7 @@ describe('Notification', () => {
 
   before(() => {
     Notification = proxyquire('../src/notification.js', {
+      '@google-cloud/promisify': fakePromisify,
       '@google-cloud/common': {
         ServiceObject: FakeServiceObject,
         util: fakeUtil,
