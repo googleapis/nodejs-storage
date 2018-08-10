@@ -24,7 +24,6 @@ const extend = require('extend');
 const fs = require('fs');
 const nodeutil = require('util');
 const proxyquire = require('proxyquire');
-const request = require('request');
 const ServiceObject = require('@google-cloud/common').ServiceObject;
 const stream = require('stream');
 const through = require('through2');
@@ -60,19 +59,6 @@ const fakeUtil = extend({}, util, {
 
 const fsCached = extend(true, {}, fs);
 const fakeFs = extend(true, {}, fsCached);
-
-let REQUEST_DEFAULT_CONF; // eslint-disable-line no-unused-vars
-const requestCached = request;
-let requestOverride;
-function fakeRequest() {
-  return (requestOverride || requestCached).apply(null, arguments);
-}
-fakeRequest.defaults = function(defaultConfiguration) {
-  // Ignore the default values, so we don't have to test for them in every API
-  // call.
-  REQUEST_DEFAULT_CONF = defaultConfiguration;
-  return fakeRequest;
-};
 
 let hashStreamValidationOverride;
 const hashStreamValidation = require('hash-stream-validation');
@@ -148,7 +134,6 @@ describe('File', function() {
       'gcs-resumable-upload': fakeResumableUpload,
       'hash-stream-validation': fakeHashStreamValidation,
       os: fakeOs,
-      request: fakeRequest,
       'xdg-basedir': fakeXdgBasedir,
     });
     duplexify = require('duplexify');
@@ -166,8 +151,6 @@ describe('File', function() {
       makeAuthenticatedRequest: function(req, callback) {
         if (callback) {
           (callback.onAuthenticated || callback)(null, req);
-        } else {
-          return (requestOverride || requestCached)(req);
         }
       },
       bucket: function(name) {
@@ -184,7 +167,6 @@ describe('File', function() {
     handleRespOverride = null;
     hashStreamValidationOverride = null;
     makeWritableStreamOverride = null;
-    requestOverride = null;
     resumableUploadOverride = null;
   });
 
@@ -713,10 +695,6 @@ describe('File', function() {
           rawResponseStream.end();
         });
       };
-
-      requestOverride = function() {
-        return through();
-      };
     });
 
     it('should throw if both a range and validation is given', function() {
@@ -802,8 +780,8 @@ describe('File', function() {
         const ERROR = new Error('Error.');
 
         beforeEach(function() {
-          file.requestStream = function(opts) {
-            const stream = requestOverride(opts);
+          file.requestStream = function() {
+            const stream = through();
 
             setImmediate(function() {
               stream.emit('error', ERROR);
@@ -827,20 +805,12 @@ describe('File', function() {
 
     describe('requestStream', function() {
       it('should get readable stream from request', function(done) {
-        const fakeRequest = {a: 'b', c: 'd'};
-
-        requestOverride = getFakeRequest();
-
         file.requestStream = function() {
           setImmediate(function() {
-            assert.deepStrictEqual(
-              requestOverride.getRequestOptions(),
-              fakeRequest
-            );
             done();
           });
 
-          return requestOverride(fakeRequest);
+          return through();
         };
 
         file.createReadStream().resume();

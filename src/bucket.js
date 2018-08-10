@@ -23,9 +23,9 @@ const extend = require('extend');
 const fs = require('fs');
 const is = require('is');
 const mime = require('mime-types');
+const fetch = require('node-fetch');
 const path = require('path');
 const snakeize = require('snakeize');
-const request = require('request');
 
 const Acl = require('./acl.js');
 const File = require('./file.js');
@@ -2297,20 +2297,21 @@ class Bucket extends common.ServiceObject {
     if (is.boolean(options.resumable)) {
       upload();
     } else if (isURL) {
-      request.head(requestOptions, (err, resp) => {
-        if (err) {
-          callback(err);
-          return;
-        }
+      const url = requestOptions.url;
+      const method = 'HEAD';
+      const headers = requestOptions.headers;
+      const redirect = requestOptions.followAllRedirects ? 'follow' : 'manual';
+      fetch(url, {method, headers, redirect})
+        .then(res => {
+          const contentLength = res.headers.get('content-length');
 
-        const contentLength = resp.headers['content-length'];
+          if (is.number(contentLength)) {
+            options.resumable = contentLength > RESUMABLE_THRESHOLD;
+          }
 
-        if (is.number(contentLength)) {
-          options.resumable = contentLength > RESUMABLE_THRESHOLD;
-        }
-
-        upload();
-      });
+          upload();
+        })
+        .catch(err => callback(err));
     } else {
       // Determine if the upload should be resumable if it's over the threshold.
       fs.stat(pathString, (err, fd) => {
@@ -2326,15 +2327,32 @@ class Bucket extends common.ServiceObject {
     }
 
     function upload() {
-      let sourceStream;
-
       if (isURL) {
-        sourceStream = request.get(requestOptions);
-      } else {
-        sourceStream = fs.createReadStream(pathString);
-      }
+        const url = requestOptions.url;
+        const method = 'GET';
+        const headers = requestOptions.headers;
+        const redirect = requestOptions.followAllRedirects
+          ? 'follow'
+          : 'manual';
 
-      sourceStream
+        fetch(url, {method, headers, redirect})
+          .then(res => {
+            const dest = newFile.createWriteStream(options);
+            res.body.pipe(dest);
+            res.body.on('error', err => {
+              callback(err);
+            });
+            dest.on('finish', () => {
+              callback(null, newFile, newFile.metadata);
+            });
+            dest.on('error', err => {
+              callback(err);
+            });
+          })
+          .catch(err => callback(err));
+        return;
+      }
+      fs.createReadStream(pathString)
         .on('error', callback)
         .pipe(newFile.createWriteStream(options))
         .on('error', callback)

@@ -22,11 +22,11 @@ const async = require('async');
 const common = require('@google-cloud/common');
 const extend = require('extend');
 const mime = require('mime-types');
+const fetch = require('node-fetch');
 const nodeutil = require('util');
 const path = require('path');
 const propAssign = require('prop-assign');
 const proxyquire = require('proxyquire');
-const request = require('request');
 const snakeize = require('snakeize');
 const stream = require('stream');
 const through = require('through2');
@@ -60,22 +60,11 @@ function FakeNotification(bucket, id) {
   this.id = id;
 }
 
-const requestCached = request;
-let requestOverride;
-function fakeRequest() {
-  return (requestOverride || requestCached).apply(null, arguments);
+const fetchCached = fetch;
+let fetchOverride;
+function fakeFetch() {
+  return (fetchOverride || fetchCached).apply(null, arguments);
 }
-fakeRequest.defaults = function() {
-  // Ignore the default values, so we don't have to test for them in every API
-  // call.
-  return fakeRequest;
-};
-fakeRequest.get = function() {
-  return (requestOverride.get || fakeRequest).apply(null, arguments);
-};
-fakeRequest.head = function() {
-  return (requestOverride.head || fakeRequest).apply(null, arguments);
-};
 
 let eachLimitOverride;
 
@@ -144,7 +133,7 @@ describe('Bucket', function() {
   before(function() {
     Bucket = proxyquire('../src/bucket.js', {
       async: fakeAsync,
-      request: fakeRequest,
+      'node-fetch': fakeFetch,
       '@google-cloud/common': {
         ServiceObject: FakeServiceObject,
         paginator: fakePaginator,
@@ -158,7 +147,7 @@ describe('Bucket', function() {
   });
 
   beforeEach(function() {
-    requestOverride = null;
+    fetchOverride = null;
     eachLimitOverride = null;
     bucket = new Bucket(STORAGE, BUCKET_NAME);
   });
@@ -1949,18 +1938,24 @@ describe('Bucket', function() {
     };
 
     beforeEach(function() {
-      requestOverride = util.noop;
-      requestOverride.get = function() {
-        const requestStream = through();
-
-        setImmediate(function() {
-          requestStream.end();
-        });
-
-        return requestStream;
-      };
-      requestOverride.head = function(uri, callback) {
-        callback(null, {headers: {}});
+      fetchOverride = function(url, options) {
+        if (options.method === 'GET') {
+          return new Promise(resolve => {
+            let res = {};
+            res.body = through();
+            setImmediate(function() {
+              res.body.end();
+            });
+            resolve(res);
+          });
+        } else if (options.method === 'HEAD') {
+          return new Promise(resolve => {
+            let res = {};
+            res.headers = {};
+            res.headers.get = function() {};
+            resolve(res);
+          });
+        }
       };
 
       bucket.file = function(name, metadata) {
@@ -1994,13 +1989,16 @@ describe('Bucket', function() {
     });
 
     it('should accept a url, custom request options & cb', function(done) {
-      requestOverride.get = function(options) {
-        assert.deepStrictEqual(options, {
-          url: urlPath,
-          followAllRedirects: true,
+      fetchOverride = function(url, options) {
+        assert.strictEqual(url, urlPath);
+        assert.strictEqual(options.redirect, 'follow');
+
+        return new Promise(resolve => {
+          let res = {};
+          res.body = through();
+          setImmediate(done);
+          resolve(res);
         });
-        setImmediate(done);
-        return through.obj();
       };
 
       const options = {
@@ -2101,8 +2099,10 @@ describe('Bucket', function() {
     it('should execute callback with error if url not found', function(done) {
       const error = new Error('Error.');
 
-      requestOverride.head = function(url, callback) {
-        callback(error);
+      fetchOverride = function() {
+        return new Promise((resolve, reject) => {
+          reject(error);
+        });
       };
 
       bucket.upload('http://not-real-url', function(err) {
@@ -2174,11 +2174,14 @@ describe('Bucket', function() {
     });
 
     it('should set resumable to true from contentLength', function(done) {
-      requestOverride.head = function(url, callback) {
-        callback(null, {
-          headers: {
-            'content-length': 5000001,
-          },
+      fetchOverride = function() {
+        return new Promise(resolve => {
+          let res = {};
+          res.headers = {};
+          res.headers.get = function() {
+            return 5000001;
+          };
+          resolve(res);
         });
       };
 
@@ -2197,11 +2200,14 @@ describe('Bucket', function() {
     });
 
     it('should set resumable to false from contentLength', function(done) {
-      requestOverride.head = function(url, callback) {
-        callback(null, {
-          headers: {
-            'content-length': 1001,
-          },
+      fetchOverride = function() {
+        return new Promise(resolve => {
+          let res = {};
+          res.headers = {};
+          res.headers.get = function() {
+            return 1001;
+          };
+          resolve(res);
         });
       };
 
