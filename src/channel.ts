@@ -53,7 +53,7 @@ class Channel extends ServiceObject {
 
     // TODO: remove type cast to any once ServiceObject's type declaration has been fixed.
     // https://github.com/googleapis/nodejs-common/issues/176
-    const metadata: any = this.metadata as any;
+    const metadata = this.metadata;
     metadata.id = id;
     metadata.resourceId = resourceId;
   }
