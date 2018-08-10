@@ -30,10 +30,65 @@ import * as snakeize from 'snakeize';
 import * as request from 'request';
 
 import {Acl} from './acl';
-import {File} from './file';
+import {File, FileOptions} from './file';
 import {Iam} from './iam';
 import {Notification} from './notification';
 import {Storage} from './index';
+
+interface SourceObject {
+  name: string;
+  generation?: number;
+}
+
+interface CreateNotificationQuery {
+  userProject?: string;
+}
+
+interface MetadataRequest {
+  predefinedAcl: string;
+  userProject?: string;
+}
+
+/**
+ * Query object for listing files.
+ *
+ * @typedef {object} GetFilesRequest
+ * @property {boolean} [autoPaginate=true] Have pagination handled
+ *     automatically.
+ * @property {string} [delimiter] Results will contain only objects whose
+ *     names, aside from the prefix, do not contain delimiter. Objects whose
+ *     names, aside from the prefix, contain delimiter will have their name
+ *     truncated after the delimiter, returned in `apiResponse.prefixes`.
+ *     Duplicate prefixes are omitted.
+ * @property {string} [directory] Filter results based on a directory name, or
+ *     more technically, a "prefix".
+ * @property {string} [prefix] Filter results to objects whose names begin
+ *     with this prefix.
+ * @property {number} [maxApiCalls] Maximum number of API calls to make.
+ * @property {number} [maxResults] Maximum number of items plus prefixes to
+ *     return.
+ * @property {string} [pageToken] A previously-returned page token
+ *     representing part of the larger set of results to view.
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ * @property {boolean} [versions] If true, returns File objects scoped to
+ *     their versions.
+ */
+export interface GetFilesRequest {
+  autoPaginate?: boolean;
+  delimited?: string;
+  directory?: string;
+  prefix?: string;
+  maxApiCalls?: number;
+  maxResults?: number;
+  pageToken?: string;
+  userProject?: string;
+  versions?: boolean;
+}
+
+export interface DeleteFilesRequest extends GetFilesRequest {
+  force?: boolean;
+}
 
 /**
  * The size of a file (in bytes) must be greater than this number to
@@ -283,7 +338,7 @@ class Bucket extends ServiceObject {
       id: name,
       createMethod: storage.createBucket.bind(storage),
       methods,
-    } as any);
+    });
 
     this.name = name;
 
@@ -409,7 +464,7 @@ class Bucket extends ServiceObject {
           sourceObjects: sources.map(source => {
             const sourceObject = {
               name: source.name,
-            } as any;
+            } as SourceObject;
 
             if (source.metadata && source.metadata.generation) {
               sourceObject.generation = source.metadata.generation;
@@ -640,7 +695,7 @@ class Bucket extends ServiceObject {
       body.payloadFormat = 'JSON_API_V1';
     }
 
-    const query = {} as any;
+    const query = {} as CreateNotificationQuery;
 
     if (body.userProject) {
       query.userProject = body.userProject;
@@ -793,13 +848,13 @@ class Bucket extends ServiceObject {
    * //-
    * bucket.deleteFiles().then(function() {});
    */
-  deleteFiles(query, callback) {
+  deleteFiles(query: DeleteFilesRequest, callback) {
     if (is.fn(query)) {
       callback = query;
       query = {};
     }
 
-    query = query || {} as any;
+    query = query || {};
 
     const MAX_PARALLEL_LIMIT = 10;
     const errors = [] as Error[];
@@ -1106,7 +1161,7 @@ class Bucket extends ServiceObject {
    * const bucket = storage.bucket('albums');
    * const file = bucket.file('my-existing-file.png');
    */
-  file(name, options?) {
+  file(name, options?: FileOptions) {
     if (!name) {
       throw Error('A file name must be specified.');
     }
@@ -1186,7 +1241,7 @@ class Bucket extends ServiceObject {
     this.getMetadata(options, (err, metadata) => {
       if (err) {
         if (err.code === 404 && autoCreate) {
-          const args = [] as any[];
+          const args = [] as object[];
 
           if (!is.empty(options)) {
             args.push(options);
@@ -1206,31 +1261,6 @@ class Bucket extends ServiceObject {
     });
   }
 
-  /**
-   * Query object for listing files.
-   *
-   * @typedef {object} GetFilesRequest
-   * @property {boolean} [autoPaginate=true] Have pagination handled
-   *     automatically.
-   * @property {string} [delimiter] Results will contain only objects whose
-   *     names, aside from the prefix, do not contain delimiter. Objects whose
-   *     names, aside from the prefix, contain delimiter will have their name
-   *     truncated after the delimiter, returned in `apiResponse.prefixes`.
-   *     Duplicate prefixes are omitted.
-   * @property {string} [directory] Filter results based on a directory name, or
-   *     more technically, a "prefix".
-   * @property {string} [prefix] Filter results to objects whose names begin
-   *     with this prefix.
-   * @property {number} [maxApiCalls] Maximum number of API calls to make.
-   * @property {number} [maxResults] Maximum number of items plus prefixes to
-   *     return.
-   * @property {string} [pageToken] A previously-returned page token
-   *     representing part of the larger set of results to view.
-   * @property {string} [userProject] The ID of the project which will be
-   *     billed for the request.
-   * @property {boolean} [versions] If true, returns File objects scoped to
-   *     their versions.
-   */
   /**
    * @typedef {array} GetFilesResponse
    * @property {File[]} 0 Array of {@link File} instances.
@@ -1308,7 +1338,7 @@ class Bucket extends ServiceObject {
    * region_tag:storage_list_files_with_prefix
    * Example of listing files, filtered by a prefix:
    */
-  getFiles(query, callback) {
+  getFiles(query: GetFilesRequest, callback?) {
     if (!callback) {
       callback = query;
       query = {};
@@ -1333,7 +1363,7 @@ class Bucket extends ServiceObject {
         }
 
         const files = arrify(resp.items).map(file => {
-          const options = {} as any;
+          const options = {} as FileOptions;
 
           if (query.versions) {
             options.generation = file.generation;
@@ -1349,7 +1379,7 @@ class Bucket extends ServiceObject {
           return fileInstance;
         });
 
-        let nextQuery = null;
+        let nextQuery: object|null = null;
         if (resp.nextPageToken) {
           nextQuery = extend({}, query, {
             pageToken: resp.nextPageToken,
@@ -1657,7 +1687,7 @@ class Bucket extends ServiceObject {
     const setPredefinedAcl = done => {
       const query = {
         predefinedAcl: 'projectPrivate',
-      } as any;
+      } as MetadataRequest;
 
       if (options.userProject) {
         query.userProject = options.userProject;
@@ -2289,7 +2319,7 @@ class Bucket extends ServiceObject {
    * Example of uploading an encrypted file:
    */
   upload(pathString, options, callback) {
-    if ((global as any).GCLOUD_SANDBOX_ENV) {
+    if (global['GCLOUD_SANDBOX_ENV']) {
       return;
     }
 

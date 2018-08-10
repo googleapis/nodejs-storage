@@ -81,6 +81,23 @@ const STORAGE_UPLOAD_BASE_URL =
 const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
 
 /**
+ * Options passed to the File constructor.
+ * @param {string} [encryptionKey] A custom encryption key.
+ * @param {number} [generation] Generation to scope the file to.
+ * @param {string} [kmsKeyName] Cloud KMS Key used to encrypt this
+ *     object, if the object is encrypted by such a key. Limited availability;
+ *     usable only by enabled projects.
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for all requests made from File object.
+ */
+export interface FileOptions {
+  encryptionKey?: string;
+  generation?: number|string;
+  kmsKeyName?: string;
+  userProject?: string;
+}
+
+/**
  * A File object is created from your {@link Bucket} object using
  * {@link Bucket#file}.
  *
@@ -151,7 +168,7 @@ class File extends ServiceObject {
 
   bucket: Bucket;
   storage: any;
-  kmsKeyName: string;
+  kmsKeyName?: string;
   userProject: string;
   name: string;
   generation?: number;
@@ -164,7 +181,7 @@ class File extends ServiceObject {
     request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri;
   };
 
-  constructor(bucket, name, options) {
+  constructor(bucket, name, options?: FileOptions) {
     name = name.replace(/^\/+/, '');
 
     super({
@@ -183,13 +200,20 @@ class File extends ServiceObject {
 
     this.name = name;
 
-    const generation = parseInt(options.generation, 10);
+    if (options.generation != null) {
+      let generation: number;
+      if (typeof options.generation === 'string') {
+        generation = parseInt(options.generation, 10);
+      } else {
+        generation = options.generation;
+      }
 
-    if (!isNaN(generation)) {
-      this.generation = generation;
-      this.requestQueryObject = {
-        generation: this.generation,
-      };
+      if (!isNaN(generation)) {
+        this.generation = generation;
+        this.requestQueryObject = {
+          generation: this.generation,
+        };
+      }
     }
 
     if (options.encryptionKey) {
