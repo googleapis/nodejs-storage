@@ -123,7 +123,7 @@ class Notification extends ServiceObject {
       id: id.toString(),
       createMethod: bucket.createNotification.bind(bucket),
       methods,
-    } as any);
+    });
   }
 
   /**

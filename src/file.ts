@@ -134,6 +134,15 @@ interface FileQuery {
   userProject?: string;
 }
 
+interface SignedUrlQuery {
+  GoogleAccessId: string;
+  Expires: number;
+  Signature: string;
+  generation: number;
+  'response-content-type': string;
+  'response-content-disposition': string;
+}
+
 class RequestError extends Error {
   code?: string;
   errors?: Error[];
@@ -1648,7 +1657,7 @@ class File extends ServiceObject {
       {
         bucket: this.bucket.name,
       },
-    ];
+    ] as object[];
 
     if (is.array(options.equals)) {
       if (!is.array(options.equals[0])) {
@@ -1901,7 +1910,7 @@ class File extends ServiceObject {
             GoogleAccessId: credentials.client_email,
             Expires: expiresInSeconds,
             Signature: signature,
-          } as any;
+          } as SignedUrlQuery;
 
           if (is.string(config.responseType)) {
             query['response-content-type'] = config.responseType;
@@ -2248,7 +2257,7 @@ class File extends ServiceObject {
       };
     }
 
-    const newFile = this.bucket.file((this as any).id, options);
+    const newFile = this.bucket.file(this.id, options);
     this.copy(newFile, callback);
   }
 

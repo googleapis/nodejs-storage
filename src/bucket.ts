@@ -2483,6 +2483,10 @@ class Bucket extends ServiceObject {
       });
     });
   }
+
+  getId(): string {
+    return this.id!;
+  }
 }
 
 /*! Developer Documentation
