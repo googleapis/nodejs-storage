@@ -109,7 +109,8 @@ describe('storage', function() {
           process.env.GOOGLE_APPLICATION_CREDENTIALS;
         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-        storageWithoutAuth = new require('../').Storage();
+        const {Storage} = require('../');
+        storageWithoutAuth = new Storage();
 
         done();
       });
