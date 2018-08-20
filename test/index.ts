@@ -23,18 +23,20 @@ import * as nodeutil from 'util';
 import * as proxyquire from 'proxyquire';
 import {Service, util} from '@google-cloud/common';
 
-// tslint:disable-next-line:variable-name
-const FakeChannel = (...args) => {
-  this.calledWith_ = args;
-};
+class FakeChannel {
+  calledWith_;
+  constructor(...args) {
+    this.calledWith_ = args;
+  }
+}
 
-// tslint:disable-next-line:variable-name
-const FakeService = (...args) => {
-  this.calledWith_ = args;
-  Service.apply(this, args);
-};
-
-nodeutil.inherits(FakeService, Service);
+class FakeService extends Service {
+  calledWith_;
+  constructor(...args) {
+    super(args[0]);
+    this.calledWith_ = args;
+  }
+}
 
 let extended = false;
 const fakePaginator = {
