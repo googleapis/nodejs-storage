@@ -897,6 +897,7 @@ class File extends ServiceObject {
         bucket: this.bucket.name,
         file: this.name,
         generation: this.generation,
+        // tslint:disable-next-line:no-any
         key: this.encryptionKey as any,
         kmsKeyName: this.kmsKeyName,
         metadata: options.metadata,
@@ -1265,6 +1266,7 @@ class File extends ServiceObject {
 
     options = extend({}, this.requestQueryObject, options);
 
+    // tslint:disable-next-line:no-any
     (this.parent as any).delete.call(this, options, callback);
   }
 
@@ -1387,6 +1389,7 @@ class File extends ServiceObject {
    * });
    */
   exists(options, callback?) {
+    // tslint:disable-next-line:no-any
     (this.parent as any).exists.call(this, options, callback);
   }
 
@@ -1439,6 +1442,7 @@ class File extends ServiceObject {
 
     this.encryptionKeyHash = crypto
       .createHash('sha256')
+      // tslint:disable-next-line:no-any
       .update(this.encryptionKeyBase64, 'base64' as any)
       .digest('base64');
 
@@ -1499,6 +1503,7 @@ class File extends ServiceObject {
    * });
    */
   get(options, callback?) {
+    // tslint:disable-next-line:no-any
     (this.parent as any).get.call(this, options, callback);
   }
 
@@ -1553,6 +1558,7 @@ class File extends ServiceObject {
 
     options = extend({}, this.requestQueryObject, options);
 
+    // tslint:disable-next-line:no-any
     (this.parent as any).getMetadata.call(this, options, callback);
   }
 
@@ -2001,6 +2007,7 @@ class File extends ServiceObject {
 
     const query = {
       predefinedAcl: options.strict ? 'private' : 'projectPrivate',
+    // tslint:disable-next-line:no-any
     } as any;
 
     if (options.userProject) {
@@ -2059,6 +2066,7 @@ class File extends ServiceObject {
   makePublic(callback) {
     callback = callback || util.noop;
 
+    // tslint:disable-next-line:no-any
     (this.acl as any).add(
       {
         entity: 'allUsers',
@@ -2389,6 +2397,7 @@ class File extends ServiceObject {
 
     options = extend({}, this.requestQueryObject, options);
 
+    // tslint:disable-next-line:no-any
     (this.parent as any).setMetadata.call(this, metadata, options, callback);
   }
 
@@ -2497,6 +2506,7 @@ class File extends ServiceObject {
       bucket: this.bucket.name,
       file: this.name,
       generation: this.generation,
+      // tslint:disable-next-line:no-any
       key: this.encryptionKey as any,
       kmsKeyName: this.kmsKeyName,
       metadata: options.metadata,
@@ -2543,6 +2553,7 @@ class File extends ServiceObject {
     const reqOpts = {
       qs: {
         name: this.name,
+      // tslint:disable-next-line:no-any
       } as any,
       uri: `${STORAGE_UPLOAD_BASE_URL}/${this.bucket.name}/o`,
     };

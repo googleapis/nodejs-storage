@@ -3234,9 +3234,11 @@ describe('File', () => {
 
   describe('setEncryptionKey', () => {
     const KEY = crypto.randomBytes(32);
+    // tslint:disable-next-line:no-any
     const KEY_BASE64 = Buffer.from(KEY as any).toString('base64');
     const KEY_HASH = crypto
       .createHash('sha256')
+      // tslint:disable-next-line:no-any
       .update(KEY_BASE64, 'base64' as any)
       .digest('base64');
     let _file;
