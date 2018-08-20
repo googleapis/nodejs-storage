@@ -1512,7 +1512,8 @@ class File extends ServiceObject {
    *     retention policy will expire.
    */
   /**
-   * Get a Date object representing the earliest time this file will expire.
+   * If this bucket has a retention policy defined, use this method to get a
+   * Date object representing the earliest time this file will expire.
    *
    * @param {GetExpirationDateCallback} [callback] Callback function.
    * @returns {Promise<GetExpirationDateResponse>}

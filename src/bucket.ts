@@ -1896,7 +1896,8 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * Remove an already-existing retention policy from this bucket.
+   * Remove an already-existing retention policy from this bucket, if it is not
+   * locked.
    *
    * @param {SetBucketMetadataCallback} [callback] Callback function.
    * @returns {Promise<SetBucketMetadataResponse>}
@@ -2103,7 +2104,8 @@ class Bucket extends ServiceObject {
    * {@link File#removeRetentionPeriod} and {@link File#setRetentionPeriod}. A
    * locked retention policy cannot be removed or shortened in duration for the
    * lifetime of the bucket. Attempting to remove or decrease period of a locked
-   * retention policy will result in a `PERMISSION_DENIED` error.
+   * retention policy will result in a `PERMISSION_DENIED` error. You can still
+   * increase the policy.
    *
    * @param {*} duration In seconds, the minimum retention time for all objects
    *     contained in this bucket.
