@@ -618,11 +618,13 @@ class Storage extends Service {
 
         const camelCaseResponse = {};
 
-        for (let prop in resp) {
-          let camelCaseProp = prop.replace(/_(\w)/g, (_, match) =>
-            match.toUpperCase()
-          );
-          camelCaseResponse[camelCaseProp] = resp[prop];
+        for (const prop in resp) {
+          if (resp.hasOwnProperty(prop)) {
+            const camelCaseProp = prop.replace(/_(\w)/g, (_, match) =>
+              match.toUpperCase()
+            );
+            camelCaseResponse[camelCaseProp] = resp[prop];
+          }
         }
 
         callback(null, camelCaseResponse, resp);
