@@ -73,7 +73,7 @@ const STORAGE_DOWNLOAD_BASE_URL = 'https://storage.googleapis.com';
  * @private
  */
 const STORAGE_UPLOAD_BASE_URL =
-  'https://www.googleapis.com/upload/storage/v1/b';
+    'https://www.googleapis.com/upload/storage/v1/b';
 
 /**
  * @const {RegExp}
@@ -100,7 +100,8 @@ export interface FileOptions {
 
 /**
  * @param {object} CopyOptions Configuration options. See an
- *     [Object resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
+ *     [Object
+ * resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
  * @param {string} [destinationKmsKeyName] Resource name of the Cloud
  *     KMS key, of the form
  *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
@@ -225,12 +226,11 @@ class File extends ServiceObject {
   generation?: number;
   requestQueryObject?: {generation: number};
 
-  private encryptionKey?: string | Buffer;
+  private encryptionKey?: string|Buffer;
   private encryptionKeyBase64?: string;
   private encryptionKeyHash?: string;
-  private encryptionKeyInterceptor?: {
-    request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri;
-  };
+  private encryptionKeyInterceptor?:
+      {request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri;};
 
   constructor(bucket, name, options?: FileOptions) {
     name = name.replace(/^\/+/, '');
@@ -299,12 +299,13 @@ class File extends ServiceObject {
    *
    * @param {string|Bucket|File} destination Destination file.
    * @param {object} [options] Configuration options. See an
-   *     [Object resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
+   *     [Object
+   * resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
    * @param {string} [options.destinationKmsKeyName] Resource name of the Cloud
    *     KMS key, of the form
    *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
-   *     that will be used to encrypt the object. Overwrites the object metadata's
-   *     `kms_key_name` value, if any.
+   *     that will be used to encrypt the object. Overwrites the object
+   * metadata's `kms_key_name` value, if any.
    * @param {string} [options.keepAcl] Retain the ACL for the new file.
    * @param {string} [options.predefinedAcl] Set the ACL for the new file.
    * @param {string} [options.token] A previously-returned `rewriteToken` from an
@@ -401,9 +402,8 @@ class File extends ServiceObject {
    * Another example:
    */
   copy(destination, options: CopyOptions, callback?) {
-    const noDestinationError = new Error(
-      'Destination file should have a name.'
-    );
+    const noDestinationError =
+        new Error('Destination file should have a name.');
 
     if (!destination) {
       throw noDestinationError;
@@ -431,9 +431,7 @@ class File extends ServiceObject {
         destName = destination;
       }
     } else if (
-      destination.constructor &&
-      destination.constructor.name === 'Bucket'
-    ) {
+        destination.constructor && destination.constructor.name === 'Bucket') {
       destBucket = destination;
       destName = this.name;
     } else if (destination instanceof File) {
@@ -463,9 +461,8 @@ class File extends ServiceObject {
     if (is.defined(this.encryptionKey)) {
       headers['x-goog-copy-source-encryption-algorithm'] = 'AES256';
       headers['x-goog-copy-source-encryption-key'] = this.encryptionKeyBase64;
-      headers[
-        'x-goog-copy-source-encryption-key-sha256'
-      ] = this.encryptionKeyHash;
+      headers['x-goog-copy-source-encryption-key-sha256'] =
+          this.encryptionKeyHash;
     }
 
     if (is.defined(newFile.encryptionKey)) {
@@ -480,59 +477,58 @@ class File extends ServiceObject {
     if (query.destinationKmsKeyName) {
       this.kmsKeyName = query.destinationKmsKeyName;
 
-      const keyIndex = this.interceptors.indexOf(this.encryptionKeyInterceptor!);
+      const keyIndex =
+          this.interceptors.indexOf(this.encryptionKeyInterceptor!);
       if (keyIndex > -1) {
         this.interceptors.splice(keyIndex, 1);
       }
     }
 
     this.request(
-      {
-        method: 'POST',
-        uri: `/rewriteTo/b/${destBucket.name}/o/${encodeURIComponent(
-          destName
-        )}`,
-        qs: query,
-        json: options,
-        headers,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, resp);
-          return;
-        }
-
-        if (resp.rewriteToken) {
-          const options = {
-            token: resp.rewriteToken,
-          } as CopyOptions;
-
-          if (query.userProject) {
-            options.userProject = query.userProject;
+        {
+          method: 'POST',
+          uri: `/rewriteTo/b/${destBucket.name}/o/${
+              encodeURIComponent(destName)}`,
+          qs: query,
+          json: options,
+          headers,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, null, resp);
+            return;
           }
 
-          if (query.destinationKmsKeyName) {
-            options.destinationKmsKeyName = query.destinationKmsKeyName;
+          if (resp.rewriteToken) {
+            const options = {
+              token: resp.rewriteToken,
+            } as CopyOptions;
+
+            if (query.userProject) {
+              options.userProject = query.userProject;
+            }
+
+            if (query.destinationKmsKeyName) {
+              options.destinationKmsKeyName = query.destinationKmsKeyName;
+            }
+
+            this.copy(newFile, options, callback);
+            return;
           }
 
-          this.copy(newFile, options, callback);
-          return;
-        }
-
-        callback(null, newFile, resp);
-      }
-    );
+          callback(null, newFile, resp);
+        });
   }
 
   /**
    * Create a readable stream to read the contents of the remote file. It can be
-   * piped to a writable stream or listened to for 'data' events to read a file's
-   * contents.
+   * piped to a writable stream or listened to for 'data' events to read a
+   * file's contents.
    *
-   * In the unlikely event there is a mismatch between what you downloaded and the
-   * version in your Bucket, your error handler will receive an error with code
-   * "CONTENT_DOWNLOAD_MISMATCH". If you receive this error, the best recourse is
-   * to try downloading the file again.
+   * In the unlikely event there is a mismatch between what you downloaded and
+   * the version in your Bucket, your error handler will receive an error with
+   * code "CONTENT_DOWNLOAD_MISMATCH". If you receive this error, the best
+   * recourse is to try downloading the file again.
    *
    * For faster crc32c computation, you must manually install
    * [`fast-crc32c`](http://www.gitnpm.com/fast-crc32c):
@@ -581,7 +577,8 @@ class File extends ServiceObject {
    * remoteFile.createReadStream()
    *   .on('error', function(err) {})
    *   .on('response', function(response) {
-   *     // Server connected and responded with the specified status and headers.
+   *     // Server connected and responded with the specified status and
+   * headers.
    *    })
    *   .on('end', function() {
    *     // The file is fully downloaded.
@@ -589,7 +586,8 @@ class File extends ServiceObject {
    *   .pipe(fs.createWriteStream(localFilename));
    *
    * //-
-   * // To limit the downloaded data to only a byte range, pass an options object.
+   * // To limit the downloaded data to only a byte range, pass an options
+   * object.
    * //-
    * const logFile = myBucket.file('access_log');
    * logFile.createReadStream({
@@ -616,7 +614,7 @@ class File extends ServiceObject {
     const rangeRequest = is.number(options.start) || is.number(options.end);
     const tailRequest = options.end < 0;
 
-    let validateStream; // Created later, if necessary.
+    let validateStream;  // Created later, if necessary.
     const throughStream = streamEvents(through()) as Duplex;
 
     let crc32c = true;
@@ -664,9 +662,7 @@ class File extends ServiceObject {
         const start = is.number(options.start) ? options.start : '0';
         const end = is.number(options.end) ? options.end : '';
 
-        headers.Range = `bytes=${
-          tailRequest ? end : `${start}-${end}`
-        }`;
+        headers.Range = `bytes=${tailRequest ? end : `${start}-${end}`}`;
       }
 
 
@@ -678,31 +674,33 @@ class File extends ServiceObject {
       };
 
       this.requestStream(reqOpts)
-        .on('error', err => {
-          throughStream.destroy(err);
-        })
-        .on('response', res => {
-          throughStream.emit('response', res);
-          util.handleResp(null, res, null, onResponse);
-        })
-        .resume();
+          .on('error',
+              err => {
+                throughStream.destroy(err);
+              })
+          .on('response',
+              res => {
+                throughStream.emit('response', res);
+                util.handleResp(null, res, null, onResponse);
+              })
+          .resume();
 
-      // We listen to the response event from the request stream so that we can...
+      // We listen to the response event from the request stream so that we
+      // can...
       //
       //   1) Intercept any data from going to the user if an error occurred.
-      //   2) Calculate the hashes from the http.IncomingMessage response stream,
+      //   2) Calculate the hashes from the http.IncomingMessage response
+      //   stream,
       //      which will return the bytes from the source without decompressing
-      //      gzip'd content. We then send it through decompressed, if applicable,
-      //      to the user.
+      //      gzip'd content. We then send it through decompressed, if
+      //      applicable, to the user.
       const onResponse = (err, body, rawResponseStream) => {
         if (err) {
           // Get error message from the body.
-          rawResponseStream.pipe(
-            concat(body => {
-              err.message = body.toString();
-              throughStream.destroy(err);
-            })
-          );
+          rawResponseStream.pipe(concat(body => {
+            err.message = body.toString();
+            throughStream.destroy(err);
+          }));
 
           return;
         }
@@ -726,15 +724,13 @@ class File extends ServiceObject {
         if (throughStreams.length === 1) {
           rawResponseStream = rawResponseStream.pipe(throughStreams[0]);
         } else if (throughStreams.length > 1) {
-          rawResponseStream = rawResponseStream.pipe(
-            pumpify.obj(throughStreams)
-          );
+          rawResponseStream =
+              rawResponseStream.pipe(pumpify.obj(throughStreams));
         }
 
-        rawResponseStream.on('end', onComplete).pipe(
-          throughStream,
-          {end: false}
-        );
+        rawResponseStream.on('end', onComplete).pipe(throughStream, {
+          end: false
+        });
       };
 
       // This is hooked to the `complete` event from the request stream. This is
@@ -763,8 +759,8 @@ class File extends ServiceObject {
         };
 
         // If we're doing validation, assume the worst-- a data integrity
-        // mismatch. If not, these tests won't be performed, and we can assume the
-        // best.
+        // mismatch. If not, these tests won't be performed, and we can assume
+        // the best.
         let failed = crc32c || md5;
 
         if (crc32c && hashes.crc32c) {
@@ -779,23 +775,19 @@ class File extends ServiceObject {
         }
 
         if (md5 && !hashes.md5) {
-          const hashError = new RequestError(
-            [
-              'MD5 verification was specified, but is not available for the',
-              'requested object. MD5 is not available for composite objects.',
-            ].join(' ')
-          );
+          const hashError = new RequestError([
+            'MD5 verification was specified, but is not available for the',
+            'requested object. MD5 is not available for composite objects.',
+          ].join(' '));
           hashError.code = 'MD5_NOT_AVAILABLE';
 
           throughStream.destroy(hashError);
         } else if (failed) {
-          const mismatchError = new RequestError(
-            [
-              'The downloaded data did not match the data from the server.',
-              'To be sure the content is the same, you should download the',
-              'file again.',
-            ].join(' ')
-          );
+          const mismatchError = new RequestError([
+            'The downloaded data did not match the data from the server.',
+            'To be sure the content is the same, you should download the',
+            'file again.',
+          ].join(' '));
           mismatchError.code = 'CONTENT_DOWNLOAD_MISMATCH';
 
           throughStream.destroy(mismatchError);
@@ -823,14 +815,15 @@ class File extends ServiceObject {
    * Create a unique resumable upload session URI. This is the first step when
    * performing a resumable upload.
    *
-   * See the [Resumable upload guide](https://cloud.google.com/storage/docs/json_api/v1/how-tos/resumable-upload)
+   * See the [Resumable upload
+   * guide](https://cloud.google.com/storage/docs/json_api/v1/how-tos/resumable-upload)
    * for more on how the entire process works.
    *
    * <h4>Note</h4>
    *
-   * If you are just looking to perform a resumable upload without worrying about
-   * any of the details, see {@link File#createWriteStream}. Resumable uploads
-   * are performed by default.
+   * If you are just looking to perform a resumable upload without worrying
+   * about any of the details, see {@link File#createWriteStream}. Resumable
+   * uploads are performed by default.
    *
    * @see [Resumable upload guide]{@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/resumable-upload}
    *
@@ -855,8 +848,8 @@ class File extends ServiceObject {
    *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
    *       team members get access according to their roles.
    *
-   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers` get
-   *       `READER` access.
+   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
+   * get `READER` access.
    * @param {boolean} [options.private] Make the uploaded file private. (Alias for
    *     `options.predefinedAcl = 'private'`)
    * @param {boolean} [options.public] Make the uploaded file public. (Alias for
@@ -892,24 +885,23 @@ class File extends ServiceObject {
     }
 
     resumableUpload.createURI(
-      {
-        authClient: this.storage.authClient,
-        bucket: this.bucket.name,
-        file: this.name,
-        generation: this.generation,
-        // tslint:disable-next-line:no-any
-        key: this.encryptionKey as any,
-        kmsKeyName: this.kmsKeyName,
-        metadata: options.metadata,
-        offset: options.offset,
-        origin: options.origin,
-        predefinedAcl: options.predefinedAcl,
-        private: options.private,
-        public: options.public,
-        userProject: options.userProject,
-      },
-      callback
-    );
+        {
+          authClient: this.storage.authClient,
+          bucket: this.bucket.name,
+          file: this.name,
+          generation: this.generation,
+          // tslint:disable-next-line:no-any
+          key: this.encryptionKey as any,
+          kmsKeyName: this.kmsKeyName,
+          metadata: options.metadata,
+          offset: options.offset,
+          origin: options.origin,
+          predefinedAcl: options.predefinedAcl,
+          private: options.private,
+          public: options.public,
+          userProject: options.userProject,
+        },
+        callback);
   }
 
   /**
@@ -922,16 +914,17 @@ class File extends ServiceObject {
    * by setting `options.resumable` to `false`.
    *
    * Resumable uploads require write access to the $HOME directory. Through
-   * [`config-store`](http://www.gitnpm.com/configstore), some metadata is stored.
-   * By default, if the directory is not writable, we will fall back to a simple
-   * upload. However, if you explicitly request a resumable upload, and we cannot
-   * write to the config directory, we will return a `ResumableUploadError`.
+   * [`config-store`](http://www.gitnpm.com/configstore), some metadata is
+   * stored. By default, if the directory is not writable, we will fall back to
+   * a simple upload. However, if you explicitly request a resumable upload, and
+   * we cannot write to the config directory, we will return a
+   * `ResumableUploadError`.
    *
    * <p class="notice">
    *   There is some overhead when using a resumable upload that can cause
-   *   noticeable performance degradation while uploading a series of small files.
-   *   When uploading files less than 10MB, it is recommended that the resumable
-   *   feature is disabled.
+   *   noticeable performance degradation while uploading a series of small
+   * files. When uploading files less than 10MB, it is recommended that the
+   * resumable feature is disabled.
    * </p>
    *
    * For faster crc32c computation, you must manually install
@@ -950,11 +943,12 @@ class File extends ServiceObject {
    *     `options.metadata.contentType`. If set to `auto`, the file name is used
    *     to determine the contentType.
    * @param {string|boolean} [options.gzip] If true, automatically gzip the file.
-   *     If set to `auto`, the contentType is used to determine if the file should
-   *     be gzipped. This will set `options.metadata.contentEncoding` to `gzip` if
-   *     necessary.
+   *     If set to `auto`, the contentType is used to determine if the file
+   * should be gzipped. This will set `options.metadata.contentEncoding` to
+   * `gzip` if necessary.
    * @param {object} [options.metadata] See the examples below or
-   *     [Objects: insert request body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON)
+   *     [Objects: insert request
+   * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON)
    *     for more details.
    * @param {string} [options.offset] The starting byte of the upload stream, for
    *     resuming an interrupted upload. Defaults to 0.
@@ -976,8 +970,8 @@ class File extends ServiceObject {
    *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
    *       team members get access according to their roles.
    *
-   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers` get
-   *       `READER` access.
+   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
+   * get `READER` access.
    * @param {boolean} [options.private] Make the uploaded file private. (Alias for
    *     `options.predefinedAcl = 'private'`)
    * @param {boolean} [options.public] Make the uploaded file public. (Alias for
@@ -1031,7 +1025,8 @@ class File extends ServiceObject {
    *   });
    *
    * //-
-   * // Downloading the file with `createReadStream` will automatically decode the
+   * // Downloading the file with `createReadStream` will automatically decode
+   * the
    * // file.
    * //-
    *
@@ -1100,13 +1095,11 @@ class File extends ServiceObject {
 
     const fileWriteStream = duplexify();
 
-    const stream = streamEvents(
-      pumpify([
-        gzip ? zlib.createGzip() : through(),
-        validateStream,
-        fileWriteStream,
-      ])
-    ) as Duplex;
+    const stream = streamEvents(pumpify([
+                     gzip ? zlib.createGzip() : through(),
+                     validateStream,
+                     fileWriteStream,
+                   ])) as Duplex;
 
     // Wait until we've received data to determine what upload technique to use.
     stream.on('writing', () => {
@@ -1122,13 +1115,11 @@ class File extends ServiceObject {
       fs.access(configDir, fs.constants.W_OK, err => {
         if (err) {
           if (options.resumable) {
-            const error = new ResumableUploadError(
-              [
-                'A resumable upload could not be performed. The directory,',
-                `${configDir}, is not writable. You may try another upload,`,
-                'this time setting `options.resumable` to `false`.',
-              ].join(' ')
-            );
+            const error = new ResumableUploadError([
+              'A resumable upload could not be performed. The directory,',
+              `${configDir}, is not writable. You may try another upload,`,
+              'this time setting `options.resumable` to `false`.',
+            ].join(' '));
             stream.destroy(error);
             return;
           }
@@ -1145,8 +1136,8 @@ class File extends ServiceObject {
     fileWriteStream.on('response', stream.emit.bind(stream, 'response'));
 
     // This is to preserve the `finish` event. We wait until the request stream
-    // emits "complete", as that is when we do validation of the data. After that
-    // is successful, we can allow the stream to naturally finish.
+    // emits "complete", as that is when we do validation of the data. After
+    // that is successful, we can allow the stream to naturally finish.
     //
     // Reference for tracking when we can use a non-hack solution:
     // https://github.com/nodejs/node/pull/2314
@@ -1158,8 +1149,9 @@ class File extends ServiceObject {
     fileWriteStream.on('complete', () => {
       const metadata = this.metadata;
 
-      // If we're doing validation, assume the worst-- a data integrity mismatch.
-      // If not, these tests won't be performed, and we can assume the best.
+      // If we're doing validation, assume the worst-- a data integrity
+      // mismatch. If not, these tests won't be performed, and we can assume the
+      // best.
       let failed = crc32c || md5;
 
       if (crc32c && metadata.crc32c) {
@@ -1280,7 +1272,8 @@ class File extends ServiceObject {
    * @param {buffer} [contents] The contents of a File.
    */
   /**
-   * Convenience method to download a file into memory or to a local destination.
+   * Convenience method to download a file into memory or to a local
+   * destination.
    *
    * @param {object} [options] Configuration options. The arguments match those
    *     passed to {@link File#createReadStream}.
@@ -1299,7 +1292,8 @@ class File extends ServiceObject {
    * const file = myBucket.file('my-file');
    *
    * //-
-   * // Download a file into memory. The contents will be available as the second
+   * // Download a file into memory. The contents will be available as the
+   * second
    * // argument in the demonstration below, `contents`.
    * //-
    * file.download(function(err, contents) {});
@@ -1344,11 +1338,10 @@ class File extends ServiceObject {
     const fileStream = this.createReadStream(options);
 
     if (destination) {
-      fileStream
-        .on('error', callback)
-        .pipe(fs.createWriteStream(destination))
-        .on('error', callback)
-        .on('finish', callback);
+      fileStream.on('error', callback)
+          .pipe(fs.createWriteStream(destination))
+          .on('error', callback)
+          .on('finish', callback);
     } else {
       fileStream.on('error', callback).pipe(concat(callback.bind(null, null)));
     }
@@ -1440,20 +1433,20 @@ class File extends ServiceObject {
     this.encryptionKey = encryptionKey;
     this.encryptionKeyBase64 = Buffer.from(encryptionKey).toString('base64');
 
-    this.encryptionKeyHash = crypto
-      .createHash('sha256')
-      // tslint:disable-next-line:no-any
-      .update(this.encryptionKeyBase64, 'base64' as any)
-      .digest('base64');
+    this.encryptionKeyHash =
+        crypto
+            .createHash('sha256')
+            // tslint:disable-next-line:no-any
+            .update(this.encryptionKeyBase64, 'base64' as any)
+            .digest('base64');
 
     this.encryptionKeyInterceptor = {
       request: reqOpts => {
         reqOpts.headers = reqOpts.headers || {};
         reqOpts.headers['x-goog-encryption-algorithm'] = 'AES256';
         reqOpts.headers['x-goog-encryption-key'] = this.encryptionKeyBase64;
-        reqOpts.headers[
-          'x-goog-encryption-key-sha256'
-        ] = this.encryptionKeyHash;
+        reqOpts.headers['x-goog-encryption-key-sha256'] =
+            this.encryptionKeyHash;
         return reqOpts;
       },
     };
@@ -1578,7 +1571,8 @@ class File extends ServiceObject {
    * In Google Cloud Platform environments, such as Cloud Functions and App
    * Engine, you usually don't provide a `keyFilename` or `credentials` during
    * instantiation. In those environments, we call the
-   * [signBlob API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * [signBlob
+   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
    * to create a signed policy. That API requires either the
    * `https://www.googleapis.com/auth/iam` or
    * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
@@ -1605,8 +1599,8 @@ class File extends ServiceObject {
    *     their expected prefixes (e.g. [['$<field>', '<value>']). Values are
    *     translated into starts-with constraints in the conditions field of the
    *     policy document (e.g. ['starts-with', '$<field>', '<value>']). If only
-   *     one prefix condition is to be specified, options.startsWith can be a one-
-   *     dimensional array (e.g. ['$<field>', '<value>']).
+   *     one prefix condition is to be specified, options.startsWith can be a
+   * one- dimensional array (e.g. ['$<field>', '<value>']).
    * @param {string} [options.acl] ACL for the object from possibly predefined
    *     ACLs.
    * @param {string} [options.successRedirect] The URL to which the user client
@@ -1684,8 +1678,7 @@ class File extends ServiceObject {
       options.startsWith.forEach(condition => {
         if (!is.array(condition) || condition.length !== 2) {
           throw new Error(
-            'StartsWith condition must be an array of 2 elements.'
-          );
+              'StartsWith condition must be an array of 2 elements.');
         }
         conditions.push(['starts-with', condition[0], condition[1]]);
       });
@@ -1714,8 +1707,7 @@ class File extends ServiceObject {
       const max = options.contentLengthRange.max;
       if (!is.number(min) || !is.number(max)) {
         throw new Error(
-          'ContentLengthRange must have numeric min & max fields.'
-        );
+            'ContentLengthRange must have numeric min & max fields.');
       }
       conditions.push(['content-length-range', min, max]);
     }
@@ -1728,18 +1720,18 @@ class File extends ServiceObject {
     const policyString = JSON.stringify(policy);
     const policyBase64 = Buffer.from(policyString).toString('base64');
 
-    this.storage.authClient.sign(policyBase64).then(
-      signature => {
-        callback(null, {
-          string: policyString,
-          base64: policyBase64,
-          signature,
-        });
-      },
-      err => {
-        callback(new SigningError(err.message));
-      }
-    );
+    this.storage.authClient.sign(policyBase64)
+        .then(
+            signature => {
+              callback(null, {
+                string: policyString,
+                base64: policyBase64,
+                signature,
+              });
+            },
+            err => {
+              callback(new SigningError(err.message));
+            });
   }
 
   /**
@@ -1757,7 +1749,8 @@ class File extends ServiceObject {
    * In Google Cloud Platform environments, such as Cloud Functions and App
    * Engine, you usually don't provide a `keyFilename` or `credentials` during
    * instantiation. In those environments, we call the
-   * [signBlob API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * [signBlob
+   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
    * to create a signed URL. That API requires either the
    * `https://www.googleapis.com/auth/iam` or
    * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
@@ -1780,8 +1773,9 @@ class File extends ServiceObject {
    * @param {*} config.expires A timestamp when this link will expire. Any value
    *     given is passed to `new Date()`.
    * @param {object} [config.extensionHeaders] If these headers are used, the
-   *     server will check to make sure that the client provides matching values.
-   *     See [Canonical extension headers](https://cloud.google.com/storage/docs/access-control/signed-urls#about-canonical-extension-headers)
+   *     server will check to make sure that the client provides matching
+   * values. See [Canonical extension
+   * headers](https://cloud.google.com/storage/docs/access-control/signed-urls#about-canonical-extension-headers)
    *     for the requirements of this feature, most notably:
    *       - The header name must be prefixed with `x-goog-`
    *       - The header name must be all lowercase
@@ -1826,7 +1820,8 @@ class File extends ServiceObject {
    * });
    *
    * //-
-   * // Generate a URL to allow write permissions. This means anyone with this URL
+   * // Generate a URL to allow write permissions. This means anyone with this
+   * URL
    * // can send a POST request with new data that will overwrite the file.
    * //-
    * file.getSignedUrl({
@@ -1869,7 +1864,8 @@ class File extends ServiceObject {
       throw new Error('An expiration date cannot be in the past.');
     }
 
-    const expiresInSeconds = Math.round(expiresInMSeconds / 1000); // The API expects seconds.
+    const expiresInSeconds =
+        Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
 
     config = extend({}, config);
 
@@ -1893,9 +1889,8 @@ class File extends ServiceObject {
 
     if (config.extensionHeaders) {
       for (const headerName of Object.keys(config.extensionHeaders)) {
-        extensionHeadersString += `${headerName}:${
-          config.extensionHeaders[headerName]
-        }\n`;
+        extensionHeadersString +=
+            `${headerName}:${config.extensionHeaders[headerName]}\n`;
       }
     }
 
@@ -1908,48 +1903,47 @@ class File extends ServiceObject {
     ].join('\n');
 
     const authClient = this.storage.authClient;
-    authClient
-      .sign(blobToSign)
-      .then(signature => {
-        authClient.getCredentials().then(credentials => {
-          const query = {
-            GoogleAccessId: credentials.client_email,
-            Expires: expiresInSeconds,
-            Signature: signature,
-          } as SignedUrlQuery;
+    authClient.sign(blobToSign)
+        .then(signature => {
+          authClient.getCredentials().then(credentials => {
+            const query = {
+              GoogleAccessId: credentials.client_email,
+              Expires: expiresInSeconds,
+              Signature: signature,
+            } as SignedUrlQuery;
 
-          if (is.string(config.responseType)) {
-            query['response-content-type'] = config.responseType;
-          }
+            if (is.string(config.responseType)) {
+              query['response-content-type'] = config.responseType;
+            }
 
-          if (is.string(config.promptSaveAs)) {
-            query['response-content-disposition'] =
-              'attachment; filename="' + config.promptSaveAs + '"';
-          }
-          if (is.string(config.responseDisposition)) {
-            query['response-content-disposition'] = config.responseDisposition;
-          }
+            if (is.string(config.promptSaveAs)) {
+              query['response-content-disposition'] =
+                  'attachment; filename="' + config.promptSaveAs + '"';
+            }
+            if (is.string(config.responseDisposition)) {
+              query['response-content-disposition'] =
+                  config.responseDisposition;
+            }
 
-          if (this.generation) {
-            query.generation = this.generation;
-          }
+            if (this.generation) {
+              query.generation = this.generation;
+            }
 
-          const parsedHost = url.parse(
-            config.cname || STORAGE_DOWNLOAD_BASE_URL
-          );
-          const signedUrl = url.format({
-            protocol: parsedHost.protocol,
-            hostname: parsedHost.hostname,
-            pathname: config.cname ? name : this.bucket.name + '/' + name,
-            query,
+            const parsedHost =
+                url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
+            const signedUrl = url.format({
+              protocol: parsedHost.protocol,
+              hostname: parsedHost.hostname,
+              pathname: config.cname ? name : this.bucket.name + '/' + name,
+              query,
+            });
+
+            callback(null, signedUrl);
           });
-
-          callback(null, signedUrl);
+        })
+        .catch(err => {
+          callback(new SigningError(err.message));
         });
-      })
-      .catch(err => {
-        callback(new SigningError(err.message));
-      });
   }
 
   /**
@@ -2007,7 +2001,7 @@ class File extends ServiceObject {
 
     const query = {
       predefinedAcl: options.strict ? 'private' : 'projectPrivate',
-    // tslint:disable-next-line:no-any
+      // tslint:disable-next-line:no-any
     } as any;
 
     if (options.userProject) {
@@ -2015,15 +2009,13 @@ class File extends ServiceObject {
     }
 
     this.setMetadata(
-      {
-        // You aren't allowed to set both predefinedAcl & acl properties on a file,
-        // so acl must explicitly be nullified, destroying all previous acls on the
-        // file.
-        acl: null,
-      },
-      query,
-      callback
-    );
+        {
+          // You aren't allowed to set both predefinedAcl & acl properties on a
+          // file, so acl must explicitly be nullified, destroying all previous
+          // acls on the file.
+          acl: null,
+        },
+        query, callback);
   }
 
   /**
@@ -2067,15 +2059,15 @@ class File extends ServiceObject {
     callback = callback || util.noop;
 
     // tslint:disable-next-line:no-any
-    (this.acl as any).add(
-      {
-        entity: 'allUsers',
-        role: 'READER',
-      },
-      (err, resp) => {
-        callback(err, resp);
-      }
-    );
+    (this.acl as any)
+        .add(
+            {
+              entity: 'allUsers',
+              role: 'READER',
+            },
+            (err, resp) => {
+              callback(err, resp);
+            });
   }
 
   /**
@@ -2092,7 +2084,8 @@ class File extends ServiceObject {
   /**
    * Move this file to another location. By default, this will rename the file
    * and keep it in the same bucket, but you can choose to move it to another
-   * Bucket by providing a Bucket or File object or a URL beginning with "gs://".
+   * Bucket by providing a Bucket or File object or a URL beginning with
+   * "gs://".
    *
    * **Warning**:
    * There is currently no atomic `move` method in the Cloud Storage API,
@@ -2108,7 +2101,8 @@ class File extends ServiceObject {
    *
    * @param {string|Bucket|File} destination Destination file.
    * @param {object} [options] Configuration options. See an
-   *     [Object resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
+   *     [Object
+   * resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {MoveCallback} [callback] Callback function.
@@ -2247,9 +2241,9 @@ class File extends ServiceObject {
    * @see [Customer-supplied Encryption Keys]{@link https://cloud.google.com/storage/docs/encryption#customer-supplied}
    *
    * @param {string|buffer|object} options If a string or Buffer is provided, it
-   *     is interpreted as an AES-256, customer-supplied encryption key. If you'd
-   *     like to use a Cloud KMS key name, you must specify an options object with
-   *     the property name: `kmsKeyName`.
+   *     is interpreted as an AES-256, customer-supplied encryption key. If
+   * you'd like to use a Cloud KMS key name, you must specify an options object
+   * with the property name: `kmsKeyName`.
    * @param {string|buffer} [options.encryptionKey] An AES-256 encryption key.
    * @param {string} [options.kmsKeyName] A Cloud KMS key name.
    * @returns {File}
@@ -2283,9 +2277,9 @@ class File extends ServiceObject {
    *
    * <p class="notice">
    *   There is some overhead when using a resumable upload that can cause
-   *   noticeable performance degradation while uploading a series of small files.
-   *   When uploading files less than 10MB, it is recommended that the resumable
-   *   feature is disabled.
+   *   noticeable performance degradation while uploading a series of small
+   * files. When uploading files less than 10MB, it is recommended that the
+   * resumable feature is disabled.
    * </p>
    *
    * @param {*} data The data to write to a file.
@@ -2320,9 +2314,9 @@ class File extends ServiceObject {
     }
 
     this.createWriteStream(options)
-      .on('error', callback)
-      .on('finish', callback)
-      .end(data);
+        .on('error', callback)
+        .on('finish', callback)
+        .end(data);
   }
 
   /**
@@ -2447,12 +2441,13 @@ class File extends ServiceObject {
     options = extend(true, {}, options);
 
     // In case we get input like `storageClass`, convert to `storage_class`.
-    options.storageClass = storageClass
-      .replace(/-/g, '_')
-      .replace(/([a-z])([A-Z])/g, (_, low, up) => {
-        return low + '_' + up;
-      })
-      .toUpperCase();
+    options.storageClass = storageClass.replace(/-/g, '_')
+                               .replace(
+                                   /([a-z])([A-Z])/g,
+                                   (_, low, up) => {
+                                     return low + '_' + up;
+                                   })
+                               .toUpperCase();
 
     this.copy(this, options, (err, file, apiResponse) => {
       if (err) {
@@ -2467,7 +2462,8 @@ class File extends ServiceObject {
   }
 
   /**
-   * Set a user project to be billed for all requests made from this File object.
+   * Set a user project to be billed for all requests made from this File
+   * object.
    *
    * @param {string} userProject The user project.
    *
@@ -2495,11 +2491,10 @@ class File extends ServiceObject {
    */
   startResumableUpload_(dup, options) {
     options = extend(
-      {
-        metadata: {},
-      },
-      options
-    );
+        {
+          metadata: {},
+        },
+        options);
 
     const uploadStream = resumableUpload.upload({
       authClient: this.storage.authClient,
@@ -2519,15 +2514,17 @@ class File extends ServiceObject {
     });
 
     uploadStream
-      .on('response', resp => {
-        dup.emit('response', resp);
-      })
-      .on('metadata', metadata => {
-        this.metadata = metadata;
-      })
-      .on('finish', () => {
-        dup.emit('complete');
-      });
+        .on('response',
+            resp => {
+              dup.emit('response', resp);
+            })
+        .on('metadata',
+            metadata => {
+              this.metadata = metadata;
+            })
+        .on('finish', () => {
+          dup.emit('complete');
+        });
 
     dup.setWritable(uploadStream);
   }
@@ -2544,16 +2541,15 @@ class File extends ServiceObject {
    */
   startSimpleUpload_(dup, options) {
     options = extend(
-      {
-        metadata: {},
-      },
-      options
-    );
+        {
+          metadata: {},
+        },
+        options);
 
     const reqOpts = {
       qs: {
         name: this.name,
-      // tslint:disable-next-line:no-any
+        // tslint:disable-next-line:no-any
       } as any,
       uri: `${STORAGE_UPLOAD_BASE_URL}/${this.bucket.name}/o`,
     };

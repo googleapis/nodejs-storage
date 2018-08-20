@@ -17,7 +17,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { ServiceObject, util } from '@google-cloud/common';
+import {ServiceObject, util} from '@google-cloud/common';
 import * as extend from 'extend';
 import * as proxyquire from 'proxyquire';
 import * as nodeUtil from 'util';
@@ -52,16 +52,16 @@ describe('Notification', () => {
 
   before(() => {
     Notification = proxyquire('../src/notification.js', {
-      '@google-cloud/promisify': fakePromisify,
-      '@google-cloud/common': {
-        ServiceObject: FakeServiceObject,
-        util: fakeUtil,
-      },
-    }).Notification;
+                     '@google-cloud/promisify': fakePromisify,
+                     '@google-cloud/common': {
+                       ServiceObject: FakeServiceObject,
+                       util: fakeUtil,
+                     },
+                   }).Notification;
   });
 
   beforeEach(() => {
-    BUCKET.createNotification = fakeUtil.noop = () => { };
+    BUCKET.createNotification = fakeUtil.noop = () => {};
     notification = new Notification(BUCKET, ID);
   });
 
@@ -86,7 +86,7 @@ describe('Notification', () => {
     });
 
     it('should use Bucket#createNotification for the createMethod', () => {
-      const bound = () => { };
+      const bound = () => {};
 
       extend(BUCKET.createNotification, {
         bind(context) {
@@ -117,7 +117,7 @@ describe('Notification', () => {
         assert.strictEqual(reqOpts.method, 'DELETE');
         assert.strictEqual(reqOpts.uri, '');
         assert.strictEqual(reqOpts.qs, options);
-        callback(); // the done fn
+        callback();  // the done fn
       };
 
       notification.delete(options, done);
@@ -126,7 +126,7 @@ describe('Notification', () => {
     it('should optionally accept options', done => {
       notification.request = (reqOpts, callback) => {
         assert.deepStrictEqual(reqOpts.qs, {});
-        callback(); // the done fn
+        callback();  // the done fn
       };
 
       notification.delete(done);
@@ -136,7 +136,7 @@ describe('Notification', () => {
       fakeUtil.noop = done;
 
       notification.request = (reqOpts, callback) => {
-        callback(); // the done fn
+        callback();  // the done fn
       };
 
       notification.delete();
@@ -200,7 +200,7 @@ describe('Notification', () => {
     describe('autoCreate', () => {
       let AUTO_CREATE_CONFIG;
 
-      const ERROR = { code: 404 };
+      const ERROR = {code: 404};
       const METADATA = {};
 
       beforeEach(() => {
@@ -228,7 +228,7 @@ describe('Notification', () => {
 
       it('should pass only a callback to create if no config', done => {
         notification.create = callback => {
-          callback(); // done()
+          callback();  // done()
         };
 
         notification.get(AUTO_CREATE_CONFIG, done);
@@ -242,7 +242,7 @@ describe('Notification', () => {
           notification.create = callback => {
             notification.get = (config, callback) => {
               assert.deepStrictEqual(config, {});
-              callback(); // done()
+              callback();  // done()
             };
 
             callback(error, null, apiResponse);
@@ -264,7 +264,7 @@ describe('Notification', () => {
           notification.create = callback => {
             notification.get = (config, callback) => {
               assert.deepStrictEqual(config, {});
-              callback(); // done()
+              callback();  // done()
             };
 
             callback(error);

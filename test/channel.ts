@@ -23,7 +23,7 @@
 import * as assert from 'assert';
 import * as nodeutil from 'util';
 import * as proxyquire from 'proxyquire';
-import { ServiceObject, util } from '@google-cloud/common';
+import {ServiceObject, util} from '@google-cloud/common';
 
 let promisified = false;
 const fakePromisify = {
@@ -53,11 +53,11 @@ describe('Channel', () => {
 
   before(() => {
     Channel = proxyquire('../src/channel.js', {
-      '@google-cloud/promisify': fakePromisify,
-      '@google-cloud/common': {
-        ServiceObject: FakeServiceObject,
-      },
-    }).Channel;
+                '@google-cloud/promisify': fakePromisify,
+                '@google-cloud/common': {
+                  ServiceObject: FakeServiceObject,
+                },
+              }).Channel;
   });
 
   beforeEach(() => {

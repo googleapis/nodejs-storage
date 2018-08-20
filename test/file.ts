@@ -17,7 +17,7 @@
 'use strict';
 
 import * as assert from 'assert';
-import { Buffer } from 'safe-buffer';
+import {Buffer} from 'safe-buffer';
 import * as crypto from 'crypto';
 let duplexify;
 import * as extend from 'extend';
@@ -29,10 +29,11 @@ import * as stream from 'stream';
 import * as through from 'through2';
 import * as tmp from 'tmp';
 import * as url from 'url';
-import { ServiceObject, util } from '@google-cloud/common';
+import {ServiceObject, util} from '@google-cloud/common';
 import * as zlib from 'zlib';
 
-interface RequestAPI extends request.RequestAPI<request.Request, request.CoreOptions, {}> { }
+interface RequestAPI extends
+    request.RequestAPI<request.Request, request.CoreOptions, {}> {}
 
 interface RequestStub {
   (...args): RequestAPI;
@@ -41,7 +42,7 @@ interface RequestStub {
   head?: typeof request.head;
 }
 
-const { Bucket } = require('../src/bucket.js');
+const {Bucket} = require('../src/bucket.js');
 
 let promisified = false;
 let makeWritableStreamOverride;
@@ -72,7 +73,7 @@ const fakePromisify = {
 const fsCached = extend(true, {}, fs);
 const fakeFs = extend(true, {}, fsCached);
 
-let REQUEST_DEFAULT_CONF; // eslint-disable-line no-unused-vars
+let REQUEST_DEFAULT_CONF;  // eslint-disable-line no-unused-vars
 const requestCached = request;
 let requestOverride;
 const fakeRequest: RequestStub = (...args) => {
@@ -89,10 +90,8 @@ fakeRequest.defaults = defaultConfiguration => {
 let hashStreamValidationOverride;
 const hashStreamValidation = require('hash-stream-validation');
 function fakeHashStreamValidation() {
-  return (hashStreamValidationOverride || hashStreamValidation).apply(
-    null,
-    arguments
-  );
+  return (hashStreamValidationOverride || hashStreamValidation)
+      .apply(null, arguments);
 }
 
 const osCached = extend(true, {}, require('os'));
@@ -138,9 +137,9 @@ const xdgBasedirCached = require('xdg-basedir');
 const fakeXdgBasedir = extend(true, {}, xdgBasedirCached);
 Object.defineProperty(fakeXdgBasedir, 'config', {
   get() {
-    return xdgConfigOverride === false
-      ? false
-      : xdgConfigOverride || xdgBasedirCached.config;
+    return xdgConfigOverride === false ?
+        false :
+        xdgConfigOverride || xdgBasedirCached.config;
   },
 });
 
@@ -157,18 +156,18 @@ describe('File', () => {
 
   before(() => {
     File = proxyquire('../src/file.js', {
-      '@google-cloud/common': {
-        ServiceObject: FakeServiceObject,
-        util: fakeUtil,
-      },
-      '@google-cloud/promisify': fakePromisify,
-      fs: fakeFs,
-      'gcs-resumable-upload': fakeResumableUpload,
-      'hash-stream-validation': fakeHashStreamValidation,
-      os: fakeOs,
-      request: fakeRequest,
-      'xdg-basedir': fakeXdgBasedir,
-    }).File;
+             '@google-cloud/common': {
+               ServiceObject: FakeServiceObject,
+               util: fakeUtil,
+             },
+             '@google-cloud/promisify': fakePromisify,
+             fs: fakeFs,
+             'gcs-resumable-upload': fakeResumableUpload,
+             'hash-stream-validation': fakeHashStreamValidation,
+             os: fakeOs,
+             request: fakeRequest,
+             'xdg-basedir': fakeXdgBasedir,
+           }).File;
     duplexify = require('duplexify');
   });
 
@@ -230,17 +229,17 @@ describe('File', () => {
 
     it('should assign KMS key name', () => {
       const kmsKeyName = 'kms-key-name';
-      const file = new File(BUCKET, '/name', { kmsKeyName });
+      const file = new File(BUCKET, '/name', {kmsKeyName});
       assert.strictEqual(file.kmsKeyName, kmsKeyName);
     });
 
     it('should accept specifying a generation', () => {
-      const file = new File(BUCKET, 'name', { generation: 2 });
+      const file = new File(BUCKET, 'name', {generation: 2});
       assert.strictEqual(file.generation, 2);
     });
 
     it('should build a requestQueryObject from generation', () => {
-      const file = new File(BUCKET, 'name', { generation: 2 });
+      const file = new File(BUCKET, 'name', {generation: 2});
       assert.deepStrictEqual(file.requestQueryObject, {
         generation: 2,
       });
@@ -273,7 +272,7 @@ describe('File', () => {
         done();
       };
 
-      const _file = new File(BUCKET, FILE_NAME, { encryptionKey: key });
+      const _file = new File(BUCKET, FILE_NAME, {encryptionKey: key});
     });
 
     describe('userProject', () => {
@@ -308,9 +307,8 @@ describe('File', () => {
     it('should URI encode file names', done => {
       const newFile = new File(BUCKET, 'nested/file.jpg');
 
-      const expectedPath = `/rewriteTo/b/${
-        file.bucket.name
-        }/o/${encodeURIComponent(newFile.name)}`;
+      const expectedPath = `/rewriteTo/b/${file.bucket.name}/o/${
+          encodeURIComponent(newFile.name)}`;
 
       directoryFile.request = reqOpts => {
         assert.strictEqual(reqOpts.uri, expectedPath);
@@ -340,7 +338,7 @@ describe('File', () => {
     });
 
     it('should send query.sourceGeneration if File has one', done => {
-      const versionedFile = new File(BUCKET, 'name', { generation: 1 });
+      const versionedFile = new File(BUCKET, 'name', {generation: 1});
       const newFile = new File(BUCKET, 'new-file');
 
       versionedFile.request = reqOpts => {
@@ -419,9 +417,7 @@ describe('File', () => {
 
       file.request = reqOpts => {
         assert.strictEqual(
-          reqOpts.qs.destinationKmsKeyName,
-          newFile.kmsKeyName
-        );
+            reqOpts.qs.destinationKmsKeyName, newFile.kmsKeyName);
         assert.strictEqual(file.kmsKeyName, newFile.kmsKeyName);
         done();
       };
@@ -435,14 +431,12 @@ describe('File', () => {
 
       file.request = reqOpts => {
         assert.strictEqual(
-          reqOpts.qs.destinationKmsKeyName,
-          destinationKmsKeyName
-        );
+            reqOpts.qs.destinationKmsKeyName, destinationKmsKeyName);
         assert.strictEqual(file.kmsKeyName, destinationKmsKeyName);
         done();
       };
 
-      file.copy(newFile, { destinationKmsKeyName }, assert.ifError);
+      file.copy(newFile, {destinationKmsKeyName}, assert.ifError);
     });
 
     it('should favor the option over the File KMS name', done => {
@@ -452,31 +446,31 @@ describe('File', () => {
 
       file.request = reqOpts => {
         assert.strictEqual(
-          reqOpts.qs.destinationKmsKeyName,
-          destinationKmsKeyName
-        );
+            reqOpts.qs.destinationKmsKeyName, destinationKmsKeyName);
         assert.strictEqual(file.kmsKeyName, destinationKmsKeyName);
         done();
       };
 
-      file.copy(newFile, { destinationKmsKeyName }, assert.ifError);
+      file.copy(newFile, {destinationKmsKeyName}, assert.ifError);
     });
 
-    it('should remove custom encryption interceptor if rotating to KMS', done => {
-      const newFile = new File(BUCKET, 'new-file');
-      const destinationKmsKeyName = 'correct-kms-key-name';
+    it('should remove custom encryption interceptor if rotating to KMS',
+       done => {
+         const newFile = new File(BUCKET, 'new-file');
+         const destinationKmsKeyName = 'correct-kms-key-name';
 
-      file.encryptionKeyInterceptor = {};
-      file.interceptors = [{}, file.encryptionKeyInterceptor, {}];
+         file.encryptionKeyInterceptor = {};
+         file.interceptors = [{}, file.encryptionKeyInterceptor, {}];
 
-      file.request = () => {
-        assert.strictEqual(file.interceptors.length, 2);
-        assert(file.interceptors.indexOf(file.encryptionKeyInterceptor) === -1);
-        done();
-      };
+         file.request = () => {
+           assert.strictEqual(file.interceptors.length, 2);
+           assert(
+               file.interceptors.indexOf(file.encryptionKeyInterceptor) === -1);
+           done();
+         };
 
-      file.copy(newFile, { destinationKmsKeyName }, assert.ifError);
-    });
+         file.copy(newFile, {destinationKmsKeyName}, assert.ifError);
+       });
 
     describe('destination types', () => {
       function assertPathEquals(file, expectedPath, callback) {
@@ -488,9 +482,8 @@ describe('File', () => {
 
       it('should allow a string', done => {
         const newFileName = 'new-file-name.png';
-        const expectedPath = `/rewriteTo/b/${
-          file.bucket.name
-          }/o/${newFileName}`;
+        const expectedPath =
+            `/rewriteTo/b/${file.bucket.name}/o/${newFileName}`;
         assertPathEquals(file, expectedPath, done);
         file.copy(newFileName);
       });
@@ -517,7 +510,7 @@ describe('File', () => {
 
       it('should throw if a destination cannot be parsed', () => {
         assert.throws(() => {
-          file.copy(() => { });
+          file.copy(() => {});
         }, /Destination file should have a name\./);
       });
     });
@@ -539,8 +532,8 @@ describe('File', () => {
         file.request = (reqOpts, callback) => {
           file.copy = (newFile_, options, callback) => {
             assert.strictEqual(newFile_, newFile);
-            assert.deepStrictEqual(options, { token: apiResponse.rewriteToken });
-            callback(); // done()
+            assert.deepStrictEqual(options, {token: apiResponse.rewriteToken});
+            callback();  // done()
           };
 
           callback(null, apiResponse);
@@ -577,9 +570,8 @@ describe('File', () => {
         file.request = (reqOpts, callback) => {
           file.copy = (newFile_, options) => {
             assert.strictEqual(
-              options.destinationKmsKeyName,
-              fakeOptions.destinationKmsKeyName
-            );
+                options.destinationKmsKeyName,
+                fakeOptions.destinationKmsKeyName);
             done();
           };
 
@@ -597,13 +589,13 @@ describe('File', () => {
           done();
         };
 
-        file.copy(newFile, { token: apiResponse.rewriteToken }, assert.ifError);
+        file.copy(newFile, {token: apiResponse.rewriteToken}, assert.ifError);
       });
     });
 
     describe('returned File object', () => {
       beforeEach(() => {
-        const resp = { success: true };
+        const resp = {success: true};
         file.request = (reqOpts, callback) => {
           callback(null, resp);
         };
@@ -640,7 +632,7 @@ describe('File', () => {
       it('should pass apiResponse into callback', done => {
         file.copy(BUCKET, (err, copiedFile, apiResponse) => {
           assert.ifError(err);
-          assert.deepStrictEqual({ success: true }, apiResponse);
+          assert.deepStrictEqual({success: true}, apiResponse);
           done();
         });
       });
@@ -733,7 +725,7 @@ describe('File', () => {
         const rawResponseStream = through();
         extend(rawResponseStream, {
           toJSON() {
-            return { headers: {} };
+            return {headers: {}};
           },
         });
         callback(null, null, rawResponseStream);
@@ -779,7 +771,7 @@ describe('File', () => {
     });
 
     it('should send query.generation if File has one', done => {
-      const versionedFile = new File(BUCKET, 'file.txt', { generation: 1 });
+      const versionedFile = new File(BUCKET, 'file.txt', {generation: 1});
 
       versionedFile.requestStream = rOpts => {
         assert.strictEqual(rOpts.qs.generation, 1);
@@ -842,26 +834,28 @@ describe('File', () => {
         });
 
         it('should emit an error from authenticating', done => {
-          file
-            .createReadStream()
-            .once('error', err => {
-              assert.strictEqual(err, ERROR);
-              done();
-            })
-            .resume();
+          file.createReadStream()
+              .once(
+                  'error',
+                  err => {
+                    assert.strictEqual(err, ERROR);
+                    done();
+                  })
+              .resume();
         });
       });
     });
 
     describe('requestStream', () => {
       it('should get readable stream from request', done => {
-        const fakeRequest = { a: 'b', c: 'd' };
+        const fakeRequest = {a: 'b', c: 'd'};
 
         requestOverride = getFakeRequest();
 
         file.requestStream = () => {
           setImmediate(() => {
-            assert.deepStrictEqual(requestOverride.getRequestOptions(), fakeRequest);
+            assert.deepStrictEqual(
+                requestOverride.getRequestOptions(), fakeRequest);
             done();
           });
 
@@ -874,16 +868,16 @@ describe('File', () => {
       it('should emit response event from request', done => {
         file.requestStream = getFakeSuccessfulRequest('body');
 
-        file
-          .createReadStream({ validation: false })
-          .on('response', () => {
-            done();
-          })
-          .resume();
+        file.createReadStream({validation: false})
+            .on('response',
+                () => {
+                  done();
+                })
+            .resume();
       });
 
       it('should let util.handleResp handle the response', done => {
-        const response = { a: 'b', c: 'd' };
+        const response = {a: 'b', c: 'd'};
 
         handleRespOverride = (err, response_, body) => {
           assert.strictEqual(err, null);
@@ -911,13 +905,14 @@ describe('File', () => {
         });
 
         it('should emit the error', done => {
-          file
-            .createReadStream()
-            .once('error', err => {
-              assert.deepStrictEqual(err, ERROR);
-              done();
-            })
-            .resume();
+          file.createReadStream()
+              .once(
+                  'error',
+                  err => {
+                    assert.deepStrictEqual(err, ERROR);
+                    done();
+                  })
+              .resume();
         });
 
         it('should parse a response stream for a better error', done => {
@@ -940,14 +935,15 @@ describe('File', () => {
             return requestStream;
           };
 
-          file
-            .createReadStream()
-            .once('error', err => {
-              assert.strictEqual(err, ERROR);
-              assert.strictEqual(err.message, rawResponsePayload);
-              done();
-            })
-            .resume();
+          file.createReadStream()
+              .once(
+                  'error',
+                  err => {
+                    assert.strictEqual(err, ERROR);
+                    assert.strictEqual(err.message, rawResponsePayload);
+                    done();
+                  })
+              .resume();
         });
       });
     });
@@ -980,14 +976,14 @@ describe('File', () => {
       });
 
       it('should gunzip the response', done => {
-        file
-          .createReadStream()
-          .once('error', done)
-          .on('data', data => {
-            assert.strictEqual(data.toString(), DATA);
-            done();
-          })
-          .resume();
+        file.createReadStream()
+            .once('error', done)
+            .on('data',
+                data => {
+                  assert.strictEqual(data.toString(), DATA);
+                  done();
+                })
+            .resume();
       });
     });
 
@@ -1027,10 +1023,7 @@ describe('File', () => {
 
         file.requestStream = getFakeSuccessfulRequest(data);
 
-        file
-          .createReadStream(fakeOptions)
-          .on('error', done)
-          .resume();
+        file.createReadStream(fakeOptions).on('error', done).resume();
       });
 
       it('should destroy stream from failed metadata fetch', done => {
@@ -1041,23 +1034,22 @@ describe('File', () => {
 
         file.requestStream = getFakeSuccessfulRequest('data');
 
-        file
-          .createReadStream()
-          .on('error', err => {
-            assert.strictEqual(err, error);
-            done();
-          })
-          .resume();
+        file.createReadStream()
+            .on('error',
+                err => {
+                  assert.strictEqual(err, error);
+                  done();
+                })
+            .resume();
       });
 
       it('should validate with crc32c', done => {
         file.requestStream = getFakeSuccessfulRequest(data);
 
-        file
-          .createReadStream({ validation: 'crc32c' })
-          .on('error', done)
-          .on('end', done)
-          .resume();
+        file.createReadStream({validation: 'crc32c'})
+            .on('error', done)
+            .on('end', done)
+            .resume();
       });
 
       it('should emit an error if crc32c validation fails', done => {
@@ -1067,13 +1059,13 @@ describe('File', () => {
           return false;
         };
 
-        file
-          .createReadStream({ validation: 'crc32c' })
-          .on('error', err => {
-            assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
-            done();
-          })
-          .resume();
+        file.createReadStream({validation: 'crc32c'})
+            .on('error',
+                err => {
+                  assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
+                  done();
+                })
+            .resume();
       });
 
       it('should validate with md5', done => {
@@ -1083,11 +1075,10 @@ describe('File', () => {
           return true;
         };
 
-        file
-          .createReadStream({ validation: 'md5' })
-          .on('error', done)
-          .on('end', done)
-          .resume();
+        file.createReadStream({validation: 'md5'})
+            .on('error', done)
+            .on('end', done)
+            .resume();
       });
 
       it('should emit an error if md5 validation fails', done => {
@@ -1097,13 +1088,13 @@ describe('File', () => {
           return false;
         };
 
-        file
-          .createReadStream({ validation: 'md5' })
-          .on('error', err => {
-            assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
-            done();
-          })
-          .resume();
+        file.createReadStream({validation: 'md5'})
+            .on('error',
+                err => {
+                  assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
+                  done();
+                })
+            .resume();
       });
 
       it('should default to crc32c validation', done => {
@@ -1116,13 +1107,13 @@ describe('File', () => {
 
         file.requestStream = getFakeSuccessfulRequest(data);
 
-        file
-          .createReadStream()
-          .on('error', err => {
-            assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
-            done();
-          })
-          .resume();
+        file.createReadStream()
+            .on('error',
+                err => {
+                  assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
+                  done();
+                })
+            .resume();
       });
 
       it('should ignore a data mismatch if validation: false', done => {
@@ -1132,11 +1123,10 @@ describe('File', () => {
           return false;
         };
 
-        file
-          .createReadStream({ validation: false })
-          .resume()
-          .on('error', done)
-          .on('end', done);
+        file.createReadStream({validation: false})
+            .resume()
+            .on('error', done)
+            .on('end', done);
       });
 
       describe('destroying the through stream', () => {
@@ -1149,7 +1139,7 @@ describe('File', () => {
         it('should destroy after failed validation', done => {
           file.requestStream = getFakeSuccessfulRequest('bad-data');
 
-          const readStream = file.createReadStream({ validation: 'md5' });
+          const readStream = file.createReadStream({validation: 'md5'});
           readStream.destroy = err => {
             assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
             done();
@@ -1167,7 +1157,7 @@ describe('File', () => {
 
           file.requestStream = getFakeSuccessfulRequest('bad-data');
 
-          const readStream = file.createReadStream({ validation: 'md5' });
+          const readStream = file.createReadStream({validation: 'md5'});
           readStream.destroy = err => {
             assert.strictEqual(err.code, 'MD5_NOT_AVAILABLE');
             done();
@@ -1183,13 +1173,14 @@ describe('File', () => {
 
         file.requestStream = opts => {
           setImmediate(() => {
-            assert.strictEqual(opts.headers.Range, 'bytes=' + startOffset + '-');
+            assert.strictEqual(
+                opts.headers.Range, 'bytes=' + startOffset + '-');
             done();
           });
           return duplexify();
         };
 
-        file.createReadStream({ start: startOffset }).resume();
+        file.createReadStream({start: startOffset}).resume();
       });
 
       it('should accept an end range and set start to 0', done => {
@@ -1203,7 +1194,7 @@ describe('File', () => {
           return duplexify();
         };
 
-        file.createReadStream({ end: endOffset }).resume();
+        file.createReadStream({end: endOffset}).resume();
       });
 
       it('should accept both a start and end range', done => {
@@ -1219,7 +1210,7 @@ describe('File', () => {
           return duplexify();
         };
 
-        file.createReadStream({ start: startOffset, end: endOffset }).resume();
+        file.createReadStream({start: startOffset, end: endOffset}).resume();
       });
 
       it('should accept range start and end as 0', done => {
@@ -1235,13 +1226,13 @@ describe('File', () => {
           return duplexify();
         };
 
-        file.createReadStream({ start: startOffset, end: endOffset }).resume();
+        file.createReadStream({start: startOffset, end: endOffset}).resume();
       });
 
       it('should end the through stream', done => {
         file.requestStream = getFakeSuccessfulRequest('body');
 
-        const readStream = file.createReadStream({ start: 100 });
+        const readStream = file.createReadStream({start: 100});
         readStream.end = done;
         readStream.resume();
       });
@@ -1259,7 +1250,7 @@ describe('File', () => {
           return duplexify();
         };
 
-        file.createReadStream({ end: endOffset }).resume();
+        file.createReadStream({end: endOffset}).resume();
       });
     });
   });
@@ -1319,7 +1310,7 @@ describe('File', () => {
   });
 
   describe('createWriteStream', () => {
-    const METADATA = { a: 'b', c: 'd' };
+    const METADATA = {a: 'b', c: 'd'};
 
     beforeEach(() => {
       extend(fakeFs, {
@@ -1397,7 +1388,7 @@ describe('File', () => {
         },
       });
 
-      file.createWriteStream({ resumable: true }).write('data');
+      file.createWriteStream({resumable: true}).write('data');
     });
 
     it('should fall back to checking tmpdir', done => {
@@ -1416,7 +1407,7 @@ describe('File', () => {
         },
       });
 
-      file.createWriteStream({ resumable: true }).write('data');
+      file.createWriteStream({resumable: true}).write('data');
     });
 
     it('should fail if resumable requested but not writable', done => {
@@ -1428,7 +1419,7 @@ describe('File', () => {
         },
       });
 
-      const writable = file.createWriteStream({ resumable: true });
+      const writable = file.createWriteStream({resumable: true});
 
       writable.on('error', err => {
         assert.notStrictEqual(err, error);
@@ -1437,14 +1428,11 @@ describe('File', () => {
 
         const configDir = xdgBasedirCached.config;
 
-        assert.strictEqual(
-          err.message,
-          [
-            'A resumable upload could not be performed. The directory,',
-            `${configDir}, is not writable. You may try another upload,`,
-            'this time setting `options.resumable` to `false`.',
-          ].join(' ')
-        );
+        assert.strictEqual(err.message, [
+          'A resumable upload could not be performed. The directory,',
+          `${configDir}, is not writable. You may try another upload,`,
+          'this time setting `options.resumable` to `false`.',
+        ].join(' '));
 
         done();
       });
@@ -1487,7 +1475,7 @@ describe('File', () => {
 
     it('should alias contentType to metadata object', done => {
       const contentType = 'text/html';
-      const writable = file.createWriteStream({ contentType });
+      const writable = file.createWriteStream({contentType});
 
       file.startResumableUpload_ = (stream, options) => {
         assert.strictEqual(options.metadata.contentType, contentType);
@@ -1498,7 +1486,7 @@ describe('File', () => {
     });
 
     it('should detect contentType with contentType:auto', done => {
-      const writable = file.createWriteStream({ contentType: 'auto' });
+      const writable = file.createWriteStream({contentType: 'auto'});
 
       file.startResumableUpload_ = (stream, options) => {
         assert.strictEqual(options.metadata.contentType, 'image/png');
@@ -1509,7 +1497,7 @@ describe('File', () => {
     });
 
     it('should set encoding with gzip:true', done => {
-      const writable = file.createWriteStream({ gzip: true });
+      const writable = file.createWriteStream({gzip: true});
 
       file.startResumableUpload_ = (stream, options) => {
         assert.strictEqual(options.metadata.contentEncoding, 'gzip');
@@ -1522,7 +1510,7 @@ describe('File', () => {
     it('should set encoding with gzip:auto & compressible', done => {
       const writable = file.createWriteStream({
         gzip: 'auto',
-        contentType: 'text/html', // (compressible)
+        contentType: 'text/html',  // (compressible)
       });
 
       file.startResumableUpload_ = (stream, options) => {
@@ -1534,7 +1522,7 @@ describe('File', () => {
     });
 
     it('should not set encoding with gzip:auto & non-compressible', done => {
-      const writable = file.createWriteStream({ gzip: 'auto' });
+      const writable = file.createWriteStream({gzip: 'auto'});
 
       file.startResumableUpload_ = (stream, options) => {
         assert.strictEqual(options.metadata.contentEncoding, undefined);
@@ -1561,7 +1549,7 @@ describe('File', () => {
     });
 
     it('should cork data on prefinish', done => {
-      const writable = file.createWriteStream({ resumable: false });
+      const writable = file.createWriteStream({resumable: false});
 
       file.startSimpleUpload_ = stream => {
         assert.strictEqual(writable._corked, 0);
@@ -1577,12 +1565,12 @@ describe('File', () => {
       const data = 'test';
 
       const fakeMetadata = {
-        crc32c: { crc32c: '####wA==' },
-        md5: { md5Hash: 'CY9rzUYh03PK3k6DJie09g==' },
+        crc32c: {crc32c: '####wA=='},
+        md5: {md5Hash: 'CY9rzUYh03PK3k6DJie09g=='},
       };
 
       it('should uncork after successful write', done => {
-        const writable = file.createWriteStream({ validation: 'crc32c' });
+        const writable = file.createWriteStream({validation: 'crc32c'});
 
         file.startResumableUpload_ = stream => {
           setImmediate(() => {
@@ -1602,7 +1590,7 @@ describe('File', () => {
       });
 
       it('should validate with crc32c', done => {
-        const writable = file.createWriteStream({ validation: 'crc32c' });
+        const writable = file.createWriteStream({validation: 'crc32c'});
 
         file.startResumableUpload_ = stream => {
           setImmediate(() => {
@@ -1617,7 +1605,7 @@ describe('File', () => {
       });
 
       it('should emit an error if crc32c validation fails', done => {
-        const writable = file.createWriteStream({ validation: 'crc32c' });
+        const writable = file.createWriteStream({validation: 'crc32c'});
 
         file.startResumableUpload_ = stream => {
           setImmediate(() => {
@@ -1640,7 +1628,7 @@ describe('File', () => {
       });
 
       it('should validate with md5', done => {
-        const writable = file.createWriteStream({ validation: 'md5' });
+        const writable = file.createWriteStream({validation: 'md5'});
 
         file.startResumableUpload_ = stream => {
           setImmediate(() => {
@@ -1656,7 +1644,7 @@ describe('File', () => {
       });
 
       it('should emit an error if md5 validation fails', done => {
-        const writable = file.createWriteStream({ validation: 'md5' });
+        const writable = file.createWriteStream({validation: 'md5'});
 
         file.startResumableUpload_ = stream => {
           setImmediate(() => {
@@ -1683,7 +1671,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = stream => {
           setImmediate(() => {
-            file.metadata = { md5Hash: 'bad-hash' };
+            file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
           });
         };
@@ -1702,11 +1690,11 @@ describe('File', () => {
       });
 
       it('should ignore a data mismatch if validation: false', done => {
-        const writable = file.createWriteStream({ validation: false });
+        const writable = file.createWriteStream({validation: false});
 
         file.startResumableUpload_ = stream => {
           setImmediate(() => {
-            file.metadata = { md5Hash: 'bad-hash' };
+            file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
           });
         };
@@ -1723,7 +1711,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = stream => {
           setImmediate(() => {
-            file.metadata = { md5Hash: 'bad-hash' };
+            file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
           });
         };
@@ -1737,11 +1725,11 @@ describe('File', () => {
       });
 
       it('should emit an error if MD5 is requested but absent', done => {
-        const writable = file.createWriteStream({ validation: 'md5' });
+        const writable = file.createWriteStream({validation: 'md5'});
 
         file.startResumableUpload_ = stream => {
           setImmediate(() => {
-            file.metadata = { crc32c: 'not-md5' };
+            file.metadata = {crc32c: 'not-md5'};
             stream.emit('complete');
           });
         };
@@ -1764,7 +1752,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = stream => {
           setImmediate(() => {
-            file.metadata = { md5Hash: 'bad-hash' };
+            file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
           });
         };
@@ -1790,10 +1778,10 @@ describe('File', () => {
   describe('delete', () => {
     it('should make the correct request', done => {
       extend(file.parent, {
-        delete(options, callback) {
+        delete (options, callback) {
           assert.strictEqual(this, file);
           assert.deepStrictEqual(options, {});
-          callback(); // done()
+          callback();  // done()
         },
       });
 
@@ -1872,7 +1860,7 @@ describe('File', () => {
     });
 
     it('should pass the provided options to createReadStream', done => {
-      const readOptions = { start: 100, end: 200 };
+      const readOptions = {start: 100, end: 200};
 
       file.createReadStream = options => {
         assert.deepStrictEqual(options, readOptions);
@@ -1946,7 +1934,7 @@ describe('File', () => {
             },
           });
 
-          file.download({ destination: tmpFilePath }, err => {
+          file.download({destination: tmpFilePath}, err => {
             assert.ifError(err);
 
             fs.readFile(tmpFilePath, (err, tmpFileContents) => {
@@ -1972,7 +1960,7 @@ describe('File', () => {
             },
           });
 
-          file.download({ destination: tmpFilePath }, err => {
+          file.download({destination: tmpFilePath}, err => {
             assert.strictEqual(err, error);
             done();
           });
@@ -1987,7 +1975,7 @@ describe('File', () => {
 
       file.parent.exists = (options_, callback) => {
         assert.strictEqual(options_, options);
-        callback(); // done()
+        callback();  // done()
       };
 
       file.exists(options, done);
@@ -2000,7 +1988,7 @@ describe('File', () => {
 
       file.parent.get = (options_, callback) => {
         assert.strictEqual(options_, options);
-        callback(); // done()
+        callback();  // done()
       };
 
       file.get(options, done);
@@ -2013,7 +2001,7 @@ describe('File', () => {
         getMetadata(options, callback) {
           assert.strictEqual(this, file);
           assert.deepStrictEqual(options, {});
-          callback(); // done()
+          callback();  // done()
         },
       });
 
@@ -2123,63 +2111,56 @@ describe('File', () => {
 
     it('should add ACL condtion', done => {
       file.getSignedPolicy(
-        {
-          expires: Date.now() + 2000,
-          acl: '<acl>',
-        },
-        (err, signedPolicy) => {
-          const conditionString = '{"acl":"<acl>"}';
-          assert.ifError(err);
-          assert(signedPolicy.string.indexOf(conditionString) > -1);
-          done();
-        }
-      );
+          {
+            expires: Date.now() + 2000,
+            acl: '<acl>',
+          },
+          (err, signedPolicy) => {
+            const conditionString = '{"acl":"<acl>"}';
+            assert.ifError(err);
+            assert(signedPolicy.string.indexOf(conditionString) > -1);
+            done();
+          });
     });
 
     it('should add success redirect', done => {
       const redirectUrl = 'http://redirect';
 
       file.getSignedPolicy(
-        {
-          expires: Date.now() + 2000,
-          successRedirect: redirectUrl,
-        },
-        (err, signedPolicy) => {
-          assert.ifError(err);
+          {
+            expires: Date.now() + 2000,
+            successRedirect: redirectUrl,
+          },
+          (err, signedPolicy) => {
+            assert.ifError(err);
 
-          const policy = JSON.parse(signedPolicy.string);
-          assert(
-            policy.conditions.some(condition => {
+            const policy = JSON.parse(signedPolicy.string);
+            assert(policy.conditions.some(condition => {
               return condition.success_action_redirect === redirectUrl;
-            })
-          );
+            }));
 
-          done();
-        }
-      );
+            done();
+          });
     });
 
     it('should add success status', done => {
       const successStatus = '200';
 
       file.getSignedPolicy(
-        {
-          expires: Date.now() + 2000,
-          successStatus,
-        },
-        (err, signedPolicy) => {
-          assert.ifError(err);
+          {
+            expires: Date.now() + 2000,
+            successStatus,
+          },
+          (err, signedPolicy) => {
+            assert.ifError(err);
 
-          const policy = JSON.parse(signedPolicy.string);
-          assert(
-            policy.conditions.some(condition => {
+            const policy = JSON.parse(signedPolicy.string);
+            assert(policy.conditions.some(condition => {
               return condition.success_action_status === successStatus;
-            })
-          );
+            }));
 
-          done();
-        }
-      );
+            done();
+          });
     });
 
     describe('expires', () => {
@@ -2187,48 +2168,45 @@ describe('File', () => {
         const expires = new Date(Date.now() + 1000 * 60);
 
         file.getSignedPolicy(
-          {
-            expires,
-          },
-          (err, policy) => {
-            assert.ifError(err);
-            const expires_ = JSON.parse(policy.string).expiration;
-            assert.strictEqual(expires_, expires.toISOString());
-            done();
-          }
-        );
+            {
+              expires,
+            },
+            (err, policy) => {
+              assert.ifError(err);
+              const expires_ = JSON.parse(policy.string).expiration;
+              assert.strictEqual(expires_, expires.toISOString());
+              done();
+            });
       });
 
       it('should accept numbers', done => {
         const expires = Date.now() + 1000 * 60;
 
         file.getSignedPolicy(
-          {
-            expires,
-          },
-          (err, policy) => {
-            assert.ifError(err);
-            const expires_ = JSON.parse(policy.string).expiration;
-            assert.strictEqual(expires_, new Date(expires).toISOString());
-            done();
-          }
-        );
+            {
+              expires,
+            },
+            (err, policy) => {
+              assert.ifError(err);
+              const expires_ = JSON.parse(policy.string).expiration;
+              assert.strictEqual(expires_, new Date(expires).toISOString());
+              done();
+            });
       });
 
       it('should accept strings', done => {
         const expires = '12-12-2099';
 
         file.getSignedPolicy(
-          {
-            expires,
-          },
-          (err, policy) => {
-            assert.ifError(err);
-            const expires_ = JSON.parse(policy.string).expiration;
-            assert.strictEqual(expires_, new Date(expires).toISOString());
-            done();
-          }
-        );
+            {
+              expires,
+            },
+            (err, policy) => {
+              assert.ifError(err);
+              const expires_ = JSON.parse(policy.string).expiration;
+              assert.strictEqual(expires_, new Date(expires).toISOString());
+              done();
+            });
       });
 
       it('should throw if a date from the past is given', () => {
@@ -2236,11 +2214,10 @@ describe('File', () => {
 
         assert.throws(() => {
           file.getSignedPolicy(
-            {
-              expires,
-            },
-            () => { }
-          );
+              {
+                expires,
+              },
+              () => {});
         }, /An expiration date cannot be in the past\./);
       });
     });
@@ -2248,55 +2225,51 @@ describe('File', () => {
     describe('equality condition', () => {
       it('should add equality conditions (array of arrays)', done => {
         file.getSignedPolicy(
-          {
-            expires: Date.now() + 2000,
-            equals: [['$<field>', '<value>']],
-          },
-          (err, signedPolicy) => {
-            const conditionString = '["eq","$<field>","<value>"]';
-            assert.ifError(err);
-            assert(signedPolicy.string.indexOf(conditionString) > -1);
-            done();
-          }
-        );
+            {
+              expires: Date.now() + 2000,
+              equals: [['$<field>', '<value>']],
+            },
+            (err, signedPolicy) => {
+              const conditionString = '["eq","$<field>","<value>"]';
+              assert.ifError(err);
+              assert(signedPolicy.string.indexOf(conditionString) > -1);
+              done();
+            });
       });
 
       it('should add equality condition (array)', done => {
         file.getSignedPolicy(
-          {
-            expires: Date.now() + 2000,
-            equals: ['$<field>', '<value>'],
-          },
-          (err, signedPolicy) => {
-            const conditionString = '["eq","$<field>","<value>"]';
-            assert.ifError(err);
-            assert(signedPolicy.string.indexOf(conditionString) > -1);
-            done();
-          }
-        );
+            {
+              expires: Date.now() + 2000,
+              equals: ['$<field>', '<value>'],
+            },
+            (err, signedPolicy) => {
+              const conditionString = '["eq","$<field>","<value>"]';
+              assert.ifError(err);
+              assert(signedPolicy.string.indexOf(conditionString) > -1);
+              done();
+            });
       });
 
       it('should throw if equal condition is not an array', () => {
         assert.throws(() => {
           file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              equals: [{}],
-            },
-            () => { }
-          );
+              {
+                expires: Date.now() + 2000,
+                equals: [{}],
+              },
+              () => {});
         }, /Equals condition must be an array of 2 elements\./);
       });
 
       it('should throw if equal condition length is not 2', () => {
         assert.throws(() => {
           file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              equals: [['1', '2', '3']],
-            },
-            () => { }
-          );
+              {
+                expires: Date.now() + 2000,
+                equals: [['1', '2', '3']],
+              },
+              () => {});
         }, /Equals condition must be an array of 2 elements\./);
       });
     });
@@ -2304,55 +2277,51 @@ describe('File', () => {
     describe('prefix conditions', () => {
       it('should add prefix conditions (array of arrays)', done => {
         file.getSignedPolicy(
-          {
-            expires: Date.now() + 2000,
-            startsWith: [['$<field>', '<value>']],
-          },
-          (err, signedPolicy) => {
-            const conditionString = '["starts-with","$<field>","<value>"]';
-            assert.ifError(err);
-            assert(signedPolicy.string.indexOf(conditionString) > -1);
-            done();
-          }
-        );
+            {
+              expires: Date.now() + 2000,
+              startsWith: [['$<field>', '<value>']],
+            },
+            (err, signedPolicy) => {
+              const conditionString = '["starts-with","$<field>","<value>"]';
+              assert.ifError(err);
+              assert(signedPolicy.string.indexOf(conditionString) > -1);
+              done();
+            });
       });
 
       it('should add prefix condition (array)', done => {
         file.getSignedPolicy(
-          {
-            expires: Date.now() + 2000,
-            startsWith: ['$<field>', '<value>'],
-          },
-          (err, signedPolicy) => {
-            const conditionString = '["starts-with","$<field>","<value>"]';
-            assert.ifError(err);
-            assert(signedPolicy.string.indexOf(conditionString) > -1);
-            done();
-          }
-        );
+            {
+              expires: Date.now() + 2000,
+              startsWith: ['$<field>', '<value>'],
+            },
+            (err, signedPolicy) => {
+              const conditionString = '["starts-with","$<field>","<value>"]';
+              assert.ifError(err);
+              assert(signedPolicy.string.indexOf(conditionString) > -1);
+              done();
+            });
       });
 
       it('should throw if prexif condition is not an array', () => {
         assert.throws(() => {
           file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              startsWith: [{}],
-            },
-            () => { }
-          );
+              {
+                expires: Date.now() + 2000,
+                startsWith: [{}],
+              },
+              () => {});
         }, /StartsWith condition must be an array of 2 elements\./);
       });
 
       it('should throw if prefix condition length is not 2', () => {
         assert.throws(() => {
           file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              startsWith: [['1', '2', '3']],
-            },
-            () => { }
-          );
+              {
+                expires: Date.now() + 2000,
+                startsWith: [['1', '2', '3']],
+              },
+              () => {});
         }, /StartsWith condition must be an array of 2 elements\./);
       });
     });
@@ -2360,40 +2329,37 @@ describe('File', () => {
     describe('content length', () => {
       it('should add content length condition', done => {
         file.getSignedPolicy(
-          {
-            expires: Date.now() + 2000,
-            contentLengthRange: { min: 0, max: 1 },
-          },
-          (err, signedPolicy) => {
-            const conditionString = '["content-length-range",0,1]';
-            assert.ifError(err);
-            assert(signedPolicy.string.indexOf(conditionString) > -1);
-            done();
-          }
-        );
+            {
+              expires: Date.now() + 2000,
+              contentLengthRange: {min: 0, max: 1},
+            },
+            (err, signedPolicy) => {
+              const conditionString = '["content-length-range",0,1]';
+              assert.ifError(err);
+              assert(signedPolicy.string.indexOf(conditionString) > -1);
+              done();
+            });
       });
 
       it('should throw if content length has no min', () => {
         assert.throws(() => {
           file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              contentLengthRange: [{ max: 1 }],
-            },
-            () => { }
-          );
+              {
+                expires: Date.now() + 2000,
+                contentLengthRange: [{max: 1}],
+              },
+              () => {});
         }, /ContentLengthRange must have numeric min & max fields\./);
       });
 
       it('should throw if content length has no max', () => {
         assert.throws(() => {
           file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              contentLengthRange: [{ min: 0 }],
-            },
-            () => { }
-          );
+              {
+                expires: Date.now() + 2000,
+                contentLengthRange: [{min: 0}],
+              },
+              () => {});
         }, /ContentLengthRange must have numeric min & max fields\./);
       });
     });
@@ -2420,16 +2386,13 @@ describe('File', () => {
 
     it('should create a signed url', done => {
       BUCKET.storage.authClient.sign = blobToSign => {
-        assert.deepStrictEqual(
-          blobToSign,
-          [
-            'GET',
-            '',
-            '',
-            Math.round(CONFIG.expires / 1000),
-            `/${BUCKET.name}/${encodeURIComponent(file.name)}`,
-          ].join('\n')
-        );
+        assert.deepStrictEqual(blobToSign, [
+          'GET',
+          '',
+          '',
+          Math.round(CONFIG.expires / 1000),
+          `/${BUCKET.name}/${encodeURIComponent(file.name)}`,
+        ].join('\n'));
         return Promise.resolve('signature');
       };
 
@@ -2438,10 +2401,9 @@ describe('File', () => {
         assert.strictEqual(typeof signedUrl, 'string');
         const expires = Math.round(CONFIG.expires / 1000);
         const expected =
-          'https://storage.googleapis.com/bucket-name/file-name.png?' +
-          'GoogleAccessId=client-email&Expires=' +
-          expires +
-          '&Signature=signature';
+            'https://storage.googleapis.com/bucket-name/file-name.png?' +
+            'GoogleAccessId=client-email&Expires=' + expires +
+            '&Signature=signature';
         assert.strictEqual(signedUrl, expected);
         done();
       });
@@ -2496,24 +2458,24 @@ describe('File', () => {
       const type = 'application/json';
 
       directoryFile.getSignedUrl(
-        {
-          action: 'read',
-          expires: Date.now() + 2000,
-          responseType: type,
-        },
-        (err, signedUrl) => {
-          assert(signedUrl.indexOf(encodeURIComponent(type)) > -1);
-          done();
-        }
-      );
+          {
+            action: 'read',
+            expires: Date.now() + 2000,
+            responseType: type,
+          },
+          (err, signedUrl) => {
+            assert(signedUrl.indexOf(encodeURIComponent(type)) > -1);
+            done();
+          });
     });
 
     it('should add generation parameter', done => {
       const generation = 10003320000;
-      const file = new File(BUCKET, 'name', { generation });
+      const file = new File(BUCKET, 'name', {generation});
 
       file.getSignedUrl(CONFIG, (err, signedUrl) => {
-        assert(signedUrl.indexOf(encodeURIComponent(generation.toString())) > -1);
+        assert(
+            signedUrl.indexOf(encodeURIComponent(generation.toString())) > -1);
         done();
       });
     });
@@ -2521,17 +2483,15 @@ describe('File', () => {
     describe('cname', () => {
       it('should use a provided cname', done => {
         const host = 'http://www.example.com';
-        const configWithCname = extend({ cname: host }, CONFIG);
+        const configWithCname = extend({cname: host}, CONFIG);
 
         file.getSignedUrl(configWithCname, (err, signedUrl) => {
           assert.ifError(err);
 
           const expires = Math.round(CONFIG.expires / 1000);
-          const expected =
-            'http://www.example.com/file-name.png?' +
-            'GoogleAccessId=client-email&Expires=' +
-            expires +
-            '&Signature=signature';
+          const expected = 'http://www.example.com/file-name.png?' +
+              'GoogleAccessId=client-email&Expires=' + expires +
+              '&Signature=signature';
 
           assert.strictEqual(signedUrl, expected);
           done();
@@ -2542,18 +2502,17 @@ describe('File', () => {
         const host = 'http://www.example.com//';
 
         file.getSignedUrl(
-          {
-            action: 'read',
-            cname: host,
-            expires: Date.now() + 2000,
-          },
-          (err, signedUrl) => {
-            assert.ifError(err);
-            assert.strictEqual(signedUrl.indexOf(host), -1);
-            assert.strictEqual(signedUrl.indexOf(host.substr(0, -1)), 0);
-            done();
-          }
-        );
+            {
+              action: 'read',
+              cname: host,
+              expires: Date.now() + 2000,
+            },
+            (err, signedUrl) => {
+              assert.ifError(err);
+              assert.strictEqual(signedUrl.indexOf(host), -1);
+              assert.strictEqual(signedUrl.indexOf(host.substr(0, -1)), 0);
+              done();
+            });
       });
     });
 
@@ -2561,16 +2520,15 @@ describe('File', () => {
       it('should add response-content-disposition', done => {
         const disposition = 'attachment; filename="fname.ext"';
         directoryFile.getSignedUrl(
-          {
-            action: 'read',
-            expires: Date.now() + 2000,
-            promptSaveAs: 'fname.ext',
-          },
-          (err, signedUrl) => {
-            assert(signedUrl.indexOf(encodeURIComponent(disposition)) > -1);
-            done();
-          }
-        );
+            {
+              action: 'read',
+              expires: Date.now() + 2000,
+              promptSaveAs: 'fname.ext',
+            },
+            (err, signedUrl) => {
+              assert(signedUrl.indexOf(encodeURIComponent(disposition)) > -1);
+              done();
+            });
       });
     });
 
@@ -2578,34 +2536,32 @@ describe('File', () => {
       it('should add response-content-disposition', done => {
         const disposition = 'attachment; filename="fname.ext"';
         directoryFile.getSignedUrl(
-          {
-            action: 'read',
-            expires: Date.now() + 2000,
-            responseDisposition: disposition,
-          },
-          (err, signedUrl) => {
-            assert(signedUrl.indexOf(encodeURIComponent(disposition)) > -1);
-            done();
-          }
-        );
+            {
+              action: 'read',
+              expires: Date.now() + 2000,
+              responseDisposition: disposition,
+            },
+            (err, signedUrl) => {
+              assert(signedUrl.indexOf(encodeURIComponent(disposition)) > -1);
+              done();
+            });
       });
 
       it('should ignore promptSaveAs if set', done => {
         const disposition = 'attachment; filename="fname.ext"';
         const saveAs = 'fname2.ext';
         directoryFile.getSignedUrl(
-          {
-            action: 'read',
-            expires: Date.now() + 2000,
-            promptSaveAs: saveAs,
-            responseDisposition: disposition,
-          },
-          (err, signedUrl) => {
-            assert(signedUrl.indexOf(encodeURIComponent(disposition)) > -1);
-            assert(signedUrl.indexOf(encodeURIComponent(saveAs)) === -1);
-            done();
-          }
-        );
+            {
+              action: 'read',
+              expires: Date.now() + 2000,
+              promptSaveAs: saveAs,
+              responseDisposition: disposition,
+            },
+            (err, signedUrl) => {
+              assert(signedUrl.indexOf(encodeURIComponent(disposition)) > -1);
+              assert(signedUrl.indexOf(encodeURIComponent(saveAs)) === -1);
+              done();
+            });
       });
     });
 
@@ -2615,17 +2571,16 @@ describe('File', () => {
         const expectedExpires = Math.round(expires.valueOf() / 1000);
 
         file.getSignedUrl(
-          {
-            action: 'read',
-            expires,
-          },
-          (err, signedUrl) => {
-            assert.ifError(err);
-            const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.strictEqual(expires_, expectedExpires.toString());
-            done();
-          }
-        );
+            {
+              action: 'read',
+              expires,
+            },
+            (err, signedUrl) => {
+              assert.ifError(err);
+              const expires_ = url.parse(signedUrl, true).query.Expires;
+              assert.strictEqual(expires_, expectedExpires.toString());
+              done();
+            });
       });
 
       it('should accept numbers', done => {
@@ -2633,17 +2588,16 @@ describe('File', () => {
         const expectedExpires = Math.round(new Date(expires).valueOf() / 1000);
 
         file.getSignedUrl(
-          {
-            action: 'read',
-            expires,
-          },
-          (err, signedUrl) => {
-            assert.ifError(err);
-            const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.strictEqual(expires_, expectedExpires.toString());
-            done();
-          }
-        );
+            {
+              action: 'read',
+              expires,
+            },
+            (err, signedUrl) => {
+              assert.ifError(err);
+              const expires_ = url.parse(signedUrl, true).query.Expires;
+              assert.strictEqual(expires_, expectedExpires.toString());
+              done();
+            });
       });
 
       it('should accept strings', done => {
@@ -2651,17 +2605,16 @@ describe('File', () => {
         const expectedExpires = Math.round(new Date(expires).valueOf() / 1000);
 
         file.getSignedUrl(
-          {
-            action: 'read',
-            expires,
-          },
-          (err, signedUrl) => {
-            assert.ifError(err);
-            const expires_ = url.parse(signedUrl, true).query.Expires;
-            assert.strictEqual(expires_, expectedExpires.toString());
-            done();
-          }
-        );
+            {
+              action: 'read',
+              expires,
+            },
+            (err, signedUrl) => {
+              assert.ifError(err);
+              const expires_ = url.parse(signedUrl, true).query.Expires;
+              assert.strictEqual(expires_, expectedExpires.toString());
+              done();
+            });
       });
 
       it('should throw if a date from the past is given', () => {
@@ -2669,12 +2622,11 @@ describe('File', () => {
 
         assert.throws(() => {
           file.getSignedUrl(
-            {
-              action: 'read',
-              expires,
-            },
-            () => { }
-          );
+              {
+                action: 'read',
+                expires,
+              },
+              () => {});
         }, /An expiration date cannot be in the past\./);
       });
     });
@@ -2693,13 +2645,12 @@ describe('File', () => {
         };
 
         directoryFile.getSignedUrl(
-          {
-            action: 'read',
-            expires: Date.now() + 2000,
-            extensionHeaders,
-          },
-          assert.ifError
-        );
+            {
+              action: 'read',
+              expires: Date.now() + 2000,
+              extensionHeaders,
+            },
+            assert.ifError);
       });
     });
   });
@@ -2738,8 +2689,8 @@ describe('File', () => {
 
     it('should make the file private to project by default', done => {
       file.setMetadata = (metadata, query) => {
-        assert.deepStrictEqual(metadata, { acl: null });
-        assert.deepStrictEqual(query, { predefinedAcl: 'projectPrivate' });
+        assert.deepStrictEqual(metadata, {acl: null});
+        assert.deepStrictEqual(query, {predefinedAcl: 'projectPrivate'});
         done();
       };
 
@@ -2748,11 +2699,11 @@ describe('File', () => {
 
     it('should make the file private to user if strict = true', done => {
       file.setMetadata = (metadata, query) => {
-        assert.deepStrictEqual(query, { predefinedAcl: 'private' });
+        assert.deepStrictEqual(query, {predefinedAcl: 'private'});
         done();
       };
 
-      file.makePrivate({ strict: true }, util.noop);
+      file.makePrivate({strict: true}, util.noop);
     });
 
     it('should accept userProject', done => {
@@ -2780,7 +2731,7 @@ describe('File', () => {
 
     it('should make the file public', done => {
       file.acl.add = options => {
-        assert.deepStrictEqual(options, { entity: 'allUsers', role: 'READER' });
+        assert.deepStrictEqual(options, {entity: 'allUsers', role: 'READER'});
         done();
       };
 
@@ -2844,7 +2795,7 @@ describe('File', () => {
           callback(null);
         };
         extend(file, {
-          delete() {
+          delete () {
             assert.strictEqual(this, file);
             done();
           },
@@ -2952,7 +2903,7 @@ describe('File', () => {
         request(reqOpts, callback) {
           assert.strictEqual(this, file);
           assert.strictEqual(reqOpts, options);
-          callback(); // done fn
+          callback();  // done fn
         },
       });
 
@@ -3004,7 +2955,7 @@ describe('File', () => {
 
       file.copy = (destination, callback) => {
         assert.strictEqual(destination, newFile);
-        callback(); // done()
+        callback();  // done()
       };
 
       file.rotateEncryptionKey({}, done);
@@ -3081,7 +3032,7 @@ describe('File', () => {
         setMetadata(metadata, options, callback) {
           assert.strictEqual(this, file);
           assert.deepStrictEqual(options, {});
-          callback(); // done()
+          callback();  // done()
         },
       });
 
@@ -3237,10 +3188,10 @@ describe('File', () => {
     // tslint:disable-next-line:no-any
     const KEY_BASE64 = Buffer.from(KEY as any).toString('base64');
     const KEY_HASH = crypto
-      .createHash('sha256')
-      // tslint:disable-next-line:no-any
-      .update(KEY_BASE64, 'base64' as any)
-      .digest('base64');
+                         .createHash('sha256')
+                         // tslint:disable-next-line:no-any
+                         .update(KEY_BASE64, 'base64' as any)
+                         .digest('base64');
     let _file;
 
     beforeEach(() => {
@@ -3273,13 +3224,9 @@ describe('File', () => {
       };
 
       assert.deepStrictEqual(
-        file.interceptors[0].request({}),
-        expectedInterceptor
-      );
+          file.interceptors[0].request({}), expectedInterceptor);
       assert.deepStrictEqual(
-        file.encryptionKeyInterceptor.request({}),
-        expectedInterceptor
-      );
+          file.encryptionKeyInterceptor.request({}), expectedInterceptor);
 
       done();
     });
@@ -3433,10 +3380,8 @@ describe('File', () => {
             name: file.name,
             predefinedAcl: options.predefinedAcl,
           },
-          uri:
-            'https://www.googleapis.com/upload/storage/v1/b/' +
-            file.bucket.name +
-            '/o',
+          uri: 'https://www.googleapis.com/upload/storage/v1/b/' +
+              file.bucket.name + '/o',
         });
         done();
       };
@@ -3450,7 +3395,7 @@ describe('File', () => {
         done();
       };
 
-      file.startSimpleUpload_(duplexify(), { public: true });
+      file.startSimpleUpload_(duplexify(), {public: true});
     });
 
     it('should set predefinedAcl when private: true', done => {
@@ -3459,11 +3404,11 @@ describe('File', () => {
         done();
       };
 
-      file.startSimpleUpload_(duplexify(), { private: true });
+      file.startSimpleUpload_(duplexify(), {private: true});
     });
 
     it('should send query.ifGenerationMatch if File has one', done => {
-      const versionedFile = new File(BUCKET, 'new-file.txt', { generation: 1 });
+      const versionedFile = new File(BUCKET, 'new-file.txt', {generation: 1});
 
       makeWritableStreamOverride = (stream, options) => {
         assert.strictEqual(options.request.qs.ifGenerationMatch, 1);
@@ -3490,7 +3435,8 @@ describe('File', () => {
       };
 
       makeWritableStreamOverride = (stream, options_) => {
-        assert.strictEqual(options_.request.qs.userProject, options.userProject);
+        assert.strictEqual(
+            options_.request.qs.userProject, options.userProject);
         done();
       };
 

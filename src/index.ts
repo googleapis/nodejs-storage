@@ -36,8 +36,10 @@ interface CreateBucketQuery {
  * @property {string} [projectId] The project ID from the Google Developer's
  *     Console, e.g. 'grape-spaceship-123'. We will also check the environment
  *     variable `GCLOUD_PROJECT` for your project ID. If your app is running in
- *     an environment which supports {@link https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application Application Default Credentials},
- *     your project ID will be detected automatically.
+ *     an environment which supports {@link
+ * https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application
+ * Application Default Credentials}, your project ID will be detected
+ * automatically.
  * @property {string} [keyFilename] Full path to the a .json, .pem, or .p12 key
  *     downloaded from the Google Developers Console. If you provide a path to a
  *     JSON file, the `projectId` option above is not necessary. NOTE: .pem and
@@ -78,9 +80,9 @@ interface CreateBucketQuery {
  * @class
  * @hideconstructor
  *
- * @example <caption>Create a client that uses Application Default Credentials (ADC)</caption>
- * const {Storage} = require('@google-cloud/storage');
- * const storage = new Storage();
+ * @example <caption>Create a client that uses Application Default Credentials
+ * (ADC)</caption> const {Storage} = require('@google-cloud/storage'); const
+ * storage = new Storage();
  *
  * @example <caption>Create a client with explicit credentials</caption>
  * storage');/storage');
@@ -320,7 +322,8 @@ class Storage extends Service {
    *
    * Cloud Storage uses a flat namespace, so you can't create a bucket with
    * a name that is already in use. For more information, see
-   * [Bucket Naming Guidelines](https://cloud.google.com/storage/docs/bucketnaming.html#requirements).
+   * [Bucket Naming
+   * Guidelines](https://cloud.google.com/storage/docs/bucketnaming.html#requirements).
    *
    * @see [Buckets: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/insert}
    * @see [Storage Classes]{@link https://cloud.google.com/storage/docs/storage-classes}
@@ -344,7 +347,8 @@ class Storage extends Service {
    * //-
    * // Create a bucket in a specific location and region. <em>See the <a
    * // href="https://cloud.google.com/storage/docs/json_api/v1/buckets/insert">
-   * // Official JSON API docs</a> for complete details on the `location` option.
+   * // Official JSON API docs</a> for complete details on the `location`
+   * option.
    * // </em>
    * //-
    * const metadata = {
@@ -423,24 +427,23 @@ class Storage extends Service {
     }
 
     this.request(
-      {
-        method: 'POST',
-        uri: '/b',
-        qs: query,
-        json: body,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, resp);
-          return;
-        }
+        {
+          method: 'POST',
+          uri: '/b',
+          qs: query,
+          json: body,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, null, resp);
+            return;
+          }
 
-        const bucket = this.bucket(name);
-        bucket.metadata = resp;
+          const bucket = this.bucket(name);
+          bucket.metadata = resp;
 
-        callback(null, bucket, resp);
-      }
-    );
+          callback(null, bucket, resp);
+        });
   }
 
   /**
@@ -527,37 +530,37 @@ class Storage extends Service {
     query.project = query.project || this.projectId;
 
     this.request(
-      {
-        uri: '/b',
-        qs: query,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, null, resp);
-          return;
-        }
+        {
+          uri: '/b',
+          qs: query,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, null, null, resp);
+            return;
+          }
 
-        const buckets = arrify(resp.items).map(bucket => {
-          const bucketInstance = this.bucket(bucket.id);
-          bucketInstance.metadata = bucket;
-          return bucketInstance;
+          const buckets = arrify(resp.items).map(bucket => {
+            const bucketInstance = this.bucket(bucket.id);
+            bucketInstance.metadata = bucket;
+            return bucketInstance;
+          });
+
+          let nextQuery = null;
+          if (resp.nextPageToken) {
+            nextQuery = extend({}, query, {pageToken: resp.nextPageToken});
+          }
+
+          callback(null, buckets, nextQuery, resp);
         });
-
-        let nextQuery = null;
-        if (resp.nextPageToken) {
-          nextQuery = extend({}, query, {pageToken: resp.nextPageToken});
-        }
-
-        callback(null, buckets, nextQuery, resp);
-      }
-    );
   }
 
   /**
    * @typedef {array} GetServiceAccountResponse
    * @property {object} 0 The service account resource.
    * @property {object} 1 The full
-   * [API response](https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource).
+   * [API
+   * response](https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource).
    */
   /**
    * @callback GetServiceAccountCallback
@@ -566,7 +569,8 @@ class Storage extends Service {
    * @param {string} serviceAccount.emailAddress The service account email
    *     address.
    * @param {object} apiResponse The full
-   * [API response](https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource).
+   * [API
+   * response](https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource).
    */
   /**
    * Get the email address of this project's Google Cloud Storage service
@@ -606,30 +610,28 @@ class Storage extends Service {
     }
 
     this.request(
-      {
-        uri: `/projects/${this.projectId}/serviceAccount`,
-        qs: options,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, resp);
-          return;
-        }
-
-        const camelCaseResponse = {};
-
-        for (const prop in resp) {
-          if (resp.hasOwnProperty(prop)) {
-            const camelCaseProp = prop.replace(/_(\w)/g, (_, match) =>
-              match.toUpperCase()
-            );
-            camelCaseResponse[camelCaseProp] = resp[prop];
+        {
+          uri: `/projects/${this.projectId}/serviceAccount`,
+          qs: options,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, null, resp);
+            return;
           }
-        }
 
-        callback(null, camelCaseResponse, resp);
-      }
-    );
+          const camelCaseResponse = {};
+
+          for (const prop in resp) {
+            if (resp.hasOwnProperty(prop)) {
+              const camelCaseProp =
+                  prop.replace(/_(\w)/g, (_, match) => match.toUpperCase());
+              camelCaseResponse[camelCaseProp] = resp[prop];
+            }
+          }
+
+          callback(null, camelCaseResponse, resp);
+        });
   }
 }
 
@@ -658,19 +660,21 @@ promisifyAll(Storage, {
  * @module {Storage} @google-cloud/storage
  * @alias nodejs-storage
  *
- * @example <caption>Install the client library with <a href="https://www.npmjs.com/">npm</a>:</caption>
- * npm install --save @google-cloud/storage
+ * @example <caption>Install the client library with <a
+ * href="https://www.npmjs.com/">npm</a>:</caption> npm install --save
+ * @google-cloud/storage
  *
  * @example <caption>Import the client library</caption>
  * const {Storage} = require('@google-cloud/storage');
  *
- * @example <caption>Create a client that uses <a href="https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application">Application Default Credentials (ADC)</a>:</caption>
- * const storage = new Storage();
+ * @example <caption>Create a client that uses <a
+ * href="https://cloud.google.com/docs/authentication/production#providing_credentials_to_your_application">Application
+ * Default Credentials (ADC)</a>:</caption> const storage = new Storage();
  *
- * @example <caption>Create a client with <a href="https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually">explicit credentials</a>:</caption>
- * const storage = new Storage({
- *   projectId: 'your-project-id',
- *   keyFilename: '/path/to/keyfile.json'
+ * @example <caption>Create a client with <a
+ * href="https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually">explicit
+ * credentials</a>:</caption> const storage = new Storage({ projectId:
+ * 'your-project-id', keyFilename: '/path/to/keyfile.json'
  * });
  *
  * @example <caption>include:samples/quickstart.js</caption>

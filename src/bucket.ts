@@ -153,7 +153,8 @@ class Bucket extends ServiceObject {
    * the ACLs defined on your bucket, as well as set, update, and delete them.
    *
    * Buckets also have
-   * [default ACLs](https://cloud.google.com/storage/docs/access-control/lists#default)
+   * [default
+   * ACLs](https://cloud.google.com/storage/docs/access-control/lists#default)
    * for all created files. Default ACLs specify permissions that all new
    * objects added to the bucket will inherit by default. You can add, delete,
    * get, and update entities and permissions for these as well with
@@ -165,7 +166,8 @@ class Bucket extends ServiceObject {
    * @name Bucket#acl
    * @mixes Acl
    * @property {Acl} default Cloud Storage Buckets have
-   * [default ACLs](https://cloud.google.com/storage/docs/access-control/lists#default)
+   * [default
+   * ACLs](https://cloud.google.com/storage/docs/access-control/lists#default)
    * for all created files. You can add, delete, get, and update entities and
    * permissions for these as well. The method signatures and examples are all
    * the same, after only prefixing the method call with `default`.
@@ -389,8 +391,8 @@ class Bucket extends ServiceObject {
    * @param {string} [options.kmsKeyName] Resource name of the Cloud KMS key, of
    *     the form
    *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
-   *     that will be used to encrypt the object. Overwrites the object metadata's
-   *     `kms_key_name` value, if any.
+   *     that will be used to encrypt the object. Overwrites the object
+   * metadata's `kms_key_name` value, if any.
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {CombineCallback} [callback] Callback function.
@@ -454,36 +456,35 @@ class Bucket extends ServiceObject {
 
     // Make the request from the destination File object.
     destination.request(
-      {
-        method: 'POST',
-        uri: '/compose',
-        json: {
-          destination: {
-            contentType: destination.metadata.contentType,
+        {
+          method: 'POST',
+          uri: '/compose',
+          json: {
+            destination: {
+              contentType: destination.metadata.contentType,
+            },
+            sourceObjects: sources.map(source => {
+              const sourceObject = {
+                name: source.name,
+              } as SourceObject;
+
+              if (source.metadata && source.metadata.generation) {
+                sourceObject.generation = source.metadata.generation;
+              }
+
+              return sourceObject;
+            }),
           },
-          sourceObjects: sources.map(source => {
-            const sourceObject = {
-              name: source.name,
-            } as SourceObject;
-
-            if (source.metadata && source.metadata.generation) {
-              sourceObject.generation = source.metadata.generation;
-            }
-
-            return sourceObject;
-          }),
+          qs: options,
         },
-        qs: options,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, resp);
-          return;
-        }
+        (err, resp) => {
+          if (err) {
+            callback(err, null, resp);
+            return;
+          }
 
-        callback(null, destination, resp);
-      }
-    );
+          callback(null, destination, resp);
+        });
   }
 
   /**
@@ -507,7 +508,8 @@ class Bucket extends ServiceObject {
    *
    * @param {string} id The ID of the channel to create.
    * @param {object} config See a
-   *     [Objects: watchAll request body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
+   *     [Objects: watchAll request
+   * body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
    * @param {string} config.address The address where notifications are
    *     delivered for this channel.
    * @param {object} [options] Configuration options.
@@ -555,32 +557,30 @@ class Bucket extends ServiceObject {
     }
 
     this.request(
-      {
-        method: 'POST',
-        uri: '/o/watch',
-        json: extend(
-          {
-            id,
-            type: 'web_hook',
-          },
-          config
-        ),
-        qs: options,
-      },
-      (err, apiResponse) => {
-        if (err) {
-          callback(err, null, apiResponse);
-          return;
-        }
+        {
+          method: 'POST',
+          uri: '/o/watch',
+          json: extend(
+              {
+                id,
+                type: 'web_hook',
+              },
+              config),
+          qs: options,
+        },
+        (err, apiResponse) => {
+          if (err) {
+            callback(err, null, apiResponse);
+            return;
+          }
 
-        const resourceId = apiResponse.resourceId;
-        const channel = this.storage.channel(id, resourceId);
+          const resourceId = apiResponse.resourceId;
+          const channel = this.storage.channel(id, resourceId);
 
-        channel.metadata = apiResponse;
+          channel.metadata = apiResponse;
 
-        callback(null, channel, apiResponse);
-      }
-    );
+          callback(null, channel, apiResponse);
+        });
   }
 
   /**
@@ -621,8 +621,8 @@ class Bucket extends ServiceObject {
    * @see [Notifications: insert]{@link https://cloud.google.com/storage/docs/json_api/v1/notifications/insert}
    *
    * @param {Topic|string} topic The Cloud PubSub topic to which this
-   *     subscription publishes. If the project ID is omitted, the current project
-   *     ID will be used.
+   *     subscription publishes. If the project ID is omitted, the current
+   * project ID will be used.
    *
    *     Acceptable formats are:
    *     - `projects/grape-spaceship-123/topics/my-topic`
@@ -703,25 +703,24 @@ class Bucket extends ServiceObject {
     }
 
     this.request(
-      {
-        method: 'POST',
-        uri: '/notificationConfigs',
-        json: snakeize(body),
-        qs: query,
-      },
-      (err, apiResponse) => {
-        if (err) {
-          callback(err, null, apiResponse);
-          return;
-        }
+        {
+          method: 'POST',
+          uri: '/notificationConfigs',
+          json: snakeize(body),
+          qs: query,
+        },
+        (err, apiResponse) => {
+          if (err) {
+            callback(err, null, apiResponse);
+            return;
+          }
 
-        const notification = this.notification(apiResponse.id);
+          const notification = this.notification(apiResponse.id);
 
-        notification.metadata = apiResponse;
+          notification.metadata = apiResponse;
 
-        callback(null, notification, apiResponse);
-      }
-    );
+          callback(null, notification, apiResponse);
+        });
   }
 
   /**
@@ -768,13 +767,12 @@ class Bucket extends ServiceObject {
     }
 
     this.request(
-      {
-        method: 'DELETE',
-        uri: '',
-        qs: options,
-      },
-      callback || util.noop
-    );
+        {
+          method: 'DELETE',
+          uri: '',
+          qs: options,
+        },
+        callback || util.noop);
   }
 
   /**
@@ -786,14 +784,14 @@ class Bucket extends ServiceObject {
   /**
    * Iterate over the bucket's files, calling `file.delete()` on each.
    *
-   * <strong>This is not an atomic request.</strong> A delete attempt will be made
-   * for each file individually. Any one can fail, in which case only a portion of
-   * the files you intended to be deleted would have.
+   * <strong>This is not an atomic request.</strong> A delete attempt will be
+   * made for each file individually. Any one can fail, in which case only a
+   * portion of the files you intended to be deleted would have.
    *
    * Operations are performed in parallel, up to 10 at once. The first error
    * breaks the loop and will execute the provided callback with it. Specify
-   * `{ force: true }` to suppress the errors until all files have had a chance to
-   * be processed.
+   * `{ force: true }` to suppress the errors until all files have had a chance
+   * to be processed.
    *
    * The `query` object passed as the first argument will also be passed to
    * {@link Bucket#getFiles}.
@@ -821,7 +819,8 @@ class Bucket extends ServiceObject {
    *
    * //-
    * // By default, if a file cannot be deleted, this method will stop deleting
-   * // files from your bucket. You can override this setting with `force: true`.
+   * // files from your bucket. You can override this setting with `force:
+   * true`.
    * //-
    * bucket.deleteFiles({
    *   force: true
@@ -1018,13 +1017,12 @@ class Bucket extends ServiceObject {
    */
   disableRequesterPays(callback) {
     this.setMetadata(
-      {
-        billing: {
-          requesterPays: false,
+        {
+          billing: {
+            requesterPays: false,
+          },
         },
-      },
-      callback || util.noop
-    );
+        callback || util.noop);
   }
 
   /**
@@ -1075,13 +1073,12 @@ class Bucket extends ServiceObject {
    */
   enableRequesterPays(callback?) {
     this.setMetadata(
-      {
-        billing: {
-          requesterPays: true,
+        {
+          billing: {
+            requesterPays: true,
+          },
         },
-      },
-      callback || util.noop
-    );
+        callback || util.noop);
   }
 
   /**
@@ -1148,7 +1145,8 @@ class Bucket extends ServiceObject {
    * @param {string|number} [options.generation] Only use a specific revision of
    *     this file.
    * @param {string} [options.encryptionKey] A custom encryption key. See
-   *     [Customer-supplied Encryption Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
+   *     [Customer-supplied Encryption
+   * Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
    * @param {string} [options.kmsKeyName] The name of the Cloud KMS key that will
    *     be used to encrypt the object. Must be in the format:
    *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`.
@@ -1352,43 +1350,42 @@ class Bucket extends ServiceObject {
     }
 
     this.request(
-      {
-        uri: '/o',
-        qs: query,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, null, resp);
-          return;
-        }
-
-        const files = arrify(resp.items).map(file => {
-          const options = {} as FileOptions;
-
-          if (query.versions) {
-            options.generation = file.generation;
+        {
+          uri: '/o',
+          qs: query,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, null, null, resp);
+            return;
           }
 
-          if (file.kmsKeyName) {
-            options.kmsKeyName = file.kmsKeyName;
-          }
+          const files = arrify(resp.items).map(file => {
+            const options = {} as FileOptions;
 
-          const fileInstance = this.file(file.name, options);
-          fileInstance.metadata = file;
+            if (query.versions) {
+              options.generation = file.generation;
+            }
 
-          return fileInstance;
-        });
+            if (file.kmsKeyName) {
+              options.kmsKeyName = file.kmsKeyName;
+            }
 
-        let nextQuery: object|null = null;
-        if (resp.nextPageToken) {
-          nextQuery = extend({}, query, {
-            pageToken: resp.nextPageToken,
+            const fileInstance = this.file(file.name, options);
+            fileInstance.metadata = file;
+
+            return fileInstance;
           });
-        }
 
-        callback(null, files, nextQuery, resp);
-      }
-    );
+          let nextQuery: object|null = null;
+          if (resp.nextPageToken) {
+            nextQuery = extend({}, query, {
+              pageToken: resp.nextPageToken,
+            });
+          }
+
+          callback(null, files, nextQuery, resp);
+        });
   }
 
   /**
@@ -1498,21 +1495,20 @@ class Bucket extends ServiceObject {
     }
 
     this.request(
-      {
-        uri: '',
-        qs: options,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, resp);
-          return;
-        }
+        {
+          uri: '',
+          qs: options,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, null, resp);
+            return;
+          }
 
-        this.metadata = resp;
+          this.metadata = resp;
 
-        callback(null, this.metadata, resp);
-      }
-    );
+          callback(null, this.metadata, resp);
+        });
   }
 
   /**
@@ -1568,25 +1564,24 @@ class Bucket extends ServiceObject {
     }
 
     this.request(
-      {
-        uri: '/notificationConfigs',
-        qs: options,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, resp);
-          return;
-        }
+        {
+          uri: '/notificationConfigs',
+          qs: options,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, null, resp);
+            return;
+          }
 
-        const notifications = arrify(resp.items).map(notification => {
-          const notificationInstance = this.notification(notification.id);
-          notificationInstance.metadata = notification;
-          return notificationInstance;
+          const notifications = arrify(resp.items).map(notification => {
+            const notificationInstance = this.notification(notification.id);
+            notificationInstance.metadata = notification;
+            return notificationInstance;
+          });
+
+          callback(null, notifications, resp);
         });
-
-        callback(null, notifications, resp);
-      }
-    );
   }
 
   /**
@@ -1601,18 +1596,18 @@ class Bucket extends ServiceObject {
   /**
    * Make the bucket listing private.
    *
-   * You may also choose to make the contents of the bucket private by specifying
-   * `includeFiles: true`. This will automatically run
+   * You may also choose to make the contents of the bucket private by
+   * specifying `includeFiles: true`. This will automatically run
    * {@link File#makePrivate} for every file in the bucket.
    *
-   * When specifying `includeFiles: true`, use `force: true` to delay execution of
-   * your callback until all files have been processed. By default, the callback
-   * is executed after the first error. Use `force` to queue such errors until all
-   * files have been processed, after which they will be returned as an array as
-   * the first argument to your callback.
+   * When specifying `includeFiles: true`, use `force: true` to delay execution
+   * of your callback until all files have been processed. By default, the
+   * callback is executed after the first error. Use `force` to queue such
+   * errors until all files have been processed, after which they will be
+   * returned as an array as the first argument to your callback.
    *
-   * NOTE: This may cause the process to be long-running and use a high number of
-   * requests. Use with caution.
+   * NOTE: This may cause the process to be long-running and use a high number
+   * of requests. Use with caution.
    *
    * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
    *
@@ -1694,14 +1689,12 @@ class Bucket extends ServiceObject {
       }
 
       this.setMetadata(
-        {
-          // You aren't allowed to set both predefinedAcl & acl properties on a
-          // bucket so acl must explicitly be nullified.
-          acl: null,
-        },
-        query,
-        done
-      );
+          {
+            // You aren't allowed to set both predefinedAcl & acl properties on
+            // a bucket so acl must explicitly be nullified.
+            acl: null,
+          },
+          query, done);
     };
 
     const makeFilesPrivate = done => {
@@ -1732,14 +1725,14 @@ class Bucket extends ServiceObject {
    * specifying `includeFiles: true`. This will automatically run
    * {@link File#makePublic} for every file in the bucket.
    *
-   * When specifying `includeFiles: true`, use `force: true` to delay execution of
-   * your callback until all files have been processed. By default, the callback
-   * is executed after the first error. Use `force` to queue such errors until all
-   * files have been processed, after which they will be returned as an array as
-   * the first argument to your callback.
+   * When specifying `includeFiles: true`, use `force: true` to delay execution
+   * of your callback until all files have been processed. By default, the
+   * callback is executed after the first error. Use `force` to queue such
+   * errors until all files have been processed, after which they will be
+   * returned as an array as the first argument to your callback.
    *
-   * NOTE: This may cause the process to be long-running and use a high number of
-   * requests. Use with caution.
+   * NOTE: This may cause the process to be long-running and use a high number
+   * of requests. Use with caution.
    *
    * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
    *
@@ -1812,22 +1805,20 @@ class Bucket extends ServiceObject {
     const addAclPermissions = done => {
       // Allow reading bucket contents while preserving original permissions.
       this.acl.add(
-        {
-          entity: 'allUsers',
-          role: 'READER',
-        },
-        done
-      );
+          {
+            entity: 'allUsers',
+            role: 'READER',
+          },
+          done);
     };
 
     const addDefaultAclPermissions = done => {
-      this.acl.default!.add(
-        {
-          entity: 'allUsers',
-          role: 'READER',
-        },
-        done
-      );
+      this.acl.default !.add(
+          {
+            entity: 'allUsers',
+            role: 'READER',
+          },
+          done);
     };
 
     const makeFilesPublic = done => {
@@ -1840,9 +1831,8 @@ class Bucket extends ServiceObject {
     };
 
     async.series(
-      [addAclPermissions, addDefaultAclPermissions, makeFilesPublic],
-      callback
-    );
+        [addAclPermissions, addDefaultAclPermissions, makeFilesPublic],
+        callback);
   }
 
   /**
@@ -2012,23 +2002,22 @@ class Bucket extends ServiceObject {
     callback = callback || util.noop;
 
     this.request(
-      {
-        method: 'PATCH',
-        uri: '',
-        json: metadata,
-        qs: options,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, resp);
-          return;
-        }
+        {
+          method: 'PATCH',
+          uri: '',
+          json: metadata,
+          qs: options,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, resp);
+            return;
+          }
 
-        this.metadata = resp;
+          this.metadata = resp;
 
-        callback(null, resp);
-      }
-    );
+          callback(null, resp);
+        });
   }
 
   /**
@@ -2069,12 +2058,13 @@ class Bucket extends ServiceObject {
    */
   setStorageClass(storageClass, options, callback) {
     // In case we get input like `storageClass`, convert to `storage_class`.
-    storageClass = storageClass
-      .replace(/-/g, '_')
-      .replace(/([a-z])([A-Z])/g, (_, low, up) => {
-        return low + '_' + up;
-      })
-      .toUpperCase();
+    storageClass = storageClass.replace(/-/g, '_')
+                       .replace(
+                           /([a-z])([A-Z])/g,
+                           (_, low, up) => {
+                             return low + '_' + up;
+                           })
+                       .toUpperCase();
 
     this.setMetadata({storageClass}, options, callback);
   }
@@ -2112,8 +2102,8 @@ class Bucket extends ServiceObject {
    * {@link File#createWriteStream}.
    *
    * You can specify whether or not an upload is resumable by setting
-   * `options.resumable`. *Resumable uploads are enabled by default if your input
-   * file is larger than 5 MB.*
+   * `options.resumable`. *Resumable uploads are enabled by default if your
+   * input file is larger than 5 MB.*
    *
    * For faster crc32c computation, you must manually install
    * [`fast-crc32c`](http://www.gitnpm.com/fast-crc32c):
@@ -2128,19 +2118,22 @@ class Bucket extends ServiceObject {
    * @param {object} [options] Configuration options.
    * @param {string|File} [options.destination] The place to save
    *     your file. If given a string, the file will be uploaded to the bucket
-   *     using the string as a filename. When given a File object, your local file
-   *     will be uploaded to the File object's bucket and under the File object's
-   *     name. Lastly, when this argument is omitted, the file is uploaded to your
-   *     bucket using the name of the local file or the path of the url relative to it's domain.
+   *     using the string as a filename. When given a File object, your local
+   * file will be uploaded to the File object's bucket and under the File
+   * object's name. Lastly, when this argument is omitted, the file is uploaded
+   * to your bucket using the name of the local file or the path of the url
+   * relative to it's domain.
    * @param {string} [options.encryptionKey] A custom encryption key. See
-   *     [Customer-supplied Encryption Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
+   *     [Customer-supplied Encryption
+   * Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
    * @param {boolean} [options.gzip] Automatically gzip the file. This will set
    *     `options.metadata.contentEncoding` to `gzip`.
    * @param {string} [options.kmsKeyName] The name of the Cloud KMS key that will
    *     be used to encrypt the object. Must be in the format:
    *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`.
    * @param {object} [options.metadata] See an
-   *     [Objects: insert request body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON).
+   *     [Objects: insert request
+   * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON).
    * @param {string} [options.offset] The starting byte of the upload stream, for
    *     resuming an interrupted upload. Defaults to 0.
    * @param {string} [options.predefinedAcl] Apply a predefined set of access
@@ -2161,8 +2154,8 @@ class Bucket extends ServiceObject {
    *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
    *       team members get access according to their roles.
    *
-   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers` get
-   *       `READER` access.
+   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
+   * get `READER` access.
    * @param {boolean} [options.private] Make the uploaded file private. (Alias for
    *     `options.predefinedAcl = 'private'`)
    * @param {boolean} [options.public] Make the uploaded file public. (Alias for
@@ -2176,11 +2169,12 @@ class Bucket extends ServiceObject {
    * @param {string|boolean} [options.validation] Possible values: `"md5"`,
    *     `"crc32c"`, or `false`. By default, data integrity is validated with an
    *     MD5 checksum for maximum reliability. CRC32c will provide better
-   *     performance with less reliability. You may also choose to skip validation
-   *     completely, however this is **not recommended**.
+   *     performance with less reliability. You may also choose to skip
+   * validation completely, however this is **not recommended**.
    * @param {object} [options.requestOptions] When `pathString` is a URL,
-   *     additional [options for the HTTP request](https://github.com/request/request#requestoptions-callback)
-   *     could be provided here.
+   *     additional [options for the HTTP
+   * request](https://github.com/request/request#requestoptions-callback) could
+   * be provided here.
    * @param {UploadCallback} [callback] Callback function.
    * @returns {Promise<UploadResponse>}
    *
@@ -2203,7 +2197,8 @@ class Bucket extends ServiceObject {
    * // You can also upload a file from a URL.
    * //-
    *
-   * bucket.upload('https://example.com/images/image.png', function(err, file, apiResponse) {
+   * bucket.upload('https://example.com/images/image.png', function(err, file,
+   * apiResponse) {
    *   // Your bucket now contains:
    *   // - "image.png"
    *
@@ -2241,7 +2236,8 @@ class Bucket extends ServiceObject {
    *   // Your bucket now contains:
    *   // - "index.html" (automatically compressed with gzip)
    *
-   *   // Downloading the file with `file.download` will automatically decode the
+   *   // Downloading the file with `file.download` will automatically decode
+   * the
    *   // file.
    * });
    *
@@ -2264,8 +2260,10 @@ class Bucket extends ServiceObject {
    *
    * //-
    * // To use
-   * // <a href="https://cloud.google.com/storage/docs/encryption#customer-supplied">
-   * // Customer-supplied Encryption Keys</a>, provide the `encryptionKey` option.
+   * // <a
+   * href="https://cloud.google.com/storage/docs/encryption#customer-supplied">
+   * // Customer-supplied Encryption Keys</a>, provide the `encryptionKey`
+   * option.
    * //-
    * const crypto = require('crypto');
    * const encryptionKey = crypto.randomBytes(32);
@@ -2331,18 +2329,16 @@ class Bucket extends ServiceObject {
     }
 
     options = extend(
-      {
-        metadata: {},
-      },
-      options
-    );
+        {
+          metadata: {},
+        },
+        options);
 
     const requestOptions = Object.assign(
-      {
-        url: pathString,
-      },
-      options.requestOptions
-    );
+        {
+          url: pathString,
+        },
+        options.requestOptions);
 
     let newFile;
     if (options.destination instanceof File) {
@@ -2408,13 +2404,12 @@ class Bucket extends ServiceObject {
         sourceStream = fs.createReadStream(pathString);
       }
 
-      sourceStream
-        .on('error', callback)
-        .pipe(newFile.createWriteStream(options))
-        .on('error', callback)
-        .on('finish', () => {
-          callback(null, newFile, newFile.metadata);
-        });
+      sourceStream.on('error', callback)
+          .pipe(newFile.createWriteStream(options))
+          .on('error', callback)
+          .on('finish', () => {
+            callback(null, newFile, newFile.metadata);
+          });
     }
   }
 

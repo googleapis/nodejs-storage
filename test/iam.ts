@@ -19,7 +19,7 @@
 import * as assert from 'assert';
 import * as extend from 'extend';
 import * as proxyquire from 'proxyquire';
-import { util } from '@google-cloud/common';
+import {util} from '@google-cloud/common';
 
 describe('storage/iam', () => {
   // tslint:disable-next-line:variable-name
@@ -39,8 +39,8 @@ describe('storage/iam', () => {
 
   before(() => {
     Iam = proxyquire('../src/iam.js', {
-      '@google-cloud/promisify': fakePromisify,
-    }).Iam;
+            '@google-cloud/promisify': fakePromisify,
+          }).Iam;
   });
 
   beforeEach(() => {
@@ -63,7 +63,7 @@ describe('storage/iam', () => {
       extend(BUCKET_INSTANCE, {
         request(callback) {
           assert.strictEqual(this, BUCKET_INSTANCE);
-          callback(); // done()
+          callback();  // done()
         },
       });
 
@@ -84,7 +84,7 @@ describe('storage/iam', () => {
           qs: {},
         });
 
-        callback(); // done()
+        callback();  // done()
       };
 
       iam.getPolicy(done);
@@ -121,15 +121,14 @@ describe('storage/iam', () => {
           method: 'PUT',
           uri: '/iam',
           json: extend(
-            {
-              resourceId: iam.resourceId_,
-            },
-            policy
-          ),
+              {
+                resourceId: iam.resourceId_,
+              },
+              policy),
           qs: {},
         });
 
-        callback(); // done()
+        callback();  // done()
       };
 
       iam.setPolicy(policy, done);
@@ -224,11 +223,10 @@ describe('storage/iam', () => {
       };
 
       const expectedQuery = extend(
-        {
-          permissions,
-        },
-        options
-      );
+          {
+            permissions,
+          },
+          options);
 
       iam.request_ = reqOpts => {
         assert.deepStrictEqual(reqOpts.qs, expectedQuery);

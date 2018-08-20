@@ -65,8 +65,8 @@ class AclRoleAccessorMethods {
   private static roles = ['OWNER', 'READER', 'WRITER'];
 
   /**
-   * An object of convenience methods to add or delete owner ACL permissions for a
-   * given entity.
+   * An object of convenience methods to add or delete owner ACL permissions for
+   * a given entity.
    *
    * The supported methods include:
    *
@@ -95,7 +95,8 @@ class AclRoleAccessorMethods {
    * //-
    * const myBucket = gcs.bucket('my-bucket');
    * const myFile = myBucket.file('my-file');
-   * myFile.acl.owners.addUser('email@example.com', function(err, aclObject) {});
+   * myFile.acl.owners.addUser('email@example.com', function(err, aclObject)
+   * {});
    *
    * //-
    * // For reference, the above command is the same as running the following.
@@ -116,8 +117,8 @@ class AclRoleAccessorMethods {
   owners = {};
 
   /**
-   * An object of convenience methods to add or delete reader ACL permissions for
-   * a given entity.
+   * An object of convenience methods to add or delete reader ACL permissions
+   * for a given entity.
    *
    * The supported methods include:
    *
@@ -144,7 +145,8 @@ class AclRoleAccessorMethods {
    * //-
    * // Add a user as a reader of a file.
    * //-
-   * myFile.acl.readers.addUser('email@example.com', function(err, aclObject) {});
+   * myFile.acl.readers.addUser('email@example.com', function(err, aclObject)
+   * {});
    *
    * //-
    * // For reference, the above command is the same as running the following.
@@ -165,8 +167,8 @@ class AclRoleAccessorMethods {
   readers = {};
 
   /**
-   * An object of convenience methods to add or delete writer ACL permissions for
-   * a given entity.
+   * An object of convenience methods to add or delete writer ACL permissions
+   * for a given entity.
    *
    * The supported methods include:
    *
@@ -193,7 +195,8 @@ class AclRoleAccessorMethods {
    * //-
    * // Add a user as a writer of a file.
    * //-
-   * myFile.acl.writers.addUser('email@example.com', function(err, aclObject) {});
+   * myFile.acl.writers.addUser('email@example.com', function(err, aclObject)
+   * {});
    *
    * //-
    * // For reference, the above command is the same as running the following.
@@ -246,19 +249,18 @@ class AclRoleAccessorMethods {
             apiEntity = entity + entityId;
           } else {
             // If the entity is not a prefix, it is a special entity group that
-            // does not require further details. The accessor methods only accept
-            // a callback.
+            // does not require further details. The accessor methods only
+            // accept a callback.
             apiEntity = entity;
             callback = entityId;
           }
 
           options = extend(
-            {
-              entity: apiEntity,
-              role,
-            },
-            options
-          );
+              {
+                entity: apiEntity,
+                role,
+              },
+              options);
 
           const args = [options];
 
@@ -348,7 +350,8 @@ class Acl extends AclRoleAccessorMethods {
    * @param {object} options Configuration options.
    * @param {string} options.entity Whose permissions will be added.
    * @param {string} options.role Permissions allowed for the defined entity.
-   *     See {@link https://cloud.google.com/storage/docs/access-control Access Control}.
+   *     See {@link https://cloud.google.com/storage/docs/access-control Access
+   * Control}.
    * @param {number} [options.generation] **File Objects Only** Select a specific
    *     revision of this file (as opposed to the latest version, the default).
    * @param {string} [options.userProject] The ID of the project which will be
@@ -370,7 +373,8 @@ class Acl extends AclRoleAccessorMethods {
    *
    * //-
    * // For file ACL operations, you can also specify a `generation` property.
-   * // Here is how you would grant ownership permissions to a user on a specific
+   * // Here is how you would grant ownership permissions to a user on a
+   * specific
    * // revision of a file.
    * //-
    * myFile.acl.add({
@@ -411,24 +415,23 @@ class Acl extends AclRoleAccessorMethods {
     }
 
     this.request(
-      {
-        method: 'POST',
-        uri: '',
-        qs: query,
-        json: {
-          entity: options.entity,
-          role: options.role.toUpperCase(),
+        {
+          method: 'POST',
+          uri: '',
+          qs: query,
+          json: {
+            entity: options.entity,
+            role: options.role.toUpperCase(),
+          },
         },
-      },
-      (err, resp) => {
-        if (err) {
-          callback!(err, null, resp);
-          return;
-        }
+        (err, resp) => {
+          if (err) {
+            callback!(err, null, resp);
+            return;
+          }
 
-        callback!(null, this.makeAclObject_(resp), resp);
-      }
-    );
+          callback!(null, this.makeAclObject_(resp), resp);
+        });
   }
 
   /**
@@ -503,15 +506,14 @@ class Acl extends AclRoleAccessorMethods {
     }
 
     this.request(
-      {
-        method: 'DELETE',
-        uri: '/' + encodeURIComponent(options.entity),
-        qs: query,
-      },
-      (err, resp) => {
-        callback!(err, resp);
-      }
-    );
+        {
+          method: 'DELETE',
+          uri: '/' + encodeURIComponent(options.entity),
+          qs: query,
+        },
+        (err, resp) => {
+          callback!(err, resp);
+        });
   }
 
   /**
@@ -534,8 +536,8 @@ class Acl extends AclRoleAccessorMethods {
    * @see [ObjectAccessControls: get API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objectAccessControls/get}
    *
    * @param {object|function} [options] Configuration options. If you want to
-   *     receive a list of all access controls, pass the callback function as the
-   *     only argument.
+   *     receive a list of all access controls, pass the callback function as
+   * the only argument.
    * @param {string} [options.entity] Whose permissions will be fetched.
    * @param {number} [options.generation] **File Objects Only** Select a specific
    *     revision of this file (as opposed to the latest version, the default).
@@ -617,27 +619,26 @@ class Acl extends AclRoleAccessorMethods {
     }
 
     this.request(
-      {
-        uri: path,
-        qs: query,
-      },
-      (err, resp) => {
-        if (err) {
-          callback!(err, null, resp);
-          return;
-        }
+        {
+          uri: path,
+          qs: query,
+        },
+        (err, resp) => {
+          if (err) {
+            callback!(err, null, resp);
+            return;
+          }
 
-        let results;
+          let results;
 
-        if (resp.items) {
-          results = arrify(resp.items).map(this.makeAclObject_);
-        } else {
-          results = this.makeAclObject_(resp);
-        }
+          if (resp.items) {
+            results = arrify(resp.items).map(this.makeAclObject_);
+          } else {
+            results = this.makeAclObject_(resp);
+          }
 
-        callback!(null, results, resp);
-      }
-    );
+          callback!(null, results, resp);
+        });
   }
 
   /**
@@ -709,23 +710,22 @@ class Acl extends AclRoleAccessorMethods {
     }
 
     this.request(
-      {
-        method: 'PUT',
-        uri: '/' + encodeURIComponent(options.entity),
-        qs: query,
-        json: {
-          role: options.role.toUpperCase(),
+        {
+          method: 'PUT',
+          uri: '/' + encodeURIComponent(options.entity),
+          qs: query,
+          json: {
+            role: options.role.toUpperCase(),
+          },
         },
-      },
-      (err, resp) => {
-        if (err) {
-          callback!(err, null, resp);
-          return;
-        }
+        (err, resp) => {
+          if (err) {
+            callback!(err, null, resp);
+            return;
+          }
 
-        callback!(null, this.makeAclObject_(resp), resp);
-      }
-    );
+          callback!(null, this.makeAclObject_(resp), resp);
+        });
   }
 
   /**

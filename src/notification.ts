@@ -172,13 +172,12 @@ class Notification extends ServiceObject {
     }
 
     this.request(
-      {
-        method: 'DELETE',
-        uri: '',
-        qs: options,
-      },
-      callback || util.noop
-    );
+        {
+          method: 'DELETE',
+          uri: '',
+          qs: options,
+        },
+        callback || util.noop);
   }
 
   /**
@@ -319,21 +318,20 @@ class Notification extends ServiceObject {
     }
 
     this.request(
-      {
-        uri: '',
-        qs: options,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, resp);
-          return;
-        }
+        {
+          uri: '',
+          qs: options,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, null, resp);
+            return;
+          }
 
-        this.metadata = resp;
+          this.metadata = resp;
 
-        callback(null, this.metadata, resp);
-      }
-    );
+          callback(null, this.metadata, resp);
+        });
   }
 }
 

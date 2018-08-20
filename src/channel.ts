@@ -41,18 +41,19 @@ class Channel extends ServiceObject {
       baseUrl: '/channels',
 
       // An ID shouldn't be included in the API requests.
-      // RE: https://github.com/GoogleCloudPlatform/google-cloud-node/issues/1145
+      // RE:
+      // https://github.com/GoogleCloudPlatform/google-cloud-node/issues/1145
       id: '',
 
       methods: {
-        // Only need `request`.
+          // Only need `request`.
       },
     };
 
     super(config);
 
-    // TODO: remove type cast to any once ServiceObject's type declaration has been fixed.
-    // https://github.com/googleapis/nodejs-common/issues/176
+    // TODO: remove type cast to any once ServiceObject's type declaration has
+    // been fixed. https://github.com/googleapis/nodejs-common/issues/176
     const metadata = this.metadata;
     metadata.id = id;
     metadata.resourceId = resourceId;
@@ -94,15 +95,14 @@ class Channel extends ServiceObject {
     callback = callback || util.noop;
 
     this.request(
-      {
-        method: 'POST',
-        uri: '/stop',
-        json: this.metadata,
-      },
-      (err, apiResponse) => {
-        callback(err, apiResponse);
-      }
-    );
+        {
+          method: 'POST',
+          uri: '/stop',
+          json: this.metadata,
+        },
+        (err, apiResponse) => {
+          callback(err, apiResponse);
+        });
   }
 }
 

@@ -20,7 +20,7 @@ import * as assert from 'assert';
 import * as async from 'async';
 import * as extend from 'extend';
 import * as proxyquire from 'proxyquire';
-import { util } from '@google-cloud/common';
+import {util} from '@google-cloud/common';
 
 // tslint:disable-next-line:variable-name
 let Acl;
@@ -56,7 +56,7 @@ describe('storage/acl', () => {
   });
 
   beforeEach(() => {
-    acl = new Acl({ request: MAKE_REQ, pathPrefix: PATH_PREFIX });
+    acl = new Acl({request: MAKE_REQ, pathPrefix: PATH_PREFIX});
   });
 
   describe('initialization', () => {
@@ -79,7 +79,7 @@ describe('storage/acl', () => {
         done();
       };
 
-      acl.add({ entity: ENTITY, role: ROLE }, assert.ifError);
+      acl.add({entity: ENTITY, role: ROLE}, assert.ifError);
     });
 
     it('should set the generation', done => {
@@ -113,8 +113,8 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with an ACL object', done => {
-      const apiResponse = { entity: ENTITY, role: ROLE };
-      const expectedAclObject = { entity: ENTITY, role: ROLE };
+      const apiResponse = {entity: ENTITY, role: ROLE};
+      const expectedAclObject = {entity: ENTITY, role: ROLE};
 
       acl.makeAclObject_ = (obj) => {
         assert.deepStrictEqual(obj, apiResponse);
@@ -125,7 +125,7 @@ describe('storage/acl', () => {
         callback(null, apiResponse);
       };
 
-      acl.add({ entity: ENTITY, role: ROLE }, (err, aclObject) => {
+      acl.add({entity: ENTITY, role: ROLE}, (err, aclObject) => {
         assert.ifError(err);
         assert.deepStrictEqual(aclObject, expectedAclObject);
         done();
@@ -144,7 +144,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with apiResponse', done => {
-      const resp = { success: true };
+      const resp = {success: true};
 
       acl.request = (reqOpts, callback) => {
         callback(null, resp);
@@ -166,7 +166,7 @@ describe('storage/acl', () => {
         done();
       };
 
-      acl.delete({ entity: ENTITY }, assert.ifError);
+      acl.delete({entity: ENTITY}, assert.ifError);
     });
 
     it('should set the generation', done => {
@@ -210,7 +210,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with apiResponse', done => {
-      const resp = { success: true };
+      const resp = {success: true};
 
       acl.request = (reqOpts, callback) => {
         callback(null, resp);
@@ -244,22 +244,22 @@ describe('storage/acl', () => {
           done();
         };
 
-        acl.get({ generation }, assert.ifError);
+        acl.get({generation}, assert.ifError);
       });
 
       it('should pass an array of acl objects to the callback', done => {
         const apiResponse = {
           items: [
-            { entity: ENTITY, role: ROLE },
-            { entity: ENTITY, role: ROLE },
-            { entity: ENTITY, role: ROLE },
+            {entity: ENTITY, role: ROLE},
+            {entity: ENTITY, role: ROLE},
+            {entity: ENTITY, role: ROLE},
           ],
         };
 
         const expectedAclObjects = [
-          { entity: ENTITY, role: ROLE },
-          { entity: ENTITY, role: ROLE },
-          { entity: ENTITY, role: ROLE },
+          {entity: ENTITY, role: ROLE},
+          {entity: ENTITY, role: ROLE},
+          {entity: ENTITY, role: ROLE},
         ];
 
         acl.makeAclObject_ = (obj, index) => {
@@ -286,7 +286,7 @@ describe('storage/acl', () => {
           done();
         };
 
-        acl.get({ entity: ENTITY }, assert.ifError);
+        acl.get({entity: ENTITY}, assert.ifError);
       });
 
       it('should accept a configuration object', done => {
@@ -298,7 +298,7 @@ describe('storage/acl', () => {
           done();
         };
 
-        acl.get({ entity: ENTITY, generation }, assert.ifError);
+        acl.get({entity: ENTITY, generation}, assert.ifError);
       });
 
       it('should set the userProject', done => {
@@ -316,8 +316,8 @@ describe('storage/acl', () => {
       });
 
       it('should pass an acl object to the callback', done => {
-        const apiResponse = { entity: ENTITY, role: ROLE };
-        const expectedAclObject = { entity: ENTITY, role: ROLE };
+        const apiResponse = {entity: ENTITY, role: ROLE};
+        const expectedAclObject = {entity: ENTITY, role: ROLE};
 
         acl.makeAclObject_ = () => {
           return expectedAclObject;
@@ -327,7 +327,7 @@ describe('storage/acl', () => {
           callback(null, apiResponse);
         };
 
-        acl.get({ entity: ENTITY }, (err, aclObject) => {
+        acl.get({entity: ENTITY}, (err, aclObject) => {
           assert.ifError(err);
           assert.deepStrictEqual(aclObject, expectedAclObject);
           done();
@@ -347,7 +347,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with apiResponse', done => {
-      const resp = { success: true };
+      const resp = {success: true};
 
       acl.request = (reqOpts, callback) => {
         callback(null, resp);
@@ -370,7 +370,7 @@ describe('storage/acl', () => {
         done();
       };
 
-      acl.update({ entity: ENTITY, role: ROLE }, assert.ifError);
+      acl.update({entity: ENTITY, role: ROLE}, assert.ifError);
     });
 
     it('should set the generation', done => {
@@ -404,8 +404,8 @@ describe('storage/acl', () => {
     });
 
     it('should pass an acl object to the callback', done => {
-      const apiResponse = { entity: ENTITY, role: ROLE };
-      const expectedAclObject = { entity: ENTITY, role: ROLE };
+      const apiResponse = {entity: ENTITY, role: ROLE};
+      const expectedAclObject = {entity: ENTITY, role: ROLE};
 
       acl.makeAclObject_ = () => {
         return expectedAclObject;
@@ -415,7 +415,7 @@ describe('storage/acl', () => {
         callback(null, apiResponse);
       };
 
-      acl.update({ entity: ENTITY, role: ROLE }, (err, aclObject) => {
+      acl.update({entity: ENTITY, role: ROLE}, (err, aclObject) => {
         assert.ifError(err);
         assert.deepStrictEqual(aclObject, expectedAclObject);
         done();
@@ -434,7 +434,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with apiResponse', done => {
-      const resp = { success: true };
+      const resp = {success: true};
 
       acl.request = (reqOpts, callback) => {
         callback(null, resp);
@@ -482,7 +482,7 @@ describe('storage/acl', () => {
       acl.request_ = (reqOpts_, callback) => {
         assert.strictEqual(reqOpts_, reqOpts);
         assert.strictEqual(reqOpts_.uri, PATH_PREFIX + uri);
-        callback(); // done()
+        callback();  // done()
       };
 
       acl.request(reqOpts, done);
@@ -556,15 +556,17 @@ describe('storage/AclRoleAccessorMethods', () => {
       aclEntity._assignAccessMethods(role);
 
       async.parallel(
-        [next => {
-          // The method name should be in plural form. (fakeroles vs fakerole)
-          aclEntity.fakeroles.addUser(userName, next);
-        }, next => {
-          aclEntity.fakeroles.deleteAllUsers(next);
-        },
-        ],
-        done
-      );
+          [
+            next => {
+              // The method name should be in plural form. (fakeroles vs
+              // fakerole)
+              aclEntity.fakeroles.addUser(userName, next);
+            },
+            next => {
+              aclEntity.fakeroles.deleteAllUsers(next);
+            },
+          ],
+          done);
     });
 
     it('should return the parent methods return value', () => {
@@ -598,12 +600,11 @@ describe('storage/AclRoleAccessorMethods', () => {
       };
 
       const expectedOptions = extend(
-        {
-          entity: 'user-' + fakeUser,
-          role: fakeRole,
-        },
-        fakeOptions
-      );
+          {
+            entity: 'user-' + fakeUser,
+            role: fakeRole,
+          },
+          fakeOptions);
 
       aclEntity.add = (options) => {
         assert.deepStrictEqual(options, expectedOptions);

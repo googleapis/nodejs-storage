@@ -99,12 +99,11 @@ class Iam {
     }
 
     this.request_(
-      {
-        uri: '/iam',
-        qs: options,
-      },
-      callback
-    );
+        {
+          uri: '/iam',
+          qs: options,
+        },
+        callback);
   }
 
   /**
@@ -144,7 +143,8 @@ class Iam {
    *   bindings: [
    *     {
    *       role: 'roles/storage.admin',
-   *       members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com']
+   *       members:
+   * ['serviceAccount:myotherproject@appspot.gserviceaccount.com']
    *     }
    *   ]
    * };
@@ -178,19 +178,17 @@ class Iam {
     }
 
     this.request_(
-      {
-        method: 'PUT',
-        uri: '/iam',
-        json: extend(
-          {
-            resourceId: this.resourceId_,
-          },
-          policy
-        ),
-        qs: options,
-      },
-      callback
-    );
+        {
+          method: 'PUT',
+          uri: '/iam',
+          json: extend(
+              {
+                resourceId: this.resourceId_,
+              },
+              policy),
+          qs: options,
+        },
+        callback);
   }
 
   /**
@@ -270,34 +268,32 @@ class Iam {
     }
 
     options = extend(
-      {
-        permissions: arrify(permissions),
-      },
-      options
-    );
+        {
+          permissions: arrify(permissions),
+        },
+        options);
 
     this.request_(
-      {
-        uri: '/iam/testPermissions',
-        qs: options,
-        useQuerystring: true,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, resp);
-          return;
-        }
+        {
+          uri: '/iam/testPermissions',
+          qs: options,
+          useQuerystring: true,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, null, resp);
+            return;
+          }
 
-        const availablePermissions = arrify(resp.permissions);
+          const availablePermissions = arrify(resp.permissions);
 
-        const permissionsHash = permissions.reduce((acc, permission) => {
-          acc[permission] = availablePermissions.indexOf(permission) > -1;
-          return acc;
-        }, {});
+          const permissionsHash = permissions.reduce((acc, permission) => {
+            acc[permission] = availablePermissions.indexOf(permission) > -1;
+            return acc;
+          }, {});
 
-        callback(null, permissionsHash, resp);
-      }
-    );
+          callback(null, permissionsHash, resp);
+        });
   }
 }
 
