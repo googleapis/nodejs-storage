@@ -23,14 +23,16 @@ import * as nodeutil from 'util';
 import * as proxyquire from 'proxyquire';
 import { Service, util } from '@google-cloud/common';
 
-function FakeChannel() {
-  this.calledWith_ = arguments;
-}
+// tslint:disable-next-line:variable-name
+const FakeChannel = (...args) => {
+  this.calledWith_ = args;
+};
 
-function FakeService() {
-  this.calledWith_ = arguments;
-  Service.apply(this, arguments);
-}
+// tslint:disable-next-line:variable-name
+const FakeService = (...args) => {
+  this.calledWith_ = args;
+  Service.apply(this, args);
+};
 
 nodeutil.inherits(FakeService, Service);
 
@@ -427,7 +429,7 @@ describe('Storage', () => {
   });
 
   describe('getServiceAccount', () => {
-    it('should make the correct request', (done) => {
+    it('should make the correct request', done => {
       storage.request = (reqOpts) => {
         assert.strictEqual(
           reqOpts.uri,
@@ -440,10 +442,10 @@ describe('Storage', () => {
       storage.getServiceAccount(assert.ifError);
     });
 
-    it('should allow user options', function(done) {
+    it('should allow user options', done => {
       const options = {};
 
-      storage.request = function(reqOpts) {
+      storage.request = (reqOpts) => {
         assert.strictEqual(reqOpts.qs, options);
         done();
       };
@@ -451,18 +453,18 @@ describe('Storage', () => {
       storage.getServiceAccount(options, assert.ifError);
     });
 
-    describe('error', function() {
+    describe('error', () => {
       const ERROR = new Error('Error.');
       const API_RESPONSE = {};
 
-      beforeEach(function() {
-        storage.request = function(reqOpts, callback) {
+      beforeEach(() => {
+        storage.request = (reqOpts, callback) => {
           callback(ERROR, API_RESPONSE);
         };
       });
 
-      it('should return the error and apiResponse', function(done) {
-        storage.getServiceAccount(function(err, serviceAccount, apiResponse) {
+      it('should return the error and apiResponse', done => {
+        storage.getServiceAccount((err, serviceAccount, apiResponse) => {
           assert.strictEqual(err, ERROR);
           assert.strictEqual(serviceAccount, null);
           assert.strictEqual(apiResponse, API_RESPONSE);
@@ -471,25 +473,25 @@ describe('Storage', () => {
       });
     });
 
-    describe('success', function() {
+    describe('success', () => {
       const API_RESPONSE = {};
 
-      beforeEach(function() {
-        storage.request = function(reqOpts, callback) {
+      beforeEach(() => {
+        storage.request = (reqOpts, callback) => {
           callback(null, API_RESPONSE);
         };
       });
 
-      it('should convert snake_case response to camelCase', function(done) {
+      it('should convert snake_case response to camelCase', done => {
         const apiResponse = {
           snake_case: true,
         };
 
-        storage.request = function(reqOpts, callback) {
+        storage.request = (reqOpts, callback) => {
           callback(null, apiResponse);
         };
 
-        storage.getServiceAccount(function(err, serviceAccount) {
+        storage.getServiceAccount((err, serviceAccount) => {
           assert.ifError(err);
           assert.strictEqual(serviceAccount.snakeCase, apiResponse.snake_case);
           assert.strictEqual(serviceAccount.snake_case, undefined);
@@ -497,8 +499,8 @@ describe('Storage', () => {
         });
       });
 
-      it('should return the serviceAccount and apiResponse', function(done) {
-        storage.getServiceAccount(function(err, serviceAccount, apiResponse) {
+      it('should return the serviceAccount and apiResponse', done => {
+        storage.getServiceAccount((err, serviceAccount, apiResponse) => {
           assert.ifError(err);
           assert.deepStrictEqual(serviceAccount, {});
           assert.strictEqual(apiResponse, API_RESPONSE);
