@@ -582,7 +582,8 @@ class Storage extends Service {
    * @returns {Promise<GetServiceAccountResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    *
    * storage.getServiceAccount(function(err, serviceAccount, apiResponse) {
    *   if (!err) {

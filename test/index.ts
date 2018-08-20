@@ -426,9 +426,9 @@ describe('Storage', () => {
     });
   });
 
-  describe('getServiceAccount', function() {
-    it('should make the correct request', function(done) {
-      storage.request = function(reqOpts) {
+  describe('getServiceAccount', () => {
+    it('should make the correct request', (done) => {
+      storage.request = (reqOpts) => {
         assert.strictEqual(
           reqOpts.uri,
           `/projects/${storage.projectId}/serviceAccount`
