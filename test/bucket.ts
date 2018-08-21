@@ -140,18 +140,18 @@ describe('Bucket', () => {
 
   before(() => {
     Bucket = proxyquire('../src/bucket.js', {
-      async: fakeAsync,
-      '@google-cloud/promisify': fakePromisify,
-      '@google-cloud/paginator': fakePaginator,
-      '@google-cloud/common': {
-        ServiceObject: FakeServiceObject,
-        util: fakeUtil,
-      },
-      './acl.js': { Acl: FakeAcl },
-      './file.js': { File: FakeFile },
-      './iam.js': { Iam: FakeIam },
-      './notification.js': { Notification: FakeNotification },
-    }).Bucket;
+               async: fakeAsync,
+               '@google-cloud/promisify': fakePromisify,
+               '@google-cloud/paginator': fakePaginator,
+               '@google-cloud/common': {
+                 ServiceObject: FakeServiceObject,
+                 util: fakeUtil,
+               },
+               './acl.js': {Acl: FakeAcl},
+               './file.js': {File: FakeFile},
+               './iam.js': {Iam: FakeIam},
+               './notification.js': {Notification: FakeNotification},
+             }).Bucket;
   });
 
   beforeEach(() => {

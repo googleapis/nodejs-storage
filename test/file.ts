@@ -799,7 +799,7 @@ describe('File', () => {
       describe('errors', () => {
         const ERROR = new Error('Error.');
 
-        beforeEach(function() {
+        beforeEach(() => {
           file.requestStream = () => {
             const stream = through();
 

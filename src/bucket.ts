@@ -2118,10 +2118,10 @@ class Bucket extends ServiceObject {
    * @param {object} [options] Configuration options.
    * @param {string|File} [options.destination] The place to save
    *     your file. If given a string, the file will be uploaded to the bucket
-   *     using the string as a filename. When given a File object, your local file
-   *     will be uploaded to the File object's bucket and under the File object's
-   *     name. Lastly, when this argument is omitted, the file is uploaded to your
-   *     bucket using the name of the local file.
+   *     using the string as a filename. When given a File object, your local
+   * file will be uploaded to the File object's bucket and under the File
+   * object's name. Lastly, when this argument is omitted, the file is uploaded
+   * to your bucket using the name of the local file.
    * @param {string} [options.encryptionKey] A custom encryption key. See
    *     [Customer-supplied Encryption
    * Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
@@ -2168,8 +2168,8 @@ class Bucket extends ServiceObject {
    * @param {string|boolean} [options.validation] Possible values: `"md5"`,
    *     `"crc32c"`, or `false`. By default, data integrity is validated with an
    *     MD5 checksum for maximum reliability. CRC32c will provide better
-   *     performance with less reliability. You may also choose to skip validation
-   *     completely, however this is **not recommended**.
+   *     performance with less reliability. You may also choose to skip
+   * validation completely, however this is **not recommended**.
    * @param {UploadCallback} [callback] Callback function.
    * @returns {Promise<UploadResponse>}
    *
@@ -2346,12 +2346,12 @@ class Bucket extends ServiceObject {
 
     function upload() {
       fs.createReadStream(pathString)
-        .on('error', callback)
-        .pipe(newFile.createWriteStream(options))
-        .on('error', callback)
-        .on('finish', () => {
-          callback(null, newFile, newFile.metadata);
-        });
+          .on('error', callback)
+          .pipe(newFile.createWriteStream(options))
+          .on('error', callback)
+          .on('finish', () => {
+            callback(null, newFile, newFile.metadata);
+          });
     }
   }
 
