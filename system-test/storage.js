@@ -33,7 +33,7 @@ const uuid = require('uuid');
 
 const util = require('@google-cloud/common').util;
 
-const Storage = require('../');
+const {Storage} = require('../');
 const Bucket = Storage.Bucket;
 const PubSub = require('@google-cloud/pubsub');
 
@@ -109,7 +109,8 @@ describe('storage', function() {
           process.env.GOOGLE_APPLICATION_CREDENTIALS;
         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-        storageWithoutAuth = require('../')();
+        const {Storage} = require('../');
+        storageWithoutAuth = new Storage();
 
         done();
       });
@@ -1827,22 +1828,16 @@ describe('storage', function() {
                 return;
               }
 
-              storage.request(
-                {
-                  uri:
-                    'https://www.googleapis.com/storage/v1/projects/{{projectId}}/serviceAccount',
-                },
-                function(err, resp) {
-                  if (err) {
-                    next(err);
-                    return;
-                  }
-
-                  SERVICE_ACCOUNT_EMAIL = resp.email_address;
-
-                  next();
+              storage.getServiceAccount(function(err, serviceAccount) {
+                if (err) {
+                  next(err);
+                  return;
                 }
-              );
+
+                SERVICE_ACCOUNT_EMAIL = serviceAccount.emailAddress;
+
+                next();
+              });
             },
 
             function grantPermissionToServiceAccount(next) {
