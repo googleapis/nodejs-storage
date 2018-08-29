@@ -43,10 +43,9 @@ bucket.upload('https://example.com/images/image.png', function(err, file, res) {
 
 ```js
 const request = require('request');
-let readStream = request(url).createReadStream();
 const file = bucket.file(name);
 const writeStream = file.createWriteStream();
-readStream.pipe(writeStream);
+request(url).pipe(writeStream);
 ```
 
 ### Breaking changes
