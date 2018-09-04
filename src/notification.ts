@@ -16,8 +16,10 @@
 
 'use strict';
 
-const common = require('@google-cloud/common');
-const is = require('is');
+import {ServiceObject, util} from '@google-cloud/common';
+import {promisifyAll} from '@google-cloud/promisify';
+import * as is from 'is';
+import * as request from 'request';
 
 /**
  * A Notification object is created from your {@link Bucket} object using
@@ -33,12 +35,13 @@ const is = require('is');
  * @param {string} id The ID of the notification.
  *
  * @example
- * const storage = require('@google-cloud/storage')();
+ * const {Storage} = require('@google-cloud/storage');
+ * const storage = new Storage();
  * const myBucket = storage.bucket('my-bucket');
  *
  * const notification = myBucket.notification('1');
  */
-class Notification extends common.ServiceObject {
+class Notification extends ServiceObject {
   constructor(bucket, id) {
     const methods = {
       /**
@@ -61,7 +64,8 @@ class Notification extends common.ServiceObject {
        * @throws {Error} If a valid topic is not provided.
        *
        * @example
-       * const storage = require('@google-cloud/storage')();
+       * const {Storage} = require('@google-cloud/storage');
+       * const storage = new Storage();
        * const myBucket = storage.bucket('my-bucket');
        * const notification = myBucket.notification('1');
        *
@@ -97,7 +101,8 @@ class Notification extends common.ServiceObject {
        * @returns {Promise<NotificationExistsResponse>}
        *
        * @example
-       * const storage = require('@google-cloud/storage')();
+       * const {Storage} = require('@google-cloud/storage');
+       * const storage = new Storage();
        * const myBucket = storage.bucket('my-bucket');
        * const notification = myBucket.notification('1');
        *
@@ -118,7 +123,8 @@ class Notification extends common.ServiceObject {
       baseUrl: '/notificationConfigs',
       id: id.toString(),
       createMethod: bucket.createNotification.bind(bucket),
-      methods: methods,
+      methods,
+      requestModule: request,
     });
   }
 
@@ -143,7 +149,8 @@ class Notification extends common.ServiceObject {
    * @returns {Promise<DeleteNotificationResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    * const notification = myBucket.notification('1');
    *
@@ -160,20 +167,19 @@ class Notification extends common.ServiceObject {
    * region_tag:storage_delete_notification
    * Another example:
    */
-  delete(options, callback) {
+  delete(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
     }
 
     this.request(
-      {
-        method: 'DELETE',
-        uri: '',
-        qs: options,
-      },
-      callback || common.util.noop
-    );
+        {
+          method: 'DELETE',
+          uri: '',
+          qs: options,
+        },
+        callback || util.noop);
   }
 
   /**
@@ -202,7 +208,8 @@ class Notification extends common.ServiceObject {
    * @return {Promise<GetNotificationCallback>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    * const notification = myBucket.notification('1');
    *
@@ -218,7 +225,7 @@ class Notification extends common.ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  get(options, callback) {
+  get(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -244,7 +251,7 @@ class Notification extends common.ServiceObject {
     this.getMetadata(options, (err, metadata) => {
       if (err) {
         if (err.code === 404 && autoCreate) {
-          const args = [];
+          const args = [] as object[];
 
           if (!is.empty(options)) {
             args.push(options);
@@ -287,7 +294,8 @@ class Notification extends common.ServiceObject {
    * @returns {Promise<GetNotificationMetadataResponse>}
    *
    * @example
-   * const storage = require('@google-cloud/storage')();
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    * const myBucket = storage.bucket('my-bucket');
    * const notification = myBucket.notification('1');
    *
@@ -305,28 +313,27 @@ class Notification extends common.ServiceObject {
    * region_tag:storage_notifications_get_metadata
    * Another example:
    */
-  getMetadata(options, callback) {
+  getMetadata(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
     }
 
     this.request(
-      {
-        uri: '',
-        qs: options,
-      },
-      (err, resp) => {
-        if (err) {
-          callback(err, null, resp);
-          return;
-        }
+        {
+          uri: '',
+          qs: options,
+        },
+        (err, resp) => {
+          if (err) {
+            callback(err, null, resp);
+            return;
+          }
 
-        this.metadata = resp;
+          this.metadata = resp;
 
-        callback(null, this.metadata, resp);
-      }
-    );
+          callback(null, this.metadata, resp);
+        });
   }
 }
 
@@ -335,11 +342,11 @@ class Notification extends common.ServiceObject {
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
-common.util.promisifyAll(Notification);
+promisifyAll(Notification);
 
 /**
  * Reference to the {@link Notification} class.
  * @name module:@google-cloud/storage.Notification
  * @see Notification
  */
-module.exports = Notification;
+export {Notification};
