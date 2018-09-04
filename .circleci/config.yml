@@ -172,4 +172,5 @@ jobs:
     steps:
       - checkout
       - run: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc'
+      - run: *npm_install_and_link
       - run: npm publish --access=public
