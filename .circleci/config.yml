@@ -60,7 +60,7 @@ jobs:
         user: node
     steps: &unit_tests_steps
       - checkout
-      - run: &npm_install_and_link
+      - run: &npm_install
           name: Install and link the module
           command: |-
             mkdir -p /home/node/.npm-global
@@ -85,7 +85,7 @@ jobs:
         user: node
     steps:
       - checkout
-      - run: *npm_install_and_link
+      - run: *npm_install
       - run: &samples_npm_install_and_link
           name: Link the module being tested to the samples.
           command: |
@@ -105,7 +105,7 @@ jobs:
         user: node
     steps:
       - checkout
-      - run: *npm_install_and_link
+      - run: *npm_install
       - run:
           name: Build documentation.
           command: npm run docs
@@ -121,7 +121,7 @@ jobs:
             openssl aes-256-cbc -d -in .circleci/key.json.enc \
                 -out .circleci/key.json \
                 -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
-      - run: *npm_install_and_link
+      - run: *npm_install
       - run: *samples_npm_install_and_link
       - run:
           name: Run sample tests.
@@ -153,7 +153,7 @@ jobs:
             openssl aes-256-cbc -d -in .circleci/no-whitelist-key.json.enc \
                 -out .circleci/no-whitelist-key.json \
                 -k "${SYSTEM_TESTS_ENCRYPTION_KEY}"
-      - run: *npm_install_and_link
+      - run: *npm_install
       - run:
           name: Run system tests.
           command: npm run system-test
@@ -172,4 +172,5 @@ jobs:
     steps:
       - checkout
       - run: 'echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc'
+      - run: *npm_install
       - run: npm publish --access=public
