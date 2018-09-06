@@ -1455,7 +1455,7 @@ class Bucket extends ServiceObject {
   /**
    * @callback GetBucketMetadataCallback
    * @param {?Error} err Request error, if any.
-   * @param {object} files The bucket metadata.
+   * @param {object} metadata The bucket metadata.
    * @param {object} apiResponse The full API response.
    */
   /**
@@ -1590,6 +1590,9 @@ class Bucket extends ServiceObject {
    * Lock a previously-defined retention policy. This will prevent changes to
    * the policy.
    *
+   * @param {SetBucketMetadataCallback} [callback] Callback function.
+   * @returns {Promise<SetBucketMetadataResponse>}
+   *
    * @example
    * const storage = require('@google-cloud/storage')();
    * const bucket = storage.bucket('albums');
@@ -1604,9 +1607,9 @@ class Bucket extends ServiceObject {
    * });
    */
   lock(callback) {
-    this.getMetadata((err, metadata) => {
+    this.getMetadata((err, metadata, apiResponse) => {
       if (err) {
-        callback(err);
+        callback(err, null, apiResponse);
         return;
       }
 

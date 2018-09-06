@@ -1558,6 +1558,56 @@ describe('Bucket', () => {
     });
   });
 
+  describe('lock', () => {
+    it('should refresh metadata', done => {
+      bucket.getMetadata = () => {
+        done();
+      };
+
+      bucket.lock(assert.ifError);
+    });
+
+    it('should return error from getMetadata', done => {
+      const error = new Error('Error.');
+      const apiResponse = {}
+
+      bucket.getMetadata = callback => {
+        callback(error, null, apiResponse);
+      };
+
+      bucket.lock((err, metadata, apiResponse_) => {
+        assert.strictEqual(err, error);
+        assert.strictEqual(metadata, null);
+        assert.strictEqual(apiResponse_, apiResponse);
+        done();
+      });
+    });
+
+    it('should make the correct request', done => {
+      const metadata = {
+        metageneration: 8,
+      };
+
+      bucket.getMetadata = callback => {
+        callback(null, metadata);
+      };
+
+      bucket.request = (reqOpts, callback) => {
+        assert.deepStrictEqual(reqOpts, {
+          method: 'POST',
+          uri: '/lockRetentionPolicy',
+          qs: {
+            ifMetagenerationMatch: metadata.metageneration,
+          },
+        });
+
+        callback(); // done()
+      };
+
+      bucket.lock(done);
+    });
+  });
+
   describe('makePrivate', () => {
     it('should set predefinedAcl & privatize files', done => {
       let didSetPredefinedAcl = false;
@@ -1716,6 +1766,20 @@ describe('Bucket', () => {
       assert(notification instanceof FakeNotification);
       assert.strictEqual(notification.bucket, bucket);
       assert.strictEqual(notification.id, fakeId);
+    });
+  });
+
+  describe('removeRetentionPeriod', () => {
+    it('should call setMetadata correctly', done => {
+      bucket.setMetadata = (metadata, callback) => {
+        assert.deepStrictEqual(metadata, {
+          retentionPolicy: null,
+        });
+
+        callback(); // done()
+      };
+
+      bucket.removeRetentionPeriod(done);
     });
   });
 
@@ -1883,6 +1947,24 @@ describe('Bucket', () => {
         assert.strictEqual(apiResponse_, apiResponse);
         done();
       });
+    });
+  });
+
+  describe('setRetentionPeriod', () => {
+    it('should call setMetadata correctly', done => {
+      const duration = 90000;
+
+      bucket.setMetadata = (metadata, callback) => {
+        assert.deepStrictEqual(metadata, {
+          retentionPolicy: {
+            retentionPeriod: duration,
+          },
+        });
+
+        callback(); // done()
+      };
+
+      bucket.setRetentionPeriod(duration, done);
     });
   });
 

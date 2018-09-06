@@ -1020,13 +1020,13 @@ describe('storage', function() {
       });
 
       it('should set and release an event-based hold', function() {
-        return FILE.hold()
+        return FILE.setMetadata({eventBasedHold: true})
           .then(response => {
             const metadata = response[0];
 
             assert.strictEqual(metadata.eventBasedHold, true);
           })
-          .then(() => FILE.release())
+          .then(() => FILE.setMetadata({eventBasedHold: false}))
           .then(() => FILE.getMetadata())
           .then(response => {
             const metadata = response[0];
@@ -1036,13 +1036,13 @@ describe('storage', function() {
       });
 
       it('should set and release a temporary hold', function() {
-        return FILE.hold({temporary: true})
+        return FILE.setMetadata({temporaryHold: true})
           .then(response => {
             const metadata = response[0];
 
             assert.strictEqual(metadata.temporaryHold, true);
           })
-          .then(() => FILE.release({temporary: true}))
+          .then(() => FILE.setMetadata({temporaryHold: false}))
           .then(() => FILE.getMetadata())
           .then(response => {
             const metadata = response[0];

@@ -1508,8 +1508,8 @@ class File extends ServiceObject {
   /**
    * @callback GetExpirationDateCallback
    * @param {?Error} err Request error, if any.
-   * @param {date} file A Date object representing the earliest time this file's
-   *     retention policy will expire.
+   * @param {date} expirationDate A Date object representing the earliest time
+   *     this file's retention policy will expire.
    */
   /**
    * If this bucket has a retention policy defined, use this method to get a
