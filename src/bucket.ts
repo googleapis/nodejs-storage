@@ -1614,15 +1614,14 @@ class Bucket extends ServiceObject {
       }
 
       this.request(
-        {
-          method: 'POST',
-          uri: '/lockRetentionPolicy',
-          qs: {
-            ifMetagenerationMatch: metadata.metageneration,
+          {
+            method: 'POST',
+            uri: '/lockRetentionPolicy',
+            qs: {
+              ifMetagenerationMatch: metadata.metageneration,
+            },
           },
-        },
-        callback
-      );
+          callback);
     });
   }
 
@@ -1920,11 +1919,10 @@ class Bucket extends ServiceObject {
    */
   removeRetentionPeriod(callback) {
     this.setMetadata(
-      {
-        retentionPolicy: null,
-      },
-      callback
-    );
+        {
+          retentionPolicy: null,
+        },
+        callback);
   }
 
   /**
@@ -2135,13 +2133,12 @@ class Bucket extends ServiceObject {
    */
   setRetentionPeriod(duration, callback) {
     this.setMetadata(
-      {
-        retentionPolicy: {
-          retentionPeriod: duration,
+        {
+          retentionPolicy: {
+            retentionPeriod: duration,
+          },
         },
-      },
-      callback
-    );
+        callback);
   }
 
   /**

@@ -1569,7 +1569,7 @@ describe('Bucket', () => {
 
     it('should return error from getMetadata', done => {
       const error = new Error('Error.');
-      const apiResponse = {}
+      const apiResponse = {};
 
       bucket.getMetadata = callback => {
         callback(error, null, apiResponse);
@@ -1601,7 +1601,7 @@ describe('Bucket', () => {
           },
         });
 
-        callback(); // done()
+        callback();  // done()
       };
 
       bucket.lock(done);
@@ -1776,7 +1776,7 @@ describe('Bucket', () => {
           retentionPolicy: null,
         });
 
-        callback(); // done()
+        callback();  // done()
       };
 
       bucket.removeRetentionPeriod(done);
@@ -1961,7 +1961,7 @@ describe('Bucket', () => {
           },
         });
 
-        callback(); // done()
+        callback();  // done()
       };
 
       bucket.setRetentionPeriod(duration, done);
