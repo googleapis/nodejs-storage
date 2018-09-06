@@ -1058,6 +1058,76 @@ describe('storage', function() {
         });
       });
     });
+
+    describe('operations on held objects', function() {
+      const BUCKET = storage.bucket(generateName());
+      const FILES = [];
+
+      const RETENTION_PERIOD_SECONDS = 5; // Each test has this much time!
+
+      function createFile(callback) {
+        const file = BUCKET.file(generateName());
+        FILES.push(file);
+
+        file.save('data', function(err) {
+          if (err) {
+            callback(err);
+            return;
+          }
+
+          callback(null, file);
+        });
+      }
+
+      function deleteFiles(callback) {
+        async.each(FILES, function(file, next) {
+          file.setMetadata({temporaryHold: null}, function(err) {
+            if (err) {
+              next(err);
+              return;
+            }
+
+            file.delete(next);
+          });
+        }, callback);
+      }
+
+      before(function() {
+        return BUCKET.create({
+          retentionPolicy: {
+            retentionPeriod: RETENTION_PERIOD_SECONDS,
+          },
+        });
+      });
+
+      after(function(done) {
+        setTimeout(deleteFiles, RETENTION_PERIOD_SECONDS * 1000, done);
+      });
+
+      //verify how the client library behaves when holds are enabled
+      //and attempting to perform an overwrite and delete.
+      it('should block an overwrite request', function(done) {
+        createFile(function(err, file) {
+          assert.ifError(err);
+
+          file.save('new data', function(err) {
+            assert.strictEqual(err.code, 403);
+            done();
+          });
+        });
+      });
+
+      it('should block a delete request', function(done) {
+        createFile(function(err, file) {
+          assert.ifError(err);
+
+          file.delete(function(err) {
+            assert.strictEqual(err.code, 403);
+            done();
+          });
+        });
+      });
+    });
   });
 
   describe('requester pays', function() {
