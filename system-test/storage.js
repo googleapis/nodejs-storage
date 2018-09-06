@@ -1111,7 +1111,7 @@ describe('storage', function() {
           async.each(files, createFile, function(err) {
             assert.ifError(err);
 
-            const sourceFiles = files.map(prop('file'));
+            const sourceFiles = files.map(x => x.file);
             const destinationFile = bucketNonWhitelist.file(
               'file-one-n-two.txt'
             );
