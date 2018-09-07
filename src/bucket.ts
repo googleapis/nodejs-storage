@@ -1590,6 +1590,10 @@ class Bucket extends ServiceObject {
    * Lock a previously-defined retention policy. This will prevent changes to
    * the policy.
    *
+   * @throws {Error} if a metageneration is not provided.
+   *
+   * @param {Number|String} metageneration The bucket's metageneration. This is
+   *     accesssible from calling {@link File#getMetadata}.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
    * @returns {Promise<SetBucketMetadataResponse>}
    *
@@ -1606,23 +1610,20 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  lock(callback) {
-    this.getMetadata((err, metadata, apiResponse) => {
-      if (err) {
-        callback(err, null, apiResponse);
-        return;
-      }
+  lock(metageneration, callback) {
+    if (!is.number(metageneration) && !is.string(metageneration)) {
+      throw new Error('A metageneration must be provided.');
+    }
 
-      this.request(
-          {
-            method: 'POST',
-            uri: '/lockRetentionPolicy',
-            qs: {
-              ifMetagenerationMatch: metadata.metageneration,
-            },
+    this.request(
+        {
+          method: 'POST',
+          uri: '/lockRetentionPolicy',
+          qs: {
+            ifMetagenerationMatch: metageneration,
           },
-          callback);
-    });
+        },
+        callback);
   }
 
   /**

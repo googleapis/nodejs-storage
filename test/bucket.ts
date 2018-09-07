@@ -1559,52 +1559,30 @@ describe('Bucket', () => {
   });
 
   describe('lock', () => {
-    it('should refresh metadata', done => {
-      bucket.getMetadata = () => {
-        done();
-      };
+    it('should throw if a metageneration is not provided', () => {
+      const expectedError = new RegExp('A metageneration must be provided.');
 
-      bucket.lock(assert.ifError);
-    });
-
-    it('should return error from getMetadata', done => {
-      const error = new Error('Error.');
-      const apiResponse = {};
-
-      bucket.getMetadata = callback => {
-        callback(error, null, apiResponse);
-      };
-
-      bucket.lock((err, metadata, apiResponse_) => {
-        assert.strictEqual(err, error);
-        assert.strictEqual(metadata, null);
-        assert.strictEqual(apiResponse_, apiResponse);
-        done();
-      });
+      assert.throws(() => {
+        bucket.lock(assert.ifError);
+      }, expectedError);
     });
 
     it('should make the correct request', done => {
-      const metadata = {
-        metageneration: 8,
-      };
-
-      bucket.getMetadata = callback => {
-        callback(null, metadata);
-      };
+      const metageneration = 8;
 
       bucket.request = (reqOpts, callback) => {
         assert.deepStrictEqual(reqOpts, {
           method: 'POST',
           uri: '/lockRetentionPolicy',
           qs: {
-            ifMetagenerationMatch: metadata.metageneration,
+            ifMetagenerationMatch: metageneration,
           },
         });
 
         callback();  // done()
       };
 
-      bucket.lock(done);
+      bucket.lock(metageneration, done);
     });
   });
 
