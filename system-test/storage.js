@@ -1080,16 +1080,20 @@ describe('storage', function() {
       }
 
       function deleteFiles(callback) {
-        async.each(FILES, function(file, next) {
-          file.setMetadata({temporaryHold: null}, function(err) {
-            if (err) {
-              next(err);
-              return;
-            }
+        async.each(
+          FILES,
+          function(file, next) {
+            file.setMetadata({temporaryHold: null}, function(err) {
+              if (err) {
+                next(err);
+                return;
+              }
 
-            file.delete(next);
-          });
-        }, callback);
+              file.delete(next);
+            });
+          },
+          callback
+        );
       }
 
       before(function() {
