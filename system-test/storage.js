@@ -1384,9 +1384,7 @@ describe('storage', function() {
           })
         );
 
-        // @TODO: There may be a backend bug here.
-        // Reference: https://github.com/googleapis/nodejs-storage/pull/190#issuecomment-388475406
-        it.skip(
+        it(
           'iam#testPermissions',
           doubleTest(function(options, done) {
             const tests = ['storage.buckets.delete'];
