@@ -1,11 +1,12 @@
 #!/bin/bash
-# Copyright 2017 Google Inc.
+
+# Copyright 2018 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,15 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -xeo pipefail
-
-# Always run the cleanup script, regardless of the success of bouncing into
-# the container.
-function cleanup() {
-    chmod +x ${KOKORO_GFILE_DIR}/trampoline_cleanup.sh
-    ${KOKORO_GFILE_DIR}/trampoline_cleanup.sh
-    echo "cleanup";
-}
-trap cleanup EXIT
-
-python3 "${KOKORO_GFILE_DIR}/trampoline_v1.py"
+# nodejs-storage's system tests require additional project and
+# system test key
+export GCN_STORAGE_2ND_PROJECT_ID=gcloud-node-whitelist-ci-tests
+export GCN_STORAGE_2ND_PROJECT_KEY=${KOKORO_GFILE_DIR}/no-whitelist-key.json

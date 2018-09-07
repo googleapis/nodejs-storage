@@ -16,11 +16,9 @@
 'use strict';
 
 const proxyquire = require(`proxyquire`).noPreserveCache();
-const sinon = require(`sinon`);
 const test = require(`ava`);
 const tools = require(`@google-cloud/nodejs-repo-tools`);
 const uuid = require(`uuid`);
-
 
 const {Storage} = proxyquire(`@google-cloud/storage`, {});
 
@@ -39,8 +37,8 @@ test.after.always(async () => {
 test.cb(`should create a bucket`, t => {
   const expectedBucketName = `my-new-bucket`;
 
-  const storageMock = {
-    createBucket: _bucketName => {
+  const StorageMock = class {
+    createBucket(_bucketName) {
       t.is(_bucketName, expectedBucketName);
 
       return bucket.create().then(([bucket]) => {
@@ -61,10 +59,12 @@ test.cb(`should create a bucket`, t => {
 
         return [bucket];
       });
-    },
+    }
   };
 
   proxyquire(`../quickstart`, {
-    '@google-cloud/storage': sinon.stub().returns(storageMock),
+    '@google-cloud/storage': {
+      Storage: StorageMock,
+    },
   });
 });
