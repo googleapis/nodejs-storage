@@ -12,8 +12,6 @@
 - fix: make dependency on request explicit ([#361](https://github.com/googleapis/nodejs-storage/pull/361))
 - fix: remove trailing slashes from bucket name. ([#266](https://github.com/googleapis/nodejs-storage/pull/266))
 
-### New Features
-
 ### Dependencies
 - fix(deps): update dependency @google-cloud/common to ^0.24.0 ([#367](https://github.com/googleapis/nodejs-storage/pull/367))
 - fix(deps): update dependency gcs-resumable-upload to ^0.13.0 ([#368](https://github.com/googleapis/nodejs-storage/pull/368))
