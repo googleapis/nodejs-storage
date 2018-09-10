@@ -1601,12 +1601,14 @@ class Bucket extends ServiceObject {
    * const storage = require('@google-cloud/storage')();
    * const bucket = storage.bucket('albums');
    *
-   * bucket.lock(function(err, apiResponse) {});
+   * const metageneration = 2;
+   *
+   * bucket.lock(metageneration, function(err, apiResponse) {});
    *
    * //-
    * // If the callback is omitted, we'll return a Promise.
    * //-
-   * bucket.lock().then(function(data) {
+   * bucket.lock(metageneration).then(function(data) {
    *   const apiResponse = data[0];
    * });
    */
