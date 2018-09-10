@@ -6,6 +6,8 @@
 
 ## v2.0.1
 
+**This fixes types declaration issues with projects using TypeScript.**
+
 ### Implementation Changes
 - Enable noImplicitThis in the tsconfig ([#370](https://github.com/googleapis/nodejs-storage/pull/370))
 - Fix the path to the d.ts ([#364](https://github.com/googleapis/nodejs-storage/pull/364))
