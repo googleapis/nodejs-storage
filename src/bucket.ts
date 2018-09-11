@@ -53,6 +53,7 @@ interface MetadataRequest {
 interface BucketOptions {
   userProject?: string;
 }
+
 /**
  * See a [Objects:
  * watchAll request
@@ -105,6 +106,12 @@ export interface GetFilesRequest {
   versions?: boolean;
 }
 
+/**
+ * @typedef {object} DeleteFilesRequest Query object. See {@link Bucket#getFiles}
+ *     for all of the supported properties.
+ * @property {boolean} [force] Suppress errors until all files have been
+ *     processed.
+ */
 export interface DeleteFilesRequest extends GetFilesRequest {
   force?: boolean;
 }
@@ -877,12 +884,7 @@ class Bucket extends ServiceObject {
    *
    * @see [Objects: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/delete}
    *
-   * @param {object} [query] Query object. See {@link Bucket#getFiles}
-   *     for all of the supported properties.
-   * @param {boolean} [query.force] Suppress errors until all files have been
-   *     processed.
-   * @param {string} [query.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {DeleteFilesRequest} [query] Query object. See {@link Bucket#getFiles}
    * @param {DeleteFilesCallback} [callback] Callback function.
    * @returns {Promise}
    *
