@@ -55,7 +55,8 @@ interface BucketOptions {
 }
 /**
  * See a [Objects:
- * watchAll request body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
+ * watchAll request
+ * body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
  */
 interface WatchAllRequest {
   delimiter: string;
@@ -142,7 +143,8 @@ export type CombineResponse = [File, object];
 
 /**
  * See a [Objects:
- * watchAll request body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
+ * watchAll request
+ * body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
  *
  * @typedef {object} CreateChannelConfig
  * @property {string} address The address where notifications are
@@ -493,9 +495,15 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  combine(sources: string[]|File[], destination: string|File, options: CombineOptions): Promise<CombineResponse>;
-  combine(sources: string[]|File[], destination: string|File, options: CombineOptions, callback);
-  combine(sources: string[]|File[], destination: string|File, options: CombineOptions, callback?): Promise<CombineResponse> | void {
+  combine(
+      sources: string[]|File[], destination: string|File,
+      options: CombineOptions): Promise<CombineResponse>;
+  combine(
+      sources: string[]|File[], destination: string|File,
+      options: CombineOptions, callback);
+  combine(
+      sources: string[]|File[], destination: string|File,
+      options: CombineOptions, callback?): Promise<CombineResponse>|void {
     if (!is.array(sources) || sources.length < 2) {
       throw new Error('You must provide at least two source files.');
     }
@@ -601,10 +609,18 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  createChannel(id: string, config: CreateChannelConfig, options?: CreateChannelOptions): Promise<CreateChannelResponse>;
-  createChannel(id: string, config: CreateChannelConfig, callback: CreateChannelCallback);
-  createChannel(id: string, config: CreateChannelConfig, options: CreateChannelOptions, callback: CreateChannelCallback);
-  createChannel(id: string, config: CreateChannelConfig, options?: CreateChannelOptions|CreateChannelCallback, callback?: CreateChannelCallback): Promise<CreateChannelResponse>|void {
+  createChannel(
+      id: string, config: CreateChannelConfig,
+      options?: CreateChannelOptions): Promise<CreateChannelResponse>;
+  createChannel(
+      id: string, config: CreateChannelConfig, callback: CreateChannelCallback);
+  createChannel(
+      id: string, config: CreateChannelConfig, options: CreateChannelOptions,
+      callback: CreateChannelCallback);
+  createChannel(
+      id: string, config: CreateChannelConfig,
+      options?: CreateChannelOptions|CreateChannelCallback,
+      callback?: CreateChannelCallback): Promise<CreateChannelResponse>|void {
     if (!is.string(id)) {
       throw new Error('An ID is required to create a channel.');
     }
