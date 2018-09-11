@@ -155,7 +155,7 @@ export interface CreateReadStreamOptions {
    * specified but is not available. You may also choose to skip validation
    * completely, however this is **not recommended**.
    */
-  validation?: 'md5' | 'crc32c' | false | true;
+  validation?: 'md5'|'crc32c'|false|true;
   /**
    * A byte offset to begin the file's download
    * from. Default is 0. NOTE: Byte ranges are inclusive; that is,
@@ -435,8 +435,12 @@ class File extends ServiceObject {
    * Another example:
    */
   copy(destination: string|Bucket|File, callback: FileCallback);
-  copy(destination: string|Bucket|File, options: CopyOptions, callback: FileCallback);
-  copy(destination: string|Bucket|File, optionsOrCallback: CopyOptions|FileCallback, callback?: FileCallback) {
+  copy(
+      destination: string|Bucket|File, options: CopyOptions,
+      callback: FileCallback);
+  copy(
+      destination: string|Bucket|File,
+      optionsOrCallback: CopyOptions|FileCallback, callback?: FileCallback) {
     const noDestinationError =
         new Error('Destination file should have a name.');
 
@@ -660,7 +664,8 @@ class File extends ServiceObject {
 
     if (is.string(options.validation)) {
       // tslint:disable-next-line:no-any
-      (options as any).validation = (options.validation as string).toLowerCase();
+      (options as any).validation =
+          (options.validation as string).toLowerCase();
       crc32c = options.validation === 'crc32c';
       md5 = options.validation === 'md5';
     } else if (options.validation === false) {

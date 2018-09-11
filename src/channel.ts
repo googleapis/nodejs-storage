@@ -19,7 +19,7 @@
 import {ServiceObject, util} from '@google-cloud/common';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as request from 'request';
-import { Storage } from '.';
+import {Storage} from '.';
 
 /**
  * Create a channel object to interact with a Cloud Storage channel.
