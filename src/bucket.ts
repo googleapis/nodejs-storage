@@ -187,6 +187,54 @@ export interface CreateChannelCallback {
   (err: Error|null, channel: Channel|null, apiResponse: object);
 }
 
+/**
+ * Metadata to set for the Notification.
+ *
+ * @typedef {object} CreateNotificationRequest
+ * @property {object} [customAttributes] An optional list of additional
+ *     attributes to attach to each Cloud PubSub message published for this
+ *     notification subscription.
+ * @property {string[]} [eventTypes] If present, only send notifications about
+ *     listed event types. If empty, sent notifications for all event types.
+ * @property {string} [objectNamePrefix] If present, only apply this
+ *     notification configuration to object names that begin with this prefix.
+ * @property {string} [payloadFormat] The desired content of the Payload.
+ *     Defaults to `JSON_API_V1`.
+ *
+ *     Acceptable values are:
+ *     - `JSON_API_V1`
+ *
+ *     - `NONE`
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface CreateNotificationRequest {
+  customAttributes?: {[key:string]: string};
+  eventTypes?: string[];
+  objectNamePrefix?: string;
+  payloadFormat?: string;
+  userProject?: string;
+}
+
+/**
+ * @callback CreateNotificationCallback
+ * @param {?Error} err Request error, if any.
+ * @param {Notification} notification The new {@link Notification}.
+ * @param {object} apiResponse The full API response.
+ */
+export interface CreateNotificationCallback {
+  (err: Error|null, notification: Notification|null, apiResponse: object);
+}
+
+/**
+ * @typedef {array} CreateNotificationResponse
+ * @property {Notification} 0 The new {@link Notification}.
+ * @property {object} 1 The full API response.
+ */
+export type CreateNotificationResponse = [
+  Notification,
+  object
+];
 
 /**
  * The size of a file (in bytes) must be greater than this number to
@@ -669,38 +717,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * Metadata to set for the Notification.
-   *
-   * @typedef {object} CreateNotificationRequest
-   * @property {object} [customAttributes] An optional list of additional
-   *     attributes to attach to each Cloud PubSub message published for this
-   *     notification subscription.
-   * @property {string[]} [eventTypes] If present, only send notifications about
-   *     listed event types. If empty, sent notifications for all event types.
-   * @property {string} [objectNamePrefix] If present, only apply this
-   *     notification configuration to object names that begin with this prefix.
-   * @property {string} [payloadFormat] The desired content of the Payload.
-   *     Defaults to `JSON_API_V1`.
-   *
-   *     Acceptable values are:
-   *     - `JSON_API_V1`
-   *
-   *     - `NONE`
-   * @property {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
-   */
-  /**
-   * @typedef {array} CreateNotificationResponse
-   * @property {Notification} 0 The new {@link Notification}.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback CreateNotificationCallback
-   * @param {?Error} err Request error, if any.
-   * @param {Notification} notification The new {@link Notification}.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Creates a notification subscription for the bucket.
    *
    * @see [Notifications: insert]{@link https://cloud.google.com/storage/docs/json_api/v1/notifications/insert}
@@ -754,8 +770,18 @@ class Bucket extends ServiceObject {
    * region_tag:storage_create_notification
    * Another example:
    */
-  createNotification(topic: string, options, callback?) {
-    if (is.fn(options)) {
+  createNotification(topic: string, options?: CreateNotificationRequest):
+      Promise<CreateNotificationResponse>;
+  createNotification(
+      topic: string, options: CreateNotificationRequest,
+      callback: CreateNotificationCallback);
+  createNotification(topic: string, callback: CreateNotificationCallback);
+  createNotification(
+      topic: string,
+      options?: CreateNotificationRequest|CreateNotificationCallback,
+      callback?: CreateNotificationCallback): Promise<CreateNotificationResponse>|void {
+
+    if (typeof options === 'function') {
       callback = options;
       options = {};
     }
@@ -769,7 +795,7 @@ class Bucket extends ServiceObject {
       throw new Error('A valid topic name is required.');
     }
 
-    const body = extend({topic}, options);
+    const body = Object.assign({topic}, options);
 
     if (body.topic.indexOf('projects') !== 0) {
       body.topic = 'projects/{{projectId}}/topics/' + body.topic;
@@ -797,7 +823,7 @@ class Bucket extends ServiceObject {
         },
         (err, apiResponse) => {
           if (err) {
-            callback(err, null, apiResponse);
+            callback!(err, null, apiResponse);
             return;
           }
 
@@ -805,7 +831,7 @@ class Bucket extends ServiceObject {
 
           notification.metadata = apiResponse;
 
-          callback(null, notification, apiResponse);
+          callback!(null, notification, apiResponse);
         });
   }
 
