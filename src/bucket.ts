@@ -199,7 +199,7 @@ export interface CreateChannelCallback {
  *     billed for the request.
  */
 export interface CreateNotificationRequest {
-  customAttributes?: {[key:string]: string};
+  customAttributes?: {[key: string]: string};
   eventTypes?: string[];
   objectNamePrefix?: string;
   payloadFormat?: string;
@@ -221,10 +221,7 @@ export interface CreateNotificationCallback {
  * @property {Notification} 0 The new {@link Notification}.
  * @property {object} 1 The full API response.
  */
-export type CreateNotificationResponse = [
-  Notification,
-  object
-];
+export type CreateNotificationResponse = [Notification, object];
 
 /**
  * @typedef {object} DeleteBucketRequest Configuration options.
@@ -239,14 +236,14 @@ export interface DeleteBucketRequest {
  * @typedef {array} DeleteBucketResponse
  * @property {object} 0 The full API response.
  */
-export type DeleteBucketResponse = [ object ];
+export type DeleteBucketResponse = [object];
 
 /**
  * @callback DeleteBucketCallback
  * @param {?Error} err Request error, if any.
  * @param {object} apiResponse The full API response.
  */
-export interface DeleteBucketCallback extends DeleteCallback{
+export interface DeleteBucketCallback extends DeleteCallback {
   (err: Error|null, apiResponse: object);
 }
 
@@ -813,8 +810,8 @@ class Bucket extends ServiceObject {
   createNotification(
       topic: string,
       options?: CreateNotificationRequest|CreateNotificationCallback,
-      callback?: CreateNotificationCallback): Promise<CreateNotificationResponse>|void {
-
+      callback?: CreateNotificationCallback):
+      Promise<CreateNotificationResponse>|void {
     if (typeof options === 'function') {
       callback = options;
       options = {};
@@ -900,7 +897,9 @@ class Bucket extends ServiceObject {
   delete(options?: DeleteBucketRequest): Promise<DeleteBucketResponse>;
   delete(callback: DeleteBucketCallback);
   delete(options: DeleteBucketRequest, callback: DeleteBucketCallback);
-  delete(options?: DeleteBucketRequest|DeleteBucketCallback, callback?: DeleteBucketCallback): Promise<DeleteBucketResponse>|void {
+  delete(
+      options?: DeleteBucketRequest|DeleteBucketCallback,
+      callback?: DeleteBucketCallback): Promise<DeleteBucketResponse>|void {
     if (typeof options === 'function') {
       callback = options;
       options = {} as DeleteBucketRequest;
@@ -979,7 +978,9 @@ class Bucket extends ServiceObject {
   deleteFiles(query?: DeleteFilesRequest): Promise<void>;
   deleteFiles(callback: DeleteFilesCallback);
   deleteFiles(query: DeleteFilesRequest, callback: DeleteFilesCallback);
-  deleteFiles(query?: DeleteFilesRequest|DeleteFilesCallback, callback?: DeleteFilesCallback): Promise<void>|void {
+  deleteFiles(
+      query?: DeleteFilesRequest|DeleteFilesCallback,
+      callback?: DeleteFilesCallback): Promise<void>|void {
     if (typeof query === 'function') {
       callback = query;
       query = {} as DeleteFilesRequest;
@@ -1014,14 +1015,15 @@ class Bucket extends ServiceObject {
       };
 
       // Iterate through each file and attempt to delete it.
-      async.eachLimit<File, Error>(files, MAX_PARALLEL_LIMIT, deleteFile, err => {
-        if (err || errors.length > 0) {
-          callback!(err || errors);
-          return;
-        }
+      async.eachLimit<File, Error>(
+          files, MAX_PARALLEL_LIMIT, deleteFile, err => {
+            if (err || errors.length > 0) {
+              callback!(err || errors);
+              return;
+            }
 
-        callback!(null);
-      });
+            callback!(null);
+          });
     });
   }
 
