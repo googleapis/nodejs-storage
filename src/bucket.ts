@@ -366,6 +366,26 @@ export interface GetBucketCallback extends InstanceResponseCallback {
   (err: null, bucket: Bucket, apiResponse: object);
 }
 
+export interface GetLabelsRequest {
+
+}
+
+/**
+ * @typedef {array} GetLabelsResponse
+ * @property {object} 0 Object of labels currently set on this bucket.
+ */
+export type GetLabelsResponse = [object];
+
+/**
+ * @callback GetLabelsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} labels Object of labels currently set on this bucket.
+ */
+export interface GetLabelsCallback {
+  (err: Error, labels: null);
+  (err: null, labels: object);
+}
+
 /**
  * The size of a file (in bytes) must be greater than this number to
  * automatically trigger a resumable upload.
@@ -1588,15 +1608,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} GetLabelsResponse
-   * @property {object} 0 Object of labels currently set on this bucket.
-   */
-  /**
-   * @callback GetLabelsCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} labels Object of labels currently set on this bucket.
-   */
-  /**
    * Get the labels currently set on this bucket.
    *
    * @param {object} [options] Configuration options.
@@ -1628,19 +1639,25 @@ class Bucket extends ServiceObject {
    *   const labels = data[0];
    * });
    */
-  getLabels(options, callback?) {
-    if (is.fn(options)) {
+  getLabels(options: GetLabelsRequest): Promise<GetLabelsResponse>;
+  getLabels(callback: GetLabelsCallback);
+  getLabels(options:  GetLabelsRequest, callback: GetLabelsCallback);
+  getLabels(options?: GetLabelsRequest|GetLabelsCallback, callback?: GetLabelsCallback): Promise<GetLabelsResponse>|void {
+    let req = {} as GetLabelsRequest;
+
+    if (typeof options === 'function') {
       callback = options;
-      options = {};
+    } else if (options) {
+      req = options;
     }
 
     this.getMetadata(options, (err, metadata) => {
       if (err) {
-        callback(err);
+        callback!(err, null);
         return;
       }
 
-      callback(null, metadata.labels || {});
+      callback!(null, metadata.labels || {});
     });
   }
 
