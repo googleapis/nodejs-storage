@@ -107,16 +107,6 @@ export interface GetFilesRequest {
 }
 
 /**
- * @typedef {object} DeleteFilesRequest Query object. See {@link Bucket#getFiles}
- *     for all of the supported properties.
- * @property {boolean} [force] Suppress errors until all files have been
- *     processed.
- */
-export interface DeleteFilesRequest extends GetFilesRequest {
-  force?: boolean;
-}
-
-/**
  * @typedef {object} CombineOptions
  * @property {string} [kmsKeyName] Resource name of the Cloud KMS key, of
  *     the form
@@ -258,6 +248,26 @@ export type DeleteBucketResponse = [ object ];
  */
 export interface DeleteBucketCallback extends DeleteCallback{
   (err: Error|null, apiResponse: object);
+}
+
+/**
+ * @typedef {object} DeleteFilesRequest Query object. See {@link Bucket#getFiles}
+ *     for all of the supported properties.
+ * @property {boolean} [force] Suppress errors until all files have been
+ *     processed.
+ */
+export interface DeleteFilesRequest extends GetFilesRequest {
+  force?: boolean;
+}
+
+/**
+ * @callback DeleteFilesCallback
+ * @param {?Error|?Error[]} err Request error, if any, or array of errors from
+ *     files that were not able to be deleted.
+ * @param {object} [apiResponse] The full API response.
+ */
+export interface DeleteFilesCallback {
+  (err: Error|Error[]|null, apiResponse?: object);
 }
 
 /**
@@ -906,12 +916,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @callback DeleteFilesCallback
-   * @param {?Error|?Error[]} err Request error, if any, or array of errors from
-   *     files that were not able to be deleted.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Iterate over the bucket's files, calling `file.delete()` on each.
    *
    * <strong>This is not an atomic request.</strong> A delete attempt will be
@@ -972,48 +976,51 @@ class Bucket extends ServiceObject {
    * //-
    * bucket.deleteFiles().then(function() {});
    */
-  deleteFiles(query: DeleteFilesRequest, callback?) {
-    if (is.fn(query)) {
+  deleteFiles(query?: DeleteFilesRequest): Promise<void>;
+  deleteFiles(callback: DeleteFilesCallback);
+  deleteFiles(query: DeleteFilesRequest, callback: DeleteFilesCallback);
+  deleteFiles(query?: DeleteFilesRequest|DeleteFilesCallback, callback?: DeleteFilesCallback): Promise<void>|void {
+    if (typeof query === 'function') {
       callback = query;
-      query = {};
+      query = {} as DeleteFilesRequest;
     }
 
-    query = query || {};
+    const req = query || {} as DeleteFilesRequest;
 
     const MAX_PARALLEL_LIMIT = 10;
     const errors = [] as Error[];
 
-    this.getFiles(query, (err, files) => {
+    this.getFiles(req, (err, files) => {
       if (err) {
-        callback(err);
+        callback!(err, {});
         return;
       }
 
       const deleteFile = (file, callback) => {
-        file.delete(query, (err: Error) => {
+        file.delete(req, (err: Error) => {
           if (err) {
-            if (query.force) {
+            if (req.force) {
               errors.push(err);
-              callback();
+              callback!();
               return;
             }
 
-            callback(err);
+            callback!(err);
             return;
           }
 
-          callback();
+          callback!(null);
         });
       };
 
       // Iterate through each file and attempt to delete it.
-      async.eachLimit(files, MAX_PARALLEL_LIMIT, deleteFile, err => {
+      async.eachLimit<File, Error>(files, MAX_PARALLEL_LIMIT, deleteFile, err => {
         if (err || errors.length > 0) {
-          callback(err || errors);
+          callback!(err || errors);
           return;
         }
 
-        callback();
+        callback!(null);
       });
     });
   }
