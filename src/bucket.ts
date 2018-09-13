@@ -313,6 +313,31 @@ export interface EnableRequesterPaysCallback {
 }
 
 /**
+ * @typedef {object} BucketExistsRequest Configuration options for Bucket#exists().
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface BucketExistsRequest {
+  userProject?: string;
+}
+
+/**
+ * @typedef {array} BucketExistsResponse
+ * @property {boolean} 0 Whether the {@link Bucket} exists.
+ */
+export type BucketExistsResponse = [boolean];
+
+/**
+ * @callback BucketExistsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {boolean} exists Whether the {@link Bucket} exists.
+ */
+export interface BucketExistsCallback {
+  (err: Error);
+  (err: null, exists: boolean);
+}
+
+/**
  * The size of a file (in bytes) must be greater than this number to
  * automatically trigger a resumable upload.
  *
@@ -1245,20 +1270,9 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} BucketExistsResponse
-   * @property {boolean} 0 Whether the {@link Bucket} exists.
-   */
-  /**
-   * @callback BucketExistsCallback
-   * @param {?Error} err Request error, if any.
-   * @param {boolean} exists Whether the {@link Bucket} exists.
-   */
-  /**
    * Check if the bucket exists.
    *
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {BucketExistsRequest} [options] Configuration options.
    * @param {BucketExistsCallback} [callback] Callback function.
    * @returns {Promise<BucketExistsResponse>}
    *
@@ -1276,26 +1290,31 @@ class Bucket extends ServiceObject {
    *   const exists = data[0];
    * });
    */
-  exists(options, callback?) {
-    if (is.fn(options)) {
+  exists(options?: BucketExistsRequest): Promise<BucketExistsResponse>;
+  exists(callback: BucketExistsCallback);
+  exists(options: BucketExistsRequest, callback: BucketExistsCallback);
+  exists(
+      options?: BucketExistsRequest|BucketExistsCallback,
+      callback?: BucketExistsCallback): Promise<BucketExistsResponse>|void {
+    if (typeof options === 'function') {
       callback = options;
-      options = {};
+      options = {} as BucketExistsRequest;
     }
 
-    options = options || {};
+    options = options || {} as BucketExistsRequest;
 
     this.get(options, err => {
       if (err) {
         if (err.code === 404) {
-          callback(null, false);
+          callback!(null, false);
         } else {
-          callback(err);
+          callback!(err);
         }
 
         return;
       }
 
-      callback(null, true);
+      callback!(null, true);
     });
   }
 
