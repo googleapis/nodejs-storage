@@ -372,7 +372,7 @@ export interface GetBucketCallback extends InstanceResponseCallback {
  *     billed for the request.
  */
 export interface GetLabelsRequest {
-  userProject?: string
+  userProject?: string;
 }
 
 /**
@@ -1462,7 +1462,8 @@ class Bucket extends ServiceObject {
   get(options?: GetBucketRequest): Promise<GetBucketResponse>;
   get(callback: GetBucketCallback);
   get(options: GetBucketRequest, callback: GetBucketCallback);
-  get(options?: GetBucketRequest|GetBucketCallback, callback?: GetBucketCallback): Promise<GetBucketResponse>|void {
+  get(options?: GetBucketRequest|GetBucketCallback,
+      callback?: GetBucketCallback): Promise<GetBucketResponse>|void {
     if (typeof options === 'function') {
       callback = options;
       options = {} as GetBucketRequest;
@@ -1673,8 +1674,10 @@ class Bucket extends ServiceObject {
    */
   getLabels(options: GetLabelsRequest): Promise<GetLabelsResponse>;
   getLabels(callback: GetLabelsCallback);
-  getLabels(options:  GetLabelsRequest, callback: GetLabelsCallback);
-  getLabels(options?: GetLabelsRequest|GetLabelsCallback, callback?: GetLabelsCallback): Promise<GetLabelsResponse>|void {
+  getLabels(options: GetLabelsRequest, callback: GetLabelsCallback);
+  getLabels(
+      options?: GetLabelsRequest|GetLabelsCallback,
+      callback?: GetLabelsCallback): Promise<GetLabelsResponse>|void {
     let req = {} as GetLabelsRequest;
 
     if (typeof options === 'function') {
@@ -1723,10 +1726,15 @@ class Bucket extends ServiceObject {
    * region_tag:storage_get_requester_pays_status
    * Example of retrieving the requester pays status of a bucket:
    */
-  getMetadata(options?: GetBucketMetadataRequest): Promise<GetBucketMetadataResponse>;
+  getMetadata(options?: GetBucketMetadataRequest):
+      Promise<GetBucketMetadataResponse>;
   getMetadata(callback: GetBucketMetadataCallback);
-  getMetadata(options: GetBucketMetadataRequest, callback: GetBucketMetadataCallback);
-  getMetadata(options?: GetBucketMetadataRequest|GetBucketMetadataCallback, callback?: GetBucketMetadataCallback): Promise<GetBucketMetadataResponse>|void {
+  getMetadata(
+      options: GetBucketMetadataRequest, callback: GetBucketMetadataCallback);
+  getMetadata(
+      options?: GetBucketMetadataRequest|GetBucketMetadataCallback,
+      callback?: GetBucketMetadataCallback): Promise<GetBucketMetadataResponse>|
+      void {
     if (typeof options === 'function') {
       callback = options;
       options = {} as GetBucketMetadataRequest;
