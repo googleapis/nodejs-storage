@@ -268,6 +268,21 @@ export interface DeleteFilesCallback {
 }
 
 /**
+ * @typedef {array} DeleteLabelsResponse
+ * @property {object} 0 The full API response.
+ */
+export type DeleteLabelsResponse = [object];
+
+/**
+ * @callback DeleteLabelsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface DeleteLabelsCallback {
+  (err: Error|null, apiResponse?: object);
+}
+
+/**
  * The size of a file (in bytes) must be greater than this number to
  * automatically trigger a resumable upload.
  *
@@ -1028,15 +1043,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} DeleteLabelsResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback DeleteLabelsCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Delete one or more labels from this bucket.
    *
    * @param {string|string[]} labels The labels to delete. If no labels are
@@ -1074,10 +1080,15 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  deleteLabels(labels: string|string[], callback?) {
-    if (is.fn(labels)) {
+  deleteLabels(labels?: string|string[]): Promise<DeleteLabelsResponse>;
+  deleteLabels(callback: DeleteLabelsCallback);
+  deleteLabels(labels: string|string[], callback: DeleteLabelsCallback);
+  deleteLabels(
+      labels?: string|string[]|DeleteLabelsCallback,
+      callback?: DeleteLabelsCallback): Promise<DeleteLabelsResponse>|void {
+    if (typeof labels === 'function') {
       callback = labels;
-      labels = [];
+      labels = [] as string[];
     }
 
     labels = arrify(labels);
@@ -1094,7 +1105,7 @@ class Bucket extends ServiceObject {
     if (labels.length === 0) {
       this.getLabels((err, labels) => {
         if (err) {
-          callback(err);
+          callback!(err);
           return;
         }
 
