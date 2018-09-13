@@ -296,6 +296,22 @@ export type DisableRequesterPaysResponse = [object];
 export interface DisableRequesterPaysCallback {
   (err: Error|null, apiResponse?: object);
 }
+
+/**
+ * @typedef {array} EnableRequesterPaysResponse
+ * @property {object} 0 The full API response.
+ */
+export type EnableRequesterPaysResponse = [object];
+
+/**
+ * @callback EnableRequesterPaysCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface EnableRequesterPaysCallback {
+  (err: Error|null, apiResponse: object);
+}
+
 /**
  * The size of a file (in bytes) must be greater than this number to
  * automatically trigger a resumable upload.
@@ -1179,15 +1195,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} EnableRequesterPaysResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback EnableRequesterPaysCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * <div class="notice">
    *   <strong>Early Access Testers Only</strong>
    *   <p>
@@ -1224,7 +1231,10 @@ class Bucket extends ServiceObject {
    * region_tag:storage_enable_requester_pays
    * Example of enabling requester pays:
    */
-  enableRequesterPays(callback?) {
+  enableRequesterPays(): Promise<EnableRequesterPaysResponse>;
+  enableRequesterPays(callback: EnableRequesterPaysCallback);
+  enableRequesterPays(callback?: EnableRequesterPaysCallback):
+      Promise<EnableRequesterPaysResponse>|void {
     this.setMetadata(
         {
           billing: {
