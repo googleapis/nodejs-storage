@@ -18,7 +18,7 @@
 
 import * as arrify from 'arrify';
 import * as async from 'async';
-import {ServiceObject, util, DeleteCallback} from '@google-cloud/common';
+import {ServiceObject, util, DeleteCallback, InstanceResponseCallback, GetConfig} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
@@ -335,6 +335,35 @@ export type BucketExistsResponse = [boolean];
 export interface BucketExistsCallback {
   (err: Error);
   (err: null, exists: boolean);
+}
+
+/**
+ * @typedef {object} [GetBucketRequest] Configuration options for Bucket#get()
+ * @property {boolean} [autoCreate] Automatically create the object if
+ *     it does not exist. Default: `false`
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface GetBucketRequest extends GetConfig {
+  userProject?: string;
+}
+
+/**
+ * @typedef {array} GetBucketResponse
+ * @property {Bucket} 0 The {@link Bucket}.
+ * @property {object} 1 The full API response.
+ */
+export type GetBucketResponse = [Bucket, object];
+
+/**
+ * @callback GetBucketCallback
+ * @param {?Error} err Request error, if any.
+ * @param {Bucket} bucket The {@link Bucket}.
+ * @param {object} apiResponse The full API response.
+ */
+export interface GetBucketCallback extends InstanceResponseCallback {
+  (err: Error, bucket: null, apiResponse: object);
+  (err: null, bucket: Bucket, apiResponse: object);
 }
 
 /**
@@ -1341,7 +1370,7 @@ class Bucket extends ServiceObject {
    * const bucket = storage.bucket('albums');
    * const file = bucket.file('my-existing-file.png');
    */
-  file(name: string, options?: FileOptions) {
+  file(name: string, options?: FileOptions): File {
     if (!name) {
       throw Error('A file name must be specified.');
     }
@@ -1350,17 +1379,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} GetBucketResponse
-   * @property {Bucket} 0 The {@link Bucket}.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback GetBucketCallback
-   * @param {?Error} err Request error, if any.
-   * @param {Bucket} bucket The {@link Bucket}.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Get a bucket if it exists.
    *
    * You may optionally use this to "get or create" an object by providing an
@@ -1368,11 +1386,7 @@ class Bucket extends ServiceObject {
    * normally required for the `create` method must be contained within this
    * object as well.
    *
-   * @param {object} [options] Configuration options.
-   * @param {boolean} [options.autoCreate] Automatically create the object if
-   *     it does not exist. Default: `false`
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {GetBucketRequest} [options] Configuration options.
    * @param {GetBucketCallback} [callback] Callback function.
    * @returns {Promise<GetBucketResponse>}
    *
@@ -1393,38 +1407,41 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  get(options, callback?) {
-    if (is.fn(options)) {
+  get(options?: GetBucketRequest): Promise<GetBucketResponse>;
+  get(callback: GetBucketCallback);
+  get(options: GetBucketRequest, callback: GetBucketCallback);
+  get(options?: GetBucketRequest|GetBucketCallback, callback?: GetBucketCallback): Promise<GetBucketResponse>|void {
+    if (typeof options === 'function') {
       callback = options;
-      options = {};
+      options = {} as GetBucketRequest;
     }
 
-    options = options || {};
+    const req = options || {} as GetBucketRequest;
 
-    const autoCreate = options.autoCreate;
-    delete options.autoCreate;
+    const autoCreate = req.autoCreate;
+    delete req.autoCreate;
 
     const onCreate = (err, bucket, apiResponse) => {
       if (err) {
         if (err.code === 409) {
-          this.get(options, callback);
+          this.get(req, callback!);
           return;
         }
 
-        callback(err, null, apiResponse);
+        callback!(err, null, apiResponse);
         return;
       }
 
-      callback(null, bucket, apiResponse);
+      callback!(null, bucket, apiResponse);
     };
 
-    this.getMetadata(options, (err, metadata) => {
+    this.getMetadata(req, (err, metadata) => {
       if (err) {
         if (err.code === 404 && autoCreate) {
           const args = [] as object[];
 
-          if (!is.empty(options)) {
-            args.push(options);
+          if (!is.empty(req)) {
+            args.push(req);
           }
 
           args.push(onCreate);
@@ -1433,11 +1450,11 @@ class Bucket extends ServiceObject {
           return;
         }
 
-        callback(err, null, metadata);
+        callback!(err, null, metadata);
         return;
       }
 
-      callback(null, this, metadata);
+      callback!(null, this, metadata);
     });
   }
 
