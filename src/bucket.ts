@@ -283,6 +283,20 @@ export interface DeleteLabelsCallback {
 }
 
 /**
+ * @typedef {array} DisableRequesterPaysResponse
+ * @property {object} 0 The full API response.
+ */
+export type DisableRequesterPaysResponse = [object];
+
+/**
+ * @callback DisableRequesterPaysCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface DisableRequesterPaysCallback {
+  (err: Error|null, apiResponse?: object);
+}
+/**
  * The size of a file (in bytes) must be greater than this number to
  * automatically trigger a resumable upload.
  *
@@ -1117,15 +1131,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} DisableRequesterPaysResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback DisableRequesterPaysCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * <div class="notice">
    *   <strong>Early Access Testers Only</strong>
    *   <p>
@@ -1160,7 +1165,10 @@ class Bucket extends ServiceObject {
    * region_tag:storage_disable_requester_pays
    * Example of disabling requester pays:
    */
-  disableRequesterPays(callback?) {
+  disableRequesterPays(): Promise<DisableRequesterPaysResponse>;
+  disableRequesterPays(callback: DisableRequesterPaysCallback);
+  disableRequesterPays(callback?: DisableRequesterPaysCallback):
+      Promise<DisableRequesterPaysResponse>|void {
     this.setMetadata(
         {
           billing: {
