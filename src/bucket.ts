@@ -411,12 +411,40 @@ export interface GetBucketMetadataCallback extends GetMetadataCallback {
 
 /**
  * @typedef {object} GetBucketMetadataRequest Configuration options for Bucket#getMetadata().
- * @param {string} [userProject] The ID of the project which will be
+ * @property {string} [userProject] The ID of the project which will be
  *     billed for the request.
  */
 export interface GetBucketMetadataRequest {
   userProject?: string;
 }
+
+/**
+ * @typedef {object} GetNotificationRequest Configuration options for Bucket#getNotification().
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface GetNotificationsRequest {
+  userProject?: string;
+}
+
+/**
+ * @callback GetNotificationsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {Notification[]} notifications Array of {@link Notification}
+ *     instances.
+ * @param {object} apiResponse The full API response.
+ */
+export interface GetNotificationsCallback {
+  (err: Error, notifications: null, apiResponse: object);
+  (err: null, notifications: Notification[], apiResponse: object);
+}
+
+/**
+ * @typedef {array} GetNotificationsResponse
+ * @property {Notification[]} 0 Array of {@link Notification} instances.
+ * @property {object} 1 The full API response.
+ */
+export type GetNotificationsResponse = [Notification[], object];
 
 /**
  * The size of a file (in bytes) must be greater than this number to
@@ -1760,25 +1788,11 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} GetNotificationsResponse
-   * @property {Notification[]} 0 Array of {@link Notification} instances.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback GetNotificationsCallback
-   * @param {?Error} err Request error, if any.
-   * @param {Notification[]} notifications Array of {@link Notification}
-   *     instances.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Retrieves a list of notification subscriptions for a given bucket.
    *
    * @see [Notifications: list]{@link https://cloud.google.com/storage/docs/json_api/v1/notifications/list}
    *
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {GetNotificationsRequest} [options] Configuration options.
    * @param {GetNotificationsCallback} [callback] Callback function.
    * @returns {Promise<GetNotificationsResponse>}
    *
@@ -1805,20 +1819,25 @@ class Bucket extends ServiceObject {
    * region_tag:storage_list_notifications
    * Another example:
    */
-  getNotifications(options, callback?) {
-    if (is.fn(options)) {
+  getNotifications(options?: GetNotificationsRequest): Promise<GetNotificationsResponse>;
+  getNotifications(callback: GetNotificationsCallback);
+  getNotifications(options: GetNotificationsRequest, callback: GetNotificationsCallback);
+  getNotifications(options?: GetNotificationsRequest|GetNotificationsCallback, callback?: GetNotificationsCallback): Promise<GetNotificationsResponse>|void {
+    if (typeof options === 'function') {
       callback = options;
       options = {};
     }
 
+    const req = options || {} as GetNotificationsRequest;
+
     this.request(
         {
           uri: '/notificationConfigs',
-          qs: options,
+          qs: req,
         },
         (err, resp) => {
           if (err) {
-            callback(err, null, resp);
+            callback!(err, null, resp);
             return;
           }
 
@@ -1828,7 +1847,7 @@ class Bucket extends ServiceObject {
             return notificationInstance;
           });
 
-          callback(null, notifications, resp);
+          callback!(null, notifications, resp);
         });
   }
 
