@@ -18,7 +18,7 @@
 
 import * as arrify from 'arrify';
 import * as async from 'async';
-import {ServiceObject, util} from '@google-cloud/common';
+import {ServiceObject, util, DeleteCallback} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
@@ -235,6 +235,30 @@ export type CreateNotificationResponse = [
   Notification,
   object
 ];
+
+/**
+ * @typedef {object} DeleteBucketRequest Configuration options.
+ * @param {string} userProject The ID of the project which will be
+ *     billed for the request.
+ */
+export interface DeleteBucketRequest {
+  userProject: string;
+}
+
+/**
+ * @typedef {array} DeleteBucketResponse
+ * @property {object} 0 The full API response.
+ */
+export type DeleteBucketResponse = [ object ];
+
+/**
+ * @callback DeleteBucketCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface DeleteBucketCallback extends DeleteCallback{
+  (err: Error|null, apiResponse: object);
+}
 
 /**
  * The size of a file (in bytes) must be greater than this number to
@@ -836,15 +860,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} DeleteBucketResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback DeleteBucketCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Delete the bucket.
    *
    * @see [Buckets: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/delete}
@@ -872,10 +887,13 @@ class Bucket extends ServiceObject {
    * region_tag:storage_delete_bucket
    * Another example:
    */
-  delete(options, callback?) {
-    if (is.fn(options)) {
+  delete(options?: DeleteBucketRequest): Promise<DeleteBucketResponse>;
+  delete(callback: DeleteBucketCallback);
+  delete(options: DeleteBucketRequest, callback: DeleteBucketCallback);
+  delete(options?: DeleteBucketRequest|DeleteBucketCallback, callback?: DeleteBucketCallback): Promise<DeleteBucketResponse>|void {
+    if (typeof options === 'function') {
       callback = options;
-      options = {};
+      options = {} as DeleteBucketRequest;
     }
 
     this.request(
