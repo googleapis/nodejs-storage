@@ -18,7 +18,7 @@
 
 import * as arrify from 'arrify';
 import * as async from 'async';
-import {ServiceObject, util, DeleteCallback, InstanceResponseCallback, GetConfig} from '@google-cloud/common';
+import {ServiceObject, util, DeleteCallback, InstanceResponseCallback, GetConfig, GetMetadataCallback} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
@@ -366,8 +366,13 @@ export interface GetBucketCallback extends InstanceResponseCallback {
   (err: null, bucket: Bucket, apiResponse: object);
 }
 
+/**
+ * @typedef {object} GetLabelsRequest Configuration options for Bucket#getLabels().
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
 export interface GetLabelsRequest {
-
+  userProject?: string
 }
 
 /**
@@ -384,6 +389,33 @@ export type GetLabelsResponse = [object];
 export interface GetLabelsCallback {
   (err: Error, labels: null);
   (err: null, labels: object);
+}
+
+/**
+ * @typedef {array} GetBucketMetadataResponse
+ * @property {object} 0 The bucket metadata.
+ * @property {object} 1 The full API response.
+ */
+export type GetBucketMetadataResponse = [object, object];
+
+/**
+ * @callback GetBucketMetadataCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} metadata The bucket metadata.
+ * @param {object} apiResponse The full API response.
+ */
+export interface GetBucketMetadataCallback extends GetMetadataCallback {
+  (err: Error, metadata: null, apiResponse: object);
+  (err: null, metadata: object, apiResponse: object);
+}
+
+/**
+ * @typedef {object} GetBucketMetadataRequest Configuration options for Bucket#getMetadata().
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface GetBucketMetadataRequest {
+  userProject?: string;
 }
 
 /**
@@ -1651,7 +1683,7 @@ class Bucket extends ServiceObject {
       req = options;
     }
 
-    this.getMetadata(options, (err, metadata) => {
+    this.getMetadata(req, (err, metadata) => {
       if (err) {
         callback!(err, null);
         return;
@@ -1662,26 +1694,13 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} GetBucketMetadataResponse
-   * @property {object} 0 The bucket metadata.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback GetBucketMetadataCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} files The bucket metadata.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Get the bucket's metadata.
    *
    * To set metadata, see {@link Bucket#setMetadata}.
    *
    * @see [Buckets: get API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/get}
    *
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {GetBucketMetadataRequest} [options] Configuration options.
    * @param {GetBucketMetadataCallback} [callback] Callback function.
    * @returns {Promise<GetBucketMetadataResponse>}
    *
@@ -1704,26 +1723,31 @@ class Bucket extends ServiceObject {
    * region_tag:storage_get_requester_pays_status
    * Example of retrieving the requester pays status of a bucket:
    */
-  getMetadata(options, callback?) {
-    if (is.fn(options)) {
+  getMetadata(options?: GetBucketMetadataRequest): Promise<GetBucketMetadataResponse>;
+  getMetadata(callback: GetBucketMetadataCallback);
+  getMetadata(options: GetBucketMetadataRequest, callback: GetBucketMetadataCallback);
+  getMetadata(options?: GetBucketMetadataRequest|GetBucketMetadataCallback, callback?: GetBucketMetadataCallback): Promise<GetBucketMetadataResponse>|void {
+    if (typeof options === 'function') {
       callback = options;
-      options = {};
+      options = {} as GetBucketMetadataRequest;
     }
+
+    const req = options || {} as GetBucketMetadataRequest;
 
     this.request(
         {
           uri: '',
-          qs: options,
+          qs: req,
         },
         (err, resp) => {
           if (err) {
-            callback(err, null, resp);
+            callback!(err, null, resp);
             return;
           }
 
           this.metadata = resp;
 
-          callback(null, this.metadata, resp);
+          callback!(null, this.metadata, resp);
         });
   }
 
