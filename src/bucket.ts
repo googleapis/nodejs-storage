@@ -1819,10 +1819,15 @@ class Bucket extends ServiceObject {
    * region_tag:storage_list_notifications
    * Another example:
    */
-  getNotifications(options?: GetNotificationsRequest): Promise<GetNotificationsResponse>;
+  getNotifications(options?: GetNotificationsRequest):
+      Promise<GetNotificationsResponse>;
   getNotifications(callback: GetNotificationsCallback);
-  getNotifications(options: GetNotificationsRequest, callback: GetNotificationsCallback);
-  getNotifications(options?: GetNotificationsRequest|GetNotificationsCallback, callback?: GetNotificationsCallback): Promise<GetNotificationsResponse>|void {
+  getNotifications(
+      options: GetNotificationsRequest, callback: GetNotificationsCallback);
+  getNotifications(
+      options?: GetNotificationsRequest|GetNotificationsCallback,
+      callback?: GetNotificationsCallback): Promise<GetNotificationsResponse>|
+      void {
     if (typeof options === 'function') {
       callback = options;
       options = {};
