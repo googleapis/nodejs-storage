@@ -128,7 +128,7 @@ export interface CombineOptions {
  * @param {object} apiResponse The full API response.
  */
 export interface CombineCallback {
-  (err: Error|null, newFile: File|null, apiResponse: object);
+  (err: Error|null, newFile: File|null, apiResponse: request.Response);
 }
 
 /**
@@ -136,7 +136,7 @@ export interface CombineCallback {
  * @property {File} 0 The new {@link File}.
  * @property {object} 1 The full API response.
  */
-export type CombineResponse = [File, object];
+export type CombineResponse = [File, request.Response];
 
 /**
  * See a [Objects:
@@ -165,7 +165,7 @@ export interface CreateChannelOptions {
  * @property {Channel} 0 The new {@link Channel}.
  * @property {object} 1 The full API response.
  */
-export type CreateChannelResponse = [Channel, object];
+export type CreateChannelResponse = [Channel, request.Response];
 
 /**
  * @callback CreateChannelCallback
@@ -174,7 +174,7 @@ export type CreateChannelResponse = [Channel, object];
  * @param {object} apiResponse The full API response.
  */
 export interface CreateChannelCallback {
-  (err: Error|null, channel: Channel|null, apiResponse: object);
+  (err: Error|null, channel: Channel|null, apiResponse: request.Response);
 }
 
 /**
@@ -213,7 +213,7 @@ export interface CreateNotificationRequest {
  * @param {object} apiResponse The full API response.
  */
 export interface CreateNotificationCallback {
-  (err: Error|null, notification: Notification|null, apiResponse: object);
+  (err: Error|null, notification: Notification|null, apiResponse: request.Response);
 }
 
 /**
@@ -221,7 +221,7 @@ export interface CreateNotificationCallback {
  * @property {Notification} 0 The new {@link Notification}.
  * @property {object} 1 The full API response.
  */
-export type CreateNotificationResponse = [Notification, object];
+export type CreateNotificationResponse = [Notification, request.Response];
 
 /**
  * @typedef {object} DeleteBucketRequest Configuration options.
@@ -236,7 +236,7 @@ export interface DeleteBucketRequest {
  * @typedef {array} DeleteBucketResponse
  * @property {object} 0 The full API response.
  */
-export type DeleteBucketResponse = [object];
+export type DeleteBucketResponse = [request.Response];
 
 /**
  * @callback DeleteBucketCallback
@@ -244,7 +244,7 @@ export type DeleteBucketResponse = [object];
  * @param {object} apiResponse The full API response.
  */
 export interface DeleteBucketCallback extends DeleteCallback {
-  (err: Error|null, apiResponse: object);
+  (err: Error|null, apiResponse: request.Response);
 }
 
 /**
@@ -271,7 +271,7 @@ export interface DeleteFilesCallback {
  * @typedef {array} DeleteLabelsResponse
  * @property {object} 0 The full API response.
  */
-export type DeleteLabelsResponse = [object];
+export type DeleteLabelsResponse = [request.Response];
 
 /**
  * @callback DeleteLabelsCallback
@@ -286,7 +286,7 @@ export interface DeleteLabelsCallback {
  * @typedef {array} DisableRequesterPaysResponse
  * @property {object} 0 The full API response.
  */
-export type DisableRequesterPaysResponse = [object];
+export type DisableRequesterPaysResponse = [request.Response];
 
 /**
  * @callback DisableRequesterPaysCallback
@@ -301,7 +301,7 @@ export interface DisableRequesterPaysCallback {
  * @typedef {array} EnableRequesterPaysResponse
  * @property {object} 0 The full API response.
  */
-export type EnableRequesterPaysResponse = [object];
+export type EnableRequesterPaysResponse = [request.Response];
 
 /**
  * @callback EnableRequesterPaysCallback
@@ -309,7 +309,7 @@ export type EnableRequesterPaysResponse = [object];
  * @param {object} apiResponse The full API response.
  */
 export interface EnableRequesterPaysCallback {
-  (err: Error|null, apiResponse: object);
+  (err: Error|null, apiResponse: request.Response);
 }
 
 /**
@@ -353,7 +353,7 @@ export interface GetBucketRequest extends GetConfig {
  * @property {Bucket} 0 The {@link Bucket}.
  * @property {object} 1 The full API response.
  */
-export type GetBucketResponse = [Bucket, object];
+export type GetBucketResponse = [Bucket, request.Response];
 
 /**
  * @callback GetBucketCallback
@@ -362,8 +362,8 @@ export type GetBucketResponse = [Bucket, object];
  * @param {object} apiResponse The full API response.
  */
 export interface GetBucketCallback extends InstanceResponseCallback {
-  (err: Error, bucket: null, apiResponse: object);
-  (err: null, bucket: Bucket, apiResponse: object);
+  (err: Error, bucket: null, apiResponse: request.Response);
+  (err: null, bucket: Bucket, apiResponse: request.Response);
 }
 
 /**
@@ -379,7 +379,7 @@ export interface GetLabelsRequest {
  * @typedef {array} GetLabelsResponse
  * @property {object} 0 Object of labels currently set on this bucket.
  */
-export type GetLabelsResponse = [object];
+export type GetLabelsResponse = [request.Response];
 
 /**
  * @callback GetLabelsCallback
@@ -396,7 +396,7 @@ export interface GetLabelsCallback {
  * @property {object} 0 The bucket metadata.
  * @property {object} 1 The full API response.
  */
-export type GetBucketMetadataResponse = [object, object];
+export type GetBucketMetadataResponse = [object, request.Response];
 
 /**
  * @callback GetBucketMetadataCallback
@@ -405,8 +405,8 @@ export type GetBucketMetadataResponse = [object, object];
  * @param {object} apiResponse The full API response.
  */
 export interface GetBucketMetadataCallback extends GetMetadataCallback {
-  (err: Error, metadata: null, apiResponse: object);
-  (err: null, metadata: object, apiResponse: object);
+  (err: Error, metadata: null, apiResponse: request.Response);
+  (err: null, metadata: object, apiResponse: request.Response);
 }
 
 /**
@@ -435,8 +435,8 @@ export interface GetNotificationsRequest {
  * @param {object} apiResponse The full API response.
  */
 export interface GetNotificationsCallback {
-  (err: Error, notifications: null, apiResponse: object);
-  (err: null, notifications: Notification[], apiResponse: object);
+  (err: Error, notifications: null, apiResponse: request.Response);
+  (err: null, notifications: Notification[], apiResponse: request.Response);
 }
 
 /**
@@ -444,7 +444,7 @@ export interface GetNotificationsCallback {
  * @property {Notification[]} 0 Array of {@link Notification} instances.
  * @property {object} 1 The full API response.
  */
-export type GetNotificationsResponse = [Notification[], object];
+export type GetNotificationsResponse = [Notification[], request.Response];
 
 /**
  * The size of a file (in bytes) must be greater than this number to
