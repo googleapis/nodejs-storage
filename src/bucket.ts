@@ -18,7 +18,7 @@
 
 import * as arrify from 'arrify';
 import * as async from 'async';
-import {ServiceObject, util, DeleteCallback, InstanceResponseCallback, GetConfig, GetMetadataCallback} from '@google-cloud/common';
+import {ExistsCallback, ServiceObject, Metadata, util, DeleteCallback, InstanceResponseCallback, GetConfig, GetMetadataCallback} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
@@ -332,10 +332,7 @@ export type BucketExistsResponse = [boolean];
  * @param {?Error} err Request error, if any.
  * @param {boolean} exists Whether the {@link Bucket} exists.
  */
-export interface BucketExistsCallback {
-  (err: Error);
-  (err: null, exists: boolean);
-}
+export interface BucketExistsCallback extends ExistsCallback { }
 
 /**
  * @typedef {object} [GetBucketRequest] Configuration options for Bucket#get()
@@ -362,8 +359,7 @@ export type GetBucketResponse = [Bucket, request.Response];
  * @param {object} apiResponse The full API response.
  */
 export interface GetBucketCallback extends InstanceResponseCallback {
-  (err: Error, bucket: null, apiResponse: request.Response);
-  (err: null, bucket: Bucket, apiResponse: request.Response);
+  (err: Error|null, bucket: Bucket|null, apiResponse: request.Response);
 }
 
 /**
@@ -387,8 +383,7 @@ export type GetLabelsResponse = [request.Response];
  * @param {object} labels Object of labels currently set on this bucket.
  */
 export interface GetLabelsCallback {
-  (err: Error, labels: null);
-  (err: null, labels: object);
+  (err: Error|null, labels: object|null);
 }
 
 /**
@@ -405,8 +400,7 @@ export type GetBucketMetadataResponse = [object, request.Response];
  * @param {object} apiResponse The full API response.
  */
 export interface GetBucketMetadataCallback extends GetMetadataCallback {
-  (err: Error, metadata: null, apiResponse: request.Response);
-  (err: null, metadata: object, apiResponse: request.Response);
+  (err: Error|null, metadata: Metadata|null, apiResponse: request.Response);
 }
 
 /**
@@ -435,8 +429,7 @@ export interface GetNotificationsRequest {
  * @param {object} apiResponse The full API response.
  */
 export interface GetNotificationsCallback {
-  (err: Error, notifications: null, apiResponse: request.Response);
-  (err: null, notifications: Notification[], apiResponse: request.Response);
+  (err: Error|null, notifications: Notification[]|null, apiResponse: request.Response);
 }
 
 /**
@@ -1273,7 +1266,7 @@ class Bucket extends ServiceObject {
           return;
         }
 
-        deleteLabels(Object.keys(labels));
+        deleteLabels(Object.keys(labels!));
       });
     } else {
       deleteLabels(labels);
