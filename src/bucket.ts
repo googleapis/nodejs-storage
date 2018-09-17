@@ -226,11 +226,11 @@ export type CreateNotificationResponse = [Notification, request.Response];
 
 /**
  * @typedef {object} DeleteBucketRequest Configuration options.
- * @param {string} userProject The ID of the project which will be
+ * @param {string} [userProject] The ID of the project which will be
  *     billed for the request.
  */
 export interface DeleteBucketRequest {
-  userProject: string;
+  userProject?: string;
 }
 
 /**
@@ -766,7 +766,8 @@ class Bucket extends ServiceObject {
       callback: CombineCallback);
   combine(
       sources: string[]|File[], destination: string|File,
-      optionsOrCallback?: CombineOptions|CombineCallback, callback?: CombineCallback): Promise<CombineResponse>|void {
+      optionsOrCallback?: CombineOptions|CombineCallback,
+      callback?: CombineCallback): Promise<CombineResponse>|void {
     if (!is.array(sources) || sources.length < 2) {
       throw new Error('You must provide at least two source files.');
     }
@@ -775,11 +776,10 @@ class Bucket extends ServiceObject {
       throw new Error('A destination file must be specified.');
     }
 
-    let options;
+    let options: CombineOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
-      options = {};
-    } else {
+    } else if (optionsOrCallback) {
       options = optionsOrCallback;
     }
 
@@ -885,7 +885,7 @@ class Bucket extends ServiceObject {
       callback: CreateChannelCallback);
   createChannel(
       id: string, config: CreateChannelConfig,
-      options?: CreateChannelOptions|CreateChannelCallback,
+      optionsOrCallback?: CreateChannelOptions|CreateChannelCallback,
       callback?: CreateChannelCallback): Promise<CreateChannelResponse>|void {
     if (!is.string(id)) {
       throw new Error('An ID is required to create a channel.');
@@ -895,9 +895,11 @@ class Bucket extends ServiceObject {
       throw new Error('An address is required to create a channel.');
     }
 
-    if (typeof options === 'function') {
-      callback = options;
-      options = {};
+    let options: CreateChannelOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     this.request(
@@ -989,12 +991,14 @@ class Bucket extends ServiceObject {
   createNotification(topic: string, callback: CreateNotificationCallback);
   createNotification(
       topic: string,
-      options?: CreateNotificationRequest|CreateNotificationCallback,
+      optionsOrCallback?: CreateNotificationRequest|CreateNotificationCallback,
       callback?: CreateNotificationCallback):
       Promise<CreateNotificationResponse>|void {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {};
+    let options: CreateNotificationRequest = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     if (is.object(topic) && util.isCustomType(topic, 'pubsub/topic')) {
@@ -1051,9 +1055,7 @@ class Bucket extends ServiceObject {
    *
    * @see [Buckets: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/delete}
    *
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {DeleteBucketRequest} [options] Configuration options.
    * @param {DeleteBucketCallback} [callback] Callback function.
    * @returns {Promise<DeleteBucketResponse>}
    *
@@ -1078,11 +1080,13 @@ class Bucket extends ServiceObject {
   delete(callback: DeleteBucketCallback);
   delete(options: DeleteBucketRequest, callback: DeleteBucketCallback);
   delete(
-      options?: DeleteBucketRequest|DeleteBucketCallback,
+      optionsOrCallback?: DeleteBucketRequest|DeleteBucketCallback,
       callback?: DeleteBucketCallback): Promise<DeleteBucketResponse>|void {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {} as DeleteBucketRequest;
+    let options: DeleteBucketRequest = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     this.request(
@@ -1159,28 +1163,28 @@ class Bucket extends ServiceObject {
   deleteFiles(callback: DeleteFilesCallback);
   deleteFiles(query: DeleteFilesRequest, callback: DeleteFilesCallback);
   deleteFiles(
-      query?: DeleteFilesRequest|DeleteFilesCallback,
+      queryOrCallback?: DeleteFilesRequest|DeleteFilesCallback,
       callback?: DeleteFilesCallback): Promise<void>|void {
-    if (typeof query === 'function') {
-      callback = query;
-      query = {} as DeleteFilesRequest;
+    let query: DeleteFilesRequest = {};
+    if (typeof queryOrCallback === 'function') {
+      callback = queryOrCallback;
+    } else if (queryOrCallback) {
+      query = queryOrCallback;
     }
-
-    const req = query || {} as DeleteFilesRequest;
 
     const MAX_PARALLEL_LIMIT = 10;
     const errors = [] as Error[];
 
-    this.getFiles(req, (err, files) => {
+    this.getFiles(query, (err, files) => {
       if (err) {
         callback!(err, {});
         return;
       }
 
       const deleteFile = (file, callback) => {
-        file.delete(req, (err: Error) => {
+        file.delete(query, (err: Error) => {
           if (err) {
-            if (req.force) {
+            if (query.force) {
               errors.push(err);
               callback!();
               return;
@@ -1249,14 +1253,14 @@ class Bucket extends ServiceObject {
   deleteLabels(callback: DeleteLabelsCallback);
   deleteLabels(labels: string|string[], callback: DeleteLabelsCallback);
   deleteLabels(
-      labels?: string|string[]|DeleteLabelsCallback,
+      labelsOrCallback?: string|string[]|DeleteLabelsCallback,
       callback?: DeleteLabelsCallback): Promise<DeleteLabelsResponse>|void {
-    if (typeof labels === 'function') {
-      callback = labels;
-      labels = [] as string[];
+    let labels = new Array<string>();
+    if (typeof labelsOrCallback === 'function') {
+      callback = labelsOrCallback;
+    } else if (labelsOrCallback) {
+      labels = arrify(labelsOrCallback);
     }
-
-    labels = arrify(labels);
 
     const deleteLabels = labels => {
       const nullLabelMap = labels.reduce((nullLabelMap, labelKey) => {
@@ -1404,11 +1408,13 @@ class Bucket extends ServiceObject {
   exists(callback: BucketExistsCallback);
   exists(options: BucketExistsRequest, callback: BucketExistsCallback);
   exists(
-      options?: BucketExistsRequest|BucketExistsCallback,
+      optionsOrCallback?: BucketExistsRequest|BucketExistsCallback,
       callback?: BucketExistsCallback): Promise<BucketExistsResponse>|void {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {} as BucketExistsRequest;
+    let options: BucketExistsRequest = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     options = options || {} as BucketExistsRequest;
@@ -1491,22 +1497,22 @@ class Bucket extends ServiceObject {
   get(options?: GetBucketRequest): Promise<GetBucketResponse>;
   get(callback: GetBucketCallback);
   get(options: GetBucketRequest, callback: GetBucketCallback);
-  get(options?: GetBucketRequest|GetBucketCallback,
+  get(optionsOrCallback?: GetBucketRequest|GetBucketCallback,
       callback?: GetBucketCallback): Promise<GetBucketResponse>|void {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {} as GetBucketRequest;
+    let options: GetBucketRequest = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
-    const req = options || {} as GetBucketRequest;
-
-    const autoCreate = req.autoCreate;
-    delete req.autoCreate;
+    const autoCreate = options.autoCreate;
+    delete options.autoCreate;
 
     const onCreate = (err, bucket, apiResponse) => {
       if (err) {
         if (err.code === 409) {
-          this.get(req, callback!);
+          this.get(options, callback!);
           return;
         }
 
@@ -1517,13 +1523,13 @@ class Bucket extends ServiceObject {
       callback!(null, bucket, apiResponse);
     };
 
-    this.getMetadata(req, (err, metadata) => {
+    this.getMetadata(options, (err, metadata) => {
       if (err) {
         if (err.code === 404 && autoCreate) {
           const args = [] as object[];
 
-          if (!is.empty(req)) {
-            args.push(req);
+          if (!is.empty(options)) {
+            args.push(options);
           }
 
           args.push(onCreate);
@@ -1705,17 +1711,16 @@ class Bucket extends ServiceObject {
   getLabels(callback: GetLabelsCallback);
   getLabels(options: GetLabelsRequest, callback: GetLabelsCallback);
   getLabels(
-      options?: GetLabelsRequest|GetLabelsCallback,
+      optionsOrCallback?: GetLabelsRequest|GetLabelsCallback,
       callback?: GetLabelsCallback): Promise<GetLabelsResponse>|void {
-    let req = {} as GetLabelsRequest;
-
-    if (typeof options === 'function') {
-      callback = options;
-    } else if (options) {
-      req = options;
+    let options: GetLabelsRequest = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
-    this.getMetadata(req, (err, metadata) => {
+    this.getMetadata(options, (err, metadata) => {
       if (err) {
         callback!(err, null);
         return;
@@ -1761,20 +1766,20 @@ class Bucket extends ServiceObject {
   getMetadata(
       options: GetBucketMetadataRequest, callback: GetBucketMetadataCallback);
   getMetadata(
-      options?: GetBucketMetadataRequest|GetBucketMetadataCallback,
+      optionsOrCallback?: GetBucketMetadataRequest|GetBucketMetadataCallback,
       callback?: GetBucketMetadataCallback): Promise<GetBucketMetadataResponse>|
       void {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {} as GetBucketMetadataRequest;
+    let options: GetBucketMetadataRequest = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
-
-    const req = options || {} as GetBucketMetadataRequest;
 
     this.request(
         {
           uri: '',
-          qs: req,
+          qs: options,
         },
         (err, resp) => {
           if (err) {
@@ -1826,20 +1831,20 @@ class Bucket extends ServiceObject {
   getNotifications(
       options: GetNotificationsRequest, callback: GetNotificationsCallback);
   getNotifications(
-      options?: GetNotificationsRequest|GetNotificationsCallback,
+      optionsOrCallback?: GetNotificationsRequest|GetNotificationsCallback,
       callback?: GetNotificationsCallback): Promise<GetNotificationsResponse>|
       void {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {};
+    let options: GetNotificationsRequest = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
-
-    const req = options || {} as GetNotificationsRequest;
 
     this.request(
         {
           uri: '/notificationConfigs',
-          qs: req,
+          qs: options,
         },
         (err, resp) => {
           if (err) {
