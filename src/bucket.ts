@@ -213,7 +213,8 @@ export interface CreateNotificationRequest {
  * @param {object} apiResponse The full API response.
  */
 export interface CreateNotificationCallback {
-  (err: Error|null, notification: Notification|null, apiResponse: request.Response);
+  (err: Error|null, notification: Notification|null,
+   apiResponse: request.Response);
 }
 
 /**
@@ -332,7 +333,7 @@ export type BucketExistsResponse = [boolean];
  * @param {?Error} err Request error, if any.
  * @param {boolean} exists Whether the {@link Bucket} exists.
  */
-export interface BucketExistsCallback extends ExistsCallback { }
+export interface BucketExistsCallback extends ExistsCallback {}
 
 /**
  * @typedef {object} [GetBucketRequest] Configuration options for Bucket#get()
@@ -429,7 +430,8 @@ export interface GetNotificationsRequest {
  * @param {object} apiResponse The full API response.
  */
 export interface GetNotificationsCallback {
-  (err: Error|null, notifications: Notification[]|null, apiResponse: request.Response);
+  (err: Error|null, notifications: Notification[]|null,
+   apiResponse: request.Response);
 }
 
 /**
@@ -758,10 +760,13 @@ class Bucket extends ServiceObject {
       options: CombineOptions): Promise<CombineResponse>;
   combine(
       sources: string[]|File[], destination: string|File,
-      options: CombineOptions, callback);
+      options: CombineOptions, callback: CombineCallback);
   combine(
       sources: string[]|File[], destination: string|File,
-      options: CombineOptions, callback?): Promise<CombineResponse>|void {
+      callback: CombineCallback);
+  combine(
+      sources: string[]|File[], destination: string|File,
+      optionsOrCallback?: CombineOptions|CombineCallback, callback?: CombineCallback): Promise<CombineResponse>|void {
     if (!is.array(sources) || sources.length < 2) {
       throw new Error('You must provide at least two source files.');
     }
@@ -770,12 +775,15 @@ class Bucket extends ServiceObject {
       throw new Error('A destination file must be specified.');
     }
 
-    if (is.fn(options)) {
-      callback = options;
+    let options;
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
       options = {};
+    } else {
+      options = optionsOrCallback;
     }
 
-    const convertToFile = (file: string|File) => {
+    const convertToFile = (file: string|File): File => {
       if (file instanceof File) {
         return file;
       }
@@ -784,25 +792,25 @@ class Bucket extends ServiceObject {
 
     // tslint:disable-next-line:no-any
     sources = (sources as any).map(convertToFile);
-    destination = convertToFile(destination);
+    const destinationFile = convertToFile(destination);
     callback = callback || util.noop;
 
-    if (!destination.metadata.contentType) {
-      const destinationContentType = mime.contentType(destination.name);
+    if (!destinationFile.metadata.contentType) {
+      const destinationContentType = mime.contentType(destinationFile.name);
 
       if (destinationContentType) {
-        destination.metadata.contentType = destinationContentType;
+        destinationFile.metadata.contentType = destinationContentType;
       }
     }
 
     // Make the request from the destination File object.
-    destination.request(
+    destinationFile.request(
         {
           method: 'POST',
           uri: '/compose',
           json: {
             destination: {
-              contentType: destination.metadata.contentType,
+              contentType: destinationFile.metadata.contentType,
             },
             // tslint:disable-next-line:no-any
             sourceObjects: (sources as any).map(source => {
@@ -825,7 +833,7 @@ class Bucket extends ServiceObject {
             return;
           }
 
-          callback!(null, destination, resp);
+          callback!(null, destinationFile, resp);
         });
   }
 
