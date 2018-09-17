@@ -18,7 +18,7 @@
 
 import * as arrify from 'arrify';
 import * as async from 'async';
-import {ServiceObject, util} from '@google-cloud/common';
+import {ServiceObject, util, DeleteCallback} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
@@ -30,6 +30,7 @@ import * as snakeize from 'snakeize';
 import * as request from 'request';
 
 import {Acl} from './acl';
+import {Channel} from './channel';
 import {File, FileOptions} from './file';
 import {Iam} from './iam';
 import {Notification} from './notification';
@@ -47,6 +48,25 @@ interface CreateNotificationQuery {
 interface MetadataRequest {
   predefinedAcl: string;
   userProject?: string;
+}
+
+interface BucketOptions {
+  userProject?: string;
+}
+
+/**
+ * See a [Objects:
+ * watchAll request
+ * body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
+ */
+interface WatchAllRequest {
+  delimiter: string;
+  maxResults: number;
+  pageToken: string;
+  prefix: string;
+  projection: string;
+  userProject: string;
+  versions: boolean;
 }
 
 /**
@@ -76,7 +96,7 @@ interface MetadataRequest {
  */
 export interface GetFilesRequest {
   autoPaginate?: boolean;
-  delimited?: string;
+  delimiter?: string;
   directory?: string;
   prefix?: string;
   maxApiCalls?: number;
@@ -86,8 +106,235 @@ export interface GetFilesRequest {
   versions?: boolean;
 }
 
+/**
+ * @typedef {object} CombineOptions
+ * @property {string} [kmsKeyName] Resource name of the Cloud KMS key, of
+ *     the form
+ *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
+ *     that will be used to encrypt the object. Overwrites the object
+ * metadata's `kms_key_name` value, if any.
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface CombineOptions {
+  kmsKeyName?: string;
+  userProject?: string;
+}
+
+/**
+ * @callback CombineCallback
+ * @param {?Error} err Request error, if any.
+ * @param {File} newFile The new {@link File}.
+ * @param {object} apiResponse The full API response.
+ */
+export interface CombineCallback {
+  (err: Error|null, newFile: File|null, apiResponse: object);
+}
+
+/**
+ * @typedef {array} CombineResponse
+ * @property {File} 0 The new {@link File}.
+ * @property {object} 1 The full API response.
+ */
+export type CombineResponse = [File, object];
+
+/**
+ * See a [Objects:
+ * watchAll request
+ * body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
+ *
+ * @typedef {object} CreateChannelConfig
+ * @property {string} address The address where notifications are
+ *     delivered for this channel.
+ */
+export interface CreateChannelConfig extends WatchAllRequest {
+  address: string;
+}
+
+/**
+ * @typedef {object} CreateChannelOptions
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface CreateChannelOptions {
+  userProject?: string;
+}
+
+/**
+ * @typedef {array} CreateChannelResponse
+ * @property {Channel} 0 The new {@link Channel}.
+ * @property {object} 1 The full API response.
+ */
+export type CreateChannelResponse = [Channel, object];
+
+/**
+ * @callback CreateChannelCallback
+ * @param {?Error} err Request error, if any.
+ * @param {Channel} channel The new {@link Channel}.
+ * @param {object} apiResponse The full API response.
+ */
+export interface CreateChannelCallback {
+  (err: Error|null, channel: Channel|null, apiResponse: object);
+}
+
+/**
+ * Metadata to set for the Notification.
+ *
+ * @typedef {object} CreateNotificationRequest
+ * @property {object} [customAttributes] An optional list of additional
+ *     attributes to attach to each Cloud PubSub message published for this
+ *     notification subscription.
+ * @property {string[]} [eventTypes] If present, only send notifications about
+ *     listed event types. If empty, sent notifications for all event types.
+ * @property {string} [objectNamePrefix] If present, only apply this
+ *     notification configuration to object names that begin with this prefix.
+ * @property {string} [payloadFormat] The desired content of the Payload.
+ *     Defaults to `JSON_API_V1`.
+ *
+ *     Acceptable values are:
+ *     - `JSON_API_V1`
+ *
+ *     - `NONE`
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface CreateNotificationRequest {
+  customAttributes?: {[key: string]: string};
+  eventTypes?: string[];
+  objectNamePrefix?: string;
+  payloadFormat?: string;
+  userProject?: string;
+}
+
+/**
+ * @callback CreateNotificationCallback
+ * @param {?Error} err Request error, if any.
+ * @param {Notification} notification The new {@link Notification}.
+ * @param {object} apiResponse The full API response.
+ */
+export interface CreateNotificationCallback {
+  (err: Error|null, notification: Notification|null, apiResponse: object);
+}
+
+/**
+ * @typedef {array} CreateNotificationResponse
+ * @property {Notification} 0 The new {@link Notification}.
+ * @property {object} 1 The full API response.
+ */
+export type CreateNotificationResponse = [Notification, object];
+
+/**
+ * @typedef {object} DeleteBucketRequest Configuration options.
+ * @param {string} userProject The ID of the project which will be
+ *     billed for the request.
+ */
+export interface DeleteBucketRequest {
+  userProject: string;
+}
+
+/**
+ * @typedef {array} DeleteBucketResponse
+ * @property {object} 0 The full API response.
+ */
+export type DeleteBucketResponse = [object];
+
+/**
+ * @callback DeleteBucketCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface DeleteBucketCallback extends DeleteCallback {
+  (err: Error|null, apiResponse: object);
+}
+
+/**
+ * @typedef {object} DeleteFilesRequest Query object. See {@link Bucket#getFiles}
+ *     for all of the supported properties.
+ * @property {boolean} [force] Suppress errors until all files have been
+ *     processed.
+ */
 export interface DeleteFilesRequest extends GetFilesRequest {
   force?: boolean;
+}
+
+/**
+ * @callback DeleteFilesCallback
+ * @param {?Error|?Error[]} err Request error, if any, or array of errors from
+ *     files that were not able to be deleted.
+ * @param {object} [apiResponse] The full API response.
+ */
+export interface DeleteFilesCallback {
+  (err: Error|Error[]|null, apiResponse?: object);
+}
+
+/**
+ * @typedef {array} DeleteLabelsResponse
+ * @property {object} 0 The full API response.
+ */
+export type DeleteLabelsResponse = [object];
+
+/**
+ * @callback DeleteLabelsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface DeleteLabelsCallback {
+  (err: Error|null, apiResponse?: object);
+}
+
+/**
+ * @typedef {array} DisableRequesterPaysResponse
+ * @property {object} 0 The full API response.
+ */
+export type DisableRequesterPaysResponse = [object];
+
+/**
+ * @callback DisableRequesterPaysCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface DisableRequesterPaysCallback {
+  (err: Error|null, apiResponse?: object);
+}
+
+/**
+ * @typedef {array} EnableRequesterPaysResponse
+ * @property {object} 0 The full API response.
+ */
+export type EnableRequesterPaysResponse = [object];
+
+/**
+ * @callback EnableRequesterPaysCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface EnableRequesterPaysCallback {
+  (err: Error|null, apiResponse: object);
+}
+
+/**
+ * @typedef {object} BucketExistsRequest Configuration options for Bucket#exists().
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface BucketExistsRequest {
+  userProject?: string;
+}
+
+/**
+ * @typedef {array} BucketExistsResponse
+ * @property {boolean} 0 Whether the {@link Bucket} exists.
+ */
+export type BucketExistsResponse = [boolean];
+
+/**
+ * @callback BucketExistsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {boolean} exists Whether the {@link Bucket} exists.
+ */
+export interface BucketExistsCallback {
+  (err: Error);
+  (err: null, exists: boolean);
 }
 
 /**
@@ -136,7 +383,7 @@ class Bucket extends ServiceObject {
    * @name Bucket#userProject
    * @type {string}
    */
-  userProject: string;
+  userProject?: string;
 
   /**
    * Cloud Storage uses access control lists (ACLs) to manage object and
@@ -299,7 +546,7 @@ class Bucket extends ServiceObject {
    */
   getFilesStream: Function;
 
-  constructor(storage, name, options?) {
+  constructor(storage: Storage, name: string, options?: BucketOptions) {
     options = options || {};
 
     // Allow for "gs://"-style input, and strip any trailing slashes.
@@ -366,17 +613,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} CombineResponse
-   * @property {File} 0 The new {@link File}.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback CombineCallback
-   * @param {?Error} err Request error, if any.
-   * @param {File} newFile The new {@link File}.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Combine multiple files into one new file.
    *
    * @see [Objects: compose API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/compose}
@@ -389,14 +625,7 @@ class Bucket extends ServiceObject {
    *     combined.
    * @param {string|File} destination The file you would like the
    *     source files combined into.
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.kmsKeyName] Resource name of the Cloud KMS key, of
-   *     the form
-   *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
-   *     that will be used to encrypt the object. Overwrites the object
-   * metadata's `kms_key_name` value, if any.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {CombineOptions} [options] Configuration options.
    * @param {CombineCallback} [callback] Callback function.
    * @returns {Promise<CombineResponse>}
    *
@@ -422,7 +651,15 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  combine(sources, destination, options, callback) {
+  combine(
+      sources: string[]|File[], destination: string|File,
+      options: CombineOptions): Promise<CombineResponse>;
+  combine(
+      sources: string[]|File[], destination: string|File,
+      options: CombineOptions, callback);
+  combine(
+      sources: string[]|File[], destination: string|File,
+      options: CombineOptions, callback?): Promise<CombineResponse>|void {
     if (!is.array(sources) || sources.length < 2) {
       throw new Error('You must provide at least two source files.');
     }
@@ -436,15 +673,15 @@ class Bucket extends ServiceObject {
       options = {};
     }
 
-    const convertToFile = file => {
+    const convertToFile = (file: string|File) => {
       if (file instanceof File) {
         return file;
       }
-
       return this.file(file);
     };
 
-    sources = sources.map(convertToFile);
+    // tslint:disable-next-line:no-any
+    sources = (sources as any).map(convertToFile);
     destination = convertToFile(destination);
     callback = callback || util.noop;
 
@@ -465,7 +702,8 @@ class Bucket extends ServiceObject {
             destination: {
               contentType: destination.metadata.contentType,
             },
-            sourceObjects: sources.map(source => {
+            // tslint:disable-next-line:no-any
+            sourceObjects: (sources as any).map(source => {
               const sourceObject = {
                 name: source.name,
               } as SourceObject;
@@ -481,25 +719,14 @@ class Bucket extends ServiceObject {
         },
         (err, resp) => {
           if (err) {
-            callback(err, null, resp);
+            callback!(err, null, resp);
             return;
           }
 
-          callback(null, destination, resp);
+          callback!(null, destination, resp);
         });
   }
 
-  /**
-   * @typedef {array} CreateChannelResponse
-   * @property {Channel} 0 The new {@link Channel}.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback CreateChannelCallback
-   * @param {?Error} err Request error, if any.
-   * @param {Channel} channel The new {@link Channel}.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * Create a channel that will be notified when objects in this bucket changes.
    *
@@ -509,14 +736,8 @@ class Bucket extends ServiceObject {
    * @see [Objects: watchAll API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll}
    *
    * @param {string} id The ID of the channel to create.
-   * @param {object} config See a
-   *     [Objects: watchAll request
-   * body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
-   * @param {string} config.address The address where notifications are
-   *     delivered for this channel.
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {CreateChannelConfig} config Configuration for creating channel.
+   * @param {CreateChannelOptions} [options] Configuration options.
    * @param {CreateChannelCallback} [callback] Callback function.
    * @returns {Promise<CreateChannelResponse>}
    *
@@ -544,7 +765,18 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  createChannel(id, config, options, callback) {
+  createChannel(
+      id: string, config: CreateChannelConfig,
+      options?: CreateChannelOptions): Promise<CreateChannelResponse>;
+  createChannel(
+      id: string, config: CreateChannelConfig, callback: CreateChannelCallback);
+  createChannel(
+      id: string, config: CreateChannelConfig, options: CreateChannelOptions,
+      callback: CreateChannelCallback);
+  createChannel(
+      id: string, config: CreateChannelConfig,
+      options?: CreateChannelOptions|CreateChannelCallback,
+      callback?: CreateChannelCallback): Promise<CreateChannelResponse>|void {
     if (!is.string(id)) {
       throw new Error('An ID is required to create a channel.');
     }
@@ -553,7 +785,7 @@ class Bucket extends ServiceObject {
       throw new Error('An address is required to create a channel.');
     }
 
-    if (is.fn(options)) {
+    if (typeof options === 'function') {
       callback = options;
       options = {};
     }
@@ -572,7 +804,7 @@ class Bucket extends ServiceObject {
         },
         (err, apiResponse) => {
           if (err) {
-            callback(err, null, apiResponse);
+            callback!(err, null, apiResponse);
             return;
           }
 
@@ -581,42 +813,10 @@ class Bucket extends ServiceObject {
 
           channel.metadata = apiResponse;
 
-          callback(null, channel, apiResponse);
+          callback!(null, channel, apiResponse);
         });
   }
 
-  /**
-   * Metadata to set for the Notification.
-   *
-   * @typedef {object} CreateNotificationRequest
-   * @property {object} [customAttributes] An optional list of additional
-   *     attributes to attach to each Cloud PubSub message published for this
-   *     notification subscription.
-   * @property {string[]} [eventTypes] If present, only send notifications about
-   *     listed event types. If empty, sent notifications for all event types.
-   * @property {string} [objectNamePrefix] If present, only apply this
-   *     notification configuration to object names that begin with this prefix.
-   * @property {string} [payloadFormat] The desired content of the Payload.
-   *     Defaults to `JSON_API_V1`.
-   *
-   *     Acceptable values are:
-   *     - `JSON_API_V1`
-   *
-   *     - `NONE`
-   * @property {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
-   */
-  /**
-   * @typedef {array} CreateNotificationResponse
-   * @property {Notification} 0 The new {@link Notification}.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback CreateNotificationCallback
-   * @param {?Error} err Request error, if any.
-   * @param {Notification} notification The new {@link Notification}.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * Creates a notification subscription for the bucket.
    *
@@ -671,21 +871,32 @@ class Bucket extends ServiceObject {
    * region_tag:storage_create_notification
    * Another example:
    */
-  createNotification(topic, options, callback) {
-    if (is.fn(options)) {
+  createNotification(topic: string, options?: CreateNotificationRequest):
+      Promise<CreateNotificationResponse>;
+  createNotification(
+      topic: string, options: CreateNotificationRequest,
+      callback: CreateNotificationCallback);
+  createNotification(topic: string, callback: CreateNotificationCallback);
+  createNotification(
+      topic: string,
+      options?: CreateNotificationRequest|CreateNotificationCallback,
+      callback?: CreateNotificationCallback):
+      Promise<CreateNotificationResponse>|void {
+    if (typeof options === 'function') {
       callback = options;
       options = {};
     }
 
     if (is.object(topic) && util.isCustomType(topic, 'pubsub/topic')) {
-      topic = topic.name;
+      // tslint:disable-next-line:no-any
+      topic = (topic as any).name;
     }
 
     if (!is.string(topic)) {
       throw new Error('A valid topic name is required.');
     }
 
-    const body = extend({topic}, options);
+    const body = Object.assign({topic}, options);
 
     if (body.topic.indexOf('projects') !== 0) {
       body.topic = 'projects/{{projectId}}/topics/' + body.topic;
@@ -713,7 +924,7 @@ class Bucket extends ServiceObject {
         },
         (err, apiResponse) => {
           if (err) {
-            callback(err, null, apiResponse);
+            callback!(err, null, apiResponse);
             return;
           }
 
@@ -721,19 +932,10 @@ class Bucket extends ServiceObject {
 
           notification.metadata = apiResponse;
 
-          callback(null, notification, apiResponse);
+          callback!(null, notification, apiResponse);
         });
   }
 
-  /**
-   * @typedef {array} DeleteBucketResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback DeleteBucketCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * Delete the bucket.
    *
@@ -762,10 +964,15 @@ class Bucket extends ServiceObject {
    * region_tag:storage_delete_bucket
    * Another example:
    */
-  delete(options, callback?) {
-    if (is.fn(options)) {
+  delete(options?: DeleteBucketRequest): Promise<DeleteBucketResponse>;
+  delete(callback: DeleteBucketCallback);
+  delete(options: DeleteBucketRequest, callback: DeleteBucketCallback);
+  delete(
+      options?: DeleteBucketRequest|DeleteBucketCallback,
+      callback?: DeleteBucketCallback): Promise<DeleteBucketResponse>|void {
+    if (typeof options === 'function') {
       callback = options;
-      options = {};
+      options = {} as DeleteBucketRequest;
     }
 
     this.request(
@@ -777,12 +984,6 @@ class Bucket extends ServiceObject {
         callback || util.noop);
   }
 
-  /**
-   * @callback DeleteFilesCallback
-   * @param {?Error|?Error[]} err Request error, if any, or array of errors from
-   *     files that were not able to be deleted.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * Iterate over the bucket's files, calling `file.delete()` on each.
    *
@@ -800,12 +1001,7 @@ class Bucket extends ServiceObject {
    *
    * @see [Objects: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/delete}
    *
-   * @param {object} [query] Query object. See {@link Bucket#getFiles}
-   *     for all of the supported properties.
-   * @param {boolean} [query.force] Suppress errors until all files have been
-   *     processed.
-   * @param {string} [query.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {DeleteFilesRequest} [query] Query object. See {@link Bucket#getFiles}
    * @param {DeleteFilesCallback} [callback] Callback function.
    * @returns {Promise}
    *
@@ -849,61 +1045,58 @@ class Bucket extends ServiceObject {
    * //-
    * bucket.deleteFiles().then(function() {});
    */
-  deleteFiles(query: DeleteFilesRequest, callback) {
-    if (is.fn(query)) {
+  deleteFiles(query?: DeleteFilesRequest): Promise<void>;
+  deleteFiles(callback: DeleteFilesCallback);
+  deleteFiles(query: DeleteFilesRequest, callback: DeleteFilesCallback);
+  deleteFiles(
+      query?: DeleteFilesRequest|DeleteFilesCallback,
+      callback?: DeleteFilesCallback): Promise<void>|void {
+    if (typeof query === 'function') {
       callback = query;
-      query = {};
+      query = {} as DeleteFilesRequest;
     }
 
-    query = query || {};
+    const req = query || {} as DeleteFilesRequest;
 
     const MAX_PARALLEL_LIMIT = 10;
     const errors = [] as Error[];
 
-    this.getFiles(query, (err, files) => {
+    this.getFiles(req, (err, files) => {
       if (err) {
-        callback(err);
+        callback!(err, {});
         return;
       }
 
       const deleteFile = (file, callback) => {
-        file.delete(query, (err: Error) => {
+        file.delete(req, (err: Error) => {
           if (err) {
-            if (query.force) {
+            if (req.force) {
               errors.push(err);
-              callback();
+              callback!();
               return;
             }
 
-            callback(err);
+            callback!(err);
             return;
           }
 
-          callback();
+          callback!(null);
         });
       };
 
       // Iterate through each file and attempt to delete it.
-      async.eachLimit(files, MAX_PARALLEL_LIMIT, deleteFile, err => {
-        if (err || errors.length > 0) {
-          callback(err || errors);
-          return;
-        }
+      async.eachLimit<File, Error>(
+          files, MAX_PARALLEL_LIMIT, deleteFile, err => {
+            if (err || errors.length > 0) {
+              callback!(err || errors);
+              return;
+            }
 
-        callback();
-      });
+            callback!(null);
+          });
     });
   }
 
-  /**
-   * @typedef {array} DeleteLabelsResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback DeleteLabelsCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * Delete one or more labels from this bucket.
    *
@@ -942,10 +1135,15 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  deleteLabels(labels, callback?) {
-    if (is.fn(labels)) {
+  deleteLabels(labels?: string|string[]): Promise<DeleteLabelsResponse>;
+  deleteLabels(callback: DeleteLabelsCallback);
+  deleteLabels(labels: string|string[], callback: DeleteLabelsCallback);
+  deleteLabels(
+      labels?: string|string[]|DeleteLabelsCallback,
+      callback?: DeleteLabelsCallback): Promise<DeleteLabelsResponse>|void {
+    if (typeof labels === 'function') {
       callback = labels;
-      labels = [];
+      labels = [] as string[];
     }
 
     labels = arrify(labels);
@@ -962,7 +1160,7 @@ class Bucket extends ServiceObject {
     if (labels.length === 0) {
       this.getLabels((err, labels) => {
         if (err) {
-          callback(err);
+          callback!(err);
           return;
         }
 
@@ -973,15 +1171,6 @@ class Bucket extends ServiceObject {
     }
   }
 
-  /**
-   * @typedef {array} DisableRequesterPaysResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback DisableRequesterPaysCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * <div class="notice">
    *   <strong>Early Access Testers Only</strong>
@@ -1017,7 +1206,10 @@ class Bucket extends ServiceObject {
    * region_tag:storage_disable_requester_pays
    * Example of disabling requester pays:
    */
-  disableRequesterPays(callback) {
+  disableRequesterPays(): Promise<DisableRequesterPaysResponse>;
+  disableRequesterPays(callback: DisableRequesterPaysCallback);
+  disableRequesterPays(callback?: DisableRequesterPaysCallback):
+      Promise<DisableRequesterPaysResponse>|void {
     this.setMetadata(
         {
           billing: {
@@ -1027,15 +1219,6 @@ class Bucket extends ServiceObject {
         callback || util.noop);
   }
 
-  /**
-   * @typedef {array} EnableRequesterPaysResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback EnableRequesterPaysCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * <div class="notice">
    *   <strong>Early Access Testers Only</strong>
@@ -1073,7 +1256,10 @@ class Bucket extends ServiceObject {
    * region_tag:storage_enable_requester_pays
    * Example of enabling requester pays:
    */
-  enableRequesterPays(callback?) {
+  enableRequesterPays(): Promise<EnableRequesterPaysResponse>;
+  enableRequesterPays(callback: EnableRequesterPaysCallback);
+  enableRequesterPays(callback?: EnableRequesterPaysCallback):
+      Promise<EnableRequesterPaysResponse>|void {
     this.setMetadata(
         {
           billing: {
@@ -1084,20 +1270,9 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} BucketExistsResponse
-   * @property {boolean} 0 Whether the {@link Bucket} exists.
-   */
-  /**
-   * @callback BucketExistsCallback
-   * @param {?Error} err Request error, if any.
-   * @param {boolean} exists Whether the {@link Bucket} exists.
-   */
-  /**
    * Check if the bucket exists.
    *
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {BucketExistsRequest} [options] Configuration options.
    * @param {BucketExistsCallback} [callback] Callback function.
    * @returns {Promise<BucketExistsResponse>}
    *
@@ -1115,26 +1290,31 @@ class Bucket extends ServiceObject {
    *   const exists = data[0];
    * });
    */
-  exists(options, callback?) {
-    if (is.fn(options)) {
+  exists(options?: BucketExistsRequest): Promise<BucketExistsResponse>;
+  exists(callback: BucketExistsCallback);
+  exists(options: BucketExistsRequest, callback: BucketExistsCallback);
+  exists(
+      options?: BucketExistsRequest|BucketExistsCallback,
+      callback?: BucketExistsCallback): Promise<BucketExistsResponse>|void {
+    if (typeof options === 'function') {
       callback = options;
-      options = {};
+      options = {} as BucketExistsRequest;
     }
 
-    options = options || {};
+    options = options || {} as BucketExistsRequest;
 
     this.get(options, err => {
       if (err) {
         if (err.code === 404) {
-          callback(null, false);
+          callback!(null, false);
         } else {
-          callback(err);
+          callback!(err);
         }
 
         return;
       }
 
-      callback(null, true);
+      callback!(null, true);
     });
   }
 
@@ -1161,7 +1341,7 @@ class Bucket extends ServiceObject {
    * const bucket = storage.bucket('albums');
    * const file = bucket.file('my-existing-file.png');
    */
-  file(name, options?: FileOptions) {
+  file(name: string, options?: FileOptions) {
     if (!name) {
       throw Error('A file name must be specified.');
     }
@@ -1559,7 +1739,7 @@ class Bucket extends ServiceObject {
    * region_tag:storage_list_notifications
    * Another example:
    */
-  getNotifications(options, callback) {
+  getNotifications(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1714,7 +1894,7 @@ class Bucket extends ServiceObject {
    *   const files = data[0];
    * });
    */
-  makePrivate(options, callback) {
+  makePrivate(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1837,7 +2017,7 @@ class Bucket extends ServiceObject {
    *   const files = data[0];
    * });
    */
-  makePublic(options, callback) {
+  makePublic(options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
@@ -1892,7 +2072,7 @@ class Bucket extends ServiceObject {
    * const bucket = storage.bucket('my-bucket');
    * const notification = bucket.notification('1');
    */
-  notification(id) {
+  notification(id: string) {
     if (!id) {
       throw new Error('You must supply a notification ID.');
     }
@@ -2206,7 +2386,7 @@ class Bucket extends ServiceObject {
    *
    * bucket.setUserProject('grape-spaceship-123');
    */
-  setUserProject(userProject) {
+  setUserProject(userProject: string) {
     this.userProject = userProject;
   }
 
@@ -2412,7 +2592,7 @@ class Bucket extends ServiceObject {
    * region_tag:storage_upload_encrypted_file
    * Example of uploading an encrypted file:
    */
-  upload(pathString, options, callback) {
+  upload(pathString: string, options, callback?) {
     if (global['GCLOUD_SANDBOX_ENV']) {
       return;
     }
