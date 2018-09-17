@@ -760,10 +760,10 @@ class Bucket extends ServiceObject {
       options: CombineOptions): Promise<CombineResponse>;
   combine(
       sources: string[]|File[], destination: string|File,
-      options: CombineOptions, callback: CombineCallback);
+      options: CombineOptions, callback: CombineCallback): void;
   combine(
       sources: string[]|File[], destination: string|File,
-      callback: CombineCallback);
+      callback: CombineCallback): void;
   combine(
       sources: string[]|File[], destination: string|File,
       optionsOrCallback?: CombineOptions|CombineCallback,
@@ -879,10 +879,11 @@ class Bucket extends ServiceObject {
       id: string, config: CreateChannelConfig,
       options?: CreateChannelOptions): Promise<CreateChannelResponse>;
   createChannel(
-      id: string, config: CreateChannelConfig, callback: CreateChannelCallback);
+      id: string, config: CreateChannelConfig,
+      callback: CreateChannelCallback): void;
   createChannel(
       id: string, config: CreateChannelConfig, options: CreateChannelOptions,
-      callback: CreateChannelCallback);
+      callback: CreateChannelCallback): void;
   createChannel(
       id: string, config: CreateChannelConfig,
       optionsOrCallback?: CreateChannelOptions|CreateChannelCallback,
@@ -987,8 +988,8 @@ class Bucket extends ServiceObject {
       Promise<CreateNotificationResponse>;
   createNotification(
       topic: string, options: CreateNotificationRequest,
-      callback: CreateNotificationCallback);
-  createNotification(topic: string, callback: CreateNotificationCallback);
+      callback: CreateNotificationCallback): void;
+  createNotification(topic: string, callback: CreateNotificationCallback): void;
   createNotification(
       topic: string,
       optionsOrCallback?: CreateNotificationRequest|CreateNotificationCallback,
@@ -1077,8 +1078,8 @@ class Bucket extends ServiceObject {
    * Another example:
    */
   delete(options?: DeleteBucketRequest): Promise<DeleteBucketResponse>;
-  delete(callback: DeleteBucketCallback);
-  delete(options: DeleteBucketRequest, callback: DeleteBucketCallback);
+  delete(callback: DeleteBucketCallback): void;
+  delete(options: DeleteBucketRequest, callback: DeleteBucketCallback): void;
   delete(
       optionsOrCallback?: DeleteBucketRequest|DeleteBucketCallback,
       callback?: DeleteBucketCallback): Promise<DeleteBucketResponse>|void {
@@ -1160,8 +1161,8 @@ class Bucket extends ServiceObject {
    * bucket.deleteFiles().then(function() {});
    */
   deleteFiles(query?: DeleteFilesRequest): Promise<void>;
-  deleteFiles(callback: DeleteFilesCallback);
-  deleteFiles(query: DeleteFilesRequest, callback: DeleteFilesCallback);
+  deleteFiles(callback: DeleteFilesCallback): void;
+  deleteFiles(query: DeleteFilesRequest, callback: DeleteFilesCallback): void;
   deleteFiles(
       queryOrCallback?: DeleteFilesRequest|DeleteFilesCallback,
       callback?: DeleteFilesCallback): Promise<void>|void {
@@ -1250,8 +1251,8 @@ class Bucket extends ServiceObject {
    * });
    */
   deleteLabels(labels?: string|string[]): Promise<DeleteLabelsResponse>;
-  deleteLabels(callback: DeleteLabelsCallback);
-  deleteLabels(labels: string|string[], callback: DeleteLabelsCallback);
+  deleteLabels(callback: DeleteLabelsCallback): void;
+  deleteLabels(labels: string|string[], callback: DeleteLabelsCallback): void;
   deleteLabels(
       labelsOrCallback?: string|string[]|DeleteLabelsCallback,
       callback?: DeleteLabelsCallback): Promise<DeleteLabelsResponse>|void {
@@ -1321,7 +1322,7 @@ class Bucket extends ServiceObject {
    * Example of disabling requester pays:
    */
   disableRequesterPays(): Promise<DisableRequesterPaysResponse>;
-  disableRequesterPays(callback: DisableRequesterPaysCallback);
+  disableRequesterPays(callback: DisableRequesterPaysCallback): void;
   disableRequesterPays(callback?: DisableRequesterPaysCallback):
       Promise<DisableRequesterPaysResponse>|void {
     this.setMetadata(
@@ -1371,7 +1372,7 @@ class Bucket extends ServiceObject {
    * Example of enabling requester pays:
    */
   enableRequesterPays(): Promise<EnableRequesterPaysResponse>;
-  enableRequesterPays(callback: EnableRequesterPaysCallback);
+  enableRequesterPays(callback: EnableRequesterPaysCallback): void;
   enableRequesterPays(callback?: EnableRequesterPaysCallback):
       Promise<EnableRequesterPaysResponse>|void {
     this.setMetadata(
@@ -1405,8 +1406,8 @@ class Bucket extends ServiceObject {
    * });
    */
   exists(options?: BucketExistsRequest): Promise<BucketExistsResponse>;
-  exists(callback: BucketExistsCallback);
-  exists(options: BucketExistsRequest, callback: BucketExistsCallback);
+  exists(callback: BucketExistsCallback): void;
+  exists(options: BucketExistsRequest, callback: BucketExistsCallback): void;
   exists(
       optionsOrCallback?: BucketExistsRequest|BucketExistsCallback,
       callback?: BucketExistsCallback): Promise<BucketExistsResponse>|void {
@@ -1495,8 +1496,8 @@ class Bucket extends ServiceObject {
    * });
    */
   get(options?: GetBucketRequest): Promise<GetBucketResponse>;
-  get(callback: GetBucketCallback);
-  get(options: GetBucketRequest, callback: GetBucketCallback);
+  get(callback: GetBucketCallback): void;
+  get(options: GetBucketRequest, callback: GetBucketCallback): void;
   get(optionsOrCallback?: GetBucketRequest|GetBucketCallback,
       callback?: GetBucketCallback): Promise<GetBucketResponse>|void {
     let options: GetBucketRequest = {};
@@ -1708,8 +1709,8 @@ class Bucket extends ServiceObject {
    * });
    */
   getLabels(options: GetLabelsRequest): Promise<GetLabelsResponse>;
-  getLabels(callback: GetLabelsCallback);
-  getLabels(options: GetLabelsRequest, callback: GetLabelsCallback);
+  getLabels(callback: GetLabelsCallback): void;
+  getLabels(options: GetLabelsRequest, callback: GetLabelsCallback): void;
   getLabels(
       optionsOrCallback?: GetLabelsRequest|GetLabelsCallback,
       callback?: GetLabelsCallback): Promise<GetLabelsResponse>|void {
@@ -1762,9 +1763,10 @@ class Bucket extends ServiceObject {
    */
   getMetadata(options?: GetBucketMetadataRequest):
       Promise<GetBucketMetadataResponse>;
-  getMetadata(callback: GetBucketMetadataCallback);
+  getMetadata(callback: GetBucketMetadataCallback): void;
   getMetadata(
-      options: GetBucketMetadataRequest, callback: GetBucketMetadataCallback);
+      options: GetBucketMetadataRequest,
+      callback: GetBucketMetadataCallback): void;
   getMetadata(
       optionsOrCallback?: GetBucketMetadataRequest|GetBucketMetadataCallback,
       callback?: GetBucketMetadataCallback): Promise<GetBucketMetadataResponse>|
@@ -1827,9 +1829,10 @@ class Bucket extends ServiceObject {
    */
   getNotifications(options?: GetNotificationsRequest):
       Promise<GetNotificationsResponse>;
-  getNotifications(callback: GetNotificationsCallback);
+  getNotifications(callback: GetNotificationsCallback): void;
   getNotifications(
-      options: GetNotificationsRequest, callback: GetNotificationsCallback);
+      options: GetNotificationsRequest,
+      callback: GetNotificationsCallback): void;
   getNotifications(
       optionsOrCallback?: GetNotificationsRequest|GetNotificationsCallback,
       callback?: GetNotificationsCallback): Promise<GetNotificationsResponse>|
