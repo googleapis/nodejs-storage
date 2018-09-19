@@ -768,8 +768,8 @@ class File extends ServiceObject {
             }
 
             if (throughStreams.length === 1) {
-              // tslint:disable-next-line:no-any
               rawResponseStream =
+                  // tslint:disable-next-line:no-any
                   (rawResponseStream.pipe(throughStreams[0]) as any);
             } else if (throughStreams.length > 1) {
               rawResponseStream =
