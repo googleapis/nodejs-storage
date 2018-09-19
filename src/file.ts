@@ -435,6 +435,7 @@ class File extends ServiceObject {
    * Another example:
    */
   copy(destination: string|Bucket|File, callback: FileCallback);
+  copy(destination: string|Bucket|File, callback: FileCallback);
   copy(
       destination: string|Bucket|File, options: CopyOptions,
       callback: FileCallback);
@@ -452,7 +453,7 @@ class File extends ServiceObject {
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
       options = {};
-    } else {
+    } else if (optionsOrCallback) {
       options = optionsOrCallback;
     }
 
