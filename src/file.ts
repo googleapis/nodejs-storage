@@ -449,10 +449,9 @@ class File extends ServiceObject {
       throw noDestinationError;
     }
 
-    let options: CopyOptions;
+    let options: CopyOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
-      options = {};
     } else if (optionsOrCallback) {
       options = optionsOrCallback;
     }
