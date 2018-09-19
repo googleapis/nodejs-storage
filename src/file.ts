@@ -435,7 +435,6 @@ class File extends ServiceObject {
    * Another example:
    */
   copy(destination: string|Bucket|File, callback: FileCallback);
-  copy(destination: string|Bucket|File, callback: FileCallback);
   copy(
       destination: string|Bucket|File, options: CopyOptions,
       callback: FileCallback);
