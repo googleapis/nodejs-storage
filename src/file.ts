@@ -129,7 +129,7 @@ export type DownloadResponse = [Buffer];
  * @param err Request error, if any.
  * @param contents The contents of a File.
  */
-export type DownloadCallback = (err: Error | undefined, contents: Buffer) => void;
+export type DownloadCallback = (err: Error|undefined, contents: Buffer) => void;
 
 export interface DownloadOptions extends CreateReadStreamOptions {
   destination?: string;
@@ -1375,7 +1375,9 @@ class File extends ServiceObject {
   download(options?: DownloadOptions): Promise<DownloadResponse>;
   download(options: DownloadOptions, callback: DownloadCallback): void;
   download(callback: DownloadCallback): void;
-  download(optionsOrCallback?: DownloadOptions | DownloadCallback, callback?: DownloadCallback): Promise<DownloadResponse> | void {
+  download(
+      optionsOrCallback?: DownloadOptions|DownloadCallback,
+      callback?: DownloadCallback): Promise<DownloadResponse>|void {
     let options: DownloadOptions;
     if (is.fn(optionsOrCallback)) {
       callback = optionsOrCallback as DownloadCallback;
