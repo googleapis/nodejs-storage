@@ -196,6 +196,7 @@ test.serial(`should get metadata for a file`, async t => {
     cwd
   );
   const output = results.stdout + results.stderr;
+  console.log(`METADATA: ${output}`);
   t.regex(output, new RegExp(`File: ${copiedFileName}`));
   t.regex(output, new RegExp(`Bucket: ${bucketName}`));
 });
