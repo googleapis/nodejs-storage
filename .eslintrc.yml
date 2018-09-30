@@ -11,3 +11,5 @@ rules:
   block-scoped-var: error
   eqeqeq: error
   no-warning-comments: warn
+  no-var: error
+  prefer-const: error
