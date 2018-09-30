@@ -1108,8 +1108,6 @@ describe('storage', function() {
         setTimeout(deleteFiles, RETENTION_PERIOD_SECONDS * 1000, done);
       });
 
-      //verify how the client library behaves when holds are enabled
-      //and attempting to perform an overwrite and delete.
       it('should block an overwrite request', function(done) {
         createFile(function(err, file) {
           assert.ifError(err);
