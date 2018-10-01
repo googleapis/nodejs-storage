@@ -297,7 +297,7 @@ async function generateSignedUrl(bucketName, filename) {
   };
 
   // Get a signed URL for the file
-  const [url] = storage
+  const [url] = await storage
     .bucket(bucketName)
     .file(filename)
     .getSignedUrl(options);
