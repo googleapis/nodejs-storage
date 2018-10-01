@@ -61,13 +61,13 @@ function getRetentionPolicy(bucketName) {
       const metadata = results[0];
       if (metadata.hasOwnProperty('retentionPolicy')) {
         const retentionPolicy = metadata.retentionPolicy;
-        console.log('Retention policy:');
-        console.log(`\tperiod: ${retentionPolicy.retentionPeriod}`);
-        console.log(`\teffective time: ${retentionPolicy.effectiveTime}`);
+        console.log('A retention policy exists!');
+        console.log(`Period: ${retentionPolicy.retentionPeriod}`);
+        console.log(`Effective time: ${retentionPolicy.effectiveTime}`);
         if (retentionPolicy.hasOwnProperty('isLocked')) {
-          console.log('\tpolicy is locked');
+          console.log('Policy is locked');
         } else {
-          console.log('\tpolicy is unlocked');
+          console.log('Policy is unlocked');
         }
       }
     })
@@ -102,10 +102,7 @@ function removeRetentionPolicy(bucketName) {
           .bucket(bucketName)
           .removeRetentionPeriod()
           .then(response => {
-            const metadata = response[0];
-            if (!metadata.hasOwnProperty('retentionPolicy')) {
-              console.log(`Removed bucket ${bucketName} retention policy.`);
-            }
+            console.log(`Removed bucket ${bucketName} retention policy.`);
           });
       }
     })
@@ -128,22 +125,20 @@ function lockRetentionPolicy(bucketName) {
     .bucket(bucketName)
     .getMetadata()
     .then(results => {
-      const metadata = results[0];
+      const unlockedMetadata = results[0];
       // Warning: Once a retention policy is locked it cannot be unlocked
       // and retention period can only be increased.
       return storage
         .bucket(bucketName)
-        .lock(metadata.metageneration)
+        .lock(unlockedMetadata.metageneration)
         .then(results => {
-          const metadata = results[0];
-          if (metadata.retentionPolicy.isLocked) {
-            console.log(`Retention policy for ${bucketName} is now locked.`);
-            console.log(
-              `Retention policy effective as of ${
-                metadata.retentionPolicy.effectiveTime
-              }`
-            );
-          }
+          const lockedMetadata = results[0];
+          console.log(`Retention policy for ${bucketName} is now locked.`);
+          console.log(
+            `Retention policy effective as of ${
+              lockedMetadata.retentionPolicy.effectiveTime
+            }`
+          );
         });
     })
     .catch(err => {
@@ -171,11 +166,8 @@ function enableDefaultEventBasedHold(bucketName) {
     .setMetadata({
       defaultEventBasedHold: true,
     })
-    .then(results => {
-      const metadata = results[0];
-      if (metadata.defaultEventBasedHold) {
-        console.log(`Default event-based hold was enabled for ${bucketName}.`);
-      }
+    .then(() => {
+      console.log(`Default event-based hold was enabled for ${bucketName}.`);
     })
     .catch(err => {
       console.error('ERROR:', err);
@@ -202,14 +194,8 @@ function disableDefaultEventBasedHold(bucketName) {
     .setMetadata({
       defaultEventBasedHold: false,
     })
-    .then(results => {
-      const metadata = results[0];
-      if (
-        metadata.hasOwnProperty('defaultEventBasedHold') &&
-        !metadata.defaultEventBasedHold
-      ) {
-        console.log(`Default event-based hold was disabled for ${bucketName}.`);
-      }
+    .then(() => {
+      console.log(`Default event-based hold was disabled for ${bucketName}.`);
     })
     .catch(err => {
       console.error('ERROR:', err);
@@ -267,14 +253,8 @@ function setEventBasedHold(bucketName, fileName) {
     .setMetadata({
       eventBasedHold: true,
     })
-    .then(results => {
-      const metadata = results[0];
-      if (
-        metadata.hasOwnProperty('eventBasedHold') &&
-        metadata.eventBasedHold
-      ) {
-        console.log(`Event-based hold was set for ${fileName}.`);
-      }
+    .then(() => {
+      console.log(`Event-based hold was set for ${fileName}.`);
     })
     .catch(err => {
       console.error('ERROR:', err);
@@ -302,14 +282,8 @@ function releaseEventBasedHold(bucketName, fileName) {
     .setMetadata({
       eventBasedHold: false,
     })
-    .then(results => {
-      const metadata = results[0];
-      if (
-        metadata.hasOwnProperty('eventBasedHold') &&
-        !metadata.eventBasedHold
-      ) {
-        console.log(`Event-based hold was released for ${fileName}.`);
-      }
+    .then(() => {
+      console.log(`Event-based hold was released for ${fileName}.`);
     })
     .catch(err => {
       console.error('ERROR:', err);
@@ -337,11 +311,8 @@ function setTemporarydHold(bucketName, fileName) {
     .setMetadata({
       temporaryHold: true,
     })
-    .then(results => {
-      const metadata = results[0];
-      if (metadata.hasOwnProperty('temporaryHold') && metadata.temporaryHold) {
-        console.log(`Temporary hold was set for ${fileName}.`);
-      }
+    .then(() => {
+      console.log(`Temporary hold was set for ${fileName}.`);
     })
     .catch(err => {
       console.error('ERROR:', err);
@@ -369,11 +340,8 @@ function releaseTemporaryHold(bucketName, fileName) {
     .setMetadata({
       temporaryHold: false,
     })
-    .then(results => {
-      const metadata = results[0];
-      if (metadata.hasOwnProperty('temporaryHold') && !metadata.temporaryHold) {
-        console.log(`Temporary hold was released for ${fileName}.`);
-      }
+    .then(() => {
+      console.log(`Temporary hold was released for ${fileName}.`);
     })
     .catch(err => {
       console.error('ERROR:', err);
