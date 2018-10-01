@@ -69,7 +69,10 @@ test.serial(`should get a retention policy on a bucket`, async t => {
     `${cmd} get-retention-policy ${bucketName}`,
     cwd
   );
-  t.regex(results.stdout + results.stderr, new RegExp(`A retention policy exists!`));
+  t.regex(
+    results.stdout + results.stderr,
+    new RegExp(`A retention policy exists!`)
+  );
 });
 
 test.serial(`should enable default event-based hold on a bucket`, async t => {

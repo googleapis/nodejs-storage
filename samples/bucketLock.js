@@ -101,7 +101,7 @@ function removeRetentionPolicy(bucketName) {
         return storage
           .bucket(bucketName)
           .removeRetentionPeriod()
-          .then(response => {
+          .then(() => {
             console.log(`Removed bucket ${bucketName} retention policy.`);
           });
       }
