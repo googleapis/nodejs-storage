@@ -122,7 +122,9 @@ export interface CopyOptions {
   userProject?: string;
 }
 
-
+/**
+ * @property [0] The contents of a File.
+ */
 export type DownloadResponse = [Buffer];
 
 /**
