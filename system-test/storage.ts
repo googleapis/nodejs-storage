@@ -49,15 +49,19 @@ describe('storage', () => {
 
   const FILES = {
     logo: {
-      path: path.join(__dirname, '../../system-test/data/CloudPlatform_128px_Retina.png'),
+      path: path.join(
+          __dirname, '../../system-test/data/CloudPlatform_128px_Retina.png'),
     },
-    big:
-        {path: path.join(__dirname, '../../system-test/data/three-mb-file.tif'), hash: undefined},
+    big: {
+      path: path.join(__dirname, '../../system-test/data/three-mb-file.tif'),
+      hash: undefined
+    },
     html: {
       path: path.join(__dirname, '../../system-test/data/long-html-file.html'),
     },
     gzip: {
-      path: path.join(__dirname, '../../system-test/data/long-html-file.html.gz'),
+      path:
+          path.join(__dirname, '../../system-test/data/long-html-file.html.gz'),
     },
   };
 
