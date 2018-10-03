@@ -92,7 +92,7 @@ const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
  *     billed for all requests made from File object.
  */
 export interface FileOptions {
-  encryptionKey?: string;
+  encryptionKey?: string|Buffer;
   generation?: number|string;
   kmsKeyName?: string;
   userProject?: string;
@@ -120,6 +120,23 @@ export interface CopyOptions {
   predefinedAcl?: string;
   token?: string;
   userProject?: string;
+}
+
+/**
+ * @typedef {array} DownloadResponse
+ * @property [0] The contents of a File.
+ */
+export type DownloadResponse = [Buffer];
+
+/**
+ * @callback DownloadCallback
+ * @param err Request error, if any.
+ * @param contents The contents of a File.
+ */
+export type DownloadCallback = (err: Error|undefined, contents: Buffer) => void;
+
+export interface DownloadOptions extends CreateReadStreamOptions {
+  destination?: string;
 }
 
 interface CopyQuery {
@@ -1307,15 +1324,6 @@ class File extends ServiceObject {
   }
 
   /**
-   * @typedef {array} DownloadResponse
-   * @property {object} [0] The contents of a File.
-   */
-  /**
-   * @callback DownloadCallback
-   * @param {?Error} err Request error, if any.
-   * @param {buffer} [contents] The contents of a File.
-   */
-  /**
    * Convenience method to download a file into memory or to a local
    * destination.
    *
@@ -1368,13 +1376,21 @@ class File extends ServiceObject {
    * region_tag:storage_download_file_requester_pays
    * Example of downloading a file where the requester pays:
    */
-  download(options?, callback?) {
-    if (is.fn(options)) {
-      callback = options;
+  download(options?: DownloadOptions): Promise<DownloadResponse>;
+  download(options: DownloadOptions, callback: DownloadCallback): void;
+  download(callback: DownloadCallback): void;
+  download(
+      optionsOrCallback?: DownloadOptions|DownloadCallback,
+      callback?: DownloadCallback): Promise<DownloadResponse>|void {
+    let options: DownloadOptions;
+    if (is.fn(optionsOrCallback)) {
+      callback = optionsOrCallback as DownloadCallback;
       options = {};
+    } else {
+      options = optionsOrCallback as DownloadOptions;
     }
 
-    callback = once(callback);
+    callback = once(callback as DownloadCallback);
 
     const destination = options.destination;
     delete options.destination;
@@ -2475,7 +2491,7 @@ class File extends ServiceObject {
    * //-
    * file.setStorageClass('regional').then(function() {});
    */
-  setStorageClass(storageClass, options, callback) {
+  setStorageClass(storageClass, options, callback?) {
     if (is.fn(options)) {
       callback = options;
       options = {};
