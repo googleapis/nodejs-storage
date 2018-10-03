@@ -14,29 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -xeo pipefail
+# nodejs-storage's system tests require additional project and
+# system test key
+export GCN_STORAGE_2ND_PROJECT_ID=gcloud-node-whitelist-ci-tests
+export GCN_STORAGE_2ND_PROJECT_KEY=${KOKORO_GFILE_DIR}/no-whitelist-key.json
 
-export NPM_CONFIG_PREFIX=/home/node/.npm-global
-
-# Setup service account credentials.
-export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_GFILE_DIR}/service-account.json
-export GCLOUD_PROJECT=long-door-651
-
-cd $(dirname $0)/..
-
-# Run a pre-test hook, if a pre-samples-test.sh is in the project
-if [ -f .kokoro/pre-samples-test.sh ]; then
-    set +x
-    . .kokoro/pre-samples-test.sh
-    set -x
-fi
-
-npm install
-
-# Install and link samples
-cd samples/
-npm link ../
-npm install
-cd ..
-
-npm run samples-test
+export GOOGLE_CLOUD_KMS_KEY_ASIA="projects/long-door-651/locations/asia/keyRings/test-key-asia/cryptoKeys/test-key-asia"
+export GOOGLE_CLOUD_KMS_KEY_US="projects/long-door-651/locations/us/keyRings/test-key-us/cryptoKeys/test-key-us"

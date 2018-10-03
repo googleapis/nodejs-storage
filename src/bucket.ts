@@ -18,7 +18,7 @@
 
 import * as arrify from 'arrify';
 import * as async from 'async';
-import {ServiceObject, util, DeleteCallback} from '@google-cloud/common';
+import {ExistsCallback, ServiceObject, Metadata, util, DeleteCallback, InstanceResponseCallback, GetConfig, GetMetadataCallback, DecorateRequestOptions, BodyResponseCallback} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
@@ -26,7 +26,7 @@ import * as fs from 'fs';
 import * as is from 'is';
 import * as mime from 'mime-types';
 import * as path from 'path';
-import * as snakeize from 'snakeize';
+const snakeize = require('snakeize');
 import * as request from 'request';
 
 import {Acl} from './acl';
@@ -45,7 +45,7 @@ interface CreateNotificationQuery {
   userProject?: string;
 }
 
-interface MetadataRequest {
+interface MetadataOptions {
   predefinedAcl: string;
   userProject?: string;
 }
@@ -55,11 +55,20 @@ interface BucketOptions {
 }
 
 /**
+ * @callback GetFilesCallback
+ * @param {?Error} err Request error, if any.
+ * @param {File[]} files Array of {@link File} instances.
+ */
+export interface GetFilesCallback {
+  (err: Error|null, files?: File[]): void;
+}
+
+/**
  * See a [Objects:
  * watchAll request
  * body](https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll).
  */
-interface WatchAllRequest {
+interface WatchAllOptions {
   delimiter: string;
   maxResults: number;
   pageToken: string;
@@ -72,7 +81,7 @@ interface WatchAllRequest {
 /**
  * Query object for listing files.
  *
- * @typedef {object} GetFilesRequest
+ * @typedef {object} GetFilesOptions
  * @property {boolean} [autoPaginate=true] Have pagination handled
  *     automatically.
  * @property {string} [delimiter] Results will contain only objects whose
@@ -94,7 +103,7 @@ interface WatchAllRequest {
  * @property {boolean} [versions] If true, returns File objects scoped to
  *     their versions.
  */
-export interface GetFilesRequest {
+export interface GetFilesOptions {
   autoPaginate?: boolean;
   delimiter?: string;
   directory?: string;
@@ -128,7 +137,7 @@ export interface CombineOptions {
  * @param {object} apiResponse The full API response.
  */
 export interface CombineCallback {
-  (err: Error|null, newFile: File|null, apiResponse: object);
+  (err: Error|null, newFile: File|null, apiResponse: request.Response): void;
 }
 
 /**
@@ -136,7 +145,7 @@ export interface CombineCallback {
  * @property {File} 0 The new {@link File}.
  * @property {object} 1 The full API response.
  */
-export type CombineResponse = [File, object];
+export type CombineResponse = [File, request.Response];
 
 /**
  * See a [Objects:
@@ -147,7 +156,7 @@ export type CombineResponse = [File, object];
  * @property {string} address The address where notifications are
  *     delivered for this channel.
  */
-export interface CreateChannelConfig extends WatchAllRequest {
+export interface CreateChannelConfig extends WatchAllOptions {
   address: string;
 }
 
@@ -165,7 +174,7 @@ export interface CreateChannelOptions {
  * @property {Channel} 0 The new {@link Channel}.
  * @property {object} 1 The full API response.
  */
-export type CreateChannelResponse = [Channel, object];
+export type CreateChannelResponse = [Channel, request.Response];
 
 /**
  * @callback CreateChannelCallback
@@ -174,13 +183,13 @@ export type CreateChannelResponse = [Channel, object];
  * @param {object} apiResponse The full API response.
  */
 export interface CreateChannelCallback {
-  (err: Error|null, channel: Channel|null, apiResponse: object);
+  (err: Error|null, channel: Channel|null, apiResponse: request.Response): void;
 }
 
 /**
  * Metadata to set for the Notification.
  *
- * @typedef {object} CreateNotificationRequest
+ * @typedef {object} CreateNotificationOptions
  * @property {object} [customAttributes] An optional list of additional
  *     attributes to attach to each Cloud PubSub message published for this
  *     notification subscription.
@@ -198,7 +207,7 @@ export interface CreateChannelCallback {
  * @property {string} [userProject] The ID of the project which will be
  *     billed for the request.
  */
-export interface CreateNotificationRequest {
+export interface CreateNotificationOptions {
   customAttributes?: {[key: string]: string};
   eventTypes?: string[];
   objectNamePrefix?: string;
@@ -213,7 +222,8 @@ export interface CreateNotificationRequest {
  * @param {object} apiResponse The full API response.
  */
 export interface CreateNotificationCallback {
-  (err: Error|null, notification: Notification|null, apiResponse: object);
+  (err: Error|null, notification: Notification|null,
+   apiResponse: request.Response): void;
 }
 
 /**
@@ -221,22 +231,22 @@ export interface CreateNotificationCallback {
  * @property {Notification} 0 The new {@link Notification}.
  * @property {object} 1 The full API response.
  */
-export type CreateNotificationResponse = [Notification, object];
+export type CreateNotificationResponse = [Notification, request.Response];
 
 /**
- * @typedef {object} DeleteBucketRequest Configuration options.
- * @param {string} userProject The ID of the project which will be
+ * @typedef {object} DeleteBucketOptions Configuration options.
+ * @param {string} [userProject] The ID of the project which will be
  *     billed for the request.
  */
-export interface DeleteBucketRequest {
-  userProject: string;
+export interface DeleteBucketOptions {
+  userProject?: string;
 }
 
 /**
  * @typedef {array} DeleteBucketResponse
  * @property {object} 0 The full API response.
  */
-export type DeleteBucketResponse = [object];
+export type DeleteBucketResponse = [request.Response];
 
 /**
  * @callback DeleteBucketCallback
@@ -244,16 +254,16 @@ export type DeleteBucketResponse = [object];
  * @param {object} apiResponse The full API response.
  */
 export interface DeleteBucketCallback extends DeleteCallback {
-  (err: Error|null, apiResponse: object);
+  (err: Error|null, apiResponse: request.Response): void;
 }
 
 /**
- * @typedef {object} DeleteFilesRequest Query object. See {@link Bucket#getFiles}
+ * @typedef {object} DeleteFilesOptions Query object. See {@link Bucket#getFiles}
  *     for all of the supported properties.
  * @property {boolean} [force] Suppress errors until all files have been
  *     processed.
  */
-export interface DeleteFilesRequest extends GetFilesRequest {
+export interface DeleteFilesOptions extends GetFilesOptions {
   force?: boolean;
 }
 
@@ -264,14 +274,14 @@ export interface DeleteFilesRequest extends GetFilesRequest {
  * @param {object} [apiResponse] The full API response.
  */
 export interface DeleteFilesCallback {
-  (err: Error|Error[]|null, apiResponse?: object);
+  (err: Error|Error[]|null, apiResponse?: object): void;
 }
 
 /**
  * @typedef {array} DeleteLabelsResponse
  * @property {object} 0 The full API response.
  */
-export type DeleteLabelsResponse = [object];
+export type DeleteLabelsResponse = [request.Response];
 
 /**
  * @callback DeleteLabelsCallback
@@ -279,14 +289,14 @@ export type DeleteLabelsResponse = [object];
  * @param {object} apiResponse The full API response.
  */
 export interface DeleteLabelsCallback {
-  (err: Error|null, apiResponse?: object);
+  (err: Error|null, apiResponse?: object): void;
 }
 
 /**
  * @typedef {array} DisableRequesterPaysResponse
  * @property {object} 0 The full API response.
  */
-export type DisableRequesterPaysResponse = [object];
+export type DisableRequesterPaysResponse = [request.Response];
 
 /**
  * @callback DisableRequesterPaysCallback
@@ -294,14 +304,14 @@ export type DisableRequesterPaysResponse = [object];
  * @param {object} apiResponse The full API response.
  */
 export interface DisableRequesterPaysCallback {
-  (err: Error|null, apiResponse?: object);
+  (err: Error|null, apiResponse?: object): void;
 }
 
 /**
  * @typedef {array} EnableRequesterPaysResponse
  * @property {object} 0 The full API response.
  */
-export type EnableRequesterPaysResponse = [object];
+export type EnableRequesterPaysResponse = [request.Response];
 
 /**
  * @callback EnableRequesterPaysCallback
@@ -309,15 +319,15 @@ export type EnableRequesterPaysResponse = [object];
  * @param {object} apiResponse The full API response.
  */
 export interface EnableRequesterPaysCallback {
-  (err: Error|null, apiResponse: object);
+  (err: Error|null, apiResponse: request.Response): void;
 }
 
 /**
- * @typedef {object} BucketExistsRequest Configuration options for Bucket#exists().
+ * @typedef {object} BucketExistsOptions Configuration options for Bucket#exists().
  * @param {string} [userProject] The ID of the project which will be
  *     billed for the request.
  */
-export interface BucketExistsRequest {
+export interface BucketExistsOptions {
   userProject?: string;
 }
 
@@ -332,10 +342,114 @@ export type BucketExistsResponse = [boolean];
  * @param {?Error} err Request error, if any.
  * @param {boolean} exists Whether the {@link Bucket} exists.
  */
-export interface BucketExistsCallback {
-  (err: Error);
-  (err: null, exists: boolean);
+export interface BucketExistsCallback extends ExistsCallback {}
+
+/**
+ * @typedef {object} [GetBucketOptions] Configuration options for Bucket#get()
+ * @property {boolean} [autoCreate] Automatically create the object if
+ *     it does not exist. Default: `false`
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface GetBucketOptions extends GetConfig {
+  userProject?: string;
 }
+
+/**
+ * @typedef {array} GetBucketResponse
+ * @property {Bucket} 0 The {@link Bucket}.
+ * @property {object} 1 The full API response.
+ */
+export type GetBucketResponse = [Bucket, request.Response];
+
+/**
+ * @callback GetBucketCallback
+ * @param {?Error} err Request error, if any.
+ * @param {Bucket} bucket The {@link Bucket}.
+ * @param {object} apiResponse The full API response.
+ */
+export interface GetBucketCallback extends InstanceResponseCallback {
+  (err: Error|null, bucket: Bucket|null, apiResponse: request.Response): void;
+}
+
+/**
+ * @typedef {object} GetLabelsOptions Configuration options for Bucket#getLabels().
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface GetLabelsOptions {
+  userProject?: string;
+}
+
+/**
+ * @typedef {array} GetLabelsResponse
+ * @property {object} 0 Object of labels currently set on this bucket.
+ */
+export type GetLabelsResponse = [request.Response];
+
+/**
+ * @callback GetLabelsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} labels Object of labels currently set on this bucket.
+ */
+export interface GetLabelsCallback {
+  (err: Error|null, labels: object|null): void;
+}
+
+/**
+ * @typedef {array} GetBucketMetadataResponse
+ * @property {object} 0 The bucket metadata.
+ * @property {object} 1 The full API response.
+ */
+export type GetBucketMetadataResponse = [object, request.Response];
+
+/**
+ * @callback GetBucketMetadataCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} metadata The bucket metadata.
+ * @param {object} apiResponse The full API response.
+ */
+export interface GetBucketMetadataCallback extends GetMetadataCallback {
+  (err: Error|null, metadata: Metadata|null,
+   apiResponse: request.Response): void;
+}
+
+/**
+ * @typedef {object} GetBucketMetadataOptions Configuration options for Bucket#getMetadata().
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface GetBucketMetadataOptions {
+  userProject?: string;
+}
+
+/**
+ * @typedef {object} GetNotificationOptions Configuration options for Bucket#getNotification().
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface GetNotificationsOptions {
+  userProject?: string;
+}
+
+/**
+ * @callback GetNotificationsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {Notification[]} notifications Array of {@link Notification}
+ *     instances.
+ * @param {object} apiResponse The full API response.
+ */
+export interface GetNotificationsCallback {
+  (err: Error|null, notifications: Notification[]|null,
+   apiResponse: request.Response): void;
+}
+
+/**
+ * @typedef {array} GetNotificationsResponse
+ * @property {Notification[]} 0 Array of {@link Notification} instances.
+ * @property {object} 1 The full API response.
+ */
+export type GetNotificationsResponse = [Notification[], request.Response];
 
 /**
  * The size of a file (in bytes) must be greater than this number to
@@ -518,7 +632,7 @@ class Bucket extends ServiceObject {
    * readable object stream.
    *
    * @method Bucket#getFilesStream
-   * @param {GetFilesRequest} [query] Query object for listing files.
+   * @param {GetFilesOptions} [query] Query object for listing files.
    * @returns {ReadableStream} A readable stream that emits {@link File} instances.
    *
    * @example
@@ -557,7 +671,7 @@ class Bucket extends ServiceObject {
        * Create a bucket.
        *
        * @method Bucket#create
-       * @param {CreateBucketRequest} [metadata] Metadata to set for the bucket.
+       * @param {CreateBucketOptions} [metadata] Metadata to set for the bucket.
        * @param {CreateBucketCallback} [callback] Callback function.
        * @returns {Promise<CreateBucketResponse>}
        *
@@ -656,10 +770,14 @@ class Bucket extends ServiceObject {
       options: CombineOptions): Promise<CombineResponse>;
   combine(
       sources: string[]|File[], destination: string|File,
-      options: CombineOptions, callback);
+      options: CombineOptions, callback: CombineCallback): void;
   combine(
       sources: string[]|File[], destination: string|File,
-      options: CombineOptions, callback?): Promise<CombineResponse>|void {
+      callback: CombineCallback): void;
+  combine(
+      sources: string[]|File[], destination: string|File,
+      optionsOrCallback?: CombineOptions|CombineCallback,
+      callback?: CombineCallback): Promise<CombineResponse>|void {
     if (!is.array(sources) || sources.length < 2) {
       throw new Error('You must provide at least two source files.');
     }
@@ -668,12 +786,14 @@ class Bucket extends ServiceObject {
       throw new Error('A destination file must be specified.');
     }
 
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
+    let options: CombineOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
-    const convertToFile = (file: string|File) => {
+    const convertToFile = (file: string|File): File => {
       if (file instanceof File) {
         return file;
       }
@@ -682,25 +802,25 @@ class Bucket extends ServiceObject {
 
     // tslint:disable-next-line:no-any
     sources = (sources as any).map(convertToFile);
-    destination = convertToFile(destination);
+    const destinationFile = convertToFile(destination);
     callback = callback || util.noop;
 
-    if (!destination.metadata.contentType) {
-      const destinationContentType = mime.contentType(destination.name);
+    if (!destinationFile.metadata.contentType) {
+      const destinationContentType = mime.contentType(destinationFile.name);
 
       if (destinationContentType) {
-        destination.metadata.contentType = destinationContentType;
+        destinationFile.metadata.contentType = destinationContentType;
       }
     }
 
     // Make the request from the destination File object.
-    destination.request(
+    destinationFile.request(
         {
           method: 'POST',
           uri: '/compose',
           json: {
             destination: {
-              contentType: destination.metadata.contentType,
+              contentType: destinationFile.metadata.contentType,
             },
             // tslint:disable-next-line:no-any
             sourceObjects: (sources as any).map(source => {
@@ -723,7 +843,7 @@ class Bucket extends ServiceObject {
             return;
           }
 
-          callback!(null, destination, resp);
+          callback!(null, destinationFile, resp);
         });
   }
 
@@ -769,13 +889,14 @@ class Bucket extends ServiceObject {
       id: string, config: CreateChannelConfig,
       options?: CreateChannelOptions): Promise<CreateChannelResponse>;
   createChannel(
-      id: string, config: CreateChannelConfig, callback: CreateChannelCallback);
+      id: string, config: CreateChannelConfig,
+      callback: CreateChannelCallback): void;
   createChannel(
       id: string, config: CreateChannelConfig, options: CreateChannelOptions,
-      callback: CreateChannelCallback);
+      callback: CreateChannelCallback): void;
   createChannel(
       id: string, config: CreateChannelConfig,
-      options?: CreateChannelOptions|CreateChannelCallback,
+      optionsOrCallback?: CreateChannelOptions|CreateChannelCallback,
       callback?: CreateChannelCallback): Promise<CreateChannelResponse>|void {
     if (!is.string(id)) {
       throw new Error('An ID is required to create a channel.');
@@ -785,9 +906,11 @@ class Bucket extends ServiceObject {
       throw new Error('An address is required to create a channel.');
     }
 
-    if (typeof options === 'function') {
-      callback = options;
-      options = {};
+    let options: CreateChannelOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     this.request(
@@ -830,7 +953,7 @@ class Bucket extends ServiceObject {
    *     - `projects/grape-spaceship-123/topics/my-topic`
    *
    *     - `my-topic`
-   * @param {CreateNotificationRequest} [options] Metadata to set for the
+   * @param {CreateNotificationOptions} [options] Metadata to set for the
    *     notification.
    * @param {CreateNotificationCallback} [callback] Callback function.
    * @returns {Promise<CreateNotificationResponse>}
@@ -871,20 +994,22 @@ class Bucket extends ServiceObject {
    * region_tag:storage_create_notification
    * Another example:
    */
-  createNotification(topic: string, options?: CreateNotificationRequest):
+  createNotification(topic: string, options?: CreateNotificationOptions):
       Promise<CreateNotificationResponse>;
   createNotification(
-      topic: string, options: CreateNotificationRequest,
-      callback: CreateNotificationCallback);
-  createNotification(topic: string, callback: CreateNotificationCallback);
+      topic: string, options: CreateNotificationOptions,
+      callback: CreateNotificationCallback): void;
+  createNotification(topic: string, callback: CreateNotificationCallback): void;
   createNotification(
       topic: string,
-      options?: CreateNotificationRequest|CreateNotificationCallback,
+      optionsOrCallback?: CreateNotificationOptions|CreateNotificationCallback,
       callback?: CreateNotificationCallback):
       Promise<CreateNotificationResponse>|void {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {};
+    let options: CreateNotificationOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     if (is.object(topic) && util.isCustomType(topic, 'pubsub/topic')) {
@@ -941,9 +1066,7 @@ class Bucket extends ServiceObject {
    *
    * @see [Buckets: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/delete}
    *
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {DeleteBucketOptions} [options] Configuration options.
    * @param {DeleteBucketCallback} [callback] Callback function.
    * @returns {Promise<DeleteBucketResponse>}
    *
@@ -964,15 +1087,17 @@ class Bucket extends ServiceObject {
    * region_tag:storage_delete_bucket
    * Another example:
    */
-  delete(options?: DeleteBucketRequest): Promise<DeleteBucketResponse>;
-  delete(callback: DeleteBucketCallback);
-  delete(options: DeleteBucketRequest, callback: DeleteBucketCallback);
+  delete(options?: DeleteBucketOptions): Promise<DeleteBucketResponse>;
+  delete(callback: DeleteBucketCallback): void;
+  delete(options: DeleteBucketOptions, callback: DeleteBucketCallback): void;
   delete(
-      options?: DeleteBucketRequest|DeleteBucketCallback,
+      optionsOrCallback?: DeleteBucketOptions|DeleteBucketCallback,
       callback?: DeleteBucketCallback): Promise<DeleteBucketResponse>|void {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {} as DeleteBucketRequest;
+    let options: DeleteBucketOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     this.request(
@@ -1001,7 +1126,7 @@ class Bucket extends ServiceObject {
    *
    * @see [Objects: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/delete}
    *
-   * @param {DeleteFilesRequest} [query] Query object. See {@link Bucket#getFiles}
+   * @param {DeleteFilesOptions} [query] Query object. See {@link Bucket#getFiles}
    * @param {DeleteFilesCallback} [callback] Callback function.
    * @returns {Promise}
    *
@@ -1045,32 +1170,32 @@ class Bucket extends ServiceObject {
    * //-
    * bucket.deleteFiles().then(function() {});
    */
-  deleteFiles(query?: DeleteFilesRequest): Promise<void>;
-  deleteFiles(callback: DeleteFilesCallback);
-  deleteFiles(query: DeleteFilesRequest, callback: DeleteFilesCallback);
+  deleteFiles(query?: DeleteFilesOptions): Promise<void>;
+  deleteFiles(callback: DeleteFilesCallback): void;
+  deleteFiles(query: DeleteFilesOptions, callback: DeleteFilesCallback): void;
   deleteFiles(
-      query?: DeleteFilesRequest|DeleteFilesCallback,
+      queryOrCallback?: DeleteFilesOptions|DeleteFilesCallback,
       callback?: DeleteFilesCallback): Promise<void>|void {
-    if (typeof query === 'function') {
-      callback = query;
-      query = {} as DeleteFilesRequest;
+    let query: DeleteFilesOptions = {};
+    if (typeof queryOrCallback === 'function') {
+      callback = queryOrCallback;
+    } else if (queryOrCallback) {
+      query = queryOrCallback;
     }
-
-    const req = query || {} as DeleteFilesRequest;
 
     const MAX_PARALLEL_LIMIT = 10;
     const errors = [] as Error[];
 
-    this.getFiles(req, (err, files) => {
+    this.getFiles(query, (err, files) => {
       if (err) {
         callback!(err, {});
         return;
       }
 
       const deleteFile = (file, callback) => {
-        file.delete(req, (err: Error) => {
+        file.delete(query, (err: Error) => {
           if (err) {
-            if (req.force) {
+            if (query.force) {
               errors.push(err);
               callback!();
               return;
@@ -1086,7 +1211,7 @@ class Bucket extends ServiceObject {
 
       // Iterate through each file and attempt to delete it.
       async.eachLimit<File, Error>(
-          files, MAX_PARALLEL_LIMIT, deleteFile, err => {
+          files!, MAX_PARALLEL_LIMIT, deleteFile, err => {
             if (err || errors.length > 0) {
               callback!(err || errors);
               return;
@@ -1136,17 +1261,17 @@ class Bucket extends ServiceObject {
    * });
    */
   deleteLabels(labels?: string|string[]): Promise<DeleteLabelsResponse>;
-  deleteLabels(callback: DeleteLabelsCallback);
-  deleteLabels(labels: string|string[], callback: DeleteLabelsCallback);
+  deleteLabels(callback: DeleteLabelsCallback): void;
+  deleteLabels(labels: string|string[], callback: DeleteLabelsCallback): void;
   deleteLabels(
-      labels?: string|string[]|DeleteLabelsCallback,
+      labelsOrCallback?: string|string[]|DeleteLabelsCallback,
       callback?: DeleteLabelsCallback): Promise<DeleteLabelsResponse>|void {
-    if (typeof labels === 'function') {
-      callback = labels;
-      labels = [] as string[];
+    let labels = new Array<string>();
+    if (typeof labelsOrCallback === 'function') {
+      callback = labelsOrCallback;
+    } else if (labelsOrCallback) {
+      labels = arrify(labelsOrCallback);
     }
-
-    labels = arrify(labels);
 
     const deleteLabels = labels => {
       const nullLabelMap = labels.reduce((nullLabelMap, labelKey) => {
@@ -1164,7 +1289,7 @@ class Bucket extends ServiceObject {
           return;
         }
 
-        deleteLabels(Object.keys(labels));
+        deleteLabels(Object.keys(labels!));
       });
     } else {
       deleteLabels(labels);
@@ -1207,7 +1332,7 @@ class Bucket extends ServiceObject {
    * Example of disabling requester pays:
    */
   disableRequesterPays(): Promise<DisableRequesterPaysResponse>;
-  disableRequesterPays(callback: DisableRequesterPaysCallback);
+  disableRequesterPays(callback: DisableRequesterPaysCallback): void;
   disableRequesterPays(callback?: DisableRequesterPaysCallback):
       Promise<DisableRequesterPaysResponse>|void {
     this.setMetadata(
@@ -1257,7 +1382,7 @@ class Bucket extends ServiceObject {
    * Example of enabling requester pays:
    */
   enableRequesterPays(): Promise<EnableRequesterPaysResponse>;
-  enableRequesterPays(callback: EnableRequesterPaysCallback);
+  enableRequesterPays(callback: EnableRequesterPaysCallback): void;
   enableRequesterPays(callback?: EnableRequesterPaysCallback):
       Promise<EnableRequesterPaysResponse>|void {
     this.setMetadata(
@@ -1272,7 +1397,7 @@ class Bucket extends ServiceObject {
   /**
    * Check if the bucket exists.
    *
-   * @param {BucketExistsRequest} [options] Configuration options.
+   * @param {BucketExistsOptions} [options] Configuration options.
    * @param {BucketExistsCallback} [callback] Callback function.
    * @returns {Promise<BucketExistsResponse>}
    *
@@ -1290,18 +1415,20 @@ class Bucket extends ServiceObject {
    *   const exists = data[0];
    * });
    */
-  exists(options?: BucketExistsRequest): Promise<BucketExistsResponse>;
-  exists(callback: BucketExistsCallback);
-  exists(options: BucketExistsRequest, callback: BucketExistsCallback);
+  exists(options?: BucketExistsOptions): Promise<BucketExistsResponse>;
+  exists(callback: BucketExistsCallback): void;
+  exists(options: BucketExistsOptions, callback: BucketExistsCallback): void;
   exists(
-      options?: BucketExistsRequest|BucketExistsCallback,
+      optionsOrCallback?: BucketExistsOptions|BucketExistsCallback,
       callback?: BucketExistsCallback): Promise<BucketExistsResponse>|void {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {} as BucketExistsRequest;
+    let options: BucketExistsOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
-    options = options || {} as BucketExistsRequest;
+    options = options || {} as BucketExistsOptions;
 
     this.get(options, err => {
       if (err) {
@@ -1341,7 +1468,7 @@ class Bucket extends ServiceObject {
    * const bucket = storage.bucket('albums');
    * const file = bucket.file('my-existing-file.png');
    */
-  file(name: string, options?: FileOptions) {
+  file(name: string, options?: FileOptions): File {
     if (!name) {
       throw Error('A file name must be specified.');
     }
@@ -1350,17 +1477,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} GetBucketResponse
-   * @property {Bucket} 0 The {@link Bucket}.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback GetBucketCallback
-   * @param {?Error} err Request error, if any.
-   * @param {Bucket} bucket The {@link Bucket}.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Get a bucket if it exists.
    *
    * You may optionally use this to "get or create" an object by providing an
@@ -1368,11 +1484,7 @@ class Bucket extends ServiceObject {
    * normally required for the `create` method must be contained within this
    * object as well.
    *
-   * @param {object} [options] Configuration options.
-   * @param {boolean} [options.autoCreate] Automatically create the object if
-   *     it does not exist. Default: `false`
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {GetBucketOptions} [options] Configuration options.
    * @param {GetBucketCallback} [callback] Callback function.
    * @returns {Promise<GetBucketResponse>}
    *
@@ -1393,13 +1505,17 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  get(options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
+  get(options?: GetBucketOptions): Promise<GetBucketResponse>;
+  get(callback: GetBucketCallback): void;
+  get(options: GetBucketOptions, callback: GetBucketCallback): void;
+  get(optionsOrCallback?: GetBucketOptions|GetBucketCallback,
+      callback?: GetBucketCallback): Promise<GetBucketResponse>|void {
+    let options: GetBucketOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
-
-    options = options || {};
 
     const autoCreate = options.autoCreate;
     delete options.autoCreate;
@@ -1407,15 +1523,15 @@ class Bucket extends ServiceObject {
     const onCreate = (err, bucket, apiResponse) => {
       if (err) {
         if (err.code === 409) {
-          this.get(options, callback);
+          this.get(options, callback!);
           return;
         }
 
-        callback(err, null, apiResponse);
+        callback!(err, null, apiResponse);
         return;
       }
 
-      callback(null, bucket, apiResponse);
+      callback!(null, bucket, apiResponse);
     };
 
     this.getMetadata(options, (err, metadata) => {
@@ -1433,11 +1549,11 @@ class Bucket extends ServiceObject {
           return;
         }
 
-        callback(err, null, metadata);
+        callback!(err, null, metadata);
         return;
       }
 
-      callback(null, this, metadata);
+      callback!(null, this, metadata);
     });
   }
 
@@ -1446,16 +1562,11 @@ class Bucket extends ServiceObject {
    * @property {File[]} 0 Array of {@link File} instances.
    */
   /**
-   * @callback GetFilesCallback
-   * @param {?Error} err Request error, if any.
-   * @param {File[]} files Array of {@link File} instances.
-   */
-  /**
    * Get {@link File} objects for the files currently in the bucket.
    *
    * @see [Objects: list API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/list}
    *
-   * @param {GetFilesRequest} [query] Query object for listing files.
+   * @param {GetFilesOptions} [query] Query object for listing files.
    * @param {GetFilesCallback} [callback] Callback function.
    * @returns {Promise<GetFilesResponse>}
    *
@@ -1518,12 +1629,16 @@ class Bucket extends ServiceObject {
    * region_tag:storage_list_files_with_prefix
    * Example of listing files, filtered by a prefix:
    */
-  getFiles(query: GetFilesRequest, callback?) {
+  getFiles(query?: GetFilesOptions): Promise<[File[]]>;
+  getFiles(query: GetFilesOptions, callback: GetFilesCallback): void;
+  getFiles(callback: GetFilesCallback): void;
+  getFiles(
+      queryOrCallback?: GetFilesOptions|GetFilesCallback,
+      callback?: GetFilesCallback): void|Promise<[File[]]> {
+    let query = typeof queryOrCallback === 'object' ? queryOrCallback : {};
     if (!callback) {
-      callback = query;
-      query = {};
+      callback = queryOrCallback as GetFilesCallback;
     }
-
     query = extend({}, query);
 
     if (query.directory) {
@@ -1538,7 +1653,8 @@ class Bucket extends ServiceObject {
         },
         (err, resp) => {
           if (err) {
-            callback(err, null, null, resp);
+            // tslint:disable-next-line:no-any
+            (callback as any)(err, null, null, resp);
             return;
           }
 
@@ -1565,20 +1681,11 @@ class Bucket extends ServiceObject {
               pageToken: resp.nextPageToken,
             });
           }
-
-          callback(null, files, nextQuery, resp);
+          // tslint:disable-next-line:no-any
+          (callback as any)(null, files, nextQuery, resp);
         });
   }
 
-  /**
-   * @typedef {array} GetLabelsResponse
-   * @property {object} 0 Object of labels currently set on this bucket.
-   */
-  /**
-   * @callback GetLabelsCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} labels Object of labels currently set on this bucket.
-   */
   /**
    * Get the labels currently set on this bucket.
    *
@@ -1611,33 +1718,29 @@ class Bucket extends ServiceObject {
    *   const labels = data[0];
    * });
    */
-  getLabels(options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
+  getLabels(options: GetLabelsOptions): Promise<GetLabelsResponse>;
+  getLabels(callback: GetLabelsCallback): void;
+  getLabels(options: GetLabelsOptions, callback: GetLabelsCallback): void;
+  getLabels(
+      optionsOrCallback?: GetLabelsOptions|GetLabelsCallback,
+      callback?: GetLabelsCallback): Promise<GetLabelsResponse>|void {
+    let options: GetLabelsOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     this.getMetadata(options, (err, metadata) => {
       if (err) {
-        callback(err);
+        callback!(err, null);
         return;
       }
 
-      callback(null, metadata.labels || {});
+      callback!(null, metadata.labels || {});
     });
   }
 
-  /**
-   * @typedef {array} GetBucketMetadataResponse
-   * @property {object} 0 The bucket metadata.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback GetBucketMetadataCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} metadata The bucket metadata.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * Get the bucket's metadata.
    *
@@ -1645,9 +1748,7 @@ class Bucket extends ServiceObject {
    *
    * @see [Buckets: get API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/get}
    *
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {GetBucketMetadataOptions} [options] Configuration options.
    * @param {GetBucketMetadataCallback} [callback] Callback function.
    * @returns {Promise<GetBucketMetadataResponse>}
    *
@@ -1670,10 +1771,21 @@ class Bucket extends ServiceObject {
    * region_tag:storage_get_requester_pays_status
    * Example of retrieving the requester pays status of a bucket:
    */
-  getMetadata(options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
+  getMetadata(options?: GetBucketMetadataOptions):
+      Promise<GetBucketMetadataResponse>;
+  getMetadata(callback: GetBucketMetadataCallback): void;
+  getMetadata(
+      options: GetBucketMetadataOptions,
+      callback: GetBucketMetadataCallback): void;
+  getMetadata(
+      optionsOrCallback?: GetBucketMetadataOptions|GetBucketMetadataCallback,
+      callback?: GetBucketMetadataCallback): Promise<GetBucketMetadataResponse>|
+      void {
+    let options: GetBucketMetadataOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     this.request(
@@ -1683,36 +1795,22 @@ class Bucket extends ServiceObject {
         },
         (err, resp) => {
           if (err) {
-            callback(err, null, resp);
+            callback!(err, null, resp);
             return;
           }
 
           this.metadata = resp;
 
-          callback(null, this.metadata, resp);
+          callback!(null, this.metadata, resp);
         });
   }
 
-  /**
-   * @typedef {array} GetNotificationsResponse
-   * @property {Notification[]} 0 Array of {@link Notification} instances.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback GetNotificationsCallback
-   * @param {?Error} err Request error, if any.
-   * @param {Notification[]} notifications Array of {@link Notification}
-   *     instances.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * Retrieves a list of notification subscriptions for a given bucket.
    *
    * @see [Notifications: list]{@link https://cloud.google.com/storage/docs/json_api/v1/notifications/list}
    *
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {GetNotificationsOptions} [options] Configuration options.
    * @param {GetNotificationsCallback} [callback] Callback function.
    * @returns {Promise<GetNotificationsResponse>}
    *
@@ -1739,10 +1837,21 @@ class Bucket extends ServiceObject {
    * region_tag:storage_list_notifications
    * Another example:
    */
-  getNotifications(options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
+  getNotifications(options?: GetNotificationsOptions):
+      Promise<GetNotificationsResponse>;
+  getNotifications(callback: GetNotificationsCallback): void;
+  getNotifications(
+      options: GetNotificationsOptions,
+      callback: GetNotificationsCallback): void;
+  getNotifications(
+      optionsOrCallback?: GetNotificationsOptions|GetNotificationsCallback,
+      callback?: GetNotificationsCallback): Promise<GetNotificationsResponse>|
+      void {
+    let options: GetNotificationsOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     this.request(
@@ -1752,7 +1861,7 @@ class Bucket extends ServiceObject {
         },
         (err, resp) => {
           if (err) {
-            callback(err, null, resp);
+            callback!(err, null, resp);
             return;
           }
 
@@ -1762,7 +1871,7 @@ class Bucket extends ServiceObject {
             return notificationInstance;
           });
 
-          callback(null, notifications, resp);
+          callback!(null, notifications, resp);
         });
   }
 
@@ -1904,9 +2013,9 @@ class Bucket extends ServiceObject {
     options.private = true;
 
     const setPredefinedAcl = done => {
-      const query = {
+      const query: MetadataOptions = {
         predefinedAcl: 'projectPrivate',
-      } as MetadataRequest;
+      };
 
       if (options.userProject) {
         query.userProject = options.userProject;
@@ -2116,13 +2225,15 @@ class Bucket extends ServiceObject {
    * @param {object} reqOpts - The request options.
    * @param {function} callback - The callback function.
    */
-  request(reqOpts): Promise<request.Response>;
-  request(reqOpts, callback): void;
-  request(reqOpts, callback?): void|Promise<request.Response> {
+  request(reqOpts: DecorateRequestOptions): Promise<request.Response>;
+  request(reqOpts: DecorateRequestOptions, callback: BodyResponseCallback):
+      void;
+  request(reqOpts: DecorateRequestOptions, callback?: BodyResponseCallback):
+      void|Promise<request.Response> {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
       reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
     }
-    return super.request(reqOpts, callback);
+    return super.request(reqOpts, callback!);
   }
 
   /**
@@ -2714,7 +2825,7 @@ class Bucket extends ServiceObject {
       };
 
       // Iterate through each file and make it public or private.
-      async.eachLimit(files, MAX_PARALLEL_LIMIT, processFile, err => {
+      async.eachLimit(files!, MAX_PARALLEL_LIMIT, processFile, err => {
         if (err || errors.length > 0) {
           callback(err || errors, updatedFiles);
           return;
