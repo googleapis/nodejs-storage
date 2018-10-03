@@ -123,11 +123,13 @@ export interface CopyOptions {
 }
 
 /**
+ * @typedef {array} DownloadResponse
  * @property [0] The contents of a File.
  */
 export type DownloadResponse = [Buffer];
 
 /**
+ * @callback DownloadCallback
  * @param err Request error, if any.
  * @param contents The contents of a File.
  */
