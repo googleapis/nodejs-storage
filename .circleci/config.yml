@@ -29,7 +29,7 @@ workflows:
             - docs
           filters: &master_and_releases
             branches:
-              only: master
+              only: try-mkdir-config
             tags: &releases
               only: '/^v[\d.]+$/'
       - sample_tests:
@@ -143,6 +143,8 @@ jobs:
         user: node
     steps:
       - checkout
+      - run:
+          command: mkdir /home/node/.config
       - run:
           name: Decrypt credentials.
           command: |
