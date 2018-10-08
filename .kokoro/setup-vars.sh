@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_GFILE_DIR}/storage-key.json
+
 # nodejs-storage's system tests require additional project and
 # system test key
 export GCN_STORAGE_2ND_PROJECT_ID=gcloud-node-whitelist-ci-tests
