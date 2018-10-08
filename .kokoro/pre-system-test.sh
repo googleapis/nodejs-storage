@@ -14,4 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+gcloud config config-helper --format json | grep 'account'
+
 . .kokoro/setup-vars.sh
