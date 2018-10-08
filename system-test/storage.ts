@@ -1253,9 +1253,9 @@ describe('storage', () => {
            }));
 
         it('iam#testPermissions', doubleTest((options, done) => {
-                  const tests = ['storage.buckets.delete'];
-                  bucketNonWhitelist.iam.testPermissions(tests, options, done);
-                }));
+             const tests = ['storage.buckets.delete'];
+             bucketNonWhitelist.iam.testPermissions(tests, options, done);
+           }));
 
         it('notification#get', doubleTest((options, done) => {
              if (!notification) {
