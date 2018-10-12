@@ -18,9 +18,7 @@
 
 import {ServiceObject, util} from '@google-cloud/common';
 import {promisifyAll} from '@google-cloud/promisify';
-import * as request from 'request';  // Only for type declarations.
-import {teenyRequest} from 'teeny-request';
-
+import * as request from 'request';
 import {Storage} from '.';
 import {Response} from 'request';
 
@@ -32,7 +30,6 @@ import {Response} from 'request';
 export interface StopCallback {
   (err: Error|null, apiResponse?: request.Response): void;
 }
-
 
 /**
  * Create a channel object to interact with a Cloud Storage channel.
@@ -63,7 +60,7 @@ class Channel extends ServiceObject {
       methods: {
           // Only need `request`.
       },
-      requestModule: teenyRequest as typeof request,
+      requestModule: request,
     };
 
     super(config);
