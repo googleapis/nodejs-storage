@@ -309,9 +309,7 @@ export type MakeFilePrivateResponse = [r.Response];
  * @param {?Error} err Request error, if any.
  * @param {object} apiResponse The full API response.
  */
-export interface MakeFilePrivateCallback {
-  (err: Error|null, apiResponse?: r.Response): void;
-}
+export interface MakeFilePrivateCallback extends SetFileMetadataCallback {}
 
 /**
  * @typedef {array} MakeFilePublicResponse
@@ -555,6 +553,29 @@ export interface SaveOptions extends CreateWriteStreamOptions {}
 export interface SaveCallback {
   (err?: Error|null);
 }
+
+/**
+ * @typedef {object} SetFileMetadataOptions Configuration options for File#setMetadata().
+ * @param {string} [userProject] The ID of the project which will be billed for the request.
+ */
+export interface SetFileMetadataOptions {
+  userProject?: string;
+}
+
+/**
+ * @callback SetFileMetadataCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface SetFileMetadataCallback {
+  (err?: Error|null, apiResponse?: r.Response);
+}
+
+/**
+ * @typedef {array} SetFileMetadataResponse
+ * @property {object} 0 The full API response.
+ */
+export type SetFileMetadataResponse = [r.Response];
 
 class RequestError extends Error {
   code?: string;
@@ -2407,7 +2428,7 @@ class File extends ServiceObject {
           // acls on the file.
           acl: null,
         },
-        query, callback);
+        query, callback!);
   }
 
   /**
@@ -2720,15 +2741,6 @@ class File extends ServiceObject {
   }
 
   /**
-   * @typedef {array} SetFileMetadataResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback SetFileMetadataCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Merge the given metadata with the current remote file's metadata. This
    * will set metadata if it was previously unset or update previously set
    * metadata. To unset previously set metadata, set its value to null.
@@ -2742,9 +2754,7 @@ class File extends ServiceObject {
    * @see [Objects: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/patch}
    *
    * @param {object} [metadata] The metadata you wish to update.
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {SetFileMetadataOptions} [options] Configuration options.
    * @param {SetFileMetadataCallback} [callback] Callback function.
    * @returns {Promise<SetFileMetadataResponse>}
    *
@@ -2801,16 +2811,26 @@ class File extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  setMetadata(metadata, options?, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  setMetadata(metadata: Metadata, options?: SetFileMetadataOptions):
+      Promise<SetFileMetadataResponse>;
+  setMetadata(metadata: Metadata, callback: SetFileMetadataCallback): void;
+  setMetadata(
+      metadata: Metadata, options: SetFileMetadataOptions,
+      callback: SetFileMetadataCallback): void;
+  setMetadata(
+      metadata: Metadata,
+      optionsOrCallback?: SetFileMetadataOptions|SetFileMetadataCallback,
+      callback?: SetFileMetadataCallback): Promise<SetFileMetadataResponse>|
+      void {
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+    let options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
 
     options = extend({}, this.requestQueryObject, options);
 
     // tslint:disable-next-line:no-any
-    (this.parent as any).setMetadata.call(this, metadata, options, callback);
+    (this.parent as any).setMetadata.call(this, metadata, options, callback!);
   }
 
   /**
