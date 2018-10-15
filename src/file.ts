@@ -224,6 +224,32 @@ export type CreateResumableUploadResponse = [string];
 export interface CreateResumableUploadCallback {
   (err: Error|null, uri?: string): void;
 }
+/**
+ * @typedef {object} MakeFilePrivateOptions Configuration options for File#makePrivate().
+ * @property {boolean} [strict] If true, set the file to be private to
+ *     only the owner user. Otherwise, it will be private to the project.
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface MakeFilePrivateOptions {
+  strict?: boolean;
+  userProject?: string;
+}
+
+/**
+ * @typedef {array} MakeFilePrivateResponse
+ * @property {object} 0 The full API response.
+ */
+export type MakeFilePrivateResponse = [r.Response];
+
+/**
+ * @callback MakeFilePrivateCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface MakeFilePrivateCallback {
+  (err: Error|null, apiResponse?: r.Response): void;
+}
 
 /**
  * Custom error type for errors related to creating a resumable upload.
@@ -2233,25 +2259,11 @@ class File extends ServiceObject {
   }
 
   /**
-   * @typedef {array} MakeFilePrivateResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback MakeFilePrivateCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Make a file private to the project and remove all other permissions.
    * Set `options.strict` to true to make the file private to only the owner.
    *
    * @see [Objects: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/patch}
    *
-   * @param {object} [options] Configuration options.
-   * @param {boolean} [options.strict] If true, set the file to be private to
-   *     only the owner user. Otherwise, it will be private to the project.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
    * @param {MakeFilePrivateCallback} [callback] Callback function.
    * @returns {Promise<MakeFilePrivateResponse>}
    *
@@ -2279,11 +2291,14 @@ class File extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  makePrivate(options, callback) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  makePrivate(options?: MakeFilePrivateOptions): Promise<MakeFilePrivateResponse>;
+  makePrivate(callback: MakeFilePrivateCallback): void;
+  makePrivate(options: MakeFilePrivateOptions, callback: MakeFilePrivateCallback): void;
+  makePrivate(optionsOrCallback?: MakeFilePrivateOptions|MakeFilePrivateCallback, callback?: MakeFilePrivateCallback): Promise<MakeFilePrivateResponse>|void {
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
     const query = {
       predefinedAcl: options.strict ? 'private' : 'projectPrivate',
