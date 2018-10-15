@@ -224,6 +224,7 @@ export type CreateResumableUploadResponse = [string];
 export interface CreateResumableUploadCallback {
   (err: Error|null, uri?: string): void;
 }
+
 /**
  * @typedef {object} MakeFilePrivateOptions Configuration options for File#makePrivate().
  * @property {boolean} [strict] If true, set the file to be private to
@@ -249,6 +250,21 @@ export type MakeFilePrivateResponse = [r.Response];
  */
 export interface MakeFilePrivateCallback {
   (err: Error|null, apiResponse?: r.Response): void;
+}
+
+/**
+ * @typedef {array} MakeFilePublicResponse
+ * @property {object} 0 The full API response.
+ */
+export type MakeFilePublicResponse = [r.Response];
+
+/**
+ * @callback MakeFilePublicCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface MakeFilePublicCallback {
+  (err?: Error|null, apiResponse?: r.Response): void;
 }
 
 /**
@@ -2291,10 +2307,15 @@ class File extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  makePrivate(options?: MakeFilePrivateOptions): Promise<MakeFilePrivateResponse>;
+  makePrivate(options?: MakeFilePrivateOptions):
+      Promise<MakeFilePrivateResponse>;
   makePrivate(callback: MakeFilePrivateCallback): void;
-  makePrivate(options: MakeFilePrivateOptions, callback: MakeFilePrivateCallback): void;
-  makePrivate(optionsOrCallback?: MakeFilePrivateOptions|MakeFilePrivateCallback, callback?: MakeFilePrivateCallback): Promise<MakeFilePrivateResponse>|void {
+  makePrivate(
+      options: MakeFilePrivateOptions, callback: MakeFilePrivateCallback): void;
+  makePrivate(
+      optionsOrCallback?: MakeFilePrivateOptions|MakeFilePrivateCallback,
+      callback?: MakeFilePrivateCallback): Promise<MakeFilePrivateResponse>|
+      void {
     const options =
         typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
@@ -2319,10 +2340,6 @@ class File extends ServiceObject {
         query, callback);
   }
 
-  /**
-   * @typedef {array} MakeFilePublicResponse
-   * @property {object} 0 The full API response.
-   */
   /**
    * @callback MakeFilePublicCallback
    * @param {?Error} err Request error, if any.
@@ -2356,7 +2373,10 @@ class File extends ServiceObject {
    * region_tag:storage_make_public
    * Another example:
    */
-  makePublic(callback) {
+  makePublic(): Promise<MakeFilePublicResponse>;
+  makePublic(callback: MakeFilePublicCallback): void;
+  makePublic(callback?: MakeFilePublicCallback):
+      Promise<MakeFilePublicResponse>|void {
     callback = callback || util.noop;
 
     // tslint:disable-next-line:no-any
@@ -2367,7 +2387,7 @@ class File extends ServiceObject {
               role: 'READER',
             },
             (err, resp) => {
-              callback(err, resp);
+              callback!(err, resp);
             });
   }
 
