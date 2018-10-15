@@ -2325,6 +2325,7 @@ class File extends ServiceObject {
    *
    * @see [Objects: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/patch}
    *
+   * @param {MakeFilePrivateOptions} [options] Configuration options.
    * @param {MakeFilePrivateCallback} [callback] Callback function.
    * @returns {Promise<MakeFilePrivateResponse>}
    *
