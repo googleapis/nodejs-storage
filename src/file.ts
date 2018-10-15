@@ -542,6 +542,20 @@ export interface CreateReadStreamOptions {
   end?: number;
 }
 
+/**
+ * @typedef {object} SaveOptions
+ * @extends CreateWriteStreamOptions
+ */
+export interface SaveOptions extends CreateWriteStreamOptions {}
+
+/**
+ * @callback SaveCallback
+ * @param {?Error} err Request error, if any.
+ */
+export interface SaveCallback {
+  (err?: Error|null);
+}
+
 class RequestError extends Error {
   code?: string;
   errors?: Error[];
@@ -2647,10 +2661,6 @@ class File extends ServiceObject {
   }
 
   /**
-   * @callback SaveCallback
-   * @param {?Error} err Request error, if any.
-   */
-  /**
    * Write arbitrary data to a file.
    *
    * *This is a convenience method which wraps {@link File#createWriteStream}.*
@@ -2666,7 +2676,7 @@ class File extends ServiceObject {
    * </p>
    *
    * @param {*} data The data to write to a file.
-   * @param {object} [options] See {@link File#createWriteStream}'s `options`
+   * @param {SaveOptions} [options] See {@link File#createWriteStream}'s `options`
    *     parameter.
    * @param {SaveCallback} [callback] Callback function.
    * @returns {Promise}
@@ -2690,15 +2700,22 @@ class File extends ServiceObject {
    * //-
    * file.save(contents).then(function() {});
    */
-  save(data, options?, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  // tslint:disable:no-any
+  save(data: any, options?: SaveOptions): Promise<void>;
+  save(data: any, callback: SaveCallback): void;
+  save(data: any, options: SaveOptions, callback: SaveCallback): void;
+  save(
+      data: any, optionsOrCallback?: SaveOptions|SaveCallback,
+      callback?: SaveCallback): Promise<void>|void {
+    // tslint:enable:no-any
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
 
     this.createWriteStream(options)
-        .on('error', callback)
-        .on('finish', callback)
+        .on('error', callback!)
+        .on('finish', callback!)
         .end(data);
   }
 
