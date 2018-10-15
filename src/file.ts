@@ -226,6 +226,67 @@ export interface CreateResumableUploadCallback {
 }
 
 /**
+ * @typedef {object} CreateWriteStreamOptions Configuration options for File#createWriteStream().
+ * @property {string} [contentType] Alias for
+ *     `options.metadata.contentType`. If set to `auto`, the file name is used
+ *     to determine the contentType.
+ * @property {string|boolean} [gzip] If true, automatically gzip the file.
+ *     If set to `auto`, the contentType is used to determine if the file
+ * should be gzipped. This will set `options.metadata.contentEncoding` to
+ * `gzip` if necessary.
+ * @property {object} [metadata] See the examples below or
+ *     [Objects: insert request
+ * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON)
+ *     for more details.
+ * @property {number} [offset] The starting byte of the upload stream, for
+ *     resuming an interrupted upload. Defaults to 0.
+ * @property {string} [predefinedAcl] Apply a predefined set of access
+ *     controls to this object.
+ *
+ *     Acceptable values are:
+ *     - **`authenticatedRead`** - Object owner gets `OWNER` access, and
+ *       `allAuthenticatedUsers` get `READER` access.
+ *
+ *     - **`bucketOwnerFullControl`** - Object owner gets `OWNER` access, and
+ *       project team owners get `OWNER` access.
+ *
+ *     - **`bucketOwnerRead`** - Object owner gets `OWNER` access, and project
+ *       team owners get `READER` access.
+ *
+ *     - **`private`** - Object owner gets `OWNER` access.
+ *
+ *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
+ *       team members get access according to their roles.
+ *
+ *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
+ * get `READER` access.
+ * @property {boolean} [private] Make the uploaded file private. (Alias for
+ *     `options.predefinedAcl = 'private'`)
+ * @property {boolean} [public] Make the uploaded file public. (Alias for
+ *     `options.predefinedAcl = 'publicRead'`)
+ * @property {boolean} [resumable] Force a resumable upload. NOTE: When
+ *     working with streams, the file format and size is unknown until it's
+ *     completely consumed. Because of this, it's best for you to be explicit
+ *     for what makes sense given your input.
+ * @property {string} [uri] The URI for an already-created resumable
+ *     upload. See {@link File#createResumableUpload}.
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ * @property {string|boolean} [validation] Possible values: `"md5"`,
+ *     `"crc32c"`, or `false`. By default, data integrity is validated with a
+ *     CRC32c checksum. You may use MD5 if preferred, but that hash is not
+ *     supported for composite objects. An error will be raised if MD5 is
+ *     specified but is not available. You may also choose to skip validation
+ *     completely, however this is **not recommended**.
+ */
+export interface CreateWriteStreamOptions extends CreateResumableUploadOptions {
+  contentType?: string;
+  gzip?: string|boolean;
+  resumable?: boolean;
+  validation?: string|boolean;
+}
+
+/**
  * @typedef {object} MakeFilePrivateOptions Configuration options for File#makePrivate().
  * @property {boolean} [strict] If true, set the file to be private to
  *     only the owner user. Otherwise, it will be private to the project.
@@ -1271,58 +1332,7 @@ class File extends ServiceObject {
    * @see [Upload Options (Simple or Resumable)]{@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload}
    * @see [Objects: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert}
    *
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.contentType] Alias for
-   *     `options.metadata.contentType`. If set to `auto`, the file name is used
-   *     to determine the contentType.
-   * @param {string|boolean} [options.gzip] If true, automatically gzip the file.
-   *     If set to `auto`, the contentType is used to determine if the file
-   * should be gzipped. This will set `options.metadata.contentEncoding` to
-   * `gzip` if necessary.
-   * @param {object} [options.metadata] See the examples below or
-   *     [Objects: insert request
-   * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON)
-   *     for more details.
-   * @param {string} [options.offset] The starting byte of the upload stream, for
-   *     resuming an interrupted upload. Defaults to 0.
-   * @param {string} [options.predefinedAcl] Apply a predefined set of access
-   *     controls to this object.
-   *
-   *     Acceptable values are:
-   *     - **`authenticatedRead`** - Object owner gets `OWNER` access, and
-   *       `allAuthenticatedUsers` get `READER` access.
-   *
-   *     - **`bucketOwnerFullControl`** - Object owner gets `OWNER` access, and
-   *       project team owners get `OWNER` access.
-   *
-   *     - **`bucketOwnerRead`** - Object owner gets `OWNER` access, and project
-   *       team owners get `READER` access.
-   *
-   *     - **`private`** - Object owner gets `OWNER` access.
-   *
-   *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
-   *       team members get access according to their roles.
-   *
-   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
-   * get `READER` access.
-   * @param {boolean} [options.private] Make the uploaded file private. (Alias for
-   *     `options.predefinedAcl = 'private'`)
-   * @param {boolean} [options.public] Make the uploaded file public. (Alias for
-   *     `options.predefinedAcl = 'publicRead'`)
-   * @param {boolean} [options.resumable] Force a resumable upload. NOTE: When
-   *     working with streams, the file format and size is unknown until it's
-   *     completely consumed. Because of this, it's best for you to be explicit
-   *     for what makes sense given your input.
-   * @param {string} [options.uri] The URI for an already-created resumable
-   *     upload. See {@link File#createResumableUpload}.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
-   * @param {string|boolean} [options.validation] Possible values: `"md5"`,
-   *     `"crc32c"`, or `false`. By default, data integrity is validated with a
-   *     CRC32c checksum. You may use MD5 if preferred, but that hash is not
-   *     supported for composite objects. An error will be raised if MD5 is
-   *     specified but is not available. You may also choose to skip validation
-   *     completely, however this is **not recommended**.
+   * @param {CreateWriteStreamOptions} [options] Configuration options.
    * @returns {WritableStream}
    *
    * @example
@@ -1386,7 +1396,7 @@ class File extends ServiceObject {
    *   });
    */
   // tslint:disable-next-line:no-any
-  createWriteStream(options: any = {}) {
+  createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
     options = extend({metadata: {}}, options);
 
     if (options.contentType) {
@@ -1410,7 +1420,7 @@ class File extends ServiceObject {
     let crc32c = true;
     let md5 = false;
 
-    if (is.string(options.validation)) {
+    if (typeof options.validation === 'string') {
       options.validation = options.validation.toLowerCase();
       crc32c = options.validation === 'crc32c';
       md5 = options.validation === 'md5';
@@ -1540,7 +1550,7 @@ class File extends ServiceObject {
       stream.uncork();
     });
 
-    return stream;
+    return stream as Writable;
   }
 
   /**
