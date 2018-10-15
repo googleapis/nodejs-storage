@@ -268,6 +268,33 @@ export interface MakeFilePublicCallback {
 }
 
 /**
+ * @typedef {array} MoveResponse
+ * @property {File} 0 The destination File.
+ * @property {object} 1 The full API response.
+ */
+export type MoveResponse = [r.Response];
+
+/**
+ * @callback MoveCallback
+ * @param {?Error} err Request error, if any.
+ * @param {?File} destinationFile The destination File.
+ * @param {object} apiResponse The full API response.
+ */
+export interface MoveCallback {
+  (err: Error|null, destinationFile?: File|null, apiResponse?: r.Response);
+}
+/**
+ * @typedef {object} MoveOptions Configuration options for File#move(). See an
+ *     [Object
+ * resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface MoveOptions {
+  userProject?: string;
+}
+
+/**
  * Custom error type for errors related to creating a resumable upload.
  *
  * @private
@@ -2392,17 +2419,6 @@ class File extends ServiceObject {
   }
 
   /**
-   * @typedef {array} MoveResponse
-   * @property {File} 0 The destination File.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback MoveCallback
-   * @param {?Error} err Request error, if any.
-   * @param {File} destinationFile The destination File.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Move this file to another location. By default, this will rename the file
    * and keep it in the same bucket, but you can choose to move it to another
    * Bucket by providing a Bucket or File object or a URL beginning with
@@ -2421,11 +2437,6 @@ class File extends ServiceObject {
    * @throws {Error} If the destination file is not provided.
    *
    * @param {string|Bucket|File} destination Destination file.
-   * @param {object} [options] Configuration options. See an
-   *     [Object
-   * resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
    * @param {MoveCallback} [callback] Callback function.
    * @returns {Promise<MoveResponse>}
    *
@@ -2517,22 +2528,31 @@ class File extends ServiceObject {
    * region_tag:storage_move_file
    * Another example:
    */
-  move(destination, options, callback) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  move(destination: string|Bucket|File, options?: MoveOptions):
+      Promise<MoveResponse>;
+  move(destination: string|Bucket|File, callback: MoveCallback): void;
+  move(
+      destination: string|Bucket|File, options: MoveOptions,
+      callback: MoveCallback): void;
+  move(
+      destination: string|Bucket|File,
+      optionsOrCallback?: MoveOptions|MoveCallback,
+      callback?: MoveCallback): Promise<MoveResponse>|void {
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
     callback = callback || util.noop;
 
     this.copy(destination, options, (err, destinationFile, apiResponse) => {
       if (err) {
-        callback(err, null, apiResponse);
+        callback!(err, null, apiResponse);
         return;
       }
 
       this.delete(options, (err, apiResponse) => {
-        callback(err, destinationFile, apiResponse);
+        callback!(err, destinationFile, apiResponse);
       });
     });
   }
