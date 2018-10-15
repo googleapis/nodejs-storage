@@ -31,7 +31,7 @@ import * as once from 'once';
 import * as os from 'os';
 const pumpify = require('pumpify');
 import * as resumableUpload from 'gcs-resumable-upload';
-import {Duplex, Writable} from 'stream';
+import {Duplex, Writable, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as through from 'through2';
 import * as xdgBasedir from 'xdg-basedir';
@@ -998,7 +998,7 @@ class File extends ServiceObject {
    *   .on('error', function(err) {})
    *   .pipe(fs.createWriteStream('/Users/stephen/logfile.txt'));
    */
-  createReadStream(options: CreateReadStreamOptions = {}) {
+  createReadStream(options: CreateReadStreamOptions = {}): Readable {
     const rangeRequest = is.number(options.start) || is.number(options.end);
     const tailRequest = options.end! < 0;
 
@@ -1193,7 +1193,7 @@ class File extends ServiceObject {
 
     throughStream.on('reading', makeRequest);
 
-    return throughStream;
+    return throughStream as Readable;
   }
 
   /**
