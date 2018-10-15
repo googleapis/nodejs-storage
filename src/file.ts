@@ -295,6 +295,34 @@ export interface MoveOptions {
 }
 
 /**
+ * @param {string|buffer|object} RotateEncryptionKeyOptions Configuration options
+ *     for File#rotateEncryptionKey().
+ * If a string or Buffer is provided, it is interpreted as an AES-256,
+ * customer-supplied encryption key. If you'd like to use a Cloud KMS key name,
+ * you must specify an options object with the property name: `kmsKeyName`.
+ * @param {string|buffer} [options.encryptionKey] An AES-256 encryption key.
+ * @param {string} [options.kmsKeyName] A Cloud KMS key name.
+ */
+export type RotateEncryptionKeyOptions = string|Buffer|EncryptionKeyOptions;
+
+export interface EncryptionKeyOptions {
+  encryptionKey?: string|Buffer;
+  kmsKeyName?: string;
+}
+
+/**
+ * @callback RotateEncryptionKeyCallback
+ * @extends CopyCallback
+ */
+export interface RotateEncryptionKeyCallback extends CopyCallback {}
+
+/**
+ * @typedef RotateEncryptionKeyResponse
+ * @extends CopyResponse
+ */
+export type RotateEncryptionKeyResponse = CopyResponse;
+
+/**
  * Custom error type for errors related to creating a resumable upload.
  *
  * @private
@@ -349,19 +377,19 @@ export interface FileOptions {
 }
 
 /**
- * @param {object} CopyOptions Configuration options. See an
+ * @typedef {object} CopyOptions Configuration options for File#copy(). See an
  *     [Object
  * resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
- * @param {string} [destinationKmsKeyName] Resource name of the Cloud
+ * @property {string} [destinationKmsKeyName] Resource name of the Cloud
  *     KMS key, of the form
  *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
  *     that will be used to encrypt the object. Overwrites the object metadata's
  *     `kms_key_name` value, if any.
- * @param {string} [keepAcl] Retain the ACL for the new file.
- * @param {string} [predefinedAcl] Set the ACL for the new file.
- * @param {string} [token] A previously-returned `rewriteToken` from an
+ * @property {string} [keepAcl] Retain the ACL for the new file.
+ * @property {string} [predefinedAcl] Set the ACL for the new file.
+ * @property {string} [token] A previously-returned `rewriteToken` from an
  *     unfinished rewrite request.
- * @param {string} [userProject] The ID of the project which will be
+ * @property {string} [userProject] The ID of the project which will be
  *     billed for the request.
  */
 export interface CopyOptions {
@@ -370,6 +398,17 @@ export interface CopyOptions {
   predefinedAcl?: string;
   token?: string;
   userProject?: string;
+}
+
+/**
+ * @typedef {array} CopyResponse
+ * @property {File} 0 The copied {@link File}.
+ * @property {object} 1 The full API response.
+ */
+export type CopyResponse = [File, r.Response];
+
+export interface CopyCallback {
+  (err: Error|null, file?: File|null, apiResponse?: r.Response): void;
 }
 
 /**
@@ -445,10 +484,6 @@ export interface CreateReadStreamOptions {
 class RequestError extends Error {
   code?: string;
   errors?: Error[];
-}
-
-export interface FileCallback {
-  (err: Error|null, file?: File|null, apiResponse?: r.Response): void;
 }
 
 /**
@@ -580,11 +615,6 @@ class File extends ServiceObject {
   }
 
   /**
-   * @typedef {array} CopyResponse
-   * @property {File} 0 The copied {@link File}.
-   * @property {object} 1 The full API response.
-   */
-  /**
    * @callback CopyCallback
    * @param {?Error} err Request error, if any.
    * @param {File} copiedFile The copied {@link File}.
@@ -600,20 +630,7 @@ class File extends ServiceObject {
    * @throws {Error} If the destination file is not provided.
    *
    * @param {string|Bucket|File} destination Destination file.
-   * @param {object} [options] Configuration options. See an
-   *     [Object
-   * resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
-   * @param {string} [options.destinationKmsKeyName] Resource name of the Cloud
-   *     KMS key, of the form
-   *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
-   *     that will be used to encrypt the object. Overwrites the object
-   * metadata's `kms_key_name` value, if any.
-   * @param {string} [options.keepAcl] Retain the ACL for the new file.
-   * @param {string} [options.predefinedAcl] Set the ACL for the new file.
-   * @param {string} [options.token] A previously-returned `rewriteToken` from an
-   *     unfinished rewrite request.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {CopyOptions} [options] Configuration options. See an
    * @param {CopyCallback} [callback] Callback function.
    * @returns {Promise<CopyResponse>}
    *
@@ -703,14 +720,15 @@ class File extends ServiceObject {
    * region_tag:storage_copy_file
    * Another example:
    */
-  copy(destination: string|Bucket|File, callback: FileCallback): void;
+  copy(destination: string|Bucket|File): Promise<CopyResponse>;
+  copy(destination: string|Bucket|File, callback: CopyCallback): void;
   copy(
       destination: string|Bucket|File, options: CopyOptions,
-      callback: FileCallback): void;
+      callback: CopyCallback): void;
   copy(
       destination: string|Bucket|File,
-      optionsOrCallback: CopyOptions|FileCallback,
-      callback?: FileCallback): void {
+      optionsOrCallback?: CopyOptions|CopyCallback,
+      callback?: CopyCallback): Promise<CopyResponse>|void {
     const noDestinationError =
         new Error('Destination file should have a name.');
 
@@ -2582,27 +2600,39 @@ class File extends ServiceObject {
    *
    * @see [Customer-supplied Encryption Keys]{@link https://cloud.google.com/storage/docs/encryption#customer-supplied}
    *
-   * @param {string|buffer|object} options If a string or Buffer is provided, it
-   *     is interpreted as an AES-256, customer-supplied encryption key. If
-   * you'd like to use a Cloud KMS key name, you must specify an options object
-   * with the property name: `kmsKeyName`.
-   * @param {string|buffer} [options.encryptionKey] An AES-256 encryption key.
-   * @param {string} [options.kmsKeyName] A Cloud KMS key name.
-   * @returns {File}
+   * @param {RotateEncryptionKeyOptions} [options] - Configuration options.
+   * @param {RotateEncryptionKeyCallback} [callback]
+   * @returns {Promise<File>}
    *
    * @example <caption>include:samples/encryption.js</caption>
    * region_tag:storage_rotate_encryption_key
    * Example of rotating the encryption key for this file:
    */
-  rotateEncryptionKey(options, callback) {
-    if (!is.object(options)) {
+  rotateEncryptionKey(options?: RotateEncryptionKeyOptions):
+      Promise<RotateEncryptionKeyResponse>;
+  rotateEncryptionKey(callback: RotateEncryptionKeyCallback): void;
+  rotateEncryptionKey(
+      options: RotateEncryptionKeyOptions,
+      callback: RotateEncryptionKeyCallback): void;
+  rotateEncryptionKey(
+      optionsOrCallback?: RotateEncryptionKeyOptions|
+      RotateEncryptionKeyCallback,
+      callback?: RotateEncryptionKeyCallback):
+      Promise<RotateEncryptionKeyResponse>|void {
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+    let options: EncryptionKeyOptions = {};
+    if (typeof optionsOrCallback === 'string' ||
+        optionsOrCallback instanceof Buffer) {
       options = {
-        encryptionKey: options,
+        encryptionKey: optionsOrCallback,
       };
+    } else if (typeof optionsOrCallback === 'object') {
+      options = optionsOrCallback;
     }
 
     const newFile = this.bucket.file(this.id!, options);
-    this.copy(newFile, callback);
+    this.copy(newFile, callback!);
   }
 
   /**
