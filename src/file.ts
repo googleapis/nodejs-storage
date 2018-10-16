@@ -2943,7 +2943,7 @@ class File extends ServiceObject {
    *
    * file.setUserProject('grape-spaceship-123');
    */
-  setUserProject(userProject: string) {
+  setUserProject(userProject: string): void {
     this.userProject = userProject;
   }
 
@@ -2958,7 +2958,7 @@ class File extends ServiceObject {
    * @private
    */
   startResumableUpload_(
-      dup: duplexify.Duplexify, options: CreateResumableUploadOptions) {
+      dup: duplexify.Duplexify, options: CreateResumableUploadOptions): void {
     options = extend(
         {
           metadata: {},
@@ -3008,7 +3008,7 @@ class File extends ServiceObject {
    * @private
    */
   startSimpleUpload_(
-      dup: duplexify.Duplexify, options?: CreateResumableUploadOptions) {
+      dup: duplexify.Duplexify, options?: CreateResumableUploadOptions): void {
     options = extend(
         {
           metadata: {},
