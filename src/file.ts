@@ -577,6 +577,34 @@ export interface SetFileMetadataCallback {
  */
 export type SetFileMetadataResponse = [r.Response];
 
+/**
+ * @typedef {array} SetStorageClassResponse
+ * @property {object} 0 The full API response.
+ */
+export type SetStorageClassResponse = [r.Response];
+
+/**
+ * @typedef {object} SetStorageClassOptions Configuration options for File#setStorageClass().
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface SetStorageClassOptions {
+  userProject?: string;
+}
+
+interface SetStorageClassRequest extends SetStorageClassOptions {
+  storageClass?: string;
+}
+
+/**
+ * @callback SetStorageClassCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface SetStorageClassCallback {
+  (err?: Error|null, apiResponse?: r.Response);
+}
+
 class RequestError extends Error {
   code?: string;
   errors?: Error[];
@@ -2834,15 +2862,6 @@ class File extends ServiceObject {
   }
 
   /**
-   * @typedef {array} SetStorageClassResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback SetStorageClassCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Set the storage class for this file.
    *
    * @see [Per-Object Storage Class]{@link https://cloud.google.com/storage/docs/per-object-storage-class}
@@ -2850,7 +2869,7 @@ class File extends ServiceObject {
    *
    * @param {string} storageClass The new storage class. (`multi_regional`,
    *     `regional`, `nearline`, `coldline`)
-   * @param {object} [options] Configuration options.
+   * @param {SetStorageClassOptions} [options] Configuration options.
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {SetStorageClassCallback} [callback] Callback function.
@@ -2870,32 +2889,43 @@ class File extends ServiceObject {
    * //-
    * file.setStorageClass('regional').then(function() {});
    */
-  setStorageClass(storageClass, options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
-
-    options = extend(true, {}, options);
+  setStorageClass(storageClass: string, options?: SetStorageClassOptions):
+      Promise<SetStorageClassResponse>;
+  setStorageClass(
+      storageClass: string, options: SetStorageClassOptions,
+      callback: SetStorageClassCallback): void;
+  setStorageClass(storageClass: string, callback?: SetStorageClassCallback):
+      void;
+  setStorageClass(
+      storageClass: string,
+      optionsOrCallback?: SetStorageClassOptions|SetStorageClassCallback,
+      callback?: SetStorageClassCallback): Promise<SetStorageClassResponse>|
+      void {
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    const req = extend<SetStorageClassRequest, SetStorageClassOptions>(
+        true, {}, options);
 
     // In case we get input like `storageClass`, convert to `storage_class`.
-    options.storageClass = storageClass.replace(/-/g, '_')
-                               .replace(
-                                   /([a-z])([A-Z])/g,
-                                   (_, low, up) => {
-                                     return low + '_' + up;
-                                   })
-                               .toUpperCase();
+    req.storageClass = storageClass.replace(/-/g, '_')
+                           .replace(
+                               /([a-z])([A-Z])/g,
+                               (_, low, up) => {
+                                 return low + '_' + up;
+                               })
+                           .toUpperCase();
 
-    this.copy(this, options, (err, file, apiResponse) => {
+    this.copy(this, req, (err, file, apiResponse) => {
       if (err) {
-        callback(err, apiResponse);
+        callback!(err, apiResponse!);
         return;
       }
 
       this.metadata = file!.metadata;
 
-      callback(null, apiResponse);
+      callback!(null, apiResponse!);
     });
   }
 
