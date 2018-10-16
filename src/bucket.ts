@@ -498,7 +498,7 @@ export interface SetBucketMetadataOptions {
 
 /**
  * @typedef {array} SetBucketMetadataResponse
- * @property {object} 0 The bucket metadata.
+ * @param {object} apiResponse The full API response.
  */
 export type SetBucketMetadataResponse = [request.Response];
 
@@ -510,6 +510,21 @@ export type SetBucketMetadataResponse = [request.Response];
 export interface SetBucketMetadataCallback {
   (err?: Error|null, metadata?: Metadata): void;
 }
+
+/**
+ * @callback BucketLockCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface BucketLockCallback {
+  (err?: Error|null, apiResponse?: request.Response): void;
+};
+
+/**
+ * @typedef {array} SetBucketMetadataResponse
+ * @param {object} apiResponse The full API response.
+ */
+export type BucketLockResponse = [request.Response];
 
 /**
  * @private
@@ -1978,8 +1993,8 @@ class Bucket extends ServiceObject {
    *
    * @param {Number|String} metageneration The bucket's metageneration. This is
    *     accesssible from calling {@link File#getMetadata}.
-   * @param {SetBucketMetadataCallback} [callback] Callback function.
-   * @returns {Promise<SetBucketMetadataResponse>}
+   * @param {BucketLockCallback} [callback] Callback function.
+   * @returns {Promise<BucketLockResponse>}
    *
    * @example
    * const storage = require('@google-cloud/storage')();
@@ -1996,7 +2011,9 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  lock(metageneration, callback?) {
+  lock(metageneration: number|string): Promise<BucketLockResponse>;
+  lock(metageneration: number|string, callback: BucketLockCallback): void;
+  lock(metageneration: number|string, callback?: BucketLockCallback): Promise<BucketLockResponse>|void {
     if (!is.number(metageneration) && !is.string(metageneration)) {
       throw new Error('A metageneration must be provided.');
     }
@@ -2009,7 +2026,7 @@ class Bucket extends ServiceObject {
             ifMetagenerationMatch: metageneration,
           },
         },
-        callback);
+        callback!);
   }
 
   /**
