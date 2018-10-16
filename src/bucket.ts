@@ -306,7 +306,7 @@ export type DisableRequesterPaysResponse = [request.Response];
  * @param {object} apiResponse The full API response.
  */
 export interface DisableRequesterPaysCallback {
-  (err: Error|null, apiResponse?: object): void;
+  (err?: Error|null, apiResponse?: object): void;
 }
 
 /**
@@ -321,7 +321,7 @@ export type EnableRequesterPaysResponse = [request.Response];
  * @param {object} apiResponse The full API response.
  */
 export interface EnableRequesterPaysCallback {
-  (err: Error|null, apiResponse: request.Response): void;
+  (err?: Error|null, apiResponse?: request.Response): void;
 }
 
 /**
@@ -452,6 +452,99 @@ export interface GetNotificationsCallback {
  * @property {object} 1 The full API response.
  */
 export type GetNotificationsResponse = [Notification[], request.Response];
+
+/**
+ * @typedef {object} MakeBucketPrivateOptions
+ * @param {boolean} [includeFiles=false] Make each file in the bucket
+ *     private.
+ * @param {boolean} [force] Queue errors occurred while making files
+ *     private until all files have been processed.
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface MakeBucketPrivateOptions {
+  includeFiles?: boolean;
+  force?: boolean;
+  userProject?: string;
+}
+
+interface MakeBucketPrivateRequest extends MakeBucketPrivateOptions {
+  private?: boolean;
+}
+
+/**
+ * @typedef {array} MakeBucketPrivateResponse
+ * @property {File[]} 0 List of files made private.
+ */
+export type MakeBucketPrivateResponse = [File[]];
+
+/**
+ * @callback MakeBucketPrivateCallback
+ * @param {?Error} err Request error, if any.
+ * @param {File[]} files List of files made private.
+ */
+export interface MakeBucketPrivateCallback {
+  (err?: Error|null, files?: File[]): void;
+}
+
+/**
+ * @typedef {object} SetBucketMetadataOptions Configuration options for Bucket#setMetadata().
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface SetBucketMetadataOptions {
+  userProject?: string;
+}
+
+/**
+ * @typedef {array} SetBucketMetadataResponse
+ * @property {object} 0 The bucket metadata.
+ */
+export type SetBucketMetadataResponse = [request.Response];
+
+/**
+ * @callback SetBucketMetadataCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} metadata The bucket metadata.
+ */
+export interface SetBucketMetadataCallback {
+  (err?: Error|null, metadata?: Metadata): void;
+}
+
+/**
+ * @private
+ *
+ * @typedef {object} MakeAllFilesPublicPrivateOptions
+ * @property {boolean} [force] Suppress errors until all files have been
+ *     processed.
+ * @property {boolean} [private] Make files private.
+ * @property {boolean} [public] Make files public.
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+interface MakeAllFilesPublicPrivateOptions {
+  force?: boolean;
+  private?: boolean;
+  public?: boolean;
+  userProject?: string;
+}
+
+/**
+ * @private
+ *
+ * @callback SetBucketMetadataCallback
+ * @param {?Error} err Request error, if any.
+ * @param {File[]} files Files that were updated.
+ */
+interface MakeAllFilesPublicPrivateCallback {
+  (err?: Error|Error[]|null, files?: File[]);
+}
+
+/**
+ * @typedef {array} MakeAllFilesPublicPrivateResponse
+ * @property {File[]} 0 List of files affected.
+ */
+type MakeAllFilesPublicPrivateResponse = [File[]];
 
 /**
  * The size of a file (in bytes) must be greater than this number to
@@ -1920,15 +2013,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} MakeBucketPrivateResponse
-   * @property {File[]} 0 List of files made private.
-   */
-  /**
-   * @callback MakeBucketPrivateCallback
-   * @param {?Error} err Request error, if any.
-   * @param {File[]} files List of files made private.
-   */
-  /**
    * Make the bucket listing private.
    *
    * You may also choose to make the contents of the bucket private by
@@ -1946,13 +2030,7 @@ class Bucket extends ServiceObject {
    *
    * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
    *
-   * @param {object} [options] Configuration options.
-   * @param {boolean} [options.includeFiles=false] Make each file in the bucket
-   *     private.
-   * @param {boolean} [options.force] Queue errors occurred while making files
-   *     private until all files have been processed.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {MakeBucketPrivateOptions} [options] Configuration options.
    * @param {MakeBucketPrivateCallback} [callback] Callback function.
    * @returns {Promise<MakeBucketPrivateResponse>}
    *
@@ -2005,16 +2083,24 @@ class Bucket extends ServiceObject {
    *   const files = data[0];
    * });
    */
-  makePrivate(options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  makePrivate(options?: MakeBucketPrivateOptions):
+      Promise<MakeBucketPrivateResponse>;
+  makePrivate(callback: MakeBucketPrivateCallback): void;
+  makePrivate(
+      options: MakeBucketPrivateOptions,
+      callback: MakeBucketPrivateCallback): void;
+  makePrivate(
+      optionsOrCallback?: MakeBucketPrivateOptions|MakeBucketPrivateCallback,
+      callback?: MakeBucketPrivateCallback): Promise<MakeBucketPrivateResponse>|
+      void {
+    const options: MakeBucketPrivateRequest =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
-    options = options || {};
     options.private = true;
 
-    const setPredefinedAcl = done => {
+    const setPredefinedAcl = (done: SetBucketMetadataCallback) => {
       const query: MetadataOptions = {
         predefinedAcl: 'projectPrivate',
       };
@@ -2041,7 +2127,7 @@ class Bucket extends ServiceObject {
       this.makeAllFilesPublicPrivate_(options, done);
     };
 
-    async.series([setPredefinedAcl, makeFilesPrivate], callback);
+    async.series([setPredefinedAcl, makeFilesPrivate], callback!);
   }
 
   /**
@@ -2296,23 +2382,12 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} SetBucketMetadataResponse
-   * @property {object} 0 The bucket metadata.
-   */
-  /**
-   * @callback SetBucketMetadataCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} metadata The bucket metadata.
-   */
-  /**
    * Set the bucket's metadata.
    *
    * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
    *
    * @param {object<string, *>} metadata The metadata you wish to set.
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {SetBucketMetadataOptions} [options] Configuration options.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
    * @returns {Promise<SetBucketMetadataResponse>}
    *
@@ -2365,11 +2440,21 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  setMetadata(metadata, options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  setMetadata(metadata: Metadata, options?: SetBucketMetadataOptions):
+      Promise<SetBucketMetadataResponse>;
+  setMetadata(
+      metadata: Metadata, options: SetBucketMetadataOptions,
+      callback: SetBucketMetadataCallback): void;
+  setMetadata(metadata: Metadata, callback: SetBucketMetadataCallback): void;
+  setMetadata(
+      metadata: Metadata,
+      optionsOrCallback?: SetBucketMetadataOptions|SetBucketMetadataCallback,
+      callback?: SetBucketMetadataCallback): Promise<SetBucketMetadataResponse>|
+      void {
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
     callback = callback || util.noop;
 
@@ -2382,13 +2467,13 @@ class Bucket extends ServiceObject {
         },
         (err, resp) => {
           if (err) {
-            callback(err, resp);
+            callback!(err, resp);
             return;
           }
 
           this.metadata = resp;
 
-          callback(null, resp);
+          callback!(null, resp);
         });
   }
 
@@ -2782,23 +2867,34 @@ class Bucket extends ServiceObject {
    *
    * @private
    *
-   * @param {object} options] Configuration options.
-   * @param {boolean} [options.force] Suppress errors until all files have been
-   *     processed.
-   * @param {boolean} [options.private] Make files private.
-   * @param {boolean} [options.public] Make files public.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
-   * @param {function} callback Callback function.
+   * @param {MakeAllFilesPublicPrivateOptions} [options] Configuration options.
+   * @param {MakeAllFilesPublicPrivateCallback} callback Callback function.
+   *
+   * @return {Promise<MakeAllFilesPublicPrivateResponse>}
    */
-  makeAllFilesPublicPrivate_(options, callback) {
+  makeAllFilesPublicPrivate_(options?: MakeAllFilesPublicPrivateOptions):
+      Promise<MakeAllFilesPublicPrivateResponse>;
+  makeAllFilesPublicPrivate_(callback: MakeAllFilesPublicPrivateCallback): void;
+  makeAllFilesPublicPrivate_(
+      options: MakeAllFilesPublicPrivateOptions,
+      callback: MakeAllFilesPublicPrivateCallback): void;
+  makeAllFilesPublicPrivate_(
+      optionsOrCallback?: MakeAllFilesPublicPrivateOptions|
+      MakeAllFilesPublicPrivateCallback,
+      callback?: MakeAllFilesPublicPrivateCallback):
+      Promise<MakeAllFilesPublicPrivateResponse>|void {
     const MAX_PARALLEL_LIMIT = 10;
     const errors = [] as Error[];
     const updatedFiles = [] as File[];
 
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+
     this.getFiles(options, (err, files) => {
       if (err) {
-        callback(err);
+        callback!(err);
         return;
       }
 
@@ -2827,14 +2923,15 @@ class Bucket extends ServiceObject {
       };
 
       // Iterate through each file and make it public or private.
-      async.eachLimit(files!, MAX_PARALLEL_LIMIT, processFile, err => {
-        if (err || errors.length > 0) {
-          callback(err || errors, updatedFiles);
-          return;
-        }
+      async.eachLimit<File, Error>(
+          files!, MAX_PARALLEL_LIMIT, processFile, (err?: Error) => {
+            if (err || errors.length > 0) {
+              callback!(err || errors, updatedFiles);
+              return;
+            }
 
-        callback(null, updatedFiles);
-      });
+            callback!(null, updatedFiles);
+          });
     });
   }
 
