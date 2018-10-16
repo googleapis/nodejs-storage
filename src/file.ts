@@ -31,7 +31,7 @@ import * as once from 'once';
 import * as os from 'os';
 const pumpify = require('pumpify');
 import * as resumableUpload from 'gcs-resumable-upload';
-import {Duplex, Writable} from 'stream';
+import {Duplex, Writable, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as through from 'through2';
 import * as xdgBasedir from 'xdg-basedir';
@@ -226,6 +226,67 @@ export interface CreateResumableUploadCallback {
 }
 
 /**
+ * @typedef {object} CreateWriteStreamOptions Configuration options for File#createWriteStream().
+ * @property {string} [contentType] Alias for
+ *     `options.metadata.contentType`. If set to `auto`, the file name is used
+ *     to determine the contentType.
+ * @property {string|boolean} [gzip] If true, automatically gzip the file.
+ *     If set to `auto`, the contentType is used to determine if the file
+ * should be gzipped. This will set `options.metadata.contentEncoding` to
+ * `gzip` if necessary.
+ * @property {object} [metadata] See the examples below or
+ *     [Objects: insert request
+ * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON)
+ *     for more details.
+ * @property {number} [offset] The starting byte of the upload stream, for
+ *     resuming an interrupted upload. Defaults to 0.
+ * @property {string} [predefinedAcl] Apply a predefined set of access
+ *     controls to this object.
+ *
+ *     Acceptable values are:
+ *     - **`authenticatedRead`** - Object owner gets `OWNER` access, and
+ *       `allAuthenticatedUsers` get `READER` access.
+ *
+ *     - **`bucketOwnerFullControl`** - Object owner gets `OWNER` access, and
+ *       project team owners get `OWNER` access.
+ *
+ *     - **`bucketOwnerRead`** - Object owner gets `OWNER` access, and project
+ *       team owners get `READER` access.
+ *
+ *     - **`private`** - Object owner gets `OWNER` access.
+ *
+ *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
+ *       team members get access according to their roles.
+ *
+ *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
+ * get `READER` access.
+ * @property {boolean} [private] Make the uploaded file private. (Alias for
+ *     `options.predefinedAcl = 'private'`)
+ * @property {boolean} [public] Make the uploaded file public. (Alias for
+ *     `options.predefinedAcl = 'publicRead'`)
+ * @property {boolean} [resumable] Force a resumable upload. NOTE: When
+ *     working with streams, the file format and size is unknown until it's
+ *     completely consumed. Because of this, it's best for you to be explicit
+ *     for what makes sense given your input.
+ * @property {string} [uri] The URI for an already-created resumable
+ *     upload. See {@link File#createResumableUpload}.
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ * @property {string|boolean} [validation] Possible values: `"md5"`,
+ *     `"crc32c"`, or `false`. By default, data integrity is validated with a
+ *     CRC32c checksum. You may use MD5 if preferred, but that hash is not
+ *     supported for composite objects. An error will be raised if MD5 is
+ *     specified but is not available. You may also choose to skip validation
+ *     completely, however this is **not recommended**.
+ */
+export interface CreateWriteStreamOptions extends CreateResumableUploadOptions {
+  contentType?: string;
+  gzip?: string|boolean;
+  resumable?: boolean;
+  validation?: string|boolean;
+}
+
+/**
  * @typedef {object} MakeFilePrivateOptions Configuration options for File#makePrivate().
  * @property {boolean} [strict] If true, set the file to be private to
  *     only the owner user. Otherwise, it will be private to the project.
@@ -248,9 +309,7 @@ export type MakeFilePrivateResponse = [r.Response];
  * @param {?Error} err Request error, if any.
  * @param {object} apiResponse The full API response.
  */
-export interface MakeFilePrivateCallback {
-  (err: Error|null, apiResponse?: r.Response): void;
-}
+export interface MakeFilePrivateCallback extends SetFileMetadataCallback {}
 
 /**
  * @typedef {array} MakeFilePublicResponse
@@ -479,6 +538,71 @@ export interface CreateReadStreamOptions {
    * NOTE: when specifying a byte range, data integrity is not available.
    */
   end?: number;
+}
+
+/**
+ * @typedef {object} SaveOptions
+ * @extends CreateWriteStreamOptions
+ */
+export interface SaveOptions extends CreateWriteStreamOptions {}
+
+/**
+ * @callback SaveCallback
+ * @param {?Error} err Request error, if any.
+ */
+export interface SaveCallback {
+  (err?: Error|null);
+}
+
+/**
+ * @typedef {object} SetFileMetadataOptions Configuration options for File#setMetadata().
+ * @param {string} [userProject] The ID of the project which will be billed for the request.
+ */
+export interface SetFileMetadataOptions {
+  userProject?: string;
+}
+
+/**
+ * @callback SetFileMetadataCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface SetFileMetadataCallback {
+  (err?: Error|null, apiResponse?: r.Response);
+}
+
+/**
+ * @typedef {array} SetFileMetadataResponse
+ * @property {object} 0 The full API response.
+ */
+export type SetFileMetadataResponse = [r.Response];
+
+/**
+ * @typedef {array} SetStorageClassResponse
+ * @property {object} 0 The full API response.
+ */
+export type SetStorageClassResponse = [r.Response];
+
+/**
+ * @typedef {object} SetStorageClassOptions Configuration options for File#setStorageClass().
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface SetStorageClassOptions {
+  userProject?: string;
+}
+
+interface SetStorageClassRequest extends SetStorageClassOptions {
+  storageClass?: string;
+}
+
+/**
+ * @callback SetStorageClassCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} apiResponse The full API response.
+ */
+export interface SetStorageClassCallback {
+  (err?: Error|null, apiResponse?: r.Response);
 }
 
 class RequestError extends Error {
@@ -937,7 +1061,7 @@ class File extends ServiceObject {
    *   .on('error', function(err) {})
    *   .pipe(fs.createWriteStream('/Users/stephen/logfile.txt'));
    */
-  createReadStream(options: CreateReadStreamOptions = {}) {
+  createReadStream(options: CreateReadStreamOptions = {}): Readable {
     const rangeRequest = is.number(options.start) || is.number(options.end);
     const tailRequest = options.end! < 0;
 
@@ -1132,7 +1256,7 @@ class File extends ServiceObject {
 
     throughStream.on('reading', makeRequest);
 
-    return throughStream;
+    return throughStream as Readable;
   }
 
   /**
@@ -1271,58 +1395,7 @@ class File extends ServiceObject {
    * @see [Upload Options (Simple or Resumable)]{@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload}
    * @see [Objects: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert}
    *
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.contentType] Alias for
-   *     `options.metadata.contentType`. If set to `auto`, the file name is used
-   *     to determine the contentType.
-   * @param {string|boolean} [options.gzip] If true, automatically gzip the file.
-   *     If set to `auto`, the contentType is used to determine if the file
-   * should be gzipped. This will set `options.metadata.contentEncoding` to
-   * `gzip` if necessary.
-   * @param {object} [options.metadata] See the examples below or
-   *     [Objects: insert request
-   * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON)
-   *     for more details.
-   * @param {string} [options.offset] The starting byte of the upload stream, for
-   *     resuming an interrupted upload. Defaults to 0.
-   * @param {string} [options.predefinedAcl] Apply a predefined set of access
-   *     controls to this object.
-   *
-   *     Acceptable values are:
-   *     - **`authenticatedRead`** - Object owner gets `OWNER` access, and
-   *       `allAuthenticatedUsers` get `READER` access.
-   *
-   *     - **`bucketOwnerFullControl`** - Object owner gets `OWNER` access, and
-   *       project team owners get `OWNER` access.
-   *
-   *     - **`bucketOwnerRead`** - Object owner gets `OWNER` access, and project
-   *       team owners get `READER` access.
-   *
-   *     - **`private`** - Object owner gets `OWNER` access.
-   *
-   *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
-   *       team members get access according to their roles.
-   *
-   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
-   * get `READER` access.
-   * @param {boolean} [options.private] Make the uploaded file private. (Alias for
-   *     `options.predefinedAcl = 'private'`)
-   * @param {boolean} [options.public] Make the uploaded file public. (Alias for
-   *     `options.predefinedAcl = 'publicRead'`)
-   * @param {boolean} [options.resumable] Force a resumable upload. NOTE: When
-   *     working with streams, the file format and size is unknown until it's
-   *     completely consumed. Because of this, it's best for you to be explicit
-   *     for what makes sense given your input.
-   * @param {string} [options.uri] The URI for an already-created resumable
-   *     upload. See {@link File#createResumableUpload}.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
-   * @param {string|boolean} [options.validation] Possible values: `"md5"`,
-   *     `"crc32c"`, or `false`. By default, data integrity is validated with a
-   *     CRC32c checksum. You may use MD5 if preferred, but that hash is not
-   *     supported for composite objects. An error will be raised if MD5 is
-   *     specified but is not available. You may also choose to skip validation
-   *     completely, however this is **not recommended**.
+   * @param {CreateWriteStreamOptions} [options] Configuration options.
    * @returns {WritableStream}
    *
    * @example
@@ -1386,7 +1459,7 @@ class File extends ServiceObject {
    *   });
    */
   // tslint:disable-next-line:no-any
-  createWriteStream(options: any = {}) {
+  createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
     options = extend({metadata: {}}, options);
 
     if (options.contentType) {
@@ -1410,7 +1483,7 @@ class File extends ServiceObject {
     let crc32c = true;
     let md5 = false;
 
-    if (is.string(options.validation)) {
+    if (typeof options.validation === 'string') {
       options.validation = options.validation.toLowerCase();
       crc32c = options.validation === 'crc32c';
       md5 = options.validation === 'md5';
@@ -1540,7 +1613,7 @@ class File extends ServiceObject {
       stream.uncork();
     });
 
-    return stream;
+    return stream as Writable;
   }
 
   /**
@@ -2383,7 +2456,7 @@ class File extends ServiceObject {
           // acls on the file.
           acl: null,
         },
-        query, callback);
+        query, callback!);
   }
 
   /**
@@ -2637,10 +2710,6 @@ class File extends ServiceObject {
   }
 
   /**
-   * @callback SaveCallback
-   * @param {?Error} err Request error, if any.
-   */
-  /**
    * Write arbitrary data to a file.
    *
    * *This is a convenience method which wraps {@link File#createWriteStream}.*
@@ -2656,7 +2725,7 @@ class File extends ServiceObject {
    * </p>
    *
    * @param {*} data The data to write to a file.
-   * @param {object} [options] See {@link File#createWriteStream}'s `options`
+   * @param {SaveOptions} [options] See {@link File#createWriteStream}'s `options`
    *     parameter.
    * @param {SaveCallback} [callback] Callback function.
    * @returns {Promise}
@@ -2680,27 +2749,25 @@ class File extends ServiceObject {
    * //-
    * file.save(contents).then(function() {});
    */
-  save(data, options?, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  // tslint:disable:no-any
+  save(data: any, options?: SaveOptions): Promise<void>;
+  save(data: any, callback: SaveCallback): void;
+  save(data: any, options: SaveOptions, callback: SaveCallback): void;
+  save(
+      data: any, optionsOrCallback?: SaveOptions|SaveCallback,
+      callback?: SaveCallback): Promise<void>|void {
+    // tslint:enable:no-any
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
 
     this.createWriteStream(options)
-        .on('error', callback)
-        .on('finish', callback)
+        .on('error', callback!)
+        .on('finish', callback!)
         .end(data);
   }
 
-  /**
-   * @typedef {array} SetFileMetadataResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback SetFileMetadataCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * Merge the given metadata with the current remote file's metadata. This
    * will set metadata if it was previously unset or update previously set
@@ -2715,9 +2782,7 @@ class File extends ServiceObject {
    * @see [Objects: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/patch}
    *
    * @param {object} [metadata] The metadata you wish to update.
-   * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {SetFileMetadataOptions} [options] Configuration options.
    * @param {SetFileMetadataCallback} [callback] Callback function.
    * @returns {Promise<SetFileMetadataResponse>}
    *
@@ -2774,27 +2839,28 @@ class File extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  setMetadata(metadata, options?, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  setMetadata(metadata: Metadata, options?: SetFileMetadataOptions):
+      Promise<SetFileMetadataResponse>;
+  setMetadata(metadata: Metadata, callback: SetFileMetadataCallback): void;
+  setMetadata(
+      metadata: Metadata, options: SetFileMetadataOptions,
+      callback: SetFileMetadataCallback): void;
+  setMetadata(
+      metadata: Metadata,
+      optionsOrCallback?: SetFileMetadataOptions|SetFileMetadataCallback,
+      callback?: SetFileMetadataCallback): Promise<SetFileMetadataResponse>|
+      void {
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+    let options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
 
     options = extend({}, this.requestQueryObject, options);
 
     // tslint:disable-next-line:no-any
-    (this.parent as any).setMetadata.call(this, metadata, options, callback);
+    (this.parent as any).setMetadata.call(this, metadata, options, callback!);
   }
 
-  /**
-   * @typedef {array} SetStorageClassResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback SetStorageClassCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * Set the storage class for this file.
    *
@@ -2803,7 +2869,7 @@ class File extends ServiceObject {
    *
    * @param {string} storageClass The new storage class. (`multi_regional`,
    *     `regional`, `nearline`, `coldline`)
-   * @param {object} [options] Configuration options.
+   * @param {SetStorageClassOptions} [options] Configuration options.
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {SetStorageClassCallback} [callback] Callback function.
@@ -2823,32 +2889,43 @@ class File extends ServiceObject {
    * //-
    * file.setStorageClass('regional').then(function() {});
    */
-  setStorageClass(storageClass, options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
-
-    options = extend(true, {}, options);
+  setStorageClass(storageClass: string, options?: SetStorageClassOptions):
+      Promise<SetStorageClassResponse>;
+  setStorageClass(
+      storageClass: string, options: SetStorageClassOptions,
+      callback: SetStorageClassCallback): void;
+  setStorageClass(storageClass: string, callback?: SetStorageClassCallback):
+      void;
+  setStorageClass(
+      storageClass: string,
+      optionsOrCallback?: SetStorageClassOptions|SetStorageClassCallback,
+      callback?: SetStorageClassCallback): Promise<SetStorageClassResponse>|
+      void {
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    const req = extend<SetStorageClassRequest, SetStorageClassOptions>(
+        true, {}, options);
 
     // In case we get input like `storageClass`, convert to `storage_class`.
-    options.storageClass = storageClass.replace(/-/g, '_')
-                               .replace(
-                                   /([a-z])([A-Z])/g,
-                                   (_, low, up) => {
-                                     return low + '_' + up;
-                                   })
-                               .toUpperCase();
+    req.storageClass = storageClass.replace(/-/g, '_')
+                           .replace(
+                               /([a-z])([A-Z])/g,
+                               (_, low, up) => {
+                                 return low + '_' + up;
+                               })
+                           .toUpperCase();
 
-    this.copy(this, options, (err, file, apiResponse) => {
+    this.copy(this, req, (err, file, apiResponse) => {
       if (err) {
-        callback(err, apiResponse);
+        callback!(err, apiResponse!);
         return;
       }
 
       this.metadata = file!.metadata;
 
-      callback(null, apiResponse);
+      callback!(null, apiResponse!);
     });
   }
 
@@ -2866,7 +2943,7 @@ class File extends ServiceObject {
    *
    * file.setUserProject('grape-spaceship-123');
    */
-  setUserProject(userProject: string) {
+  setUserProject(userProject: string): void {
     this.userProject = userProject;
   }
 
@@ -2881,7 +2958,7 @@ class File extends ServiceObject {
    * @private
    */
   startResumableUpload_(
-      dup: duplexify.Duplexify, options: CreateResumableUploadOptions) {
+      dup: duplexify.Duplexify, options: CreateResumableUploadOptions): void {
     options = extend(
         {
           metadata: {},
@@ -2931,7 +3008,7 @@ class File extends ServiceObject {
    * @private
    */
   startSimpleUpload_(
-      dup: duplexify.Duplexify, options?: CreateResumableUploadOptions) {
+      dup: duplexify.Duplexify, options?: CreateResumableUploadOptions): void {
     options = extend(
         {
           metadata: {},
