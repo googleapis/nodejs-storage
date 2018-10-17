@@ -20,8 +20,72 @@ import * as arrify from 'arrify';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as extend from 'extend';
 import * as is from 'is';
+import * as r from 'request';
 
 import {Bucket} from './bucket';
+import {normalize} from './util';
+
+/**
+ * @typedef {object} GetPolicyOptions
+ * @property {string} [userProject] The ID of the project which will be billed for
+ *     the request.
+ */
+export interface GetPolicyOptions {
+  userProject?: string;
+}
+
+/**
+ * @typedef {array} GetPolicyResponse
+ * @property {object} 0 The policy.
+ * @property {object} 1 The full API response.
+ */
+export type GetPolicyResponse = [object, r.Response];
+
+/**
+ * @callback GetPolicyCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} acl The policy.
+ * @param {object} apiResponse The full API response.
+ */
+export interface GetPolicyCallback {
+  (err?: Error|null, acl?: object, apiResponse?: r.Response): void;
+}
+
+/**
+ * @typedef {object} SetPolicyOptions
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface SetPolicyOptions {
+  userProject?: string;
+}
+
+/**
+ * @typedef {array} SetPolicyResponse
+ * @property {object} 0 The policy.
+ * @property {object} 1 The full API response.
+ */
+export type SetPolicyResponse = [object, r.Response];
+
+/**
+ * @callback SetPolicyCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} acl The policy.
+ * @param {object} apiResponse The full API response.
+ */
+export interface SetPolicyCallback {
+  (err?: Error|null, acl?: object, apiResponse?: object): void;
+}
+
+/**
+ * @typedef {object} Policy
+ * @property {array} policy.bindings Bindings associate members with roles.
+ * @property {string} [policy.etag] Etags are used to perform a read-modify-write.
+ */
+export interface Policy {
+  bindings: string[];
+  etag?: string;
+}
 
 /**
  * Get and set IAM policies for your Cloud Storage bucket.
@@ -50,22 +114,6 @@ class Iam {
   }
 
   /**
-   * @typedef {object} GetPolicyRequest
-   * @property {string} userProject The ID of the project which will be billed for
-   *     the request.
-   */
-  /**
-   * @typedef {array} GetPolicyResponse
-   * @property {object} 0 The policy.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback GetPolicyCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} acl The policy.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Get the IAM policy.
    *
    * @param {GetPolicyRequest} [options] Request options.
@@ -92,42 +140,31 @@ class Iam {
    * region_tag:storage_view_bucket_iam_members
    * Example of retrieving a bucket's IAM policy:
    */
-  getPolicy(options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  getPolicy(options?: GetPolicyOptions): Promise<GetPolicyResponse>;
+  getPolicy(options: GetPolicyOptions, callback: GetPolicyCallback): void;
+  getPolicy(callback: GetPolicyCallback): void;
+  getPolicy(
+      optionsOrCallback?: GetPolicyOptions|GetPolicyCallback,
+      callback?: GetPolicyCallback): Promise<GetPolicyResponse>|void {
+    const {options, callback: cb} =
+        normalize<GetPolicyOptions, GetPolicyCallback>(
+            optionsOrCallback, callback);
 
     this.request_(
         {
           uri: '/iam',
           qs: options,
         },
-        callback);
+        cb!);
   }
 
-  /**
-   * @typedef {array} SetPolicyResponse
-   * @property {object} 0 The policy.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback SetPolicyCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} acl The policy.
-   * @param {object} apiResponse The full API response.
-   */
   /**
    * Set the IAM policy.
    *
    * @throws {Error} If no policy is provided.
    *
-   * @param {object} policy The policy.
-   * @param {array} policy.bindings Bindings associate members with roles.
-   * @param {string} [policy.etag] Etags are used to perform a read-modify-write.
-   * @param {object} [options] Configuration opbject.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {Policy} policy The policy.
+   * @param {SetPolicyOptions} [options] Configuration opbject.
    * @param {SetPolicyCallback} callback Callback function.
    * @returns {Promise<SetPolicyResponse>}
    *
@@ -167,15 +204,22 @@ class Iam {
    * region_tag:storage_remove_bucket_iam_member
    * Example of removing from a bucket's IAM policy:
    */
-  setPolicy(policy, options, callback?) {
+  setPolicy(policy: Policy, options?: SetPolicyOptions):
+      Promise<SetPolicyResponse>;
+  setPolicy(policy: Policy, callback: SetPolicyCallback): void;
+  setPolicy(
+      policy: Policy, options: SetPolicyOptions,
+      callback: SetPolicyCallback): void;
+  setPolicy(
+      policy: Policy, optionsOrCallback?: SetPolicyOptions|SetPolicyCallback,
+      callback?: SetPolicyCallback): Promise<SetPolicyResponse>|void {
     if (!is.object(policy)) {
       throw new Error('A policy object is required.');
     }
 
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+    const {options, callback: cb} =
+        normalize<SetPolicyOptions, SetPolicyCallback>(
+            optionsOrCallback, callback);
 
     this.request_(
         {
@@ -188,7 +232,7 @@ class Iam {
               policy),
           qs: options,
         },
-        callback);
+        cb);
   }
 
   /**
