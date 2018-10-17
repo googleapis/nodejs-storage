@@ -88,6 +88,34 @@ export interface Policy {
 }
 
 /**
+ * @typedef {array} TestIamPermissionsResponse
+ * @property {object} 0 A subset of permissions that the caller is allowed.
+ * @property {object} 1 The full API response.
+ */
+export type TestIamPermissionsResponse = [{[key: string]: boolean}, r.Response];
+
+/**
+ * @callback TestIamPermissionsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} acl A subset of permissions that the caller is allowed.
+ * @param {object} apiResponse The full API response.
+ */
+export interface TestIamPermissionsCallback {
+  (err?: Error|null, acl?: {[key: string]: boolean}|null,
+   apiResponse?: r.Response): void;
+}
+
+/**
+ * @typedef {object} TestIamPermissionsOptions Configuration options for Iam#testPermissions().
+ * @param {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface TestIamPermissionsOptions {
+  userProject?: string;
+}
+
+
+/**
  * Get and set IAM policies for your Cloud Storage bucket.
  *
  * @see [Cloud Storage IAM Management](https://cloud.google.com/storage/docs/access-control/iam#short_title_iam_management)
@@ -236,25 +264,12 @@ class Iam {
   }
 
   /**
-   * @typedef {array} TestIamPermissionsResponse
-   * @property {object[]} 0 A subset of permissions that the caller is allowed.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback TestIamPermissionsCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object[]} acl A subset of permissions that the caller is allowed.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Test a set of permissions for a resource.
    *
    * @throws {Error} If permissions are not provided.
    *
    * @param {string|string[]} permissions The permission(s) to test for.
-   * @param {object} [options] Configuration object.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
+   * @param {TestIamPermissionsOptions} [options] Configuration object.
    * @param {TestIamPermissionsCallback} [callback] Callback function.
    * @returns {Promise<TestIamPermissionsResponse>}
    *
@@ -301,42 +316,55 @@ class Iam {
    *   const apiResponse = data[1];
    * });
    */
-  testPermissions(permissions, options, callback?) {
+  testPermissions(
+      permissions: string|string[],
+      options?: TestIamPermissionsOptions): Promise<TestIamPermissionsResponse>;
+  testPermissions(
+      permissions: string|string[], callback: TestIamPermissionsCallback): void;
+  testPermissions(
+      permissions: string|string[], options: TestIamPermissionsOptions,
+      callback: TestIamPermissionsCallback): void;
+  testPermissions(
+      permissions: string|string[],
+      optionsOrCallback?: TestIamPermissionsOptions|TestIamPermissionsCallback,
+      callback?: TestIamPermissionsCallback):
+      Promise<TestIamPermissionsResponse>|void {
     if (!is.array(permissions) && !is.string(permissions)) {
       throw new Error('Permissions are required.');
     }
 
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+    const {options, callback: cb} =
+        normalize<TestIamPermissionsOptions, TestIamPermissionsCallback>(
+            optionsOrCallback, callback);
 
-    options = extend(
+    const permissionsArray = arrify(permissions);
+
+    const req = extend(
         {
-          permissions: arrify(permissions),
+          permissions: permissionsArray,
         },
         options);
 
     this.request_(
         {
           uri: '/iam/testPermissions',
-          qs: options,
+          qs: req,
           useQuerystring: true,
         },
         (err, resp) => {
           if (err) {
-            callback(err, null, resp);
+            cb!(err, null, resp);
             return;
           }
 
           const availablePermissions = arrify(resp.permissions);
 
-          const permissionsHash = permissions.reduce((acc, permission) => {
+          const permissionsHash = permissionsArray.reduce((acc, permission) => {
             acc[permission] = availablePermissions.indexOf(permission) > -1;
             return acc;
           }, {});
 
-          callback(null, permissionsHash, resp);
+          cb!(null, permissionsHash, resp);
         });
   }
 }
