@@ -30,7 +30,7 @@ const snakeize = require('snakeize');
 import * as request from 'request';  // Only for type declarations.
 import {teenyRequest} from 'teeny-request';
 
-import {Acl} from './acl';
+import {Acl, AddAclCallback} from './acl';
 import {Channel} from './channel';
 import {File, FileOptions} from './file';
 import {Iam} from './iam';
@@ -484,6 +484,33 @@ export type MakeBucketPrivateResponse = [File[]];
 export interface MakeBucketPrivateCallback {
   (err?: Error|null, files?: File[]): void;
 }
+
+/**
+ * @typedef {object} MakeBucketPublicOptions
+ * @param {boolean} [includeFiles=false] Make each file in the bucket
+ *     private.
+ * @param {boolean} [force] Queue errors occurred while making files
+ *     private until all files have been processed.
+ */
+export interface MakeBucketPublicOptions {
+  includeFiles?: boolean;
+  force?: boolean;
+}
+
+/**
+ * @callback MakeBucketPublicCallback
+ * @param {?Error} err Request error, if any.
+ * @param {File[]} files List of files made public.
+ */
+export interface MakeBucketPublicCallback {
+  (err?: Error|null, files?: File[]): void;
+}
+
+/**
+ * @typedef {array} MakeBucketPublicResponse
+ * @property {File[]} 0 List of files made public.
+ */
+export type MakeBucketPublicResponse = [File[]];
 
 /**
  * @typedef {object} SetBucketMetadataOptions Configuration options for Bucket#setMetadata().
@@ -2175,15 +2202,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} MakeBucketPublicResponse
-   * @property {File[]} 0 List of files made public.
-   */
-  /**
-   * @callback MakeBucketPublicCallback
-   * @param {?Error} err Request error, if any.
-   * @param {File[]} files List of files made public.
-   */
-  /**
    * Make the bucket publicly readable.
    *
    * You may also choose to make the contents of the bucket publicly readable by
@@ -2201,11 +2219,7 @@ class Bucket extends ServiceObject {
    *
    * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
    *
-   * @param {object} [options] Configuration options.
-   * @param {boolean} [options.includeFiles=false] Make each file in the bucket
-   *     publicly readable.
-   * @param {boolean} [options.force] Queue errors occurred while making files
-   *     public until all files have been processed.
+   * @param {MakeBucketPublicOptions} [options] Configuration options.
    * @param {MakeBucketPublicCallback} [callback] Callback function.
    * @returns {Promise<MakeBucketPublicResponse>}
    *
@@ -2258,16 +2272,24 @@ class Bucket extends ServiceObject {
    *   const files = data[0];
    * });
    */
-  makePublic(options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  makePublic(options?: MakeBucketPublicOptions):
+      Promise<MakeBucketPublicResponse>;
+  makePublic(callback: MakeBucketPublicCallback): void;
+  makePublic(
+      options: MakeBucketPublicOptions,
+      callback: MakeBucketPublicCallback): void;
+  makePublic(
+      optionsOrCallback?: MakeBucketPublicOptions|MakeBucketPublicCallback,
+      callback?: MakeBucketPublicCallback): Promise<MakeBucketPublicResponse>|
+      void {
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
-    options = options || {};
-    options.public = true;
+    const req = extend(true, {public: true}, options);
 
-    const addAclPermissions = done => {
+    const addAclPermissions = (done: AddAclCallback) => {
       // Allow reading bucket contents while preserving original permissions.
       this.acl.add(
           {
@@ -2277,7 +2299,7 @@ class Bucket extends ServiceObject {
           done);
     };
 
-    const addDefaultAclPermissions = done => {
+    const addDefaultAclPermissions = (done: AddAclCallback) => {
       this.acl.default !.add(
           {
             entity: 'allUsers',
@@ -2286,18 +2308,20 @@ class Bucket extends ServiceObject {
           done);
     };
 
-    const makeFilesPublic = done => {
-      if (!options.includeFiles) {
+    const makeFilesPublic = (done: MakeAllFilesPublicPrivateCallback) => {
+      if (!req.includeFiles) {
         done();
         return;
       }
 
-      this.makeAllFilesPublicPrivate_(options, done);
+      this.makeAllFilesPublicPrivate_(req, done);
     };
 
-    async.series(
-        [addAclPermissions, addDefaultAclPermissions, makeFilesPublic],
-        callback);
+    // tslint:disable-next-line:no-any
+    (async as any)
+        .series(
+            [addAclPermissions, addDefaultAclPermissions, makeFilesPublic],
+            callback);
   }
 
   /**
