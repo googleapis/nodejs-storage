@@ -288,11 +288,9 @@ export type DeleteLabelsResponse = [request.Response];
 /**
  * @callback DeleteLabelsCallback
  * @param {?Error} err Request error, if any.
- * @param {object} apiResponse The full API response.
+ * @param {object} metadata Bucket's metadata.
  */
-export interface DeleteLabelsCallback {
-  (err: Error|null, apiResponse?: object): void;
-}
+export interface DeleteLabelsCallback extends SetLabelsCallback {}
 
 /**
  * @typedef {array} DisableRequesterPaysResponse
@@ -403,7 +401,7 @@ export interface GetLabelsCallback {
  * @property {object} 0 The bucket metadata.
  * @property {object} 1 The full API response.
  */
-export type GetBucketMetadataResponse = [object, request.Response];
+export type GetBucketMetadataResponse = [Metadata, request.Response];
 
 /**
  * @callback GetBucketMetadataCallback
@@ -498,7 +496,7 @@ export interface SetBucketMetadataOptions {
 
 /**
  * @typedef {array} SetBucketMetadataResponse
- * @param {object} apiResponse The full API response.
+ * @property {object} apiResponse The full API response.
  */
 export type SetBucketMetadataResponse = [request.Response];
 
@@ -518,13 +516,41 @@ export interface SetBucketMetadataCallback {
  */
 export interface BucketLockCallback {
   (err?: Error|null, apiResponse?: request.Response): void;
-};
+}
 
 /**
  * @typedef {array} SetBucketMetadataResponse
- * @param {object} apiResponse The full API response.
+ * @property {object} apiResponse The full API response.
  */
 export type BucketLockResponse = [request.Response];
+
+export type Labels = {
+  [key: string]: string;
+};
+
+/**
+ * @typedef {object} SetLabelsOptions Configuration options for Bucket#setLabels().
+ * @property {string} [userProject] The ID of the project which will be
+ *     billed for the request.
+ */
+export interface SetLabelsOptions {
+  userProject?: string;
+}
+
+/**
+ * @typedef {array} SetLabelsResponse
+ * @property {object} 0 The bucket metadata.
+ */
+export type SetLabelsResponse = [request.Response];
+
+/**
+ * @callback SetLabelsCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} metadata The bucket metadata.
+ */
+export interface SetLabelsCallback {
+  (err?: Error|null, metadata?: Metadata): void;
+}
 
 /**
  * @private
@@ -1384,12 +1410,12 @@ class Bucket extends ServiceObject {
     }
 
     const deleteLabels = labels => {
-      const nullLabelMap = labels.reduce((nullLabelMap, labelKey) => {
+      const nullLabelMap: Labels = labels.reduce((nullLabelMap, labelKey) => {
         nullLabelMap[labelKey] = null;
         return nullLabelMap;
       }, {});
 
-      this.setLabels(nullLabelMap, callback);
+      this.setLabels(nullLabelMap, callback!);
     };
 
     if (labels.length === 0) {
@@ -2013,7 +2039,8 @@ class Bucket extends ServiceObject {
    */
   lock(metageneration: number|string): Promise<BucketLockResponse>;
   lock(metageneration: number|string, callback: BucketLockCallback): void;
-  lock(metageneration: number|string, callback?: BucketLockCallback): Promise<BucketLockResponse>|void {
+  lock(metageneration: number|string, callback?: BucketLockCallback):
+      Promise<BucketLockResponse>|void {
     if (!is.number(metageneration) && !is.string(metageneration)) {
       throw new Error('A metageneration must be provided.');
     }
@@ -2342,15 +2369,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} SetLabelsResponse
-   * @property {object} 0 The bucket metadata.
-   */
-  /**
-   * @callback SetLabelsCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} metadata The bucket metadata.
-   */
-  /**
    * Set labels on the bucket.
    *
    * This makes an underlying call to {@link Bucket#setMetadata}, which
@@ -2359,8 +2377,6 @@ class Bucket extends ServiceObject {
    *
    * @param {object<string, string>} labels Labels to set on the bucket.
    * @param {object} [options] Configuration options.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
    * @param {SetLabelsCallback} [callback] Callback function.
    * @returns {Promise<SetLabelsResponse>}
    *
@@ -2387,11 +2403,19 @@ class Bucket extends ServiceObject {
    *   const metadata = data[0];
    * });
    */
-  setLabels(labels, options, callback?) {
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+  setLabels(labels: Labels, options: SetLabelsOptions):
+      Promise<SetLabelsResponse>;
+  setLabels(labels: Labels, callback: SetLabelsCallback): void;
+  setLabels(
+      labels: Labels, options: SetLabelsOptions,
+      callback: SetLabelsCallback): void;
+  setLabels(
+      labels: Labels, optionsOrCallback?: SetLabelsOptions|SetLabelsCallback,
+      callback?: SetLabelsCallback): Promise<SetLabelsResponse>|void {
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
     callback = callback || util.noop;
 

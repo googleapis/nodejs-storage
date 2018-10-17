@@ -956,7 +956,7 @@ describe('storage', () => {
       it('should lock the retention period', done => {
         const bucket = storage.bucket(generateName());
 
-        async.series(
+        async.series<{}, Error|null>(
             [
               next => bucket.create(next),
               next =>
