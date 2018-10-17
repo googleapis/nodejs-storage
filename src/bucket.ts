@@ -32,7 +32,7 @@ import {teenyRequest} from 'teeny-request';
 
 import {Acl, AddAclCallback} from './acl';
 import {Channel} from './channel';
-import {File, FileOptions} from './file';
+import {File, FileOptions, CreateResumableUploadOptions, CreateWriteStreamOptions} from './file';
 import {Iam} from './iam';
 import {Notification} from './notification';
 import {Storage} from './index';
@@ -595,6 +595,89 @@ export interface SetBucketStorageClassOptions {
 export interface SetBucketStorageClassCallback {
   (err?: Error|null): void;
 }
+
+/**
+ * @typedef {array} UploadResponse
+ * @property {object} 0 The uploaded {@link File}.
+ * @property {object} 1 The full API response.
+ */
+export type UploadResponse = [File, request.Response];
+
+/**
+ * @callback UploadCallback
+ * @param {?Error} err Request error, if any.
+ * @param {object} file The uploaded {@link File}.
+ * @param {object} apiResponse The full API response.
+ */
+export interface UploadCallback {
+  (err?: Error|null, file?: File|null, apiResponse?: request.Response): void;
+}
+
+/**
+ * @typedef {object} UploadOptions Configuration options for Bucket#upload().
+ * @param {string|File} [options.destination] The place to save
+ *     your file. If given a string, the file will be uploaded to the bucket
+ *     using the string as a filename. When given a File object, your local
+ * file will be uploaded to the File object's bucket and under the File
+ * object's name. Lastly, when this argument is omitted, the file is uploaded
+ * to your bucket using the name of the local file.
+ * @param {string} [options.encryptionKey] A custom encryption key. See
+ *     [Customer-supplied Encryption
+ * Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
+ * @param {boolean} [options.gzip] Automatically gzip the file. This will set
+ *     `options.metadata.contentEncoding` to `gzip`.
+ * @param {string} [options.kmsKeyName] The name of the Cloud KMS key that will
+ *     be used to encrypt the object. Must be in the format:
+ *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`.
+ * @param {object} [options.metadata] See an
+ *     [Objects: insert request
+ * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON).
+ * @param {string} [options.offset] The starting byte of the upload stream, for
+ *     resuming an interrupted upload. Defaults to 0.
+ * @param {string} [options.predefinedAcl] Apply a predefined set of access
+ *     controls to this object.
+ *
+ *     Acceptable values are:
+ *     - **`authenticatedRead`** - Object owner gets `OWNER` access, and
+ *       `allAuthenticatedUsers` get `READER` access.
+ *
+ *     - **`bucketOwnerFullControl`** - Object owner gets `OWNER` access, and
+ *       project team owners get `OWNER` access.
+ *
+ *     - **`bucketOwnerRead`** - Object owner gets `OWNER` access, and project
+ *       team owners get `READER` access.
+ *
+ *     - **`private`** - Object owner gets `OWNER` access.
+ *
+ *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
+ *       team members get access according to their roles.
+ *
+ *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
+ * get `READER` access.
+ * @param {boolean} [options.private] Make the uploaded file private. (Alias for
+ *     `options.predefinedAcl = 'private'`)
+ * @param {boolean} [options.public] Make the uploaded file public. (Alias for
+ *     `options.predefinedAcl = 'publicRead'`)
+ * @param {boolean} [options.resumable] Force a resumable upload. (default:
+ *     true for files larger than 5 MB).
+ * @param {string} [options.uri] The URI for an already-created resumable
+ *     upload. See {@link File#createResumableUpload}.
+ * @param {string} [options.userProject] The ID of the project which will be
+ *     billed for the request.
+ * @param {string|boolean} [options.validation] Possible values: `"md5"`,
+ *     `"crc32c"`, or `false`. By default, data integrity is validated with an
+ *     MD5 checksum for maximum reliability. CRC32c will provide better
+ *     performance with less reliability. You may also choose to skip
+ * validation completely, however this is **not recommended**.
+ */
+export interface UploadOptions extends CreateResumableUploadOptions,
+                                       CreateWriteStreamOptions {
+  destination?: string|File;
+  encryptionKey?: string|Buffer;
+  kmsKeyName?: string;
+  resumable?: boolean;
+}
+
 
 /**
  * @private
@@ -2691,17 +2774,6 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {array} UploadResponse
-   * @property {object} 0 The uploaded {@link File}.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback UploadCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} metadata The uploaded {@link File}.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
    * Upload a file to the bucket. This is a convenience method that wraps
    * {@link File#createWriteStream}.
    *
@@ -2719,61 +2791,7 @@ class Bucket extends ServiceObject {
    *
    * @param {string} pathString The fully qualified path to the file you
    *     wish to upload to your bucket.
-   * @param {object} [options] Configuration options.
-   * @param {string|File} [options.destination] The place to save
-   *     your file. If given a string, the file will be uploaded to the bucket
-   *     using the string as a filename. When given a File object, your local
-   * file will be uploaded to the File object's bucket and under the File
-   * object's name. Lastly, when this argument is omitted, the file is uploaded
-   * to your bucket using the name of the local file.
-   * @param {string} [options.encryptionKey] A custom encryption key. See
-   *     [Customer-supplied Encryption
-   * Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
-   * @param {boolean} [options.gzip] Automatically gzip the file. This will set
-   *     `options.metadata.contentEncoding` to `gzip`.
-   * @param {string} [options.kmsKeyName] The name of the Cloud KMS key that will
-   *     be used to encrypt the object. Must be in the format:
-   *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`.
-   * @param {object} [options.metadata] See an
-   *     [Objects: insert request
-   * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON).
-   * @param {string} [options.offset] The starting byte of the upload stream, for
-   *     resuming an interrupted upload. Defaults to 0.
-   * @param {string} [options.predefinedAcl] Apply a predefined set of access
-   *     controls to this object.
-   *
-   *     Acceptable values are:
-   *     - **`authenticatedRead`** - Object owner gets `OWNER` access, and
-   *       `allAuthenticatedUsers` get `READER` access.
-   *
-   *     - **`bucketOwnerFullControl`** - Object owner gets `OWNER` access, and
-   *       project team owners get `OWNER` access.
-   *
-   *     - **`bucketOwnerRead`** - Object owner gets `OWNER` access, and project
-   *       team owners get `READER` access.
-   *
-   *     - **`private`** - Object owner gets `OWNER` access.
-   *
-   *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
-   *       team members get access according to their roles.
-   *
-   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
-   * get `READER` access.
-   * @param {boolean} [options.private] Make the uploaded file private. (Alias for
-   *     `options.predefinedAcl = 'private'`)
-   * @param {boolean} [options.public] Make the uploaded file public. (Alias for
-   *     `options.predefinedAcl = 'publicRead'`)
-   * @param {boolean} [options.resumable] Force a resumable upload. (default:
-   *     true for files larger than 5 MB).
-   * @param {string} [options.uri] The URI for an already-created resumable
-   *     upload. See {@link File#createResumableUpload}.
-   * @param {string} [options.userProject] The ID of the project which will be
-   *     billed for the request.
-   * @param {string|boolean} [options.validation] Possible values: `"md5"`,
-   *     `"crc32c"`, or `false`. By default, data integrity is validated with an
-   *     MD5 checksum for maximum reliability. CRC32c will provide better
-   *     performance with less reliability. You may also choose to skip
-   * validation completely, however this is **not recommended**.
+   * @param {UploadOptions} [options] Configuration options.
    * @param {UploadCallback} [callback] Callback function.
    * @returns {Promise<UploadResponse>}
    *
@@ -2892,15 +2910,21 @@ class Bucket extends ServiceObject {
    * region_tag:storage_upload_encrypted_file
    * Example of uploading an encrypted file:
    */
-  upload(pathString: string, options, callback?) {
+  upload(pathString: string, options?: UploadOptions): Promise<UploadResponse>;
+  upload(pathString: string, callback: UploadCallback): void;
+  upload(pathString: string, options: UploadOptions, callback: UploadCallback):
+      void;
+  upload(
+      pathString: string, optionsOrCallback?: UploadOptions|UploadCallback,
+      callback?: UploadCallback): Promise<UploadResponse>|void {
     if (global['GCLOUD_SANDBOX_ENV']) {
       return;
     }
 
-    if (is.fn(options)) {
-      callback = options;
-      options = {};
-    }
+    let options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
     options = extend(
         {
@@ -2911,7 +2935,9 @@ class Bucket extends ServiceObject {
     let newFile;
     if (options.destination instanceof File) {
       newFile = options.destination;
-    } else if (is.string(options.destination)) {
+    } else if (
+        options.destination != null &&
+        typeof options.destination === 'string') {
       // Use the string as the name of the file.
       newFile = this.file(options.destination, {
         encryptionKey: options.encryptionKey,
@@ -2932,13 +2958,13 @@ class Bucket extends ServiceObject {
       options.metadata.contentType = contentType;
     }
 
-    if (is.boolean(options.resumable)) {
+    if (options.resumable != null && typeof options.resumable === 'boolean') {
       upload();
     } else {
       // Determine if the upload should be resumable if it's over the threshold.
       fs.stat(pathString, (err, fd) => {
         if (err) {
-          callback(err);
+          callback!(err);
           return;
         }
 
@@ -2950,11 +2976,11 @@ class Bucket extends ServiceObject {
 
     function upload() {
       fs.createReadStream(pathString)
-          .on('error', callback)
+          .on('error', callback!)
           .pipe(newFile.createWriteStream(options))
           .on('error', callback)
           .on('finish', () => {
-            callback(null, newFile, newFile.metadata);
+            callback!(null, newFile, newFile.metadata);
           });
     }
   }
