@@ -785,7 +785,7 @@ describe('storage', () => {
     it('should allow changing the storage class', done => {
       const bucket = storage.bucket(generateName());
 
-      async.series(
+      async.series<{}, Error|null>(
           [
             next => {
               bucket.create(next);
@@ -937,7 +937,7 @@ describe('storage', () => {
       it('should set a retention policy', done => {
         const bucket = storage.bucket(generateName());
 
-        async.series(
+        async.series<{}, Error|null>(
             [
               next => bucket.create(next),
               next =>
@@ -983,7 +983,7 @@ describe('storage', () => {
       it('should remove a retention period', done => {
         const bucket = storage.bucket(generateName());
 
-        async.series(
+        async.series<{}, Error|null>(
             [
               next => bucket.create(next),
               next =>

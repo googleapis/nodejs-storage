@@ -580,6 +580,23 @@ export interface SetLabelsCallback {
 }
 
 /**
+ * @typedef {object} SetBucketStorageClassOptions
+ * @param {string} [userProject] - The ID of the project which will be
+ *     billed for the request.
+ */
+export interface SetBucketStorageClassOptions {
+  userProject?: string;
+}
+
+/**
+ * @callback SetBucketStorageClassCallback
+ * @param {?Error} err Request error, if any.
+ */
+export interface SetBucketStorageClassCallback {
+  (err?: Error|null): void;
+}
+
+/**
  * @private
  *
  * @typedef {object} MakeAllFilesPublicPrivateOptions
@@ -2337,7 +2354,7 @@ class Bucket extends ServiceObject {
    * const bucket = storage.bucket('my-bucket');
    * const notification = bucket.notification('1');
    */
-  notification(id: string) {
+  notification(id: string): Notification {
     if (!id) {
       throw new Error('You must supply a notification ID.');
     }
@@ -2365,12 +2382,15 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  removeRetentionPeriod(callback?) {
+  removeRetentionPeriod(): Promise<SetBucketMetadataResponse>;
+  removeRetentionPeriod(callback: SetBucketMetadataCallback): void;
+  removeRetentionPeriod(callback?: SetBucketMetadataCallback):
+      Promise<SetBucketMetadataResponse>|void {
     this.setMetadata(
         {
           retentionPolicy: null,
         },
-        callback);
+        callback!);
   }
 
   /**
@@ -2577,20 +2597,20 @@ class Bucket extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    */
-  setRetentionPeriod(duration, callback?) {
+  setRetentionPeriod(duration: number): Promise<SetBucketMetadataResponse>;
+  setRetentionPeriod(duration: number, callback: SetBucketMetadataCallback):
+      void;
+  setRetentionPeriod(duration: number, callback?: SetBucketMetadataCallback):
+      Promise<SetBucketMetadataResponse>|void {
     this.setMetadata(
         {
           retentionPolicy: {
             retentionPeriod: duration,
           },
         },
-        callback);
+        callback!);
   }
 
-  /**
-   * @callback SetStorageClassCallback
-   * @param {?Error} err Request error, if any.
-   */
   /**
    * Set the default storage class for new files in this bucket.
    *
@@ -2623,7 +2643,24 @@ class Bucket extends ServiceObject {
    * //-
    * bucket.setStorageClass('regional').then(function() {});
    */
-  setStorageClass(storageClass, options, callback?) {
+  setStorageClass(storageClass: string, options: SetBucketStorageClassOptions):
+      Promise<SetBucketMetadataResponse>;
+  setStorageClass(
+      storageClass: string, callback: SetBucketStorageClassCallback): void;
+  setStorageClass(
+      storageClass: string, options: SetBucketStorageClassOptions,
+      callback: SetBucketStorageClassCallback): void;
+  setStorageClass(
+      storageClass: string,
+      optionsOrCallback: SetBucketStorageClassOptions|
+      SetBucketStorageClassCallback,
+      callback?: SetBucketStorageClassCallback):
+      Promise<SetBucketMetadataResponse>|void {
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+
     // In case we get input like `storageClass`, convert to `storage_class`.
     storageClass = storageClass.replace(/-/g, '_')
                        .replace(
@@ -2633,7 +2670,7 @@ class Bucket extends ServiceObject {
                            })
                        .toUpperCase();
 
-    this.setMetadata({storageClass}, options, callback);
+    this.setMetadata({storageClass}, options, callback!);
   }
 
   /**
