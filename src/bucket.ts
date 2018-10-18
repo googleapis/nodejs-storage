@@ -3049,7 +3049,7 @@ class Bucket extends ServiceObject {
 
       // Iterate through each file and make it public or private.
       async.eachLimit<File, Error>(
-          files!, MAX_PARALLEL_LIMIT, processFile, (err?: Error) => {
+          files!, MAX_PARALLEL_LIMIT, processFile, (err?: Error|null) => {
             if (err || errors.length > 0) {
               callback!(err || errors, updatedFiles);
               return;
