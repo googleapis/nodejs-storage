@@ -690,7 +690,7 @@ export interface UploadOptions extends CreateResumableUploadOptions,
  * @property {string} [userProject] The ID of the project which will be
  *     billed for the request.
  */
-interface MakeAllFilesPublicPrivateOptions {
+export interface MakeAllFilesPublicPrivateOptions {
   force?: boolean;
   private?: boolean;
   public?: boolean;
