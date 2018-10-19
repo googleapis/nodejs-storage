@@ -1007,7 +1007,9 @@ class Bucket extends ServiceObject {
   /**
    * Set the object lifecycle rules for objects in this bucket.
    *
-   * By default, the object lifecycle
+   * By default, the object lifecycle rule you provide to this method will be
+   * appended to any existing ones. To replace all existing rules, supply the
+   * `options` argument, setting `append` to `false`.
    *
    * @see [Object Lifecycle Management]{@link https://cloud.google.com/storage/docs/lifecycle}
    * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
