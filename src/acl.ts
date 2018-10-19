@@ -18,7 +18,6 @@
 
 import * as arrify from 'arrify';
 import {promisifyAll} from '@google-cloud/promisify';
-import * as extend from 'extend';
 import {DecorateRequestOptions, BodyResponseCallback} from '@google-cloud/common';
 import * as r from 'request';
 
@@ -309,7 +308,7 @@ class AclRoleAccessorMethods {
                 callback = entityId;
               }
 
-              options = extend(
+              options = Object.assign(
                   {
                     entity: apiEntity,
                     role,

@@ -18,7 +18,6 @@
 
 import * as assert from 'assert';
 import {ServiceObject, util, ServiceObjectConfig, DecorateRequestOptions} from '@google-cloud/common';
-import * as extend from 'extend';
 import * as proxyquire from 'proxyquire';
 import {Bucket} from '../src';
 
@@ -36,7 +35,7 @@ describe('Notification', () => {
   // tslint:disable-next-line: no-any
   let notification: any;
   let promisified = false;
-  const fakeUtil = extend({}, util);
+  const fakeUtil = Object.assign({}, util);
   const fakePromisify = {
     // tslint:disable-next-line:variable-name
     promisifyAll(Class: Function) {
@@ -90,7 +89,7 @@ describe('Notification', () => {
     it('should use Bucket#createNotification for the createMethod', () => {
       const bound = () => {};
 
-      extend(BUCKET.createNotification, {
+      Object.assign(BUCKET.createNotification, {
         bind(context: Bucket) {
           assert.strictEqual(context, BUCKET);
           return bound;
@@ -218,7 +217,7 @@ describe('Notification', () => {
       });
 
       it('should pass config to create if it was provided', done => {
-        const config = extend({}, AUTO_CREATE_CONFIG, {
+        const config = Object.assign({}, AUTO_CREATE_CONFIG, {
           maxResults: 5,
         });
 

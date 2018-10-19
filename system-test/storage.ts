@@ -19,7 +19,6 @@
 import * as assert from 'assert';
 import * as async from 'async';
 import * as crypto from 'crypto';
-import * as extend from 'extend';
 import * as fs from 'fs';
 const fetch = require('node-fetch');
 const normalizeNewline = require('normalize-newline');
@@ -849,7 +848,8 @@ describe('storage', () => {
 
             bucket.getLabels((err, labels) => {
               assert.ifError(err);
-              assert.deepStrictEqual(labels, extend({}, LABELS, newLabels));
+              assert.deepStrictEqual(
+                  labels, Object.assign({}, LABELS, newLabels));
               done();
             });
           });
@@ -873,7 +873,7 @@ describe('storage', () => {
             bucket.getLabels((err, labels) => {
               assert.ifError(err);
 
-              const expectedLabels = extend({}, LABELS);
+              const expectedLabels = Object.assign({}, LABELS);
               delete expectedLabels[labelKeyToDelete];
 
               assert.deepStrictEqual(labels, expectedLabels);
@@ -1444,7 +1444,7 @@ describe('storage', () => {
            }));
 
         it('acl#add', doubleTest((options, done) => {
-             options = extend(
+             options = Object.assign(
                  {
                    entity: USER_ACCOUNT,
                    role: storage.acl.OWNER_ROLE,
@@ -1455,7 +1455,7 @@ describe('storage', () => {
            }));
 
         it('acl#update', doubleTest((options, done) => {
-             options = extend(
+             options = Object.assign(
                  {
                    entity: USER_ACCOUNT,
                    role: storage.acl.WRITER_ROLE,
@@ -1466,7 +1466,7 @@ describe('storage', () => {
            }));
 
         it('acl#get', doubleTest((options, done) => {
-             options = extend(
+             options = Object.assign(
                  {
                    entity: USER_ACCOUNT,
                  },
@@ -1476,7 +1476,7 @@ describe('storage', () => {
            }));
 
         it('acl#delete', doubleTest((options, done) => {
-             options = extend(
+             options = Object.assign(
                  {
                    entity: USER_ACCOUNT,
                  },
@@ -2777,7 +2777,7 @@ describe('storage', () => {
     // anymore.
     const CONSISTENCY_DELAY_MS = 250;
 
-    options = extend({}, options, {
+    options = Object.assign({}, options, {
       versions: true,
     });
 

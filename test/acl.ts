@@ -18,7 +18,6 @@
 
 import * as assert from 'assert';
 import * as async from 'async';
-import * as extend from 'extend';
 import * as proxyquire from 'proxyquire';
 import {util, DecorateRequestOptions} from '@google-cloud/common';
 import * as r from 'request';
@@ -606,7 +605,7 @@ describe('storage/AclRoleAccessorMethods', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      const expectedOptions = extend(
+      const expectedOptions = Object.assign(
           {
             entity: 'user-' + fakeUser,
             role: fakeRole,

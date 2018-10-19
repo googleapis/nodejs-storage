@@ -18,7 +18,6 @@
 
 import * as arrify from 'arrify';
 import * as assert from 'assert';
-import * as extend from 'extend';
 import * as proxyquire from 'proxyquire';
 import {Service, util, DecorateRequestOptions, ServiceConfig} from '@google-cloud/common';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
@@ -192,7 +191,7 @@ describe('Storage', () => {
       storage.request =
           (reqOpts: DecorateRequestOptions, callback: Function) => {
             assert.deepStrictEqual(
-                reqOpts.json, extend(METADATA, {name: BUCKET_NAME}));
+                reqOpts.json, Object.assign(METADATA, {name: BUCKET_NAME}));
             callback(null, METADATA);
           };
       storage.bucket = (name: string) => {

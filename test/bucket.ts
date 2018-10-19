@@ -74,7 +74,7 @@ class FakeNotification {
 
 let eachLimitOverride: Function|null;
 
-const fakeAsync = extend({}, async);
+const fakeAsync = Object.assign({}, async);
 fakeAsync.eachLimit = (...args) =>
     (eachLimitOverride || async.eachLimit).apply(null, args);
 
@@ -239,7 +239,7 @@ describe('Bucket', () => {
     });
 
     it('should inherit from ServiceObject', done => {
-      const storageInstance = extend({}, STORAGE, {
+      const storageInstance = Object.assign({}, STORAGE, {
         createBucket: {
           bind(context: {}) {
             assert.strictEqual(context, storageInstance);
@@ -496,17 +496,17 @@ describe('Bucket', () => {
     });
 
     it('should make the correct request', done => {
-      const config = extend({}, CONFIG, {
+      const config = Object.assign({}, CONFIG, {
         a: 'b',
         c: 'd',
       });
-      const originalConfig = extend({}, config);
+      const originalConfig = Object.assign({}, config);
 
       bucket.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.method, 'POST');
         assert.strictEqual(reqOpts.uri, '/o/watch');
 
-        const expectedJson = extend({}, config, {
+        const expectedJson = Object.assign({}, config, {
           id: ID,
           type: 'web_hook',
         });
@@ -615,7 +615,8 @@ describe('Bucket', () => {
       const topic = 'projects/my-project/topics/my-topic';
       const options = {payloadFormat: 'NONE'};
       const expectedTopic = PUBSUB_SERVICE_PATH + topic;
-      const expectedJson = extend({topic: expectedTopic}, snakeize(options));
+      const expectedJson =
+          Object.assign({topic: expectedTopic}, snakeize(options));
 
       bucket.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.method, 'POST');
@@ -1169,7 +1170,7 @@ describe('Bucket', () => {
       });
 
       it('should pass config to create if it was provided', done => {
-        const config = extend({}, AUTO_CREATE_CONFIG, {
+        const config = Object.assign({}, AUTO_CREATE_CONFIG, {
           maxResults: 5,
         });
 
@@ -1868,7 +1869,7 @@ describe('Bucket', () => {
     it('should call ServiceObject#request correctly', done => {
       const options = {};
 
-      extend(FakeServiceObject.prototype, {
+      Object.assign(FakeServiceObject.prototype, {
         request(reqOpts: DecorateRequestOptions, callback: Function) {
           assert.strictEqual(this, bucket);
           assert.strictEqual(reqOpts, options);

@@ -1467,7 +1467,7 @@ class File extends ServiceObject {
    */
   // tslint:disable-next-line:no-any
   createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
-    options = extend({metadata: {}}, options);
+    options = Object.assign({metadata: {}}, options);
 
     if (options.contentType) {
       options.metadata.contentType = options.contentType;
@@ -1661,7 +1661,7 @@ class File extends ServiceObject {
       callback?: DeleteFileCallback): void|Promise<DeleteFileResponse> {
     let options =
         typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
-    options = extend({}, this.requestQueryObject, options);
+    options = Object.assign({}, this.requestQueryObject, options);
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
     (this.parent as ServiceObject).delete.call(this, options, callback);
@@ -2003,7 +2003,7 @@ class File extends ServiceObject {
         typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
-    options = extend({}, this.requestQueryObject, options);
+    options = Object.assign({}, this.requestQueryObject, options);
     (this.parent as ServiceObject).getMetadata.call(this, options, callback);
   }
 
@@ -2112,7 +2112,7 @@ class File extends ServiceObject {
       throw new Error('An expiration date cannot be in the past.');
     }
 
-    options = extend({}, options);
+    options = Object.assign({}, options);
 
     const conditions = [
       ['eq', '$key', this.name],
@@ -2323,7 +2323,7 @@ class File extends ServiceObject {
     const expiresInSeconds =
         Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
 
-    const config: GetSignedUrlConfigInternal = extend({}, cfg);
+    const config: GetSignedUrlConfigInternal = Object.assign({}, cfg);
 
     config.action = ({
       read: 'GET',
@@ -2338,7 +2338,7 @@ class File extends ServiceObject {
     let extensionHeadersString = '';
 
     if (config.action === 'POST') {
-      config.extensionHeaders = extend({}, config.extensionHeaders, {
+      config.extensionHeaders = Object.assign({}, config.extensionHeaders, {
         'x-goog-resumable': 'start',
       });
     }
@@ -2670,7 +2670,8 @@ class File extends ServiceObject {
   request(reqOpts: DecorateRequestOptions, callback?: BodyResponseCallback):
       void|Promise<r.Response> {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
-      reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
+      reqOpts.qs =
+          Object.assign(reqOpts.qs || {}, {userProject: this.userProject});
     }
     return super.request(reqOpts, callback!);
   }
@@ -2862,7 +2863,7 @@ class File extends ServiceObject {
     let options =
         typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
 
-    options = extend({}, this.requestQueryObject, options);
+    options = Object.assign({}, this.requestQueryObject, options);
 
     // tslint:disable-next-line:no-any
     (this.parent as any).setMetadata.call(this, metadata, options, callback!);
@@ -2966,7 +2967,7 @@ class File extends ServiceObject {
    */
   startResumableUpload_(
       dup: duplexify.Duplexify, options: CreateResumableUploadOptions): void {
-    options = extend(
+    options = Object.assign(
         {
           metadata: {},
         },
@@ -3016,7 +3017,7 @@ class File extends ServiceObject {
    */
   startSimpleUpload_(
       dup: duplexify.Duplexify, options?: CreateResumableUploadOptions): void {
-    options = extend(
+    options = Object.assign(
         {
           metadata: {},
         },

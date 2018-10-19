@@ -1179,7 +1179,7 @@ class Bucket extends ServiceObject {
         {
           method: 'POST',
           uri: '/o/watch',
-          json: extend(
+          json: Object.assign(
               {
                 id,
                 type: 'web_hook',
@@ -1899,7 +1899,7 @@ class Bucket extends ServiceObject {
     if (!callback) {
       callback = queryOrCallback as GetFilesCallback;
     }
-    query = extend({}, query);
+    query = Object.assign({}, query);
 
     if (query.directory) {
       query.prefix = `${query.directory}/`.replace(/\/*$/, '/');
@@ -1937,7 +1937,7 @@ class Bucket extends ServiceObject {
 
           let nextQuery: object|null = null;
           if (resp.nextPageToken) {
-            nextQuery = extend({}, query, {
+            nextQuery = Object.assign({}, query, {
               pageToken: resp.nextPageToken,
             });
           }
@@ -2488,7 +2488,8 @@ class Bucket extends ServiceObject {
   request(reqOpts: DecorateRequestOptions, callback?: BodyResponseCallback):
       void|Promise<request.Response> {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
-      reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
+      reqOpts.qs =
+          Object.assign(reqOpts.qs || {}, {userProject: this.userProject});
     }
     return super.request(reqOpts, callback!);
   }
@@ -2925,7 +2926,7 @@ class Bucket extends ServiceObject {
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
-    options = extend(
+    options = Object.assign(
         {
           metadata: {},
         },
