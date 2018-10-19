@@ -26,14 +26,12 @@ import * as path from 'path';
 import * as proxyquire from 'proxyquire';
 const snakeize = require('snakeize');
 import * as stream from 'stream';
-import * as through from 'through2';
 import {Bucket, Channel, Notification} from '../src';
 import {CreateWriteStreamOptions, File, SetFileMetadataOptions} from '../src/file';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import * as r from 'request';
 import {GetFilesOptions, MakeAllFilesPublicPrivateOptions} from '../src/bucket';
 import {AddAclOptions} from '../src/acl';
-import {Func} from 'mocha';
 
 class FakeFile {
   calledWith_: IArguments;
@@ -2246,7 +2244,7 @@ describe('Bucket', () => {
       const fakeFile = new FakeFile(bucket, 'file-name');
       const options = {destination: fakeFile};
       fakeFile.createWriteStream = () => {
-        const ws = through();
+        const ws = new stream.PassThrough();
         setImmediate(() => {
           ws.destroy(error);
         });
@@ -2264,7 +2262,7 @@ describe('Bucket', () => {
       const metadata = {};
 
       fakeFile.createWriteStream = () => {
-        const ws = through();
+        const ws = new stream.PassThrough();
         setImmediate(() => {
           fakeFile.metadata = metadata;
           ws.end();

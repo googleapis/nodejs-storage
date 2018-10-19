@@ -31,9 +31,8 @@ import * as once from 'once';
 import * as os from 'os';
 const pumpify = require('pumpify');
 import * as resumableUpload from 'gcs-resumable-upload';
-import {Duplex, Writable, Readable} from 'stream';
+import {Duplex, Writable, Readable, PassThrough} from 'stream';
 import * as streamEvents from 'stream-events';
-import * as through from 'through2';
 import * as xdgBasedir from 'xdg-basedir';
 import * as zlib from 'zlib';
 import * as url from 'url';
@@ -1073,7 +1072,7 @@ class File extends ServiceObject {
 
     // tslint:disable-next-line:no-any
     let validateStream: any;  // Created later, if necessary.
-    const throughStream = streamEvents(through()) as Duplex;
+    const throughStream = streamEvents(new PassThrough()) as Duplex;
 
     let crc32c = true;
     let md5 = false;
@@ -1507,7 +1506,7 @@ class File extends ServiceObject {
     const fileWriteStream = duplexify();
 
     const stream = streamEvents(pumpify([
-                     gzip ? zlib.createGzip() : through(),
+                     gzip ? zlib.createGzip() : new PassThrough(),
                      validateStream,
                      fileWriteStream,
                    ])) as Duplex;

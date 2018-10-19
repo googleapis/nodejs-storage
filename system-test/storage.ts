@@ -25,7 +25,6 @@ import * as is from 'is';
 const fetch = require('node-fetch');
 const normalizeNewline = require('normalize-newline');
 import * as path from 'path';
-import * as through from 'through2';
 import * as tmp from 'tmp';
 import * as uuid from 'uuid';
 import {util, ApiError, InstanceResponseCallback, BodyResponseCallback} from '@google-cloud/common';
@@ -33,6 +32,7 @@ import {Storage, Bucket, File, AccessControlObject} from '../src';
 import {DeleteBucketCallback} from '../src/bucket';
 import * as nock from 'nock';
 import {DeleteFileCallback} from '../src/file';
+import {PassThrough} from 'stream';
 
 // block all attempts to chat with the metadata server (kokoro runs on GCE)
 nock('http://metadata.google.internal')
@@ -1763,17 +1763,18 @@ describe('storage', () => {
             let sizeStreamed = 0;
 
             fs.createReadStream(FILES.big.path)
-                .pipe(through(function(chunk, enc, next) {
-                  sizeStreamed += chunk.length;
-
-                  if (opts.interrupt && sizeStreamed >= fileSize / 2) {
-                    // stop sending data half way through.
-                    this.push(chunk);
-                    this.destroy();
-                    ws.destroy(new Error('Interrupted.'));
-                  } else {
-                    this.push(chunk);
-                    next();
+                .pipe(new PassThrough({
+                  write(chunk, enc, next) {
+                    sizeStreamed += chunk.length;
+                    if (opts.interrupt && sizeStreamed >= fileSize / 2) {
+                      // stop sending data half way through.
+                      this.push(chunk);
+                      this.destroy();
+                      ws.destroy(new Error('Interrupted.'));
+                    } else {
+                      this.push(chunk);
+                      next();
+                    }
                   }
                 }))
                 .pipe(ws)

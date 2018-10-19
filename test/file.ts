@@ -22,7 +22,6 @@ import * as extend from 'extend';
 import * as fs from 'fs';
 import * as proxyquire from 'proxyquire';
 import * as stream from 'stream';
-import * as through from 'through2';
 import * as tmp from 'tmp';
 import * as url from 'url';
 import {ServiceObject, util, ServiceObjectConfig} from '@google-cloud/common';
@@ -99,6 +98,10 @@ extend(fakeResumableUpload, {
     return upload.apply(null, args);
   }
 });
+
+function through() {
+  return new stream.PassThrough();
+}
 
 class FakeServiceObject extends ServiceObject {
   calledWith_: IArguments;
