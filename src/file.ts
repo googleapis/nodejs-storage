@@ -1463,13 +1463,11 @@ class File extends ServiceObject {
    *     // The file upload is complete.
    *   });
    */
-  // tslint:disable-next-line:no-any
   createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
     options = extend({metadata: {}}, options);
 
     if (options.contentType) {
       options.metadata.contentType = options.contentType;
-
       if (options.metadata.contentType === 'auto') {
         options.metadata.contentType = mime.getType(this.name);
       }
@@ -1506,7 +1504,7 @@ class File extends ServiceObject {
     const fileWriteStream = duplexify();
 
     const stream = streamEvents(pumpify([
-                     gzip ? zlib.createGzip() : new PassThrough(),
+                     gzip ? zlib.createGzip() : (new PassThrough()),
                      validateStream,
                      fileWriteStream,
                    ])) as Duplex;

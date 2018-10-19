@@ -2245,9 +2245,9 @@ describe('Bucket', () => {
       const options = {destination: fakeFile};
       fakeFile.createWriteStream = () => {
         const ws = new stream.PassThrough();
-        setImmediate(() => {
-          ws.destroy(error);
-        });
+        // setImmediate(() => {
+        ws.destroy(error);
+        //});
         return ws;
       };
       bucket.upload(filepath, options, (err: Error) => {
