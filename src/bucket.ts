@@ -80,6 +80,21 @@ interface WatchAllOptions {
 }
 
 /**
+ * @typedef {object} AddLifecycleRuleOptions Configuration options for Bucket#addLifecycleRule().
+ * @property {string} [append=true] The new rules will be appended to any
+ *     pre-existing rules.
+ */
+export interface AddLifecycleRuleOptions {
+  append?: boolean;
+}
+
+export type LifecycleRule = {
+  action: {type: string, storageClass?: string}|string;
+  condition: {[key: string]: boolean | Date | number | string};
+  storageClass?: string;
+};
+
+/**
  * Query object for listing files.
  *
  * @typedef {object} GetFilesOptions
@@ -987,6 +1002,134 @@ class Bucket extends ServiceObject {
     this.iam = new Iam(this);
 
     this.getFilesStream = paginator.streamify('getFiles');
+  }
+
+  /**
+   * Set the object lifecycle rules for objects in this bucket.
+   *
+   * By default, the object lifecycle
+   *
+   * @see [Object Lifecycle Management]{@link https://cloud.google.com/storage/docs/lifecycle}
+   * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
+   *
+   * @param {LifecycleRule} rule The new lifecycle rule to be added to objects
+   *     in this bucket.
+   * @param {AddLifecycleRuleOptions} [options] Configuration object.
+   * @param {SetBucketMetadataCallback} [callback] Callback function.
+   * @returns {Promise<SetBucketMetadataResponse>}
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const bucket = storage.bucket('albums');
+   *
+   * //-
+   * // Automatically have an object deleted from this bucket once it is 3 years
+   * // of age.
+   * //-
+   * bucket.addLifecycleRule({
+   *   action: 'delete',
+   *   condition: {
+   *     age: 365 * 3 // Specified in days.
+   *   }
+   * }, function(err, apiResponse) {});
+   *
+   * //-
+   * // For objects created before 2018, "downgrade" the storage class.
+   * //-
+   * bucket.addLifecycleRule({
+   *   action: 'setStorageClass',
+   *   condition: {
+   *     createdBefore: new Date('2018')
+   *   },
+   *   storageClass: 'COLDLINE'
+   * }, function(err, apiResponse) {});
+   *
+   * //-
+   * // Delete objects created before 2016 which have the Coldline storage
+   * // class.
+   * //-
+   * bucket.addLifecycleRule({
+   *   action: 'delete',
+   *   condition: {
+   *     matchesStorageClass: 'COLDLINE',
+   *     createdBefore: new Date('2016')
+   *   }
+   * }, function(err, apiResponse) {});
+   */
+  addLifecycleRule(rule: LifecycleRule): Promise<SetBucketMetadataResponse>;
+  addLifecycleRule(
+      rule: LifecycleRule,
+      optionsOrCallback?: AddLifecycleRuleOptions|
+      SetBucketMetadataCallback): Promise<SetBucketMetadataResponse>|void;
+  addLifecycleRule(
+      rule: LifecycleRule, options: AddLifecycleRuleOptions,
+      callback: SetBucketMetadataCallback): void;
+  addLifecycleRule(
+      rule: LifecycleRule,
+      optionsOrCallback?: AddLifecycleRuleOptions|SetBucketMetadataCallback,
+      callback?): Promise<SetBucketMetadataResponse>|void {
+    const options =
+        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+
+    const newLifecycleRules = arrify(rule).map(rule => {
+      if (typeof rule.action === 'object') {
+        // This is a raw-formatted rule object, the way the API expects.
+        // Just pass it through as-is.
+        return rule;
+      }
+
+      if (rule.action === 'delete') {
+        // @TODO: Remove if the API becomes less picky.
+        rule.action = 'Delete';
+      }
+
+      rule.action = {
+        type: rule.action,
+      };
+
+      if (rule.storageClass) {
+        rule.action.storageClass = rule.storageClass;
+        delete rule.storageClass;
+      }
+
+      for (const condition in rule.condition) {
+        if (rule.condition[condition] instanceof Date) {
+          rule.condition[condition] = (rule.condition[condition] as Date)
+                                          .toISOString()
+                                          .replace(/T.+$/, '');
+        }
+      }
+
+      return rule;
+    });
+
+    if (options.append === false) {
+      this.setMetadata({lifecycle: {rule: newLifecycleRules}}, callback);
+      return;
+    }
+
+    // The default behavior appends the previously-defined lifecycle rules with
+    // the new ones just passed in by the user.
+    this.getMetadata((err, metadata) => {
+      if (err) {
+        callback(err);
+        return;
+      }
+
+      const currentLifecycleRules =
+          arrify(metadata.lifecycle && metadata.lifecycle.rule);
+
+      this.setMetadata(
+          {
+            lifecycle: {
+              rule: currentLifecycleRules.concat(newLifecycleRules),
+            },
+          },
+          callback);
+    });
   }
 
   /**
@@ -2597,6 +2740,13 @@ class Bucket extends ServiceObject {
    * //-
    * bucket.setMetadata({
    *   defaultEventBasedHold: true
+   * }, function(err, apiResponse) {});
+   *
+   * //-
+   * // Remove object lifecycle rules.
+   * //-
+   * bucket.setMetadata({
+   *   lifecycle: null
    * }, function(err, apiResponse) {});
    *
    * //-
