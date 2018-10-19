@@ -21,7 +21,6 @@ import * as async from 'async';
 import {ExistsCallback, ServiceObject, Metadata, util, DeleteCallback, InstanceResponseCallback, GetConfig, GetMetadataCallback, DecorateRequestOptions, BodyResponseCallback, ApiError} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
-import * as extend from 'extend';
 import * as fs from 'fs';
 import * as mime from 'mime-types';
 import * as path from 'path';
@@ -2385,7 +2384,7 @@ class Bucket extends ServiceObject {
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
-    const req = extend(true, {public: true}, options);
+    const req = Object.assign({public: true}, options);
 
     const addAclPermissions = (done: AddAclCallback) => {
       // Allow reading bucket contents while preserving original permissions.

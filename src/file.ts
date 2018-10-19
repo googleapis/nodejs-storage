@@ -22,7 +22,6 @@ import compressible = require('compressible');
 import concat = require('concat-stream');
 import * as crypto from 'crypto';
 import * as duplexify from 'duplexify';
-import * as extend from 'extend';
 import * as fs from 'fs';
 const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
@@ -872,7 +871,7 @@ class File extends ServiceObject {
       options = optionsOrCallback;
     }
 
-    options = extend(true, {}, options);
+    options = Object.assign({}, options);
     callback = callback || util.noop;
 
     let destBucket: Bucket|File;
@@ -2913,8 +2912,7 @@ class File extends ServiceObject {
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
     const options =
         typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
-    const req = extend<SetStorageClassRequest, SetStorageClassOptions>(
-        true, {}, options);
+    const req: SetStorageClassRequest = Object.assign({}, options);
 
     // In case we get input like `storageClass`, convert to `storage_class`.
     req.storageClass = storageClass.replace(/-/g, '_')
