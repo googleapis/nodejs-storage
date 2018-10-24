@@ -1070,7 +1070,8 @@ class Bucket extends ServiceObject {
   addLifecycleRule(
       rule: LifecycleRule,
       options?: AddLifecycleRuleOptions|SetBucketMetadataCallback,
-      callback?: SetBucketMetadataCallback): Promise<SetBucketMetadataResponse>|void {
+      callback?: SetBucketMetadataCallback): Promise<SetBucketMetadataResponse>|
+      void {
     if (typeof options === 'function') {
       callback = options;
       options = {};
