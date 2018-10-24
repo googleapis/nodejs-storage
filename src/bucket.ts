@@ -1062,19 +1062,22 @@ class Bucket extends ServiceObject {
   addLifecycleRule(rule: LifecycleRule): Promise<SetBucketMetadataResponse>;
   addLifecycleRule(
       rule: LifecycleRule,
-      optionsOrCallback?: AddLifecycleRuleOptions|
+      options?: AddLifecycleRuleOptions|
       SetBucketMetadataCallback): Promise<SetBucketMetadataResponse>|void;
   addLifecycleRule(
       rule: LifecycleRule, options: AddLifecycleRuleOptions,
       callback: SetBucketMetadataCallback): void;
   addLifecycleRule(
       rule: LifecycleRule,
-      optionsOrCallback?: AddLifecycleRuleOptions|SetBucketMetadataCallback,
-      callback?): Promise<SetBucketMetadataResponse>|void {
-    const options =
-        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
-    callback =
-        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      options?: AddLifecycleRuleOptions|SetBucketMetadataCallback,
+      callback?: SetBucketMetadataCallback): Promise<SetBucketMetadataResponse>|void {
+    if (typeof options === 'function') {
+      callback = options;
+      options = {};
+    }
+
+    options = options || {};
+    callback = callback || util.noop;
 
     const newLifecycleRules = arrify(rule).map(rule => {
       if (typeof rule.action === 'object') {
@@ -1117,7 +1120,7 @@ class Bucket extends ServiceObject {
     // the new ones just passed in by the user.
     this.getMetadata((err, metadata) => {
       if (err) {
-        callback(err);
+        callback!(err);
         return;
       }
 
@@ -1130,7 +1133,7 @@ class Bucket extends ServiceObject {
               rule: currentLifecycleRules.concat(newLifecycleRules),
             },
           },
-          callback);
+          callback!);
     });
   }
 
