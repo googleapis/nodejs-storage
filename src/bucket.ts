@@ -1041,10 +1041,10 @@ class Bucket extends ServiceObject {
    * //-
    * bucket.addLifecycleRule({
    *   action: 'setStorageClass',
+   *   storageClass: 'COLDLINE',
    *   condition: {
    *     createdBefore: new Date('2018')
-   *   },
-   *   storageClass: 'COLDLINE'
+   *   }
    * }, function(err, apiResponse) {});
    *
    * //-
