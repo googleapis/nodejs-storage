@@ -2219,9 +2219,9 @@ describe('storage', () => {
       const copiedFile = otherBucket.file(file.name);
       async.series(
           [
-            // tslint:disable-next-line no-any
             cb =>
-                bucket.upload(FILES.logo.path, {destination: file}, cb as any),
+                // tslint:disable-next-line no-any
+            bucket.upload(FILES.logo.path, {destination: file}, cb as any),
             cb => {
               otherBucket.create(
                   {
