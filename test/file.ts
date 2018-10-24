@@ -451,8 +451,8 @@ describe('File', () => {
        });
 
     describe('destination types', () => {
-      // tslint:disable-next-line no-any
       function assertPathEquals(
+          // tslint:disable-next-line no-any
           file: any, expectedPath: string, callback: Function) {
         file.request = (reqOpts: DecorateRequestOptions) => {
           assert.strictEqual(reqOpts.uri, expectedPath);
@@ -2777,8 +2777,8 @@ describe('File', () => {
 
   describe('move', () => {
     describe('copy to destination', () => {
-      // tslint:disable-next-line no-any
       function assertCopyFile(
+          // tslint:disable-next-line no-any
           file: any, expectedDestination: string, callback: Function) {
         file.copy = (destination: string) => {
           assert.strictEqual(destination, expectedDestination);

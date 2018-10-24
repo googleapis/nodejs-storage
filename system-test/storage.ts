@@ -2219,20 +2219,18 @@ describe('storage', () => {
       const copiedFile = otherBucket.file(file.name);
       async.series(
           [
-            callback =>
-                // tslint:disable-next-line no-any
-            bucket.upload(
-                FILES.logo.path, {destination: file}, callback as any),
-            callback => {
+            // tslint:disable-next-line no-any
+            cb =>
+                bucket.upload(FILES.logo.path, {destination: file}, cb as any),
+            cb => {
               otherBucket.create(
                   {
                     location: 'ASIA-EAST1',
                     dra: true,
                   },
-                  callback as InstanceResponseCallback);
+                  cb as InstanceResponseCallback);
             },
-            callback =>
-                file.copy(copiedFile, callback as InstanceResponseCallback)
+            cb => file.copy(copiedFile, cb as InstanceResponseCallback)
           ],
           err => {
             assert.ifError(err);
