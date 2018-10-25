@@ -1005,18 +1005,23 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * Set the object lifecycle rules for objects in this bucket.
+   * Add an object lifecycle management rule to the bucket.
    *
-   * By default, the object lifecycle rule you provide to this method will be
-   * appended to any existing ones. To replace all existing rules, supply the
-   * `options` argument, setting `append` to `false`.
+   * By default, an Object Lifecycle Management rule provided to this method
+   * will be included to the existing policy. To replace all existing rules,
+   * supply the `options` argument, setting `append` to `false`.
    *
    * @see [Object Lifecycle Management]{@link https://cloud.google.com/storage/docs/lifecycle}
    * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
    *
    * @param {LifecycleRule} rule The new lifecycle rule to be added to objects
    *     in this bucket.
+   * @param {string} [rule.storageClass] When using the `setStorageClass`
+   *     action, provide this option to dictate which storage class the object
+   *     should update to.
    * @param {AddLifecycleRuleOptions} [options] Configuration object.
+   * @param {boolean} [options.append=true] Append the new rule to the existing
+   *     policy.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
    * @returns {Promise<SetBucketMetadataResponse>}
    *
@@ -1034,7 +1039,41 @@ class Bucket extends ServiceObject {
    *   condition: {
    *     age: 365 * 3 // Specified in days.
    *   }
-   * }, function(err, apiResponse) {});
+   * }, function(err, apiResponse) {
+   *   if (err) {
+   *     // Error handling omitted.
+   *   }
+   *
+   *   const lifecycleRules = bucket.metadata.lifecycle.rule;
+   *
+   *   // Iterate over the Object Lifecycle Management rules on this bucket.
+   *   lifecycleRules.forEach(lifecycleRule => {});
+   * });
+   *
+   * //-
+   * // By default, the rule you provide will be added to the existing policy.
+   * // Optionally, you can disable this behavior to replace all of the
+   * // pre-existing rules.
+   * //-
+   * const options = {
+   *   append: false
+   * };
+   *
+   * bucket.addLifecycleRule({
+   *   action: 'delete',
+   *   condition: {
+   *     age: 365 * 3 // Specified in days.
+   *   }
+   * }, options, function(err, apiResponse) {
+   *   if (err) {
+   *     // Error handling omitted.
+   *   }
+   *
+   *   // All rules have been replaced with the new "delete" rule.
+   *
+   *   // Iterate over the Object Lifecycle Management rules on this bucket.
+   *   lifecycleRules.forEach(lifecycleRule => {});
+   * });
    *
    * //-
    * // For objects created before 2018, "downgrade" the storage class.
@@ -1054,7 +1093,9 @@ class Bucket extends ServiceObject {
    * bucket.addLifecycleRule({
    *   action: 'delete',
    *   condition: {
-   *     matchesStorageClass: 'COLDLINE',
+   *     matchesStorageClass: [
+   *       'COLDLINE'
+   *     ],
    *     createdBefore: new Date('2016')
    *   }
    * }, function(err, apiResponse) {});
