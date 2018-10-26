@@ -1128,29 +1128,34 @@ class Bucket extends ServiceObject {
         return rule;
       }
 
-      if (rule.action === 'delete') {
-        // @TODO: Remove if the API becomes less picky.
-        rule.action = 'Delete';
-      }
+      const apiFormattedRule = {} as LifecycleRule;
 
-      rule.action = {
+      apiFormattedRule.condition = {};
+      apiFormattedRule.action = {
         type: rule.action,
       };
 
+      // @TODO: Remove if the API becomes less picky.
+      if (rule.action === 'delete') {
+        apiFormattedRule.action.type = 'Delete';
+      }
+
       if (rule.storageClass) {
-        rule.action.storageClass = rule.storageClass;
-        delete rule.storageClass;
+        apiFormattedRule.action.storageClass = rule.storageClass;
       }
 
       for (const condition in rule.condition) {
         if (rule.condition[condition] instanceof Date) {
-          rule.condition[condition] = (rule.condition[condition] as Date)
-                                          .toISOString()
-                                          .replace(/T.+$/, '');
+          apiFormattedRule.condition[condition] =
+              (rule.condition[condition] as Date)
+                  .toISOString()
+                  .replace(/T.+$/, '');
+        } else {
+          apiFormattedRule.condition[condition] = rule.condition[condition];
         }
       }
 
-      return rule;
+      return apiFormattedRule;
     });
 
     if (options.append === false) {
