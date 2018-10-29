@@ -1100,22 +1100,24 @@ class Bucket extends ServiceObject {
    *   }
    * }, function(err, apiResponse) {});
    */
-  addLifecycleRule(rule: LifecycleRule): Promise<SetBucketMetadataResponse>;
-  addLifecycleRule(
-      rule: LifecycleRule,
-      options?: AddLifecycleRuleOptions|
-      SetBucketMetadataCallback): Promise<SetBucketMetadataResponse>|void;
+  addLifecycleRule(rule: LifecycleRule, options?: AddLifecycleRuleOptions):
+      Promise<SetBucketMetadataResponse>;
   addLifecycleRule(
       rule: LifecycleRule, options: AddLifecycleRuleOptions,
       callback: SetBucketMetadataCallback): void;
+  addLifecycleRule(rule: LifecycleRule, callback: SetBucketMetadataCallback):
+      void;
   addLifecycleRule(
       rule: LifecycleRule,
-      options?: AddLifecycleRuleOptions|SetBucketMetadataCallback,
+      optionsOrCallback?: AddLifecycleRuleOptions|SetBucketMetadataCallback,
       callback?: SetBucketMetadataCallback): Promise<SetBucketMetadataResponse>|
       void {
-    if (typeof options === 'function') {
-      callback = options;
-      options = {};
+    let options;
+
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     options = options || {};
