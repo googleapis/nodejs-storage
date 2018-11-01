@@ -2311,7 +2311,7 @@ class File extends ServiceObject {
    * region_tag:storage_generate_signed_url
    * Another example:
    */
-  getSignedUrl(cfg: GetSignedUrlConfig): Promise<GetSignedPolicyResponse>;
+  getSignedUrl(cfg: GetSignedUrlConfig): Promise<GetSignedUrlResponse>;
   getSignedUrl(cfg: GetSignedUrlConfig, callback: GetSignedUrlCallback): void;
   getSignedUrl(cfg: GetSignedUrlConfig, callback?: GetSignedUrlCallback):
       void|Promise<GetSignedPolicyResponse> {
