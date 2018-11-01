@@ -4,6 +4,18 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+## v2.3.0
+
+### New Features
+- Introduce Object Lifecycle Management ([#471](https://github.com/googleapis/nodejs-storage/pull/471))
+
+### Dependencies
+- chore(deps): update dependency eslint-plugin-node to v8 ([#490](https://github.com/googleapis/nodejs-storage/pull/490))
+
+### Internal / Testing Changes
+- chore: update issue templates ([#488](https://github.com/googleapis/nodejs-storage/pull/488))
+- fix(types): Fixes getSignedUrl Return Type ([#496](https://github.com/googleapis/nodejs-storage/pull/496))
+
 ## v2.2.0
 
 ### Bug Fixes
