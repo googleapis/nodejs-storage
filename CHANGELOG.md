@@ -6,6 +6,9 @@
 
 ## v2.3.0
 
+### Implementation Changes
+- fix(types): Fixes getSignedUrl Return Type ([#496](https://github.com/googleapis/nodejs-storage/pull/496))
+-
 ### New Features
 - Introduce Object Lifecycle Management ([#471](https://github.com/googleapis/nodejs-storage/pull/471))
 
@@ -14,7 +17,6 @@
 
 ### Internal / Testing Changes
 - chore: update issue templates ([#488](https://github.com/googleapis/nodejs-storage/pull/488))
-- fix(types): Fixes getSignedUrl Return Type ([#496](https://github.com/googleapis/nodejs-storage/pull/496))
 
 ## v2.2.0
 
