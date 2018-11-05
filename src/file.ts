@@ -2785,8 +2785,9 @@ class File extends ServiceObject {
    * object, however the other properties outside of this object must adhere
    * to the [official API documentation](https://goo.gl/BOnnCK).
    *
-   * NOTE: multiple calls to setMetadata in parallel might result in unpredictable
-   * results. See [issue]{@link https://github.com/googleapis/nodejs-storage/issues/274}.
+   * NOTE: multiple calls to setMetadata in parallel might result in
+   * unpredictable results. See [issue]{@link
+   * https://github.com/googleapis/nodejs-storage/issues/274}.
    *
    * See the examples below for more information.
    *
