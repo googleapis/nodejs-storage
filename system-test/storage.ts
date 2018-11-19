@@ -2137,7 +2137,7 @@ describe('storage', () => {
               },
 
               function createBucket(next) {
-                bucket.create({ location: BUCKET_LOCATION }, err => {
+                bucket.create({location: BUCKET_LOCATION}, err => {
                   next(err);
                 });
               },
