@@ -91,7 +91,7 @@ storage
   });
 ```
 
-*Note: to get the json key file (https://medium.com/google-cloud/upload-images-to-google-cloud-storage-with-react-native-and-expressjs-61b8874abc49)
+* Note: [To get the json key file](https://medium.com/google-cloud/upload-images-to-google-cloud-storage-with-react-native-and-expressjs-61b8874abc49)
 In your Google Cloud console (console.cloud.google.com), go to the API Manager.
 
 1. Ensure the Google Cloud Storage JSON API is enabled.
@@ -232,7 +232,7 @@ const fileUrl = req.file.cloudStoragePublicUrl;
 const uploads = req.uploads;
 ```
 
-6. Set all users permission to view files (Please see https://stackoverflow.com/questions/40232188/allow-public-read-access-on-a-gcs-bucket).
+6. [Set all users permission to view files](https://stackoverflow.com/questions/40232188/allow-public-read-access-on-a-gcs-bucket).
 
 ## Samples
 
