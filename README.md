@@ -74,6 +74,7 @@ const projectId = 'YOUR_PROJECT_ID';
 // Creates a client
 const storage = new Storage({
   projectId: projectId,
+  keyFilename: 'keyFilename.json'
 });
 
 // The name for the new bucket
@@ -89,6 +90,15 @@ storage
     console.error('ERROR:', err);
   });
 ```
+
+*Note: to get the json key file (https://medium.com/google-cloud/upload-images-to-google-cloud-storage-with-react-native-and-expressjs-61b8874abc49)
+In your Google Cloud console (console.cloud.google.com), go to the API Manager.
+
+1. Ensure the Google Cloud Storage JSON API is enabled.
+2. Go to Credentials > Create Credentials > Service Account Key
+3. Under service account, select create a new service account
+4. Once that is created, then you can generate the JSON keyfile.
+5. Save that keyfile to your Express project directory.
 
 ## Samples
 
