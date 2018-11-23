@@ -100,6 +100,140 @@ In your Google Cloud console (console.cloud.google.com), go to the API Manager.
 4. Once that is created, then you can generate the JSON keyfile.
 5. Save that keyfile to your Express project directory.
 
+### Example how to upload a file with multer
+1. npm install --save multer
+2. Add gcsFileUpload.js in helpers folder as the middleware.
+3. Add keyFilename.json in helpers foler as well.
+```
+const { Storage } = require('@google-cloud/storage');
+
+const gcs = new Storage({
+  projectId: projectId,
+  keyFilename: './helpers/keyFilename.json'
+});
+
+const bucketName = 'my-new-bucket';
+const bucket = gcs.bucket(bucketName);
+
+function getPublicUrl(filename) {
+  return 'https://storage.googleapis.com/' + bucketName + '/' + filename;
+}
+
+let ImgUpload = {};
+
+// Upload a file
+ImgUpload.uploadToGcs = (req, res, next) => {
+  if (!req.file) return next();
+
+  // Can optionally add a path to the gcsname below by concatenating it before the filename
+  // https://cloud.google.com/nodejs/getting-started/using-cloud-storage
+  const gcsname = new Date().toISOString() + '-' + req.file.originalname;
+  const file = bucket.file(gcsname);
+
+  const stream = file.createWriteStream({
+    metadata: {
+      contentType: req.file.mimetype
+    }
+  });
+
+  stream.on('error', (err) => {
+    req.file.cloudStorageError = err;
+    next(err);
+  });
+
+  stream.on('finish', () => {
+    req.file.cloudStorageObject = gcsname;
+    req.file.cloudStoragePublicUrl = getPublicUrl(gcsname);
+    next();
+  });
+
+  stream.end(req.file.buffer);
+}
+
+// Upload multiple files
+ImgUpload.uploadManyToGcs = (req, res, next) => {
+  if (!req.files) return next();
+
+  // Can optionally add a path to the gcsname below by concatenating it before the filename
+  // https://cloud.google.com/nodejs/getting-started/using-cloud-storage
+  req.uploads = []; // Used to store uploads
+  let count = 1; // Keeps track of numbers of files
+
+  req.files.forEach(upload => {
+    const gcsname = Date.now() + '-' + upload.originalname;
+    const file = bucket.file(gcsname);
+
+    const stream = file.createWriteStream({
+      metadata: {
+        contentType: upload.mimetype
+      }
+    });
+
+    stream.on('error', (err) => {
+      req.files.cloudStorageError = err;
+      next(err);
+    });
+
+    stream.on('finish', () => {
+      req.uploads.push({
+        cloudStorageObject: gcsname,
+        cloudStoragePublicUrl: getPublicUrl(gcsname)
+      });
+
+      // Wait until the last file uploaded
+      if (count === req.files.length) next();
+      count++;
+    });
+
+    // Send files to google cloud
+    stream.end(upload.buffer);
+    
+  });
+
+}
+
+module.exports = ImgUpload;
+```
+
+4. In app.js file, add - 
+* For uploading a file:
+```
+// Files upload
+const Multer = require('multer');
+const imgUpload = require('./helpers/gcsFileUpload');
+const multer = Multer({
+    storage: Multer.MemoryStorage,
+    fileSize: 5 * 1024 * 1024
+  });
+app.use(multer.single("image"));
+app.use(imgUpload.uploadManyToGcs);
+```
+* For uploading multiple files with maximum of 12 files:
+```
+// Files upload
+const Multer = require('multer');
+const imgUpload = require('./helpers/gcsFileUpload');
+const multer = Multer({
+    storage: Multer.MemoryStorage,
+    fileSize: 5 * 1024 * 1024
+  });
+app.use(multer.array("images[]", 12));
+app.use(imgUpload.uploadManyToGcs);
+```
+
+5. After creating a post request, in a post function, this will be returned from the middleware:
+* For a single file, req.file will be returned:
+```
+const objectName = req.file.cloudStorageObject;
+const fileUrl = req.file.cloudStoragePublicUrl;
+```
+* For multiple files, req.uploads array will be returned:
+```
+const uploads = req.uploads;
+```
+
+6. Set all users permission to view files (Please see https://stackoverflow.com/questions/40232188/allow-public-read-access-on-a-gcs-bucket).
+
 ## Samples
 
 Samples are in the [`samples/`](https://github.com/googleapis/nodejs-storage/tree/master/samples) directory. The samples' `README.md`
