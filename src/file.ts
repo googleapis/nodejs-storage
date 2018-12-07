@@ -2715,6 +2715,7 @@ class File extends ServiceObject {
     this.copy(newFile, callback!);
   }
 
+  // tslint:disable:no-any
   save(data: any, options?: SaveOptions): Promise<void>;
   save(data: any, callback: SaveCallback): void;
   save(data: any, options: SaveOptions, callback: SaveCallback): void;
@@ -2758,7 +2759,6 @@ class File extends ServiceObject {
    * //-
    * file.save(contents).then(function() {});
    */
-  // tslint:disable:no-any
   save(
       data: any, optionsOrCallback?: SaveOptions|SaveCallback,
       callback?: SaveCallback): Promise<void>|void {
