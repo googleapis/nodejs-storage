@@ -55,7 +55,7 @@ export interface GetSignedUrlConfig {
   cname?: string;
   contentMd5?: string;
   contentType?: string;
-  expires: string | number | Date;
+  expires: string|number|Date;
   extensionHeaders?: http.OutgoingHttpHeaders;
   promptSaveAs?: string;
   responseDisposition?: string;
@@ -112,7 +112,7 @@ export interface GetSignedPolicyCallback {
 
 export interface GetSignedPolicyOptions {
   equals?: string[]|string[][];
-  expires: string | number | Date;
+  expires: string|number|Date;
   startsWith?: string[]|string[][];
   acl?: string;
   successRedirect?: string;
