@@ -26,7 +26,7 @@
 async function createBucket(bucketName) {
   // [START storage_create_bucket]
   // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
+  const { Storage } = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -49,7 +49,7 @@ async function createBucket(bucketName) {
 async function listBuckets() {
   // [START storage_list_buckets]
   // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
+  const { Storage } = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -66,7 +66,7 @@ async function listBuckets() {
 async function deleteBucket(bucketName) {
   // [START storage_delete_bucket]
   // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
+  const { Storage } = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -86,7 +86,7 @@ async function deleteBucket(bucketName) {
 async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
   // [START storage_set_bucket_default_kms_key]
   // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
+  const { Storage } = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -110,6 +110,87 @@ async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
   // [END storage_set_bucket_default_kms_key]
 }
 
+async function enableBucketPolicyOnly(bucketName) {
+  // [START storage_enable_bucket_policy_only]
+  // Imports the Google Cloud client library
+  const { Storage } = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Enables Bucket Policy Only for the bucket
+  await storage.bucket(bucketName).setMetadata({
+    iamConfiguration: {
+      bucketPolicyOnly: {
+        enabled: true,
+      }
+    },
+  });
+
+  console.log(`Bucket Policy Only was enabled for ${bucketName}.`);
+  // [END storage_enable_bucket_policy_only]
+}
+
+async function disableBucketPolicyOnly(bucketName) {
+  // [START storage_disable_bucket_policy_only]
+  // Imports the Google Cloud client library
+  const { Storage } = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Disables Bucket Policy Only for the bucket
+  await storage.bucket(bucketName).setMetadata({
+    iamConfiguration: {
+      bucketPolicyOnly: {
+        enabled: false,
+      }
+    }
+  });
+
+  console.log(`Bucket Policy Only was disabled for ${bucketName}.`);
+  // [END storage_disable_bucket_policy_only]
+}
+
+async function getBucketPolicyOnly(bucketName) {
+  // [START storage_get_bucket_policy_only]
+  // Imports the Google Cloud client library
+  const { Storage } = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Gets Bucket Metadata and checks if BucketPolicyOnly is enabled.
+  const [metadata] = await storage
+    .bucket(bucketName)
+    .getMetadata();
+
+  if (metadata[0].hasOwnProperty('iamConfiguration')) {
+    bucketPolicyOnly = metadata[0].iamConfiguration.bucketPolicyOnly;
+    console.log(`Bucket Policy Only is enabled for ${bucketName}.`);
+    console.log(`Bucket will be locked on ${bucketPolicyOnly.lockedTime}.`);
+  } else {
+    console.log(`Bucket Policy Only is not enabled for ${bucketName}.`);
+  }
+  // [END storage_get_bucket_policy_only]
+}
+
+
 require(`yargs`)
   .demand(1)
   .command(`create <bucket>`, `Creates a new bucket.`, {}, opts =>
@@ -121,6 +202,21 @@ require(`yargs`)
     `Sets the default KMS key for the specified bucket.`,
     {},
     opts => enableDefaultKMSKey(opts.bucket, opts.defaultKmsKeyName)
+  )
+  .command(`enable-bucket-policy-only <bucket>`,
+    `Enables Bucket Policy Only for the specified bucket.`,
+    {},
+    opts => enableBucketPolicyOnly(opts.bucket)
+  )
+  .command(`disable-bucket-policy-only <bucket>`,
+    `Disables Bucket Policy Only for the specified bucket.`,
+    {},
+    opts => disableBucketPolicyOnly(opts.bucket)
+  )
+  .command(`get-bucket-policy-only <bucket>`,
+    `Get Bucket Policy Only metadata for the specified bucket.`,
+    {},
+    opts => getBucketPolicyOnly(opts.bucket)
   )
   .command(`delete <bucket>`, `Deletes a bucket.`, {}, opts =>
     deleteBucket(opts.bucket)
