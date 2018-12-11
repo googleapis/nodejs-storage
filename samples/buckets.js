@@ -230,6 +230,18 @@ require(`yargs`)
     `node $0 enable-default-kms-key my-bucket my-key`,
     `Sets the default KMS key for my-bucket.`
   )
+  .example(
+    `node $0 enable-bucket-policy-only my-bucket`,
+    `Enables Bucket Policy Only for my-bucket.`
+  )
+  .example(
+    `node $0 disable-bucket-policy-only my-bucket`,
+    `Disables Bucket Policy Only for my-bucket.`
+  )
+  .example(
+    `node $0 get-bucket-policy-only my-bucket`,
+    `Get Bucket Policy Only metadata for my-bucket.`
+  )
   .example(`node $0 delete my-bucket`, `Deletes a bucket named "my-bucket".`)
   .wrap(120)
   .recommendCommands()
