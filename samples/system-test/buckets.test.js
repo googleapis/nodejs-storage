@@ -16,7 +16,7 @@
 'use strict';
 
 const path = require(`path`);
-const { Storage } = require(`@google-cloud/storage`);
+const {Storage} = require(`@google-cloud/storage`);
 const assert = require('assert');
 const tools = require(`@google-cloud/nodejs-repo-tools`);
 const uuid = require(`uuid`);
@@ -32,7 +32,7 @@ before(tools.checkCredentials);
 after(async () => {
   try {
     await bucket.delete();
-  } catch (err) { } // ignore error
+  } catch (err) {} // ignore error
 });
 
 beforeEach(tools.stubConsole);
@@ -89,7 +89,8 @@ it(`should set a bucket's default KMS key`, async () => {
 it(`should enable a bucket's Bucket Policy Only`, async () => {
   // Remove the following setMetadata request after prod fix is released.
   await bucket.setMetadata(
-    { defaultObjectAcl: null }, { predefinedDefaultObjectAcl: "private" }
+    {defaultObjectAcl: null},
+    {predefinedDefaultObjectAcl: 'private'}
   );
 
   const results = await tools.runAsyncWithIO(
@@ -122,12 +123,9 @@ it(`should get a bucket's Bucket Policy Only metadata`, async () => {
     true
   );
   const [metadata] = await bucket.getMetadata();
+  assert.strictEqual(metadata.iamConfiguration.bucketPolicyOnly.enabled, true);
   assert.strictEqual(
-    metadata.iamConfiguration.bucketPolicyOnly.enabled,
-    true
-  );
-  assert.strictEqual(
-    metadata.iamConfiguration.bucketPolicyOnly.lockedTime != null,
+    metadata.iamConfiguration.bucketPolicyOnly.lockedTime !== null,
     true
   );
 });
@@ -149,8 +147,6 @@ it(`should disable a bucket's Bucket Policy Only`, async () => {
     false
   );
 });
-
-
 
 it(`should delete a bucket`, async () => {
   const results = await tools.runAsyncWithIO(
