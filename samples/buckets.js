@@ -180,8 +180,8 @@ async function getBucketPolicyOnly(bucketName) {
     .bucket(bucketName)
     .getMetadata();
 
-  if (metadata[0].hasOwnProperty('iamConfiguration')) {
-    bucketPolicyOnly = metadata[0].iamConfiguration.bucketPolicyOnly;
+  if (metadata.hasOwnProperty('iamConfiguration')) {
+    const bucketPolicyOnly = metadata.iamConfiguration.bucketPolicyOnly;
     console.log(`Bucket Policy Only is enabled for ${bucketName}.`);
     console.log(`Bucket will be locked on ${bucketPolicyOnly.lockedTime}.`);
   } else {

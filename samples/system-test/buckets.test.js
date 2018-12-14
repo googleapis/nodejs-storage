@@ -68,7 +68,7 @@ it(`should list buckets`, async () => {
     .start();
 });
 
-it.skip(`should set a bucket's default KMS key`, async () => {
+it(`should set a bucket's default KMS key`, async () => {
   const results = await tools.runAsyncWithIO(
     `${cmd} enable-default-kms-key ${bucketName} ${defaultKmsKeyName}`,
     cwd
@@ -86,13 +86,12 @@ it.skip(`should set a bucket's default KMS key`, async () => {
   );
 });
 
-// TODO:(frankyn@) Blocked by:
-// `message: 'Cannot disable object policies because default object acls are not empty'`
-
 it(`should enable a bucket's Bucket Policy Only`, async () => {
-  await bucket.setMetadata({
-    defaultObjectAcl: null,
-  });
+  // Remove the following setMetadata request after prod fix is released.
+  await bucket.setMetadata(
+    { defaultObjectAcl: null }, { predefinedDefaultObjectAcl: "private" }
+  );
+
   const results = await tools.runAsyncWithIO(
     `${cmd} enable-bucket-policy-only ${bucketName}`,
     cwd
@@ -115,19 +114,20 @@ it(`should get a bucket's Bucket Policy Only metadata`, async () => {
     `${cmd} get-bucket-policy-only ${bucketName}`,
     cwd
   );
+
   assert.strictEqual(
     (results.stdout + results.stderr).includes(
       `Bucket Policy Only is enabled for ${bucketName}.`
     ),
     true
   );
-  const metadata = await bucket.getMetadata();
+  const [metadata] = await bucket.getMetadata();
   assert.strictEqual(
-    metadata[0].iamConfiguration.bucketPolicyOnly.enabled,
+    metadata.iamConfiguration.bucketPolicyOnly.enabled,
     true
   );
   assert.strictEqual(
-    metadata[0].iamConfiguration.bucketPolicyOnly.lockTime != null,
+    metadata.iamConfiguration.bucketPolicyOnly.lockedTime != null,
     true
   );
 });
@@ -146,7 +146,7 @@ it(`should disable a bucket's Bucket Policy Only`, async () => {
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
     metadata[0].iamConfiguration.bucketPolicyOnly.enabled,
-    true
+    false
   );
 });
 
