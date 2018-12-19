@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {ApiError, BodyResponseCallback, DecorateRequestOptions, DeleteCallback, ExistsCallback, GetConfig, GetMetadataCallback, InstanceResponseCallback, Metadata, ServiceObject, util} from '@google-cloud/common';
+import {ApiError, BodyResponseCallback, DecorateRequestOptions, DeleteCallback, ExistsCallback, GetConfig, Metadata, ResponseBody, ServiceObject, util} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as arrify from 'arrify';
@@ -1990,7 +1990,7 @@ class Bucket extends ServiceObject {
           callback!(null, bucket, apiResponse);
         };
 
-    this.getMetadata(options, (err: ApiError|null, metadata: Metadata|null) => {
+    this.getMetadata(options, (err, metadata) => {
       if (err) {
         if (err.code === 404 && autoCreate) {
           const args = [] as object[];
@@ -2001,7 +2001,8 @@ class Bucket extends ServiceObject {
 
           args.push(onCreate);
 
-          this.create.apply(this, args);
+          // tslint:disable-next-line no-any
+          this.create.apply(this, args as any);
           return;
         }
 
@@ -2492,7 +2493,8 @@ class Bucket extends ServiceObject {
           options, done as MakeAllFilesPublicPrivateCallback);
     };
 
-    async.series([setPredefinedAcl, makeFilesPrivate], callback!);
+    // tslint:disable-next-line no-any
+    async.series([setPredefinedAcl, makeFilesPrivate] as any, callback as any);
   }
 
   makePublic(options?: MakeBucketPublicOptions):
@@ -2670,7 +2672,8 @@ class Bucket extends ServiceObject {
         callback!);
   }
 
-  request(reqOpts: DecorateRequestOptions): Promise<request.Response>;
+  request(reqOpts: DecorateRequestOptions):
+      Promise<[ResponseBody, request.Response]>;
   request(reqOpts: DecorateRequestOptions, callback: BodyResponseCallback):
       void;
   /**
@@ -2682,7 +2685,7 @@ class Bucket extends ServiceObject {
    * @param {function} callback - The callback function.
    */
   request(reqOpts: DecorateRequestOptions, callback?: BodyResponseCallback):
-      void|Promise<request.Response> {
+      void|Promise<[ResponseBody, request.Response]> {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
       reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
     }

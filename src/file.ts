@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {BodyResponseCallback, DecorateRequestOptions, GetConfig, Metadata, ServiceObject, util} from '@google-cloud/common';
+import {BodyResponseCallback, DecorateRequestOptions, GetConfig, Interceptor, Metadata, ServiceObject, util} from '@google-cloud/common';
 import {promisifyAll} from '@google-cloud/promisify';
 
 import compressible = require('compressible');
@@ -638,7 +638,7 @@ class RequestError extends Error {
  *
  * const file = myBucket.file('my-file');
  */
-class File extends ServiceObject {
+class File extends ServiceObject<File> {
   /**
    * Cloud Storage uses access control lists (ACLs) to manage object and
    * bucket access. ACLs are the mechanism you use to share objects with other
@@ -691,12 +691,12 @@ class File extends ServiceObject {
   name: string;
   generation?: number;
   requestQueryObject?: {generation: number};
+  parent!: Bucket;
 
   private encryptionKey?: string|Buffer;
   private encryptionKeyBase64?: string;
   private encryptionKeyHash?: string;
-  private encryptionKeyInterceptor?:
-      {request: (reqOpts: r.OptionsWithUri) => r.OptionsWithUri;};
+  private encryptionKeyInterceptor?: Interceptor;
 
   constructor(bucket: Bucket, name: string, options: FileOptions = {}) {
     name = name.replace(/^\/+/, '');
@@ -1663,7 +1663,7 @@ class File extends ServiceObject {
     options = Object.assign({}, this.requestQueryObject, options);
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
-    (this.parent as ServiceObject).delete.call(this, options, callback);
+    this.parent.delete.call(this, options, callback!);
   }
 
   download(options?: DownloadOptions): Promise<DownloadResponse>;
@@ -1785,7 +1785,7 @@ class File extends ServiceObject {
         typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
-    (this.parent as ServiceObject).exists.call(this, options, callback);
+    this.parent.exists.call(this, options, callback!);
   }
 
   /**
@@ -1849,7 +1849,7 @@ class File extends ServiceObject {
         reqOpts.headers['x-goog-encryption-key'] = this.encryptionKeyBase64;
         reqOpts.headers['x-goog-encryption-key-sha256'] =
             this.encryptionKeyHash;
-        return reqOpts;
+        return reqOpts as DecorateRequestOptions;
       },
     };
 
@@ -1895,7 +1895,8 @@ class File extends ServiceObject {
         typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
-    (this.parent as ServiceObject).get.call(this, options, callback);
+    // tslint:disable-next-line no-any
+    this.parent.get.call(this, options, callback as any);
   }
 
   getExpirationDate(): Promise<GetExpirationDateResponse>;
@@ -2003,7 +2004,7 @@ class File extends ServiceObject {
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
     options = Object.assign({}, this.requestQueryObject, options);
-    (this.parent as ServiceObject).getMetadata.call(this, options, callback);
+    this.parent.getMetadata.call(this, options, callback!);
   }
 
   getSignedPolicy(options: GetSignedPolicyOptions):
@@ -2655,7 +2656,7 @@ class File extends ServiceObject {
     });
   }
 
-  request(reqOpts: DecorateRequestOptions): Promise<r.Response>;
+  request(reqOpts: DecorateRequestOptions): Promise<[ResponseBody, r.Response]>;
   request(reqOpts: DecorateRequestOptions, callback: BodyResponseCallback):
       void;
   /**
@@ -2667,7 +2668,7 @@ class File extends ServiceObject {
    * @param {function} callback - The callback function.
    */
   request(reqOpts: DecorateRequestOptions, callback?: BodyResponseCallback):
-      void|Promise<r.Response> {
+      void|Promise<[ResponseBody, r.Response]> {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
       reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
     }
