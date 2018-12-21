@@ -34,6 +34,7 @@ import {File, FileOptions, CreateResumableUploadOptions, CreateWriteStreamOption
 import {Iam} from './iam';
 import {Notification} from './notification';
 import {Storage} from './storage';
+import {CreateCallback} from '@google-cloud/common/build/src/service-object';
 
 interface SourceObject {
   name: string;
@@ -2001,7 +2002,7 @@ class Bucket extends ServiceObject {
 
           args.push(onCreate);
 
-          this.create.apply(this, args);
+          this.create.apply(this, args as [CreateCallback<Bucket>]);
           return;
         }
 
@@ -2492,7 +2493,8 @@ class Bucket extends ServiceObject {
           options, done as MakeAllFilesPublicPrivateCallback);
     };
 
-    async.series([setPredefinedAcl, makeFilesPrivate], callback!);
+    // tslint:disable-next-line no-any
+    (async as any).series([setPredefinedAcl, makeFilesPrivate], callback!);
   }
 
   makePublic(options?: MakeBucketPublicOptions):

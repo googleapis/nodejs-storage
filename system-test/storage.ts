@@ -722,18 +722,14 @@ describe('storage', () => {
   describe('getting buckets', () => {
     const bucketsToCreate = [generateName(), generateName()];
 
-    before(done => {
-      async.map(bucketsToCreate, storage.createBucket.bind(storage), done);
+    before(async () => {
+      await Promise.all(
+          bucketsToCreate.map(name => storage.createBucket(name)));
     });
 
-    after(done => {
-      async.series(
-          bucketsToCreate.map(bucket => {
-            return (done: DeleteBucketCallback) => {
-              storage.bucket(bucket).delete(done);
-            };
-          }),
-          done);
+    after(async () => {
+      await Promise.all(
+          bucketsToCreate.map(name => storage.bucket(name).delete()));
     });
 
     it('should get buckets', done => {
@@ -2365,35 +2361,19 @@ describe('storage', () => {
       });
     });
 
-    it('should copy a large file', done => {
+    it('should copy a large file', async () => {
       const otherBucket = storage.bucket(generateName());
       const file = bucket.file('Big');
       const copiedFile = otherBucket.file(file.name);
-      async.series(
-          [
-            cb =>
-                // tslint:disable-next-line no-any
-            bucket.upload(FILES.logo.path, {destination: file}, cb as any),
-            cb => {
-              otherBucket.create(
-                  {
-                    location: 'ASIA-EAST1',
-                    dra: true,
-                  },
-                  cb);
-            },
-            cb => file.copy(copiedFile, cb as CopyCallback)
-          ],
-          err => {
-            assert.ifError(err);
-            async.series(
-                [
-                  copiedFile.delete.bind(copiedFile),
-                  otherBucket.delete.bind(otherBucket),
-                  file.delete.bind(file),
-                ],
-                done);
-          });
+      await bucket.upload(FILES.logo.path, {destination: file});
+      await otherBucket.create({
+        location: 'ASIA-EAST1',
+        dra: true,
+      });
+      await file.copy(copiedFile);
+      await copiedFile.delete();
+      await otherBucket.delete();
+      await file.delete();
     });
 
     it('should copy to another bucket given a gs:// URL', done => {
@@ -2533,30 +2513,14 @@ describe('storage', () => {
       bucket.file(`${DIRECTORY_NAME}/inner/CloudLogo6`),
     ];
 
-    before(done => {
-      bucket.deleteFiles(err => {
-        if (err) {
-          done(err);
-          return;
-        }
-
-        const originalFile = NEW_FILES[0];
-        const cloneFiles = NEW_FILES.slice(1);
-
-        bucket.upload(
-            FILES.logo.path, {
-              destination: originalFile,
-            },
-            err => {
-              if (err) {
-                done(err);
-                return;
-              }
-
-              async.each(
-                  cloneFiles, originalFile.copy.bind(originalFile), done);
-            });
+    before(async () => {
+      await bucket.deleteFiles();
+      const originalFile = NEW_FILES[0];
+      const cloneFiles = NEW_FILES.slice(1);
+      await bucket.upload(FILES.logo.path, {
+        destination: originalFile,
       });
+      await Promise.all(cloneFiles.map(file => file.copy(originalFile)));
     });
 
     after(done => {

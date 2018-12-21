@@ -40,7 +40,7 @@ import * as r from 'request';  // Only for type declarations.
 import {teenyRequest} from 'teeny-request';
 
 import {Storage} from './storage';
-import {Bucket} from './bucket';
+import {Bucket, GetBucketCallback} from './bucket';
 import {Acl} from './acl';
 import {ResponseBody} from '@google-cloud/common/build/src/util';
 import {normalize} from './util';
@@ -638,7 +638,7 @@ class RequestError extends Error {
  *
  * const file = myBucket.file('my-file');
  */
-class File extends ServiceObject {
+class File extends ServiceObject<File> {
   /**
    * Cloud Storage uses access control lists (ACLs) to manage object and
    * bucket access. ACLs are the mechanism you use to share objects with other
@@ -691,6 +691,7 @@ class File extends ServiceObject {
   name: string;
   generation?: number;
   requestQueryObject?: {generation: number};
+  parent!: Bucket;
 
   private encryptionKey?: string|Buffer;
   private encryptionKeyBase64?: string;
@@ -1663,7 +1664,7 @@ class File extends ServiceObject {
     options = Object.assign({}, this.requestQueryObject, options);
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
-    (this.parent as ServiceObject).delete.call(this, options, callback);
+    this.parent.delete.call(this, options, callback!);
   }
 
   download(options?: DownloadOptions): Promise<DownloadResponse>;
@@ -1785,7 +1786,7 @@ class File extends ServiceObject {
         typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
-    (this.parent as ServiceObject).exists.call(this, options, callback);
+    this.parent.exists.call(this, options, callback!);
   }
 
   /**
@@ -1895,7 +1896,7 @@ class File extends ServiceObject {
         typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
-    (this.parent as ServiceObject).get.call(this, options, callback);
+    this.parent.get.call(this, options, callback as {} as GetBucketCallback);
   }
 
   getExpirationDate(): Promise<GetExpirationDateResponse>;
@@ -2003,7 +2004,7 @@ class File extends ServiceObject {
     callback =
         typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
     options = Object.assign({}, this.requestQueryObject, options);
-    (this.parent as ServiceObject).getMetadata.call(this, options, callback);
+    this.parent.getMetadata.call(this, options, callback!);
   }
 
   getSignedPolicy(options: GetSignedPolicyOptions):

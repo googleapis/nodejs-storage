@@ -120,7 +120,7 @@ const fakePaginator = {
 class FakeAcl {
   calledWith_: IArguments;
   constructor() {
-    this.calledWith_ = [].slice.call(arguments);
+    this.calledWith_ = arguments;
   }
 }
 

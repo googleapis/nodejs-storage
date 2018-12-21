@@ -15,6 +15,7 @@
  */
 
 import {ApiError, GetMetadataCallback, ServiceObject, util} from '@google-cloud/common';
+import {CreateCallback} from '@google-cloud/common/build/src/service-object';
 import {ResponseBody} from '@google-cloud/common/build/src/util';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as request from 'request';  // Only for type declarations.
@@ -323,7 +324,7 @@ class Notification extends ServiceObject {
 
           args.push(onCreate);
 
-          this.create.apply(this, args);
+          this.create.apply(this, args as [CreateCallback<Notification>]);
           return;
         }
 
