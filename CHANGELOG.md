@@ -4,6 +4,52 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+## v2.3.4
+
+12-19-2018 14:21 PST
+
+### Implementation Changes
+- fix(types): file.getMetadata should resolves to Metadata, not File ([#560](https://github.com/googleapis/nodejs-storage/pull/560))
+
+### Internal / Testing Changes
+- refactor: modernize the sample tests ([#558](https://github.com/googleapis/nodejs-storage/pull/558))
+- chore(build): inject yoshi automation key ([#555](https://github.com/googleapis/nodejs-storage/pull/555))
+- chore: update nyc and eslint configs ([#554](https://github.com/googleapis/nodejs-storage/pull/554))
+- chore: fix publish.sh permission +x ([#552](https://github.com/googleapis/nodejs-storage/pull/552))
+- fix(build): fix Kokoro release script ([#551](https://github.com/googleapis/nodejs-storage/pull/551))
+- build: add Kokoro configs for autorelease ([#550](https://github.com/googleapis/nodejs-storage/pull/550))
+
+## v2.3.3
+
+12-06-2018 17:09 PST
+
+### Dependencies
+- chore(deps): update dependency @types/configstore to v4 ([#537](https://github.com/googleapis/nodejs-storage/pull/537))
+- chore(deps): update dependency @google-cloud/pubsub to ^0.22.0 ([#535](https://github.com/googleapis/nodejs-storage/pull/535))
+
+### Documentation
+- fix(docs): place doc comment above the last overload ([#544](https://github.com/googleapis/nodejs-storage/pull/544))
+- docs: update readme badges ([#536](https://github.com/googleapis/nodejs-storage/pull/536))
+
+### Internal / Testing Changes
+- chore: always nyc report before calling codecov ([#543](https://github.com/googleapis/nodejs-storage/pull/543))
+- chore: nyc ignore build/test by default ([#542](https://github.com/googleapis/nodejs-storage/pull/542))
+- chore: update license file ([#539](https://github.com/googleapis/nodejs-storage/pull/539))
+
+## v2.3.2
+
+This patch release fixed an issue affecting reading from a file on GCS ([#528](https://github.com/googleapis/nodejs-storage/issues/528)).
+
+### Dependencies
+- fix(dep): upgrade teeny-request to v3.11.3 ([#529](https://github.com/googleapis/nodejs-storage/pull/529))
+- fix(deps): update dependency @google-cloud/common to ^0.27.0 ([#525](https://github.com/googleapis/nodejs-storage/pull/525))
+
+### Internal / Testing Changes
+- refactor: convert sample tests from ava to mocha ([#523](https://github.com/googleapis/nodejs-storage/pull/523))
+- docs(samples): updated samples code to use async await ([#521](https://github.com/googleapis/nodejs-storage/pull/521))
+- chore: add synth.metadata
+- fix(ts): Update bucket options types ([#518](https://github.com/googleapis/nodejs-storage/pull/518))
+
 ## v2.3.1
 
 11-14-2018 22:15 PST
