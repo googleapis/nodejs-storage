@@ -182,7 +182,7 @@ describe('storage/iam', () => {
       const apiResponse = {};
 
       iam.request_ = (reqOpts: DecorateRequestOptions, callback: Function) => {
-        callback(error, apiResponse);
+        callback(error, null, apiResponse);
       };
 
       iam.testPermissions(
@@ -197,11 +197,13 @@ describe('storage/iam', () => {
     it('should pass back a hash of permissions the user has', done => {
       const permissions = ['storage.bucket.list', 'storage.bucket.consume'];
       const apiResponse = {
-        permissions: ['storage.bucket.consume'],
+        body: {
+          permissions: ['storage.bucket.consume'],
+        }
       };
 
       iam.request_ = (reqOpts: DecorateRequestOptions, callback: Function) => {
-        callback(null, apiResponse);
+        callback(null, apiResponse.body, apiResponse);
       };
 
       iam.testPermissions(
@@ -212,7 +214,6 @@ describe('storage/iam', () => {
               'storage.bucket.consume': true,
             });
             assert.strictEqual(apiResp, apiResponse);
-
             done();
           });
     });
@@ -222,7 +223,6 @@ describe('storage/iam', () => {
       const options = {
         userProject: 'grape-spaceship-123',
       };
-
       const expectedQuery = Object.assign(
           {
             permissions,

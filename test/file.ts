@@ -302,7 +302,7 @@ describe('File', () => {
       const newFile = new File(BUCKET, 'new-file');
 
       file.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
-        callback(error, apiResponse);
+        callback(error, null, apiResponse);
       };
 
       file.copy(newFile, (err: Error, file: {}, apiResponse_: {}) => {
@@ -582,12 +582,12 @@ describe('File', () => {
     });
 
     describe('returned File object', () => {
+      const resp = {body: {success: true}};
+
       beforeEach(() => {
-        const resp = {success: true};
-        file.request =
-            (reqOpts: DecorateRequestOptions, callback: Function) => {
-              callback(null, resp);
-            };
+        file.request = (reqOpts: {}, callback: Function) => {
+          callback(null, resp.body, resp);
+        };
       });
 
       it('should re-use file object if one is provided', done => {
@@ -621,7 +621,7 @@ describe('File', () => {
       it('should pass apiResponse into callback', done => {
         file.copy(BUCKET, (err: Error, copiedFile: File, apiResponse: {}) => {
           assert.ifError(err);
-          assert.deepStrictEqual({success: true}, apiResponse);
+          assert.deepStrictEqual(resp, apiResponse);
           done();
         });
       });

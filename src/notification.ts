@@ -385,13 +385,13 @@ class Notification extends ServiceObject {
           uri: '',
           qs: options,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, resp);
+            callback!(err, null, res);
             return;
           }
-          this.metadata = resp;
-          callback!(null, this.metadata, resp);
+          this.metadata = body;
+          callback!(null, this.metadata, res);
         });
   }
 }

@@ -143,10 +143,9 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with apiResponse', done => {
-      const resp = {success: true};
-
+      const resp = {body: {success: true}};
       acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
-        callback(null, resp);
+        callback(null, resp.body, resp);
       };
 
       acl.add(
@@ -211,12 +210,10 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with apiResponse', done => {
-      const resp = {success: true};
-
+      const resp = {body: {success: true}};
       acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
-        callback(null, resp);
+        callback(null, resp.body, resp);
       };
-
       acl.delete({entity: ENTITY}, (err: Error, apiResponse: r.Response) => {
         assert.deepStrictEqual(resp, apiResponse);
         done();
@@ -348,12 +345,10 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with apiResponse', done => {
-      const resp = {success: true};
-
+      const resp = {body: {success: true}};
       acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
-        callback(null, resp);
+        callback(null, resp.body, resp);
       };
-
       acl.get((err: Error, acls: Array<{}>, apiResponse: r.Response) => {
         assert.deepStrictEqual(resp, apiResponse);
         done();
@@ -367,10 +362,8 @@ describe('storage/acl', () => {
         assert.strictEqual(reqOpts.method, 'PUT');
         assert.strictEqual(reqOpts.uri, '/' + encodeURIComponent(ENTITY));
         assert.deepStrictEqual(reqOpts.json, {role: ROLE});
-
         done();
       };
-
       acl.update({entity: ENTITY, role: ROLE}, assert.ifError);
     });
 
@@ -380,12 +373,10 @@ describe('storage/acl', () => {
         role: ROLE,
         generation: 8,
       };
-
       acl.request = (reqOpts: r.Options) => {
         assert.strictEqual(reqOpts.qs.generation, options.generation);
         done();
       };
-
       acl.update(options, assert.ifError);
     });
 
@@ -435,12 +426,10 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with apiResponse', done => {
-      const resp = {success: true};
-
+      const resp = {body: {success: true}};
       acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
-        callback(null, resp);
+        callback(null, resp.body, resp);
       };
-
       const config = {entity: ENTITY, role: ROLE};
       acl.update(
           config, (err: Error, acls: Array<{}>, apiResponse: r.Response) => {
@@ -476,17 +465,12 @@ describe('storage/acl', () => {
   describe('request', () => {
     it('should make the correct request', done => {
       const uri = '/uri';
-
-      const reqOpts = {
-        uri,
-      };
-
+      const reqOpts = {uri};
       acl.request_ = (reqOpts_: DecorateRequestOptions, callback: Function) => {
         assert.strictEqual(reqOpts_, reqOpts);
         assert.strictEqual(reqOpts_.uri, PATH_PREFIX + uri);
         callback();  // done()
       };
-
       acl.request(reqOpts, done);
     });
   });

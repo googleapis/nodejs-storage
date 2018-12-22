@@ -59,7 +59,7 @@ interface BucketOptions {
  * @param {File[]} files Array of {@link File} instances.
  */
 export interface GetFilesCallback {
-  (err: Error|null, files?: File[], nextQuery?: {},
+  (err: Error|null, files?: File[]|null, nextQuery?: {}|null,
    apiResponse?: request.Response): void;
 }
 
@@ -539,7 +539,7 @@ export interface SetBucketMetadataOptions {
  * @typedef {array} SetBucketMetadataResponse
  * @property {object} apiResponse The full API response.
  */
-export type SetBucketMetadataResponse = [request.Response];
+export type SetBucketMetadataResponse = [Metadata];
 
 /**
  * @callback SetBucketMetadataCallback
@@ -1295,13 +1295,12 @@ class Bucket extends ServiceObject {
           },
           qs: options,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, resp);
+            callback!(err, null, res!);
             return;
           }
-
-          callback!(null, destinationFile, resp);
+          callback!(null, destinationFile, res!);
         });
   }
 
@@ -1383,18 +1382,15 @@ class Bucket extends ServiceObject {
               config),
           qs: options,
         },
-        (err, apiResponse) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, apiResponse);
+            callback!(err, null, res!);
             return;
           }
-
-          const resourceId = apiResponse.resourceId;
+          const resourceId = body.resourceId;
           const channel = this.storage.channel(id, resourceId);
-
-          channel.metadata = apiResponse;
-
-          callback!(null, channel, apiResponse);
+          channel.metadata = body;
+          callback!(null, channel, res!);
         });
   }
 
@@ -1506,17 +1502,14 @@ class Bucket extends ServiceObject {
           json: snakeize(body),
           qs: query,
         },
-        (err, apiResponse) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, apiResponse);
+            callback!(err, null, res!);
             return;
           }
-
-          const notification = this.notification(apiResponse.id);
-
-          notification.metadata = apiResponse;
-
-          callback!(null, notification, apiResponse);
+          const notification = this.notification(body.id);
+          notification.metadata = body;
+          callback!(null, notification, res!);
         });
   }
 
@@ -2107,38 +2100,32 @@ class Bucket extends ServiceObject {
           uri: '/o',
           qs: query,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            // tslint:disable-next-line:no-any
-            (callback as any)(err, null, null, resp);
+            callback!(err, null, null, res);
             return;
           }
 
-          const files = arrify(resp.items).map(file => {
+          const files = arrify(body.items).map(file => {
             const options = {} as FileOptions;
-
             if (query.versions) {
               options.generation = file.generation;
             }
-
             if (file.kmsKeyName) {
               options.kmsKeyName = file.kmsKeyName;
             }
-
             const fileInstance = this.file(file.name, options);
             fileInstance.metadata = file;
-
             return fileInstance;
           });
 
           let nextQuery: object|null = null;
-          if (resp.nextPageToken) {
+          if (body.nextPageToken) {
             nextQuery = Object.assign({}, query, {
-              pageToken: resp.nextPageToken,
+              pageToken: body.nextPageToken,
             });
           }
-          // tslint:disable-next-line:no-any
-          (callback as any)(null, files, nextQuery, resp);
+          callback!(null, files, nextQuery, res);
         });
   }
 
@@ -2249,15 +2236,13 @@ class Bucket extends ServiceObject {
           uri: '',
           qs: options,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, resp);
+            callback!(err, null, res!);
             return;
           }
-
-          this.metadata = resp;
-
-          callback!(null, this.metadata, resp);
+          this.metadata = body;
+          callback!(null, this.metadata, res!);
         });
   }
 
@@ -2315,19 +2300,17 @@ class Bucket extends ServiceObject {
           uri: '/notificationConfigs',
           qs: options,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, resp);
+            callback!(err, null, res!);
             return;
           }
-
-          const notifications = arrify(resp.items).map(notification => {
+          const notifications = arrify(body.items).map(notification => {
             const notificationInstance = this.notification(notification.id);
             notificationInstance.metadata = notification;
             return notificationInstance;
           });
-
-          callback!(null, notifications, resp);
+          callback!(null, notifications, res!);
         });
   }
 
@@ -2834,15 +2817,13 @@ class Bucket extends ServiceObject {
           json: metadata,
           qs: options,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, resp);
+            callback!(err, null);
             return;
           }
-
-          this.metadata = resp;
-
-          callback!(null, resp);
+          this.metadata = body;
+          callback!(null, body);
         });
   }
 

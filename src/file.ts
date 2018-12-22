@@ -950,30 +950,25 @@ class File extends ServiceObject {
           json: options,
           headers,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, resp);
+            callback!(err, null, res);
             return;
           }
-
-          if (resp.rewriteToken) {
+          if (body.rewriteToken) {
             const options = {
-              token: resp.rewriteToken,
+              token: body.rewriteToken,
             } as CopyOptions;
-
             if (query.userProject) {
               options.userProject = query.userProject;
             }
-
             if (query.destinationKmsKeyName) {
               options.destinationKmsKeyName = query.destinationKmsKeyName;
             }
-
             this.copy(newFile, options, callback!);
             return;
           }
-
-          callback!(null, newFile, resp);
+          callback!(null, newFile, res);
         });
   }
 
@@ -2511,8 +2506,8 @@ class File extends ServiceObject {
           entity: 'allUsers',
           role: 'READER',
         },
-        (err, acl, resp) => {
-          callback!(err, resp);
+        (err, acl, res) => {
+          callback!(err, res);
         });
   }
 

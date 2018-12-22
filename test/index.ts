@@ -259,10 +259,10 @@ describe('Storage', () => {
     });
 
     it('should execute callback with apiResponse', done => {
-      const resp = {success: true};
+      const resp = {body: {success: true}};
       storage.request =
           (reqOpts: DecorateRequestOptions, callback: Function) => {
-            callback(null, resp);
+            callback(null, resp.body, resp);
           };
       storage.createBucket(
           BUCKET_NAME,
@@ -366,10 +366,9 @@ describe('Storage', () => {
       const error = new Error('Error.');
       const apiResponse = {};
 
-      storage.request =
-          (reqOpts: DecorateRequestOptions, callback: Function) => {
-            callback(error, apiResponse);
-          };
+      storage.request = (reqOpts: {}, callback: Function) => {
+        callback(error, null, apiResponse);
+      };
 
       storage.getBuckets(
           {},
@@ -420,10 +419,10 @@ describe('Storage', () => {
     });
 
     it('should return apiResponse', done => {
-      const resp = {items: [{id: 'fake-bucket-name'}]};
+      const resp = {body: {items: [{id: 'fake-bucket-name'}]}};
       storage.request =
           (reqOpts: DecorateRequestOptions, callback: Function) => {
-            callback(null, resp);
+            callback(null, resp.body, resp);
           };
       storage.getBuckets(
           (err: Error, buckets: Bucket[], nextQuery: {}, apiResponse: {}) => {
@@ -460,18 +459,15 @@ describe('Storage', () => {
         assert.deepStrictEqual(reqOpts.qs, {});
         done();
       };
-
       storage.getServiceAccount(assert.ifError);
     });
 
     it('should allow user options', done => {
       const options = {};
-
       storage.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.qs, options);
         done();
       };
-
       storage.getServiceAccount(options, assert.ifError);
     });
 
@@ -480,10 +476,9 @@ describe('Storage', () => {
       const API_RESPONSE = {};
 
       beforeEach(() => {
-        storage.request =
-            (reqOpts: DecorateRequestOptions, callback: Function) => {
-              callback(ERROR, API_RESPONSE);
-            };
+        storage.request = (reqOpts: {}, callback: Function) => {
+          callback(ERROR, null, API_RESPONSE);
+        };
       });
 
       it('should return the error and apiResponse', done => {
@@ -491,38 +486,38 @@ describe('Storage', () => {
             (err: Error, serviceAccount: {}, apiResponse: r.Response) => {
               assert.strictEqual(err, ERROR);
               assert.strictEqual(serviceAccount, null);
-              assert.strictEqual(apiResponse, API_RESPONSE);
+              assert.deepStrictEqual(apiResponse, API_RESPONSE);
               done();
             });
       });
     });
 
     describe('success', () => {
-      const API_RESPONSE = {};
+      const API_RESPONSE = {body: {gimme: 'ribbiwoffles'}};
 
       beforeEach(() => {
-        storage.request =
-            (reqOpts: DecorateRequestOptions, callback: Function) => {
-              callback(null, API_RESPONSE);
-            };
+        storage.request = (_: {}, callback: Function) => {
+          callback(null, API_RESPONSE.body, API_RESPONSE);
+        };
       });
 
       it('should convert snake_case response to camelCase', done => {
         const apiResponse = {
-          snake_case: true,
+          body: {
+            snake_case: true,
+          }
         };
 
-        storage.request =
-            (reqOpts: DecorateRequestOptions, callback: Function) => {
-              callback(null, apiResponse);
-            };
+        storage.request = (reqOpts: {}, callback: Function) => {
+          callback(null, apiResponse.body, apiResponse);
+        };
 
         storage.getServiceAccount(
             (err: Error,
              serviceAccount: {[index: string]: string|undefined}) => {
               assert.ifError(err);
               assert.strictEqual(
-                  serviceAccount.snakeCase, apiResponse.snake_case);
+                  serviceAccount.snakeCase, apiResponse.body.snake_case);
               assert.strictEqual(serviceAccount.snake_case, undefined);
               done();
             });
@@ -532,7 +527,7 @@ describe('Storage', () => {
         storage.getServiceAccount(
             (err: Error, serviceAccount: {}, apiResponse: {}) => {
               assert.ifError(err);
-              assert.deepStrictEqual(serviceAccount, {});
+              assert.deepStrictEqual(serviceAccount, API_RESPONSE.body);
               assert.strictEqual(apiResponse, API_RESPONSE);
               done();
             });

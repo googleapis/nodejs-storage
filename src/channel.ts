@@ -110,8 +110,8 @@ class Channel extends ServiceObject {
           uri: '/stop',
           json: this.metadata,
         },
-        (err, apiResponse) => {
-          callback!(err, apiResponse);
+        (err, body, res) => {
+          callback!(err, res);
         });
   }
 }

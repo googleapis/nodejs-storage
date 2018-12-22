@@ -509,16 +509,14 @@ export class Storage extends Service {
           qs: query,
           json: body,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, resp);
+            callback!(err, null, res);
             return;
           }
-
           const bucket = this.bucket(name);
-          bucket.metadata = resp;
-
-          callback!(null, bucket, resp);
+          bucket.metadata = body;
+          callback!(null, bucket, res);
         });
   }
 
@@ -612,23 +610,20 @@ export class Storage extends Service {
           uri: '/b',
           qs: options,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback(err, null, null, resp);
+            callback(err, null, null, res);
             return;
           }
-
-          const buckets = arrify(resp.items).map(bucket => {
+          const buckets = arrify(body.items).map(bucket => {
             const bucketInstance = this.bucket(bucket.id);
             bucketInstance.metadata = bucket;
             return bucketInstance;
           });
-
-          const nextQuery = resp.nextPageToken ?
-              Object.assign({}, options, {pageToken: resp.nextPageToken}) :
+          const nextQuery = body.nextPageToken ?
+              Object.assign({}, options, {pageToken: body.nextPageToken}) :
               null;
-
-          callback(null, buckets, nextQuery, resp);
+          callback(null, buckets, nextQuery, res);
         });
   }
 
@@ -696,23 +691,20 @@ export class Storage extends Service {
           uri: `/projects/${this.projectId}/serviceAccount`,
           qs: options,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback(err, null, resp);
+            callback(err, null, res);
             return;
           }
-
           const camelCaseResponse = {} as {[index: string]: string};
-
-          for (const prop in resp) {
-            if (resp.hasOwnProperty(prop)) {
+          for (const prop in body) {
+            if (body.hasOwnProperty(prop)) {
               const camelCaseProp =
                   prop.replace(/_(\w)/g, (_, match) => match.toUpperCase());
-              camelCaseResponse[camelCaseProp] = resp[prop];
+              camelCaseResponse[camelCaseProp] = body[prop];
             }
           }
-
-          callback(null, camelCaseResponse, resp);
+          callback(null, camelCaseResponse, res);
         });
   }
 }

@@ -104,10 +104,9 @@ describe('Channel', () => {
       const error = {};
       const apiResponse = {};
 
-      channel.request =
-          (reqOpts: DecorateRequestOptions, callback: Function) => {
-            callback(error, apiResponse);
-          };
+      channel.request = (reqOpts: {}, callback: Function) => {
+        callback(error, null, apiResponse);
+      };
 
       channel.stop((err: Error, apiResponse_: {}) => {
         assert.strictEqual(err, error);

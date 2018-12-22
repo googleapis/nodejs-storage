@@ -282,13 +282,11 @@ describe('Notification', () => {
   describe('getMetadata', () => {
     it('should make the correct request', done => {
       const options = {};
-
       notification.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.uri, '');
         assert.strictEqual(reqOpts.qs, options);
         done();
       };
-
       notification.getMetadata(options, assert.ifError);
     });
 
@@ -297,19 +295,15 @@ describe('Notification', () => {
         assert.deepStrictEqual(reqOpts.qs, {});
         done();
       };
-
       notification.getMetadata(assert.ifError);
     });
 
     it('should return any errors to the callback', done => {
       const error = new Error('err');
-      const response = {};
-
-      notification.request =
-          (reqOpts: DecorateRequestOptions, callback: Function) => {
-            callback(error, response);
-          };
-
+      const response = {body: {}};
+      notification.request = (_: {}, callback: Function) => {
+        callback(error, response.body, response);
+      };
       notification.getMetadata((err: Error, metadata: {}, resp: {}) => {
         assert.strictEqual(err, error);
         assert.strictEqual(metadata, null);
@@ -319,17 +313,15 @@ describe('Notification', () => {
     });
 
     it('should set and return the metadata', done => {
-      const response = {};
-
+      const response = {body: {}};
       notification.request =
           (reqOpts: DecorateRequestOptions, callback: Function) => {
-            callback(null, response);
+            callback(null, response.body, response);
           };
-
       notification.getMetadata((err: Error, metadata: {}, resp: {}) => {
         assert.ifError(err);
-        assert.strictEqual(metadata, response);
-        assert.strictEqual(notification.metadata, response);
+        assert.strictEqual(metadata, response.body);
+        assert.strictEqual(notification.metadata, response.body);
         assert.strictEqual(resp, response);
         done();
       });

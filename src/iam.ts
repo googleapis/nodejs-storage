@@ -352,22 +352,19 @@ class Iam {
           qs: req,
           useQuerystring: true,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            cb!(err, null, resp);
+            cb!(err, null, res);
             return;
           }
-
-          const availablePermissions = arrify(resp.permissions);
-
+          const availablePermissions = arrify(body.permissions);
           const permissionsHash = permissionsArray.reduce(
               (acc: {[index: string]: boolean}, permission) => {
                 acc[permission] = availablePermissions.indexOf(permission) > -1;
                 return acc;
               },
               {});
-
-          cb!(null, permissionsHash, resp);
+          cb!(null, permissionsHash, res);
         });
   }
 }

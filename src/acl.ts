@@ -478,13 +478,12 @@ class Acl extends AclRoleAccessorMethods {
             role: options.role.toUpperCase(),
           },
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, resp);
+            callback!(err, null, res);
             return;
           }
-
-          callback!(null, this.makeAclObject_(resp), resp);
+          callback!(null, this.makeAclObject_(body), res);
         });
   }
 
@@ -568,8 +567,8 @@ class Acl extends AclRoleAccessorMethods {
           uri: '/' + encodeURIComponent(options.entity),
           qs: query,
         },
-        (err, resp) => {
-          callback!(err, resp);
+        (err, body, res) => {
+          callback!(err, res);
         });
   }
 
@@ -685,21 +684,19 @@ class Acl extends AclRoleAccessorMethods {
           uri: path,
           qs: query,
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, resp);
+            callback!(err, null, res);
             return;
           }
 
           let results;
-
-          if (resp.items) {
-            results = arrify(resp.items).map(this.makeAclObject_);
+          if (body.items) {
+            results = arrify(body.items).map(this.makeAclObject_);
           } else {
-            results = this.makeAclObject_(resp);
+            results = this.makeAclObject_(body);
           }
-
-          callback!(null, results, resp);
+          callback!(null, results, res);
         });
   }
 
@@ -783,13 +780,12 @@ class Acl extends AclRoleAccessorMethods {
             role: options.role.toUpperCase(),
           },
         },
-        (err, resp) => {
+        (err, body, res) => {
           if (err) {
-            callback!(err, null, resp);
+            callback!(err, null, res);
             return;
           }
-
-          callback!(null, this.makeAclObject_(resp), resp);
+          callback!(null, this.makeAclObject_(body), res);
         });
   }
 
