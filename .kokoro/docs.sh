@@ -30,4 +30,4 @@ BIN=./node_modules/.bin
 npm install broken-link-checker
 npm install http-server
 $BIN/http-server -p 8080 docs/ &
-$BIN/blc http://localhost:8080 -r --exclude http://www.googleapis.com
+$BIN/blc http://localhost:8080 -r --exclude https://www.googleapis.com
