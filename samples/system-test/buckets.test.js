@@ -15,8 +15,8 @@
 
 'use strict';
 
-const { Storage } = require(`@google-cloud/storage`);
-const { assert } = require('chai');
+const {Storage} = require(`@google-cloud/storage`);
+const {assert} = require('chai');
 const execa = require('execa');
 const uuid = require('uuid');
 
@@ -62,10 +62,7 @@ it('should set a buckets default KMS key', async () => {
 });
 
 it(`should enable a bucket's Bucket Policy Only`, async () => {
-  const results = await tools.runAsyncWithIO(
-    `${cmd} enable-bucket-policy-only ${bucketName}`,
-    cwd
-  );
+  const results = await exec(`${cmd} enable-bucket-policy-only ${bucketName}`);
   assert.strictEqual(
     (results.stdout + results.stderr).includes(
       `Bucket Policy Only was enabled for ${bucketName}.`
@@ -80,10 +77,7 @@ it(`should enable a bucket's Bucket Policy Only`, async () => {
 });
 
 it(`should get a bucket's Bucket Policy Only metadata`, async () => {
-  const results = await tools.runAsyncWithIO(
-    `${cmd} get-bucket-policy-only ${bucketName}`,
-    cwd
-  );
+  const results = await exec(`${cmd} get-bucket-policy-only ${bucketName}`);
 
   assert.strictEqual(
     (results.stdout + results.stderr).includes(
@@ -100,10 +94,7 @@ it(`should get a bucket's Bucket Policy Only metadata`, async () => {
 });
 
 it(`should disable a bucket's Bucket Policy Only`, async () => {
-  const results = await tools.runAsyncWithIO(
-    `${cmd} disable-bucket-policy-only ${bucketName}`,
-    cwd
-  );
+  const results = await exec(`${cmd} disable-bucket-policy-only ${bucketName}`);
   assert.strictEqual(
     (results.stdout + results.stderr).includes(
       `Bucket Policy Only was disabled for ${bucketName}.`
