@@ -1,7 +1,7 @@
 {
   "name": "@google-cloud/storage",
   "description": "Cloud Storage Client Library for Node.js",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
@@ -30,21 +30,20 @@
     "storage"
   ],
   "scripts": {
-    "codecov": "nyc report --reporter=json && codecov -f .coverage/*.json",
+    "predocs": "npm run compile",
     "docs": "jsdoc -c .jsdoc.js",
     "generate-scaffolding": "repo-tools generate all && repo-tools generate lib_samples_readme -l samples/ --config ../.cloud-repo-tools.json",
     "system-test": "mocha build/system-test --timeout 600000",
     "presystem-test": "npm run compile",
-    "test-only": "nyc mocha build/test",
-    "test": "npm run test-only",
-    "pretest-only": "npm run compile",
+    "test": "nyc mocha build/test",
+    "pretest": "npm run compile",
     "lint": "eslint samples/ && gts check",
     "samples-test": "npm link && cd samples/ && npm link ../ && npm test && cd ../",
     "all-test": "npm test && npm run system-test && npm run samples-test",
     "check": "gts check",
     "clean": "gts clean",
     "compile": "tsc -p .",
-    "fix": "gts fix && eslint --fix samples/**/*.js",
+    "fix": "gts fix && eslint --fix '**/*.js'",
     "prepare": "npm run compile"
   },
   "dependencies": {
@@ -54,7 +53,7 @@
     "arrify": "^1.0.0",
     "async": "^2.0.1",
     "compressible": "^2.0.12",
-    "concat-stream": "^1.5.0",
+    "concat-stream": "^2.0.0",
     "duplexify": "^3.5.0",
     "extend": "^3.0.0",
     "gcs-resumable-upload": "^0.13.0",
@@ -97,7 +96,7 @@
     "eslint-plugin-node": "^8.0.0",
     "eslint-plugin-prettier": "^3.0.0",
     "gts": "^0.9.0",
-    "ink-docstrap": "https://github.com/docstrap/docstrap/tarball/master",
+    "jsdoc-baseline": "git+https://github.com/hegemonic/jsdoc-baseline.git",
     "intelli-espower-loader": "^1.0.1",
     "jsdoc": "^3.5.4",
     "mocha": "^5.0.0",
