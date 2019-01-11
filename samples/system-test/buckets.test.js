@@ -87,12 +87,6 @@ it(`should set a bucket's default KMS key`, async () => {
 });
 
 it(`should enable a bucket's Bucket Policy Only`, async () => {
-  // Remove the following setMetadata request after prod fix is released.
-  await bucket.setMetadata(
-    {defaultObjectAcl: null},
-    {predefinedDefaultObjectAcl: 'private'}
-  );
-
   const results = await tools.runAsyncWithIO(
     `${cmd} enable-bucket-policy-only ${bucketName}`,
     cwd
@@ -123,7 +117,7 @@ it(`should get a bucket's Bucket Policy Only metadata`, async () => {
     true
   );
   const [metadata] = await bucket.getMetadata();
-  assert.strictEqual(metadata.iamConfiguration.bucketPolicyOnly.enabled, true);
+  assert.ok(metadata.iamConfiguration.bucketPolicyOnly.enabled);
   assert.strictEqual(
     metadata.iamConfiguration.bucketPolicyOnly.lockedTime !== null,
     true
