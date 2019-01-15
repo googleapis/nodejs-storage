@@ -62,13 +62,12 @@ it('should set a buckets default KMS key', async () => {
 });
 
 it(`should enable a bucket's Bucket Policy Only`, async () => {
-  const results = await exec(`${cmd} enable-bucket-policy-only ${bucketName}`);
-  assert.strictEqual(
-    (results.stdout + results.stderr).includes(
-      `Bucket Policy Only was enabled for ${bucketName}.`
-    ),
-    true
+  const output = await exec(`${cmd} enable-bucket-policy-only ${bucketName}`);
+  assert.match(
+    output,
+    new RegExp(`Bucket Policy Only was enabled for ${bucketName}.`)
   );
+
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
     metadata[0].iamConfiguration.bucketPolicyOnly.enabled,
@@ -77,14 +76,13 @@ it(`should enable a bucket's Bucket Policy Only`, async () => {
 });
 
 it(`should get a bucket's Bucket Policy Only metadata`, async () => {
-  const results = await exec(`${cmd} get-bucket-policy-only ${bucketName}`);
+  const output = await exec(`${cmd} get-bucket-policy-only ${bucketName}`);
 
-  assert.strictEqual(
-    (results.stdout + results.stderr).includes(
-      `Bucket Policy Only is enabled for ${bucketName}.`
-    ),
-    true
+  assert.match(
+    output,
+    new RegExp(`Bucket Policy Only is enabled for ${bucketName}.`)
   );
+
   const [metadata] = await bucket.getMetadata();
   assert.ok(metadata.iamConfiguration.bucketPolicyOnly.enabled);
   assert.strictEqual(
@@ -94,13 +92,12 @@ it(`should get a bucket's Bucket Policy Only metadata`, async () => {
 });
 
 it(`should disable a bucket's Bucket Policy Only`, async () => {
-  const results = await exec(`${cmd} disable-bucket-policy-only ${bucketName}`);
-  assert.strictEqual(
-    (results.stdout + results.stderr).includes(
-      `Bucket Policy Only was disabled for ${bucketName}.`
-    ),
-    true
+  const output = await exec(`${cmd} disable-bucket-policy-only ${bucketName}`);
+  assert.match(
+    output,
+    new RegExp(`Bucket Policy Only was disabled for ${bucketName}.`)
   );
+
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
     metadata[0].iamConfiguration.bucketPolicyOnly.enabled,
