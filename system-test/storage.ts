@@ -676,48 +676,94 @@ describe('storage', () => {
   describe('bucket policy only', () => {
     let bucket: Bucket;
 
-    beforeEach(async () => {
-      bucket = storage.bucket(generateName());
-      await bucket.create();
+    const customAcl = {
+      entity: USER_ACCOUNT,
+      role: storage.acl.OWNER_ROLE,
+    };
 
-      // Enable Bucket Policy Only
-      await bucket.setMetadata({
-        iamConfiguration: {
-          bucketPolicyOnly: {
-            enabled: true,
+    const createBucket = () => {
+      bucket = storage.bucket(generateName());
+      return bucket.create();
+    };
+
+    const setBucketPolicyOnly = (bucket: Bucket, enabled: boolean) =>
+        bucket.setMetadata({
+          iamConfiguration: {
+            bucketPolicyOnly: {
+              enabled,
+            },
           },
-        },
-      });
-    });
+        });
 
     describe('files', () => {
-      it('can be written to the bucket by project owner w/o configuration', () => {
-        const file = bucket.file('file');
-        assert.doesNotReject(() => file.save('data'));
-      });
-    })
+      before(createBucket);
+
+      it('can be written to the bucket by project owner w/o configuration',
+         async () => {
+           await setBucketPolicyOnly(bucket, true);
+           const file = bucket.file('file');
+           return assert.doesNotReject(() => file.save('data'));
+         });
+    });
 
     describe('disables file ACL', () => {
       let file: File;
+
+      const validateBucketPolicyOnlyEnabledError = (err: ApiError) => {
+        assert(err.message.match(/Bucket Policy Only is enabled/));
+        assert.strictEqual(err.code, 400);
+        return true;
+      };
+
       before(async () => {
+        await createBucket();
+        await setBucketPolicyOnly(bucket, true);
+
         file = bucket.file('file');
         await file.save('data');
       });
 
       it('should fail to get file ACL', () => {
-        return assert.rejects(() => file.acl.get(), /Bucket Policy Only is enabled/);
+        return assert.rejects(
+            () => file.acl.get(), validateBucketPolicyOnlyEnabledError);
       });
 
       it('should fail to update file ACL', () => {
-        const aclUpdate = {
-          entity: USER_ACCOUNT,
-          role: storage.acl.OWNER_ROLE,
-        };
-        return assert.rejects(() => file.acl.update(aclUpdate), /Bucket Policy Only is enabled/);
+        return assert.rejects(
+            () => file.acl.update(customAcl),
+            validateBucketPolicyOnlyEnabledError);
       });
     });
 
-  })
+    describe('preserves bucket/file ACL over bucket policy only on/off', () => {
+      beforeEach(createBucket);
+
+      it('should preserve default bucket ACL', async () => {
+        await bucket.acl.default.update(customAcl);
+        const [aclBefore] = await bucket.acl.default.get();
+
+        await setBucketPolicyOnly(bucket, true);
+        await setBucketPolicyOnly(bucket, false);
+
+        const [aclAfter] = await bucket.acl.default.get();
+        assert.deepStrictEqual(aclAfter, aclBefore);
+      });
+
+      it('should preserve file ACL', async () => {
+        const file = bucket.file('file');
+        await file.save('data');
+
+        await file.acl.update(customAcl);
+        const [aclBefore] = await file.acl.get();
+
+        await setBucketPolicyOnly(bucket, true);
+        await setBucketPolicyOnly(bucket, false);
+
+        const [aclAfter] = await file.acl.get();
+        assert.deepStrictEqual(aclAfter, aclBefore);
+      });
+    });
+  });
 
   describe('unicode validation', () => {
     let bucket: Bucket;
