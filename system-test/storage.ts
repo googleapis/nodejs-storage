@@ -883,10 +883,10 @@ describe('storage', () => {
 
             next => {
               bucket.getMetadata(
-                  (err: ApiError|null, metadata: MetadataResponse) => {
+                  (err: ApiError|null, metadata: Metadata) => {
                     assert.ifError(err);
                     assert.strictEqual(
-                        (metadata as any).storageClass, 'STANDARD');
+                        metadata.storageClass, 'STANDARD');
                     next();
                   });
             },
@@ -1355,9 +1355,9 @@ describe('storage', () => {
     });
 
     it('should have enabled requesterPays functionality', done => {
-      bucket.getMetadata((err: ApiError|null, metadata: MetadataResponse) => {
+      bucket.getMetadata((err: ApiError|null, metadata: Metadata) => {
         assert.ifError(err);
-        assert.strictEqual((metadata as any).billing.requesterPays, true);
+        assert.strictEqual(metadata.billing.requesterPays, true);
         done();
       });
     });
@@ -1376,13 +1376,13 @@ describe('storage', () => {
 
       function isRequesterPaysEnabled(
           callback: (err: Error|null, isEnabled?: boolean) => void) {
-        bucket.getMetadata((err: ApiError|null, metadata: MetadataResponse) => {
+        bucket.getMetadata((err: ApiError|null, metadata: Metadata) => {
           if (err) {
             callback(err);
             return;
           }
 
-          const billing = (metadata as any).billing || {};
+          const billing = metadata.billing || {};
           callback(null, !!billing && billing.requesterPays === true);
         });
       }
@@ -1557,11 +1557,13 @@ describe('storage', () => {
 
         it('bucket#get',
            doubleTest((options: GetBucketOptions, done: GetBucketCallback) => {
+             // tslint:disable-next-line no-any
              bucketNonWhitelist.get(options, done as any);
            }));
 
         it('bucket#getMetadata',
            doubleTest((options: GetBucketOptions, done: GetBucketCallback) => {
+             // tslint:disable-next-line no-any
              bucketNonWhitelist.get(options, done as any);
            }));
 

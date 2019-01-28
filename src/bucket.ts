@@ -1036,14 +1036,14 @@ class Bucket extends ServiceObject {
 
     // The default behavior appends the previously-defined lifecycle rules with
     // the new ones just passed in by the user.
-    this.getMetadata((err: ApiError|null, metadata: MetadataResponse) => {
+    this.getMetadata((err: ApiError|null, metadata: Metadata) => {
       if (err) {
         callback!(err);
         return;
       }
 
       const currentLifecycleRules = arrify(
-          (metadata as any).lifecycle && (metadata as any).lifecycle.rule);
+          metadata.lifecycle && metadata.lifecycle.rule);
 
       this.setMetadata(
           {
