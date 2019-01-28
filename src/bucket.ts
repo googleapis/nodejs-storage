@@ -1042,8 +1042,8 @@ class Bucket extends ServiceObject {
         return;
       }
 
-      const currentLifecycleRules = arrify(
-          metadata.lifecycle && metadata.lifecycle.rule);
+      const currentLifecycleRules =
+          arrify(metadata.lifecycle && metadata.lifecycle.rule);
 
       this.setMetadata(
           {

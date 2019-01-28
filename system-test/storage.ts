@@ -882,13 +882,11 @@ describe('storage', () => {
             },
 
             next => {
-              bucket.getMetadata(
-                  (err: ApiError|null, metadata: Metadata) => {
-                    assert.ifError(err);
-                    assert.strictEqual(
-                        metadata.storageClass, 'STANDARD');
-                    next();
-                  });
+              bucket.getMetadata((err: ApiError|null, metadata: Metadata) => {
+                assert.ifError(err);
+                assert.strictEqual(metadata.storageClass, 'STANDARD');
+                next();
+              });
             },
 
             next => {
