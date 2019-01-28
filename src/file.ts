@@ -429,7 +429,7 @@ class File extends ServiceObject<File> {
   constructor(bucket: Bucket, name: string, options: FileOptions = {}) {
     name = name.replace(/^\/+/, '');
 
-    let requestQueryObject: {generation?:number, userProject?:string} = {};
+    const requestQueryObject: {generation?:number, userProject?:string} = {};
 
     let generation: number;
     if (options.generation != null) {

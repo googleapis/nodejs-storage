@@ -522,7 +522,7 @@ class Bucket extends ServiceObject {
     // Allow for "gs://"-style input, and strip any trailing slashes.
     name = name.replace(/^gs:\/\//, '').replace(/\/+$/, '');
 
-    let requestQueryObject: {userProject?:string} = {};
+    const requestQueryObject: {userProject?:string} = {};
 
     const userProject = options.userProject;
     if (typeof userProject === 'string') {
