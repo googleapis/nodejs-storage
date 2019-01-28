@@ -580,6 +580,7 @@ class Bucket extends ServiceObject {
        *
        * @see [Buckets: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/delete}
        *
+       * @method Bucket#delete
        * @param {DeleteBucketOptions} [options] Configuration options.
        * @param {DeleteBucketCallback} [callback] Callback function.
        * @returns {Promise<DeleteBucketResponse>}
@@ -623,6 +624,7 @@ class Bucket extends ServiceObject {
       /**
        * Check if the bucket exists.
        *
+       * @method Bucket#exists
        * @param {BucketExistsOptions} [options] Configuration options.
        * @param {BucketExistsCallback} [callback] Callback function.
        * @returns {Promise<BucketExistsResponse>}
@@ -672,6 +674,7 @@ class Bucket extends ServiceObject {
        * is normally required for the `create` method must be contained within
        * this object as well.
        *
+       * @method Bucket#get
        * @param {GetBucketOptions} [options] Configuration options.
        * @param {GetBucketCallback} [callback] Callback function.
        * @returns {Promise<GetBucketResponse>}
@@ -721,6 +724,7 @@ class Bucket extends ServiceObject {
        *
        * @see [Buckets: get API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/get}
        *
+       * @method Bucket#getMetadata
        * @param {GetBucketMetadataOptions} [options] Configuration options.
        * @param {GetBucketMetadataCallback} [callback] Callback function.
        * @returns {Promise<GetBucketMetadataResponse>}

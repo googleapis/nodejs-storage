@@ -463,6 +463,7 @@ class File extends ServiceObject<File> {
        *
        * @see [Objects: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/delete}
        *
+       * @method File#delete
        * @param {object} [options] Configuration options.
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
@@ -505,6 +506,7 @@ class File extends ServiceObject<File> {
       /**
        * Check if the file exists.
        *
+       * @method File#exists
        * @param {options} [options] Configuration options.
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
@@ -546,6 +548,7 @@ class File extends ServiceObject<File> {
       /**
        * Get a file object and its metadata if it exists.
        *
+       * @method File#get
        * @param {options} [options] Configuration options.
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
@@ -592,6 +595,7 @@ class File extends ServiceObject<File> {
        *
        * @see [Objects: get API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/get}
        *
+       * @method File#getMetadata
        * @param {object} [options] Configuration options.
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
@@ -654,6 +658,7 @@ class File extends ServiceObject<File> {
        *
        * @see [Objects: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/patch}
        *
+       * @method File#setMetadata
        * @param {object} [metadata] The metadata you wish to update.
        * @param {SetFileMetadataOptions} [options] Configuration options.
        * @param {SetFileMetadataCallback} [callback] Callback function.
