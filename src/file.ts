@@ -429,7 +429,7 @@ class File extends ServiceObject<File> {
   constructor(bucket: Bucket, name: string, options: FileOptions = {}) {
     name = name.replace(/^\/+/, '');
 
-    const requestQueryObject: {generation?:number, userProject?:string} = {};
+    const requestQueryObject: {generation?: number, userProject?: string} = {};
 
     let generation: number;
     if (options.generation != null) {
@@ -696,10 +696,10 @@ class File extends ServiceObject<File> {
        * }, function(err, apiResponse) {});
        *
        * //-
-       * // Alternatively, you may set a temporary hold. This will follow the same
-       * // behavior as an event-based hold, with the exception that the bucket's
-       * // retention policy will not renew for this file from the time the hold is
-       * // released.
+       * // Alternatively, you may set a temporary hold. This will follow the
+       * // same behavior as an event-based hold, with the exception that the
+       * // bucket's retention policy will not renew for this file from the time
+       * // the hold is released.
        * //-
        * file.setMetadata({
        *   eventBasedHold: true
@@ -1681,7 +1681,7 @@ class File extends ServiceObject<File> {
       }
 
       if (failed) {
-        this.delete((err:ApiError) => {
+        this.delete((err: ApiError) => {
           let code;
           let message;
 
@@ -1921,20 +1921,22 @@ class File extends ServiceObject<File> {
    */
   getExpirationDate(callback?: GetExpirationDateCallback):
       void|Promise<GetExpirationDateResponse> {
-    this.getMetadata((err:ApiError|null, metadata:Metadata, apiResponse:r.Response) => {
-      if (err) {
-        callback!(err, null, apiResponse);
-        return;
-      }
+    this.getMetadata(
+        (err: ApiError|null, metadata: Metadata, apiResponse: r.Response) => {
+          if (err) {
+            callback!(err, null, apiResponse);
+            return;
+          }
 
-      if (!metadata.retentionExpirationTime) {
-        const error = new Error('An expiration time is not available.');
-        callback!(error, null, apiResponse);
-        return;
-      }
+          if (!metadata.retentionExpirationTime) {
+            const error = new Error('An expiration time is not available.');
+            callback!(error, null, apiResponse);
+            return;
+          }
 
-      callback!(null, new Date(metadata.retentionExpirationTime), apiResponse);
-    });
+          callback!
+              (null, new Date(metadata.retentionExpirationTime), apiResponse);
+        });
   }
 
   getSignedPolicy(options: GetSignedPolicyOptions):

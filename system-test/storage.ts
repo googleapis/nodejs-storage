@@ -498,7 +498,7 @@ describe('storage', () => {
             (err, file) => {
               assert.ifError(err);
 
-              file!.getMetadata((err:ApiError|null, metadata:Metadata) => {
+              file!.getMetadata((err: ApiError|null, metadata: Metadata) => {
                 assert.ifError(err);
                 assert.strictEqual(
                     metadata.customerEncryption.encryptionAlgorithm, 'AES256');
@@ -518,7 +518,7 @@ describe('storage', () => {
             (err, file) => {
               assert.ifError(err);
 
-              file!.getMetadata((err:ApiError|null, metadata:Metadata) => {
+              file!.getMetadata((err: ApiError|null, metadata: Metadata) => {
                 assert.ifError(err);
                 assert.strictEqual(
                     metadata.customerEncryption.encryptionAlgorithm, 'AES256');
@@ -865,7 +865,7 @@ describe('storage', () => {
         },
       };
 
-      bucket.setMetadata(metadata, (err:ApiError|null, meta:Metadata) => {
+      bucket.setMetadata(metadata, (err: ApiError|null, meta: Metadata) => {
         assert.ifError(err);
         assert.deepStrictEqual(meta.website, metadata.website);
         done();
@@ -882,11 +882,13 @@ describe('storage', () => {
             },
 
             next => {
-              bucket.getMetadata((err:ApiError|null, metadata:MetadataResponse) => {
-                assert.ifError(err);
-                assert.strictEqual((metadata as any).storageClass, 'STANDARD');
-                next();
-              });
+              bucket.getMetadata(
+                  (err: ApiError|null, metadata: MetadataResponse) => {
+                    assert.ifError(err);
+                    assert.strictEqual(
+                        (metadata as any).storageClass, 'STANDARD');
+                    next();
+                  });
             },
 
             next => {
@@ -896,7 +898,7 @@ describe('storage', () => {
           err => {
             assert.ifError(err);
 
-            bucket.getMetadata((err:ApiError|null, metadata:Metadata) => {
+            bucket.getMetadata((err: ApiError|null, metadata: Metadata) => {
               assert.ifError(err);
               assert.strictEqual(metadata.storageClass, 'MULTI_REGIONAL');
               done();
@@ -1084,7 +1086,7 @@ describe('storage', () => {
           {
             lifecycle: null,
           },
-          (err:ApiError) => {
+          (err: ApiError) => {
             assert.ifError(err);
             assert.strictEqual(bucket.metadata.lifecycle, undefined);
             done();
@@ -1117,7 +1119,7 @@ describe('storage', () => {
                       next();
                     });
               },
-              next => bucket.getMetadata((err:ApiError) => next(err)),
+              next => bucket.getMetadata((err: ApiError) => next(err)),
             ],
             err => {
               assert.ifError(err);
@@ -1136,7 +1138,7 @@ describe('storage', () => {
               next => bucket.create(next),
               next =>
                   bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS, next),
-              next => bucket.getMetadata((err:ApiError) => next(err)),
+              next => bucket.getMetadata((err: ApiError) => next(err)),
             ],
             err => {
               assert.ifError(err);
@@ -1155,7 +1157,7 @@ describe('storage', () => {
               next => bucket.create(next),
               next =>
                   bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS, next),
-              next => bucket.getMetadata((err:ApiError) => next(err)),
+              next => bucket.getMetadata((err: ApiError) => next(err)),
               next => {
                 bucket.lock(bucket.metadata.metageneration, next);
               },
@@ -1181,7 +1183,7 @@ describe('storage', () => {
               next =>
                   bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS, next),
               next => bucket.removeRetentionPeriod(next),
-              next => bucket.getMetadata((err:ApiError) => next(err)),
+              next => bucket.getMetadata((err: ApiError) => next(err)),
             ],
             err => {
               assert.ifError(err);
@@ -1285,7 +1287,7 @@ describe('storage', () => {
 
       function deleteFiles(callback: async.ErrorCallback) {
         async.each(FILES, (file, next) => {
-          file.setMetadata({temporaryHold: null}, (err:ApiError|null) => {
+          file.setMetadata({temporaryHold: null}, (err: ApiError|null) => {
             if (err) {
               next(err);
               return;
@@ -1324,7 +1326,7 @@ describe('storage', () => {
         createFile((err, file) => {
           assert.ifError(err);
 
-          file!.delete((err:ApiError) => {
+          file!.delete((err: ApiError) => {
             assert.strictEqual(err.code, 403);
             done();
           });
@@ -1353,7 +1355,7 @@ describe('storage', () => {
     });
 
     it('should have enabled requesterPays functionality', done => {
-      bucket.getMetadata((err:ApiError|null, metadata:MetadataResponse) => {
+      bucket.getMetadata((err: ApiError|null, metadata: MetadataResponse) => {
         assert.ifError(err);
         assert.strictEqual((metadata as any).billing.requesterPays, true);
         done();
@@ -1374,7 +1376,7 @@ describe('storage', () => {
 
       function isRequesterPaysEnabled(
           callback: (err: Error|null, isEnabled?: boolean) => void) {
-        bucket.getMetadata((err:ApiError|null, metadata:MetadataResponse) => {
+        bucket.getMetadata((err: ApiError|null, metadata: MetadataResponse) => {
           if (err) {
             callback(err);
             return;
@@ -1643,7 +1645,7 @@ describe('storage', () => {
 
         it('file#get',
            doubleTest((options: GetFileOptions, done: GetFileCallback) => {
-             file.get(options, (err:ApiError|null) => {
+             file.get(options, (err: ApiError|null) => {
                done(err);
              });
            }));
@@ -1990,7 +1992,7 @@ describe('storage', () => {
         };
         bucket.upload(FILES.logo.path, options, (err, file) => {
           assert.ifError(err);
-          file!.getMetadata((err:ApiError|null, metadata:Metadata) => {
+          file!.getMetadata((err: ApiError|null, metadata: Metadata) => {
             assert.ifError(err);
             assert.strictEqual(
                 metadata.contentType, options.metadata.contentType);
@@ -2060,7 +2062,7 @@ describe('storage', () => {
                 .pipe(fs.createWriteStream(tmpFilePath))
                 .on('error', done)
                 .on('finish', () => {
-                  file.delete((err:ApiError|null) => {
+                  file.delete((err: ApiError|null) => {
                     assert.ifError(err);
 
                     fs.readFile(tmpFilePath, (err, data) => {
@@ -2087,15 +2089,16 @@ describe('storage', () => {
       });
 
       it('should not get the hashes from the unencrypted file', done => {
-        unencryptedFile.getMetadata((err:ApiError|null, metadata:Metadata) => {
-          assert.ifError(err);
-          assert.strictEqual(metadata.crc32c, undefined);
-          done();
-        });
+        unencryptedFile.getMetadata(
+            (err: ApiError|null, metadata: Metadata) => {
+              assert.ifError(err);
+              assert.strictEqual(metadata.crc32c, undefined);
+              done();
+            });
       });
 
       it('should get the hashes from the encrypted file', done => {
-        file.getMetadata((err:ApiError|null, metadata:Metadata) => {
+        file.getMetadata((err: ApiError|null, metadata: Metadata) => {
           assert.ifError(err);
           assert.notStrictEqual(metadata.crc32c, undefined);
           done();
@@ -2269,7 +2272,7 @@ describe('storage', () => {
         });
 
         it('should have set kmsKeyName on created file', done => {
-          file.getMetadata((err:ApiError|null, metadata:Metadata) => {
+          file.getMetadata((err: ApiError|null, metadata: Metadata) => {
             assert.ifError(err);
 
             // Strip the project ID, as it could be the placeholder locally, but
@@ -2294,7 +2297,7 @@ describe('storage', () => {
           file.save(FILE_CONTENTS, {resumable: true}, err => {
             assert.ifError(err);
 
-            file.getMetadata((err:ApiError|null, metadata:Metadata) => {
+            file.getMetadata((err: ApiError|null, metadata: Metadata) => {
               assert.ifError(err);
 
               // Strip the project ID, as it could be the placeholder locally,
@@ -2386,7 +2389,7 @@ describe('storage', () => {
         });
 
         it('should have set defaultKmsKeyName on created bucket', done => {
-          bucket.getMetadata((err:ApiError|null, metadata:Metadata) => {
+          bucket.getMetadata((err: ApiError|null, metadata: Metadata) => {
             assert.ifError(err);
 
             // Strip the project ID, as it could be the placeholder locally, but
@@ -2423,7 +2426,7 @@ describe('storage', () => {
         it('should insert an object that inherits the kms key name', done => {
           const file = bucket.file('kms-encrypted-file');
 
-          bucket.getMetadata((err:ApiError|null, metadata:Metadata) => {
+          bucket.getMetadata((err: ApiError|null, metadata: Metadata) => {
             assert.ifError(err);
 
             const defaultKmsKeyName = metadata.encryption.defaultKmsKeyName;
@@ -2522,7 +2525,7 @@ describe('storage', () => {
             },
 
             next => {
-              file.getMetadata((err:ApiError|null, metadata:Metadata) => {
+              file.getMetadata((err: ApiError|null, metadata: Metadata) => {
                 assert.ifError(err);
                 assert.strictEqual(metadata.storageClass, 'STANDARD');
                 next();
@@ -2536,7 +2539,7 @@ describe('storage', () => {
           err => {
             assert.ifError(err);
 
-            file.getMetadata((err:ApiError|null, metadata:Metadata) => {
+            file.getMetadata((err: ApiError|null, metadata: Metadata) => {
               assert.ifError(err);
               assert.strictEqual(metadata.storageClass, 'MULTI_REGIONAL');
               done();
@@ -2728,7 +2731,7 @@ describe('storage', () => {
       versionedFile.save('a', err => {
         assert.ifError(err);
 
-        versionedFile.getMetadata((err:ApiError|null, metadata:Metadata) => {
+        versionedFile.getMetadata((err: ApiError|null, metadata: Metadata) => {
           assert.ifError(err);
 
           const initialGeneration = metadata.generation;
@@ -2820,7 +2823,7 @@ describe('storage', () => {
             assert.ifError(err);
             fetch(signedDeleteUrl!, {method: 'DELETE'})
                 .then(() => {
-                  file.getMetadata((err:ApiError) => {
+                  file.getMetadata((err: ApiError) => {
                     assert.strictEqual(err.code, 404);
                     done();
                   });
@@ -2919,7 +2922,7 @@ describe('storage', () => {
     });
 
     it('should get a notifications metadata', done => {
-      notification.getMetadata((err:ApiError|null, metadata:Metadata) => {
+      notification.getMetadata((err: ApiError|null, metadata: Metadata) => {
         assert.ifError(err);
         assert(metadata !== null && typeof metadata === 'object');
         done();
@@ -2927,7 +2930,7 @@ describe('storage', () => {
     });
 
     it('should tell us if a notification exists', done => {
-      notification.exists((err:ApiError|null, exists:boolean) => {
+      notification.exists((err: ApiError|null, exists: boolean) => {
         assert.ifError(err);
         assert(exists);
         done();
@@ -2937,7 +2940,7 @@ describe('storage', () => {
     it('should tell us if a notification does not exist', done => {
       const notification = bucket.notification('123');
 
-      notification.exists((err:ApiError|null, exists:boolean) => {
+      notification.exists((err: ApiError|null, exists: boolean) => {
         assert.ifError(err);
         assert.strictEqual(exists, false);
         done();

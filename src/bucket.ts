@@ -522,7 +522,7 @@ class Bucket extends ServiceObject {
     // Allow for "gs://"-style input, and strip any trailing slashes.
     name = name.replace(/^gs:\/\//, '').replace(/\/+$/, '');
 
-    const requestQueryObject: {userProject?:string} = {};
+    const requestQueryObject: {userProject?: string} = {};
 
     const userProject = options.userProject;
     if (typeof userProject === 'string') {
@@ -667,10 +667,10 @@ class Bucket extends ServiceObject {
       /**
        * Get a bucket if it exists.
        *
-       * You may optionally use this to "get or create" an object by providing an
-       * object with `autoCreate` set to `true`. Any extra configuration that is
-       * normally required for the `create` method must be contained within this
-       * object as well.
+       * You may optionally use this to "get or create" an object by providing
+       * an object with `autoCreate` set to `true`. Any extra configuration that
+       * is normally required for the `create` method must be contained within
+       * this object as well.
        *
        * @param {GetBucketOptions} [options] Configuration options.
        * @param {GetBucketCallback} [callback] Callback function.
@@ -810,7 +810,8 @@ class Bucket extends ServiceObject {
        * }, function(err, apiResponse) {});
        *
        * //-
-       * // Set the default event-based hold value for new objects in this bucket.
+       * // Set the default event-based hold value for new objects in this
+       * // bucket.
        * //-
        * bucket.setMetadata({
        *   defaultEventBasedHold: true
@@ -1035,14 +1036,14 @@ class Bucket extends ServiceObject {
 
     // The default behavior appends the previously-defined lifecycle rules with
     // the new ones just passed in by the user.
-    this.getMetadata((err:ApiError|null, metadata:MetadataResponse) => {
+    this.getMetadata((err: ApiError|null, metadata:MetadataResponse) => {
       if (err) {
         callback!(err);
         return;
       }
 
-      const currentLifecycleRules =
-          arrify((metadata as any).lifecycle && (metadata as any).lifecycle.rule);
+      const currentLifecycleRules = arrify(
+          (metadata as any).lifecycle && (metadata as any).lifecycle.rule);
 
       this.setMetadata(
           {
@@ -2737,7 +2738,8 @@ class Bucket extends ServiceObject {
   setUserProject(userProject: string) {
     this.userProject = userProject;
 
-    const methods = ['create', 'delete', 'exists', 'get', 'getMetadata', 'setMetadata'];
+    const methods =
+        ['create', 'delete', 'exists', 'get', 'getMetadata', 'setMetadata'];
     methods.forEach(method => {
       const methodConfig = this.methods[method];
       if (typeof methodConfig === 'object') {

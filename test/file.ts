@@ -235,9 +235,9 @@ describe('File', () => {
     it('should set the correct query string with a generation', () => {
       const options = {generation: 2};
       const file = new File(BUCKET, 'name', options);
-      
+
       const calledWith = file.calledWith_[0];
-      
+
       assert.deepStrictEqual(calledWith.methods, {
         delete: {reqOpts: {qs: options}},
         exists: {reqOpts: {qs: options}},
@@ -250,9 +250,9 @@ describe('File', () => {
     it('should set the correct query string with a userProject', () => {
       const options = {userProject: 'user-project'};
       const file = new File(BUCKET, 'name', options);
-      
+
       const calledWith = file.calledWith_[0];
-      
+
       assert.deepStrictEqual(calledWith.methods, {
         delete: {reqOpts: {qs: options}},
         exists: {reqOpts: {qs: options}},
@@ -2791,7 +2791,8 @@ describe('File', () => {
       const callback = () => {};
       const expectedReturnValue = {};
 
-      file.parent.request = function(reqOpts: DecorateRequestOptions, callback_: Function) {
+      file.parent.request = function(
+          reqOpts: DecorateRequestOptions, callback_: Function) {
         assert.strictEqual(this, file);
         assert.strictEqual(reqOpts, options);
         assert.strictEqual(callback_, callback);
@@ -3357,7 +3358,7 @@ describe('File', () => {
     it('should call the parent setUserProject function', done => {
       const userProject = 'grape-spaceship-123';
 
-      file.parent.setUserProject = function(userProject_:string) {
+      file.parent.setUserProject = function(userProject_: string) {
         assert.strictEqual(this, file);
         assert.strictEqual(userProject_, userProject);
         done();

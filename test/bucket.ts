@@ -269,7 +269,6 @@ describe('Bucket', () => {
     it('should set the correct query string with a userProject', () => {
       const options = {userProject: 'user-project'};
       const bucket = new Bucket(STORAGE, BUCKET_NAME, options);
-      
       const calledWith = bucket.calledWith_[0];
 
       assert.deepStrictEqual(calledWith.methods, {
@@ -1849,13 +1848,16 @@ describe('Bucket', () => {
     });
 
     it('should set the userProject on the global request options', () => {
-      const methods = ['create', 'delete', 'exists', 'get', 'getMetadata', 'setMetadata'];
+      const methods =
+          ['create', 'delete', 'exists', 'get', 'getMetadata', 'setMetadata'];
       methods.forEach(method => {
-        assert.strictEqual(bucket.methods[method].reqOpts.qs.userProject, undefined);
+        assert.strictEqual(
+            bucket.methods[method].reqOpts.qs.userProject, undefined);
       });
       bucket.setUserProject(USER_PROJECT);
       methods.forEach(method => {
-        assert.strictEqual(bucket.methods[method].reqOpts.qs.userProject, USER_PROJECT);
+        assert.strictEqual(
+            bucket.methods[method].reqOpts.qs.userProject, USER_PROJECT);
       });
     });
   });
