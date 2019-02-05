@@ -128,7 +128,7 @@ describe('storage', () => {
 
     describe('public data', () => {
       before(function() {
-        if (RUNNING_IN_VPCSC) return this.skip();
+        if (RUNNING_IN_VPCSC) this.skip();
       });
 
       let bucket: Bucket;
@@ -776,7 +776,7 @@ describe('storage', () => {
 
   describe('unicode validation', () => {
     before(function() {
-      if (RUNNING_IN_VPCSC) return this.skip();
+      if (RUNNING_IN_VPCSC) this.skip();
     });
 
     let bucket: Bucket;
