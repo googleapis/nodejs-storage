@@ -137,7 +137,7 @@ describe('storage', () => {
         bucket = storageWithoutAuth.bucket('gcp-public-data-landsat');
       });
 
-      it('should list and download a file', (done) => {
+      it('should list and download a file', done => {
         bucket.getFiles(
             {
               autoPaginate: false,
