@@ -29,6 +29,10 @@ import {Storage, Bucket, File, AccessControlObject, Notification, GetNotificatio
 import * as nock from 'nock';
 const {PubSub} = require('@google-cloud/pubsub');
 
+// When set to true, skips all tests that is not compatible for
+// running inside VPCSC.
+const RUNNING_IN_VPCSC = !!process.env['GOOGLE_CLOUD_TESTS_IN_VPCSC'];
+
 // block all attempts to chat with the metadata server (kokoro runs on GCE)
 nock('http://metadata.google.internal')
     .get(url => true)
@@ -123,13 +127,17 @@ describe('storage', () => {
     });
 
     describe('public data', () => {
+      if (RUNNING_IN_VPCSC) {
+        return;
+      }
+
       let bucket: Bucket;
 
       before(() => {
         bucket = storageWithoutAuth.bucket('gcp-public-data-landsat');
       });
 
-      it('should list and download a file', done => {
+      it('should list and download a file', (done) => {
         bucket.getFiles(
             {
               autoPaginate: false,
@@ -767,6 +775,10 @@ describe('storage', () => {
   });
 
   describe('unicode validation', () => {
+    if (RUNNING_IN_VPCSC) {
+      return;
+    }
+
     let bucket: Bucket;
 
     before(() => {
