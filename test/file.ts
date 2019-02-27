@@ -1039,9 +1039,10 @@ describe('File', () => {
                     rawResponseStream.emit('end');
                     setImmediate(done);
                   })
-              .on('end', () => {
-                done(new Error('Should not have been called.'));
-              })
+              .on('end',
+                  () => {
+                    done(new Error('Should not have been called.'));
+                  })
               .resume();
         });
       });
@@ -1120,9 +1121,10 @@ describe('File', () => {
                   createGunzipStream.emit('end');
                   setImmediate(done);
                 })
-            .on('end', () => {
-              done(new Error('Should not have been called.'));
-            })
+            .on('end',
+                () => {
+                  done(new Error('Should not have been called.'));
+                })
             .resume();
       });
     });
@@ -1192,9 +1194,10 @@ describe('File', () => {
                   fakeValidationStream.emit('end');
                   setImmediate(done);
                 })
-            .on('end', () => {
-              done(new Error('Should not have been called.'));
-            })
+            .on('end',
+                () => {
+                  done(new Error('Should not have been called.'));
+                })
             .resume();
       });
 
