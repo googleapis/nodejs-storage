@@ -1212,6 +1212,8 @@ class File extends ServiceObject<File> {
               return;
             }
 
+            rawResponseStream.on('error', onComplete);
+
             const headers = rawResponseStream.toJSON().headers;
             const isCompressed = headers['content-encoding'] === 'gzip';
             const shouldRunValidation = !rangeRequest && (crc32c || md5);
