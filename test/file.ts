@@ -1022,10 +1022,9 @@ describe('File', () => {
                 },
               });
               callback(null, null, rawResponseStream);
-              setImmediate(
-                  () => {
-                    rawResponseStream.end(GZIPPED_DATA);
-                  });
+              setImmediate(() => {
+                rawResponseStream.end(GZIPPED_DATA);
+              });
             };
         file.requestStream = getFakeSuccessfulRequest(GZIPPED_DATA);
       });
