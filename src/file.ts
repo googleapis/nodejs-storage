@@ -1245,13 +1245,16 @@ class File extends ServiceObject<File> {
       // This is hooked to the `complete` event from the request stream. This is
       // our chance to validate the data and let the user know if anything went
       // wrong.
+      let onCompleteCalled = false;
       const onComplete = (err: Error|null) => {
         if (err) {
+          onCompleteCalled = true;
           throughStream.destroy(err);
           return;
         }
 
         if (rangeRequest) {
+          onCompleteCalled = true;
           throughStream.end();
           return;
         }
@@ -1261,6 +1264,12 @@ class File extends ServiceObject<File> {
           this.getMetadata({userProject: options.userProject}, onComplete);
           return;
         }
+
+        if (onCompleteCalled) {
+          return;
+        }
+
+        onCompleteCalled = true;
 
         const hashes = {
           crc32c: this.metadata.crc32c,

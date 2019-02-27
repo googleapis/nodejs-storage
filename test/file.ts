@@ -1001,6 +1001,49 @@ describe('File', () => {
                   })
               .resume();
         });
+
+        it('should not handle both error and end events', done => {
+          const error = new Error('Error.');
+          const rawResponseStream = through();
+          // tslint:disable-next-line:no-any
+          (rawResponseStream as any).toJSON = () => {
+            return {headers: {}};
+          };
+          const requestStream = through();
+
+          handleRespOverride =
+              (err: Error, res: {}, body: {}, callback: Function) => {
+                callback(null, null, rawResponseStream);
+                setImmediate(() => {
+                  rawResponseStream.emit('error', error);
+                });
+              };
+
+          file.requestStream = () => {
+            setImmediate(() => {
+              requestStream.emit('response', rawResponseStream);
+            });
+            return requestStream;
+          };
+
+          file.getMetadata = (options: object, callback: Function) => {
+            callback();
+          };
+
+          let errorReceived = false;
+          file.createReadStream({validation: false})
+              .on('error',
+                  (err: Error) => {
+                    errorReceived = true;
+                    assert.strictEqual(err, error);
+                    rawResponseStream.emit('end');
+                    setImmediate(done);
+                  })
+              .on('end', () => {
+                done(new Error('Should not have been called.'));
+              })
+              .resume();
+        });
       });
     });
 
@@ -1057,6 +1100,31 @@ describe('File', () => {
                 })
             .resume();
       });
+
+      it('should not handle both error and end events', done => {
+        const error = new Error('Error.');
+        const createGunzipStream = through();
+        createGunzipOverride = () => {
+          setImmediate(() => {
+            createGunzipStream.emit('error', error);
+          });
+          return createGunzipStream;
+        };
+        file.getMetadata = (options: object, callback: Function) => {
+          callback();
+        };
+        file.createReadStream({validation: false})
+            .on('error',
+                (err: Error) => {
+                  assert.strictEqual(err, error);
+                  createGunzipStream.emit('end');
+                  setImmediate(done);
+                })
+            .on('end', () => {
+              done(new Error('Should not have been called.'));
+            })
+            .resume();
+      });
     });
 
     describe('validation', () => {
@@ -1102,6 +1170,31 @@ describe('File', () => {
                   assert.strictEqual(err, error);
                   done();
                 })
+            .resume();
+      });
+
+      it('should not handle both error and end events', done => {
+        const error = new Error('Error.');
+
+        hashStreamValidationOverride = () => {
+          setImmediate(() => {
+            fakeValidationStream.emit('error', error);
+          });
+          return fakeValidationStream;
+        };
+
+        file.requestStream = getFakeSuccessfulRequest(data);
+
+        file.createReadStream()
+            .on('error',
+                (err: Error) => {
+                  assert.strictEqual(err, error);
+                  fakeValidationStream.emit('end');
+                  setImmediate(done);
+                })
+            .on('end', () => {
+              done(new Error('Should not have been called.'));
+            })
             .resume();
       });
 
