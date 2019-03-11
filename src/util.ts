@@ -22,3 +22,20 @@ export function normalize<T = {}, U = Function>(
       (typeof optionsOrCallback === 'function' ? optionsOrCallback : cb)! as U;
   return {options, callback};
 }
+
+/**
+ * Return a Date object as a String, using the ISO8601 format:
+ * 20190308T220000Z
+ * @param date the Date object to convert.
+ */
+export function dateToISOString(date: Date): string {
+  return [
+    date.getUTCFullYear(),
+    date.getUTCMonth() + 1,
+    date.getUTCDay(),
+    'T',
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    date.getUTCSeconds(),
+  ].join();
+}

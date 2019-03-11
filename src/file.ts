@@ -43,7 +43,7 @@ import {Storage} from './storage';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 import {ResponseBody, ApiError} from '@google-cloud/common/build/src/util';
-import {normalize} from './util';
+import {normalize, dateToISOString} from './util';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -51,6 +51,7 @@ export interface GetExpirationDateCallback {
 }
 
 export interface GetSignedUrlConfig {
+  version: 'v2'|'v4';
   action: 'read'|'write'|'delete'|'resumable';
   cname?: string;
   contentMd5?: string;
@@ -63,7 +64,9 @@ export interface GetSignedUrlConfig {
 }
 
 interface GetSignedUrlConfigInternal {
+  expiration: number;
   action: string;
+  name: string;
   resource?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
   contentMd5?: string;
@@ -336,6 +339,10 @@ class RequestError extends Error {
   code?: string;
   errors?: Error[];
 }
+
+const SEVEN_DAYS = 7 * 24 * 60 * 60;
+
+const DEFAULT_SIGNING_VERSION = 'v2';
 
 /**
  * A File object is created from your {@link Bucket} object using
@@ -2179,6 +2186,8 @@ class File extends ServiceObject<File> {
    * @param {object} config Configuration object.
    * @param {string} config.action "read" (HTTP: GET), "write" (HTTP: PUT), or
    *     "delete" (HTTP: DELETE), "resumable" (HTTP: POST).
+   * @param {string} [config.version] The signing version to use. Currently support 'v2' and 'v4' signing.
+   *     Defaults to 'v2' if not given.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
    * @param {string} [config.contentMd5] The MD5 digest value in base64. If you
@@ -2286,20 +2295,41 @@ class File extends ServiceObject<File> {
     }
 
     const expiresInSeconds =
-        Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
+      Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
 
-    const config: GetSignedUrlConfigInternal = Object.assign({}, cfg);
-
-    config.action = ({
+    const verb = ({
       read: 'GET',
       write: 'PUT',
       delete: 'DELETE',
       resumable: 'POST',
-    } as {[index: string]: string})[config.action];
+    } as {[index: string]: string})[cfg.action];
 
     const name = encodeURIComponent(this.name);
-    config.resource = '/' + this.bucket.name + '/' + name;
+    const resource = '/' + this.bucket.name + '/' + name;
 
+    const version = cfg.version || DEFAULT_SIGNING_VERSION;
+    delete cfg.version;
+
+    const config: GetSignedUrlConfigInternal = Object.assign({}, cfg, {
+      action: verb,
+      expiration: expiresInSeconds,
+      resource,
+      name,
+    });
+
+    if (version === 'v2') {
+      return this.getSignedUrlV2(config, callback!);
+    } else if (version === 'v4') {
+      return this.getSignedUrlV4(config, callback!);
+    } else {
+      throw new Error(`Invalid signed URL version: ${version}. Supported versions are 'v2' and 'v4'.`);
+    }
+  }
+
+  private getSignedUrlV2(config: GetSignedUrlConfigInternal): Promise<GetSignedUrlResponse>;
+  private getSignedUrlV2(config: GetSignedUrlConfigInternal, callback: GetSignedUrlCallback): void;
+  private getSignedUrlV2(config: GetSignedUrlConfigInternal, callback?: GetSignedUrlCallback):
+      void|Promise<GetSignedUrlResponse> {
     let extensionHeadersString = '';
 
     if (config.action === 'POST') {
@@ -2319,7 +2349,7 @@ class File extends ServiceObject<File> {
       config.action,
       config.contentMd5 || '',
       config.contentType || '',
-      expiresInSeconds,
+      config.expiration,
       extensionHeadersString + config.resource,
     ].join('\n');
 
@@ -2329,7 +2359,7 @@ class File extends ServiceObject<File> {
           authClient.getCredentials().then(credentials => {
             const query = {
               GoogleAccessId: credentials.client_email,
-              Expires: expiresInSeconds,
+              Expires: config.expiration,
               Signature: signature,
             } as SignedUrlQuery;
 
@@ -2355,7 +2385,7 @@ class File extends ServiceObject<File> {
             const signedUrl = url.format({
               protocol: parsedHost.protocol,
               hostname: parsedHost.hostname,
-              pathname: config.cname ? name : this.bucket.name + '/' + name,
+              pathname: config.cname ? config.name : this.bucket.name + '/' + config.name,
               query,
             });
 
@@ -2365,6 +2395,97 @@ class File extends ServiceObject<File> {
         .catch(err => {
           callback!(new SigningError(err.message));
         });
+  }
+
+  private getSignedUrlV4(config: GetSignedUrlConfigInternal): Promise<GetSignedUrlResponse>;
+  private getSignedUrlV4(config: GetSignedUrlConfigInternal, callback: GetSignedUrlCallback): void;
+  private getSignedUrlV4(config: GetSignedUrlConfigInternal, callback?: GetSignedUrlCallback): Promise<GetSignedUrlResponse>|void {
+    const now = new Date();
+    const nowInSeconds = Math.floor(now.valueOf() / 1000);
+    const expiresPeriodInSeconds = config.expiration - nowInSeconds;
+
+    // v4 limit expiration to be 7 days maximum
+    if (expiresPeriodInSeconds > SEVEN_DAYS) {
+      throw new Error(`Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`);
+    }
+
+    config.action = ({
+      read: 'GET',
+      write: 'PUT',
+      delete: 'DELETE',
+      resumable: 'POST',
+    } as {[index: string]: string})[config.action];
+
+    const name = encodeURIComponent(this.name);
+    config.resource = '/' + this.bucket.name + '/' + name;
+
+    let extensionHeadersString = '';
+
+    if (config.action === 'POST') {
+      config.extensionHeaders = Object.assign({}, config.extensionHeaders, {
+        'x-goog-resumable': 'start',
+      });
+    }
+
+    let signedHeaders = new Array<string>(); // should have host at least
+    if (config.extensionHeaders) {
+      signedHeaders = Object.keys(config.extensionHeaders);
+      signedHeaders.sort();
+      signedHeaders = signedHeaders.map(header => header.toLowerCase());
+
+      for (const headerName of signedHeaders) {
+        const value =
+          `${config.extensionHeaders[headerName]}`
+            .trim().toLowerCase();
+
+        extensionHeadersString += `${headerName.toLowerCase()}:${value}\n`;
+      }
+    }
+
+    const datestamp = dateToISOString(now).split('T')[0];
+    const credentialScope = `${datestamp}/auto/storage/goog4_request`;
+
+    this.storage.authClient.getCredentials()
+      .then((credentials) => {
+        const credential = `${credentials.client_email}/${credentialScope}`;
+
+        const queryParams = {
+          'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
+          'X-Goog-Credential': credential,
+          'X-Goog-Date': dateToISOString(now),
+          'X-Goog-Expires': expiresPeriodInSeconds.toString(),
+          'X-Goog-SignedHeaders': signedHeaders.join(';'),
+        } as {[key: string]: string};
+
+        const canonicalQueryParams = [];
+        for (const param of Object.keys(queryParams)) {
+          canonicalQueryParams.push(param + '-' + encodeURIComponent(queryParams[param]));
+        }
+
+        const canonicalRequest = [
+          config.action,
+          config.resource,
+          canonicalQueryParams.join('\n'),
+          extensionHeadersString,
+          signedHeaders.join(';'),
+        ].join('\n');
+
+        const hashedCanonicalRequest =
+          crypto
+            .createHash('sha256')
+            .update(canonicalRequest)
+            .digest('hex');
+
+        const blobToSign = [
+          'GOOG4-RSA-SHA256',
+          dateToISOString(now),
+          credentialScope,
+          hashedCanonicalRequest,
+        ].join('\n');
+
+        return this.storage.authClient.sign(blobToSign);
+      })
+      .catch(callback!);
   }
 
   makePrivate(options?: MakeFilePrivateOptions):
