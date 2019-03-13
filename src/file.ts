@@ -2295,7 +2295,7 @@ class File extends ServiceObject<File> {
     }
 
     const expiresInSeconds =
-      Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
+        Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
 
     const verb = ({
       read: 'GET',
@@ -2322,14 +2322,18 @@ class File extends ServiceObject<File> {
     } else if (version === 'v4') {
       return this.getSignedUrlV4(config, callback!);
     } else {
-      throw new Error(`Invalid signed URL version: ${version}. Supported versions are 'v2' and 'v4'.`);
+      throw new Error(`Invalid signed URL version: ${
+          version}. Supported versions are 'v2' and 'v4'.`);
     }
   }
 
-  private getSignedUrlV2(config: GetSignedUrlConfigInternal): Promise<GetSignedUrlResponse>;
-  private getSignedUrlV2(config: GetSignedUrlConfigInternal, callback: GetSignedUrlCallback): void;
-  private getSignedUrlV2(config: GetSignedUrlConfigInternal, callback?: GetSignedUrlCallback):
-      void|Promise<GetSignedUrlResponse> {
+  private getSignedUrlV2(config: GetSignedUrlConfigInternal):
+      Promise<GetSignedUrlResponse>;
+  private getSignedUrlV2(
+      config: GetSignedUrlConfigInternal, callback: GetSignedUrlCallback): void;
+  private getSignedUrlV2(
+      config: GetSignedUrlConfigInternal,
+      callback?: GetSignedUrlCallback): void|Promise<GetSignedUrlResponse> {
     let extensionHeadersString = '';
 
     if (config.action === 'POST') {
@@ -2385,7 +2389,8 @@ class File extends ServiceObject<File> {
             const signedUrl = url.format({
               protocol: parsedHost.protocol,
               hostname: parsedHost.hostname,
-              pathname: config.cname ? config.name : this.bucket.name + '/' + config.name,
+              pathname: config.cname ? config.name :
+                                       this.bucket.name + '/' + config.name,
               query,
             });
 
@@ -2397,16 +2402,21 @@ class File extends ServiceObject<File> {
         });
   }
 
-  private getSignedUrlV4(config: GetSignedUrlConfigInternal): Promise<GetSignedUrlResponse>;
-  private getSignedUrlV4(config: GetSignedUrlConfigInternal, callback: GetSignedUrlCallback): void;
-  private getSignedUrlV4(config: GetSignedUrlConfigInternal, callback?: GetSignedUrlCallback): Promise<GetSignedUrlResponse>|void {
+  private getSignedUrlV4(config: GetSignedUrlConfigInternal):
+      Promise<GetSignedUrlResponse>;
+  private getSignedUrlV4(
+      config: GetSignedUrlConfigInternal, callback: GetSignedUrlCallback): void;
+  private getSignedUrlV4(
+      config: GetSignedUrlConfigInternal,
+      callback?: GetSignedUrlCallback): Promise<GetSignedUrlResponse>|void {
     const now = new Date();
     const nowInSeconds = Math.floor(now.valueOf() / 1000);
     const expiresPeriodInSeconds = config.expiration - nowInSeconds;
 
     // v4 limit expiration to be 7 days maximum
     if (expiresPeriodInSeconds > SEVEN_DAYS) {
-      throw new Error(`Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`);
+      throw new Error(
+          `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`);
     }
 
     config.action = ({
@@ -2427,7 +2437,7 @@ class File extends ServiceObject<File> {
       });
     }
 
-    let signedHeaders = new Array<string>(); // should have host at least
+    let signedHeaders = new Array<string>();  // should have host at least
     if (config.extensionHeaders) {
       signedHeaders = Object.keys(config.extensionHeaders);
       signedHeaders.sort();
@@ -2435,8 +2445,7 @@ class File extends ServiceObject<File> {
 
       for (const headerName of signedHeaders) {
         const value =
-          `${config.extensionHeaders[headerName]}`
-            .trim().toLowerCase();
+            `${config.extensionHeaders[headerName]}`.trim().toLowerCase();
 
         extensionHeadersString += `${headerName.toLowerCase()}:${value}\n`;
       }
@@ -2446,46 +2455,45 @@ class File extends ServiceObject<File> {
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
 
     this.storage.authClient.getCredentials()
-      .then((credentials) => {
-        const credential = `${credentials.client_email}/${credentialScope}`;
+        .then((credentials) => {
+          const credential = `${credentials.client_email}/${credentialScope}`;
 
-        const queryParams = {
-          'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
-          'X-Goog-Credential': credential,
-          'X-Goog-Date': dateToISOString(now),
-          'X-Goog-Expires': expiresPeriodInSeconds.toString(),
-          'X-Goog-SignedHeaders': signedHeaders.join(';'),
-        } as {[key: string]: string};
+          const queryParams = {
+            'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
+            'X-Goog-Credential': credential,
+            'X-Goog-Date': dateToISOString(now),
+            'X-Goog-Expires': expiresPeriodInSeconds.toString(),
+            'X-Goog-SignedHeaders': signedHeaders.join(';'),
+          } as {[key: string]: string};
 
-        const canonicalQueryParams = [];
-        for (const param of Object.keys(queryParams)) {
-          canonicalQueryParams.push(param + '-' + encodeURIComponent(queryParams[param]));
-        }
+          const canonicalQueryParams = [];
+          for (const param of Object.keys(queryParams)) {
+            canonicalQueryParams.push(
+                param + '-' + encodeURIComponent(queryParams[param]));
+          }
 
-        const canonicalRequest = [
-          config.action,
-          config.resource,
-          canonicalQueryParams.join('\n'),
-          extensionHeadersString,
-          signedHeaders.join(';'),
-        ].join('\n');
+          const canonicalRequest = [
+            config.action,
+            config.resource,
+            canonicalQueryParams.join('\n'),
+            extensionHeadersString,
+            signedHeaders.join(';'),
+          ].join('\n');
 
-        const hashedCanonicalRequest =
-          crypto
-            .createHash('sha256')
-            .update(canonicalRequest)
-            .digest('hex');
+          const hashedCanonicalRequest = crypto.createHash('sha256')
+                                             .update(canonicalRequest)
+                                             .digest('hex');
 
-        const blobToSign = [
-          'GOOG4-RSA-SHA256',
-          dateToISOString(now),
-          credentialScope,
-          hashedCanonicalRequest,
-        ].join('\n');
+          const blobToSign = [
+            'GOOG4-RSA-SHA256',
+            dateToISOString(now),
+            credentialScope,
+            hashedCanonicalRequest,
+          ].join('\n');
 
-        return this.storage.authClient.sign(blobToSign);
-      })
-      .catch(callback!);
+          return this.storage.authClient.sign(blobToSign);
+        })
+        .catch(callback!);
   }
 
   makePrivate(options?: MakeFilePrivateOptions):
