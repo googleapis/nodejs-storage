@@ -51,8 +51,8 @@ export interface GetExpirationDateCallback {
 }
 
 export interface GetSignedUrlConfig {
-  version: 'v2'|'v4';
   action: 'read'|'write'|'delete'|'resumable';
+  version?: 'v2'|'v4';
   cname?: string;
   contentMd5?: string;
   contentType?: string;
