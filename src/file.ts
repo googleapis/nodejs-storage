@@ -2431,10 +2431,10 @@ class File extends ServiceObject<File> {
 
     let extensionHeadersString = '';
 
+    const extensionHeaders = Object.assign({}, config.extensionHeaders);
+    extensionHeaders['host'] = 'storage.googleapis.com';
     if (config.action === 'POST') {
-      config.extensionHeaders = Object.assign({}, config.extensionHeaders, {
-        'x-goog-resumable': 'start',
-      });
+      extensionHeaders['x-goog-resumable'] = 'start';
     }
 
     let signedHeaders = new Array<string>();  // should have host at least
