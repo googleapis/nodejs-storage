@@ -2469,13 +2469,13 @@ class File extends ServiceObject<File> {
           const canonicalQueryParams = [];
           for (const param of Object.keys(queryParams)) {
             canonicalQueryParams.push(
-                param + '-' + encodeURIComponent(queryParams[param]));
+                param + '=' + encodeURIComponent(queryParams[param]));
           }
 
           const canonicalRequest = [
             config.action,
             config.resource,
-            canonicalQueryParams.join('\n'),
+            canonicalQueryParams.join('&'),
             extensionHeadersString,
             signedHeaders.join(';'),
           ].join('\n');
