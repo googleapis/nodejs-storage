@@ -2494,18 +2494,14 @@ describe('File', () => {
   });
 
   describe('getSignedUrl', () => {
-    const NOW = new Date('2019-03-18T00:00:00Z');
-
     const CONFIG = {
       action: 'read',
-      expires: NOW.valueOf() + 2000, // now + 2 seconds
+      expires: Date.now() + 2000, // now + 2 seconds
     } as {action: string, expires: number, version: string};
 
     const CLIENT_EMAIL = 'client-email';
 
     beforeEach(() => {
-      file.getDate = () => NOW;
-
       BUCKET.storage.authClient = {
         getCredentials() {
           return Promise.resolve({
@@ -2535,9 +2531,12 @@ describe('File', () => {
     });
 
     describe('v4 signed URL', () => {
+      const NOW = new Date('2019-03-18T00:00:00Z');
+
       beforeEach(() => {
         CONFIG.version = 'v4';
-      })
+        file.getDate = () => NOW;
+      });
 
       const SCOPE = '20190318/auto/storage/goog4_request';
       const CREDENTIAL = `${CLIENT_EMAIL}/${SCOPE}`;
@@ -2573,16 +2572,28 @@ describe('File', () => {
           return Promise.resolve('signature');
         };
 
+        CONFIG.expires = NOW.valueOf() + 2000;
+
         file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
           assert.ifError(err);
           assert.strictEqual(typeof signedUrl, 'string');
           done();
         });
       });
+
+      it('should fail for expirations beyond 7 days', () => {
+        CONFIG.expires = NOW.valueOf() + 7.1 * 24 * 60 * 60 * 1000;
+        assert.throws(
+          () => { file.getSignedUrl(CONFIG, () => { }); },
+          /Max allowed expiration is seven days/,
+        );
+      });
     })
 
     describe('v2 signed URL', () => {
-      CONFIG.version = 'v2';
+      beforeEach(() => {
+        CONFIG.version = 'v2';
+      })
 
       it('should create a v2 signed url when specified', done => {
         BUCKET.storage.authClient.sign = (blobToSign: string) => {

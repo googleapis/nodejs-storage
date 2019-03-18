@@ -2472,7 +2472,7 @@ class File extends ServiceObject<File> {
             'UNSIGNED-PAYLOAD',
           ].join('\n');
 
-          const hashedCanonicalRequest = crypto.createHash('sha256')
+          const canonicalRequestHash = crypto.createHash('sha256')
                                              .update(canonicalRequest)
                                              .digest('hex');
 
@@ -2480,7 +2480,7 @@ class File extends ServiceObject<File> {
             'GOOG4-RSA-SHA256',
             dateToISOString(now),
             credentialScope,
-            hashedCanonicalRequest,
+            canonicalRequestHash,
           ].join('\n');
 
           return this.storage.authClient.sign(blobToSign);
