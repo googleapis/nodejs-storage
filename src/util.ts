@@ -29,13 +29,8 @@ export function normalize<T = {}, U = Function>(
  * @param date the Date object to convert.
  */
 export function dateToISOString(date: Date): string {
-  return [
-    date.getUTCFullYear(),
-    date.getUTCMonth() + 1,
-    date.getUTCDay(),
-    'T',
-    date.getUTCHours(),
-    date.getUTCMinutes(),
-    date.getUTCSeconds(),
-  ].join();
+  return date
+    .toJSON()
+    .replace(/[:-]/g, '') // strip :'s and -'s
+    .split('.')[0] + 'Z'; // remove milliseconds part
 }

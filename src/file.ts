@@ -2290,7 +2290,7 @@ class File extends ServiceObject<File> {
       throw new Error('The expiration date provided was invalid.');
     }
 
-    if (expiresInMSeconds < Date.now()) {
+    if (expiresInMSeconds < this.getDate().valueOf()) {
       throw new Error('An expiration date cannot be in the past.');
     }
 
@@ -2308,7 +2308,6 @@ class File extends ServiceObject<File> {
     const resource = '/' + this.bucket.name + '/' + name;
 
     const version = cfg.version || DEFAULT_SIGNING_VERSION;
-    delete cfg.version;
 
     const config: GetSignedUrlConfigInternal = Object.assign({}, cfg, {
       action: verb,
@@ -2409,7 +2408,7 @@ class File extends ServiceObject<File> {
   private getSignedUrlV4(
       config: GetSignedUrlConfigInternal,
       callback?: GetSignedUrlCallback): Promise<GetSignedUrlResponse>|void {
-    const now = new Date();
+    const now = this.getDate();
     const nowInSeconds = Math.floor(now.valueOf() / 1000);
     const expiresPeriodInSeconds = config.expiration - nowInSeconds;
 
@@ -2418,16 +2417,6 @@ class File extends ServiceObject<File> {
       throw new Error(
           `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`);
     }
-
-    config.action = ({
-      read: 'GET',
-      write: 'PUT',
-      delete: 'DELETE',
-      resumable: 'POST',
-    } as {[index: string]: string})[config.action];
-
-    const name = encodeURIComponent(this.name);
-    config.resource = '/' + this.bucket.name + '/' + name;
 
     let extensionHeadersString = '';
 
@@ -2438,36 +2427,38 @@ class File extends ServiceObject<File> {
     }
 
     let signedHeaders = new Array<string>();  // should have host at least
-    if (config.extensionHeaders) {
-      signedHeaders = Object.keys(config.extensionHeaders);
-      signedHeaders.sort();
-      signedHeaders = signedHeaders.map(header => header.toLowerCase());
+    signedHeaders = Object.keys(extensionHeaders);
+    signedHeaders.sort();
+    signedHeaders = signedHeaders.map(header => header.toLowerCase());
 
-      for (const headerName of signedHeaders) {
-        const value =
-            `${config.extensionHeaders[headerName]}`.trim().toLowerCase();
+    for (const headerName of signedHeaders) {
+      const value =
+        `${extensionHeaders[headerName]}`.trim().toLowerCase();
 
-        extensionHeadersString += `${headerName.toLowerCase()}:${value}\n`;
-      }
+      extensionHeadersString += `${headerName.toLowerCase()}:${value}\n`;
     }
 
     const datestamp = dateToISOString(now).split('T')[0];
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
 
+    let queryParams = {} as { [key: string]: string };
+
     this.storage.authClient.getCredentials()
         .then((credentials) => {
           const credential = `${credentials.client_email}/${credentialScope}`;
 
-          const queryParams = {
+          queryParams = {
             'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
             'X-Goog-Credential': credential,
             'X-Goog-Date': dateToISOString(now),
             'X-Goog-Expires': expiresPeriodInSeconds.toString(),
             'X-Goog-SignedHeaders': signedHeaders.join(';'),
-          } as {[key: string]: string};
+          }
 
           const canonicalQueryParams = [];
-          for (const param of Object.keys(queryParams)) {
+          const keys = Object.keys(queryParams);
+          for (const param of keys) {
+            keys.sort();
             canonicalQueryParams.push(
                 param + '=' + encodeURIComponent(queryParams[param]));
           }
@@ -2478,6 +2469,7 @@ class File extends ServiceObject<File> {
             canonicalQueryParams.join('&'),
             extensionHeadersString,
             signedHeaders.join(';'),
+            'UNSIGNED-PAYLOAD',
           ].join('\n');
 
           const hashedCanonicalRequest = crypto.createHash('sha256')
@@ -2492,6 +2484,21 @@ class File extends ServiceObject<File> {
           ].join('\n');
 
           return this.storage.authClient.sign(blobToSign);
+        })
+        .then((signature) => {
+          queryParams['X-Goog-Signature'] = signature;
+
+          const parsedHost =
+            url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
+
+          const signedUrl = url.format({
+            protocol: parsedHost.protocol,
+            hostname: parsedHost.hostname,
+            pathname: config.cname ? config.name :
+              this.bucket.name + '/' + config.name,
+            query: queryParams,
+          });
+          callback!(null, signedUrl);
         })
         .catch(callback!);
   }
@@ -3141,6 +3148,15 @@ class File extends ServiceObject<File> {
       request: reqOpts,
       requestModule: teenyRequest as typeof r,
     });
+  }
+
+  /**
+   * Wrapper for new Date() for tests.
+   * @return {Date} value as returned by new Date().
+   * @private
+   */
+  getDate(): Date {
+    return new Date();
   }
 }
 

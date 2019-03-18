@@ -2494,16 +2494,22 @@ describe('File', () => {
   });
 
   describe('getSignedUrl', () => {
+    const NOW = new Date('2019-03-18T00:00:00Z');
+
     const CONFIG = {
       action: 'read',
-      expires: Date.now() + 2000,
+      expires: NOW.valueOf() + 2000, // now + 2 seconds
     } as {action: string, expires: number, version: string};
 
+    const CLIENT_EMAIL = 'client-email';
+
     beforeEach(() => {
+      file.getDate = () => NOW;
+
       BUCKET.storage.authClient = {
         getCredentials() {
           return Promise.resolve({
-            client_email: 'client-email',
+            client_email: CLIENT_EMAIL,
           });
         },
         sign() {
@@ -2528,10 +2534,57 @@ describe('File', () => {
       });
     });
 
+    describe('v4 signed URL', () => {
+      beforeEach(() => {
+        CONFIG.version = 'v4';
+      })
+
+      const SCOPE = '20190318/auto/storage/goog4_request';
+      const CREDENTIAL = `${CLIENT_EMAIL}/${SCOPE}`;
+
+      it('should create a v4 signed url when specified', done => {
+        const EXPECTED_QUERY_PARAM = [
+          'X-Goog-Algorithm=GOOG4-RSA-SHA256',
+          `X-Goog-Credential=${encodeURIComponent(CREDENTIAL)}`,
+          'X-Goog-Date=20190318T000000Z',
+          'X-Goog-Expires=2',
+          'X-Goog-SignedHeaders=host',
+        ].join('&');
+
+        const EXPECTED_CANONICAL_HEADERS = 'host:storage.googleapis.com\n';
+        const EXPECTED_SIGNED_HEADERS = 'host';
+
+        const CANONICAL_REQUEST = [
+          'GET',
+          `/${BUCKET.name}/${encodeURIComponent(file.name)}`,
+          EXPECTED_QUERY_PARAM,
+          EXPECTED_CANONICAL_HEADERS,
+          EXPECTED_SIGNED_HEADERS,
+          'UNSIGNED-PAYLOAD',
+        ].join('\n');
+
+        BUCKET.storage.authClient.sign = (blobToSign: string) => {
+          assert.deepStrictEqual(blobToSign, [
+            'GOOG4-RSA-SHA256',
+            '20190318T000000Z',
+            SCOPE,
+            crypto.createHash('sha256').update(CANONICAL_REQUEST).digest('hex'),
+          ].join('\n'));
+          return Promise.resolve('signature');
+        };
+
+        file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
+          assert.ifError(err);
+          assert.strictEqual(typeof signedUrl, 'string');
+          done();
+        });
+      });
+    })
+
     describe('v2 signed URL', () => {
       CONFIG.version = 'v2';
 
-      it('should create a signed url', done => {
+      it('should create a v2 signed url when specified', done => {
         BUCKET.storage.authClient.sign = (blobToSign: string) => {
           assert.deepStrictEqual(blobToSign, [
             'GET',
