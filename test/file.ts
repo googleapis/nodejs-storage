@@ -2591,6 +2591,33 @@ describe('File', () => {
           /Max allowed expiration is seven days/,
         );
       });
+
+      it('should add response-content-type parameter', done => {
+        const type = 'application/json';
+
+        const config = Object.assign({}, CONFIG,
+          {
+            responseType: type,
+          });
+
+        directoryFile.getSignedUrl(config,
+            (_: Error, signedUrl: string) => {
+              assert(signedUrl.indexOf(encodeURIComponent(type)) > -1);
+              done();
+            });
+      });
+
+      it('should add generation parameter', done => {
+        const generation = 10003320000;
+        const file = new File(BUCKET, 'name', {generation});
+
+        file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
+          assert(
+              signedUrl.indexOf(encodeURIComponent(generation.toString())) >
+              -1);
+          done();
+        });
+      });
     });
 
     describe('v2 signed URL', () => {
