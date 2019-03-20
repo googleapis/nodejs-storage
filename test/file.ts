@@ -2538,10 +2538,9 @@ describe('File', () => {
         file.getDate = () => NOW;
       });
 
-      const SCOPE = '20190318/auto/storage/goog4_request';
-      const CREDENTIAL = `${CLIENT_EMAIL}/${SCOPE}`;
-
       it('should create a v4 signed url when specified', done => {
+        const SCOPE = '20190318/auto/storage/goog4_request';
+        const CREDENTIAL = `${CLIENT_EMAIL}/${SCOPE}`;
         const EXPECTED_QUERY_PARAM = [
           'X-Goog-Algorithm=GOOG4-RSA-SHA256',
           `X-Goog-Credential=${encodeURIComponent(CREDENTIAL)}`,
@@ -2572,9 +2571,11 @@ describe('File', () => {
           return Promise.resolve('signature');
         };
 
-        CONFIG.expires = NOW.valueOf() + 2000;
+        const config = Object.assign({}, CONFIG, {
+          expires: NOW.valueOf() + 2000,
+        });
 
-        file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
+        file.getSignedUrl(config, (err: Error, signedUrl: string) => {
           assert.ifError(err);
           assert.strictEqual(typeof signedUrl, 'string');
           done();
@@ -2582,13 +2583,15 @@ describe('File', () => {
       });
 
       it('should fail for expirations beyond 7 days', () => {
-        CONFIG.expires = NOW.valueOf() + 7.1 * 24 * 60 * 60 * 1000;
+        const config = Object.assign({}, CONFIG, {
+          expires:NOW.valueOf() + 7.1 * 24 * 60 * 60 * 1000,
+        })
         assert.throws(
-          () => { file.getSignedUrl(CONFIG, () => { }); },
+          () => { file.getSignedUrl(config, () => { }); },
           /Max allowed expiration is seven days/,
         );
       });
-    })
+    });
 
     describe('v2 signed URL', () => {
       beforeEach(() => {

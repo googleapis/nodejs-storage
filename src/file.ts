@@ -290,12 +290,7 @@ interface FileQuery {
 }
 
 interface SignedUrlQuery {
-  GoogleAccessId: string;
-  Expires: number;
-  Signature: string;
-  generation: number;
-  'response-content-type': string;
-  'response-content-disposition': string;
+  [key: string]: string;
 }
 
 export interface CreateReadStreamOptions {
@@ -2316,23 +2311,50 @@ class File extends ServiceObject<File> {
       name,
     });
 
+    let promise: Promise<SignedUrlQuery>;
     if (version === 'v2') {
-      return this.getSignedUrlV2(config, callback!);
+      promise = this.getSignedUrlV2(config);
     } else if (version === 'v4') {
-      return this.getSignedUrlV4(config, callback!);
+      promise = this.getSignedUrlV4(config);
     } else {
       throw new Error(`Invalid signed URL version: ${
-          version}. Supported versions are 'v2' and 'v4'.`);
+        version}. Supported versions are 'v2' and 'v4'.`);
     }
+
+    promise
+      .then((query) => {
+        if (typeof config.responseType === 'string') {
+          query['response-content-type'] = config.responseType!;
+        }
+
+        if (typeof config.promptSaveAs === 'string') {
+          query['response-content-disposition'] =
+            'attachment; filename="' + config.promptSaveAs + '"';
+        }
+        if (typeof config.responseDisposition === 'string') {
+          query['response-content-disposition'] =
+            config.responseDisposition!;
+        }
+
+        if (this.generation) {
+          query.generation = this.generation.toString();
+        }
+
+        const parsedHost =
+          url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
+        const signedUrl = url.format({
+          protocol: parsedHost.protocol,
+          hostname: parsedHost.hostname,
+          pathname: config.cname ? name : this.bucket.name + '/' + name,
+          query,
+        });
+
+        callback!(null, signedUrl);
+      })
+      .catch(callback!);
   }
 
-  private getSignedUrlV2(config: GetSignedUrlConfigInternal):
-      Promise<GetSignedUrlResponse>;
-  private getSignedUrlV2(
-      config: GetSignedUrlConfigInternal, callback: GetSignedUrlCallback): void;
-  private getSignedUrlV2(
-      config: GetSignedUrlConfigInternal,
-      callback?: GetSignedUrlCallback): void|Promise<GetSignedUrlResponse> {
+  private getSignedUrlV2(config: GetSignedUrlConfigInternal): Promise<SignedUrlQuery> {
     let extensionHeadersString = '';
 
     if (config.action === 'POST') {
@@ -2357,57 +2379,22 @@ class File extends ServiceObject<File> {
     ].join('\n');
 
     const authClient = this.storage.authClient;
-    authClient.sign(blobToSign)
-        .then(signature => {
-          authClient.getCredentials().then(credentials => {
-            const query = {
-              GoogleAccessId: credentials.client_email,
-              Expires: config.expiration,
+    return authClient.sign(blobToSign)
+        .then(signature =>
+          authClient.getCredentials().then(credentials => (
+            {
+              GoogleAccessId: credentials.client_email!,
+              Expires: config.expiration.toString(),
               Signature: signature,
-            } as SignedUrlQuery;
-
-            if (typeof config.responseType === 'string') {
-              query['response-content-type'] = config.responseType!;
             }
-
-            if (typeof config.promptSaveAs === 'string') {
-              query['response-content-disposition'] =
-                  'attachment; filename="' + config.promptSaveAs + '"';
-            }
-            if (typeof config.responseDisposition === 'string') {
-              query['response-content-disposition'] =
-                  config.responseDisposition!;
-            }
-
-            if (this.generation) {
-              query.generation = this.generation;
-            }
-
-            const parsedHost =
-                url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
-            const signedUrl = url.format({
-              protocol: parsedHost.protocol,
-              hostname: parsedHost.hostname,
-              pathname: config.cname ? config.name :
-                                       this.bucket.name + '/' + config.name,
-              query,
-            });
-
-            callback!(null, signedUrl);
-          });
-        })
-        .catch(err => {
-          callback!(new SigningError(err.message));
+          )),
+        )
+        .catch((err) => {
+          throw new SigningError(err.message);
         });
   }
 
-  private getSignedUrlV4(config: GetSignedUrlConfigInternal):
-      Promise<GetSignedUrlResponse>;
-  private getSignedUrlV4(
-      config: GetSignedUrlConfigInternal, callback: GetSignedUrlCallback): void;
-  private getSignedUrlV4(
-      config: GetSignedUrlConfigInternal,
-      callback?: GetSignedUrlCallback): Promise<GetSignedUrlResponse>|void {
+  private getSignedUrlV4(config: GetSignedUrlConfigInternal): Promise<SignedUrlQuery> {
     const now = this.getDate();
     const nowInSeconds = Math.floor(now.valueOf() / 1000);
     const expiresPeriodInSeconds = config.expiration - nowInSeconds;
@@ -2441,9 +2428,9 @@ class File extends ServiceObject<File> {
     const datestamp = dateToISOString(now).split('T')[0];
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
 
-    let queryParams = {} as { [key: string]: string };
+    let queryParams = {} as SignedUrlQuery;
 
-    this.storage.authClient.getCredentials()
+    return this.storage.authClient.getCredentials()
         .then((credentials) => {
           const credential = `${credentials.client_email}/${credentialScope}`;
 
@@ -2483,24 +2470,15 @@ class File extends ServiceObject<File> {
             canonicalRequestHash,
           ].join('\n');
 
-          return this.storage.authClient.sign(blobToSign);
+          return this.storage.authClient.sign(blobToSign)
+            .catch((err) => {
+              throw new SigningError(err.message);
+            });
         })
         .then((signature) => {
           queryParams['X-Goog-Signature'] = signature;
-
-          const parsedHost =
-            url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
-
-          const signedUrl = url.format({
-            protocol: parsedHost.protocol,
-            hostname: parsedHost.hostname,
-            pathname: config.cname ? config.name :
-              this.bucket.name + '/' + config.name,
-            query: queryParams,
-          });
-          callback!(null, signedUrl);
+          return queryParams;
         })
-        .catch(callback!);
   }
 
   makePrivate(options?: MakeFilePrivateOptions):
