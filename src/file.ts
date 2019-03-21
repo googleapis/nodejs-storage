@@ -2476,9 +2476,12 @@ class File extends ServiceObject<File> {
             });
         })
         .then((signature) => {
-          queryParams['X-Goog-Signature'] = signature;
+          const signatureHex = Buffer
+            .from(signature, 'base64')
+            .toString('hex');
+          queryParams['X-Goog-Signature'] = signatureHex;
           return queryParams;
-        })
+        });
   }
 
   makePrivate(options?: MakeFilePrivateOptions):
@@ -3144,7 +3147,7 @@ class File extends ServiceObject<File> {
  * that a callback is omitted.
  */
 promisifyAll(File, {
-  exclude: ['request', 'setEncryptionKey'],
+  exclude: ['request', 'setEncryptionKey', 'getSignedUrlV2', 'getSignedUrlV4'],
 });
 
 /**
