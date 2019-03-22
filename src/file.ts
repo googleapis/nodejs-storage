@@ -3144,11 +3144,12 @@ class File extends ServiceObject<File> {
    */
   private getCanonicalHeaders(headers: http.OutgoingHttpHeaders) {
     // Sort headers by their lowercased names
-    const sortedHeaders = flattenObject(headers)
-        .map<[string, string | string[] | number | undefined]>(
-          ([headerName, value]) => [headerName.toLowerCase(), value],
-        )
-        .sort((a, b) => a[0].localeCompare(b[0]));
+    const sortedHeaders =
+        flattenObject(headers)
+            .map<[string, string | string[] | number | undefined]>(
+                ([headerName, value]) => [headerName.toLowerCase(), value],
+                )
+            .sort((a, b) => a[0].localeCompare(b[0]));
 
     return sortedHeaders
         .map(([headerName, value]) => {

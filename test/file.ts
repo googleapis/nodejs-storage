@@ -2649,7 +2649,7 @@ describe('File', () => {
           assert(signedUrl.indexOf('content-type') > -1);
           done();
         });
-      })
+      });
     });
 
     describe('v2 signed URL', () => {

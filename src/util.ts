@@ -40,7 +40,6 @@ export function dateToISOString(date: Date): string {
  * Flatten an object into an Array of arrays, [[key, value], ..].
  * @internal
  */
-export function flattenObject<T>(obj: {[key: string]: T}): [string, T][] {
-  return Object.keys(obj)
-    .map((key) => [key, obj[key]] as [string, T]);
+export function flattenObject<T>(obj: {[key: string]: T}): Array<[string, T]> {
+  return Object.keys(obj).map((key) => [key, obj[key]] as [string, T]);
 }
