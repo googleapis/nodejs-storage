@@ -2846,36 +2846,6 @@ describe('storage', () => {
     });
   });
 
-  describe.only('v4 signed url', () => {
-    let bucket: Bucket;
-
-    const SERVICE_ACCOUNT = path.join(
-      __dirname,
-      '../../system-test/fixtures/signing-service-account.json');
-
-    before(() => {
-      const storage = new Storage({
-        keyFilename: SERVICE_ACCOUNT,
-      })
-      bucket = storage.bucket('test-bucket');
-    });
-
-    it('should create a signed url', () => {
-      const file = bucket.file('test-object');
-      const NOW = new Date('2019-02-01T09:00:00Z');
-      file.getDate = () => NOW;
-
-      return file
-        .getSignedUrl({
-          action: 'read',
-          expires: NOW.valueOf() + 10000,
-          version: 'v4',
-        }).then(([url]) => {
-          assert.strictEqual(url, `https://storage.googleapis.com/test-bucket/test-object?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=test-iam-credentials%40dummy-project-id.iam.gserviceaccount.com%2F20190201%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20190201T090000Z&X-Goog-Expires=10&X-Goog-SignedHeaders=host&X-Goog-Signature=95e6a13d43a1d1962e667f17397f2b80ac9bdd1669210d5e08e0135df9dff4e56113485dbe429ca2266487b9d1796ebdee2d7cf682a6ef3bb9fbb4c351686fba90d7b621cf1c4eb1fdf126460dd25fa0837dfdde0a9fd98662ce60844c458448fb2b352c203d9969cb74efa4bdb742287744a4f2308afa4af0e0773f55e32e92973619249214b97283b2daa14195244444e33f938138d1e5f561088ce8011f4986dda33a556412594db7c12fc40e1ff3f1bedeb7a42f5bcda0b9567f17f65855f65071fabb88ea12371877f3f77f10e1466fff6ff6973b74a933322ff0949ce357e20abe96c3dd5cfab42c9c83e740a4d32b9e11e146f0eb3404d2e975896f74`)
-        });
-    });
-  });
-
   describe('sign policy', () => {
     let file: File;
 

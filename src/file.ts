@@ -2405,8 +2405,6 @@ class File extends ServiceObject<File> {
           `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`);
     }
 
-    let extensionHeadersString = '';
-
     const extensionHeaders = Object.assign({}, config.extensionHeaders);
     extensionHeaders['host'] = 'storage.googleapis.com';
     if (config.action === 'POST') {
@@ -2415,15 +2413,10 @@ class File extends ServiceObject<File> {
 
     let signedHeaders = new Array<string>();  // should have host at least
     signedHeaders = Object.keys(extensionHeaders);
-    signedHeaders.sort();
     signedHeaders = signedHeaders.map(header => header.toLowerCase());
+    signedHeaders.sort();
 
-    for (const headerName of signedHeaders) {
-      const value =
-        `${extensionHeaders[headerName]}`.trim().toLowerCase();
-
-      extensionHeadersString += `${headerName.toLowerCase()}:${value}\n`;
-    }
+    const extensionHeadersString = this.getCanonicalHeaders(extensionHeaders);
 
     const datestamp = dateToISOString(now).split('T')[0];
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
@@ -2479,6 +2472,7 @@ class File extends ServiceObject<File> {
           const signatureHex = Buffer
             .from(signature, 'base64')
             .toString('hex');
+
           queryParams['X-Goog-Signature'] = signatureHex;
           return queryParams;
         });
@@ -3139,6 +3133,36 @@ class File extends ServiceObject<File> {
   getDate(): Date {
     return new Date();
   }
+
+  /**
+   * Create canonical headers for signing v4 url.
+   * @param headers
+   * @private
+   */
+  private getCanonicalHeaders(headers: http.OutgoingHttpHeaders) {
+    // Sort headers by their lowercased names
+    const sortedHeaders = Object.entries(headers)
+      .map<[string, string|string[]|number|undefined]>(
+        ([headerName, value]) => [headerName.toLowerCase(), value],
+      )
+      .sort((a, b) => a[0].localeCompare(b[0]));
+
+    return sortedHeaders
+      .map(([headerName, value]) => {
+        if (!value) return;
+
+        let values = Array.isArray(value) ? value : [value.toString(10)];
+
+        const canonicalValue = values
+          .map((val) => val.trim())
+          // Sequential (2+) spaces should be converted into a single space
+          .map((val) => val.replace(/\s{2,}/, ' '))
+          .join(', ');
+
+        return `${headerName.toLowerCase()}:${canonicalValue}\n`;
+      })
+      .join('');
+  }
 }
 
 /*! Developer Documentation
@@ -3147,7 +3171,7 @@ class File extends ServiceObject<File> {
  * that a callback is omitted.
  */
 promisifyAll(File, {
-  exclude: ['request', 'setEncryptionKey', 'getSignedUrlV2', 'getSignedUrlV4'],
+  exclude: ['request', 'setEncryptionKey', 'getSignedUrlV2', 'getSignedUrlV4', 'getCanonicalHeaders'],
 });
 
 /**
