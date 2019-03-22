@@ -54,7 +54,14 @@ const fakePromisify = {
     }
 
     promisified = true;
-    assert.deepStrictEqual(options.exclude, ['request', 'setEncryptionKey']);
+    assert.deepStrictEqual(options.exclude, [
+      'request',
+      'setEncryptionKey',
+      'getSignedUrlV2',
+      'getSignedUrlV4',
+      'getCanonicalHeaders',
+      'getDate',
+    ]);
   },
 };
 
@@ -2615,6 +2622,14 @@ describe('File', () => {
           assert(
               signedUrl.indexOf(encodeURIComponent(generation.toString())) >
               -1);
+          done();
+        });
+      });
+
+      it('should URI encode file names', done => {
+        directoryFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
+          assert(
+              signedUrl.indexOf(encodeURIComponent(directoryFile.name)) > -1);
           done();
         });
       });

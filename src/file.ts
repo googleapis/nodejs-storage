@@ -3171,8 +3171,12 @@ class File extends ServiceObject<File> {
  */
 promisifyAll(File, {
   exclude: [
-    'request', 'setEncryptionKey', 'getSignedUrlV2', 'getSignedUrlV4',
-    'getCanonicalHeaders', 'getDate',
+    'request',
+    'setEncryptionKey',
+    'getSignedUrlV2',
+    'getSignedUrlV4',
+    'getCanonicalHeaders',
+    'getDate',
   ],
 });
 
