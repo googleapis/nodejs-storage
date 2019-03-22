@@ -2537,6 +2537,13 @@ describe('File', () => {
       });
     });
 
+    it('should error for an invalid version', () => {
+      const config = Object.assign({}, CONFIG, { version: 'v42' });
+      assert.throws(() => {
+        file.getSignedUrl(config, () => {});
+      }, /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./)
+    });
+
     describe('v4 signed URL', () => {
       const NOW = new Date('2019-03-18T00:00:00Z');
 
