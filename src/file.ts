@@ -3158,7 +3158,7 @@ class File extends ServiceObject<File> {
                                      .map((val) => val.replace(/\s{2,}/, ' '))
                                      .join(', ');
 
-          return `${headerName.toLowerCase()}:${canonicalValue}\n`;
+          return `${headerName}:${canonicalValue}\n`;
         })
         .join('');
   }
