@@ -2410,6 +2410,12 @@ class File extends ServiceObject<File> {
     if (config.action === 'POST') {
       extensionHeaders['x-goog-resumable'] = 'start';
     }
+    if (config.contentMd5) {
+      extensionHeaders['content-md5'] = config.contentMd5;
+    }
+    if (config.contentType) {
+      extensionHeaders['content-type'] = config.contentType;
+    }
 
     let signedHeaders = new Array<string>();  // should have host at least
     signedHeaders = Object.keys(extensionHeaders);

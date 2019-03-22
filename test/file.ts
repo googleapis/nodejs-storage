@@ -2633,6 +2633,23 @@ describe('File', () => {
           done();
         });
       });
+
+      it('should add Content-MD5 and Content-Type headers if given', done => {
+        const config = {
+          action: 'write',
+          version: 'v4',
+          expires: NOW.valueOf() + 2000,
+          contentMd5: 'bf2342851dfc2edd281a6b079d806cbe',
+          contentType: 'image/png',
+        };
+
+        file.getSignedUrl(config, (err: Error, signedUrl: string) => {
+          assert.ifError(err);
+          assert(signedUrl.indexOf('content-md5') > -1);
+          assert(signedUrl.indexOf('content-type') > -1);
+          done();
+        });
+      })
     });
 
     describe('v2 signed URL', () => {
