@@ -2496,7 +2496,7 @@ describe('File', () => {
   describe('getSignedUrl', () => {
     const CONFIG = {
       action: 'read',
-      expires: Date.now() + 2000, // now + 2 seconds
+      expires: Date.now() + 2000,  // now + 2 seconds
     } as {action: string, expires: number, version: string};
 
     const CLIENT_EMAIL = 'client-email';
@@ -2584,27 +2584,27 @@ describe('File', () => {
 
       it('should fail for expirations beyond 7 days', () => {
         const config = Object.assign({}, CONFIG, {
-          expires:NOW.valueOf() + 7.1 * 24 * 60 * 60 * 1000,
-        })
+          expires: NOW.valueOf() + 7.1 * 24 * 60 * 60 * 1000,
+        });
         assert.throws(
-          () => { file.getSignedUrl(config, () => { }); },
-          /Max allowed expiration is seven days/,
+            () => {
+              file.getSignedUrl(config, () => {});
+            },
+            /Max allowed expiration is seven days/,
         );
       });
 
       it('should add response-content-type parameter', done => {
         const type = 'application/json';
 
-        const config = Object.assign({}, CONFIG,
-          {
-            responseType: type,
-          });
+        const config = Object.assign({}, CONFIG, {
+          responseType: type,
+        });
 
-        directoryFile.getSignedUrl(config,
-            (_: Error, signedUrl: string) => {
-              assert(signedUrl.indexOf(encodeURIComponent(type)) > -1);
-              done();
-            });
+        directoryFile.getSignedUrl(config, (_: Error, signedUrl: string) => {
+          assert(signedUrl.indexOf(encodeURIComponent(type)) > -1);
+          done();
+        });
       });
 
       it('should add generation parameter', done => {
@@ -2623,7 +2623,7 @@ describe('File', () => {
     describe('v2 signed URL', () => {
       beforeEach(() => {
         CONFIG.version = 'v2';
-      })
+      });
 
       it('should create a v2 signed url when specified', done => {
         BUCKET.storage.authClient.sign = (blobToSign: string) => {

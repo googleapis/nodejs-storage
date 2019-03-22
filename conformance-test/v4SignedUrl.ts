@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 import * as assert from 'assert';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 
 import {Storage} from '../src/';
 
 const testCases = JSON.parse(fs.readFileSync(
-  path.join(
-    __dirname,
-    '../../conformance-test/test-data/v4SignedUrl.json',
-  ), 'utf-8'));
+    path.join(
+        __dirname,
+        '../../conformance-test/test-data/v4SignedUrl.json',
+        ),
+    'utf-8'));
 
 const SERVICE_ACCOUNT = path.join(
-  __dirname,
-  '../../conformance-test/fixtures/signing-service-account.json');
+    __dirname, '../../conformance-test/fixtures/signing-service-account.json');
 
 describe('v4 signed url', () => {
   let storage: Storage;
 
   before(() => {
-    storage = new Storage({ keyFilename: SERVICE_ACCOUNT })
+    storage = new Storage({keyFilename: SERVICE_ACCOUNT});
   });
 
   // tslint:disable-next-line:no-any
@@ -49,20 +49,23 @@ describe('v4 signed url', () => {
         POST: 'resumable',
         PUT: 'write',
         DELETE: 'delete',
-      } as {[index: string]: 'read'|'resumable'|'write'|'delete'})[testCase.method];
+      } as {
+        [index: string]: 'read' | 'resumable' | 'write' | 'delete'
+      })[testCase.method];
 
-      const expires = new Date(testCase.timestamp).valueOf() + testCase.expiration * 1000;
+      const expires =
+          new Date(testCase.timestamp).valueOf() + testCase.expiration * 1000;
 
       return file
-        .getSignedUrl({
-          version: 'v4',
-          action,
-          expires,
-          extensionHeaders: testCase.headers,
-        })
-        .then(([signedUrl]) => {
-          assert.strictEqual(signedUrl, testCase.expectedUrl);
-        })
+          .getSignedUrl({
+            version: 'v4',
+            action,
+            expires,
+            extensionHeaders: testCase.headers,
+          })
+          .then(([signedUrl]) => {
+            assert.strictEqual(signedUrl, testCase.expectedUrl);
+          });
     });
   });
 });

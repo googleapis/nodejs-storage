@@ -2318,43 +2318,43 @@ class File extends ServiceObject<File> {
       promise = this.getSignedUrlV4(config);
     } else {
       throw new Error(`Invalid signed URL version: ${
-        version}. Supported versions are 'v2' and 'v4'.`);
+          version}. Supported versions are 'v2' and 'v4'.`);
     }
 
     promise
-      .then((query) => {
-        if (typeof config.responseType === 'string') {
-          query['response-content-type'] = config.responseType!;
-        }
+        .then((query) => {
+          if (typeof config.responseType === 'string') {
+            query['response-content-type'] = config.responseType!;
+          }
 
-        if (typeof config.promptSaveAs === 'string') {
-          query['response-content-disposition'] =
-            'attachment; filename="' + config.promptSaveAs + '"';
-        }
-        if (typeof config.responseDisposition === 'string') {
-          query['response-content-disposition'] =
-            config.responseDisposition!;
-        }
+          if (typeof config.promptSaveAs === 'string') {
+            query['response-content-disposition'] =
+                'attachment; filename="' + config.promptSaveAs + '"';
+          }
+          if (typeof config.responseDisposition === 'string') {
+            query['response-content-disposition'] = config.responseDisposition!;
+          }
 
-        if (this.generation) {
-          query.generation = this.generation.toString();
-        }
+          if (this.generation) {
+            query.generation = this.generation.toString();
+          }
 
-        const parsedHost =
-          url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
-        const signedUrl = url.format({
-          protocol: parsedHost.protocol,
-          hostname: parsedHost.hostname,
-          pathname: config.cname ? name : this.bucket.name + '/' + name,
-          query,
-        });
+          const parsedHost =
+              url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
+          const signedUrl = url.format({
+            protocol: parsedHost.protocol,
+            hostname: parsedHost.hostname,
+            pathname: config.cname ? name : this.bucket.name + '/' + name,
+            query,
+          });
 
-        callback!(null, signedUrl);
-      })
-      .catch(callback!);
+          callback!(null, signedUrl);
+        })
+        .catch(callback!);
   }
 
-  private getSignedUrlV2(config: GetSignedUrlConfigInternal): Promise<SignedUrlQuery> {
+  private getSignedUrlV2(config: GetSignedUrlConfigInternal):
+      Promise<SignedUrlQuery> {
     let extensionHeadersString = '';
 
     if (config.action === 'POST') {
@@ -2380,21 +2380,21 @@ class File extends ServiceObject<File> {
 
     const authClient = this.storage.authClient;
     return authClient.sign(blobToSign)
-        .then(signature =>
-          authClient.getCredentials().then(credentials => (
-            {
-              GoogleAccessId: credentials.client_email!,
-              Expires: config.expiration.toString(),
-              Signature: signature,
-            }
-          )),
-        )
+        .then(
+            signature => authClient.getCredentials().then(
+                credentials => ({
+                  GoogleAccessId: credentials.client_email!,
+                  Expires: config.expiration.toString(),
+                  Signature: signature,
+                })),
+            )
         .catch((err) => {
           throw new SigningError(err.message);
         });
   }
 
-  private getSignedUrlV4(config: GetSignedUrlConfigInternal): Promise<SignedUrlQuery> {
+  private getSignedUrlV4(config: GetSignedUrlConfigInternal):
+      Promise<SignedUrlQuery> {
     const now = this.getDate();
     const nowInSeconds = Math.floor(now.valueOf() / 1000);
     const expiresPeriodInSeconds = config.expiration - nowInSeconds;
@@ -2433,7 +2433,7 @@ class File extends ServiceObject<File> {
             'X-Goog-Date': dateToISOString(now),
             'X-Goog-Expires': expiresPeriodInSeconds.toString(),
             'X-Goog-SignedHeaders': signedHeaders.join(';'),
-          }
+          };
 
           const canonicalQueryParams = [];
           const keys = Object.keys(queryParams);
@@ -2453,8 +2453,8 @@ class File extends ServiceObject<File> {
           ].join('\n');
 
           const canonicalRequestHash = crypto.createHash('sha256')
-                                             .update(canonicalRequest)
-                                             .digest('hex');
+                                           .update(canonicalRequest)
+                                           .digest('hex');
 
           const blobToSign = [
             'GOOG4-RSA-SHA256',
@@ -2463,15 +2463,12 @@ class File extends ServiceObject<File> {
             canonicalRequestHash,
           ].join('\n');
 
-          return this.storage.authClient.sign(blobToSign)
-            .catch((err) => {
-              throw new SigningError(err.message);
-            });
+          return this.storage.authClient.sign(blobToSign).catch((err) => {
+            throw new SigningError(err.message);
+          });
         })
         .then((signature) => {
-          const signatureHex = Buffer
-            .from(signature, 'base64')
-            .toString('hex');
+          const signatureHex = Buffer.from(signature, 'base64').toString('hex');
 
           queryParams['X-Goog-Signature'] = signatureHex;
           return queryParams;
@@ -3141,27 +3138,29 @@ class File extends ServiceObject<File> {
    */
   private getCanonicalHeaders(headers: http.OutgoingHttpHeaders) {
     // Sort headers by their lowercased names
-    const sortedHeaders = Object.entries(headers)
-      .map<[string, string|string[]|number|undefined]>(
-        ([headerName, value]) => [headerName.toLowerCase(), value],
-      )
-      .sort((a, b) => a[0].localeCompare(b[0]));
+    const sortedHeaders =
+        Object.entries(headers)
+            .map<[string, string | string[] | number | undefined]>(
+                ([headerName, value]) => [headerName.toLowerCase(), value],
+                )
+            .sort((a, b) => a[0].localeCompare(b[0]));
 
     return sortedHeaders
-      .map(([headerName, value]) => {
-        if (!value) return;
+        .map(([headerName, value]) => {
+          if (!value) return;
 
-        let values = Array.isArray(value) ? value : [value.toString(10)];
+          const values = Array.isArray(value) ? value : [value.toString(10)];
 
-        const canonicalValue = values
-          .map((val) => val.trim())
-          // Sequential (2+) spaces should be converted into a single space
-          .map((val) => val.replace(/\s{2,}/, ' '))
-          .join(', ');
+          const canonicalValue = values
+                                     .map((val) => val.trim())
+                                     // Sequential (2+) spaces should be
+                                     // converted into a single space
+                                     .map((val) => val.replace(/\s{2,}/, ' '))
+                                     .join(', ');
 
-        return `${headerName.toLowerCase()}:${canonicalValue}\n`;
-      })
-      .join('');
+          return `${headerName.toLowerCase()}:${canonicalValue}\n`;
+        })
+        .join('');
   }
 }
 
@@ -3171,7 +3170,10 @@ class File extends ServiceObject<File> {
  * that a callback is omitted.
  */
 promisifyAll(File, {
-  exclude: ['request', 'setEncryptionKey', 'getSignedUrlV2', 'getSignedUrlV4', 'getCanonicalHeaders'],
+  exclude: [
+    'request', 'setEncryptionKey', 'getSignedUrlV2', 'getSignedUrlV4',
+    'getCanonicalHeaders'
+  ],
 });
 
 /**
