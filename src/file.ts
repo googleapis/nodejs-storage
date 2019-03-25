@@ -3147,6 +3147,7 @@ class File extends ServiceObject<File> {
         .map(([headerName, value]) => {
           if (!value) return;
 
+          // Convert single-valued header to an Array<string>
           const values = Array.isArray(value) ? value : [value.toString(10)];
 
           const canonicalValue = values
