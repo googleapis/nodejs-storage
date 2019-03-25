@@ -2441,13 +2441,10 @@ class File extends ServiceObject<File> {
             'X-Goog-SignedHeaders': signedHeaders.join(';'),
           };
 
-          const canonicalQueryParams = [];
-          const keys = Object.keys(queryParams);
-          for (const param of keys) {
-            keys.sort();
-            canonicalQueryParams.push(
-                param + '=' + encodeURIComponent(queryParams[param]));
-          }
+          const canonicalQueryParams =
+            Object.keys(queryParams)
+              .sort()
+              .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`);
 
           const canonicalRequest = [
             config.action,
