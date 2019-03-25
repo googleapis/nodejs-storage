@@ -2285,7 +2285,7 @@ class File extends ServiceObject<File> {
       throw new Error('The expiration date provided was invalid.');
     }
 
-    if (expiresInMSeconds < this.getDate().valueOf()) {
+    if (expiresInMSeconds < Date.now()) {
       throw new Error('An expiration date cannot be in the past.');
     }
 
@@ -2395,7 +2395,7 @@ class File extends ServiceObject<File> {
 
   private getSignedUrlV4(config: GetSignedUrlConfigInternal):
       Promise<SignedUrlQuery> {
-    const now = this.getDate();
+    const now = new Date();
     const nowInSeconds = Math.floor(now.valueOf() / 1000);
     const expiresPeriodInSeconds = config.expiration - nowInSeconds;
 
@@ -3126,15 +3126,6 @@ class File extends ServiceObject<File> {
       request: reqOpts,
       requestModule: teenyRequest as typeof r,
     });
-  }
-
-  /**
-   * Wrapper for new Date() for tests.
-   * @return {Date} value as returned by new Date().
-   * @private
-   */
-  getDate(): Date {
-    return new Date();
   }
 
   /**

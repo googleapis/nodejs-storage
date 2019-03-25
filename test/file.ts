@@ -29,8 +29,9 @@ import * as through from 'through2';
 import * as tmp from 'tmp';
 import * as url from 'url';
 import * as zlib from 'zlib';
+import * as timekeeper from 'timekeeper';
 
-import {Bucket, File, FileOptions, GetFileMetadataOptions, PolicyDocument, SetFileMetadataOptions} from '../src';
+import {Bucket, File, FileOptions, GetFileMetadataOptions, PolicyDocument, SetFileMetadataOptions, GetSignedUrlConfig} from '../src';
 
 let promisified = false;
 let makeWritableStreamOverride: Function|null;
@@ -2501,14 +2502,18 @@ describe('File', () => {
   });
 
   describe('getSignedUrl', () => {
+    const NOW = new Date('2019-03-18T00:00:00Z');
+
     const CONFIG = {
       action: 'read',
-      expires: Date.now() + 2000,  // now + 2 seconds
-    } as {action: string, expires: number, version: string};
+      expires: NOW.valueOf() + 2000,  // now + 2 seconds
+    } as GetSignedUrlConfig;
 
     const CLIENT_EMAIL = 'client-email';
 
     beforeEach(() => {
+      timekeeper.freeze(NOW);
+
       BUCKET.storage.authClient = {
         getCredentials() {
           return Promise.resolve({
@@ -2521,11 +2526,15 @@ describe('File', () => {
       };
     });
 
+    afterEach(() => {
+      timekeeper.reset();
+    })
+
     it('should default to v2 if version is not given', done => {
       file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
         assert.ifError(err);
         assert.strictEqual(typeof signedUrl, 'string');
-        const expires = Math.round(CONFIG.expires / 1000);
+        const expires = Math.round((CONFIG.expires as number) / 1000);
         const expected =
             'https://storage.googleapis.com/bucket-name/file-name.png?' +
             'GoogleAccessId=client-email&Expires=' + expires +
@@ -2545,11 +2554,8 @@ describe('File', () => {
     });
 
     describe('v4 signed URL', () => {
-      const NOW = new Date('2019-03-18T00:00:00Z');
-
       beforeEach(() => {
         CONFIG.version = 'v4';
-        file.getDate = () => NOW;
       });
 
       it('should create a v4 signed url when specified', done => {
@@ -2670,7 +2676,7 @@ describe('File', () => {
             'GET',
             '',
             '',
-            Math.round(CONFIG.expires / 1000),
+            Math.round((CONFIG.expires as number) / 1000),
             `/${BUCKET.name}/${encodeURIComponent(file.name)}`,
           ].join('\n'));
           return Promise.resolve('signature');
@@ -2679,7 +2685,7 @@ describe('File', () => {
         file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
           assert.ifError(err);
           assert.strictEqual(typeof signedUrl, 'string');
-          const expires = Math.round(CONFIG.expires / 1000);
+          const expires = Math.round((CONFIG.expires as number) / 1000);
           const expected =
               'https://storage.googleapis.com/bucket-name/file-name.png?' +
               'GoogleAccessId=client-email&Expires=' + expires +
@@ -2771,7 +2777,7 @@ describe('File', () => {
         file.getSignedUrl(configWithCname, (err: Error, signedUrl: string) => {
           assert.ifError(err);
 
-          const expires = Math.round(CONFIG.expires / 1000);
+          const expires = Math.round((CONFIG.expires as number) / 1000);
           const expected = 'http://www.example.com/file-name.png?' +
               'GoogleAccessId=client-email&Expires=' + expires +
               '&Signature=signature';
