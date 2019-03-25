@@ -2421,7 +2421,8 @@ class File extends ServiceObject<File> {
     const signedHeaders =
       Object.keys(extensionHeaders)
         .map(header => header.toLowerCase())
-        .sort();
+        .sort()
+        .join(';');
 
     const extensionHeadersString = this.getCanonicalHeaders(extensionHeaders);
 
@@ -2440,7 +2441,7 @@ class File extends ServiceObject<File> {
             'X-Goog-Credential': credential,
             'X-Goog-Date': dateISO,
             'X-Goog-Expires': expiresPeriodInSeconds.toString(),
-            'X-Goog-SignedHeaders': signedHeaders.join(';'),
+            'X-Goog-SignedHeaders': signedHeaders,
           };
 
           const canonicalQueryParams =
@@ -2455,7 +2456,7 @@ class File extends ServiceObject<File> {
             config.resource,
             canonicalQueryParams.join('&'),
             extensionHeadersString,
-            signedHeaders.join(';'),
+            signedHeaders,
             'UNSIGNED-PAYLOAD',
           ].join('\n');
 
