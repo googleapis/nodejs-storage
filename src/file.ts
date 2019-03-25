@@ -44,7 +44,7 @@ import {Storage} from './storage';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 import {ResponseBody, ApiError} from '@google-cloud/common/build/src/util';
-import {normalize, dateToISOString, flattenObject} from './util';
+import {normalize, flattenObject} from './util';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -2425,7 +2425,7 @@ class File extends ServiceObject<File> {
 
     const extensionHeadersString = this.getCanonicalHeaders(extensionHeaders);
 
-    const datestamp = dateformat(now, "UTC:yyyymmdd")
+    const datestamp = dateformat(now, 'UTC:yyyymmdd');
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
 
     let queryParams = {} as SignedUrlQuery;
@@ -2437,15 +2437,17 @@ class File extends ServiceObject<File> {
           queryParams = {
             'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
             'X-Goog-Credential': credential,
-            'X-Goog-Date': dateformat(now, "UTC:yyyymmdd'T'HHMMss'Z'"),
+            'X-Goog-Date': dateformat(now, 'UTC:yyyymmdd\'T\'HHMMss\'Z\''),
             'X-Goog-Expires': expiresPeriodInSeconds.toString(),
             'X-Goog-SignedHeaders': signedHeaders.join(';'),
           };
 
           const canonicalQueryParams =
-            Object.keys(queryParams)
-              .sort()
-              .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`);
+              Object.keys(queryParams)
+                  .sort()
+                  .map(
+                      (key) =>
+                          `${key}=${encodeURIComponent(queryParams[key])}`);
 
           const canonicalRequest = [
             config.action,

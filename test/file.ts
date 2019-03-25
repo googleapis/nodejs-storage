@@ -26,12 +26,12 @@ import * as proxyquire from 'proxyquire';
 import * as stream from 'stream';
 import {Readable} from 'stream';
 import * as through from 'through2';
+import * as timekeeper from 'timekeeper';
 import * as tmp from 'tmp';
 import * as url from 'url';
 import * as zlib from 'zlib';
-import * as timekeeper from 'timekeeper';
 
-import {Bucket, File, FileOptions, GetFileMetadataOptions, PolicyDocument, SetFileMetadataOptions, GetSignedUrlConfig} from '../src';
+import {Bucket, File, FileOptions, GetFileMetadataOptions, GetSignedUrlConfig, PolicyDocument, SetFileMetadataOptions} from '../src';
 
 let promisified = false;
 let makeWritableStreamOverride: Function|null;
@@ -2528,7 +2528,7 @@ describe('File', () => {
 
     afterEach(() => {
       timekeeper.reset();
-    })
+    });
 
     it('should default to v2 if version is not given', done => {
       file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
@@ -2547,10 +2547,10 @@ describe('File', () => {
     });
 
     it('should error for an invalid version', () => {
-      const config = Object.assign({}, CONFIG, { version: 'v42' });
+      const config = Object.assign({}, CONFIG, {version: 'v42'});
       assert.throws(() => {
         file.getSignedUrl(config, () => {});
-      }, /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./)
+      }, /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./);
     });
 
     describe('v4 signed URL', () => {
