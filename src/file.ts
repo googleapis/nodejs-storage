@@ -2301,7 +2301,7 @@ class File extends ServiceObject<File> {
     } as {[index: string]: string})[cfg.action];
 
     const name = encodeURIComponent(this.name);
-    const resource = '/' + this.bucket.name + '/' + name;
+    const resource = `/${this.bucket.name}/${name}`;
 
     const version = cfg.version || DEFAULT_SIGNING_VERSION;
 
@@ -2407,7 +2407,7 @@ class File extends ServiceObject<File> {
     }
 
     const extensionHeaders = Object.assign({}, config.extensionHeaders);
-    extensionHeaders['host'] = 'storage.googleapis.com';
+    extensionHeaders.host = 'storage.googleapis.com';
     if (config.action === 'POST') {
       extensionHeaders['x-goog-resumable'] = 'start';
     }
