@@ -2433,11 +2433,12 @@ class File extends ServiceObject<File> {
     return this.storage.authClient.getCredentials()
         .then((credentials) => {
           const credential = `${credentials.client_email}/${credentialScope}`;
+          const dateISO = dateformat(now, 'UTC:yyyymmdd\'T\'HHMMss\'Z\'');
 
           queryParams = {
             'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
             'X-Goog-Credential': credential,
-            'X-Goog-Date': dateformat(now, 'UTC:yyyymmdd\'T\'HHMMss\'Z\''),
+            'X-Goog-Date': dateISO,
             'X-Goog-Expires': expiresPeriodInSeconds.toString(),
             'X-Goog-SignedHeaders': signedHeaders.join(';'),
           };
@@ -2464,7 +2465,7 @@ class File extends ServiceObject<File> {
 
           const blobToSign = [
             'GOOG4-RSA-SHA256',
-            dateToISOString(now),
+            dateISO,
             credentialScope,
             canonicalRequestHash,
           ].join('\n');
