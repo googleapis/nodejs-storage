@@ -2418,10 +2418,10 @@ class File extends ServiceObject<File> {
       extensionHeaders['content-type'] = config.contentType;
     }
 
-    let signedHeaders = new Array<string>();  // should have host at least
-    signedHeaders = Object.keys(extensionHeaders);
-    signedHeaders = signedHeaders.map(header => header.toLowerCase());
-    signedHeaders.sort();
+    const signedHeaders =
+      Object.keys(extensionHeaders)
+        .map(header => header.toLowerCase())
+        .sort();
 
     const extensionHeadersString = this.getCanonicalHeaders(extensionHeaders);
 
