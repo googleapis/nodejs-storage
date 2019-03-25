@@ -2534,7 +2534,7 @@ describe('File', () => {
       file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
         assert.ifError(err);
         assert.strictEqual(typeof signedUrl, 'string');
-        const expires = Math.round((CONFIG.expires as number) / 1000);
+        const expires = Math.round(Number(CONFIG.expires) / 1000);
         const expected =
             'https://storage.googleapis.com/bucket-name/file-name.png?' +
             'GoogleAccessId=client-email&Expires=' + expires +
@@ -2676,7 +2676,7 @@ describe('File', () => {
             'GET',
             '',
             '',
-            Math.round((CONFIG.expires as number) / 1000),
+            Math.round(Number(CONFIG.expires) / 1000),
             `/${BUCKET.name}/${encodeURIComponent(file.name)}`,
           ].join('\n'));
           return Promise.resolve('signature');
@@ -2685,7 +2685,7 @@ describe('File', () => {
         file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
           assert.ifError(err);
           assert.strictEqual(typeof signedUrl, 'string');
-          const expires = Math.round((CONFIG.expires as number) / 1000);
+          const expires = Math.round(Number(CONFIG.expires) / 1000);
           const expected =
               'https://storage.googleapis.com/bucket-name/file-name.png?' +
               'GoogleAccessId=client-email&Expires=' + expires +
@@ -2777,7 +2777,7 @@ describe('File', () => {
         file.getSignedUrl(configWithCname, (err: Error, signedUrl: string) => {
           assert.ifError(err);
 
-          const expires = Math.round((CONFIG.expires as number) / 1000);
+          const expires = Math.round(Number(CONFIG.expires) / 1000);
           const expected = 'http://www.example.com/file-name.png?' +
               'GoogleAccessId=client-email&Expires=' + expires +
               '&Signature=signature';
