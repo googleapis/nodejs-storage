@@ -20,6 +20,7 @@ import {promisifyAll} from '@google-cloud/promisify';
 import compressible = require('compressible');
 import concat = require('concat-stream');
 import * as crypto from 'crypto';
+import * as dateformat from 'dateformat';
 import * as duplexify from 'duplexify';
 import * as extend from 'extend';
 import * as fs from 'fs';
@@ -2424,7 +2425,7 @@ class File extends ServiceObject<File> {
 
     const extensionHeadersString = this.getCanonicalHeaders(extensionHeaders);
 
-    const datestamp = dateToISOString(now).split('T')[0];
+    const datestamp = dateformat(now, "UTC:yyyymmdd")
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
 
     let queryParams = {} as SignedUrlQuery;
@@ -2436,7 +2437,7 @@ class File extends ServiceObject<File> {
           queryParams = {
             'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
             'X-Goog-Credential': credential,
-            'X-Goog-Date': dateToISOString(now),
+            'X-Goog-Date': dateformat(now, "UTC:yyyymmdd'T'HHMMss'Z'"),
             'X-Goog-Expires': expiresPeriodInSeconds.toString(),
             'X-Goog-SignedHeaders': signedHeaders.join(';'),
           };
