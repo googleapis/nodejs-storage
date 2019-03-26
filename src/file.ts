@@ -292,7 +292,18 @@ interface FileQuery {
 }
 
 interface SignedUrlQuery {
-  [key: string]: string;
+  GoogleAccessId?: string;
+  Expires?: number;
+  Signature?: string;
+  generation?: number;
+  'response-content-type'?: string;
+  'response-content-disposition'?: string;
+  'X-Goog-Algorithm'?: string;
+  'X-Goog-Credential'?: string;
+  'X-Goog-Date'?: string;
+  'X-Goog-Expires'?: number;
+  'X-Goog-SignedHeaders'?: string;
+  'X-Goog-Signature'?: string;
 }
 
 export interface CreateReadStreamOptions {
@@ -2337,7 +2348,7 @@ class File extends ServiceObject<File> {
       }
 
       if (this.generation) {
-        query.generation = this.generation.toString();
+        query.generation = this.generation;
       }
 
       const signedUrl = new url.URL(config.cname || STORAGE_DOWNLOAD_BASE_URL);
@@ -2380,7 +2391,7 @@ class File extends ServiceObject<File> {
             signature => authClient.getCredentials().then(
                 credentials => ({
                   GoogleAccessId: credentials.client_email!,
-                  Expires: config.expiration.toString(),
+                  Expires: config.expiration,
                   Signature: signature,
                 })),
             )
@@ -2434,21 +2445,16 @@ class File extends ServiceObject<File> {
             'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
             'X-Goog-Credential': credential,
             'X-Goog-Date': dateISO,
-            'X-Goog-Expires': expiresPeriodInSeconds.toString(),
+            'X-Goog-Expires': expiresPeriodInSeconds,
             'X-Goog-SignedHeaders': signedHeaders,
           };
 
-          const canonicalQueryParams =
-              Object.keys(queryParams)
-                  .sort()
-                  .map(
-                      (key) =>
-                          `${key}=${encodeURIComponent(queryParams[key])}`);
+          const canonicalQueryParams = qs.stringify(queryParams, {strict: true});
 
           const canonicalRequest = [
             config.action,
             config.resource,
-            canonicalQueryParams.join('&'),
+            canonicalQueryParams,
             extensionHeadersString,
             signedHeaders,
             'UNSIGNED-PAYLOAD',
