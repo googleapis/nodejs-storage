@@ -3150,15 +3150,11 @@ class File extends ServiceObject<File> {
 
     return sortedHeaders.filter(([_, value]) => value !== undefined)
         .map(([headerName, value]) => {
-          // Convert single-valued header to an Array<string>
-          const values = Array.isArray(value) ? value : [value!.toString(10)];
-
-          const canonicalValue = values
-                                     .map((val) => val.trim())
-                                     // Sequential (2+) spaces should be
-                                     // converted into a single space
-                                     .map((val) => val.replace(/\s{2,}/, ' '))
-                                     .join(', ');
+          // - Convert Array (multi-valued header) into string, delimited by
+          //      ',' (no space).
+          // - Trim leading and trailing spaces.
+          // - Convert sequential (2+) spaces into a single space
+          const canonicalValue = `${value}`.trim().replace(/\s{2,}/, ' ');
 
           return `${headerName}:${canonicalValue}\n`;
         })
