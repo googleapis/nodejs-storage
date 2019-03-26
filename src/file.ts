@@ -1161,6 +1161,7 @@ class File extends ServiceObject<File> {
 
       const headers = {
         'Accept-Encoding': 'gzip',
+        'Cache-Control': 'no-store'
       } as r.Headers;
 
       if (rangeRequest) {
