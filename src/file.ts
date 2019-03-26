@@ -67,7 +67,7 @@ export interface GetSignedUrlConfig {
 
 interface GetSignedUrlConfigInternal {
   expiration: number;
-  action: string;
+  method: string;
   name: string;
   resource?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
@@ -77,6 +77,13 @@ interface GetSignedUrlConfigInternal {
   responseType?: string;
   responseDisposition?: string;
   cname?: string;
+}
+
+export enum ActionToHTTPMethod {
+  read = 'GET',
+  write = 'PUT',
+  delete = 'DELETE',
+  resumable = 'POST',
 }
 
 export type GetSignedUrlResponse = [string];
@@ -2305,12 +2312,7 @@ class File extends ServiceObject<File> {
     const expiresInSeconds =
         Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
 
-    const verb = ({
-      read: 'GET',
-      write: 'PUT',
-      delete: 'DELETE',
-      resumable: 'POST',
-    } as {[index: string]: string})[cfg.action];
+    const method = ActionToHTTPMethod[cfg.action];
 
     const name = encodeURIComponent(this.name);
     const resource = `/${this.bucket.name}/${name}`;
@@ -2318,7 +2320,7 @@ class File extends ServiceObject<File> {
     const version = cfg.version || DEFAULT_SIGNING_VERSION;
 
     const config: GetSignedUrlConfigInternal = Object.assign({}, cfg, {
-      action: verb,
+      method,
       expiration: expiresInSeconds,
       resource,
       name,
@@ -2364,7 +2366,7 @@ class File extends ServiceObject<File> {
       Promise<SignedUrlQuery> {
     let extensionHeadersString = '';
 
-    if (config.action === 'POST') {
+    if (config.method === 'POST') {
       config.extensionHeaders = Object.assign({}, config.extensionHeaders, {
         'x-goog-resumable': 'start',
       });
@@ -2378,7 +2380,7 @@ class File extends ServiceObject<File> {
     }
 
     const blobToSign = [
-      config.action,
+      config.method,
       config.contentMd5 || '',
       config.contentType || '',
       config.expiration,
@@ -2414,7 +2416,7 @@ class File extends ServiceObject<File> {
 
     const extensionHeaders = Object.assign({}, config.extensionHeaders);
     extensionHeaders.host = 'storage.googleapis.com';
-    if (config.action === 'POST') {
+    if (config.method === 'POST') {
       extensionHeaders['x-goog-resumable'] = 'start';
     }
     if (config.contentMd5) {
@@ -2452,7 +2454,7 @@ class File extends ServiceObject<File> {
           const canonicalQueryParams = qs.stringify(queryParams, {strict: true});
 
           const canonicalRequest = [
-            config.action,
+            config.method,
             config.resource,
             canonicalQueryParams,
             extensionHeadersString,
