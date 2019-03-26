@@ -3148,8 +3148,7 @@ class File extends ServiceObject<File> {
                 )
             .sort((a, b) => a[0].localeCompare(b[0]));
 
-    return sortedHeaders
-        .filter(([_, value]) => value !== undefined)
+    return sortedHeaders.filter(([_, value]) => value !== undefined)
         .map(([headerName, value]) => {
           // Convert single-valued header to an Array<string>
           const values = Array.isArray(value) ? value : [value!.toString(10)];
