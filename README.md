@@ -8,10 +8,15 @@
 [![npm version](https://img.shields.io/npm/v/@google-cloud/storage.svg)](https://www.npmjs.org/package/@google-cloud/storage)
 [![codecov](https://img.shields.io/codecov/c/github/googleapis/nodejs-storage/master.svg?style=flat)](https://codecov.io/gh/googleapis/nodejs-storage)
 
+<<<<<<< HEAD
 
 Cloud Storage Client Library for Node.js
 
 
+=======
+Cloud Storage Client Library for Node.js
+
+>>>>>>> docs: new synthtool generated README
 * [Using the client library](#using-the-client-library)
 * [Samples](#samples)
 * [Versioning](#versioning)
@@ -104,6 +109,7 @@ Apache Version 2.0
 See [LICENSE](https://github.com/googleapis/nodejs-storage/blob/master/LICENSE)
 
 ## What's Next
+<<<<<<< HEAD
 
 * [Google Cloud Storage Documentation][product-docs]
 * [Google Cloud Storage Node.js Client API Reference][client-docs]
@@ -114,6 +120,18 @@ Google APIs Client Libraries, in [Client Libraries Explained][explained].
 
 [explained]: https://cloud.google.com/apis/docs/client-libraries-explained
 
+=======
+
+* [Google Cloud Storage Documentation][product-docs]
+* [Google Cloud Storage Node.js Client API Reference][client-docs]
+* [github.com/googleapis/nodejs-storage](https://github.com/googleapis/nodejs-storage)
+
+Read more about the client libraries for Cloud APIs, including the older
+Google APIs Client Libraries, in [Client Libraries Explained][explained].
+
+[explained]: https://cloud.google.com/apis/docs/client-libraries-explained
+
+>>>>>>> docs: new synthtool generated README
 [client-docs]: https://cloud.google.com/nodejs/docs/reference/storage/2.3.x/
 [product-docs]: https://cloud.google.com/storage
 [shell_img]: https://gstatic.com/cloudssh/images/open-btn.png

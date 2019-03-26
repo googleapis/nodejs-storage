@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "updateTime": "2019-03-27T11:27:46.413216Z",
+=======
+  "updateTime": "2019-03-26T20:24:16.137716Z",
+>>>>>>> docs: new synthtool generated README
   "sources": [
     {
       "template": {
