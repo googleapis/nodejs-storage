@@ -2806,23 +2806,17 @@ describe('storage', () => {
           .on('finish', done.bind(null, null));
     });
 
-    it('should create a signed read url', done => {
-      file.getSignedUrl(
-          {
-            version: 'v2',
-            action: 'read',
-            expires: Date.now() + 5000,
-          },
-          (err, signedReadUrl) => {
-            assert.ifError(err);
-            fetch(signedReadUrl!)
-                .then(res => res.text())
-                .then(body => {
-                  assert.strictEqual(body, localFile.toString());
-                  file.delete(done);
-                })
-                .catch(error => assert.ifError(error));
-          });
+    it('should create a signed read url', async () => {
+      const [signedReadUrl] = await file.getSignedUrl({
+        version: 'v2',
+        action: 'read',
+        expires: Date.now() + 5000,
+      });
+
+      const res = await fetch(signedReadUrl!);
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
+      await file.delete();
     });
 
     it('should create a signed delete url', done => {
