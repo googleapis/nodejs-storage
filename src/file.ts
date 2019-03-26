@@ -2452,7 +2452,8 @@ class File extends ServiceObject<File> {
             'X-Goog-SignedHeaders': signedHeaders,
           };
 
-          const canonicalQueryParams = qs.stringify(queryParams, {strict: true});
+          const canonicalQueryParams =
+              qs.stringify(queryParams, {strict: true});
 
           const canonicalRequest = [
             config.method,
