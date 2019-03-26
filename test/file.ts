@@ -841,6 +841,7 @@ describe('File', () => {
             uri: '',
             headers: {
               'Accept-Encoding': 'gzip',
+              'Cache-Control': 'no-store',
             },
             qs: {
               alt: 'media',
