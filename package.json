@@ -91,6 +91,7 @@
     "@types/pumpify": "^1.4.1",
     "@types/query-string": "^6.3.0",
     "@types/request": "^2.47.1",
+    "@types/sinon": "^7.0.10",
     "@types/through2": "^2.0.33",
     "@types/tmp": "0.0.34",
     "@types/uuid": "^3.4.4",
@@ -114,8 +115,8 @@
     "prettier": "^1.7.0",
     "proxyquire": "^2.0.0",
     "query-string": "^6.4.0",
+    "sinon": "^7.3.0",
     "source-map-support": "^0.5.6",
-    "timekeeper": "^2.2.0",
     "tmp": "^0.1.0",
     "typescript": "~3.3.0",
     "uuid": "^3.1.0"

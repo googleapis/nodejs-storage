@@ -23,10 +23,10 @@ import * as extend from 'extend';
 import * as fs from 'fs';
 import * as resumableUpload from 'gcs-resumable-upload';
 import * as proxyquire from 'proxyquire';
+import * as sinon from 'sinon';
 import * as stream from 'stream';
 import {Readable} from 'stream';
 import * as through from 'through2';
-import * as timekeeper from 'timekeeper';
 import * as tmp from 'tmp';
 import * as url from 'url';
 import * as zlib from 'zlib';
@@ -2512,8 +2512,10 @@ describe('File', () => {
 
     const CLIENT_EMAIL = 'client-email';
 
+    let fakeTimers: sinon.SinonFakeTimers;
+
     beforeEach(() => {
-      timekeeper.freeze(NOW);
+      fakeTimers = sinon.useFakeTimers(NOW);
 
       BUCKET.storage.authClient = {
         getCredentials() {
@@ -2528,7 +2530,7 @@ describe('File', () => {
     });
 
     afterEach(() => {
-      timekeeper.reset();
+      fakeTimers.restore();
     });
 
     it('should default to v2 if version is not given', done => {
