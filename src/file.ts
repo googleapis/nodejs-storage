@@ -2183,8 +2183,8 @@ class File extends ServiceObject<File> {
    * @param {object} config Configuration object.
    * @param {string} config.action "read" (HTTP: GET), "write" (HTTP: PUT), or
    *     "delete" (HTTP: DELETE), "resumable" (HTTP: POST).
-   * @param {string} [config.version] The signing version to use. Currently support 'v2' and 'v4' signing.
-   *     Defaults to 'v2' if not given.
+   * @param {string} [config.version='v2'] The signing version to use, either
+   *     'v2' or 'v4.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
    * @param {string} [config.contentMd5] The MD5 digest value in base64. If you
@@ -2280,7 +2280,7 @@ class File extends ServiceObject<File> {
    * Another example:
    */
   getSignedUrl(cfg: GetSignedUrlConfig, callback?: GetSignedUrlCallback):
-    void | Promise<GetSignedUrlResponse> {
+      void|Promise<GetSignedUrlResponse> {
     const expiresInMSeconds = new Date(cfg.expires).valueOf();
 
     if (isNaN(expiresInMSeconds)) {
@@ -2292,14 +2292,14 @@ class File extends ServiceObject<File> {
     }
 
     const expiresInSeconds =
-      Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
+        Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
 
     const verb = ({
       read: 'GET',
       write: 'PUT',
       delete: 'DELETE',
       resumable: 'POST',
-    } as { [index: string]: string })[cfg.action];
+    } as {[index: string]: string})[cfg.action];
 
     const name = encodeURIComponent(this.name);
     const resource = `/${this.bucket.name}/${name}`;
@@ -2320,34 +2320,33 @@ class File extends ServiceObject<File> {
       promise = this.getSignedUrlV4(config);
     } else {
       throw new Error(`Invalid signed URL version: ${
-        version}. Supported versions are 'v2' and 'v4'.`);
+          version}. Supported versions are 'v2' and 'v4'.`);
     }
 
-    promise
-      .then((query) => {
-        if (typeof config.responseType === 'string') {
-          query['response-content-type'] = config.responseType!;
-        }
+    promise.then((query) => {
+      if (typeof config.responseType === 'string') {
+        query['response-content-type'] = config.responseType!;
+      }
 
-        if (typeof config.promptSaveAs === 'string') {
-          query['response-content-disposition'] =
+      if (typeof config.promptSaveAs === 'string') {
+        query['response-content-disposition'] =
             'attachment; filename="' + config.promptSaveAs + '"';
-        }
-        if (typeof config.responseDisposition === 'string') {
-          query['response-content-disposition'] = config.responseDisposition!;
-        }
+      }
+      if (typeof config.responseDisposition === 'string') {
+        query['response-content-disposition'] = config.responseDisposition!;
+      }
 
-        if (this.generation) {
-          query.generation = this.generation.toString();
-        }
+      if (this.generation) {
+        query.generation = this.generation.toString();
+      }
 
-        const signedUrl = new url.URL(config.cname || STORAGE_DOWNLOAD_BASE_URL);
-        signedUrl.pathname = config.cname ? name : `${this.bucket.name}/${name}`;
-        signedUrl.search = qs.stringify(query, { strict: false, sort: false });
+      const signedUrl = new url.URL(config.cname || STORAGE_DOWNLOAD_BASE_URL);
+      signedUrl.pathname = config.cname ? name : `${this.bucket.name}/${name}`;
+      signedUrl.search = qs.stringify(query, {strict: false, sort: false});
 
-        callback!(null, signedUrl.href);
-      }, callback!);
-  };
+      callback!(null, signedUrl.href);
+    }, callback!);
+  }
 
 
   private getSignedUrlV2(config: GetSignedUrlConfigInternal):
