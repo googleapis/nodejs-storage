@@ -3149,11 +3149,10 @@ class File extends ServiceObject<File> {
             .sort((a, b) => a[0].localeCompare(b[0]));
 
     return sortedHeaders
+        .filter(([_, value]) => value !== undefined)
         .map(([headerName, value]) => {
-          if (!value) return;
-
           // Convert single-valued header to an Array<string>
-          const values = Array.isArray(value) ? value : [value.toString(10)];
+          const values = Array.isArray(value) ? value : [value!.toString(10)];
 
           const canonicalValue = values
                                      .map((val) => val.trim())
