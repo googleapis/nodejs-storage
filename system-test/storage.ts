@@ -2813,30 +2813,24 @@ describe('storage', () => {
         expires: Date.now() + 5000,
       });
 
-      const res = await fetch(signedReadUrl!);
+      const res = await fetch(signedReadUrl);
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
       await file.delete();
     });
 
-    it('should create a signed delete url', done => {
-      file.getSignedUrl(
-          {
-            version: 'v2',
-            action: 'delete',
-            expires: Date.now() + 5000,
-          },
-          (err, signedDeleteUrl) => {
-            assert.ifError(err);
-            fetch(signedDeleteUrl!, {method: 'DELETE'})
-                .then(() => {
-                  file.getMetadata((err: ApiError) => {
-                    assert.strictEqual(err.code, 404);
-                    done();
-                  });
-                })
-                .catch(error => assert.ifError(error));
-          });
+    it('should create a signed delete url', async () => {
+      const [signedDeleteUrl] = await file.getSignedUrl({
+        version: 'v2',
+        action: 'delete',
+        expires: Date.now() + 5000,
+      });
+
+      await fetch(signedDeleteUrl, {method: 'DELETE'});
+      assert.rejects(
+        () => file.getMetadata(),
+        (err: ApiError) => err.code === 404,
+      );
     });
   });
 
