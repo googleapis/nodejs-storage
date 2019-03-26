@@ -34,6 +34,7 @@ import {Duplex, Writable, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as through from 'through2';
 import * as xdgBasedir from 'xdg-basedir';
+import * as qs from 'query-string';
 import * as zlib from 'zlib';
 import * as url from 'url';
 import * as http from 'http';
@@ -2279,7 +2280,7 @@ class File extends ServiceObject<File> {
    * Another example:
    */
   getSignedUrl(cfg: GetSignedUrlConfig, callback?: GetSignedUrlCallback):
-      void|Promise<GetSignedUrlResponse> {
+    void | Promise<GetSignedUrlResponse> {
     const expiresInMSeconds = new Date(cfg.expires).valueOf();
 
     if (isNaN(expiresInMSeconds)) {
@@ -2291,14 +2292,14 @@ class File extends ServiceObject<File> {
     }
 
     const expiresInSeconds =
-        Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
+      Math.round(expiresInMSeconds / 1000);  // The API expects seconds.
 
     const verb = ({
       read: 'GET',
       write: 'PUT',
       delete: 'DELETE',
       resumable: 'POST',
-    } as {[index: string]: string})[cfg.action];
+    } as { [index: string]: string })[cfg.action];
 
     const name = encodeURIComponent(this.name);
     const resource = `/${this.bucket.name}/${name}`;
@@ -2319,40 +2320,35 @@ class File extends ServiceObject<File> {
       promise = this.getSignedUrlV4(config);
     } else {
       throw new Error(`Invalid signed URL version: ${
-          version}. Supported versions are 'v2' and 'v4'.`);
+        version}. Supported versions are 'v2' and 'v4'.`);
     }
 
     promise
-        .then((query) => {
-          if (typeof config.responseType === 'string') {
-            query['response-content-type'] = config.responseType!;
-          }
+      .then((query) => {
+        if (typeof config.responseType === 'string') {
+          query['response-content-type'] = config.responseType!;
+        }
 
-          if (typeof config.promptSaveAs === 'string') {
-            query['response-content-disposition'] =
-                'attachment; filename="' + config.promptSaveAs + '"';
-          }
-          if (typeof config.responseDisposition === 'string') {
-            query['response-content-disposition'] = config.responseDisposition!;
-          }
+        if (typeof config.promptSaveAs === 'string') {
+          query['response-content-disposition'] =
+            'attachment; filename="' + config.promptSaveAs + '"';
+        }
+        if (typeof config.responseDisposition === 'string') {
+          query['response-content-disposition'] = config.responseDisposition!;
+        }
 
-          if (this.generation) {
-            query.generation = this.generation.toString();
-          }
+        if (this.generation) {
+          query.generation = this.generation.toString();
+        }
 
-          const parsedHost =
-              url.parse(config.cname || STORAGE_DOWNLOAD_BASE_URL);
-          const signedUrl = url.format({
-            protocol: parsedHost.protocol,
-            hostname: parsedHost.hostname,
-            pathname: config.cname ? name : this.bucket.name + '/' + name,
-            query,
-          });
+        const signedUrl = new url.URL(config.cname || STORAGE_DOWNLOAD_BASE_URL);
+        signedUrl.pathname = config.cname ? name : `${this.bucket.name}/${name}`;
+        signedUrl.search = qs.stringify(query, { strict: false, sort: false });
 
-          callback!(null, signedUrl);
-        })
-        .catch(callback!);
-  }
+        callback!(null, signedUrl.href);
+      }, callback!);
+  };
+
 
   private getSignedUrlV2(config: GetSignedUrlConfigInternal):
       Promise<SignedUrlQuery> {
