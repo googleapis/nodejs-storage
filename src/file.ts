@@ -299,18 +299,27 @@ interface FileQuery {
 }
 
 interface SignedUrlQuery {
-  GoogleAccessId?: string;
-  Expires?: number;
-  Signature?: string;
   generation?: number;
   'response-content-type'?: string;
   'response-content-disposition'?: string;
-  'X-Goog-Algorithm'?: string;
-  'X-Goog-Credential'?: string;
-  'X-Goog-Date'?: string;
-  'X-Goog-Expires'?: number;
-  'X-Goog-SignedHeaders'?: string;
-  'X-Goog-Signature'?: string;
+}
+
+interface V2SignedUrlQuery extends SignedUrlQuery {
+  GoogleAccessId: string;
+  Expires: number;
+  Signature: string;
+}
+
+interface V4UrlQuery extends SignedUrlQuery {
+  'X-Goog-Algorithm': string;
+  'X-Goog-Credential': string;
+  'X-Goog-Date': string;
+  'X-Goog-Expires': number;
+  'X-Goog-SignedHeaders': string;
+}
+
+interface V4SignedUrlQuery extends V4UrlQuery {
+  'X-Goog-Signature': string;
 }
 
 export interface CreateReadStreamOptions {
@@ -2404,7 +2413,7 @@ class File extends ServiceObject<File> {
                   GoogleAccessId: credentials.client_email!,
                   Expires: config.expiration,
                   Signature: signature,
-                })),
+                } as V2SignedUrlQuery)),
             )
         .catch((err) => {
           const signingErr = new SigningError(err.message);
@@ -2447,14 +2456,12 @@ class File extends ServiceObject<File> {
     const datestamp = dateformat(now, 'UTC:yyyymmdd');
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
 
-    let queryParams = {} as SignedUrlQuery;
-
     return this.storage.authClient.getCredentials()
         .then((credentials) => {
           const credential = `${credentials.client_email}/${credentialScope}`;
           const dateISO = dateformat(now, 'UTC:yyyymmdd\'T\'HHMMss\'Z\'');
 
-          queryParams = {
+          const queryParams: V4UrlQuery = {
             'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
             'X-Goog-Credential': credential,
             'X-Goog-Date': dateISO,
@@ -2484,17 +2491,21 @@ class File extends ServiceObject<File> {
             canonicalRequestHash,
           ].join('\n');
 
-          return this.storage.authClient.sign(blobToSign).catch((err) => {
-            const signingErr = new SigningError(err.message);
-            signingErr.stack = err.stack;
-            throw signingErr;
-          });
-        })
-        .then((signature) => {
-          const signatureHex = Buffer.from(signature, 'base64').toString('hex');
+          return this.storage.authClient.sign(blobToSign)
+            .then((signature) => {
+              const signatureHex = Buffer.from(signature, 'base64').toString('hex');
 
-          queryParams['X-Goog-Signature'] = signatureHex;
-          return queryParams;
+              const signedQuery: V4SignedUrlQuery = Object.assign({}, queryParams, {
+                'X-Goog-Signature': signatureHex,
+              });
+
+              return signedQuery;
+            })
+            .catch((err) => {
+              const signingErr = new SigningError(err.message);
+              signingErr.stack = err.stack;
+              throw signingErr;
+            });
         });
   }
 
