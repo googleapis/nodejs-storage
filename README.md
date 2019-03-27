@@ -94,7 +94,7 @@ async function quickstart(
 
 // process.env.GOOGLE_APPLICATION_CREDENTIALS points to service account JSON.
 // process.env.GOOGLE_CLOUD_PROJECT points to your project in GCP.
-quickstart(process.env.GOOGLE_CLOUD_PROJECT, "my-bucket")
+quickstart(process.env.GOOGLE_CLOUD_PROJECT)
 ```
 
 

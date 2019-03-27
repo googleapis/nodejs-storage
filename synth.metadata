@@ -2,6 +2,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   "updateTime": "2019-03-27T11:27:46.413216Z",
 =======
   "updateTime": "2019-03-26T20:24:16.137716Z",
@@ -12,6 +13,9 @@
 =======
   "updateTime": "2019-03-27T00:59:47.165103Z",
 >>>>>>> chore: some additional tweaks to README generation
+=======
+  "updateTime": "2019-03-27T01:08:58.048137Z",
+>>>>>>> chore: slight tweak to make bucket name less confusing
   "sources": [
     {
       "template": {
