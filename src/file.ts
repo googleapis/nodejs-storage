@@ -3163,7 +3163,7 @@ class File extends ServiceObject<File> {
           //      ',' (no space).
           // - Trim leading and trailing spaces.
           // - Convert sequential (2+) spaces into a single space
-          const canonicalValue = `${value}`.trim().replace(/\s{2,}/, ' ');
+          const canonicalValue = `${value}`.trim().replace(/\s{2,}/g, ' ');
 
           return `${headerName}:${canonicalValue}\n`;
         })
