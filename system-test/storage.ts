@@ -2854,11 +2854,11 @@ describe('storage', () => {
       });
 
       const res = await fetch(signedReadUrl, {
-        headers: { 'x-goog-custom-header': 'value1,value2' },
+        headers: {'x-goog-custom-header': 'value1,value2'},
       });
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
-    })
+    });
   });
 
   describe('sign policy', () => {
