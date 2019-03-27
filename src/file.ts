@@ -2404,7 +2404,9 @@ class File extends ServiceObject<File> {
                 })),
             )
         .catch((err) => {
-          throw new SigningError(err.message);
+          const signingErr = new SigningError(err.message);
+          signingErr.stack = err.stack;
+          throw signingErr;
         });
   }
 
@@ -2481,7 +2483,9 @@ class File extends ServiceObject<File> {
           ].join('\n');
 
           return this.storage.authClient.sign(blobToSign).catch((err) => {
-            throw new SigningError(err.message);
+            const signingErr = new SigningError(err.message);
+            signingErr.stack = err.stack;
+            throw signingErr;
           });
         })
         .then((signature) => {
