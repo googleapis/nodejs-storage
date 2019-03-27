@@ -2617,6 +2617,21 @@ describe('File', () => {
         );
       });
 
+      it('should set correct settings if resumable', done => {
+        const config = Object.assign({}, CONFIG, {
+          action: 'resumable',
+        });
+
+        const spy = sinon.spy(file, 'getCanonicalHeaders');
+
+        file.getSignedUrl(config, (err: Error) => {
+          assert.ifError(err);
+          assert(spy.returnValues[0].indexOf('x-goog-resumable:start') > -1);
+          spy.restore();
+          done();
+        });
+      });
+
       it('should add response-content-type parameter', done => {
         const type = 'application/json';
 
