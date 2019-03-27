@@ -34,7 +34,7 @@ import {Duplex, Writable, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as through from 'through2';
 import * as xdgBasedir from 'xdg-basedir';
-import * as qs from 'query-string';
+import * as querystring from 'querystring';
 import * as zlib from 'zlib';
 import * as url from 'url';
 import * as http from 'http';
@@ -2364,7 +2364,7 @@ class File extends ServiceObject<File> {
 
       const signedUrl = new url.URL(config.cname || STORAGE_DOWNLOAD_BASE_URL);
       signedUrl.pathname = config.cname ? name : `${this.bucket.name}/${name}`;
-      signedUrl.search = qs.stringify(query, {strict: false, sort: false});
+      signedUrl.search = querystring.stringify(query);
 
       callback!(null, signedUrl.href);
     }, callback!);
@@ -2462,8 +2462,7 @@ class File extends ServiceObject<File> {
             'X-Goog-SignedHeaders': signedHeaders,
           };
 
-          const canonicalQueryParams =
-              qs.stringify(queryParams, {strict: true});
+          const canonicalQueryParams = querystring.stringify(queryParams);
 
           const canonicalRequest = [
             config.method,
