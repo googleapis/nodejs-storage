@@ -8,16 +8,9 @@
 [![npm version](https://img.shields.io/npm/v/@google-cloud/storage.svg)](https://www.npmjs.org/package/@google-cloud/storage)
 [![codecov](https://img.shields.io/codecov/c/github/googleapis/nodejs-storage/master.svg?style=flat)](https://codecov.io/gh/googleapis/nodejs-storage)
 
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-Cloud Storage Client Library for Node.js
-=======
-=======
 
 
->>>>>>> chore: some additional tweaks to README generation
+
 > Node.js idiomatic client for [Cloud Storage][product-docs].
 
 [Cloud Storage](https://cloud.google.com/storage/docs) allows world-wide
@@ -25,16 +18,8 @@ storage and retrieval of any amount of data at any time. You can use Google
 Cloud Storage for a range of scenarios including serving website content,
 storing data for archival and disaster recovery, or distributing large data
 objects to users via direct download.
->>>>>>> docs: playing with header
 
 
-<<<<<<< HEAD
-=======
-Cloud Storage Client Library for Node.js
-
->>>>>>> docs: new synthtool generated README
-* [Using the client library](#using-the-client-library)
-=======
 * [Google Cloud Storage Node.js Client API Reference][client-docs]
 * [Google Cloud Storage Documentation][product-docs]
 * [github.com/googleapis/nodejs-storage](https://github.com/googleapis/nodejs-storage)
@@ -51,7 +36,6 @@ Google APIs Client Libraries, in [Client Libraries Explained][explained].
   * [Before you begin](#before-you-begin)
   * [Installing the client library](#installing-the-client-library)
   * [Using the client library](#using-the-client-library)
->>>>>>> chore: some additional tweaks to README generation
 * [Samples](#samples)
 * [Versioning](#versioning)
 * [Contributing](#contributing)
@@ -77,24 +61,25 @@ npm install @google-cloud/storage
 ### Using the client library
 
 ```javascript
-async function quickstart(
-  projectId = 'YOUR_PROJECT_ID', // Your Google Cloud Platform project ID
-  bucketName = 'my-new-bucket' // The name for the new bucket
-) {
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
-  const storage = new Storage({projectId});
+  const storage = new Storage();
 
-  // Creates the new bucket
-  await storage.createBucket(bucketName);
-  console.log(`Bucket ${bucketName} created.`);
-}
+  /**
+   * TODO(developer): Uncomment these variables before running the sample.
+   */
+  // const bucketName = 'bucket-name';
 
-// process.env.GOOGLE_APPLICATION_CREDENTIALS points to service account JSON.
-// process.env.GOOGLE_CLOUD_PROJECT points to your project in GCP.
-quickstart(process.env.GOOGLE_CLOUD_PROJECT)
+  async function createBucket() {
+    // Creates the new bucket
+    await storage.createBucket(bucketName);
+    console.log(`Bucket ${bucketName} created.`);
+  }
+
+  createBucket();
+
 ```
 
 
@@ -149,35 +134,7 @@ Apache Version 2.0
 
 See [LICENSE](https://github.com/googleapis/nodejs-storage/blob/master/LICENSE)
 
-<<<<<<< HEAD
-## What's Next
-<<<<<<< HEAD
-
-* [Google Cloud Storage Documentation][product-docs]
-* [Google Cloud Storage Node.js Client API Reference][client-docs]
-* [github.com/googleapis/nodejs-storage](https://github.com/googleapis/nodejs-storage)
-
-Read more about the client libraries for Cloud APIs, including the older
-Google APIs Client Libraries, in [Client Libraries Explained][explained].
-
-[explained]: https://cloud.google.com/apis/docs/client-libraries-explained
-
-=======
-
-* [Google Cloud Storage Documentation][product-docs]
-* [Google Cloud Storage Node.js Client API Reference][client-docs]
-* [github.com/googleapis/nodejs-storage](https://github.com/googleapis/nodejs-storage)
-
-Read more about the client libraries for Cloud APIs, including the older
-Google APIs Client Libraries, in [Client Libraries Explained][explained].
-
-[explained]: https://cloud.google.com/apis/docs/client-libraries-explained
-
->>>>>>> docs: new synthtool generated README
-[client-docs]: https://cloud.google.com/nodejs/docs/reference/storage/2.3.x/
-=======
 [client-docs]: https://cloud.google.com/nodejs/docs/reference/storage/latest/
->>>>>>> chore: some additional tweaks to README generation
 [product-docs]: https://cloud.google.com/storage
 [shell_img]: https://gstatic.com/cloudssh/images/open-btn.png
 [projects]: https://console.cloud.google.com/project
