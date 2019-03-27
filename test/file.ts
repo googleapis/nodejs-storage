@@ -2626,7 +2626,7 @@ describe('File', () => {
 
         file.getSignedUrl(config, (err: Error) => {
           assert.ifError(err);
-          assert(spy.returnValues[0].indexOf('x-goog-resumable:start') > -1);
+          assert(spy.returnValues[0].includes('x-goog-resumable:start'));
           spy.restore();
           done();
         });
@@ -2640,7 +2640,7 @@ describe('File', () => {
         });
 
         directoryFile.getSignedUrl(config, (_: Error, signedUrl: string) => {
-          assert(signedUrl.indexOf(encodeURIComponent(type)) > -1);
+          assert(signedUrl.includes(encodeURIComponent(type)));
           done();
         });
       });
@@ -2651,8 +2651,7 @@ describe('File', () => {
 
         file.getSignedUrl(CONFIG, (_: Error, signedUrl: string) => {
           assert(
-              signedUrl.indexOf(encodeURIComponent(generation.toString())) >
-              -1);
+            signedUrl.includes(encodeURIComponent(generation.toString())));
           done();
         });
       });
@@ -2660,7 +2659,7 @@ describe('File', () => {
       it('should URI encode file names', done => {
         directoryFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
           assert(
-              signedUrl.indexOf(encodeURIComponent(directoryFile.name)) > -1);
+              signedUrl.includes(encodeURIComponent(directoryFile.name)));
           done();
         });
       });
@@ -2676,8 +2675,8 @@ describe('File', () => {
 
         file.getSignedUrl(config, (err: Error, signedUrl: string) => {
           assert.ifError(err);
-          assert(signedUrl.indexOf('content-md5') > -1);
-          assert(signedUrl.indexOf('content-type') > -1);
+          assert(signedUrl.includes('content-md5'));
+          assert(signedUrl.includes('content-type'));
           done();
         });
       });
@@ -2744,7 +2743,7 @@ describe('File', () => {
 
         BUCKET.storage.authClient.sign = (blobToSign: string) => {
           assert.strictEqual(blobToSign.indexOf('POST'), 0);
-          assert(blobToSign.indexOf('x-goog-resumable:start') > -1);
+          assert(blobToSign.includes('x-goog-resumable:start'));
           done();
         };
 
@@ -2768,7 +2767,7 @@ describe('File', () => {
       it('should URI encode file names', done => {
         directoryFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
           assert(
-              signedUrl.indexOf(encodeURIComponent(directoryFile.name)) > -1);
+              signedUrl.includes(encodeURIComponent(directoryFile.name)));
           done();
         });
       });
@@ -2783,7 +2782,7 @@ describe('File', () => {
               responseType: type,
             },
             (err: Error, signedUrl: string) => {
-              assert(signedUrl.indexOf(encodeURIComponent(type)) > -1);
+              assert(signedUrl.includes(encodeURIComponent(type)));
               done();
             });
       });
@@ -2794,8 +2793,7 @@ describe('File', () => {
 
         file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
           assert(
-              signedUrl.indexOf(encodeURIComponent(generation.toString())) >
-              -1);
+              signedUrl.includes(encodeURIComponent(generation.toString())));
           done();
         });
       });
