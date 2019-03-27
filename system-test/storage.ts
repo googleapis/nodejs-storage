@@ -2798,7 +2798,7 @@ describe('storage', () => {
     const localFile = fs.readFileSync(FILES.logo.path);
     let file: File;
 
-    before(done => {
+    beforeEach(done => {
       file = bucket.file('LogoToSign.jpg');
       fs.createReadStream(FILES.logo.path)
           .pipe(file.createWriteStream())
