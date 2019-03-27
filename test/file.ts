@@ -2650,16 +2650,14 @@ describe('File', () => {
         const file = new File(BUCKET, 'name', {generation});
 
         file.getSignedUrl(CONFIG, (_: Error, signedUrl: string) => {
-          assert(
-            signedUrl.includes(encodeURIComponent(generation.toString())));
+          assert(signedUrl.includes(encodeURIComponent(generation.toString())));
           done();
         });
       });
 
       it('should URI encode file names', done => {
         directoryFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert(
-              signedUrl.includes(encodeURIComponent(directoryFile.name)));
+          assert(signedUrl.includes(encodeURIComponent(directoryFile.name)));
           done();
         });
       });
@@ -2766,8 +2764,7 @@ describe('File', () => {
 
       it('should URI encode file names', done => {
         directoryFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert(
-              signedUrl.includes(encodeURIComponent(directoryFile.name)));
+          assert(signedUrl.includes(encodeURIComponent(directoryFile.name)));
           done();
         });
       });
@@ -2792,8 +2789,7 @@ describe('File', () => {
         const file = new File(BUCKET, 'name', {generation});
 
         file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert(
-              signedUrl.includes(encodeURIComponent(generation.toString())));
+          assert(signedUrl.includes(encodeURIComponent(generation.toString())));
           done();
         });
       });
