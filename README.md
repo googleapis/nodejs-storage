@@ -11,8 +11,13 @@
 <<<<<<< HEAD
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Cloud Storage Client Library for Node.js
 =======
+=======
+
+
+>>>>>>> chore: some additional tweaks to README generation
 > Node.js idiomatic client for [Cloud Storage][product-docs].
 
 [Cloud Storage](https://cloud.google.com/storage/docs) allows world-wide
@@ -23,17 +28,38 @@ objects to users via direct download.
 >>>>>>> docs: playing with header
 
 
+<<<<<<< HEAD
 =======
 Cloud Storage Client Library for Node.js
 
 >>>>>>> docs: new synthtool generated README
 * [Using the client library](#using-the-client-library)
+=======
+* [Google Cloud Storage Node.js Client API Reference][client-docs]
+* [Google Cloud Storage Documentation][product-docs]
+* [github.com/googleapis/nodejs-storage](https://github.com/googleapis/nodejs-storage)
+
+Read more about the client libraries for Cloud APIs, including the older
+Google APIs Client Libraries, in [Client Libraries Explained][explained].
+
+[explained]: https://cloud.google.com/apis/docs/client-libraries-explained
+
+**Table of contents:**
+
+
+* [Quickstart](#quickstart)
+  * [Before you begin](#before-you-begin)
+  * [Installing the client library](#installing-the-client-library)
+  * [Using the client library](#using-the-client-library)
+>>>>>>> chore: some additional tweaks to README generation
 * [Samples](#samples)
 * [Versioning](#versioning)
 * [Contributing](#contributing)
 * [License](#license)
 
-## Using the client library
+## Quickstart
+
+### Before you begin
 
 1.  [Select or create a Cloud Platform project][projects].
 1.  [Enable billing for your project][billing].
@@ -41,12 +67,14 @@ Cloud Storage Client Library for Node.js
 1.  [Set up authentication with a service account][auth] so you can access the
     API from your local workstation.
 
-1. Install the client library:
+### Installing the client library
 
-        npm install @google-cloud/storage
+```bash
+npm install @google-cloud/storage
+```
 
 
-1. Try an example:
+### Using the client library
 
 ```javascript
 async function quickstart(
@@ -64,6 +92,9 @@ async function quickstart(
   console.log(`Bucket ${bucketName} created.`);
 }
 
+// process.env.GOOGLE_APPLICATION_CREDENTIALS points to service account JSON.
+// process.env.GOOGLE_CLOUD_PROJECT points to your project in GCP.
+quickstart(process.env.GOOGLE_CLOUD_PROJECT, "my-bucket")
 ```
 
 
@@ -118,6 +149,7 @@ Apache Version 2.0
 
 See [LICENSE](https://github.com/googleapis/nodejs-storage/blob/master/LICENSE)
 
+<<<<<<< HEAD
 ## What's Next
 <<<<<<< HEAD
 
@@ -143,6 +175,9 @@ Google APIs Client Libraries, in [Client Libraries Explained][explained].
 
 >>>>>>> docs: new synthtool generated README
 [client-docs]: https://cloud.google.com/nodejs/docs/reference/storage/2.3.x/
+=======
+[client-docs]: https://cloud.google.com/nodejs/docs/reference/storage/latest/
+>>>>>>> chore: some additional tweaks to README generation
 [product-docs]: https://cloud.google.com/storage
 [shell_img]: https://gstatic.com/cloudssh/images/open-btn.png
 [projects]: https://console.cloud.google.com/project

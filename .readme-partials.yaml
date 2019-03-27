@@ -6,3 +6,9 @@ introduction: |-
     Cloud Storage for a range of scenarios including serving website content,
     storing data for archival and disaster recovery, or distributing large data
     objects to users via direct download.
+quickstart_footer:
+    // process.env.GOOGLE_APPLICATION_CREDENTIALS points to service account JSON.
+
+    // process.env.GOOGLE_CLOUD_PROJECT points to your project in GCP.
+
+    quickstart(process.env.GOOGLE_CLOUD_PROJECT, "my-bucket")
