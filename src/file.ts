@@ -45,7 +45,7 @@ import {Storage} from './storage';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 import {ResponseBody, ApiError} from '@google-cloud/common/build/src/util';
-import {normalize, flattenObject} from './util';
+import {normalize, objectEntries} from './util';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -354,6 +354,9 @@ class RequestError extends Error {
   code?: string;
   errors?: Error[];
 }
+
+type ValueOf<T> = T[keyof T];
+type HeaderValue = ValueOf<http.OutgoingHttpHeaders>;
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
@@ -3151,10 +3154,10 @@ class File extends ServiceObject<File> {
   private getCanonicalHeaders(headers: http.OutgoingHttpHeaders) {
     // Sort headers by their lowercased names
     const sortedHeaders =
-        flattenObject(headers)
-            .map<[string, string | string[] | number | undefined]>(
-                ([headerName, value]) => [headerName.toLowerCase(), value],
-                )
+        objectEntries(headers)
+            // Convert header names to lowercase
+            .map<[string, HeaderValue]>(
+                ([headerName, value]) => [headerName.toLowerCase(), value])
             .sort((a, b) => a[0].localeCompare(b[0]));
 
     return sortedHeaders.filter(([_, value]) => value !== undefined)
