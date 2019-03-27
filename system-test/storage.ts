@@ -2798,7 +2798,7 @@ describe('storage', () => {
     const localFile = fs.readFileSync(FILES.logo.path);
     let file: File;
 
-    before(done => {
+    beforeEach(done => {
       file = bucket.file('LogoToSign.jpg');
       fs.createReadStream(FILES.logo.path)
           .pipe(file.createWriteStream())
@@ -2870,6 +2870,23 @@ describe('storage', () => {
           () => file.getMetadata(),
           (err: ApiError) => err.code === 404,
       );
+    });
+
+    it('should work with multi-valued extension headers', async () => {
+      const HEADERS = {
+        'x-goog-custom-header': ['value1', 'value2'],
+      };
+      const [signedReadUrl] = await file.getSignedUrl({
+        action: 'read',
+        expires: Date.now() + 5000,
+        extensionHeaders: HEADERS,
+      });
+
+      const res = await fetch(signedReadUrl, {
+        headers: {'x-goog-custom-header': 'value1,value2'},
+      });
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
     });
   });
 
