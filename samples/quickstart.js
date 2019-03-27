@@ -40,4 +40,4 @@ function main(
   // [END storage_quickstart]
 }
 
-main(...process.argv.slice(2)).catch(console.error);
+main(...process.argv.slice(2));
