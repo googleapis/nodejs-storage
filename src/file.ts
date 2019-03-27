@@ -2456,57 +2456,57 @@ class File extends ServiceObject<File> {
     const datestamp = dateformat(now, 'UTC:yyyymmdd');
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
 
-    return this.storage.authClient.getCredentials()
-        .then((credentials) => {
-          const credential = `${credentials.client_email}/${credentialScope}`;
-          const dateISO = dateformat(now, 'UTC:yyyymmdd\'T\'HHMMss\'Z\'');
+    return this.storage.authClient.getCredentials().then((credentials) => {
+      const credential = `${credentials.client_email}/${credentialScope}`;
+      const dateISO = dateformat(now, 'UTC:yyyymmdd\'T\'HHMMss\'Z\'');
 
-          const queryParams: V4UrlQuery = {
-            'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
-            'X-Goog-Credential': credential,
-            'X-Goog-Date': dateISO,
-            'X-Goog-Expires': expiresPeriodInSeconds,
-            'X-Goog-SignedHeaders': signedHeaders,
-          };
+      const queryParams: V4UrlQuery = {
+        'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
+        'X-Goog-Credential': credential,
+        'X-Goog-Date': dateISO,
+        'X-Goog-Expires': expiresPeriodInSeconds,
+        'X-Goog-SignedHeaders': signedHeaders,
+      };
 
-          const canonicalQueryParams = querystring.stringify(queryParams);
+      const canonicalQueryParams = querystring.stringify(queryParams);
 
-          const canonicalRequest = [
-            config.method,
-            config.resource,
-            canonicalQueryParams,
-            extensionHeadersString,
-            signedHeaders,
-            'UNSIGNED-PAYLOAD',
-          ].join('\n');
+      const canonicalRequest = [
+        config.method,
+        config.resource,
+        canonicalQueryParams,
+        extensionHeadersString,
+        signedHeaders,
+        'UNSIGNED-PAYLOAD',
+      ].join('\n');
 
-          const canonicalRequestHash = crypto.createHash('sha256')
-                                           .update(canonicalRequest)
-                                           .digest('hex');
+      const canonicalRequestHash =
+          crypto.createHash('sha256').update(canonicalRequest).digest('hex');
 
-          const blobToSign = [
-            'GOOG4-RSA-SHA256',
-            dateISO,
-            credentialScope,
-            canonicalRequestHash,
-          ].join('\n');
+      const blobToSign = [
+        'GOOG4-RSA-SHA256',
+        dateISO,
+        credentialScope,
+        canonicalRequestHash,
+      ].join('\n');
 
-          return this.storage.authClient.sign(blobToSign)
-            .then((signature) => {
-              const signatureHex = Buffer.from(signature, 'base64').toString('hex');
+      return this.storage.authClient.sign(blobToSign)
+          .then((signature) => {
+            const signatureHex =
+                Buffer.from(signature, 'base64').toString('hex');
 
-              const signedQuery: V4SignedUrlQuery = Object.assign({}, queryParams, {
-                'X-Goog-Signature': signatureHex,
-              });
+            const signedQuery: V4SignedUrlQuery =
+                Object.assign({}, queryParams, {
+                  'X-Goog-Signature': signatureHex,
+                });
 
-              return signedQuery;
-            })
-            .catch((err) => {
-              const signingErr = new SigningError(err.message);
-              signingErr.stack = err.stack;
-              throw signingErr;
-            });
-        });
+            return signedQuery;
+          })
+          .catch((err) => {
+            const signingErr = new SigningError(err.message);
+            signingErr.stack = err.stack;
+            throw signingErr;
+          });
+    });
   }
 
   makePrivate(options?: MakeFilePrivateOptions):
