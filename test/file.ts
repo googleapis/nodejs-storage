@@ -2634,7 +2634,7 @@ describe('File', () => {
         const generation = 10003320000;
         const file = new File(BUCKET, 'name', {generation});
 
-        file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
+        file.getSignedUrl(CONFIG, (_: Error, signedUrl: string) => {
           assert(
               signedUrl.indexOf(encodeURIComponent(generation.toString())) >
               -1);
@@ -2663,6 +2663,20 @@ describe('File', () => {
           assert.ifError(err);
           assert(signedUrl.indexOf('content-md5') > -1);
           assert(signedUrl.indexOf('content-type') > -1);
+          done();
+        });
+      });
+
+      it('should return a SigningError if signBlob errors', done => {
+        const error = new Error('Error.');
+
+        BUCKET.storage.authClient.sign = () => {
+          return Promise.reject(error);
+        };
+
+        file.getSignedUrl(CONFIG, (err: Error) => {
+          assert.strictEqual(err.name, 'SigningError');
+          assert.strictEqual(err.message, error.message);
           done();
         });
       });
