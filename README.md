@@ -10,7 +10,17 @@
 
 <<<<<<< HEAD
 
+<<<<<<< HEAD
 Cloud Storage Client Library for Node.js
+=======
+> Node.js idiomatic client for [Cloud Storage][product-docs].
+
+[Cloud Storage](https://cloud.google.com/storage/docs) allows world-wide
+storage and retrieval of any amount of data at any time. You can use Google
+Cloud Storage for a range of scenarios including serving website content,
+storing data for archival and disaster recovery, or distributing large data
+objects to users via direct download.
+>>>>>>> docs: playing with header
 
 
 =======
