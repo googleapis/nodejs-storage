@@ -3158,6 +3158,14 @@ class File extends ServiceObject<File> {
 
   /**
    * Create canonical headers for signing v4 url.
+   *
+   * The canonical headers for v4-signing a request demands header names are
+   * first lowercased, followed by sorting the header names.
+   * Then, construct the canonical headers part of the request:
+   *  <lowercasedHeaderName> + ":" + Trim(<value>) + "\n"
+   *  ..
+   *  <lowercasedHeaderName> + ":" + Trim(<value>) + "\n"
+   *
    * @param headers
    * @private
    */
