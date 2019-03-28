@@ -33,6 +33,10 @@ interface V4SignedURLConformanceTestCases {
   expectedUrl: string;
 }
 
+interface MethodAction {
+  [key: string]: 'read'|'resumable'|'write'|'delete';
+}
+
 const testFile = fs.readFileSync(
     path.join(
         __dirname,
@@ -69,9 +73,7 @@ describe('v4 signed url', () => {
         POST: 'resumable',
         PUT: 'write',
         DELETE: 'delete',
-      } as {
-        [index: string]: 'read' | 'resumable' | 'write' | 'delete'
-      })[testCase.method];
+      } as MethodAction)[testCase.method];
 
       const expires = NOW.valueOf() + testCase.expiration * 1000;
 
