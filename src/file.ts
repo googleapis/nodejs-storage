@@ -367,7 +367,7 @@ class RequestError extends Error {
 type ValueOf<T> = T[keyof T];
 type HeaderValue = ValueOf<http.OutgoingHttpHeaders>;
 
-const SEVEN_DAYS = 7 * 24 * 60 * 60;
+const SEVEN_DAYS = 604800;
 
 const DEFAULT_SIGNING_VERSION = 'v2';
 
