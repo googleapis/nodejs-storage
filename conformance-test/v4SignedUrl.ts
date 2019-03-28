@@ -49,9 +49,14 @@ describe('v4 signed url', () => {
   const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
 
   testCases.forEach((testCase) => {
-    // v4 signed URL does not support Bucket operations (list bucket, etc) yet
-    // Remove this conditional once it is supported.
-    (testCase.object ? it : it.skip)(testCase.description, async () => {
+    it(testCase.description, async function() {
+      // v4 signed URL does not support Bucket operations (list bucket, etc) yet
+      // Remove this conditional once it is supported.
+      if (!testCase.object) {
+        this.skip();
+        return;
+      }
+
       const NOW =
           dateFormat.parse(testCase.timestamp, 'YYYYMMDD HHmmss ', true);
       const fakeTimer = sinon.useFakeTimers(NOW);
