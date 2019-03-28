@@ -14,35 +14,50 @@
  * limitations under the License.
  */
 import * as assert from 'assert';
+import * as dateFormat from 'date-and-time';
 import * as fs from 'fs';
+import {OutgoingHttpHeaders} from 'http';
 import * as path from 'path';
+import * as sinon from 'sinon';
 
 import {Storage} from '../src/';
 
-const testCases = JSON.parse(fs.readFileSync(
+interface V4SignedURLConformanceTestCases {
+  description: string;
+  bucket: string;
+  object: string;
+  headers?: OutgoingHttpHeaders;
+  method: string;
+  expiration: number;
+  timestamp: string;
+  expectedUrl: string;
+}
+
+const testFile = fs.readFileSync(
     path.join(
         __dirname,
         '../../conformance-test/test-data/v4SignedUrl.json',
         ),
-    'utf-8'));
+    'utf-8');
+
+const testCases = JSON.parse(testFile) as V4SignedURLConformanceTestCases[];
 
 const SERVICE_ACCOUNT = path.join(
     __dirname, '../../conformance-test/fixtures/signing-service-account.json');
 
 describe('v4 signed url', () => {
-  let storage: Storage;
+  const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
 
-  before(() => {
-    storage = new Storage({keyFilename: SERVICE_ACCOUNT});
-  });
+  testCases.forEach((testCase) => {
+    // v4 signed URL does not support Bucket operations (list bucket, etc) yet
+    // Remove this conditional once it is supported.
+    (testCase.object ? it : it.skip)(testCase.description, async () => {
+      const NOW =
+          dateFormat.parse(testCase.timestamp, 'YYYYMMDD HHmmss ', true);
+      const fakeTimer = sinon.useFakeTimers(NOW);
 
-  // tslint:disable-next-line:no-any
-  testCases.forEach((testCase: any) => {
-    it(testCase.description, () => {
       const bucket = storage.bucket(testCase.bucket);
       const file = bucket.file(testCase.object);
-
-      file.getDate = () => new Date(testCase.timestamp);
 
       const action = ({
         GET: 'read',
@@ -53,19 +68,17 @@ describe('v4 signed url', () => {
         [index: string]: 'read' | 'resumable' | 'write' | 'delete'
       })[testCase.method];
 
-      const expires =
-          new Date(testCase.timestamp).valueOf() + testCase.expiration * 1000;
+      const expires = NOW.valueOf() + testCase.expiration * 1000;
 
-      return file
-          .getSignedUrl({
-            version: 'v4',
-            action,
-            expires,
-            extensionHeaders: testCase.headers,
-          })
-          .then(([signedUrl]) => {
-            assert.strictEqual(signedUrl, testCase.expectedUrl);
-          });
+      const [signedUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action,
+        expires,
+        extensionHeaders: testCase.headers,
+      });
+
+      assert.strictEqual(signedUrl, testCase.expectedUrl);
+      fakeTimer.restore();
     });
   });
 });
