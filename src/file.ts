@@ -2214,6 +2214,8 @@ class File extends ServiceObject<File> {
    * @param {object} config Configuration object.
    * @param {string} config.action "read" (HTTP: GET), "write" (HTTP: PUT), or
    *     "delete" (HTTP: DELETE), "resumable" (HTTP: POST).
+   *     When using "resumable", the header `X-Goog-Resumable: start` has
+   *     to be sent when making a request with the signed URL.
    * @param {string} [config.version='v2'] The signing version to use, either
    *     'v2' or 'v4.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
