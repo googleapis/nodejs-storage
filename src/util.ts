@@ -24,22 +24,10 @@ export function normalize<T = {}, U = Function>(
 }
 
 /**
- * Return a Date object as a String, using the ISO8601 format:
- * 20190308T220000Z
- * @param date the Date object to convert.
- * @internal
- */
-export function dateToISOString(date: Date): string {
-  return date.toJSON()
-             .replace(/[:-]/g, '')  // strip :'s and -'s
-             .split('.')[0] +
-      'Z';  // remove milliseconds part
-}
-
-/**
  * Flatten an object into an Array of arrays, [[key, value], ..].
+ * Implements Object.entries() for Node.js <8
  * @internal
  */
-export function flattenObject<T>(obj: {[key: string]: T}): Array<[string, T]> {
+export function objectEntries<T>(obj: {[key: string]: T}): Array<[string, T]> {
   return Object.keys(obj).map((key) => [key, obj[key]] as [string, T]);
 }

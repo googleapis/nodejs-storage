@@ -23,6 +23,7 @@ import * as extend from 'extend';
 import * as fs from 'fs';
 import * as resumableUpload from 'gcs-resumable-upload';
 import * as proxyquire from 'proxyquire';
+import * as sinon from 'sinon';
 import * as stream from 'stream';
 import {Readable} from 'stream';
 import * as through from 'through2';
@@ -30,7 +31,7 @@ import * as tmp from 'tmp';
 import * as url from 'url';
 import * as zlib from 'zlib';
 
-import {Bucket, File, FileOptions, GetFileMetadataOptions, PolicyDocument, SetFileMetadataOptions} from '../src';
+import {Bucket, File, FileOptions, GetFileMetadataOptions, GetSignedUrlConfig, PolicyDocument, SetFileMetadataOptions} from '../src';
 
 let promisified = false;
 let makeWritableStreamOverride: Function|null;
@@ -840,6 +841,7 @@ describe('File', () => {
             uri: '',
             headers: {
               'Accept-Encoding': 'gzip',
+              'Cache-Control': 'no-store',
             },
             qs: {
               alt: 'media',
@@ -2501,14 +2503,20 @@ describe('File', () => {
   });
 
   describe('getSignedUrl', () => {
+    const NOW = new Date('2019-03-18T00:00:00Z');
+
     const CONFIG = {
       action: 'read',
-      expires: Date.now() + 2000,  // now + 2 seconds
-    } as {action: string, expires: number, version: string};
+      expires: NOW.valueOf() + 2000,  // now + 2 seconds
+    } as GetSignedUrlConfig;
 
     const CLIENT_EMAIL = 'client-email';
 
+    let fakeTimers: sinon.SinonFakeTimers;
+
     beforeEach(() => {
+      fakeTimers = sinon.useFakeTimers(NOW);
+
       BUCKET.storage.authClient = {
         getCredentials() {
           return Promise.resolve({
@@ -2521,11 +2529,15 @@ describe('File', () => {
       };
     });
 
+    afterEach(() => {
+      fakeTimers.restore();
+    });
+
     it('should default to v2 if version is not given', done => {
       file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
         assert.ifError(err);
         assert.strictEqual(typeof signedUrl, 'string');
-        const expires = Math.round(CONFIG.expires / 1000);
+        const expires = Math.round(Number(CONFIG.expires) / 1000);
         const expected =
             'https://storage.googleapis.com/bucket-name/file-name.png?' +
             'GoogleAccessId=client-email&Expires=' + expires +
@@ -2538,18 +2550,15 @@ describe('File', () => {
     });
 
     it('should error for an invalid version', () => {
-      const config = Object.assign({}, CONFIG, { version: 'v42' });
+      const config = Object.assign({}, CONFIG, {version: 'v42'});
       assert.throws(() => {
         file.getSignedUrl(config, () => {});
-      }, /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./)
+      }, /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./);
     });
 
     describe('v4 signed URL', () => {
-      const NOW = new Date('2019-03-18T00:00:00Z');
-
       beforeEach(() => {
         CONFIG.version = 'v4';
-        file.getDate = () => NOW;
       });
 
       it('should create a v4 signed url when specified', done => {
@@ -2608,6 +2617,21 @@ describe('File', () => {
         );
       });
 
+      it('should set correct settings if resumable', done => {
+        const config = Object.assign({}, CONFIG, {
+          action: 'resumable',
+        });
+
+        const spy = sinon.spy(file, 'getCanonicalHeaders');
+
+        file.getSignedUrl(config, (err: Error) => {
+          assert.ifError(err);
+          assert(spy.returnValues[0].includes('x-goog-resumable:start'));
+          spy.restore();
+          done();
+        });
+      });
+
       it('should add response-content-type parameter', done => {
         const type = 'application/json';
 
@@ -2616,7 +2640,7 @@ describe('File', () => {
         });
 
         directoryFile.getSignedUrl(config, (_: Error, signedUrl: string) => {
-          assert(signedUrl.indexOf(encodeURIComponent(type)) > -1);
+          assert(signedUrl.includes(encodeURIComponent(type)));
           done();
         });
       });
@@ -2625,18 +2649,15 @@ describe('File', () => {
         const generation = 10003320000;
         const file = new File(BUCKET, 'name', {generation});
 
-        file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert(
-              signedUrl.indexOf(encodeURIComponent(generation.toString())) >
-              -1);
+        file.getSignedUrl(CONFIG, (_: Error, signedUrl: string) => {
+          assert(signedUrl.includes(encodeURIComponent(generation.toString())));
           done();
         });
       });
 
       it('should URI encode file names', done => {
         directoryFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert(
-              signedUrl.indexOf(encodeURIComponent(directoryFile.name)) > -1);
+          assert(signedUrl.includes(encodeURIComponent(directoryFile.name)));
           done();
         });
       });
@@ -2652,8 +2673,22 @@ describe('File', () => {
 
         file.getSignedUrl(config, (err: Error, signedUrl: string) => {
           assert.ifError(err);
-          assert(signedUrl.indexOf('content-md5') > -1);
-          assert(signedUrl.indexOf('content-type') > -1);
+          assert(signedUrl.includes('content-md5'));
+          assert(signedUrl.includes('content-type'));
+          done();
+        });
+      });
+
+      it('should return a SigningError if signBlob errors', done => {
+        const error = new Error('Error.');
+
+        BUCKET.storage.authClient.sign = () => {
+          return Promise.reject(error);
+        };
+
+        file.getSignedUrl(CONFIG, (err: Error) => {
+          assert.strictEqual(err.name, 'SigningError');
+          assert.strictEqual(err.message, error.message);
           done();
         });
       });
@@ -2670,7 +2705,7 @@ describe('File', () => {
             'GET',
             '',
             '',
-            Math.round(CONFIG.expires / 1000),
+            Math.round(Number(CONFIG.expires) / 1000),
             `/${BUCKET.name}/${encodeURIComponent(file.name)}`,
           ].join('\n'));
           return Promise.resolve('signature');
@@ -2679,7 +2714,7 @@ describe('File', () => {
         file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
           assert.ifError(err);
           assert.strictEqual(typeof signedUrl, 'string');
-          const expires = Math.round(CONFIG.expires / 1000);
+          const expires = Math.round(Number(CONFIG.expires) / 1000);
           const expected =
               'https://storage.googleapis.com/bucket-name/file-name.png?' +
               'GoogleAccessId=client-email&Expires=' + expires +
@@ -2706,7 +2741,7 @@ describe('File', () => {
 
         BUCKET.storage.authClient.sign = (blobToSign: string) => {
           assert.strictEqual(blobToSign.indexOf('POST'), 0);
-          assert(blobToSign.indexOf('x-goog-resumable:start') > -1);
+          assert(blobToSign.includes('x-goog-resumable:start'));
           done();
         };
 
@@ -2729,8 +2764,7 @@ describe('File', () => {
 
       it('should URI encode file names', done => {
         directoryFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert(
-              signedUrl.indexOf(encodeURIComponent(directoryFile.name)) > -1);
+          assert(signedUrl.includes(encodeURIComponent(directoryFile.name)));
           done();
         });
       });
@@ -2745,7 +2779,7 @@ describe('File', () => {
               responseType: type,
             },
             (err: Error, signedUrl: string) => {
-              assert(signedUrl.indexOf(encodeURIComponent(type)) > -1);
+              assert(signedUrl.includes(encodeURIComponent(type)));
               done();
             });
       });
@@ -2755,9 +2789,7 @@ describe('File', () => {
         const file = new File(BUCKET, 'name', {generation});
 
         file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert(
-              signedUrl.indexOf(encodeURIComponent(generation.toString())) >
-              -1);
+          assert(signedUrl.includes(encodeURIComponent(generation.toString())));
           done();
         });
       });
@@ -2771,7 +2803,7 @@ describe('File', () => {
         file.getSignedUrl(configWithCname, (err: Error, signedUrl: string) => {
           assert.ifError(err);
 
-          const expires = Math.round(CONFIG.expires / 1000);
+          const expires = Math.round(Number(CONFIG.expires) / 1000);
           const expected = 'http://www.example.com/file-name.png?' +
               'GoogleAccessId=client-email&Expires=' + expires +
               '&Signature=signature';

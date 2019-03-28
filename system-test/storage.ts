@@ -2798,7 +2798,7 @@ describe('storage', () => {
     const localFile = fs.readFileSync(FILES.logo.path);
     let file: File;
 
-    before(done => {
+    beforeEach(done => {
       file = bucket.file('LogoToSign.jpg');
       fs.createReadStream(FILES.logo.path)
           .pipe(file.createWriteStream())
@@ -2806,43 +2806,48 @@ describe('storage', () => {
           .on('finish', done.bind(null, null));
     });
 
-    it('should create a signed read url', done => {
-      file.getSignedUrl(
-          {
-            version: 'v2',
-            action: 'read',
-            expires: Date.now() + 5000,
-          },
-          (err, signedReadUrl) => {
-            assert.ifError(err);
-            fetch(signedReadUrl!)
-                .then(res => res.text())
-                .then(body => {
-                  assert.strictEqual(body, localFile.toString());
-                  file.delete(done);
-                })
-                .catch(error => assert.ifError(error));
-          });
+    it('should create a signed read url', async () => {
+      const [signedReadUrl] = await file.getSignedUrl({
+        version: 'v2',
+        action: 'read',
+        expires: Date.now() + 5000,
+      });
+
+      const res = await fetch(signedReadUrl);
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
+      await file.delete();
     });
 
-    it('should create a signed delete url', done => {
-      file.getSignedUrl(
-          {
-            version: 'v2',
-            action: 'delete',
-            expires: Date.now() + 5000,
-          },
-          (err, signedDeleteUrl) => {
-            assert.ifError(err);
-            fetch(signedDeleteUrl!, {method: 'DELETE'})
-                .then(() => {
-                  file.getMetadata((err: ApiError) => {
-                    assert.strictEqual(err.code, 404);
-                    done();
-                  });
-                })
-                .catch(error => assert.ifError(error));
-          });
+    it('should create a signed delete url', async () => {
+      const [signedDeleteUrl] = await file.getSignedUrl({
+        version: 'v2',
+        action: 'delete',
+        expires: Date.now() + 5000,
+      });
+
+      await fetch(signedDeleteUrl, {method: 'DELETE'});
+      assert.rejects(
+          () => file.getMetadata(),
+          (err: ApiError) => err.code === 404,
+      );
+    });
+
+    it('should work with multi-valued extension headers', async () => {
+      const HEADERS = {
+        'x-goog-custom-header': ['value1', 'value2'],
+      };
+      const [signedReadUrl] = await file.getSignedUrl({
+        action: 'read',
+        expires: Date.now() + 5000,
+        extensionHeaders: HEADERS,
+      });
+
+      const res = await fetch(signedReadUrl, {
+        headers: {'x-goog-custom-header': 'value1,value2'},
+      });
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
     });
   });
 
@@ -2858,43 +2863,30 @@ describe('storage', () => {
           .on('finish', done.bind(null, null));
     });
 
-    it('should create a signed read url', done => {
-      file.getSignedUrl(
-          {
-            version: 'v4',
-            action: 'read',
-            expires: Date.now() + 5000,
-          },
-          (err, signedReadUrl) => {
-            assert.ifError(err);
-            fetch(signedReadUrl!)
-                .then(res => res.text())
-                .then(body => {
-                  assert.strictEqual(body, localFile.toString());
-                  file.delete(done);
-                })
-                .catch(error => assert.ifError(error));
-          });
+    it('should create a signed read url', async () => {
+      const [signedReadUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        expires: Date.now() + 5000,
+      });
+
+      const res = await fetch(signedReadUrl);
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
+      await file.delete();
     });
 
-    it('should create a signed delete url', done => {
-      file.getSignedUrl(
-          {
-            version: 'v4',
-            action: 'delete',
-            expires: Date.now() + 5000,
-          },
-          (err, signedDeleteUrl) => {
-            assert.ifError(err);
-            fetch(signedDeleteUrl!, {method: 'DELETE'})
-                .then(() => {
-                  file.getMetadata((err: ApiError) => {
-                    assert.strictEqual(err.code, 404);
-                    done();
-                  });
-                })
-                .catch(error => assert.ifError(error));
-          });
+    it('should create a signed delete url', async () => {
+      const [signedDeleteUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'delete',
+        expires: Date.now() + 5000,
+      });
+      await fetch(signedDeleteUrl!, {method: 'DELETE'});
+      assert.rejects(
+          () => file.getMetadata(),
+          (err: ApiError) => err.code === 404,
+      );
     });
   });
 
