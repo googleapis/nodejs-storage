@@ -2553,6 +2553,7 @@ describe('File', () => {
         assert(emitWarningStub.calledOnce);
         const warning = emitWarningStub.args[0][0];
         assert.deepStrictEqual(warning, DEFAULT_VERSION_WARNING.message);
+        emitWarningStub.restore();
         done();
       });
     });
