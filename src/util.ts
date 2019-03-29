@@ -14,6 +14,17 @@
  * limitations under the License.
  */
 
+export enum WarningTypes {
+  WARNING = 'Warning',
+}
+
+interface Warning {
+  code: string;
+  message: string;
+  type?: WarningTypes;
+  warned?: boolean;
+}
+
 export function normalize<T = {}, U = Function>(
     optionsOrCallback?: T|U, cb?: U) {
   const options =
@@ -30,4 +41,24 @@ export function normalize<T = {}, U = Function>(
  */
 export function objectEntries<T>(obj: {[key: string]: T}): Array<[string, T]> {
   return Object.keys(obj).map((key) => [key, obj[key]] as [string, T]);
+}
+
+export function emitWarning(warning: Warning) {
+  if (warning.warned) {
+    return;
+  }
+  warning.warned = true;
+  // tslint:disable-next-line no-any
+  process.emitWarning(warning.message, warning as any);
+};
+
+export const DEFAULT_VERSION_WARNING = {
+  code: 'signed-url-default-version-warning',
+  type: WarningTypes.WARNING,
+  message: [
+    'You have generated a signed URL using the default v2 signing',
+    'implementation. In the future, this will default to v4. You may',
+    'experience breaking changes if you use longer than 7 day expiration',
+    'times with v4. To opt-in to the behavior specify config.version=\'v4\'',
+  ].join(' '),
 }
