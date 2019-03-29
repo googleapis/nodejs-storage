@@ -298,11 +298,12 @@ async function generateSignedUrl(bucketName, filename) {
 
   // These options will allow temporary read access to the file
   const options = {
+    version: 'v2', // defaults to 'v2' if missing.
     action: 'read',
     expires: Date.now() + 1000 * 60 * 60, // one hour
   };
 
-  // Get a signed URL for the file
+  // Get a v2 signed URL for the file
   const [url] = await storage
     .bucket(bucketName)
     .file(filename)
@@ -333,7 +334,7 @@ async function generateV4ReadSignedUrl(bucketName, filename) {
     expires: Date.now() + 1000 * 60 * 60, // one hour
   };
 
-  // Get a signed URL for the file
+  // Get a v4 signed URL for reading the file
   const [url] = await storage
     .bucket(bucketName)
     .file(filename)
@@ -366,7 +367,7 @@ async function generateV4UploadSignedUrl(bucketName, filename) {
     contentType: 'application/octet-stream',
   };
 
-  // Get a signed URL for uploading file
+  // Get a v4 signed URL for uploading file
   const [url] = await storage
     .bucket(bucketName)
     .file(filename)
