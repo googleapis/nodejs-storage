@@ -312,6 +312,70 @@ async function generateSignedUrl(bucketName, filename) {
   // [END storage_generate_signed_url]
 }
 
+async function generateV4ReadSignedUrl(bucketName, filename) {
+  // [START storage_generate_signed_url_v4]
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'File to access, e.g. file.txt';
+
+  // These options will allow temporary read access to the file
+  const options = {
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + 1000 * 60 * 60, // one hour
+  };
+
+  // Get a signed URL for the file
+  const [url] = await storage
+    .bucket(bucketName)
+    .file(filename)
+    .getSignedUrl(options);
+
+  console.log(`The v4 signed url for reading ${filename} is ${url}.`);
+  // [END storage_generate_signed_url]
+}
+
+async function generateV4UploadSignedUrl(bucketName, filename) {
+  // [START storage_generate_upload_signed_url_v4]
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'File to access, e.g. file.txt';
+
+  // These options will allow temporary uploading of the file with outgoing
+  // Content-Type: application/octet-stream header.
+  const options = {
+    version: 'v4',
+    action: 'write',
+    expires: Date.now() + 1000 * 60 * 60, // one hour
+    contentType: 'application/octet-stream',
+  };
+
+  // Get a signed URL for uploading file
+  const [url] = await storage
+    .bucket(bucketName)
+    .file(filename)
+    .getSignedUrl(options);
+
+  console.log(`The v4 signed url for uploading ${filename} is ${url}.`);
+  // [END storage_generate_signed_url]
+}
+
 async function moveFile(bucketName, srcFilename, destFilename) {
   // [START storage_move_file]
   // Imports the Google Cloud client library
@@ -428,6 +492,18 @@ require(`yargs`)
     `Generates a signed URL for a file.`,
     {},
     opts => generateSignedUrl(opts.bucketName, opts.fileName)
+  )
+  .command(
+    'generate-v4-read-signed-url <bucketName> <fileName>',
+    'Generates a v4 signed URL for reading a file.',
+    {},
+    opts => generateV4ReadSignedUrl(opts.bucketName, opts.fileName)
+  )
+  .command(
+    'generate-v4-upload-signed-url <bucketName> <fileName>',
+    'Generates a v4 signed URL for uploading a file.',
+    {},
+    opts => generateV4UploadSignedUrl(opts.bucketName, opts.fileName)
   )
   .command(
     `move <bucketName> <srcFileName> <destFileName>`,
