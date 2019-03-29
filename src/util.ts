@@ -50,7 +50,7 @@ export function emitWarning(warning: Warning) {
   warning.warned = true;
   // tslint:disable-next-line no-any
   process.emitWarning(warning.message, warning as any);
-};
+}
 
 export const DEFAULT_VERSION_WARNING: Warning = {
   code: 'signed-url-default-version-warning',
@@ -61,4 +61,4 @@ export const DEFAULT_VERSION_WARNING: Warning = {
     'experience breaking changes if you use longer than 7 day expiration',
     'times with v4. To opt-in to the behavior specify config.version=\'v4\'',
   ].join(' '),
-}
+};
