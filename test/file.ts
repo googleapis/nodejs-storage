@@ -32,6 +32,7 @@ import * as url from 'url';
 import * as zlib from 'zlib';
 
 import {Bucket, File, FileOptions, GetFileMetadataOptions, GetSignedUrlConfig, PolicyDocument, SetFileMetadataOptions} from '../src';
+import {DEFAULT_VERSION_WARNING} from '../src/util';
 
 let promisified = false;
 let makeWritableStreamOverride: Function|null;
@@ -2514,6 +2515,8 @@ describe('File', () => {
 
     let fakeTimers: sinon.SinonFakeTimers;
 
+    DEFAULT_VERSION_WARNING.warned = false;
+
     beforeEach(() => {
       fakeTimers = sinon.useFakeTimers(NOW);
 
@@ -2534,6 +2537,8 @@ describe('File', () => {
     });
 
     it('should default to v2 if version is not given', done => {
+      const emitWarningStub = sinon.stub(process, 'emitWarning');
+
       file.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
         assert.ifError(err);
         assert.strictEqual(typeof signedUrl, 'string');
@@ -2545,6 +2550,9 @@ describe('File', () => {
         assert.strictEqual(
             signedUrl, expected,
             'signedUrl doesn\'t match expected format for v2');
+        assert(emitWarningStub.calledOnce);
+        const warning = emitWarningStub.args[0][0];
+        assert.deepStrictEqual(warning, DEFAULT_VERSION_WARNING.message);
         done();
       });
     });

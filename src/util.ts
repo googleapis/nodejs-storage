@@ -52,7 +52,7 @@ export function emitWarning(warning: Warning) {
   process.emitWarning(warning.message, warning as any);
 };
 
-export const DEFAULT_VERSION_WARNING = {
+export const DEFAULT_VERSION_WARNING: Warning = {
   code: 'signed-url-default-version-warning',
   type: WarningTypes.WARNING,
   message: [
