@@ -25,6 +25,7 @@ objects to users via direct download.
   * [Files](#files)
   * [Iam](#iam)
   * [Notifications](#notifications)
+  * [Quickstart](#quickstart)
   * [Requester Pays](#requester-pays)
 
 ## Before you begin
@@ -45,13 +46,8 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 
 __Usage:__
 
-See available commands:
 
-`node acl.js --help`
-
-Run the sample:
-
-`node acl.js [command] [options]`
+`node acl.js`
 
 
 -----
@@ -67,13 +63,8 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 
 __Usage:__
 
-See available commands:
 
-`node bucketLock.js --help`
-
-Run the sample:
-
-`node bucketLock.js [command] [options]`
+`node bucketLock.js`
 
 
 -----
@@ -89,13 +80,8 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 
 __Usage:__
 
-See available commands:
 
-`node buckets.js --help`
-
-Run the sample:
-
-`node buckets.js [command] [options]`
+`node buckets.js`
 
 
 -----
@@ -111,13 +97,8 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 
 __Usage:__
 
-See available commands:
 
-`node encryption.js --help`
-
-Run the sample:
-
-`node encryption.js [command] [options]`
+`node encryption.js`
 
 
 -----
@@ -133,13 +114,8 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 
 __Usage:__
 
-See available commands:
 
-`node files.js --help`
-
-Run the sample:
-
-`node files.js [command] [options]`
+`node files.js`
 
 
 -----
@@ -155,13 +131,8 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 
 __Usage:__
 
-See available commands:
 
-`node iam.js --help`
-
-Run the sample:
-
-`node iam.js [command] [options]`
+`node iam.js`
 
 
 -----
@@ -177,13 +148,25 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 
 __Usage:__
 
-See available commands:
 
-`node notifications.js --help`
+`node notifications.js`
 
-Run the sample:
 
-`node notifications.js [command] [options]`
+-----
+
+
+
+
+### Quickstart
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/quickstart.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/quickstart.js,samples/README.md)
+
+__Usage:__
+
+
+`node quickstart.js`
 
 
 -----
@@ -199,13 +182,8 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 
 __Usage:__
 
-See available commands:
 
-`node requesterPays.js --help`
-
-Run the sample:
-
-`node requesterPays.js [command] [options]`
+`node requesterPays.js`
 
 
 
