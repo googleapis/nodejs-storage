@@ -20,6 +20,7 @@ const path = require('path');
 const {Storage} = require('@google-cloud/storage');
 const {assert} = require('chai');
 const execa = require('execa');
+const fetch = require('node-fetch');
 const uuid = require('uuid');
 const {promisify} = require('util');
 
@@ -35,6 +36,8 @@ const kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US;
 const filePath = path.join(cwd, 'resources', fileName);
 const downloadFilePath = path.join(cwd, 'downloaded.txt');
 const cmd = `node files.js`;
+
+const fileContent = fs.readFileSync(filePath, 'utf-8');
 
 before(async () => {
   await bucket.create();
@@ -144,11 +147,17 @@ it('should generate a v2 signed URL for a file', async () => {
   assert.match(output, new RegExp(`The signed url for ${copiedFileName} is `));
 });
 
-it('should generate a v4 signed URL for reading a file', async () => {
+it('should generate a v4 signed URL and read a file', async () => {
   const output = await exec(
     `${cmd} generate-v4-read-signed-url ${bucketName} ${copiedFileName}`
   );
-  assert.match(output, new RegExp(`The signed url `)
+  const regExp = new RegExp(`The v4 signed url for reading ${copiedFileName} is (?<url>.*)`);
+  assert.match(output, regExp);
+
+  const {groups} = output.match(regExp);
+  const res = await fetch(groups.url);
+  const text = await res.text();
+  assert.strictEqual(text, fileContent);
 });
 
 it('should get metadata for a file', async () => {
