@@ -32,6 +32,7 @@ const bucket = storage.bucket(bucketName);
 const fileName = 'test.txt';
 const movedFileName = 'test2.txt';
 const copiedFileName = 'test3.txt';
+const signedFileName = 'signed-upload.txt';
 const kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US;
 const filePath = path.join(cwd, 'resources', fileName);
 const downloadFilePath = path.join(cwd, 'downloaded.txt');
@@ -158,6 +159,34 @@ it('should generate a v4 signed URL and read a file', async () => {
   const res = await fetch(groups.url);
   const text = await res.text();
   assert.strictEqual(text, fileContent);
+});
+
+it('should generate a v4 signed URL and upload a file', async () => {
+  const output = await exec(
+    `${cmd} generate-v4-upload-signed-url ${bucketName} ${signedFileName}`
+  );
+  const regExp = new RegExp(`The v4 signed url for uploading ${signedFileName} is (?<url>.*)`);
+  assert.match(output, regExp);
+
+  const {groups} = output.match(regExp);
+  const req = {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/octet-stream'},
+    body: fileContent,
+  }
+  await fetch(groups.url, req);
+
+  await new Promise((resolve, reject) => {
+    let remoteContent = '';
+    bucket.file(signedFileName)
+      .createReadStream()
+      .on('data', (buf) => remoteContent += buf.toString())
+      .on('end', () => {
+        assert.strictEqual(remoteContent, fileContent);
+        resolve();
+      })
+      .on('error', reject);
+  })
 });
 
 it('should get metadata for a file', async () => {

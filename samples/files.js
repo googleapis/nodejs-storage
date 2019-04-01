@@ -340,7 +340,7 @@ async function generateV4ReadSignedUrl(bucketName, filename) {
     .file(filename)
     .getSignedUrl(options);
 
-  console.log(`The v4 signed url for reading ${filename} is ${url}.`);
+  console.log(`The v4 signed url for reading ${filename} is ${url}`);
   // [END storage_generate_signed_url]
 }
 
@@ -373,7 +373,7 @@ async function generateV4UploadSignedUrl(bucketName, filename) {
     .file(filename)
     .getSignedUrl(options);
 
-  console.log(`The v4 signed url for uploading ${filename} is ${url}.`);
+  console.log(`The v4 signed url for uploading ${filename} is ${url}`);
   // [END storage_generate_signed_url]
 }
 
