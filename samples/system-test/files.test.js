@@ -137,11 +137,18 @@ it('should make a file public', async () => {
   );
 });
 
-it('should generate a signed URL for a file', async () => {
+it('should generate a v2 signed URL for a file', async () => {
   const output = await exec(
     `${cmd} generate-signed-url ${bucketName} ${copiedFileName}`
   );
   assert.match(output, new RegExp(`The signed url for ${copiedFileName} is `));
+});
+
+it('should generate a v4 signed URL for reading a file', async () => {
+  const output = await exec(
+    `${cmd} generate-v4-read-signed-url ${bucketName} ${copiedFileName}`
+  );
+  assert.match(output, new RegExp(`The signed url `)
 });
 
 it('should get metadata for a file', async () => {
