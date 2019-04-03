@@ -2915,8 +2915,8 @@ class File extends ServiceObject<File> {
    *
    * @private
    */
-  startResumableUpload_(
-      dup: Duplexify, options: CreateResumableUploadOptions): void {
+  startResumableUpload_(dup: Duplexify, options: CreateResumableUploadOptions):
+      void {
     options = Object.assign(
         {
           metadata: {},
@@ -2965,8 +2965,8 @@ class File extends ServiceObject<File> {
    *
    * @private
    */
-  startSimpleUpload_(
-      dup: Duplexify, options?: CreateResumableUploadOptions): void {
+  startSimpleUpload_(dup: Duplexify, options?: CreateResumableUploadOptions):
+      void {
     options = Object.assign(
         {
           metadata: {},
