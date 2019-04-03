@@ -45,7 +45,7 @@ import {Storage} from './storage';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 import {ResponseBody, ApiError} from '@google-cloud/common/build/src/util';
-import {normalize, objectEntries, emitWarning, DEFAULT_VERSION_WARNING} from './util';
+import {normalize, objectEntries} from './util';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -371,7 +371,6 @@ const SEVEN_DAYS = 604800;
 
 /*
  * Default signing version for getSignedUrl is 'v2'.
- * The default will be changed to 'v4' at a later time.
  */
 const DEFAULT_SIGNING_VERSION = 'v2';
 
@@ -2222,7 +2221,6 @@ class File extends ServiceObject<File> {
    *     to be sent when making a request with the signed URL.
    * @param {string} [config.version='v2'] The signing version to use, either
    *     'v2' or 'v4.
-   *     The default version will be changed to 'v4' in the future
    * @param {string} [config.cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
    * @param {string} [config.contentMd5] The MD5 digest value in base64. If you
@@ -2342,9 +2340,6 @@ class File extends ServiceObject<File> {
     const name = encodeURIComponent(this.name);
     const resource = `/${this.bucket.name}/${name}`;
 
-    if (!cfg.version) {
-      emitWarning(DEFAULT_VERSION_WARNING);
-    }
     const version = cfg.version || DEFAULT_SIGNING_VERSION;
 
     const config: GetSignedUrlConfigInternal = Object.assign({}, cfg, {
