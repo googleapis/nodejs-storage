@@ -155,9 +155,10 @@ it('should generate a v4 signed URL and read a file', async () => {
 
   const regExp = new RegExp(
     'Generated GET signed URL:\n' +
-    '(?<url>.*)\n' +
-    'You can use this URL with any user agent, for example:\n' +
-    'curl ');
+      '(?<url>.*)\n' +
+      'You can use this URL with any user agent, for example:\n' +
+      'curl '
+  );
   assert.match(output, regExp);
 
   const {groups} = output.match(regExp);
@@ -172,9 +173,10 @@ it('should generate a v4 signed URL and upload a file', async () => {
   );
   const regExp = new RegExp(
     'Generated PUT signed URL:\n' +
-    '(?<url>.*)\n' +
-    'You can use this URL with any user agent, for example:\n' +
-    'curl -X PUT');
+      '(?<url>.*)\n' +
+      'You can use this URL with any user agent, for example:\n' +
+      'curl -X PUT'
+  );
   assert.match(output, regExp);
 
   const {groups} = output.match(regExp);
@@ -182,20 +184,27 @@ it('should generate a v4 signed URL and upload a file', async () => {
     method: 'PUT',
     headers: {'Content-Type': 'application/octet-stream'},
     body: fileContent,
-  }
+  };
   await fetch(groups.url, req);
 
   await new Promise((resolve, reject) => {
     let remoteContent = '';
-    bucket.file(signedFileName)
+    bucket
+      .file(signedFileName)
       .createReadStream()
-      .on('data', (buf) => remoteContent += buf.toString())
+      .on('response', res => {
+        assert.strictEqual(
+          res.headers['content-type'],
+          'application/octet-stream'
+        );
+      })
+      .on('data', buf => (remoteContent += buf.toString()))
       .on('end', () => {
         assert.strictEqual(remoteContent, fileContent);
         resolve();
       })
       .on('error', reject);
-  })
+  });
 });
 
 it('should get metadata for a file', async () => {
