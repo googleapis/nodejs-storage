@@ -21,7 +21,6 @@ import compressible = require('compressible');
 import concat = require('concat-stream');
 import * as crypto from 'crypto';
 import * as dateFormat from 'date-and-time';
-import * as duplexify from 'duplexify';
 import * as extend from 'extend';
 import * as fs from 'fs';
 const hashStreamValidation = require('hash-stream-validation');
@@ -39,12 +38,12 @@ import * as zlib from 'zlib';
 import * as url from 'url';
 import * as http from 'http';
 import * as r from 'request';  // Only for type declarations.
-import {teenyRequest} from 'teeny-request';
 
 import {Storage} from './storage';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
-import {ResponseBody, ApiError} from '@google-cloud/common/build/src/util';
+import {ResponseBody, ApiError, Duplexify, DuplexifyConstructor} from '@google-cloud/common/build/src/util';
+const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectEntries} from './util';
 
 export type GetExpirationDateResponse = [Date];
@@ -765,7 +764,6 @@ class File extends ServiceObject<File> {
       parent: bucket,
       baseUrl: '/o',
       id: encodeURIComponent(name),
-      requestModule: teenyRequest as typeof r,
       methods,
     });
 
@@ -3057,8 +3055,8 @@ class File extends ServiceObject<File> {
    *
    * @private
    */
-  startResumableUpload_(
-      dup: duplexify.Duplexify, options: CreateResumableUploadOptions): void {
+  startResumableUpload_(dup: Duplexify, options: CreateResumableUploadOptions):
+      void {
     options = Object.assign(
         {
           metadata: {},
@@ -3107,8 +3105,8 @@ class File extends ServiceObject<File> {
    *
    * @private
    */
-  startSimpleUpload_(
-      dup: duplexify.Duplexify, options?: CreateResumableUploadOptions): void {
+  startSimpleUpload_(dup: Duplexify, options?: CreateResumableUploadOptions):
+      void {
     options = Object.assign(
         {
           metadata: {},
@@ -3143,7 +3141,7 @@ class File extends ServiceObject<File> {
     }
 
     util.makeWritableStream(dup, {
-      makeAuthenticatedRequest: reqOpts => {
+      makeAuthenticatedRequest: (reqOpts: object) => {
         this.request(reqOpts as DecorateRequestOptions, (err, body, resp) => {
           if (err) {
             dup.destroy(err);
@@ -3156,8 +3154,7 @@ class File extends ServiceObject<File> {
         });
       },
       metadata: options.metadata,
-      request: reqOpts,
-      requestModule: teenyRequest as typeof r,
+      request: reqOpts
     });
   }
 
