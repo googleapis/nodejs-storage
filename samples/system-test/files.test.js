@@ -155,14 +155,14 @@ it('should generate a v4 signed URL and read a file', async () => {
 
   const regExp = new RegExp(
     'Generated GET signed URL:\n' +
-      '(?<url>.*)\n' +
+      '(.*)\n' +
       'You can use this URL with any user agent, for example:\n' +
       'curl '
   );
   assert.match(output, regExp);
 
-  const {groups} = output.match(regExp);
-  const res = await fetch(groups.url);
+  const match = output.match(regExp);
+  const res = await fetch(match[1]);
   const text = await res.text();
   assert.strictEqual(text, fileContent);
 });
@@ -173,19 +173,19 @@ it('should generate a v4 signed URL and upload a file', async () => {
   );
   const regExp = new RegExp(
     'Generated PUT signed URL:\n' +
-      '(?<url>.*)\n' +
+      '(.*)\n' +
       'You can use this URL with any user agent, for example:\n' +
       'curl -X PUT'
   );
   assert.match(output, regExp);
 
-  const {groups} = output.match(regExp);
+  const match = output.match(regExp);
   const req = {
     method: 'PUT',
     headers: {'Content-Type': 'application/octet-stream'},
     body: fileContent,
   };
-  await fetch(groups.url, req);
+  await fetch(match[1], req);
 
   await new Promise((resolve, reject) => {
     let remoteContent = '';

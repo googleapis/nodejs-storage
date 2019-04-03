@@ -381,7 +381,7 @@ async function generateV4UploadSignedUrl(bucketName, filename) {
   console.log('You can use this URL with any user agent, for example:');
   console.log(
     "curl -X PUT -H 'Content-Type: application/octet-stream' " +
-      `--upload-file my-file '${url}'`
+    `--upload-file my-file '${url}'`
   );
   // [END storage_generate_upload_signed_url_v4]
 }
