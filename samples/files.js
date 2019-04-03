@@ -331,7 +331,7 @@ async function generateV4ReadSignedUrl(bucketName, filename) {
   const options = {
     version: 'v4',
     action: 'read',
-    expires: Date.now() + 1000 * 60 * 60, // one hour
+    expires: Date.now() + 15 * 60 * 1000, // 15 minutes
   };
 
   // Get a v4 signed URL for reading the file
@@ -366,7 +366,7 @@ async function generateV4UploadSignedUrl(bucketName, filename) {
   const options = {
     version: 'v4',
     action: 'write',
-    expires: Date.now() + 1000 * 60 * 60, // one hour
+    expires: Date.now() + 15 * 60 * 1000, // 15 minutes
     contentType: 'application/octet-stream',
   };
 
