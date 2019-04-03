@@ -153,7 +153,7 @@ it('should generate a v4 signed URL and read a file', async () => {
     `${cmd} generate-v4-read-signed-url ${bucketName} ${copiedFileName}`
   );
 
-  const expected = /URL:\n([^ ]+)/;
+  const expected = /URL:\n([^\s]+)/;
   assert.match(output, expected);
 
   const match = output.match(expected);
@@ -167,7 +167,7 @@ it('should generate a v4 signed URL and upload a file', async () => {
     `${cmd} generate-v4-upload-signed-url ${bucketName} ${signedFileName}`
   );
 
-  const expected = /URL:\n([^ ]+)/;
+  const expected = /URL:\n([^\s]+)/;
   assert.match(output, expected);
 
   const match = output.match(expected);
