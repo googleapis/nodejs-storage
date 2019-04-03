@@ -340,7 +340,10 @@ async function generateV4ReadSignedUrl(bucketName, filename) {
     .file(filename)
     .getSignedUrl(options);
 
-  console.log(`The v4 signed url for reading ${filename} is ${url}`);
+  console.log('Generated GET signed URL:');
+  console.log(url);
+  console.log('You can use this URL with any user agent, for example:');
+  console.log(`curl '${url}'`);
   // [END storage_generate_signed_url_v4]
 }
 
@@ -373,7 +376,12 @@ async function generateV4UploadSignedUrl(bucketName, filename) {
     .file(filename)
     .getSignedUrl(options);
 
-  console.log(`The v4 signed url for uploading ${filename} is ${url}`);
+  console.log('Generated PUT signed URL:');
+  console.log(url);
+  console.log('You can use this URL with any user agent, for example:');
+  console.log(
+    "curl -X PUT -H 'Content-Type: application/octet-stream' " +
+    `--upload-file my-file '${url}'`);
   // [END storage_generate_upload_signed_url_v4]
 }
 

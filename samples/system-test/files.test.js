@@ -152,7 +152,12 @@ it('should generate a v4 signed URL and read a file', async () => {
   const output = await exec(
     `${cmd} generate-v4-read-signed-url ${bucketName} ${copiedFileName}`
   );
-  const regExp = new RegExp(`The v4 signed url for reading ${copiedFileName} is (?<url>.*)`);
+
+  const regExp = new RegExp(
+    'Generated GET signed URL:\n' +
+    '(?<url>.*)\n' +
+    'You can use this URL with any user agent, for example:\n' +
+    'curl ');
   assert.match(output, regExp);
 
   const {groups} = output.match(regExp);
@@ -165,7 +170,11 @@ it('should generate a v4 signed URL and upload a file', async () => {
   const output = await exec(
     `${cmd} generate-v4-upload-signed-url ${bucketName} ${signedFileName}`
   );
-  const regExp = new RegExp(`The v4 signed url for uploading ${signedFileName} is (?<url>.*)`);
+  const regExp = new RegExp(
+    'Generated PUT signed URL:\n' +
+    '(?<url>.*)\n' +
+    'You can use this URL with any user agent, for example:\n' +
+    'curl -X PUT');
   assert.match(output, regExp);
 
   const {groups} = output.match(regExp);
