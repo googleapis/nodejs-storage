@@ -153,15 +153,10 @@ it('should generate a v4 signed URL and read a file', async () => {
     `${cmd} generate-v4-read-signed-url ${bucketName} ${copiedFileName}`
   );
 
-  const regExp = new RegExp(
-    'Generated GET signed URL:\n' +
-      '(.*)\n' +
-      'You can use this URL with any user agent, for example:\n' +
-      'curl '
-  );
-  assert.match(output, regExp);
+  const expected = /URL:\n(.*)/;
+  assert.match(output, expected);
 
-  const match = output.match(regExp);
+  const match = output.match(expected);
   const res = await fetch(match[1]);
   const text = await res.text();
   assert.strictEqual(text, fileContent);
@@ -171,15 +166,10 @@ it('should generate a v4 signed URL and upload a file', async () => {
   const output = await exec(
     `${cmd} generate-v4-upload-signed-url ${bucketName} ${signedFileName}`
   );
-  const regExp = new RegExp(
-    'Generated PUT signed URL:\n' +
-      '(.*)\n' +
-      'You can use this URL with any user agent, for example:\n' +
-      'curl -X PUT'
-  );
-  assert.match(output, regExp);
+  const expected = /URL:\n(.*)/;
+  assert.match(output, expected);
 
-  const match = output.match(regExp);
+  const match = output.match(expected);
   const req = {
     method: 'PUT',
     headers: {'Content-Type': 'application/octet-stream'},
