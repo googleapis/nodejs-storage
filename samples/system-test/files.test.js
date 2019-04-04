@@ -66,7 +66,7 @@ it('should upload a file with a kms key', async () => {
   assert.strictEqual(exists, true);
 });
 
-it('should download a file', async () => {
+it('should download a file', () => {
   const output = execSync(
     `${cmd} download ${bucketName} ${fileName} ${downloadFilePath}`
   );
@@ -107,14 +107,14 @@ it('should copy a file', async () => {
   assert.strictEqual(exists, true);
 });
 
-it('should list files', async () => {
+it('should list files', () => {
   const output = execSync(`${cmd} list ${bucketName}`);
   assert.match(output, /Files:/);
   assert.match(output, new RegExp(movedFileName));
   assert.match(output, new RegExp(copiedFileName));
 });
 
-it('should list files by a prefix', async () => {
+it('should list files by a prefix', () => {
   let output = execSync(`${cmd} list ${bucketName} test "/"`);
   assert.match(output, /Files:/);
   assert.match(output, new RegExp(movedFileName));
@@ -126,24 +126,22 @@ it('should list files by a prefix', async () => {
   assert.notMatch(output, new RegExp(copiedFileName));
 });
 
-it('should make a file public', async () => {
-  const output = execSync(
-    `${cmd} make-public ${bucketName} ${copiedFileName}`
-  );
+it('should make a file public', () => {
+  const output = execSync(`${cmd} make-public ${bucketName} ${copiedFileName}`);
   assert.match(
     output,
     new RegExp(`gs://${bucketName}/${copiedFileName} is now public.`)
   );
 });
 
-it('should generate a signed URL for a file', async () => {
+it('should generate a signed URL for a file', () => {
   const output = execSync(
     `${cmd} generate-signed-url ${bucketName} ${copiedFileName}`
   );
   assert.match(output, new RegExp(`The signed url for ${copiedFileName} is `));
 });
 
-it('should get metadata for a file', async () => {
+it('should get metadata for a file', () => {
   const output = execSync(
     `${cmd} get-metadata ${bucketName} ${copiedFileName}`
   );

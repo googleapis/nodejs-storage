@@ -37,7 +37,7 @@ it('should create a bucket', async () => {
   assert.strictEqual(exists, true);
 });
 
-it('should list buckets', async () => {
+it('should list buckets', () => {
   const output = execSync(`${cmd} list`);
   assert.match(output, /Buckets:/);
   assert.match(output, new RegExp(bucketName));

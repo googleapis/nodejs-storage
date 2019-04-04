@@ -46,7 +46,7 @@ after(async () => {
   await bucket.delete().catch(console.error);
 });
 
-it('should generate a key', async () => {
+it('should generate a key', () => {
   const output = execSync(`${cmd} generate-encryption-key`);
   assert.match(output, /Base 64 encoded encryption key:/);
   const test = /^Base 64 encoded encryption key: (.+)$/;
@@ -65,7 +65,7 @@ it('should upload a file', async () => {
   assert.strictEqual(exists, true);
 });
 
-it('should download a file', async () => {
+it('should download a file', () => {
   const output = execSync(
     `${cmd} download ${bucketName} ${fileName} ${downloadFilePath} ${key}`
   );
@@ -76,14 +76,12 @@ it('should download a file', async () => {
   fs.statSync(downloadFilePath);
 });
 
-it('should rotate keys', async () => {
+it('should rotate keys', () => {
   // Generate a new key
   let output = execSync(`${cmd} generate-encryption-key`);
   assert.match(output, /Base 64 encoded encryption key:/);
   const test = /^Base 64 encoded encryption key: (.+)$/;
   const newKey = output.match(test)[1];
-  output = execSync(
-    `${cmd} rotate ${bucketName} ${fileName} ${key} ${newKey}`
-  );
+  output = execSync(`${cmd} rotate ${bucketName} ${fileName} ${key} ${newKey}`);
   assert.strictEqual(output, 'Encryption key rotated successfully.');
 });

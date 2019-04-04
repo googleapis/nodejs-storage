@@ -29,7 +29,6 @@ const fileName = 'test.txt';
 const filePath = path.join(__dirname, '..', 'resources', fileName);
 const cmd = 'node acl.js';
 
-
 before(async () => {
   await bucket.create();
   await bucket.upload(filePath);
@@ -53,14 +52,14 @@ after(async () => {
   }
 });
 
-it('should print acl for a bucket', async () => {
+it('should print acl for a bucket', () => {
   const out = execSync(`${cmd} print-bucket-acl ${bucketName}`);
   assert.match(out, /OWNER: project-editors-/);
   assert.match(out, /OWNER: project-owners-/);
   assert.match(out, /READER: project-viewers-/);
 });
 
-it('should print acl for a file', async () => {
+it('should print acl for a file', () => {
   const out = execSync(`${cmd} print-file-acl ${bucketName} ${fileName}`);
   assert.match(out, /OWNER: project-editors-/);
   assert.match(out, /OWNER: project-owners-/);
@@ -76,7 +75,7 @@ it('should print a users acl for a bucket', async () => {
   await bucket.acl.readers.deleteUser(userEmail);
 });
 
-it('should add a user as an owner on a bucket', async () => {
+it('should add a user as an owner on a bucket', () => {
   const out = execSync(`${cmd} add-bucket-owner ${bucketName} ${userEmail}`);
   assert.match(
     out,
@@ -84,17 +83,15 @@ it('should add a user as an owner on a bucket', async () => {
   );
 });
 
-it('should remove a user from a bucket', async () => {
-  const out = execSync(
-    `${cmd} remove-bucket-owner ${bucketName} ${userEmail}`
-  );
+it('should remove a user from a bucket', () => {
+  const out = execSync(`${cmd} remove-bucket-owner ${bucketName} ${userEmail}`);
   assert.match(
     out,
     new RegExp(`Removed user ${userEmail} from bucket ${bucketName}.`)
   );
 });
 
-it('should add a user as a default owner on a bucket', async () => {
+it('should add a user as a default owner on a bucket', () => {
   const out = execSync(
     `${cmd} add-bucket-default-owner ${bucketName} ${userEmail}`
   );
@@ -104,7 +101,7 @@ it('should add a user as a default owner on a bucket', async () => {
   );
 });
 
-it('should remove a default user from a bucket', async () => {
+it('should remove a default user from a bucket', () => {
   const out = execSync(
     `${cmd} remove-bucket-default-owner ${bucketName} ${userEmail}`
   );
@@ -123,7 +120,7 @@ it('should print a users acl for a file', async () => {
   await bucket.file(fileName).acl.readers.deleteUser(userEmail);
 });
 
-it('should add a user as an owner on a bucket', async () => {
+it('should add a user as an owner on a bucket', () => {
   const out = execSync(
     `${cmd} add-file-owner ${bucketName} ${fileName} ${userEmail}`
   );
@@ -133,7 +130,7 @@ it('should add a user as an owner on a bucket', async () => {
   );
 });
 
-it('should remove a user from a bucket', async () => {
+it('should remove a user from a bucket', () => {
   const out = execSync(
     `${cmd} remove-file-owner ${bucketName} ${fileName} ${userEmail}`
   );
