@@ -17,7 +17,7 @@
 
 const {Storage} = require('@google-cloud/storage');
 const {assert} = require('chai');
-const execa = require('execa');
+const {execSync} = require('child_process');
 const uuid = require('uuid');
 const path = require('path');
 
@@ -29,7 +29,6 @@ const fileName = 'test.txt';
 const filePath = path.join(__dirname, '..', 'resources', fileName);
 const cmd = 'node acl.js';
 
-const exec = async cmd => (await execa.shell(cmd)).stdout;
 
 before(async () => {
   await bucket.create();
@@ -55,14 +54,14 @@ after(async () => {
 });
 
 it('should print acl for a bucket', async () => {
-  const out = await exec(`${cmd} print-bucket-acl ${bucketName}`);
+  const out = execSync(`${cmd} print-bucket-acl ${bucketName}`);
   assert.match(out, /OWNER: project-editors-/);
   assert.match(out, /OWNER: project-owners-/);
   assert.match(out, /READER: project-viewers-/);
 });
 
 it('should print acl for a file', async () => {
-  const out = await exec(`${cmd} print-file-acl ${bucketName} ${fileName}`);
+  const out = execSync(`${cmd} print-file-acl ${bucketName} ${fileName}`);
   assert.match(out, /OWNER: project-editors-/);
   assert.match(out, /OWNER: project-owners-/);
   assert.match(out, /READER: project-viewers-/);
@@ -70,7 +69,7 @@ it('should print acl for a file', async () => {
 
 it('should print a users acl for a bucket', async () => {
   await bucket.acl.readers.addUser(userEmail);
-  const out = await exec(
+  const out = execSync(
     `${cmd} print-bucket-acl-for-user ${bucketName} ${userEmail}`
   );
   assert.match(out, new RegExp(`READER: user-${userEmail}`));
@@ -78,7 +77,7 @@ it('should print a users acl for a bucket', async () => {
 });
 
 it('should add a user as an owner on a bucket', async () => {
-  const out = await exec(`${cmd} add-bucket-owner ${bucketName} ${userEmail}`);
+  const out = execSync(`${cmd} add-bucket-owner ${bucketName} ${userEmail}`);
   assert.match(
     out,
     new RegExp(`Added user ${userEmail} as an owner on bucket ${bucketName}.`)
@@ -86,7 +85,7 @@ it('should add a user as an owner on a bucket', async () => {
 });
 
 it('should remove a user from a bucket', async () => {
-  const out = await exec(
+  const out = execSync(
     `${cmd} remove-bucket-owner ${bucketName} ${userEmail}`
   );
   assert.match(
@@ -96,7 +95,7 @@ it('should remove a user from a bucket', async () => {
 });
 
 it('should add a user as a default owner on a bucket', async () => {
-  const out = await exec(
+  const out = execSync(
     `${cmd} add-bucket-default-owner ${bucketName} ${userEmail}`
   );
   assert.match(
@@ -106,7 +105,7 @@ it('should add a user as a default owner on a bucket', async () => {
 });
 
 it('should remove a default user from a bucket', async () => {
-  const out = await exec(
+  const out = execSync(
     `${cmd} remove-bucket-default-owner ${bucketName} ${userEmail}`
   );
   assert.match(
@@ -117,7 +116,7 @@ it('should remove a default user from a bucket', async () => {
 
 it('should print a users acl for a file', async () => {
   await bucket.file(fileName).acl.readers.addUser(userEmail);
-  const out = await exec(
+  const out = execSync(
     `${cmd} print-file-acl-for-user ${bucketName} ${fileName} ${userEmail}`
   );
   assert.match(out, new RegExp(`READER: user-${userEmail}`));
@@ -125,7 +124,7 @@ it('should print a users acl for a file', async () => {
 });
 
 it('should add a user as an owner on a bucket', async () => {
-  const out = await exec(
+  const out = execSync(
     `${cmd} add-file-owner ${bucketName} ${fileName} ${userEmail}`
   );
   assert.match(
@@ -135,7 +134,7 @@ it('should add a user as an owner on a bucket', async () => {
 });
 
 it('should remove a user from a bucket', async () => {
-  const out = await exec(
+  const out = execSync(
     `${cmd} remove-file-owner ${bucketName} ${fileName} ${userEmail}`
   );
   assert.match(

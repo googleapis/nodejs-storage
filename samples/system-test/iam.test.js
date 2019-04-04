@@ -17,10 +17,9 @@
 
 const {Storage} = require('@google-cloud/storage');
 const {assert} = require('chai');
-const execa = require('execa');
+const {execSync} = require('child_process');
 const uuid = require('uuid');
 
-const exec = async cmd => (await execa.shell(cmd)).stdout;
 const storage = new Storage();
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
 const bucket = storage.bucket(bucketName);
@@ -37,7 +36,7 @@ after(async () => {
 });
 
 it('should add multiple members to a role on a bucket', async () => {
-  const output = await exec(
+  const output = execSync(
     `${cmd} add-members ${bucketName} ${roleName} "user:${userEmail}"`
   );
   assert.ok(
@@ -49,7 +48,7 @@ it('should add multiple members to a role on a bucket', async () => {
 });
 
 it('should list members of a role on a bucket', async () => {
-  const output = await exec(
+  const output = execSync(
     `${cmd} view-members ${bucketName} "user:${userEmail}"`
   );
   assert.match(output, new RegExp(`Roles for bucket ${bucketName}:`));
@@ -59,7 +58,7 @@ it('should list members of a role on a bucket', async () => {
 });
 
 it('should remove multiple members from a role on a bucket', async () => {
-  const output = await exec(
+  const output = execSync(
     `${cmd} remove-members ${bucketName} ${roleName} "user:${userEmail}"`
   );
   assert.ok(

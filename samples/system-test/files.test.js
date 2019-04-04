@@ -19,11 +19,10 @@ const fs = require('fs');
 const path = require('path');
 const {Storage} = require('@google-cloud/storage');
 const {assert} = require('chai');
-const execa = require('execa');
+const {execSync} = require('child_process');
 const uuid = require('uuid');
 const {promisify} = require('util');
 
-const exec = async cmd => (await execa.shell(cmd)).stdout;
 const storage = new Storage();
 const cwd = path.join(__dirname, '..');
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
@@ -49,14 +48,14 @@ after(async () => {
 });
 
 it('should upload a file', async () => {
-  const output = await exec(`${cmd} upload ${bucketName} ${filePath}`);
+  const output = execSync(`${cmd} upload ${bucketName} ${filePath}`);
   assert.match(output, new RegExp(`${filePath} uploaded to ${bucketName}.`));
   const [exists] = await bucket.file(fileName).exists();
   assert.strictEqual(exists, true);
 });
 
 it('should upload a file with a kms key', async () => {
-  const output = await exec(
+  const output = execSync(
     `${cmd} upload-with-kms-key ${bucketName} ${filePath} ${kmsKeyName}`
   );
   assert.match(
@@ -68,7 +67,7 @@ it('should upload a file with a kms key', async () => {
 });
 
 it('should download a file', async () => {
-  const output = await exec(
+  const output = execSync(
     `${cmd} download ${bucketName} ${fileName} ${downloadFilePath}`
   );
   assert.match(
@@ -81,7 +80,7 @@ it('should download a file', async () => {
 });
 
 it('should move a file', async () => {
-  const output = await exec(
+  const output = execSync(
     `${cmd} move ${bucketName} ${fileName} ${movedFileName}`
   );
   assert.match(
@@ -95,7 +94,7 @@ it('should move a file', async () => {
 });
 
 it('should copy a file', async () => {
-  const output = await exec(
+  const output = execSync(
     `${cmd} copy ${bucketName} ${movedFileName} ${bucketName} ${copiedFileName}`
   );
   assert.match(
@@ -109,26 +108,26 @@ it('should copy a file', async () => {
 });
 
 it('should list files', async () => {
-  const output = await exec(`${cmd} list ${bucketName}`);
+  const output = execSync(`${cmd} list ${bucketName}`);
   assert.match(output, /Files:/);
   assert.match(output, new RegExp(movedFileName));
   assert.match(output, new RegExp(copiedFileName));
 });
 
 it('should list files by a prefix', async () => {
-  let output = await exec(`${cmd} list ${bucketName} test "/"`);
+  let output = execSync(`${cmd} list ${bucketName} test "/"`);
   assert.match(output, /Files:/);
   assert.match(output, new RegExp(movedFileName));
   assert.match(output, new RegExp(copiedFileName));
 
-  output = await exec(`${cmd} list ${bucketName} foo`);
+  output = execSync(`${cmd} list ${bucketName} foo`);
   assert.match(output, /Files:/);
   assert.notMatch(output, new RegExp(movedFileName));
   assert.notMatch(output, new RegExp(copiedFileName));
 });
 
 it('should make a file public', async () => {
-  const output = await exec(
+  const output = execSync(
     `${cmd} make-public ${bucketName} ${copiedFileName}`
   );
   assert.match(
@@ -138,14 +137,14 @@ it('should make a file public', async () => {
 });
 
 it('should generate a signed URL for a file', async () => {
-  const output = await exec(
+  const output = execSync(
     `${cmd} generate-signed-url ${bucketName} ${copiedFileName}`
   );
   assert.match(output, new RegExp(`The signed url for ${copiedFileName} is `));
 });
 
 it('should get metadata for a file', async () => {
-  const output = await exec(
+  const output = execSync(
     `${cmd} get-metadata ${bucketName} ${copiedFileName}`
   );
   assert.match(output, new RegExp(`File: ${copiedFileName}`));
@@ -153,7 +152,7 @@ it('should get metadata for a file', async () => {
 });
 
 it('should delete a file', async () => {
-  const output = await exec(`${cmd} delete ${bucketName} ${copiedFileName}`);
+  const output = execSync(`${cmd} delete ${bucketName} ${copiedFileName}`);
   assert.match(
     output,
     new RegExp(`gs://${bucketName}/${copiedFileName} deleted.`)
