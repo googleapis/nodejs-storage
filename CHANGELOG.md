@@ -15,7 +15,7 @@ file.getSignedUrl({
   version: 'v4', // optional, defaults to v2 (existing version)
   action: 'read',
   expires: FUTURE_DATE,
-}
+})
 ```
 
 ### New Features
