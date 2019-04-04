@@ -47,8 +47,8 @@ after(async () => {
   await bucket.delete().catch(console.error);
 });
 
-it.skip(`should error on requester-pays requests if they are disabled`, async () => {
-  const result = await execa.shell(
+it.skip(`should error on requester-pays requests if they are disabled`, () => {
+  const result = execSync(
     `${cmd} download ${bucketName} ${fileName} ${downloadFilePath}`
   );
   assert.ok(result.stderr);
@@ -58,7 +58,7 @@ it.skip(`should error on requester-pays requests if they are disabled`, async ()
   );
 });
 
-it(`should fetch requester-pays status on a default bucket`, async () => {
+it(`should fetch requester-pays status on a default bucket`, () => {
   const out = execSync(`${cmd} get-status ${bucketName}`);
   assert.strictEqual(
     out,
@@ -66,7 +66,7 @@ it(`should fetch requester-pays status on a default bucket`, async () => {
   );
 });
 
-it(`should enable requester-pays requests`, async () => {
+it(`should enable requester-pays requests`, () => {
   const out = execSync(`${cmd} enable ${bucketName}`);
   assert.strictEqual(
     out,
@@ -74,7 +74,7 @@ it(`should enable requester-pays requests`, async () => {
   );
 });
 
-it(`should fetch requester-pays status on a modified bucket`, async () => {
+it(`should fetch requester-pays status on a modified bucket`, () => {
   const out = execSync(`${cmd} get-status ${bucketName}`);
   assert.strictEqual(
     out,
@@ -82,7 +82,7 @@ it(`should fetch requester-pays status on a modified bucket`, async () => {
   );
 });
 
-it(`should download a file using requester-pays requests`, async () => {
+it(`should download a file using requester-pays requests`, () => {
   const out = execSync(
     `${cmd} download ${bucketName} ${fileName} ${downloadFilePath}`
   );
@@ -93,7 +93,7 @@ it(`should download a file using requester-pays requests`, async () => {
   fs.statSync(downloadFilePath);
 });
 
-it(`should disable requester-pays requests`, async () => {
+it(`should disable requester-pays requests`, () => {
   const out = execSync(`${cmd} disable ${bucketName}`);
   assert.strictEqual(
     out,
