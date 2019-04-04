@@ -10,7 +10,7 @@
 
 This release brings an option to file#getSignedURL to create a version 4 Signed URL.
 
-```
+```javascript
 file.getSignedUrl({
   version: 'v4', // optional, defaults to v2 (existing version)
   action: 'read',
