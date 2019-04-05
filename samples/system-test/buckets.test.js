@@ -49,11 +49,9 @@ it('should set a buckets default KMS key', async () => {
   const output = execSync(
     `${cmd} enable-default-kms-key ${bucketName} ${defaultKmsKeyName}`
   );
-  assert.match(
+  assert.include(
     output,
-    new RegExp(
-      `Default KMS key for ${bucketName} was set to ${defaultKmsKeyName}.`
-    )
+    `Default KMS key for ${bucketName} was set to ${defaultKmsKeyName}.`
   );
   const metadata = await bucket.getMetadata();
   assert.strictEqual(

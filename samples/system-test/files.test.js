@@ -64,9 +64,9 @@ it('should upload a file with a kms key', async () => {
   const output = execSync(
     `${cmd} upload-with-kms-key ${bucketName} ${filePath} ${kmsKeyName}`
   );
-  assert.match(
+  assert.include(
     output,
-    new RegExp(`${filePath} uploaded to ${bucketName} using ${kmsKeyName}.`)
+    `${filePath} uploaded to ${bucketName} using ${kmsKeyName}.`
   );
   const [exists] = await bucket.file(fileName).exists();
   assert.strictEqual(exists, true);
@@ -141,7 +141,7 @@ it('should make a file public', () => {
 });
 
 it('should generate a v2 signed URL for a file', async () => {
-  const output = await exec(
+  const output = await execSync(
     `${cmd} generate-signed-url ${bucketName} ${copiedFileName}`
   );
   assert.match(output, new RegExp(`The signed url for ${copiedFileName} is `));

@@ -62,7 +62,7 @@ it.skip(`should error on requester-pays requests if they are disabled`, () => {
 
 it(`should fetch requester-pays status on a default bucket`, () => {
   const out = execSync(`${cmd} get-status ${bucketName}`);
-  assert.strictEqual(
+  assert.include(
     out,
     `Requester-pays requests are disabled for bucket ${bucketName}.`
   );
@@ -70,7 +70,7 @@ it(`should fetch requester-pays status on a default bucket`, () => {
 
 it(`should enable requester-pays requests`, () => {
   const out = execSync(`${cmd} enable ${bucketName}`);
-  assert.strictEqual(
+  assert.include(
     out,
     `Requester-pays requests have been enabled for bucket ${bucketName}.`
   );
@@ -78,7 +78,7 @@ it(`should enable requester-pays requests`, () => {
 
 it(`should fetch requester-pays status on a modified bucket`, () => {
   const out = execSync(`${cmd} get-status ${bucketName}`);
-  assert.strictEqual(
+  assert.include(
     out,
     `Requester-pays requests are enabled for bucket ${bucketName}.`
   );
@@ -88,7 +88,7 @@ it(`should download a file using requester-pays requests`, () => {
   const out = execSync(
     `${cmd} download ${bucketName} ${fileName} ${downloadFilePath}`
   );
-  assert.strictEqual(
+  assert.include(
     out,
     `gs://${bucketName}/${fileName} downloaded to ${downloadFilePath} using requester-pays requests.`
   );
@@ -97,7 +97,7 @@ it(`should download a file using requester-pays requests`, () => {
 
 it(`should disable requester-pays requests`, () => {
   const out = execSync(`${cmd} disable ${bucketName}`);
-  assert.strictEqual(
+  assert.include(
     out,
     `Requester-pays requests have been disabled for bucket ${bucketName}.`
   );
