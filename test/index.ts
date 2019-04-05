@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import {DecorateRequestOptions, Service, ServiceConfig, util} from '@google-cloud/common';
+import {DecorateRequestOptions, Service, ServiceConfig, util, Metadata} from '@google-cloud/common';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import * as arrify from 'arrify';
 import * as assert from 'assert';
 import * as proxyquire from 'proxyquire';
-import * as r from 'request';
 
 import {Bucket} from '../src';
 import {GetFilesOptions} from '../src/bucket';
@@ -266,7 +265,7 @@ describe('Storage', () => {
           };
       storage.createBucket(
           BUCKET_NAME,
-          (err: Error, bucket: Bucket, apiResponse: r.Response) => {
+          (err: Error, bucket: Bucket, apiResponse: Metadata) => {
             assert.strictEqual(resp, apiResponse);
             done();
           });
@@ -373,7 +372,7 @@ describe('Storage', () => {
 
       storage.getBuckets(
           {},
-          (err: Error, buckets: Bucket[], nextQuery: {}, resp: r.Response) => {
+          (err: Error, buckets: Bucket[], nextQuery: {}, resp: Metadata) => {
             assert.strictEqual(err, error);
             assert.strictEqual(buckets, null);
             assert.strictEqual(nextQuery, null);
@@ -488,7 +487,7 @@ describe('Storage', () => {
 
       it('should return the error and apiResponse', done => {
         storage.getServiceAccount(
-            (err: Error, serviceAccount: {}, apiResponse: r.Response) => {
+            (err: Error, serviceAccount: {}, apiResponse: Metadata) => {
               assert.strictEqual(err, ERROR);
               assert.strictEqual(serviceAccount, null);
               assert.strictEqual(apiResponse, API_RESPONSE);

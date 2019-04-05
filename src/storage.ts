@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-import {GoogleAuthOptions, Service} from '@google-cloud/common';
+import {GoogleAuthOptions, Service, Metadata} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as arrify from 'arrify';
-import * as r from 'request';  // Only for type declarations.
 import {Readable} from 'stream';
-import {teenyRequest} from 'teeny-request';
 
 import {Bucket} from './bucket';
 import {Channel} from './channel';
@@ -33,10 +31,10 @@ export interface GetServiceAccountOptions {
 export interface ServiceAccount {
   emailAddress?: string;
 }
-export type GetServiceAccountResponse = [ServiceAccount, r.Response];
+export type GetServiceAccountResponse = [ServiceAccount, Metadata];
 export interface GetServiceAccountCallback {
   (err: Error|null, serviceAccount?: ServiceAccount,
-   apiResponse?: r.Response): void;
+   apiResponse?: Metadata): void;
 }
 
 export interface CreateBucketQuery {
@@ -67,10 +65,10 @@ export interface CreateBucketRequest {
   location?: string;
 }
 
-export type CreateBucketResponse = [Bucket, r.Response];
+export type CreateBucketResponse = [Bucket, Metadata];
 
 export interface BucketCallback {
-  (err: Error|null, bucket?: Bucket|null, apiResponse?: r.Response): void;
+  (err: Error|null, bucket?: Bucket|null, apiResponse?: Metadata): void;
 }
 
 export type GetBucketsResponse = [Bucket[]];
