@@ -75,7 +75,6 @@
   },
   "devDependencies": {
     "@google-cloud/pubsub": "^0.28.0",
-    "@types/arrify": "^1.0.4",
     "@types/async": "^2.0.49",
     "@types/compressible": "^2.0.0",
     "@types/concat-stream": "^1.6.0",
