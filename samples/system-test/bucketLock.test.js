@@ -21,7 +21,7 @@ const {assert} = require('chai');
 const cp = require('child_process');
 const uuid = require('uuid');
 
-const execSync = (cmd) => cp.execSync(cmd, {encoding: 'utf-8'});
+const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
 const storage = new Storage();
 const cwd = path.join(__dirname, '..');

@@ -24,7 +24,7 @@ const fetch = require('node-fetch');
 const uuid = require('uuid');
 const {promisify} = require('util');
 
-const execSync = (cmd) => cp.execSync(cmd, {encoding: 'utf-8'});
+const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
 const storage = new Storage();
 const cwd = path.join(__dirname, '..');
