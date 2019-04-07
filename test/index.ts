@@ -16,7 +16,7 @@
 
 import {DecorateRequestOptions, Service, ServiceConfig, util, Metadata} from '@google-cloud/common';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
-import * as arrify from 'arrify';
+import arrify = require('arrify');
 import * as assert from 'assert';
 import * as proxyquire from 'proxyquire';
 

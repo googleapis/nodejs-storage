@@ -16,7 +16,7 @@
 
 import {BodyResponseCallback, DecorateRequestOptions, Metadata} from '@google-cloud/common';
 import {promisifyAll} from '@google-cloud/promisify';
-import * as arrify from 'arrify';
+import arrify = require('arrify');
 
 export interface AclOptions {
   pathPrefix: string;

@@ -17,7 +17,7 @@
 import {GoogleAuthOptions, Service, Metadata} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
-import * as arrify from 'arrify';
+import arrify = require('arrify');
 import {Readable} from 'stream';
 
 import {Bucket} from './bucket';
