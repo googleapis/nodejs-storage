@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import {GoogleAuthOptions, Service, Metadata} from '@google-cloud/common';
+import {GoogleAuthOptions, Metadata, Service} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
+
 import arrify = require('arrify');
 import {Readable} from 'stream';
 

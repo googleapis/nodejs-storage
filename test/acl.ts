@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {DecorateRequestOptions, util, Metadata} from '@google-cloud/common';
+import {DecorateRequestOptions, Metadata, util} from '@google-cloud/common';
 import * as assert from 'assert';
 import * as async from 'async';
 import * as proxyquire from 'proxyquire';

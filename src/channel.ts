@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {ServiceObject, util, Metadata} from '@google-cloud/common';
+import {Metadata, ServiceObject, util} from '@google-cloud/common';
 import {promisifyAll} from '@google-cloud/promisify';
 
 import {Storage} from './storage';

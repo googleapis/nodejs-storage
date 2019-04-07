@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import {DecorateRequestOptions, Service, ServiceConfig, util, Metadata} from '@google-cloud/common';
+import {DecorateRequestOptions, Metadata, Service, ServiceConfig, util} from '@google-cloud/common';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
+
 import arrify = require('arrify');
 import * as assert from 'assert';
 import * as proxyquire from 'proxyquire';
@@ -264,8 +265,7 @@ describe('Storage', () => {
             callback(null, resp);
           };
       storage.createBucket(
-          BUCKET_NAME,
-          (err: Error, bucket: Bucket, apiResponse: Metadata) => {
+          BUCKET_NAME, (err: Error, bucket: Bucket, apiResponse: Metadata) => {
             assert.strictEqual(resp, apiResponse);
             done();
           });

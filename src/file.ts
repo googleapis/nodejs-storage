@@ -44,7 +44,7 @@ import {Acl} from './acl';
 import {ResponseBody, ApiError, Duplexify, DuplexifyConstructor} from '@google-cloud/common/build/src/util';
 const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectEntries} from './util';
-import { Headers } from 'gaxios';
+import {Headers} from 'gaxios';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -198,8 +198,7 @@ export interface MakeFilePublicCallback {
 export type MoveResponse = [Metadata];
 
 export interface MoveCallback {
-  (err: Error|null, destinationFile?: File|null,
-   apiResponse?: Metadata): void;
+  (err: Error|null, destinationFile?: File|null, apiResponse?: Metadata): void;
 }
 
 export interface MoveOptions {

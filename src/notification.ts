@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {ApiError, MetadataCallback, ServiceObject, util, Metadata} from '@google-cloud/common';
+import {ApiError, Metadata, MetadataCallback, ServiceObject, util} from '@google-cloud/common';
 import {ResponseBody} from '@google-cloud/common/build/src/util';
 import {promisifyAll} from '@google-cloud/promisify';
 
@@ -42,8 +42,7 @@ export type GetNotificationMetadataResponse = [ResponseBody, Metadata];
  * @param {object} apiResponse The full API response.
  */
 export interface GetNotificationMetadataCallback {
-  (err: Error|null, metadata?: ResponseBody,
-   apiResponse?: Metadata): void;
+  (err: Error|null, metadata?: ResponseBody, apiResponse?: Metadata): void;
 }
 
 /**

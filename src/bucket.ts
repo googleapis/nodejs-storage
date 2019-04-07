@@ -177,8 +177,7 @@ export interface GetBucketOptions extends GetConfig {
 export type GetBucketResponse = [Bucket, Metadata];
 
 export interface GetBucketCallback {
-  (err: ApiError|null, bucket: Bucket|null,
-   apiResponse: Metadata): void;
+  (err: ApiError|null, bucket: Bucket|null, apiResponse: Metadata): void;
 }
 
 export interface GetLabelsOptions {
@@ -194,8 +193,7 @@ export interface GetLabelsCallback {
 export type GetBucketMetadataResponse = [Metadata, Metadata];
 
 export interface GetBucketMetadataCallback {
-  (err: ApiError|null, metadata: Metadata|null,
-   apiResponse: Metadata): void;
+  (err: ApiError|null, metadata: Metadata|null, apiResponse: Metadata): void;
 }
 
 export interface GetBucketMetadataOptions {
@@ -2515,8 +2513,7 @@ class Bucket extends ServiceObject {
         callback!);
   }
 
-  request(reqOpts: DecorateRequestOptions):
-      Promise<[ResponseBody, Metadata]>;
+  request(reqOpts: DecorateRequestOptions): Promise<[ResponseBody, Metadata]>;
   request(reqOpts: DecorateRequestOptions, callback: BodyResponseCallback):
       void;
   /**

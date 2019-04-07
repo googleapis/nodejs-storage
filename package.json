@@ -32,10 +32,9 @@
   "scripts": {
     "predocs": "npm run compile",
     "docs": "jsdoc -c .jsdoc.js",
-    "system-test": "mocha build/system-test --timeout 600000 && npm run conformance-test",
+    "system-test": "mocha build/system-test --timeout 600000",
     "conformance-test": "mocha build/conformance-test",
     "preconformance-test": "npm run compile",
-    "system-test": "mocha build/system-test --timeout 600000",
     "presystem-test": "npm run compile",
     "test": "nyc mocha build/test",
     "pretest": "npm run compile",
