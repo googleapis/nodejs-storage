@@ -2124,11 +2124,12 @@ class Bucket extends ServiceObject {
             return;
           }
 
-          const notifications = arrify(resp.items).map((notification: Metadata) => {
-            const notificationInstance = this.notification(notification.id);
-            notificationInstance.metadata = notification;
-            return notificationInstance;
-          });
+          const notifications =
+              arrify(resp.items).map((notification: Metadata) => {
+                const notificationInstance = this.notification(notification.id);
+                notificationInstance.metadata = notification;
+                return notificationInstance;
+              });
 
           callback!(null, notifications, resp);
         });
