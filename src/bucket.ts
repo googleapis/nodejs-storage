@@ -1950,7 +1950,7 @@ class Bucket extends ServiceObject {
             return;
           }
 
-          const files = arrify(resp.items).map(file => {
+          const files = arrify(resp.items).map((file: Metadata) => {
             const options = {} as FileOptions;
 
             if (query.versions) {
@@ -2124,7 +2124,7 @@ class Bucket extends ServiceObject {
             return;
           }
 
-          const notifications = arrify(resp.items).map(notification => {
+          const notifications = arrify(resp.items).map((notification: Metadata) => {
             const notificationInstance = this.notification(notification.id);
             notificationInstance.metadata = notification;
             return notificationInstance;
