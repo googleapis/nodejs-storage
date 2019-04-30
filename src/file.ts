@@ -2319,6 +2319,12 @@ class File extends ServiceObject<File> {
    */
   getSignedUrl(cfg: GetSignedUrlConfig, callback?: GetSignedUrlCallback):
       void|Promise<GetSignedUrlResponse> {
+    const validAction = ['read', 'write', 'delete', 'resumable'];
+
+    if (!cfg.action || !validAction.includes(cfg.action)) {
+      throw new Error('The action is not provided or invalid.');
+    }
+
     const expiresInMSeconds = new Date(cfg.expires).valueOf();
 
     if (isNaN(expiresInMSeconds)) {
