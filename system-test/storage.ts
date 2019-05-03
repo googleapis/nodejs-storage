@@ -3271,8 +3271,8 @@ describe('storage', () => {
           })
           // tslint:disable-next-line no-any
           .then((data: any) => {
-            // tslint:disable-next-line no-any
             return Promise.all(
+              // tslint:disable-next-line no-any
               data[0].map((notification: any) => {
                 return notification.delete();
               })

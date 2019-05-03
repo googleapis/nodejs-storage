@@ -2327,8 +2327,9 @@ describe('File', () => {
           assert.ifError(err);
 
           const policy = JSON.parse(signedPolicy.string);
-          // tslint:disable-next-line no-any
+
           assert(
+            // tslint:disable-next-line no-any
             policy.conditions.some((condition: any) => {
               return condition.success_action_redirect === redirectUrl;
             })
@@ -2351,8 +2352,9 @@ describe('File', () => {
           assert.ifError(err);
 
           const policy = JSON.parse(signedPolicy.string);
-          // tslint:disable-next-line no-any
+
           assert(
+            // tslint:disable-next-line no-any
             policy.conditions.some((condition: any) => {
               return condition.success_action_status === successStatus;
             })
