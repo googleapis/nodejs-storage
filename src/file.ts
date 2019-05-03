@@ -2404,6 +2404,10 @@ class File extends ServiceObject<File> {
 
     const method = ActionToHTTPMethod[cfg.action];
 
+    if (!method) {
+      throw new Error('The action is not provided or invalid.');
+    }
+
     const name = encodeURIComponent(this.name);
     const resource = `/${this.bucket.name}/${name}`;
 
