@@ -1098,7 +1098,7 @@ class Bucket extends ServiceObject {
   combine(
     sources: string[] | File[],
     destination: string | File,
-    options: CombineOptions
+    options?: CombineOptions
   ): Promise<CombineResponse>;
   combine(
     sources: string[] | File[],
@@ -2772,7 +2772,7 @@ class Bucket extends ServiceObject {
 
   setStorageClass(
     storageClass: string,
-    options: SetBucketStorageClassOptions
+    options?: SetBucketStorageClassOptions
   ): Promise<SetBucketMetadataResponse>;
   setStorageClass(
     storageClass: string,
@@ -2826,7 +2826,7 @@ class Bucket extends ServiceObject {
    */
   setStorageClass(
     storageClass: string,
-    optionsOrCallback:
+    optionsOrCallback?:
       | SetBucketStorageClassOptions
       | SetBucketStorageClassCallback,
     callback?: SetBucketStorageClassCallback
