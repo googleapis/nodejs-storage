@@ -19,8 +19,8 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
 const normalizeNewline = require('normalize-newline');
-const pLimit = require('p-limit');
-const {promisify} = require('util');
+import pLimit from 'p-limit';
+import {promisify} from 'util';
 import * as path from 'path';
 import * as through from 'through2';
 import * as tmp from 'tmp';
@@ -899,7 +899,7 @@ describe('storage', () => {
     });
 
     after(async () => {
-      Promise.all(
+      await Promise.all(
         bucketsToCreate.map(bucket => storage.bucket(bucket).delete())
       );
     });
@@ -1114,15 +1114,14 @@ describe('storage', () => {
           age: 30,
           isLive: true,
         },
-      }),
-        await bucket.addLifecycleRule({
-          action: 'delete',
-          condition: {
-            age: 60,
-            isLive: true,
-          },
-        });
-      const xuy = numExistingRules + 2;
+      });
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          age: 60,
+          isLive: true,
+        },
+      });
       assert.strictEqual(
         bucket.metadata.lifecycle.rule.length,
         numExistingRules + 2
@@ -1177,11 +1176,9 @@ describe('storage', () => {
         await bucket.getMetadata();
 
         await bucket.lock(bucket.metadata.metageneration);
-        try {
-          await bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS / 2);
-        } catch (error) {
-          assert.strictEqual(error.code, 403);
-        }
+        bucket
+          .setRetentionPeriod(RETENTION_DURATION_SECONDS / 2)
+          .then(util.noop, err => assert.strictEqual(err.code, 403));
       });
 
       it('should remove a retention period', async () => {
@@ -1279,9 +1276,10 @@ describe('storage', () => {
           setTimeout(resolve, RETENTION_PERIOD_SECONDS * 1000)
         );
         return Promise.all(
-          FILES.map(file =>
-            file.setMetadata({temporaryHold: null}).then(() => file.delete())
-          )
+          FILES.map(async file => {
+            await file.setMetadata({temporaryHold: null});
+            return file.delete();
+          })
         );
       }
 
@@ -2505,8 +2503,8 @@ describe('storage', () => {
     it('should copy an existing file', async () => {
       const opts = {destination: 'CloudLogo'};
       const [file] = await bucket.upload(FILES.logo.path, opts);
-      const [copiedFile] = await file!.copy('CloudLogoCopy');
-      await Promise.all([file!.delete, copiedFile!.delete()]);
+      const [copiedFile] = await file.copy('CloudLogoCopy');
+      await Promise.all([file.delete, copiedFile.delete()]);
     });
 
     it('should copy a large file', async () => {
