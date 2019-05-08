@@ -2277,7 +2277,6 @@ describe('storage', () => {
 
       async function createCryptoKeyAsync(cryptoKeyId: string) {
         // createCryptoKeyId
-        // const request = promisify(storage.request);
         await request({
           method: 'POST',
           uri: `${keyRingsBaseUrl}/${keyRingId}/cryptoKeys`,
