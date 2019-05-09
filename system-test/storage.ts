@@ -1176,9 +1176,12 @@ describe('storage', () => {
         await bucket.getMetadata();
 
         await bucket.lock(bucket.metadata.metageneration);
-        bucket
-          .setRetentionPeriod(RETENTION_DURATION_SECONDS / 2)
-          .then(util.noop, err => assert.strictEqual(err.code, 403));
+        await assert.rejects(
+          bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS / 2),
+          (err: ApiError) => {
+            return err.code === 403;
+          }
+        );
       });
 
       it('should remove a retention period', async () => {
