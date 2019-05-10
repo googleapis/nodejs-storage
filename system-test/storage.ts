@@ -387,10 +387,8 @@ describe('storage', () => {
 
         await bucket.makePublic({includeFiles: true});
         const [files] = await bucket.getFiles();
-        const resps = await Promise.all(
-          files.map(file => isFilePublicAsync(file))
-        );
-        resps.forEach(resp => assert.ok(resp));
+        const [resps] = await Promise.all(files.map(file => file.isPublic()));
+        resps.forEach(resp => assert.strictEqual(resp, true));
         await Promise.all([
           bucket.acl.default.delete({entity: 'allUsers'}),
           bucket.deleteFiles(),
@@ -419,10 +417,10 @@ describe('storage', () => {
 
         await bucket.makePrivate({includeFiles: true});
         const [files] = await bucket.getFiles();
-        const resps = await Promise.all(
-          files.map(file => isFilePublicAsync(file))
-        );
-        resps.forEach(resp => assert.ok(!resp));
+        const [resps] = await Promise.all(files.map(file => file.isPublic()));
+        resps.forEach(resp => {
+          assert.strictEqual(resp, false);
+        });
         await bucket.deleteFiles();
       });
     });
@@ -3138,26 +3136,6 @@ describe('storage', () => {
     return Promise.all(
       filteredTopics.map(topic => limit(() => deleteTopicAsync(topic)))
     );
-  }
-
-  async function isFilePublicAsync(file: File) {
-    try {
-      const [aclObject] = await file.acl.get({entity: 'allUsers'});
-      if (
-        (aclObject as AccessControlObject).entity === 'allUsers' &&
-        (aclObject as AccessControlObject).role === 'READER'
-      ) {
-        return true;
-      } else {
-        return false;
-      }
-    } catch (error) {
-      if (error.code === 404) {
-        return false;
-      } else {
-        throw error;
-      }
-    }
   }
 
   // tslint:disable-next-line no-any

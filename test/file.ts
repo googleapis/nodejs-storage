@@ -36,6 +36,7 @@ import * as through from 'through2';
 import * as tmp from 'tmp';
 import * as url from 'url';
 import * as zlib from 'zlib';
+import * as gaxios from 'gaxios';
 
 import {
   Bucket,
@@ -3202,6 +3203,39 @@ describe('File', () => {
       };
 
       file.makePublic(util.noop);
+    });
+  });
+
+  describe('isPublic', () => {
+    const sandbox = sinon.createSandbox();
+
+    afterEach(() => sandbox.restore());
+
+    it('should execute callback with `true` in response', done => {
+      sandbox.stub(gaxios, 'request').resolves();
+      file.isPublic((err: gaxios.GaxiosError, resp: boolean) => {
+        assert.ifError(err);
+        assert.strictEqual(resp, true);
+        done();
+      });
+    });
+
+    it('should execute callback with `false` in response', done => {
+      sandbox.stub(gaxios, 'request').rejects({code: '403'});
+      file.isPublic((err: gaxios.GaxiosError, resp: boolean) => {
+        assert.ifError(err);
+        assert.strictEqual(resp, false);
+        done();
+      });
+    });
+
+    it('should propagate different error to user', done => {
+      const error = {code: '400'};
+      sandbox.stub(gaxios, 'request').rejects(error as gaxios.GaxiosError);
+      file.isPublic((err: gaxios.GaxiosError) => {
+        assert.strictEqual(err, error);
+        done();
+      });
     });
   });
 
