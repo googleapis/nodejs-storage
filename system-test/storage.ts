@@ -209,17 +209,12 @@ describe('storage', () => {
         bucket = storageWithoutAuth.bucket('gcp-public-data-landsat');
       });
 
-      it('should list and download a file', done => {
-        bucket.getFiles(
-          {
-            autoPaginate: false,
-          },
-          (err, files) => {
-            assert.ifError(err);
-            const file = files![0];
-            file.download(done);
-          }
-        );
+      it('should list and download a file', async () => {
+        const [files] = await bucket.getFiles({autoPaginate: false});
+        const file = files[0];
+        const [isPblc] = await file.isPublic();
+        assert.strictEqual(isPblc, true);
+        assert.doesNotReject(file.download());
       });
     });
 
@@ -232,13 +227,14 @@ describe('storage', () => {
         file = bucket.file(privateFile.id!);
       });
 
-      it('should not download a file', done => {
-        file.download(err => {
-          assert(
-            err!.message.indexOf('does not have storage.objects.get') > -1
-          );
-          done();
-        });
+      it('should not download a file', async () => {
+        const [isPblc] = await file.isPublic();
+        assert.strictEqual(isPblc, false);
+        assert.rejects(
+          file.download(),
+          (err: Error) =>
+            err.message.indexOf('does not have storage.objects.get') > -1
+        );
       });
 
       it('should not upload a file', done => {
@@ -387,7 +383,9 @@ describe('storage', () => {
 
         await bucket.makePublic({includeFiles: true});
         const [files] = await bucket.getFiles();
-        const [resps] = await Promise.all(files.map(file => file.isPublic()));
+        const resps = await Promise.all(
+          files.map(file => isFilePublicAsync(file))
+        );
         resps.forEach(resp => assert.strictEqual(resp, true));
         await Promise.all([
           bucket.acl.default.delete({entity: 'allUsers'}),
@@ -417,7 +415,9 @@ describe('storage', () => {
 
         await bucket.makePrivate({includeFiles: true});
         const [files] = await bucket.getFiles();
-        const [resps] = await Promise.all(files.map(file => file.isPublic()));
+        const resps = await Promise.all(
+          files.map(file => isFilePublicAsync(file))
+        );
         resps.forEach(resp => {
           assert.strictEqual(resp, false);
         });
@@ -3136,6 +3136,26 @@ describe('storage', () => {
     return Promise.all(
       filteredTopics.map(topic => limit(() => deleteTopicAsync(topic)))
     );
+  }
+
+  async function isFilePublicAsync(file: File) {
+    try {
+      const [aclObject] = await file.acl.get({entity: 'allUsers'});
+      if (
+        (aclObject as AccessControlObject).entity === 'allUsers' &&
+        (aclObject as AccessControlObject).role === 'READER'
+      ) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      if (error.code === 404) {
+        return false;
+      } else {
+        throw error;
+      }
+    }
   }
 
   // tslint:disable-next-line no-any
