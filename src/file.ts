@@ -2645,7 +2645,9 @@ class File extends ServiceObject<File> {
   isPublic(callback?: IsPublicCallback): Promise<IsPublicResponse> | void {
     gaxiosRequest({
       method: 'HEAD',
-      url: `http://${this.bucket.name}.storage.googleapis.com/${this.id}`,
+      url: `http://${
+        this.bucket.name
+      }.storage.googleapis.com/${encodeURIComponent(this.name)}`,
     }).then(
       () => callback!(null, true),
       (err: GaxiosError) => {

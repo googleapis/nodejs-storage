@@ -3229,11 +3229,32 @@ describe('File', () => {
       });
     });
 
-    it('should propagate different error to user', done => {
+    it('should propagate non-403 errors to user', done => {
       const error = {code: '400'};
       sandbox.stub(gaxios, 'request').rejects(error as gaxios.GaxiosError);
       file.isPublic((err: gaxios.GaxiosError) => {
         assert.strictEqual(err, error);
+        done();
+      });
+    });
+
+    it('should correctly send a HEAD request', done => {
+      const spy = sandbox.spy(gaxios, 'request');
+      file.isPublic((err: gaxios.GaxiosError) => {
+        assert.ifError(err);
+        assert.strictEqual(spy.calledWithMatch({method: 'HEAD'}), true);
+        done();
+      });
+    });
+    
+    it('should correctly format URL in the request', done => {
+      const expecterURL = `http://${
+        BUCKET.name
+      }.storage.googleapis.com/${encodeURIComponent(file.name)}`;
+      const spy = sandbox.spy(gaxios, 'request');
+      file.isPublic((err: gaxios.GaxiosError) => {
+        assert.ifError(err);
+        assert.strictEqual(spy.calledWithMatch({url: expecterURL}), true);
         done();
       });
     });

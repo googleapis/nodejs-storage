@@ -212,8 +212,8 @@ describe('storage', () => {
       it('should list and download a file', async () => {
         const [files] = await bucket.getFiles({autoPaginate: false});
         const file = files[0];
-        const [isPblc] = await file.isPublic();
-        assert.strictEqual(isPblc, true);
+        const [isPublic] = await file.isPublic();
+        assert.strictEqual(isPublic, true);
         assert.doesNotReject(file.download());
       });
     });
@@ -228,8 +228,8 @@ describe('storage', () => {
       });
 
       it('should not download a file', async () => {
-        const [isPblc] = await file.isPublic();
-        assert.strictEqual(isPblc, false);
+        const [isPublic] = await file.isPublic();
+        assert.strictEqual(isPublic, false);
         assert.rejects(
           file.download(),
           (err: Error) =>
