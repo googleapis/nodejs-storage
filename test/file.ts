@@ -3246,7 +3246,7 @@ describe('File', () => {
         done();
       });
     });
-    
+
     it('should correctly format URL in the request', done => {
       const expecterURL = `http://${
         BUCKET.name
