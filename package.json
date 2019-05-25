@@ -50,7 +50,7 @@
     "predocs-test": "npm run docs"
   },
   "dependencies": {
-    "@google-cloud/common": "^1.0.0",
+    "@google-cloud/common": "^2.0.0",
     "@google-cloud/paginator": "^1.0.0",
     "@google-cloud/promisify": "^1.0.0",
     "@types/protobufjs": "^6.0.0",
