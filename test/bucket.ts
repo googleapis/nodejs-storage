@@ -27,6 +27,7 @@ import * as async from 'async';
 import * as mime from 'mime-types';
 import * as path from 'path';
 import * as proxyquire from 'proxyquire';
+import * as sinon from 'sinon';
 
 const snakeize = require('snakeize');
 import * as stream from 'stream';
@@ -38,12 +39,13 @@ import {
   SetFileMetadataOptions,
   FileOptions,
 } from '../src/file';
-import {PromisifyAllOptions} from '@google-cloud/promisify';
+import {promisify, PromisifyAllOptions} from '@google-cloud/promisify';
 import {
   GetBucketMetadataCallback,
   GetFilesOptions,
   MakeAllFilesPublicPrivateOptions,
   SetBucketMetadataCallback,
+  UploadOptions,
 } from '../src/bucket';
 import {AddAclOptions} from '../src/acl';
 
@@ -2216,6 +2218,138 @@ describe('Bucket', () => {
           assert.strictEqual(file, fakeFile);
           assert.strictEqual(apiResponse, metadata);
           done();
+        }
+      );
+    });
+  });
+
+  describe('uploadDirectory', () => {
+    const directoryPath = path.join(__dirname, '../../test/testdata/');
+
+    beforeEach(() => {
+      bucket.upload = promisify(bucket.upload);
+    });
+
+    it('should return early in snippet sandbox', () => {
+      // tslint:disable-next-line:no-any
+      (global as any)['GCLOUD_SANDBOX_ENV'] = true;
+      const returnValue = bucket.uploadDirectory(directoryPath, assert.ifError);
+      // tslint:disable-next-line:no-any
+      delete (global as any)['GCLOUD_SANDBOX_ENV'];
+      assert.strictEqual(returnValue, undefined);
+    });
+
+    it('should throw if directoryPath is invalid', () => {
+      const fileDirectory = path.join(
+        __dirname,
+        '../../test/testdata/textfile.txt'
+      );
+      const invalidDirectory = '//../../test/testdata/textfile.txt';
+      assert.throws(
+        () => bucket.uploadDirectory(invalidDirectory),
+        (err: Error) => {
+          return err.message === `${invalidDirectory} is an invalid directory`;
+        }
+      );
+      assert.throws(
+        () => bucket.uploadDirectory(fileDirectory),
+        (err: Error) => {
+          return err.message === `${fileDirectory} is an invalid directory`;
+        }
+      );
+    });
+
+    it('should accept a directoryPath & cb', () => {
+      bucket.uploadDirectory(
+        directoryPath,
+        {},
+        (err: Error, resp: [{fileName: string; status: string | Error}]) => {
+          assert.ifError(err);
+          resp.forEach(element => {
+            assert.strictEqual(
+              element.fileName.split('/')[0],
+              path.basename(directoryPath)
+            );
+          });
+        }
+      );
+    });
+
+    it('should accept a directoryPath, metadata and cb', () => {
+      const metadata = {
+        metadata: {
+          a: 'b',
+          c: 'd',
+        },
+      };
+      const options = {metadata};
+      bucket.upload = async (filepath: string, options: UploadOptions) => {
+        assert.strictEqual(
+          (options.destination as string).split('/')[0],
+          path.basename(directoryPath)
+        );
+        assert.deepStrictEqual(options.metadata, metadata);
+      };
+      bucket.uploadDirectory(directoryPath, options, assert.ifError);
+    });
+
+    it('should accept `recurse` in options', () => {
+      bucket.uploadDirectory(
+        directoryPath,
+        {recurse: true},
+        (err: Error, resps: [{fileName: string; status: string | Error}]) => {
+          assert.ifError(err);
+          const subFolders = resps
+            .map(resp =>
+              path.relative(
+                path.basename(directoryPath),
+                path.dirname(resp.fileName)
+              )
+            )
+            .filter(Boolean);
+          assert.strictEqual(
+            subFolders.includes('testdatas1') &&
+              subFolders.includes(path.join('testdatas1', 'testdatas2')),
+            true
+          );
+        }
+      );
+    });
+
+    it('should not upload empty folder', () => {
+      bucket.uploadDirectory(
+        directoryPath,
+        {recurse: true},
+        (err: Error, resps: [{fileName: string; status: string | Error}]) => {
+          assert.ifError(err);
+          const subFolders = resps
+            .map(resp =>
+              path.relative(
+                path.basename(directoryPath),
+                path.dirname(resp.fileName)
+              )
+            )
+            .filter(Boolean);
+          assert.strictEqual(subFolders.indexOf('emptySubFolder'), -1);
+        }
+      );
+    });
+
+    it('should return list of successes and fails', () => {
+      const error = new Error('Error');
+      const stub = sinon.stub();
+      stub.onCall(0).resolves();
+      stub.onCall(1).rejects(error);
+      stub.onCall(2).rejects(error);
+      bucket.upload = stub;
+
+      bucket.uploadDirectory(
+        directoryPath,
+        {},
+        (err: Error, resp: [{fileName: string; status: string | Error}]) => {
+          assert.ifError(err);
+          const values = resp.map(item => item.status);
+          assert.deepStrictEqual(values, ['success', error, error]);
         }
       );
     });

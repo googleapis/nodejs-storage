@@ -165,6 +165,14 @@ describe('storage', () => {
     return Promise.all([deleteAllBucketsAsync(), deleteAllTopicsAsync()]);
   });
 
+  describe('upload a directory', () => {
+    it('should upload directory', async () => {
+      const directoryPath = path.join(__dirname, '../../system-test/data');
+      const [files] = await bucket.uploadDirectory(directoryPath);
+      assert.strictEqual(files.length, Object.keys(FILES).length);
+    });
+  });
+
   describe('without authentication', () => {
     let privateBucket: Bucket;
     let privateFile: File;

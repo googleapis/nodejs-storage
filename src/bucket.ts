@@ -30,6 +30,7 @@ import {
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import arrify = require('arrify');
+import pLimit from 'p-limit';
 import * as async from 'async';
 import * as extend from 'extend';
 import * as fs from 'fs';
@@ -322,6 +323,16 @@ export interface UploadOptions
   kmsKeyName?: string;
   resumable?: boolean;
 }
+
+export interface UploadDirectoryOptions extends CreateWriteStreamOptions {
+  recurse?: boolean;
+}
+
+export interface UploadDirectoryCallback {
+  (err: Error | null, resp?: Array<{[k: string]: string | Error}>): void;
+}
+
+export type UploadDirectoryResponse = [Array<{[k: string]: string | Error}>];
 
 export interface MakeAllFilesPublicPrivateOptions {
   force?: boolean;
@@ -3172,6 +3183,201 @@ class Bucket extends ServiceObject {
           callback!(null, newFile, newFile.metadata);
         });
     }
+  }
+
+  uploadDirectory(
+    directoryPathString: string,
+    options?: UploadDirectoryOptions
+  ): Promise<UploadDirectoryResponse>;
+  uploadDirectory(
+    directoryPathString: string,
+    options: UploadDirectoryOptions,
+    callback: UploadDirectoryCallback
+  ): void;
+  uploadDirectory(
+    directoryPathString: string,
+    callback: UploadDirectoryCallback
+  ): void;
+  /**
+   * @typedef {object} UploadDirectoryOptions Configuration options for Bucket#uploadDirectory().
+   * @param {boolean} [options.recurse] Whether to recursevely upload all files from
+   *     all subdirectories
+   * @param {boolean} [options.gzip] Automatically gzip every file. This will set
+   *     `options.metadata.contentEncoding` to `gzip`.
+   * @param {object} [options.metadata] See an
+   *     [Objects: insert request
+   * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON).
+   * @param {string} [options.offset] The starting byte of the upload stream, for
+   *     resuming an interrupted upload. Defaults to 0.
+   * @param {string} [options.predefinedAcl] Apply a predefined set of access
+   *     controls to every object.
+   *
+   *     Acceptable values are:
+   *     - **`authenticatedRead`** - Object owner gets `OWNER` access, and
+   *       `allAuthenticatedUsers` get `READER` access.
+   *
+   *     - **`bucketOwnerFullControl`** - Object owner gets `OWNER` access, and
+   *       project team owners get `OWNER` access.
+   *
+   *     - **`bucketOwnerRead`** - Object owner gets `OWNER` access, and project
+   *       team owners get `READER` access.
+   *
+   *     - **`private`** - Object owner gets `OWNER` access.
+   *
+   *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
+   *       team members get access according to their roles.
+   *
+   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
+   * get `READER` access.
+   * @param {boolean} [options.private] Make the uploaded files private. (Alias for
+   *     `options.predefinedAcl = 'private'`)
+   * @param {boolean} [options.public] Make the uploaded files public. (Alias for
+   *     `options.predefinedAcl = 'publicRead'`)
+   * @param {boolean} [options.resumable] Force a resumable upload. (default:
+   *     true for files larger than 5 MB).
+   * @param {string} [options.uri] The URI for an already-created resumable
+   *     upload. See {@link File#createResumableUpload}.
+   * @param {string} [options.userProject] The ID of the project which will be
+   *     billed for the request.
+   * @param {string|boolean} [options.validation] Possible values: `"md5"`,
+   *     `"crc32c"`, or `false`. By default, data integrity is validated with an
+   *     MD5 checksum for maximum reliability. CRC32c will provide better
+   *     performance with less reliability. You may also choose to skip
+   * validation completely, however this is **not recommended**.
+   */
+  /**
+   * @typedef {array} UploadDirectoryResponse
+   * @property {object} [response] Response for each of the uploaded files.
+   * @param {string} [filename] Absolute file path.
+   * @param {string | Error} [status] Status of the file upload. "success"
+   *     or an Error returned while attempting to upload current file.
+   */
+  /**
+   * @callback UploadDirectoryCallback
+   * @param {?Error} err Request error, if any.
+   * @param {array} resp The list of object responses for every uploaded file.
+   */
+
+  /**
+   * Upload a directory to the bucket. This is a convenience method for multiple
+   * {@link Bucket#upload}.
+   *
+   * You can specify whether or not an upload is resumable by setting
+   * `options.resumable`. *Resumable uploads are enabled by default if your
+   * input file is larger than 5 MB.*
+   *
+   * For faster crc32c computation, you must manually install
+   * [`fast-crc32c`](http://www.gitnpm.com/fast-crc32c):
+   *
+   *     $ npm install --save fast-crc32c
+   *
+   * @see [Upload Options (Simple or Resumable)]{@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload#uploads}
+   * @see [Objects: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert}
+   *
+   * @param {string} directoryPathString The fully qualified path to the
+   *     directory you wish to upload to your bucket.
+   * @param {UploadDirectoryOptions} [options] Configuration options.
+   * @param {UploadDirectoryCallback} [callback] Callback function.
+   * @returns {Promise<UploadDirectoryResponse>}
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const bucket = storage.bucket('albums');
+   *
+   * //-
+   * // Upload a directory from a local path.
+   * //-
+   * bucket.uploadDirectory('/local/path/myfolder', function(err, resp) {
+   *   // Your bucket now contains:
+   *   // - "myfolder/" directory (with the contents of `/local/path/myfolder/')
+   *
+   *   // `file` is an instance of a File object that refers to your new file.
+   * });
+   *
+   *
+   * //-
+   * // You can also have files gzip'd on the fly.
+   * //-
+   * bucket.uploadDirectory(path.join(__dirname, 'index', { gzip: true }, function(err, resp) {
+   *   // Your bucket now contains:
+   *   // - "index/" directory (automatically compressed with gzip)
+   *
+   *   // Downloading the file with `file.download` will automatically decode
+   * the
+   *   // file.
+   * });
+   *
+   *
+   * //-
+   * // If the callback is omitted, we'll return a Promise.
+   * //-
+   * bucket.uploadDirectory('local-directory-path').then(function(data) {
+   *   const resp = data[0];
+   * });
+   */
+
+  uploadDirectory(
+    directoryPathString: string,
+    optionsOrCallback?: UploadDirectoryOptions | UploadDirectoryCallback,
+    callback?: UploadDirectoryCallback
+  ): Promise<UploadDirectoryResponse> | void {
+    // tslint:disable-next-line:no-any
+    if ((global as any)['GCLOUD_SANDBOX_ENV']) {
+      return;
+    }
+
+    const options =
+      typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+      typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+
+    let stat: fs.Stats | Error;
+    try {
+      stat = fs.lstatSync(directoryPathString);
+    } catch (error) {
+      stat = error;
+    }
+    if (stat instanceof Error || !stat.isDirectory()) {
+      throw new Error(`${directoryPathString} is an invalid directory`);
+    }
+
+    const fileList: string[] = [];
+    const pathDirName = path.dirname(directoryPathString);
+
+    getFileList(directoryPathString);
+
+    function getFileList(directory: string) {
+      const items = fs.readdirSync(directory);
+      items.forEach(item => {
+        const fullPath = path.join(directory, item);
+        const stat = fs.lstatSync(fullPath);
+        if (stat.isFile()) {
+          fileList.push(fullPath);
+        } else if (options.recurse && stat.isDirectory()) {
+          getFileList(fullPath);
+        }
+      });
+    }
+
+    const limit = pLimit(10);
+    Promise.all(
+      fileList.map(file =>
+        limit(() => {
+          let destination = path.relative(pathDirName, file);
+          if (process.platform === 'win32') {
+            destination = destination.replace(/\\/g, '/');
+          }
+          const uploadOptions = extend({}, {destination}, options);
+          return this.upload(file, uploadOptions).then(
+            () => ({fileName: uploadOptions.destination, status: 'success'}),
+            (err: Error) => ({fileName: uploadOptions.destination, status: err})
+          );
+        })
+      )
+    ).then(resp => {
+      callback!(null, resp);
+    }, callback);
   }
 
   makeAllFilesPublicPrivate_(
