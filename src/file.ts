@@ -2613,7 +2613,14 @@ class File extends ServiceObject<File> {
    * @property {boolean} 0 Whether file is public or not.
    */
   /**
-   * Check whether this file is public or not.
+   * Check whether this file is public or not by sending
+   * a HEAD request without credentials. 
+   * No errors form the server indicates that the current
+   * file is public.
+   * A 403-Forbidden error {@link https://cloud.google.com/storage/docs/json_api/v1/status-codes#403_Forbidden}
+   * indicates that file is private.
+   * Any other non 403 error is propagated to user.
+   * 
    * @param {IsPublicCallback} [callback] Callback function.
    * @returns {Promise<IsPublicResponse>}
    *
