@@ -2615,7 +2615,7 @@ class File extends ServiceObject<File> {
   /**
    * Check whether this file is public or not by sending
    * a HEAD request without credentials.
-   * No errors form the server indicates that the current
+   * No errors from the server indicates that the current
    * file is public.
    * A 403-Forbidden error {@link https://cloud.google.com/storage/docs/json_api/v1/status-codes#403_Forbidden}
    * indicates that file is private.
