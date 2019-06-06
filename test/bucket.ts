@@ -2262,7 +2262,6 @@ describe('Bucket', () => {
     it('should accept a directoryPath & cb', () => {
       bucket.uploadDirectory(
         directoryPath,
-        {},
         (err: Error, resp: [{fileName: string; status: string | Error}]) => {
           assert.ifError(err);
           resp.forEach(element => {
@@ -2273,6 +2272,40 @@ describe('Bucket', () => {
           });
         }
       );
+    });
+
+    describe('On Windows platform', () => {
+      const windowsStilePath = 'windows\\stile\\path\\';
+      const posixStilePath = windowsStilePath.replace(/\\/g, '/');
+
+      before(function() {
+        // save original process.platform
+        this.originalPlatform = Object.getOwnPropertyDescriptor(
+          process,
+          'platform'
+        );
+
+        // redefine process.platform
+        Object.defineProperty(process, 'platform', {
+          value: 'win32',
+        });
+
+        sinon.stub(path, 'relative').returns('windows\\stile\\path\\');
+      });
+
+      after(function() {
+        // restore original process.platfork
+        Object.defineProperty(process, 'platform', this.originalPlatform);
+        sinon.restore();
+      });
+
+      it('should accept windows stile directoryPath', () => {
+        bucket.upload = async (filepath: string, options: UploadOptions) => {
+          assert.strictEqual(options.destination as string, posixStilePath);
+        };
+
+        bucket.uploadDirectory(directoryPath, assert.ifError);
+      });
     });
 
     it('should accept a directoryPath, metadata and cb', () => {
@@ -2345,7 +2378,6 @@ describe('Bucket', () => {
 
       bucket.uploadDirectory(
         directoryPath,
-        {},
         (err: Error, resp: [{fileName: string; status: string | Error}]) => {
           assert.ifError(err);
           const values = resp.map(item => item.status);
