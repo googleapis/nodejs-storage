@@ -328,11 +328,15 @@ export interface UploadDirectoryOptions extends CreateWriteStreamOptions {
   recurse?: boolean;
 }
 
-export interface UploadDirectoryCallback {
-  (err: Error | null, resp?: Array<{[k: string]: string | Error}>): void;
+interface UploadFileResponse {
+  [k: string]: string | Error;
 }
 
-export type UploadDirectoryResponse = [Array<{[k: string]: string | Error}>];
+export interface UploadDirectoryCallback {
+  (err: Error | null, resp?: UploadFileResponse[]): void;
+}
+
+export type UploadDirectoryResponse = [UploadFileResponse];
 
 export interface MakeAllFilesPublicPrivateOptions {
   force?: boolean;
@@ -3199,17 +3203,18 @@ class Bucket extends ServiceObject {
     callback: UploadDirectoryCallback
   ): void;
   /**
-   * @typedef {object} UploadDirectoryOptions Configuration options for Bucket#uploadDirectory().
-   * @param {boolean} [options.recurse] Whether to recursevely upload all files from
+   * @typedef {object} UploadDirectoryOptions Configuration options for
+   *     {@link Bucket#uploadDirectory}.
+   * @property {boolean} [options.recurse] Whether to recursively upload all files from
    *     all subdirectories
-   * @param {boolean} [options.gzip] Automatically gzip every file. This will set
+   * @property {boolean} [options.gzip] Automatically gzip every file. This will set
    *     `options.metadata.contentEncoding` to `gzip`.
-   * @param {object} [options.metadata] See an
+   * @property {object} [options.metadata] See an
    *     [Objects: insert request
    * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON).
-   * @param {string} [options.offset] The starting byte of the upload stream, for
+   * @property {string} [options.offset] The starting byte of the upload stream, for
    *     resuming an interrupted upload. Defaults to 0.
-   * @param {string} [options.predefinedAcl] Apply a predefined set of access
+   * @property {string} [options.predefinedAcl] Apply a predefined set of access
    *     controls to every object.
    *
    *     Acceptable values are:
@@ -3229,38 +3234,43 @@ class Bucket extends ServiceObject {
    *
    *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
    * get `READER` access.
-   * @param {boolean} [options.private] Make the uploaded files private. (Alias for
+   * @property {boolean} [options.private] Make the uploaded files private. (Alias for
    *     `options.predefinedAcl = 'private'`)
-   * @param {boolean} [options.public] Make the uploaded files public. (Alias for
+   * @property {boolean} [options.public] Make the uploaded files public. (Alias for
    *     `options.predefinedAcl = 'publicRead'`)
-   * @param {boolean} [options.resumable] Force a resumable upload. (default:
+   * @property {boolean} [options.resumable] Force a resumable upload. (default:
    *     true for files larger than 5 MB).
-   * @param {string} [options.uri] The URI for an already-created resumable
+   * @property {string} [options.uri] The URI for an already-created resumable
    *     upload. See {@link File#createResumableUpload}.
-   * @param {string} [options.userProject] The ID of the project which will be
+   * @property {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
-   * @param {string|boolean} [options.validation] Possible values: `"md5"`,
+   * @property {string|boolean} [options.validation] Possible values: `"md5"`,
    *     `"crc32c"`, or `false`. By default, data integrity is validated with an
    *     MD5 checksum for maximum reliability. CRC32c will provide better
    *     performance with less reliability. You may also choose to skip
    * validation completely, however this is **not recommended**.
    */
   /**
+   * @typedef {Object} UploadFileResponse
+   * @property {string} fileName Absolute file path.
+   * @property {string|error} status Status of the file upload.
+   *     "success" or an Error returned while attempting to upload current file.
+   */
+  /**
    * @typedef {array} UploadDirectoryResponse
-   * @property {object} [response] Response for each of the uploaded files.
-   * @param {string} [filename] Absolute file path.
-   * @param {string | Error} [status] Status of the file upload. "success"
-   *     or an Error returned while attempting to upload current file.
+   * @property {UploadFileResponse[]} 0 List of {@link Bucket#UploadFileResponse}
+   *     objects for each of the uploaded files.
    */
   /**
    * @callback UploadDirectoryCallback
-   * @param {?Error} err Request error, if any.
-   * @param {array} resp The list of object responses for every uploaded file.
+   * @param {Error} err Request error, if any.
+   * @param {UploadFileResponse[]} resp List of {@link Bucket#UploadFileResponse}
+   *     objects for every uploaded file.
    */
 
   /**
-   * Upload a directory to the bucket. This is a convenience method for multiple
-   * {@link Bucket#upload}.
+   * This is a convenience method for making multiple {@link Bucket#upload}
+   * calls.
    *
    * You can specify whether or not an upload is resumable by setting
    * `options.resumable`. *Resumable uploads are enabled by default if your
@@ -3291,42 +3301,31 @@ class Bucket extends ServiceObject {
    * bucket.uploadDirectory('/local/path/myfolder', function(err, resp) {
    *   // Your bucket now contains:
    *   // - "myfolder/" directory (with the contents of `/local/path/myfolder/')
-   *
-   *   // `file` is an instance of a File object that refers to your new file.
    * });
    *
    *
    * //-
    * // You can also have files gzip'd on the fly.
    * //-
-   * bucket.uploadDirectory(path.join(__dirname, 'index', { gzip: true }, function(err, resp) {
+   * bucket.uploadDirectory('/path/to/direcotry/index', { gzip: true }, function(err, resp) {
    *   // Your bucket now contains:
    *   // - "index/" directory (automatically compressed with gzip)
    *
    *   // Downloading the file with `file.download` will automatically decode
-   * the
-   *   // file.
+   *   // the file.
    * });
    *
    *
    * //-
    * // If the callback is omitted, we'll return a Promise.
    * //-
-   * bucket.uploadDirectory('local-directory-path').then(function(data) {
-   *   const resp = data[0];
-   * });
+   * const [response] = await bucket.uploadDirectory('local-directory-path');
    */
-
   uploadDirectory(
     directoryPathString: string,
     optionsOrCallback?: UploadDirectoryOptions | UploadDirectoryCallback,
     callback?: UploadDirectoryCallback
   ): Promise<UploadDirectoryResponse> | void {
-    // tslint:disable-next-line:no-any
-    if ((global as any)['GCLOUD_SANDBOX_ENV']) {
-      return;
-    }
-
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
@@ -3370,7 +3369,7 @@ class Bucket extends ServiceObject {
           }
           const uploadOptions = extend({}, {destination}, options);
           return this.upload(file, uploadOptions).then(
-            () => ({fileName: uploadOptions.destination, status: 'success'}),
+            resp => ({fileName: uploadOptions.destination, status: resp[1]}),
             (err: Error) => ({fileName: uploadOptions.destination, status: err})
           );
         })

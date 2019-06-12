@@ -2230,15 +2230,6 @@ describe('Bucket', () => {
       bucket.upload = promisify(bucket.upload);
     });
 
-    it('should return early in snippet sandbox', () => {
-      // tslint:disable-next-line:no-any
-      (global as any)['GCLOUD_SANDBOX_ENV'] = true;
-      const returnValue = bucket.uploadDirectory(directoryPath, assert.ifError);
-      // tslint:disable-next-line:no-any
-      delete (global as any)['GCLOUD_SANDBOX_ENV'];
-      assert.strictEqual(returnValue, undefined);
-    });
-
     it('should throw if directoryPath is invalid', () => {
       const fileDirectory = path.join(
         __dirname,
