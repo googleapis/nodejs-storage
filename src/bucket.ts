@@ -3290,31 +3290,12 @@ class Bucket extends ServiceObject {
    * @param {UploadDirectoryCallback} [callback] Callback function.
    * @returns {Promise<UploadDirectoryResponse>}
    *
-   * @example
-   * const {Storage} = require('@google-cloud/storage');
-   * const storage = new Storage();
-   * const bucket = storage.bucket('albums');
-   *
-   * //-
-   * // Upload a directory from a local path.
-   * //-
-   * bucket.uploadDirectory('/local/path/myfolder', function(err, resp) {
-   *   // Your bucket now contains:
-   *   // - "myfolder/" directory (with the contents of `/local/path/myfolder/')
-   * });
-   *
-   *
-   * //-
-   * // You can also have files gzip'd on the fly.
-   * //-
-   * bucket.uploadDirectory('/path/to/direcotry/index', { gzip: true }, function(err, resp) {
-   *   // Your bucket now contains:
-   *   // - "index/" directory (automatically compressed with gzip)
-   *
-   *   // Downloading the file with `file.download` will automatically decode
-   *   // the file.
-   * });
-   *
+   * @example <caption>include:samples/files.js</caption>
+   * region_tag:storage_upload_top_level_files
+   * Another example:
+   * 
+   * @example <caption>include:samples/files.js</caption>
+   * region_tag:storage_upload_full_folder_hierarchy
    *
    * //-
    * // If the callback is omitted, we'll return a Promise.
