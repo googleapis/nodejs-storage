@@ -154,6 +154,56 @@ async function uploadFileWithKmsKey(bucketName, filename, kmsKeyName) {
   // [END storage_upload_with_kms_key]
 }
 
+async function uploadFiles(bucketName, directoryPath) {
+  // [START storage_upload_top_level_files]
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const directoryPath = 'path/to/directory/myfolder/';
+
+  // Uploads a top level files from a directory
+  const [responses] = await storage
+    .bucket(bucketName)
+    .uploadDirectory(directoryPath);
+
+  console.log(
+    `${responses.length} files uploaded to ${bucketName} successfully.`
+  );
+  // [END storage_upload_top_level_files]
+}
+
+async function uploadFilesRecurse(bucketName, directoryPath, recurse) {
+  // [START storage_upload_full_folder_hierarchy]
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const directoryPath = 'path/to/directory/myfolder/';
+
+  // Uploads a top level files from a directory
+  const [responses] = await storage
+    .bucket(bucketName)
+    .uploadDirectory(directoryPath, {recurse: recurse});
+
+  console.log(
+    `${responses.length} files uploaded to ${bucketName} successfully.`
+  );
+  // [END storage_upload_full_folder_hierarchy]
+}
+
 async function downloadFile(bucketName, srcFilename, destFilename) {
   // [START storage_download_file]
   // Imports the Google Cloud client library
@@ -474,6 +524,19 @@ require(`yargs`)
       uploadFileWithKmsKey(opts.bucketName, opts.srcFileName, opts.kmsKeyName)
   )
   .command(
+    `upload-directory <bucketName> <srcDirectoryPath>`,
+    `Uploads top level files of a local directory to a bucket.`,
+    {},
+    opts => uploadFiles(opts.bucketName, opts.srcDirectoryPath)
+  )
+  .command(
+    `upload-directory-recurse <bucketName> <srcDirectoryPath> <recurse>`,
+    `Uploads full hierarchy of a local directory to a bucket.`,
+    {},
+    opts =>
+      uploadFilesRecurse(opts.bucketName, opts.srcDirectoryPath, opts.recurse)
+  )
+  .command(
     `download <bucketName> <srcFileName> <destFileName>`,
     `Downloads a file from a bucket.`,
     {},
@@ -545,6 +608,14 @@ require(`yargs`)
   .example(
     `node $0 upload-with-kms-key my-bucket ./file.txt my-key`,
     `Uploads "./file.txt" to "my-bucket" using "my-key".`
+  )
+  .example(
+    `node $0 upload-directory my-bucket ./my-folder`,
+    `Uploads top level contents of "./my-folder to "my-bucket.`
+  )
+  .example(
+    `node $0 upload-directory-recurse my-bucket ./my-folder true`,
+    `Uploads full hierarchy of "./my-folder directory to "my-bucket.`
   )
   .example(
     `node $0 download my-bucket file.txt ./file.txt`,

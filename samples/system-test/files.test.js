@@ -36,6 +36,7 @@ const copiedFileName = 'test3.txt';
 const signedFileName = 'signed-upload.txt';
 const kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US;
 const filePath = path.join(cwd, 'resources', fileName);
+const folderPath = path.join(cwd, 'resources');
 const downloadFilePath = path.join(cwd, 'downloaded.txt');
 const cmd = `node files.js`;
 
@@ -70,6 +71,68 @@ it('should upload a file with a kms key', async () => {
   );
   const [exists] = await bucket.file(fileName).exists();
   assert.strictEqual(exists, true);
+});
+
+it.only('should upload a top level files of a local folder', async () => {
+  const output = execSync(
+    `${cmd} upload-directory ${bucketName} ${folderPath}`
+  );
+  const files = fs.readdirSync(bucketName);
+  assert.match(
+    output,
+    new RegExp(`${files.length} files uploaded to ${bucketName} successfully.`)
+  );
+  files.forEach(async fileName => {
+    const [exists] = await bucket.file(fileName).exists();
+    assert.strictEqual(exists, true);
+  });
+});
+
+it.only('should upload a top level files of a local directory', async () => {
+  const output = execSync(
+    `${cmd} upload-directory ${bucketName} ${folderPath}`
+  );
+  const files = fs.readdirSync(bucketName);
+  assert.match(
+    output,
+    new RegExp(`${files.length} files uploaded to ${bucketName} successfully.`)
+  );
+  files.forEach(async fileName => {
+    const [exists] = await bucket.file(fileName).exists();
+    assert.strictEqual(exists, true);
+  });
+});
+
+it('should upload a full hierarchy of a local directory', async () => {
+  const output = execSync(
+    `${cmd} upload-directory-recurse ${bucketName} ${folderPath} ${true}`
+  );
+  const fileList = [];
+  getFileList(folderPath);
+
+  function getFileList(directory) {
+    const items = fs.readdirSync(directory);
+    items.forEach(item => {
+      const fullPath = path.join(directory, item);
+      const stat = fs.lstatSync(fullPath);
+      if (stat.isFile()) {
+        fileList.push(fullPath);
+      } else {
+        getFileList(fullPath);
+      }
+    });
+  }
+
+  assert.match(
+    output,
+    new RegExp(
+      `${fileList.length} files uploaded to ${bucketName} successfully.`
+    )
+  );
+  fileList.forEach(async fileName => {
+    const [exists] = await bucket.file(fileName).exists();
+    assert.strictEqual(exists, true);
+  });
 });
 
 it('should download a file', () => {
