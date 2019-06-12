@@ -3369,7 +3369,7 @@ class Bucket extends ServiceObject {
           }
           const uploadOptions = extend({}, {destination}, options);
           return this.upload(file, uploadOptions).then(
-            resp => ({fileName: uploadOptions.destination, status: resp[1]}),
+            () => ({fileName: uploadOptions.destination, status: 'success'}),
             (err: Error) => ({fileName: uploadOptions.destination, status: err})
           );
         })
