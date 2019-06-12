@@ -73,26 +73,11 @@ it('should upload a file with a kms key', async () => {
   assert.strictEqual(exists, true);
 });
 
-it.only('should upload a top level files of a local folder', async () => {
+it('should upload a top level files of a local directory', async () => {
   const output = execSync(
     `${cmd} upload-directory ${bucketName} ${folderPath}`
   );
-  const files = fs.readdirSync(bucketName);
-  assert.match(
-    output,
-    new RegExp(`${files.length} files uploaded to ${bucketName} successfully.`)
-  );
-  files.forEach(async fileName => {
-    const [exists] = await bucket.file(fileName).exists();
-    assert.strictEqual(exists, true);
-  });
-});
-
-it.only('should upload a top level files of a local directory', async () => {
-  const output = execSync(
-    `${cmd} upload-directory ${bucketName} ${folderPath}`
-  );
-  const files = fs.readdirSync(bucketName);
+  const files = fs.readdirSync(folderPath);
   assert.match(
     output,
     new RegExp(`${files.length} files uploaded to ${bucketName} successfully.`)

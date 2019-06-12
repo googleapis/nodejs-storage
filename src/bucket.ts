@@ -3293,7 +3293,7 @@ class Bucket extends ServiceObject {
    * @example <caption>include:samples/files.js</caption>
    * region_tag:storage_upload_top_level_files
    * Another example:
-   * 
+   *
    * @example <caption>include:samples/files.js</caption>
    * region_tag:storage_upload_full_folder_hierarchy
    *
