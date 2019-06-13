@@ -73,22 +73,35 @@ it('should upload a file with a kms key', async () => {
   assert.strictEqual(exists, true);
 });
 
-it('should upload a top level files of a local directory', async () => {
+it('should upload a top level files of a local directory', done => {
   const output = execSync(
     `${cmd} upload-directory ${bucketName} ${folderPath}`
   );
-  const files = fs.readdirSync(folderPath);
+  const files = fs
+    .readdirSync(folderPath)
+    .map(item => path.join(folderPath, item))
+    .filter(file => fs.lstatSync(file).isFile());
   assert.match(
     output,
     new RegExp(`${files.length} files uploaded to ${bucketName} successfully.`)
   );
-  files.forEach(async fileName => {
-    const [exists] = await bucket.file(fileName).exists();
-    assert.strictEqual(exists, true);
-  });
+
+  Promise.all(
+    files.map(file =>
+      bucket
+        .file(path.relative(path.dirname(folderPath), file).replace(/\\/g, '/'))
+        .exists()
+    )
+  ).then(resps => {
+    const ctr = resps.reduce((acc, cur) => {
+      return acc + cur[0];
+    }, 0);
+    assert.strictEqual(ctr, files.length);
+    done();
+  }, assert.ifError);
 });
 
-it('should upload a full hierarchy of a local directory', async () => {
+it('should upload a full hierarchy of a local directory', done => {
   const output = execSync(
     `${cmd} upload-directory-recurse ${bucketName} ${folderPath} ${true}`
   );
@@ -114,10 +127,19 @@ it('should upload a full hierarchy of a local directory', async () => {
       `${fileList.length} files uploaded to ${bucketName} successfully.`
     )
   );
-  fileList.forEach(async fileName => {
-    const [exists] = await bucket.file(fileName).exists();
-    assert.strictEqual(exists, true);
-  });
+  Promise.all(
+    fileList.map(file =>
+      bucket
+        .file(path.relative(path.dirname(folderPath), file).replace(/\\/g, '/'))
+        .exists()
+    )
+  ).then(resps => {
+    const ctr = resps.reduce((acc, cur) => {
+      return acc + cur[0];
+    }, 0);
+    assert.strictEqual(ctr, fileList.length);
+    done();
+  }, assert.ifError);
 });
 
 it('should download a file', () => {
