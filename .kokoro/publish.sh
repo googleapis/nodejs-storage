@@ -29,4 +29,4 @@ echo "//wombat-dressing-room.appspot.com/:_authToken=${NPM_TOKEN}" > ~/.npmrc
 
 # npm install
 # npm publish --access=public --registry=https://wombat-dressing-room.appspot.com
-npm dist tag add @google-cloud/storage@2.5.0 latest
+npm dist-tag add @google-cloud/storage@2.5.0 latest
