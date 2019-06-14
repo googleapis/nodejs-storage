@@ -3188,11 +3188,16 @@ class Bucket extends ServiceObject {
     callback =
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
-    const processFile = (file: File) => {
-      if (options.public) {
-        return file.makePublic();
+    const processFile = async (file: File) => {
+      try {
+        await (options.public ? file.makePublic() : file.makePrivate(options));
+        updatedFiles.push(file);
+      } catch (e) {
+        if (!options.force) {
+          throw e;
+        }
+        errors.push(e);
       }
-      return file.makePrivate(options);
     };
 
     this.getFiles(options)
