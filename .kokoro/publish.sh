@@ -19,13 +19,14 @@ set -eo pipefail
 export NPM_CONFIG_PREFIX=/home/node/.npm-global
 
 # Start the releasetool reporter
-python3 -m pip install gcp-releasetool
-python3 -m releasetool publish-reporter-script > /tmp/publisher-script; source /tmp/publisher-script
+# python3 -m pip install gcp-releasetool
+# python3 -m releasetool publish-reporter-script > /tmp/publisher-script; source /tmp/publisher-script
 
 cd $(dirname $0)/..
 
 NPM_TOKEN=$(cat $KOKORO_KEYSTORE_DIR/73713_google-cloud-storage-npm-token)
 echo "//wombat-dressing-room.appspot.com/:_authToken=${NPM_TOKEN}" > ~/.npmrc
 
-npm install
-npm publish --access=public --registry=https://wombat-dressing-room.appspot.com
+# npm install
+# npm publish --access=public --registry=https://wombat-dressing-room.appspot.com
+npm dist tag add @google-cloud/storage@2.5.0 latest
