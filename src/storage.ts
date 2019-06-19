@@ -25,6 +25,7 @@ import {Bucket} from './bucket';
 import {Channel} from './channel';
 import {File} from './file';
 import {normalize} from './util';
+import {HmacKey} from './hmacKey';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -98,6 +99,61 @@ export interface GetBucketsRequest {
   pageToken?: string;
   userProject?: string;
 }
+
+export interface HmacKeyMetadata {
+  accessId: string;
+  etag: string;
+  id: string;
+  projectId: string;
+  serviceAccountEmail: string;
+  state: string;
+  timeCreated: string;
+}
+
+export interface HmacKeyResource {
+  hmacKey: HmacKey;
+  secret: string;
+}
+
+export interface HmacKeyResourceResponse {
+  metadata: HmacKeyMetadata;
+  secret: string;
+}
+
+export type CreateHmacKeyResponse = [HmacKeyResource];
+
+export interface CreateHmacKeyOptions {
+  userProject?: string;
+}
+
+export interface CreateHmacKeyCallback {
+  (
+    err: Error | null,
+    resource?: HmacKeyResource | null,
+    apiResponse?: HmacKeyResourceResponse
+  ): void;
+}
+
+export interface GetHmacKeysOptions {
+  serviceAccountEmail?: string;
+  showDeletedKeys?: boolean;
+  autoPaginate?: boolean;
+  maxApiCalls?: number;
+  maxResults?: number;
+  pageToken?: string;
+  userProject?: string;
+}
+
+export interface GetHmacKeysCallback {
+  (
+    err: Error | null,
+    hmacKeys: HmacKey[] | null,
+    nextQuery?: {},
+    apiResponse?: Metadata
+  ): void;
+}
+
+export type GetHmacKeysResponse = [HmacKey[]];
 
 /*! Developer Documentation
  *
@@ -248,6 +304,35 @@ export class Storage extends Service {
   getBucketsStream: () => Readable;
 
   /**
+   * Get {@link HmacKey} objects for all of the HMAC keys in the project in
+   * a readable object stream.
+   *
+   * @method Storage#getHmacKeysStream
+   * @param {GetHmacKeysOptions} [options] Configuration options.
+   * @returns {ReadableStream} A readable stream that emits {@link HmacKey} instances.
+   *
+   * @example
+   * storage.getHmacKeysStream()
+   *   .on('error', console.error)
+   *   .on('data', function(hmacKey) {
+   *     // hmacKey is an HmacKey object.
+   *   })
+   *   .on('end', function() {
+   *     // All HmacKey retrieved.
+   *   });
+   *
+   * //-
+   * // If you anticipate many results, you can end a stream early to prevent
+   * // unnecessary processing and API requests.
+   * //-
+   * storage.getHmacKeysStream()
+   *   .on('data', function(bucket) {
+   *     this.end();
+   *   });
+   */
+  getHmacKeysStream: () => Readable;
+
+  /**
    * @typedef {object} StorageOptions
    * @property {string} [projectId] The project ID from the Google Developer's
    *     Console, e.g. 'grape-spaceship-123'. We will also check the environment
@@ -314,6 +399,7 @@ export class Storage extends Service {
     this.acl = Storage.acl;
 
     this.getBucketsStream = paginator.streamify('getBuckets');
+    this.getHmacKeysStream = paginator.streamify('getHmacKeys');
   }
 
   /**
@@ -550,6 +636,132 @@ export class Storage extends Service {
     );
   }
 
+  /**
+   * @typedef {object} CreateHmacKeyOptions
+   * @property {string} [userProject] This parameter is currently ignored.
+   */
+  /**
+   * @typedef {object} HmacKeyMetadata
+   * @property {string} accessId The access id identifies which HMAC key was
+   *     used to sign a request when authenticating with HMAC.
+   * @property {string} etag Used to perform a read-modify-write of the key.
+   * @property {string} id The resource name of the HMAC key.
+   * @property {string} projectId The project ID.
+   * @property {string} serviceAccountEmail The service account's email this
+   *     HMAC key is created for.
+   * @property {string} state The state of this HMAC key. One of "ACTIVE",
+   *     "INACTIVE" or "DELETED".
+   * @property {string} timeCreated The creation time of the HMAC key in
+   *     RFC 3339 format.
+   * @property {string} [updated] The time this HMAC key was last updated in
+   *     RFC 3339 format.
+   */
+  /**
+   * @typedef {object} HmacKeyResource
+   * @property {HmacKey} hmacKey The HmacKey object.
+   * @property {string} secret The HMAC key secret used to access XML API.
+   */
+  /**
+   * @typedef {array} CreateHmacKeyResponse
+   * @property {HmacKeyResource} 0 The HMAC key resource.
+   */
+  /**
+   * @callback CreateHmacKeyCallback Callback function.
+   * @param {?Error} err Request error, if any.
+   * @param {HmacKeyResource} resource An object containing the HMAC key's secret and the HmacKey object.
+   * @param {object} apiResponse The raw API response.
+   */
+  /**
+   * Create an HMAC key associated with an service account to authenticate
+   * requests to the Cloud Storage XML API.
+   *
+   * @see [HMAC keys documentation]{@linkhttps://cloud.google.com/storage/docs/authentication/hmackeys}
+   *
+   * @param {string} serviceAccountEmail The service account's email address
+   *     with which the HMAC key is created for.
+   * @param {CreateHmacKeyCallback} [callback] Callback function.
+   * @return {Promise<CreateHmacKeyResponse>}
+   *
+   * @example
+   * const {Storage} = require('google-cloud/storage');
+   * const storage = new Storage();
+   *
+   * // Replace with your service account's email address
+   * const serviceAccountEmail =
+   *   'my-service-account@appspot.gserviceaccount.com';
+   *
+   * storage.createHmacKey(serviceAccountEmail, function(err, hmacKeyResource) {
+   *   if (!err) {
+   *     const secret = hmacKey.secret;
+   *     // Securely store the secret for use with the XML API.
+   *   }
+   * });
+   *
+   * //-
+   * // If the callback is omitted, we'll return a Promise.
+   * //-
+   * storage.createHmacKey(serviceAccountEmail)
+   *   .then((response) => {
+   *     const [hmacKeyResource] = response;
+   *     const secret = hmacKeyResource.secret;
+   *     // Securely store the secret for use with the XML API.
+   *   });
+   */
+  createHmacKey(
+    serviceAccountEmail: string,
+    options?: CreateHmacKeyOptions
+  ): Promise<CreateHmacKeyResponse>;
+  createHmacKey(
+    serviceAccountEmail: string,
+    callback: CreateHmacKeyCallback
+  ): void;
+  createHmacKey(
+    serviceAccountEmail: string,
+    options: CreateHmacKeyOptions,
+    callback: CreateHmacKeyCallback
+  ): void;
+  createHmacKey(
+    serviceAccountEmail: string,
+    optionsOrCb?: CreateHmacKeyOptions | CreateHmacKeyCallback,
+    cb?: CreateHmacKeyCallback
+  ): Promise<CreateHmacKeyResponse> | void {
+    if (typeof serviceAccountEmail !== 'string') {
+      throw new Error(
+        'The first argument must be a service account email to create an HMAC key.'
+      );
+    }
+
+    const {options, callback} = normalize<
+      CreateHmacKeyOptions,
+      CreateHmacKeyCallback
+    >(optionsOrCb, cb);
+    const query = Object.assign({}, options, {serviceAccountEmail});
+
+    this.request(
+      {
+        method: 'POST',
+        uri: `/projects/${this.projectId}/hmacKeys`,
+        qs: query,
+      },
+      (err, resp: HmacKeyResourceResponse) => {
+        if (err) {
+          callback!(err, null, resp);
+          return;
+        }
+
+        const hmacKey = new HmacKey(this, resp.metadata.accessId);
+        hmacKey.metadata = resp.metadata;
+
+        const resource = {
+          hmacKey,
+          secret: resp.secret,
+        };
+
+        callback!(null, resource, resp);
+      }
+    );
+  }
+
   getBuckets(options?: GetBucketsRequest): Promise<GetBucketsResponse>;
   getBuckets(options: GetBucketsRequest, callback: GetBucketsCallback): void;
   getBuckets(callback: GetBucketsCallback): void;
@@ -664,6 +876,114 @@ export class Storage extends Service {
     );
   }
 
+  /**
+   * Query object for listing HMAC keys.
+   *
+   * @typedef {object} GetHmacKeysOptions
+   * @property {string} [serviceAccountEmail] If present, only HMAC keys for the
+   *     given service account are returned.
+   * @property {boolean} [showDeletedKeys=false] If true, include keys in the DELETE
+   *     state. Default is false.
+   * @property {boolean} [autoPaginate=true] Have pagination handled
+   *     automatically.
+   * @property {number} [maxApiCalls] Maximum number of API calls to make.
+   * @property {number} [maxResults] Maximum number of items plus prefixes to
+   *     return.
+   * @property {string} [pageToken] A previously-returned page token
+   *     representing part of the larger set of results to view.
+   * @property {string} [userProject] This parameter is currently ignored.
+   */
+  /**
+   * @typedef {array} GetHmacKeysResponse
+   * @property {HmacKey[]} 0 Array of {@link HmacKey} instances.
+   */
+  /**
+   * @callback GetHmacKeysCallback
+   * @param {?Error} err Request error, if any.
+   * @param {HmacKey[]} hmacKeys Array of {@link HmacKey} instances.
+   */
+  /**
+   * Retrieves a list of HMAC keys matching the criteria.
+   *
+   * The authenticated user must have storage.hmacKeys.list permission for the project in which the key exists.
+   *
+   * @param {GetHmacKeysOption} options Configuration options.
+   * @param {GetHmacKeysCallback} callback Callback function.
+   * @return {Promise<GetHmacKeysResponse>}
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * storage.getHmacKeys(function(err, hmacKeys) {
+   *   if (!err) {
+   *     // hmacKeys is an array of HmacKey objects.
+   *   }
+   * });
+   *
+   * //-
+   * // To control how many API requests are made and page through the results
+   * // manually, set `autoPaginate` to `false`.
+   * //-
+   * const callback = function(err, hmacKeys, nextQuery, apiResponse) {
+   *   if (nextQuery) {
+   *     // More results exist.
+   *     storage.getHmacKeys(nextQuery, callback);
+   *   }
+   *
+   *   // The `metadata` property is populated for you with the metadata at the
+   *   // time of fetching.
+   *   hmacKeys[0].metadata;
+   * };
+   *
+   * storage.getHmacKeys({
+   *   autoPaginate: false
+   * }, callback);
+   *
+   * //-
+   * // If the callback is omitted, we'll return a Promise.
+   * //-
+   * storage.getHmacKeys().then(function(data) {
+   *   const hmacKeys = data[0];
+   * });
+   */
+  getHmacKeys(options?: GetHmacKeysOptions): Promise<GetHmacKeysResponse>;
+  getHmacKeys(callback: GetHmacKeysCallback): void;
+  getHmacKeys(options: GetHmacKeysOptions, callback: GetHmacKeysCallback): void;
+  getHmacKeys(
+    optionsOrCb?: GetHmacKeysOptions | GetHmacKeysCallback,
+    cb?: GetHmacKeysCallback
+  ): Promise<GetHmacKeysResponse> | void {
+    const {options, callback} = normalize<GetHmacKeysOptions>(optionsOrCb, cb);
+
+    this.request(
+      {
+        uri: `/projects/${this.projectId}/hmacKeys`,
+        qs: options,
+      },
+      (err, resp) => {
+        if (err) {
+          callback(err, null, null, resp);
+          return;
+        }
+
+        const hmacKeys = arrify(resp.items).map((hmacKey: Metadata) => {
+          const hmacKeyInstance = this.hmacKey(hmacKey.accessId);
+          hmacKeyInstance.metadata = hmacKey;
+          return hmacKeyInstance;
+        });
+
+        const nextQuery = resp.nextPageToken
+          ? Object.assign({}, options, {pageToken: resp.nextPageToken})
+          : null;
+
+        callback(null, hmacKeys, nextQuery, resp);
+      }
+    );
+  }
+
+  getServiceAccount(
+    options?: GetServiceAccountOptions
+  ): Promise<GetServiceAccountResponse>;
   getServiceAccount(
     options?: GetServiceAccountOptions
   ): Promise<GetServiceAccountResponse>;
@@ -754,13 +1074,34 @@ export class Storage extends Service {
       }
     );
   }
+
+  /**
+   * Get a reference to an HmacKey object.
+   * Note: this does not fetch the HMAC key's metadata. Use HmacKey#get() to
+   * retrieve and populate the metadata.
+   *
+   * @param {string} accessId The HMAC key's access ID.
+   * @returns {HmacKey}
+   * @see HmacKey
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const hmacKey = storage.hmacKey('ACCESS_ID');
+   */
+  hmacKey(accessId: string) {
+    return new HmacKey(this, accessId);
+  }
 }
 
 /*! Developer Documentation
  *
  * These methods can be auto-paginated.
  */
-paginator.extend(Storage, 'getBuckets');
+paginator.extend(Storage, [
+  'getBuckets',
+  'getHmacKeys',
+]);
 
 /*! Developer Documentation
  *
@@ -768,5 +1109,5 @@ paginator.extend(Storage, 'getBuckets');
  * that a callback is omitted.
  */
 promisifyAll(Storage, {
-  exclude: ['bucket', 'channel'],
+  exclude: ['bucket', 'channel', 'hmacKey'],
 });

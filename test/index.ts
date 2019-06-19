@@ -29,6 +29,9 @@ import * as proxyquire from 'proxyquire';
 
 import {Bucket} from '../src';
 import {GetFilesOptions} from '../src/bucket';
+import sinon = require('sinon');
+import {HmacKey} from '../src/hmacKey';
+import {HmacKeyResource, HmacKeyResourceResponse} from '../src/storage';
 
 class FakeChannel {
   calledWith_: Array<{}>;
@@ -186,6 +189,119 @@ describe('Storage', () => {
       assert.strictEqual(channel.calledWith_[0], storage);
       assert.strictEqual(channel.calledWith_[1], ID);
       assert.strictEqual(channel.calledWith_[2], RESOURCE_ID);
+    });
+  });
+
+  describe('createHmacKey', () => {
+    const SERVICE_ACCOUNT_EMAIL = 'service-account@gserviceaccount.com';
+    const ACCESS_ID = 'some-access-id';
+    const metadataResponse = {
+      accessId: ACCESS_ID,
+      etag: 'etag',
+      id: ACCESS_ID,
+      projectId: 'project-id',
+      serviceAccountEmail: SERVICE_ACCOUNT_EMAIL,
+      state: 'ACTIVE',
+      timeCreated: '20190101T00:00:00Z',
+      updated: '20190101T00:00:00Z',
+    };
+    const response = {
+      secret: 'my-secret',
+      metadata: metadataResponse,
+    };
+
+    it('should make correct API request', done => {
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        assert.strictEqual(reqOpts.method, 'POST');
+        assert.strictEqual(
+          reqOpts.uri,
+          `/projects/${storage.projectId}/hmacKeys`
+        );
+        assert.strictEqual(
+          reqOpts.qs.serviceAccountEmail,
+          SERVICE_ACCOUNT_EMAIL
+        );
+
+        callback(null, response);
+      };
+
+      storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, done);
+    });
+
+    it('should throw without a serviceAccountEmail', () => {
+      assert.throws(
+        () => storage.createHmacKey(),
+        /must be a service account email/
+      );
+    });
+
+    it('should throw when first argument is not a string', () => {
+      assert.throws(
+        () =>
+          storage.createHmacKey({
+            userProject: 'my-project',
+          }),
+        /must be a service account email/
+      );
+    });
+
+    it('should honor the userProject option', async () => {
+      const options = {
+        userProject: 'my-project',
+      };
+
+      storage.request = sinon
+        .stub()
+        .returns((_reqOpts: {}, callback: Function) => callback());
+
+      await storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, options);
+      const reqArg = storage.request.firstCall.args[0];
+      assert.strictEqual(reqArg.qs.userProject, options.userProject);
+    });
+
+    it('should invoke callback with a secret and an HmacKey instance', done => {
+      storage.request = (_reqOpts: {}, callback: Function) => {
+        callback(null, response);
+      };
+
+      storage.createHmacKey(
+        SERVICE_ACCOUNT_EMAIL,
+        (err: Error, resource: HmacKeyResource) => {
+          assert.ifError(err);
+          assert.strictEqual(resource.secret, response.secret);
+          // tslint:disable-next-line: no-any
+          assert.strictEqual((resource as any).metadata, undefined);
+          assert(resource.hmacKey instanceof HmacKey);
+          assert.strictEqual(resource.hmacKey.metadata, metadataResponse);
+          assert.strictEqual(
+            resource.hmacKey.accessId,
+            metadataResponse.accessId
+          );
+          done();
+        }
+      );
+    });
+
+    it('should invoke callback with raw apiResponse', done => {
+      storage.request = (_reqOpts: {}, callback: Function) => {
+        callback(null, response);
+      };
+
+      storage.createHmacKey(
+        SERVICE_ACCOUNT_EMAIL,
+        (
+          err: Error,
+          resource: HmacKeyResource,
+          apiResponse: HmacKeyResourceResponse
+        ) => {
+          assert.ifError(err);
+          assert.strictEqual(apiResponse, response);
+          done();
+        }
+      );
     });
   });
 
