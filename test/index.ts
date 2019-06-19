@@ -32,7 +32,6 @@ import {GetFilesOptions} from '../src/bucket';
 import sinon = require('sinon');
 import {HmacKey} from '../src/hmacKey';
 import {HmacKeyResource, HmacKeyResourceResponse} from '../src/storage';
-import {any} from 'async';
 
 class FakeChannel {
   calledWith_: Array<{}>;
