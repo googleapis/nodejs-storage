@@ -626,6 +626,19 @@ export class Storage extends Service {
     );
   }
 
+  createHmacKey(
+    serviceAccountEmail: string,
+    options?: CreateHmacKeyOptions
+  ): Promise<CreateHmacKeyResponse>;
+  createHmacKey(
+    serviceAccountEmail: string,
+    callback: CreateHmacKeyCallback
+  ): void;
+  createHmacKey(
+    serviceAccountEmail: string,
+    options: CreateHmacKeyOptions,
+    callback: CreateHmacKeyCallback
+  ): void;
   /**
    * @typedef {object} CreateHmacKeyOptions
    * @property {string} [userProject] This parameter is currently ignored.
@@ -697,19 +710,6 @@ export class Storage extends Service {
    *     // Securely store the secret for use with the XML API.
    *   });
    */
-  createHmacKey(
-    serviceAccountEmail: string,
-    options?: CreateHmacKeyOptions
-  ): Promise<CreateHmacKeyResponse>;
-  createHmacKey(
-    serviceAccountEmail: string,
-    callback: CreateHmacKeyCallback
-  ): void;
-  createHmacKey(
-    serviceAccountEmail: string,
-    options: CreateHmacKeyOptions,
-    callback: CreateHmacKeyCallback
-  ): void;
   createHmacKey(
     serviceAccountEmail: string,
     optionsOrCb?: CreateHmacKeyOptions | CreateHmacKeyCallback,
