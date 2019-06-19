@@ -25,7 +25,7 @@ import {Bucket} from './bucket';
 import {Channel} from './channel';
 import {File} from './file';
 import {normalize} from './util';
-import {HmacKey} from './hmacKey';
+import {HmacKey, HmacKeyMetadata} from './hmacKey';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -98,16 +98,6 @@ export interface GetBucketsRequest {
   maxResults?: number;
   pageToken?: string;
   userProject?: string;
-}
-
-export interface HmacKeyMetadata {
-  accessId: string;
-  etag: string;
-  id: string;
-  projectId: string;
-  serviceAccountEmail: string;
-  state: string;
-  timeCreated: string;
 }
 
 export interface HmacKeyResource {
@@ -1098,10 +1088,7 @@ export class Storage extends Service {
  *
  * These methods can be auto-paginated.
  */
-paginator.extend(Storage, [
-  'getBuckets',
-  'getHmacKeys',
-]);
+paginator.extend(Storage, ['getBuckets', 'getHmacKeys']);
 
 /*! Developer Documentation
  *
