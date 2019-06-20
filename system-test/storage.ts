@@ -2610,6 +2610,115 @@ describe('storage', () => {
     });
   });
 
+  describe.only('HMAC keys', () => {
+    // This is generally a valid service account for a project.
+    const ALTERNATE_SERVICE_ACCOUNT = `${process.env.PROJECT_ID}@appspot.gserviceaccount.com`;
+    const SERVICE_ACCOUNT = process.env.HMAC_KEY_TEST_SERVICE_ACCOUNT || ALTERNATE_SERVICE_ACCOUNT;
+    // Second service account to test listing HMAC keys from different accounts.
+    const SECOND_SERVICE_ACCOUNT = process.env.HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT;
+
+    let accessId: string;
+    let secondAccessId: string;
+
+    before(async () => {
+      await deleteHmacKeys(SERVICE_ACCOUNT);
+      await deleteHmacKeys(ALTERNATE_SERVICE_ACCOUNT);
+    });
+
+    after(async () => {
+      await deleteHmacKeys(SERVICE_ACCOUNT);
+      await deleteHmacKeys(ALTERNATE_SERVICE_ACCOUNT);
+    });
+
+    it('should create an HMAC key for a service account', async () => {
+      const [res] = await storage.createHmacKey(SERVICE_ACCOUNT);
+      // We should always get a 40 character secret, which is valid base64.
+      assert.strictEqual(res.secret.length, 40);
+      accessId = res.hmacKey.accessId;
+      const metadata = res.hmacKey.metadata;
+      assert.strictEqual(metadata.accessId, accessId);
+      assert.strictEqual(metadata.state, 'ACTIVE');
+      assert.strictEqual(metadata.projectId, process.env.PROJECT_ID);
+      assert.strictEqual(metadata.serviceAccountEmail, SERVICE_ACCOUNT);
+      assert(typeof metadata.etag === 'string');
+      assert(typeof metadata.timeCreated === 'string');
+      assert(typeof metadata.updated === 'string');
+    });
+
+    it('should get metadata for an HMAC key', async () => {
+      const hmacKey = storage.hmacKey(accessId);
+      const [metadata] = await hmacKey.get();
+      assert.strictEqual(metadata.accessId, accessId);
+    });
+
+    it('should show up from getHmacKeys() without serviceAccountEmail param', async () => {
+      const [hmacKeys] = await storage.getHmacKeys();
+      assert(hmacKeys.length > 0);
+      assert(
+        hmacKeys.some((hmacKey) => hmacKey.accessId === accessId),
+        'created HMAC key not found from getHmacKeys result');
+    });
+
+    it('should make the key INACTIVE', async () => {
+      const hmacKey = storage.hmacKey(accessId);
+      let [metadata] = await hmacKey.update({state: 'INACTIVE'});
+      assert.strictEqual(metadata.state, 'INACTIVE');
+
+      [metadata] = await hmacKey.get();
+      assert.strictEqual(metadata.state, 'INACTIVE');
+    });
+
+    it('should delete the key', async () => {
+      const hmacKey = storage.hmacKey(accessId);
+      await hmacKey.delete();
+      const [res] = await hmacKey.get();
+      assert.strictEqual(res.state, 'DELETED');
+      assert.strictEqual(hmacKey.metadata.state, 'DELETED');
+    });
+
+    it('deleted key should not show up from getHmacKeys() by default', async () => {
+      const [hmacKeys] = await storage.getHmacKeys();
+      assert(Array.isArray(hmacKeys));
+      assert(
+        !hmacKeys.some((hmacKey) => hmacKey.accessId === accessId),
+        'deleted HMAC key is found from getHmacKeys result');
+    });
+
+    describe('second service account', () => {
+      before(function () {
+        if (!SECOND_SERVICE_ACCOUNT) {
+          this.skip();
+          return;
+        }
+      });
+
+      it('should create key for a second service account', async () => {
+        const [res] = await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!);
+        secondAccessId = res.hmacKey.accessId;
+      });
+
+      it('get HMAC keys for both service accounts', async () => {
+        const [hmacKeys] = await storage.getHmacKeys();
+        assert(hmacKeys.some((hmacKey) =>
+          hmacKey.metadata.serviceAccountEmail === SERVICE_ACCOUNT),
+          `Expected at least 1 key for service account: ${SERVICE_ACCOUNT}`
+        );
+        assert(hmacKeys.some((hmacKey) =>
+          hmacKey.metadata.serviceAccountEmail === SECOND_SERVICE_ACCOUNT),
+          `Expected at least 1 key for service account: ${SECOND_SERVICE_ACCOUNT}`
+        );
+      });
+
+      it('filter by service account email', async () => {
+        const [hmacKeys] = await storage.getHmacKeys({serviceAccountEmail: SECOND_SERVICE_ACCOUNT});
+        assert(hmacKeys.every((hmacKey) =>
+          hmacKey.metadata.serviceAccountEmail === SECOND_SERVICE_ACCOUNT),
+          'HMAC key belonging to other service accounts unexpected'
+        );
+      });
+    });
+  });
+
   describe('list files', () => {
     const DIRECTORY_NAME = 'directory-name';
 
@@ -3156,6 +3265,17 @@ describe('storage', () => {
         throw error;
       }
     }
+  }
+
+  async function deleteHmacKeys(serviceAccountEmail: string) {
+    const [hmacKeys] = await storage.getHmacKeys({ serviceAccountEmail });
+    const limit = pLimit(10);
+    await Promise.all(hmacKeys.map((hmacKey) => limit(async () => {
+      if (hmacKey.metadata.state === 'ACTIVE') {
+        await hmacKey.update({state:'INACTIVE' });
+      }
+      await hmacKey.delete();
+    })));
   }
 
   // tslint:disable-next-line no-any
