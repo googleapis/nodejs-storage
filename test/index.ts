@@ -704,9 +704,9 @@ describe('Storage', () => {
         callback(null, {nextPageToken: token, items: []});
       });
 
-      // tslint:disable-next-line: no-any
       storage.getHmacKeys(
         {maxResults: 5},
+        // tslint:disable-next-line: no-any
         (err: Error, _hmacKeys: [], nextQuery: any) => {
           assert.ifError(err);
           assert.strictEqual(nextQuery.pageToken, token);
