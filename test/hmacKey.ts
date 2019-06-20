@@ -32,11 +32,12 @@ let hmacKey: any;
 const ACCESS_ID = 'fake-access-id';
 
 const SERVICE_ACCOUNT_EMAIL = 'service-account@gserviceaccount.com';
+const PROJECT_ID = 'project-id';
 const metadataResponse = {
   accessId: ACCESS_ID,
   etag: 'etag',
   id: ACCESS_ID,
-  projectId: 'project-id',
+  projectId: PROJECT_ID,
   serviceAccountEmail: SERVICE_ACCOUNT_EMAIL,
   state: 'ACTIVE',
   timeCreated: '20190101T00:00:00Z',
@@ -214,12 +215,9 @@ describe('HmacKey', () => {
         await hmacKey.update(newMetadata, options);
 
         const requestArg = storageRequestStub.firstCall.args[0];
-        assert.deepStrictEqual(requestArg, {
-          uri: '/',
-          method: 'put',
-          qs: options,
-          body: newMetadata,
-        });
+        assert.deepStrictEqual(requestArg.method, 'put');
+        assert.deepStrictEqual(requestArg.qs, options);
+        assert.deepStrictEqual(requestArg.json, newMetadata);
       });
 
       it('should resolve with the HMAC keys metadata and assign to instance', async () => {

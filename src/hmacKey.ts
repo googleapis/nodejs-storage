@@ -238,26 +238,6 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata> {
     });
   }
 
-  request(reqOpts: DecorateRequestOptions): Promise<[ResponseBody, Metadata]>;
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback: BodyResponseCallback
-  ): void;
-  /**
-   * Makes request and applies userProject query parameter if necessary.
-   *
-   * @private
-   *
-   * @param {object} reqOpts - The request options.
-   * @param {function} callback - The callback function.
-   */
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback?: BodyResponseCallback
-  ): void | Promise<[ResponseBody, Metadata]> {
-    return this.parent.request.call(this, reqOpts, callback!);
-  }
-
   update(
     metadata: UpdateHmacKeyMetadata,
     options?: UpdateHmacKeyOptions
@@ -353,7 +333,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata> {
         uri: '/',
         method: 'put',
         qs: options,
-        body: metadata,
+        json: metadata,
       },
       (err: Error | null, metadata?: HmacKeyMetadata, res?: Metadata) => {
         if (err) {
