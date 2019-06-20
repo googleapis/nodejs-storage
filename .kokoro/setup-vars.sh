@@ -22,3 +22,6 @@ export GCN_STORAGE_2ND_PROJECT_KEY=${KOKORO_GFILE_DIR}/no-whitelist-key.json
 
 export GOOGLE_CLOUD_KMS_KEY_ASIA="projects/long-door-651/locations/asia/keyRings/test-key-asia/cryptoKeys/test-key-asia"
 export GOOGLE_CLOUD_KMS_KEY_US="projects/long-door-651/locations/us/keyRings/test-key-us/cryptoKeys/test-key-us"
+
+# Second service account for testing HMAC feature
+export HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT="gcs-hmac-system-test-alt@long-door-651.iam.gserviceaccount.com"
