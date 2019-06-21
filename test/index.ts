@@ -303,6 +303,19 @@ describe('Storage', () => {
         }
       );
     });
+
+    it('should execute callback with request error', done => {
+      const error = new Error('Request error');
+      storage.request = (_reqOpts: {}, callback: Function) => {
+        callback(error);
+      };
+
+      storage.createHmacKey(SERVICE_ACCOUNT_EMAIL,
+        (err: Error) => {
+          assert.strictEqual(err, error);
+          done();
+        });
+    });
   });
 
   describe('createBucket', () => {
