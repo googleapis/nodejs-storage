@@ -310,11 +310,10 @@ describe('Storage', () => {
         callback(error);
       };
 
-      storage.createHmacKey(SERVICE_ACCOUNT_EMAIL,
-        (err: Error) => {
-          assert.strictEqual(err, error);
-          done();
-        });
+      storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, (err: Error) => {
+        assert.strictEqual(err, error);
+        done();
+      });
     });
   });
 
