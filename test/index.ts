@@ -194,6 +194,31 @@ describe('Storage', () => {
     const METADATA = {a: 'b', c: {d: 'e'}};
     const BUCKET = {name: BUCKET_NAME};
 
+    describe('storage object with timeout set', () => {
+      const requestTimeout = 120000; // 2 minutes
+      
+      beforeEach(() => storage.timeout = requestTimeout);
+      afterEach(() => storage.timeout = undefined);
+
+      it('shoud pass timeout to storage.request', done => {
+        storage.request = (
+          reqOpts: DecorateRequestOptions,
+          callback: Function
+        ) => {
+          assert.strictEqual(reqOpts.method, 'POST');
+          assert.strictEqual(reqOpts.uri, '/b');
+          assert.strictEqual(reqOpts.qs.project, storage.projectId);
+          assert.strictEqual(reqOpts.json.name, BUCKET_NAME);
+          assert.strictEqual(reqOpts.timeout, requestTimeout);
+  
+          callback();
+        };
+        
+        storage.createBucket(BUCKET_NAME, done);
+      });
+    });
+
+
     it('should make correct API request', done => {
       storage.request = (
         reqOpts: DecorateRequestOptions,
@@ -203,6 +228,7 @@ describe('Storage', () => {
         assert.strictEqual(reqOpts.uri, '/b');
         assert.strictEqual(reqOpts.qs.project, storage.projectId);
         assert.strictEqual(reqOpts.json.name, BUCKET_NAME);
+        assert.strictEqual(reqOpts.timeout, undefined);
 
         callback();
       };
@@ -379,10 +405,28 @@ describe('Storage', () => {
   });
 
   describe('getBuckets', () => {
+    describe('storage object with timeout set', () => {
+      const requestTimeout = 120000; // 2 minutes
+      
+      beforeEach(() => storage.timeout = requestTimeout);
+      afterEach(() => storage.timeout = undefined);
+
+      it('shoud pass timeout to storage.request', done => {
+        storage.request = (reqOpts: DecorateRequestOptions) => {
+          assert.strictEqual(reqOpts.uri, '/b');
+          assert.deepStrictEqual(reqOpts.qs, {project: storage.projectId});
+          assert.strictEqual(reqOpts.timeout, requestTimeout);
+          done();
+        };
+        storage.getBuckets(util.noop);
+      });
+    });
+
     it('should get buckets without a query', done => {
       storage.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.uri, '/b');
         assert.deepStrictEqual(reqOpts.qs, {project: storage.projectId});
+        assert.strictEqual(reqOpts.timeout, undefined);
         done();
       };
       storage.getBuckets(util.noop);
@@ -509,6 +553,28 @@ describe('Storage', () => {
   });
 
   describe('getServiceAccount', () => {
+    describe('storage object with timeout set', () => {
+      const requestTimeout = 120000; // 2 minutes
+      
+      beforeEach(() => storage.timeout = requestTimeout);
+      afterEach(() => storage.timeout = undefined);
+
+      it('shoud pass timeout to storage.request', done => {
+        storage.request = (reqOpts: DecorateRequestOptions) => {
+          assert.strictEqual(
+            reqOpts.uri,
+            `/projects/${storage.projectId}/serviceAccount`
+          );
+          assert.deepStrictEqual(reqOpts.qs, {});
+          assert.strictEqual(reqOpts.timeout, requestTimeout);
+  
+          done();
+        };
+        
+        storage.getServiceAccount(assert.ifError);
+      });
+    });
+
     it('should make the correct request', done => {
       storage.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(
@@ -516,6 +582,7 @@ describe('Storage', () => {
           `/projects/${storage.projectId}/serviceAccount`
         );
         assert.deepStrictEqual(reqOpts.qs, {});
+        assert.strictEqual(reqOpts.timeout, undefined);
         done();
       };
 

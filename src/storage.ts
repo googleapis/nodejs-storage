@@ -55,6 +55,11 @@ export interface StorageOptions extends GoogleAuthOptions {
    * Defaults to `www.googleapis.com`.
    */
   apiEndpoint?: string;
+  /**
+   * A number of miliseconds to wait for socket to connect.
+   * Defaults to 60000.
+   */
+  timeout?: number;
 }
 
 export interface BucketOptions {
@@ -219,6 +224,12 @@ export class Storage extends Service {
   acl: typeof Storage.acl;
 
   /**
+   * A number of miliseconds to wait for socket to connect.
+   * Defaults to 60000.
+   */
+  timeout: number;
+
+  /**
    * Get {@link Bucket} objects for all of the buckets in your project as
    * a readable object stream.
    *
@@ -314,6 +325,8 @@ export class Storage extends Service {
     this.acl = Storage.acl;
 
     this.getBucketsStream = paginator.streamify('getBuckets');
+
+    this.timeout = options.timeout!;
   }
 
   /**
@@ -535,6 +548,7 @@ export class Storage extends Service {
         uri: '/b',
         qs: query,
         json: body,
+        timeout: this.timeout,
       },
       (err, resp) => {
         if (err) {
@@ -642,6 +656,7 @@ export class Storage extends Service {
       {
         uri: '/b',
         qs: options,
+        timeout: this.timeout,
       },
       (err, resp) => {
         if (err) {
@@ -732,6 +747,7 @@ export class Storage extends Service {
       {
         uri: `/projects/${this.projectId}/serviceAccount`,
         qs: options,
+        timeout: this.timeout,
       },
       (err, resp) => {
         if (err) {
