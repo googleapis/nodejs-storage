@@ -196,9 +196,9 @@ describe('Storage', () => {
 
     describe('storage object with timeout set', () => {
       const requestTimeout = 120000; // 2 minutes
-      
-      beforeEach(() => storage.timeout = requestTimeout);
-      afterEach(() => storage.timeout = undefined);
+
+      beforeEach(() => (storage.timeout = requestTimeout));
+      afterEach(() => (storage.timeout = undefined));
 
       it('shoud pass timeout to storage.request', done => {
         storage.request = (
@@ -210,14 +210,13 @@ describe('Storage', () => {
           assert.strictEqual(reqOpts.qs.project, storage.projectId);
           assert.strictEqual(reqOpts.json.name, BUCKET_NAME);
           assert.strictEqual(reqOpts.timeout, requestTimeout);
-  
+
           callback();
         };
-        
+
         storage.createBucket(BUCKET_NAME, done);
       });
     });
-
 
     it('should make correct API request', done => {
       storage.request = (
@@ -407,9 +406,9 @@ describe('Storage', () => {
   describe('getBuckets', () => {
     describe('storage object with timeout set', () => {
       const requestTimeout = 120000; // 2 minutes
-      
-      beforeEach(() => storage.timeout = requestTimeout);
-      afterEach(() => storage.timeout = undefined);
+
+      beforeEach(() => (storage.timeout = requestTimeout));
+      afterEach(() => (storage.timeout = undefined));
 
       it('shoud pass timeout to storage.request', done => {
         storage.request = (reqOpts: DecorateRequestOptions) => {
@@ -555,9 +554,9 @@ describe('Storage', () => {
   describe('getServiceAccount', () => {
     describe('storage object with timeout set', () => {
       const requestTimeout = 120000; // 2 minutes
-      
-      beforeEach(() => storage.timeout = requestTimeout);
-      afterEach(() => storage.timeout = undefined);
+
+      beforeEach(() => (storage.timeout = requestTimeout));
+      afterEach(() => (storage.timeout = undefined));
 
       it('shoud pass timeout to storage.request', done => {
         storage.request = (reqOpts: DecorateRequestOptions) => {
@@ -567,10 +566,10 @@ describe('Storage', () => {
           );
           assert.deepStrictEqual(reqOpts.qs, {});
           assert.strictEqual(reqOpts.timeout, requestTimeout);
-  
+
           done();
         };
-        
+
         storage.getServiceAccount(assert.ifError);
       });
     });
