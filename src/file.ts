@@ -2478,9 +2478,7 @@ class File extends ServiceObject<File> {
 
     if (config.extensionHeaders) {
       for (const headerName of Object.keys(config.extensionHeaders)) {
-        extensionHeadersString += `${headerName}:${
-          config.extensionHeaders[headerName]
-        }\n`;
+        extensionHeadersString += `${headerName}:${config.extensionHeaders[headerName]}\n`;
       }
     }
 
