@@ -1154,8 +1154,7 @@ class File extends ServiceObject<File> {
    * remoteFile.createReadStream()
    *   .on('error', function(err) {})
    *   .on('response', function(response) {
-   *     // Server connected and responded with the specified status and
-   * headers.
+   *     // Server connected and responded with the specified status and headers.
    *    })
    *   .on('end', function() {
    *     // The file is fully downloaded.
@@ -2479,7 +2478,9 @@ class File extends ServiceObject<File> {
 
     if (config.extensionHeaders) {
       for (const headerName of Object.keys(config.extensionHeaders)) {
-        extensionHeadersString += `${headerName}:${config.extensionHeaders[headerName]}\n`;
+        extensionHeadersString += `${headerName}:${
+          config.extensionHeaders[headerName]
+        }\n`;
       }
     }
 
