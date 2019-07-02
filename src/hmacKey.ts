@@ -18,9 +18,6 @@ import {
   Metadata,
   ServiceObject,
   GetConfig,
-  DecorateRequestOptions,
-  ResponseBody,
-  BodyResponseCallback,
 } from '@google-cloud/common';
 import {promisifyAll} from '@google-cloud/promisify';
 
@@ -68,10 +65,9 @@ export type HmacKeyMetadataResponse = [HmacKeyMetadata, Metadata];
  *
  * @class
  */
-export class HmacKey extends ServiceObject<HmacKeyMetadata> {
+export class HmacKey extends ServiceObject<HmacKeyMetadata|undefined> {
   accessId: string;
-  metadata: HmacKeyMetadata;
-  parent: Storage;
+  metadata: HmacKeyMetadata|undefined;
 
   /**
    * Constructs an HmacKey object.
@@ -162,8 +158,6 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata> {
     });
 
     this.accessId = accessId;
-    this.metadata = {accessId};
-    this.parent = storage;
   }
 
   get(options?: GetHmacKeyOptions): Promise<HmacKeyMetadataResponse>;
