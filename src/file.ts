@@ -1154,8 +1154,7 @@ class File extends ServiceObject<File> {
    * remoteFile.createReadStream()
    *   .on('error', function(err) {})
    *   .on('response', function(response) {
-   *     // Server connected and responded with the specified status and
-   * headers.
+   *     // Server connected and responded with the specified status and headers.
    *    })
    *   .on('end', function() {
    *     // The file is fully downloaded.
@@ -2295,11 +2294,14 @@ class File extends ServiceObject<File> {
    *     'v2' or 'v4.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
-   * @param {string} [config.contentMd5] The MD5 digest value in base64. If you
-   *     provide this, the client must provide this HTTP header with this same
-   *     value in its request.
-   * @param {string} [config.contentType] If you provide this value, the client
-   *     must provide this HTTP header set to the same value.
+   * @param {string} [config.contentMd5] The MD5 digest value in base64. Just like
+   *     if you provide this, the client must provide this HTTP header with this same
+   *     value in its request, so to if this parameter is not provided here,
+   *     the client must not provide any value for this HTTP header in its request.
+   * @param {string} [config.contentType] Just like if you provide this, the client
+   *     must provide this HTTP header with this same value in its request, so to if
+   *     this parameter is not provided here, the client must not provide any value
+   *     for this HTTP header in its request.
    * @param {*} config.expires A timestamp when this link will expire. Any value
    *     given is passed to `new Date()`.
    * @param {object} [config.extensionHeaders] If these headers are used, the
