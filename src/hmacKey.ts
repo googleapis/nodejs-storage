@@ -204,6 +204,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        * The authenticated user must have `storage.hmacKeys.get` permission
        * for the project in which the key exists.
        *
+       * @method HmacKey#get
        * @param {GetHmacKeyOptions} [options] Configuration options.
        * @param {GetHmacKeyCallback} [callback] Callback function.
        * @returns {Promise<GetHmacKeyResponse>}

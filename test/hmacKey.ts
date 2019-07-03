@@ -20,7 +20,6 @@ import * as assert from 'assert';
 import {util, ServiceObject} from '@google-cloud/common';
 import {HmacKey} from '../src/hmacKey';
 import {Storage} from '../src';
-import {HmacKeyResource} from '../src/storage';
 
 // tslint:disable-next-line: no-any
 let sandbox: sinon.SinonSandbox;
