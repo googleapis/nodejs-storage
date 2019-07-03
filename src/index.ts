@@ -182,7 +182,6 @@ export {
   SetStorageClassResponse,
 } from './file';
 export {
-  GetHmacKeyOptions,
   HmacKey,
   HmacKeyMetadata,
   HmacKeyMetadataCallback,

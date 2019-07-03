@@ -98,7 +98,10 @@ describe('HmacKey', () => {
       const ctorArg = serviceObjectSpy.firstCall.args[0];
       assert(ctorArg.parent, STORAGE);
       assert(ctorArg.id, ACCESS_ID);
-      assert.deepStrictEqual(ctorArg.methods, {delete: true});
+      assert.deepStrictEqual(ctorArg.methods, {
+        delete: true,
+        getMetadata: true,
+      });
     });
 
     it('should throw if accessId is not provided', () => {
@@ -123,13 +126,13 @@ describe('HmacKey', () => {
       hmacKey = new HmacKey(STORAGE, ACCESS_ID);
     });
 
-    describe('get', () => {
+    describe('getMetadata', () => {
       it('should accept just a callback', done => {
-        hmacKey.get(done);
+        hmacKey.getMetadata(done);
       });
 
       it('should accept an options object and callback', done => {
-        hmacKey.get({userProject: 'my-project'}, done);
+        hmacKey.getMetadata({userProject: 'my-project'}, done);
       });
 
       it('should execute callback with request error', done => {
@@ -138,30 +141,20 @@ describe('HmacKey', () => {
           callback(error);
         });
 
-        hmacKey.get({}, (err: Error) => {
+        hmacKey.getMetadata({}, (err: Error) => {
           assert.strictEqual(err, error);
           done();
         });
       });
 
       it('should return a Promise when callback is omitted', () => {
-        const promise = hmacKey.get();
+        const promise = hmacKey.getMetadata();
         assert(promise instanceof Promise);
         return promise;
       });
 
-      it('should strip autoCreate field from request options', async () => {
-        await hmacKey.get({
-          autoCreate: true,
-          otherField: 'value',
-        });
-        const callArgs = storageRequestStub.firstCall.args;
-        assert.strictEqual(callArgs[0].qs.otherField, 'value');
-        assert.strictEqual(callArgs[0].qs.autoCreate, undefined);
-      });
-
       it('should resolve with the HMAC keys metadata and assign to instance', async () => {
-        const [metadata] = await hmacKey.get();
+        const [metadata] = await hmacKey.getMetadata();
 
         assert.deepStrictEqual(metadata, metadataResponse);
         assert.deepStrictEqual(hmacKey.metadata, metadataResponse);

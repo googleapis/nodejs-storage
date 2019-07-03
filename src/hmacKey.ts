@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  Metadata,
-  ServiceObject,
-  GetConfig,
-} from '@google-cloud/common';
+import {Metadata, ServiceObject, GetConfig} from '@google-cloud/common';
 import {promisifyAll} from '@google-cloud/promisify';
 
 import {Storage} from './storage';
@@ -33,10 +29,6 @@ export interface HmacKeyMetadata {
   state?: string;
   timeCreated?: string;
   updated?: string;
-}
-
-export interface GetHmacKeyOptions extends GetConfig {
-  userProject?: string;
 }
 
 export interface UpdateHmacKeyOptions {
@@ -65,9 +57,9 @@ export type HmacKeyMetadataResponse = [HmacKeyMetadata, Metadata];
  *
  * @class
  */
-export class HmacKey extends ServiceObject<HmacKeyMetadata|undefined> {
+export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
   accessId: string;
-  metadata: HmacKeyMetadata|undefined;
+  metadata: HmacKeyMetadata | undefined;
 
   /**
    * Constructs an HmacKey object.
@@ -148,6 +140,52 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata|undefined> {
        *   });
        */
       delete: true,
+      /**
+       * @typedef {object} GetHmacKeyMetadataOptions
+       * @property {string} userProject This parameter is currently ignored.
+       */
+      /**
+       * Retrieves and populate an HMAC key's metadata.
+       *
+       * HmacKey.get() does not give the HMAC key secret, as
+       * it is only returned on creation.
+       *
+       * The authenticated user must have `storage.hmacKeys.get` permission
+       * for the project in which the key exists.
+       *
+       * @method HmacKey#getMetadata
+       * @param {GetHmacKeyMetadataOptions} [options] Configuration options.
+       * @param {HmacKeyMetadataCallback} [callback] Callback function.
+       * @returns {Promise<HmacKeyMetadataResponse>}
+       *
+       * @example
+       * const {Storage} = require('@google-cloud/storage');
+       * const storage = new Storage();
+       *
+       * //-
+       * // Get the HmacKey's metadata and populate to the metadata property.
+       * //-
+       * storage.hmacKey('ACCESS_ID')
+       *   .getMetadata((err, hmacKeyMetadata) => {
+       *     if (err) {
+       *       // The request was an error.
+       *       console.error(err);
+       *       return;
+       *     }
+       *     console.log(hmacKeyMetadata);
+       *   });
+       *
+       * //-
+       * // If the callback is omitted, a promise is returned.
+       * //-
+       * storage.hmacKey('ACCESS_ID')
+       *   .getMetadata()
+       *   .then((data) => {
+       *     const hmacKeyMetadata = data[0];
+       *     console.log(hmacKeyMetadata);
+       *   });
+       */
+      getMetadata: true,
     };
 
     super({
@@ -158,78 +196,6 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata|undefined> {
     });
 
     this.accessId = accessId;
-  }
-
-  get(options?: GetHmacKeyOptions): Promise<HmacKeyMetadataResponse>;
-  get(callback: HmacKeyMetadataCallback): void;
-  get(options: GetHmacKeyOptions, callback: HmacKeyMetadataCallback): void;
-  /**
-   * @typedef {object} GetHmacKeyOptions
-   * @property {string} userProject This parameter is currently ignored.
-   */
-  /**
-   * Retrieves and populate an HMAC key's metadata.
-   *
-   * HmacKey.get() does not give the HMAC key secret, as
-   * it is only returned on creation.
-   * The authenticated user must have `storage.hmacKeys.get` permission for the project in which the key exists.
-   *
-   * @param {GetHmacKeyOptions} [options] Configuration options.
-   * @param {HmacKeyMetadataCallback} [callback] Callback function.
-   * @returns {Promise<HmacKeyMetadataResponse>}
-   *
-   * @example
-   * const {Storage} = require('@google-cloud/storage');
-   * const storage = new Storage();
-   *
-   * //-
-   * // Get the HmacKey's Metadata.
-   * //-
-   * storage.hmacKey('ACCESS_ID')
-   *   .get((err, hmacKeyMetadata) => {
-   *     if (err) {
-   *       // The request was an error.
-   *       console.error(err);
-   *       return;
-   *     }
-   *     console.log(hmacKeyMetadata);
-   *   });
-   *
-   * //-
-   * // If the callback is omitted, a promise is returned.
-   * //-
-   * storage.hmacKey('ACCESS_ID')
-   *   .get()
-   *   .then((data) => {
-   *     const hmacKeyMetadata = data[0];
-   *     console.log(hmacKeyMetadata);
-   *   });
-   */
-  get(
-    optionsOrCb?: GetHmacKeyOptions | HmacKeyMetadataCallback,
-    cb?: HmacKeyMetadataCallback
-  ): Promise<HmacKeyMetadataResponse> | void {
-    const {options, callback} = normalize<
-      GetHmacKeyOptions,
-      HmacKeyMetadataCallback
-    >(optionsOrCb, cb);
-    const opts = Object.assign({}, options);
-    // autoCreate is ignored - key must be created using Storage.createHmacKey.
-    delete opts.autoCreate;
-
-    const reqOpts = {
-      uri: '/',
-      qs: opts,
-    };
-
-    this.request(reqOpts, (err, metadata, res) => {
-      if (err) {
-        callback!(err);
-        return;
-      }
-      this.metadata = metadata!;
-      callback!(null, this.metadata, res);
-    });
   }
 
   update(
