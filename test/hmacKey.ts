@@ -101,6 +101,7 @@ describe('HmacKey', () => {
       assert.deepStrictEqual(ctorArg.methods, {
         delete: true,
         getMetadata: true,
+        get: true,
       });
     });
 
@@ -124,6 +125,43 @@ describe('HmacKey', () => {
         });
 
       hmacKey = new HmacKey(STORAGE, ACCESS_ID);
+    });
+
+    describe('get', () => {
+      it('should accept just a callback', done => {
+        hmacKey.get(done);
+      });
+
+      it('should accept an options object and callback', done => {
+        hmacKey.get({userProject: 'my-project'}, done);
+      });
+
+      it('should execute callback with request error', done => {
+        const error = new Error('Request error');
+        storageRequestStub.callsFake((_opts: {}, callback: Function) => {
+          callback(error);
+        });
+
+        hmacKey.get({}, (err: Error) => {
+          assert.strictEqual(err, error);
+          done();
+        });
+      });
+
+      it('should return a Promise when callback is omitted', async () => {
+        const promise = hmacKey.get();
+        assert(promise instanceof Promise);
+        const res = await promise;
+        assert(Array.isArray(res));
+        assert(res[0] instanceof HmacKey);
+      });
+
+      it('should resolve with the HMAC key and assign HmacKey.metadata', async () => {
+        const [hmacKey2] = await hmacKey.get();
+
+        assert.strictEqual(hmacKey2, hmacKey);
+        assert.deepStrictEqual(hmacKey2.metadata, metadataResponse);
+      });
     });
 
     describe('getMetadata', () => {

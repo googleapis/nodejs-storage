@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Metadata, ServiceObject, GetConfig} from '@google-cloud/common';
+import {Metadata, ServiceObject} from '@google-cloud/common';
 import {promisifyAll} from '@google-cloud/promisify';
 
 import {Storage} from './storage';
@@ -32,6 +32,9 @@ export interface HmacKeyMetadata {
 }
 
 export interface UpdateHmacKeyOptions {
+  /**
+   * This parameter is currently ignored.
+   */
   userProject?: string;
 }
 
@@ -145,9 +148,10 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        * @property {string} userProject This parameter is currently ignored.
        */
       /**
-       * Retrieves and populate an HMAC key's metadata.
+       * Retrieves and populate an HMAC key's metadata, and return
+       * the HMAC key's metadata as an object.
        *
-       * HmacKey.get() does not give the HMAC key secret, as
+       * HmacKey.getMetadata() does not give the HMAC key secret, as
        * it is only returned on creation.
        *
        * The authenticated user must have `storage.hmacKeys.get` permission
@@ -186,6 +190,51 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        *   });
        */
       getMetadata: true,
+      /**
+       * @typedef {object} GetHmacKeyOptions
+       * @property {string} userProject This parameter is currently ignored.
+       */
+      /**
+       * Retrieves and populate an HMAC key's metadata, and return
+       * the HMAC key object.
+       *
+       * HmacKey.get() does not give the HMAC key secret, as
+       * it is only returned on creation.
+       *
+       * The authenticated user must have `storage.hmacKeys.get` permission
+       * for the project in which the key exists.
+       *
+       * @param {GetHmacKeyOptions} [options] Configuration options.
+       * @param {GetHmacKeyCallback} [callback] Callback function.
+       * @returns {Promise<GetHmacKeyResponse>}
+       *
+       * @example
+       * const {Storage} = require('@google-cloud/storage');
+       * const storage = new Storage();
+       *
+       * //-
+       * // Get the HmacKey's Metadata.
+       * //-
+       * storage.hmacKey('ACCESS_ID')
+       *   .get((err, hmacKey) => {
+       *     if (err) {
+       *       // The request was an error.
+       *       console.error(err);
+       *       return;
+       *     }
+       *     // do something with the returned HmacKey object.
+       *   });
+       *
+       * //-
+       * // If the callback is omitted, a promise is returned.
+       * //-
+       * storage.hmacKey('ACCESS_ID')
+       *   .get()
+       *   .then((data) => {
+       *     const hmacKey = data[0];
+       *   });
+       */
+      get: true,
     };
 
     super({
