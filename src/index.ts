@@ -232,7 +232,6 @@ export {
   GetServiceAccountCallback,
   GetServiceAccountOptions,
   GetServiceAccountResponse,
-  HmacKeyResource,
   HmacKeyResourceResponse,
   ServiceAccount,
   Storage,

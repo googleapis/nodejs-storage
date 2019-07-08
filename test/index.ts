@@ -31,7 +31,7 @@ import {Bucket} from '../src';
 import {GetFilesOptions} from '../src/bucket';
 import sinon = require('sinon');
 import {HmacKey} from '../src/hmacKey';
-import {HmacKeyResource, HmacKeyResourceResponse} from '../src/storage';
+import {HmacKeyResourceResponse} from '../src/storage';
 
 class FakeChannel {
   calledWith_: Array<{}>;
@@ -269,15 +269,13 @@ describe('Storage', () => {
 
       storage.createHmacKey(
         SERVICE_ACCOUNT_EMAIL,
-        (err: Error, resource: HmacKeyResource) => {
+        (err: Error, hmacKey: HmacKey, secret: string) => {
           assert.ifError(err);
-          assert.strictEqual(resource.secret, response.secret);
-          // tslint:disable-next-line: no-any
-          assert.strictEqual((resource as any).metadata, undefined);
-          assert(resource.hmacKey instanceof HmacKey);
-          assert.strictEqual(resource.hmacKey.metadata, metadataResponse);
+          assert.strictEqual(secret, response.secret);
+          assert(hmacKey instanceof HmacKey);
+          assert.strictEqual(hmacKey.metadata, metadataResponse);
           assert.strictEqual(
-            resource.hmacKey.accessId,
+            hmacKey.accessId,
             metadataResponse.accessId
           );
           done();
@@ -294,7 +292,8 @@ describe('Storage', () => {
         SERVICE_ACCOUNT_EMAIL,
         (
           err: Error,
-          resource: HmacKeyResource,
+          _hmacKey: HmacKey,
+          _secret: string,
           apiResponse: HmacKeyResourceResponse
         ) => {
           assert.ifError(err);

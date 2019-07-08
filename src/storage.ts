@@ -100,17 +100,12 @@ export interface GetBucketsRequest {
   userProject?: string;
 }
 
-export interface HmacKeyResource {
-  hmacKey: HmacKey;
-  secret: string;
-}
-
 export interface HmacKeyResourceResponse {
   metadata: HmacKeyMetadata;
   secret: string;
 }
 
-export type CreateHmacKeyResponse = [HmacKeyResource];
+export type CreateHmacKeyResponse = [HmacKey, string, HmacKeyResourceResponse];
 
 export interface CreateHmacKeyOptions {
   userProject?: string;
@@ -119,7 +114,8 @@ export interface CreateHmacKeyOptions {
 export interface CreateHmacKeyCallback {
   (
     err: Error | null,
-    resource?: HmacKeyResource | null,
+    hmacKey?: HmacKey | null,
+    secret?: string | null,
     apiResponse?: HmacKeyResourceResponse
   ): void;
 }
@@ -660,18 +656,16 @@ export class Storage extends Service {
    *     RFC 3339 format.
    */
   /**
-   * @typedef {object} HmacKeyResource
-   * @property {HmacKey} hmacKey The HmacKey object.
-   * @property {string} secret The HMAC key secret used to access XML API.
-   */
-  /**
    * @typedef {array} CreateHmacKeyResponse
-   * @property {HmacKeyResource} 0 The HMAC key resource.
+   * @property {HmacKey} 0 The HmacKey instance created from API response.
+   * @property {string} 1 The HMAC key's secret used to access the XML API.
+   * @property {object} 3 The raw API response.
    */
   /**
    * @callback CreateHmacKeyCallback Callback function.
    * @param {?Error} err Request error, if any.
-   * @param {HmacKeyResource} resource An object containing the HMAC key's secret and the HmacKey object.
+   * @param {HmacKey} hmacKey The HmacKey instance created from API response.
+   * @param {string} secret The HMAC key's secret used to access the XML API.
    * @param {object} apiResponse The raw API response.
    */
   /**
@@ -693,9 +687,8 @@ export class Storage extends Service {
    * const serviceAccountEmail =
    *   'my-service-account@appspot.gserviceaccount.com';
    *
-   * storage.createHmacKey(serviceAccountEmail, function(err, hmacKeyResource) {
+   * storage.createHmacKey(serviceAccountEmail, function(err, hmacKey, secret) {
    *   if (!err) {
-   *     const secret = hmacKey.secret;
    *     // Securely store the secret for use with the XML API.
    *   }
    * });
@@ -705,8 +698,8 @@ export class Storage extends Service {
    * //-
    * storage.createHmacKey(serviceAccountEmail)
    *   .then((response) => {
-   *     const [hmacKeyResource] = response;
-   *     const secret = hmacKeyResource.secret;
+   *     const hmacKey = response[0];
+   *     const secret = response[1];
    *     // Securely store the secret for use with the XML API.
    *   });
    */
@@ -735,19 +728,14 @@ export class Storage extends Service {
       },
       (err, resp: HmacKeyResourceResponse) => {
         if (err) {
-          callback!(err, null, resp);
+          callback!(err, null, null, resp);
           return;
         }
 
         const hmacKey = new HmacKey(this, resp.metadata.accessId);
         hmacKey.metadata = resp.metadata;
 
-        const resource = {
-          hmacKey,
-          secret: resp.secret,
-        };
-
-        callback!(null, resource, resp);
+        callback!(null, hmacKey, resp.secret, resp);
       }
     );
   }
