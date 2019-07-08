@@ -274,10 +274,7 @@ describe('Storage', () => {
           assert.strictEqual(secret, response.secret);
           assert(hmacKey instanceof HmacKey);
           assert.strictEqual(hmacKey.metadata, metadataResponse);
-          assert.strictEqual(
-            hmacKey.accessId,
-            metadataResponse.accessId
-          );
+          assert.strictEqual(hmacKey.accessId, metadataResponse.accessId);
           done();
         }
       );
