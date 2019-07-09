@@ -672,7 +672,7 @@ export class Storage extends Service {
    * Create an HMAC key associated with an service account to authenticate
    * requests to the Cloud Storage XML API.
    *
-   * @see [HMAC keys documentation]{@linkhttps://cloud.google.com/storage/docs/authentication/hmackeys}
+   * @see [HMAC keys documentation]{@link https://cloud.google.com/storage/docs/authentication/hmackeys}
    *
    * @param {string} serviceAccountEmail The service account's email address
    *     with which the HMAC key is created for.
