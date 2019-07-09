@@ -145,7 +145,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
       delete: true,
       /**
        * @typedef {object} GetHmacKeyMetadataOptions
-       * @property {string} userProject This parameter is currently ignored.
+       * @property {string} [userProject] This parameter is currently ignored.
        */
       /**
        * Retrieves and populate an HMAC key's metadata, and return
@@ -191,12 +191,23 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        */
       getMetadata: true,
       /**
+       * @callback GetHmacKeyCallback
+       * @param {?Error} err Request error, if any.
+       * @param {HmacKey} hmacKey this {@link HmacKey} instance.
+       * @param {object} apiResponse The full API response.
+       */
+      /**
+       * @typedef {array} GetHmacKeyResponse
+       * @property {HmacKey} 0 This {@link HmacKey} instance.
+       * @property {object} 1 The full API response.
+       */
+      /**
        * @typedef {object} GetHmacKeyOptions
-       * @property {string} userProject This parameter is currently ignored.
+       * @property {string} [userProject] This parameter is currently ignored.
        */
       /**
        * Retrieves and populate an HMAC key's metadata, and return
-       * the HMAC key object.
+       * this {@link HmacKey} instance.
        *
        * HmacKey.get() does not give the HMAC key secret, as
        * it is only returned on creation.
@@ -269,7 +280,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
    */
   /**
    * @typedef {object} UpdateHmacKeyOptions
-   * @property {string} userProject This parameter is currently ignored.
+   * @property {string} [userProject] This parameter is currently ignored.
    */
   /**
    * @callback HmacKeyMetadataCallback
