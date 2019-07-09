@@ -3276,7 +3276,7 @@ describe('storage', () => {
     const [hmacKeys] = await storage.getHmacKeys({ serviceAccountEmail });
     const limit = pLimit(10);
     await Promise.all(hmacKeys.map((hmacKey) => limit(async () => {
-      if (hmacKey.metadata.state === 'ACTIVE') {
+      if (hmacKey.metadata!.state === 'ACTIVE') {
         await hmacKey.update({state:'INACTIVE' });
       }
       await hmacKey.delete();
