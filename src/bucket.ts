@@ -2599,7 +2599,7 @@ class Bucket extends ServiceObject {
 
   setLabels(
     labels: Labels,
-    options: SetLabelsOptions
+    options?: SetLabelsOptions
   ): Promise<SetLabelsResponse>;
   setLabels(labels: Labels, callback: SetLabelsCallback): void;
   setLabels(
