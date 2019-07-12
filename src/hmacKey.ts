@@ -308,7 +308,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
         reqOpts: {
           method: 'PUT',
         },
-      }
+      },
     };
 
     super({

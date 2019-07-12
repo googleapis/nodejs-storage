@@ -105,7 +105,7 @@ describe('HmacKey', () => {
           reqOpts: {
             method: 'PUT',
           },
-        }
+        },
       });
     });
 
