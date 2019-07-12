@@ -99,8 +99,13 @@ describe('HmacKey', () => {
       assert(ctorArg.id, ACCESS_ID);
       assert.deepStrictEqual(ctorArg.methods, {
         delete: true,
-        getMetadata: true,
         get: true,
+        getMetadata: true,
+        setMetadata: {
+          reqOpts: {
+            method: 'PUT',
+          },
+        }
       });
     });
 
@@ -198,21 +203,9 @@ describe('HmacKey', () => {
       });
     });
 
-    describe('update', () => {
-      it('should throw without metadata object', () => {
-        assert.throws(() => {
-          hmacKey.update(undefined, assert.ifError);
-        }, /Cannot update HmacKey/);
-      });
-
-      it('should throw with an empty metadata object', () => {
-        assert.throws(() => {
-          hmacKey.update({}, assert.ifError);
-        }, /Cannot update HmacKey/);
-      });
-
-      it('should accept an options object', () => {
-        hmacKey.update({state: 'INACTIVE'}, {}, assert.ifError);
+    describe('setMetadata', () => {
+      it('should accept an options object', async () => {
+        await hmacKey.setMetadata({state: 'INACTIVE'}, {});
       });
 
       it('should execute callback with request error', done => {
@@ -221,14 +214,14 @@ describe('HmacKey', () => {
           callback(error);
         });
 
-        hmacKey.update({state: 'INACTIVE'}, (err: Error) => {
+        hmacKey.setMetadata({state: 'INACTIVE'}, (err: Error) => {
           assert.strictEqual(err, error);
           done();
         });
       });
 
       it('should return a Promise when callback is omitted', () => {
-        const promise = hmacKey.update({state: 'INACTIVE'});
+        const promise = hmacKey.setMetadata({state: 'INACTIVE'});
         assert(promise instanceof Promise);
         return promise;
       });
@@ -242,10 +235,10 @@ describe('HmacKey', () => {
           userProject: 'my-project',
         };
 
-        await hmacKey.update(newMetadata, options);
+        await hmacKey.setMetadata(newMetadata, options);
 
         const requestArg = storageRequestStub.firstCall.args[0];
-        assert.deepStrictEqual(requestArg.method, 'put');
+        assert.deepStrictEqual(requestArg.method, 'PUT');
         assert.deepStrictEqual(requestArg.qs, options);
         assert.deepStrictEqual(requestArg.json, newMetadata);
       });
@@ -255,7 +248,7 @@ describe('HmacKey', () => {
           state: 'INACTIVE',
           etag: 'some-etag',
         };
-        const [metadata] = await hmacKey.update(newMetadata);
+        const [metadata] = await hmacKey.setMetadata(newMetadata);
 
         const expectedMetadata = Object.assign(
           {},
@@ -267,7 +260,7 @@ describe('HmacKey', () => {
       });
 
       it('should assign the response metadata to the HmacKey instance', async () => {
-        await hmacKey.update({state: 'ACTIVE'});
+        await hmacKey.setMetadata({state: 'ACTIVE'});
         assert.deepStrictEqual(hmacKey.metadata, metadataResponse);
       });
     });
