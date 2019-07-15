@@ -2752,9 +2752,10 @@ class Bucket extends ServiceObject {
    *
    * @see [Storage Classes]{@link https://cloud.google.com/storage/docs/storage-classes}
    *
-   * @param {string} storageClass The new storage class. (`multi_regional`,
-   *     `regional`, `standard`, `nearline`, `coldline`, or
-   *     `durable_reduced_availability`)
+   * @param {string} storageClass The new storage class. (`standard`,
+   *     `nearline`, `coldline`, or `durable_reduced_availability`).
+   *     **Note:** The legacy storage classes `multi_regional` and `regional`
+   *     have been deprecated.
    * @param {object} [options] Configuration options.
    * @param {string} [options.userProject] - The ID of the project which will be
    *     billed for the request.
