@@ -960,11 +960,7 @@ describe('storage', () => {
     });
 
     describe('locationType', () => {
-      const types = [
-        'multi-region',
-        'region',
-        'dual-region',
-      ];
+      const types = ['multi-region', 'region', 'dual-region'];
 
       beforeEach(() => {
         delete bucket.metadata;
