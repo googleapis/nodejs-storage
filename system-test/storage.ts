@@ -990,6 +990,7 @@ describe('storage', () => {
       it('should be available from setting retention policy', async () => {
         await bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS);
         assert(types.includes(bucket.metadata.locationType));
+        await bucket.removeRetentionPeriod();
       });
 
       it('should be available from updating a bucket', async () => {
