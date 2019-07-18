@@ -324,14 +324,22 @@ describe('Storage', () => {
 
     it('should execute callback with request error', done => {
       const error = new Error('Request error');
+      const response = {success: false};
       storage.request = (_reqOpts: {}, callback: Function) => {
-        callback(error);
+        callback(error, response);
       };
 
-      storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, (err: Error) => {
-        assert.strictEqual(err, error);
-        done();
-      });
+      storage.createHmacKey(SERVICE_ACCOUNT_EMAIL,
+        (
+          err: Error,
+          _hmacKey: HmacKey,
+          _secret: string,
+          apiResponse: {},
+        ) => {
+          assert.strictEqual(err, error);
+          assert.strictEqual(apiResponse, response)
+          done();
+        });
     });
   });
 
