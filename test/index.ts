@@ -329,17 +329,14 @@ describe('Storage', () => {
         callback(error, response);
       };
 
-      storage.createHmacKey(SERVICE_ACCOUNT_EMAIL,
-        (
-          err: Error,
-          _hmacKey: HmacKey,
-          _secret: string,
-          apiResponse: {},
-        ) => {
+      storage.createHmacKey(
+        SERVICE_ACCOUNT_EMAIL,
+        (err: Error, _hmacKey: HmacKey, _secret: string, apiResponse: {}) => {
           assert.strictEqual(err, error);
-          assert.strictEqual(apiResponse, response)
+          assert.strictEqual(apiResponse, response);
           done();
-        });
+        }
+      );
     });
   });
 
