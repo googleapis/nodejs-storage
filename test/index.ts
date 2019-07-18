@@ -217,6 +217,9 @@ describe('Storage', () => {
       secret: 'my-secret',
       metadata: metadataResponse,
     };
+    const OPTIONS = {
+      some: 'value',
+    };
 
     it('should make correct API request', done => {
       storage.request = (
@@ -256,18 +259,30 @@ describe('Storage', () => {
       );
     });
 
-    it('should honor the userProject option', async () => {
-      const options = {
-        userProject: 'my-project',
-      };
-
+    it('should make request with method options as query parameter', async () => {
       storage.request = sinon
         .stub()
         .returns((_reqOpts: {}, callback: Function) => callback());
 
-      await storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, options);
+      await storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, OPTIONS);
       const reqArg = storage.request.firstCall.args[0];
-      assert.strictEqual(reqArg.qs.userProject, options.userProject);
+      assert.deepStrictEqual(reqArg.qs, {
+        serviceAccountEmail: SERVICE_ACCOUNT_EMAIL,
+        ...OPTIONS,
+      });
+    });
+
+    it('should not modify the options object', done => {
+      storage.request = (_reqOpts: {}, callback: Function) => {
+        callback(null, response);
+      };
+      const originalOptions = Object.assign({}, OPTIONS);
+
+      storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, OPTIONS, (err: Error) => {
+        assert.ifError(err);
+        assert.deepStrictEqual(OPTIONS, originalOptions);
+        done();
+      });
     });
 
     it('should invoke callback with a secret and an HmacKey instance', done => {
