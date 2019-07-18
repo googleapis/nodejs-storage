@@ -72,10 +72,6 @@ describe('HmacKey', () => {
       assert(promisifyAllStub.calledOnce);
     });
 
-    it('should assign accessId', () => {
-      assert.strictEqual(hmacKey.accessId, ACCESS_ID);
-    });
-
     it('should assign Storage instance', () => {
       assert.strictEqual(hmacKey.parent, STORAGE);
     });

@@ -735,17 +735,21 @@ describe('Storage', () => {
 
     it('should return nextQuery if more results exist', done => {
       const token = 'next-page-token';
+      const query = {
+        param1: 'a',
+        param2: 'b',
+      };
+      const expectedNextQuery = Object.assign({}, query, {pageToken: token});
       storageRequestStub.callsFake((_opts: {}, callback: Function) => {
         callback(null, {nextPageToken: token, items: []});
       });
 
       storage.getHmacKeys(
-        {maxResults: 5},
+        query,
         // tslint:disable-next-line: no-any
         (err: Error, _hmacKeys: [], nextQuery: any) => {
           assert.ifError(err);
-          assert.strictEqual(nextQuery.pageToken, token);
-          assert.strictEqual(nextQuery.maxResults, 5);
+          assert.deepStrictEqual(nextQuery, expectedNextQuery);
           done();
         }
       );
@@ -757,7 +761,7 @@ describe('Storage', () => {
       });
 
       storage.getHmacKeys(
-        {maxResults: 5},
+        {},
         (err: Error, _hmacKeys: [], nextQuery: {}) => {
           assert.ifError(err);
           assert.strictEqual(nextQuery, null);
@@ -789,7 +793,6 @@ describe('Storage', () => {
       storage.getHmacKeys((err: Error, hmacKeys: HmacKey[]) => {
         assert.ifError(err);
         assert(hmacKeys![0] instanceof HmacKey);
-        assert.strictEqual(hmacKeys[0].accessId, metadataResponse.accessId);
         assert.deepStrictEqual(hmacKeys[0].metadata, metadataResponse);
         done();
       });

@@ -59,7 +59,6 @@ export type HmacKeyMetadataResponse = [HmacKeyMetadata, Metadata];
  * @class
  */
 export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
-  accessId: string;
   metadata: HmacKeyMetadata | undefined;
 
   /**
