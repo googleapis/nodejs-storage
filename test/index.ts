@@ -192,6 +192,14 @@ describe('Storage', () => {
     });
   });
 
+  describe('hmacKey', () => {
+    it('should throw if accessId is not provided', () => {
+      assert.throws(() => {
+        storage.hmacKey();
+      }, /access ID is needed/);
+    });
+  });
+
   describe('createHmacKey', () => {
     const SERVICE_ACCOUNT_EMAIL = 'service-account@gserviceaccount.com';
     const ACCESS_ID = 'some-access-id';

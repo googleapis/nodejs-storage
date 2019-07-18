@@ -77,10 +77,6 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
    * const hmacKey = storage.hmacKey('access-id');
    */
   constructor(storage: Storage, accessId: string) {
-    if (!accessId) {
-      throw new Error('An access ID is needed to create an HmacKey object.');
-    }
-
     const methods = {
       /**
        * @typedef {object} DeleteHmacKeyOptions

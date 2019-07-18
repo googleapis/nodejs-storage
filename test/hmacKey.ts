@@ -96,11 +96,5 @@ describe('HmacKey', () => {
         },
       });
     });
-
-    it('should throw if accessId is not provided', () => {
-      assert.throws(() => {
-        const _hmacKey = new HmacKey(STORAGE);
-      }, /access ID is needed/);
-    });
   });
 });
