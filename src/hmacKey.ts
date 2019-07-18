@@ -122,7 +122,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        *         return;
        *       }
        *       // The HMAC key is deleted.
-       *     })
+       *     });
        *   });
        *
        * //-
