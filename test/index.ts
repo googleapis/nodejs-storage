@@ -761,18 +761,6 @@ describe('Storage', () => {
       );
     });
 
-    it('should return HmacKey objects', done => {
-      storageRequestStub.callsFake((_opts: {}, callback: Function) => {
-        callback(null, {items: [metadataResponse]});
-      });
-
-      storage.getHmacKeys((err: Error, hmacKeys: HmacKey[]) => {
-        assert.ifError(err);
-        assert(hmacKeys![0] instanceof HmacKey);
-        done();
-      });
-    });
-
     it('should return apiResponse', done => {
       const resp = {items: [metadataResponse]};
       storageRequestStub.callsFake((_opts: {}, callback: Function) => {
@@ -795,6 +783,7 @@ describe('Storage', () => {
 
       storage.getHmacKeys((err: Error, hmacKeys: HmacKey[]) => {
         assert.ifError(err);
+        assert(hmacKeys![0] instanceof HmacKey);
         assert.strictEqual(hmacKeys[0].accessId, metadataResponse.accessId);
         assert.deepStrictEqual(hmacKeys[0].metadata, metadataResponse);
         done();
