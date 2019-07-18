@@ -313,8 +313,6 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
       id: accessId,
       methods,
     });
-
-    this.accessId = accessId;
   }
 }
 
