@@ -760,14 +760,11 @@ describe('Storage', () => {
         callback(null, {items: []});
       });
 
-      storage.getHmacKeys(
-        {},
-        (err: Error, _hmacKeys: [], nextQuery: {}) => {
-          assert.ifError(err);
-          assert.strictEqual(nextQuery, null);
-          done();
-        }
-      );
+      storage.getHmacKeys({}, (err: Error, _hmacKeys: [], nextQuery: {}) => {
+        assert.ifError(err);
+        assert.strictEqual(nextQuery, null);
+        done();
+      });
     });
 
     it('should return apiResponse', done => {
