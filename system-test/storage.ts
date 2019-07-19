@@ -2854,6 +2854,33 @@ describe('storage', () => {
         files![1].metadata.generation
       );
     });
+
+    it('should throw an error Precondition Failed on overwrite with version 0, then save file with and withour resumable', done => {
+      const fileName = `test-${Date.now()}.txt`;
+      bucketWithVersioning
+        .file(fileName)
+        .save('hello1', {resumable: false}, err => {
+          assert.ifError(err);
+
+          bucketWithVersioning
+            .file(fileName, {generation: 0})
+            // tslint:disable-next-line: no-any
+            .save('hello2', (err: any) => {
+              assert.strictEqual(err.code, 412);
+
+              bucketWithVersioning
+                .file(fileName)
+                .save('hello3', {resumable: false}, err => {
+                  assert.ifError(err);
+
+                  bucketWithVersioning.file(fileName).save('hello4', err => {
+                    assert.ifError(err);
+                    done();
+                  });
+                });
+            });
+        });
+    });
   });
 
   describe('v2 signed urls', () => {

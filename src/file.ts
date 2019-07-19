@@ -3362,6 +3362,18 @@ class File extends ServiceObject<File> {
   }
 
   /**
+   * Delete failed resumable upload file cache.
+   */
+  deleteResumableCache() {
+    const uploadStream = resumableUpload.upload({
+      bucket: this.bucket.name,
+      file: this.name,
+      generation: this.generation,
+    });
+    uploadStream.deleteConfig();
+  }
+
+  /**
    * Create canonical headers for signing v4 url.
    *
    * The canonical headers for v4-signing a request demands header names are
