@@ -22,17 +22,9 @@ const normalizeNewline = require('normalize-newline');
 import pLimit from 'p-limit';
 import {promisify} from 'util';
 import * as path from 'path';
-import * as through from 'through2';
 import * as tmp from 'tmp';
 import * as uuid from 'uuid';
-import {
-  util,
-  ApiError,
-  InstanceResponseCallback,
-  BodyResponseCallback,
-  MetadataResponse,
-  Metadata,
-} from '@google-cloud/common';
+import {util, ApiError, Metadata} from '@google-cloud/common';
 import {
   Storage,
   Bucket,
@@ -94,6 +86,7 @@ import {
   Iam,
 } from '../src';
 import * as nock from 'nock';
+import {PassThrough} from 'stream';
 
 interface ErrorCallbackFunction {
   (err: Error | null): void;
@@ -2171,18 +2164,20 @@ describe('storage', () => {
 
             fs.createReadStream(FILES.big.path)
               .pipe(
-                through(function(chunk, enc, next) {
-                  sizeStreamed += chunk.length;
+                new PassThrough({
+                  transform(chunk, enc, next) {
+                    sizeStreamed += chunk.length;
 
-                  if (opts.interrupt && sizeStreamed >= fileSize / 2) {
-                    // stop sending data half way through.
-                    this.push(chunk);
-                    this.destroy();
-                    ws.destroy(new Error('Interrupted.'));
-                  } else {
-                    this.push(chunk);
-                    next();
-                  }
+                    if (opts.interrupt && sizeStreamed >= fileSize / 2) {
+                      // stop sending data half way through.
+                      this.push(chunk);
+                      this.destroy();
+                      ws.destroy(new Error('Interrupted.'));
+                    } else {
+                      this.push(chunk);
+                      next();
+                    }
+                  },
                 })
               )
               .pipe(ws)

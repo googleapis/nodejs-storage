@@ -29,8 +29,7 @@ import * as path from 'path';
 import * as proxyquire from 'proxyquire';
 
 const snakeize = require('snakeize');
-import * as stream from 'stream';
-import * as through from 'through2';
+import {PassThrough, Writable} from 'stream';
 import {Bucket, Channel, Notification} from '../src';
 import {
   CreateWriteStreamOptions,
@@ -64,7 +63,7 @@ class FakeFile {
 
     this.createWriteStream = (options: CreateWriteStreamOptions) => {
       this.metadata = options.metadata;
-      const ws = new stream.Writable();
+      const ws = new Writable();
       ws.write = () => {
         ws.emit('complete');
         ws.end();
@@ -2088,7 +2087,7 @@ describe('Bucket', () => {
       const fakeFile = new FakeFile(bucket, 'file-name');
       const options = {destination: fakeFile};
       fakeFile.createWriteStream = (options: CreateWriteStreamOptions) => {
-        const ws = new stream.Writable();
+        const ws = new Writable();
         ws.write = () => true;
         setImmediate(() => {
           const expectedContentType = 'application/json; charset=utf-8';
@@ -2104,7 +2103,7 @@ describe('Bucket', () => {
       const fakeFile = new FakeFile(bucket, 'file-name');
       const options = {destination: fakeFile};
       fakeFile.createWriteStream = (options: CreateWriteStreamOptions) => {
-        const ws = new stream.Writable();
+        const ws = new Writable();
         ws.write = () => true;
         setImmediate(() => {
           const expectedContentType = 'text/plain; charset=utf-8';
@@ -2120,7 +2119,7 @@ describe('Bucket', () => {
       const fakeFile = new FakeFile(bucket, 'file-name');
       const options = {destination: fakeFile, resumable: true};
       fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
-        const ws = new stream.Writable();
+        const ws = new Writable();
         ws.write = () => true;
         setImmediate(() => {
           assert.strictEqual(options_.resumable, options.resumable);
@@ -2136,7 +2135,7 @@ describe('Bucket', () => {
       const metadata = {contentType: 'made-up-content-type'};
       const options = {destination: fakeFile, metadata};
       fakeFile.createWriteStream = (options: CreateWriteStreamOptions) => {
-        const ws = new stream.Writable();
+        const ws = new Writable();
         ws.write = () => true;
         setImmediate(() => {
           assert.strictEqual(
@@ -2158,7 +2157,7 @@ describe('Bucket', () => {
         c: 'd',
       };
       fakeFile.createWriteStream = (options_: {a: {}; c: {}}) => {
-        const ws = new stream.Writable();
+        const ws = new Writable();
         ws.write = () => true;
         setImmediate(() => {
           assert.strictEqual(options_.a, options.a);
@@ -2175,7 +2174,7 @@ describe('Bucket', () => {
       const fakeFile = new FakeFile(bucket, 'file-name');
       const options = {destination: fakeFile};
       fakeFile.createWriteStream = () => {
-        const ws = through();
+        const ws = new PassThrough();
         setImmediate(() => {
           ws.destroy(error);
         });
@@ -2193,7 +2192,7 @@ describe('Bucket', () => {
       const metadata = {};
 
       fakeFile.createWriteStream = () => {
-        const ws = through();
+        const ws = new PassThrough();
         setImmediate(() => {
           fakeFile.metadata = metadata;
           ws.end();
