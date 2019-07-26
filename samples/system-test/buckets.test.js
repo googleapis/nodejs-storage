@@ -61,7 +61,9 @@ it('should set a buckets default KMS key', async () => {
 });
 
 it(`should enable a bucket's uniform bucket-level access`, async () => {
-  const output = execSync(`${cmd} enable-uniform-bucket-level-access ${bucketName}`);
+  const output = execSync(
+    `${cmd} enable-uniform-bucket-level-access ${bucketName}`
+  );
   assert.match(
     output,
     new RegExp(`uniform bucket-level access was enabled for ${bucketName}.`)
@@ -75,7 +77,9 @@ it(`should enable a bucket's uniform bucket-level access`, async () => {
 });
 
 it(`should get a bucket's uniform bucket-level access metadata`, async () => {
-  const output = execSync(`${cmd} get-uniform-bucket-level-access ${bucketName}`);
+  const output = execSync(
+    `${cmd} get-uniform-bucket-level-access ${bucketName}`
+  );
 
   assert.match(
     output,
@@ -91,7 +95,9 @@ it(`should get a bucket's uniform bucket-level access metadata`, async () => {
 });
 
 it(`should disable a bucket's uniform bucket-level access`, async () => {
-  const output = execSync(`${cmd} disable-uniform-bucket-level-access ${bucketName}`);
+  const output = execSync(
+    `${cmd} disable-uniform-bucket-level-access ${bucketName}`
+  );
   assert.match(
     output,
     new RegExp(`uniform bucket-level access was disabled for ${bucketName}.`)
