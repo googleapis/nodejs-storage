@@ -66,7 +66,7 @@ it(`should enable a bucket's uniform bucket-level access`, async () => {
   );
   assert.match(
     output,
-    new RegExp(`uniform bucket-level access was enabled for ${bucketName}.`)
+    new RegExp(`Uniform bucket-level access was enabled for ${bucketName}.`)
   );
 
   const metadata = await bucket.getMetadata();
@@ -83,7 +83,7 @@ it(`should get a bucket's uniform bucket-level access metadata`, async () => {
 
   assert.match(
     output,
-    new RegExp(`uniform bucket-level access is enabled for ${bucketName}.`)
+    new RegExp(`Uniform bucket-level access is enabled for ${bucketName}.`)
   );
 
   const [metadata] = await bucket.getMetadata();
@@ -100,7 +100,7 @@ it(`should disable a bucket's uniform bucket-level access`, async () => {
   );
   assert.match(
     output,
-    new RegExp(`uniform bucket-level access was disabled for ${bucketName}.`)
+    new RegExp(`Uniform bucket-level access was disabled for ${bucketName}.`)
   );
 
   const metadata = await bucket.getMetadata();

@@ -141,7 +141,7 @@ async function enableUniformBucketLevelAccess(bucketName) {
     },
   });
 
-  console.log(`uniform bucket-level access was enabled for ${bucketName}.`);
+  console.log(`Uniform bucket-level access was enabled for ${bucketName}.`);
   // [END storage_enable_uniform_bucket_level_access]
 }
 
@@ -172,7 +172,7 @@ async function disableUniformBucketLevelAccess(bucketName) {
     },
   });
 
-  console.log(`uniform bucket-level access was disabled for ${bucketName}.`);
+  console.log(`Uniform bucket-level access was disabled for ${bucketName}.`);
   // [END storage_disable_uniform_bucket_level_access]
 }
 
