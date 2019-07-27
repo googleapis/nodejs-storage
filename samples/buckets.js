@@ -182,7 +182,7 @@ async function getUniformBucketLevelAccess(bucketName) {
   // Gets Bucket Metadata and checks if uniform bucket-level access is enabled.
   const [metadata] = await storage.bucket(bucketName).getMetadata();
 
-  if (metadata.hasOwnProperty('iamConfiguration')) {
+  if ('iamConfiguration' in metadata) {
     const uniformBucketLevelAccess =
       metadata.iamConfiguration.uniformBucketLevelAccess;
     console.log(`Uniform bucket-level access is enabled for ${bucketName}.`);

@@ -58,6 +58,7 @@
     "concat-stream": "^2.0.0",
     "date-and-time": "^0.7.0",
     "duplexify": "^3.5.0",
+    "express": "^4.17.1",
     "extend": "^3.0.0",
     "gaxios": "^2.0.1",
     "gcs-resumable-upload": "^2.0.0",
