@@ -133,6 +133,11 @@ async function enableUniformBucketLevelAccess(bucketName) {
       uniformBucketLevelAccess: {
         enabled: true,
       },
+      /** THIS IS A WORKAROUND */
+      bucketPolicyOnly: {
+        enabled: false,
+      },
+      /** THIS IS A WORKAROUND */
     },
   });
 
@@ -159,6 +164,11 @@ async function disableUniformBucketLevelAccess(bucketName) {
       uniformBucketLevelAccess: {
         enabled: false,
       },
+      /** THIS IS A WORKAROUND */
+      bucketPolicyOnly: {
+        enabled: false,
+      },
+      /** THIS IS A WORKAROUND */
     },
   });
 
@@ -182,7 +192,10 @@ async function getUniformBucketLevelAccess(bucketName) {
   // Gets Bucket Metadata and checks if uniform bucket-level access is enabled.
   const [metadata] = await storage.bucket(bucketName).getMetadata();
 
-  if ('iamConfiguration' in metadata) {
+  if (
+    'iamConfiguration' in metadata &&
+    metadata.iamConfiguration.uniformBucketLevelAccess.enabled
+  ) {
     const uniformBucketLevelAccess =
       metadata.iamConfiguration.uniformBucketLevelAccess;
     console.log(`Uniform bucket-level access is enabled for ${bucketName}.`);

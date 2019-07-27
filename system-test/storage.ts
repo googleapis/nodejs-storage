@@ -766,6 +766,11 @@ describe('storage', () => {
           uniformBucketLevelAccess: {
             enabled,
           },
+          /** THIS IS A WORKAROUND */
+          bucketPolicyOnly: {
+            enabled,
+          },
+          /** THIS IS A WORKAROUND */
         },
       });
 
