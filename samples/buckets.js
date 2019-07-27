@@ -135,7 +135,7 @@ async function enableUniformBucketLevelAccess(bucketName) {
       },
       /** THIS IS A WORKAROUND */
       bucketPolicyOnly: {
-        enabled: false,
+        enabled: true,
       },
       /** THIS IS A WORKAROUND */
     },
