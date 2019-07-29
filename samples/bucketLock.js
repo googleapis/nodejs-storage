@@ -47,12 +47,12 @@ async function getRetentionPolicy(bucketName) {
   // Creates a client
   const storage = new Storage();
   const [metadata] = await storage.bucket(bucketName).getMetadata();
-  if ('retentionPolicy' in metadata) {
+  if (metadata.hasOwnProperty('retentionPolicy')) {
     const retentionPolicy = metadata.retentionPolicy;
     console.log('A retention policy exists!');
     console.log(`Period: ${retentionPolicy.retentionPeriod}`);
     console.log(`Effective time: ${retentionPolicy.effectiveTime}`);
-    if ('isLocked' in retentionPolicy) {
+    if (retentionPolicy.hasOwnProperty('isLocked')) {
       console.log('Policy is locked');
     } else {
       console.log('Policy is unlocked');
@@ -69,7 +69,10 @@ async function removeRetentionPolicy(bucketName) {
   // Creates a client
   const storage = new Storage();
   const [metadata] = await storage.bucket(bucketName).getMetadata();
-  if ('retentionPolicy' in metadata && 'isLocked' in metadata.retentionPolicy) {
+  if (
+    metadata.hasOwnProperty('retentionPolicy') &&
+    metadata.retentionPolicy.hasOwnProperty('isLocked')
+  ) {
     console.log(
       'Unable to remove retention period as retention policy is locked.'
     );

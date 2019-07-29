@@ -193,7 +193,7 @@ async function getUniformBucketLevelAccess(bucketName) {
   const [metadata] = await storage.bucket(bucketName).getMetadata();
 
   if (
-    'iamConfiguration' in metadata &&
+    metadata.hasOwnProperty('iamConfiguration') &&
     metadata.iamConfiguration.uniformBucketLevelAccess.enabled
   ) {
     const uniformBucketLevelAccess =
