@@ -1068,6 +1068,10 @@ export class Storage extends Service {
    * const hmacKey = storage.hmacKey('ACCESS_ID');
    */
   hmacKey(accessId: string) {
+    if (!accessId) {
+      throw new Error('An access ID is needed to create an HmacKey object.');
+    }
+
     return new HmacKey(this, accessId);
   }
 }
