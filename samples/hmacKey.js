@@ -80,7 +80,7 @@ async function deleteHmacKey(hmacKeyAccessId) {
    */
   // const hmacKeyAccessId = 'HMAC Access Key Id to delete, e.g. GOOG0234230X00';
 
-  const hmacKey = await storage.hmacKey(hmacKeyAccessId);
+  const [hmacKey] = await storage.hmacKey(hmacKeyAccessId);
 
   hmacKey.delete(err => {
     if (err) {
@@ -107,13 +107,18 @@ async function getHmacKey(hmacKeyAccessId) {
    */
   // const hmacKeyAccessId = 'HMAC Access Key Id to get, e.g. GOOG0234230X00';
 
-  const [hmacKey] = await storage.hmacKey(hmacKeyAccessId);
+  const [hmacKeyMetadata] = await storage.hmacKey(hmacKeyAccessId);
 
+  console.log(`The HMAC key metadata is: `);
+  console.log(`Service Account Email: ${hmacKeyMetadata.serviceAccountEmail}`);
+  console.log(`Access Id: ${hmacKeyMetadata.accessId}`);
+  console.log(`State: ${hmacKeyMetadata.state}`);
+  console.log(`Etag: ${hmacKeyMetadata.etag}`);
   // [END storage_get_hmac_key]
 }
 
-async function updateHmacKey(hmacKeyAccessId, state) {
-  // [START storage_update_hmac_key]
+async function activateHmacKey(hmacKeyAccessId) {
+  // [START storage_activate_hmac_key]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
@@ -124,12 +129,42 @@ async function updateHmacKey(hmacKeyAccessId, state) {
    * TODO(developer): Uncomment the following line before running the sample.
    */
   // const hmacKeyAccessId = 'HMAC Access Key Id to update, e.g. GOOG0234230X00';
-  // const state = `HMAC Key State, e.g. either ACTIVE or INACTIVE.`;
 
   const [hmacKey] = await storage.hmacKey(hmacKeyAccessId);
-  //const hmacKey = storage.hmacKey('ACCESS_ID');
-  hmacKey.update({state: state}, (err, hmacKeyMetadata) => {});
-  // [END storage_update_hmac_key]
+
+  hmacKey.update({state: 'ACTIVE'}, (err, hmacKeyMetadata) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    console.log(`The HMAC key is now active.`);
+  });
+  // [END storage_activate_hmac_key]
+}
+
+async function deactivateHmacKey(hmacKeyAccessId) {
+  // [START storage_deactivate_hmac_key]
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const hmacKeyAccessId = 'HMAC Access Key Id to update, e.g. GOOG0234230X00';
+
+  const [hmacKey] = await storage.hmacKey(hmacKeyAccessId);
+
+  hmacKey.update({state: 'INACTIVE'}, (err, hmacKeyMetadata) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    console.log(`The HMAC key is now inactive.`);
+  });
+  // [END storage_deactivate_hmac_key]
 }
 
 async function main() {
@@ -142,54 +177,48 @@ async function main() {
       opts => listHmacKeys()
     )
     .command(
-      `release-temporary-hold <bucketName> <fileName>`,
-      `Release a temporary hold for a given file.`,
+      `get-hmac-key <hmacKeyAccessId>`,
+      `Get HMAC Key..`,
       {},
-      opts => releaseTemporaryHold(opts.bucketName, opts.fileName)
+      opts => getHmacKey(opts.hmacKeyAccessId)
+    )
+    .command(
+      `create-hmac-key <serviceAccountEmail>`,
+      `Create..`,
+      {},
+      opts => createHmacKey(opts.serviceAccountEmail)
+    )
+    .command(
+      `activate-hmac-key <hmacKeyAccessId>`,
+      `Activate an HMAC key`,
+      {},
+      opts => activateHmacKey(opts.hmacKeyAccessId)
+    )
+    .command(
+      `deactivate-hmac-key <hmacKeyAccessId>`,
+      `Deactivate an HMAC key`,
+      {},
+      opts => deactivateHmacKey(opts.hmacKeyAccessId)
     )
     .example(
-      `node $0 set-retention-policy my-bucket 5`,
-      `Defines a retention policy of 5 seconds on a "my-bucket".`
+      `node $0 list-hmac-keys`,
+      `Get list of HMAC Keys for project set in GOOGLE_CLOUD_PROJECT.`
     )
     .example(
-      `node $0 remove-retention-policy my-bucket`,
-      `Removes a retention policy from "my-bucket".`
+      `node $0 create-hmac-key service-account@example.com`,
+      `Create a new HMAC key for service-account@example.com`
     )
     .example(
-      `node $0 get-retention-policy my-bucket`,
-      `Get the retention policy for "my-bucket".`
+      `node $0 delete-hmac-key GOOG0234230X00`,
+      `Delete HMAC key with ID GOOG0234230X00`
     )
     .example(
-      `node $0 lock-retention-policy my-bucket`,
-      `Lock the retention policy for "my-bucket".`
+      `node $0 deactivate-hmac-key GOOG0234230X00`,
+      `Deactivate HMAC key GOOG0234230X00`
     )
     .example(
-      `node $0 enable-default-event-based-hold my-bucket`,
-      `Enable a default event-based hold for "my-bucket".`
-    )
-    .example(
-      `node $0 disable-default-event-based-hold my-bucket`,
-      `Disable a default-event based hold for "my-bucket".`
-    )
-    .example(
-      `node $0 get-default-event-based-hold my-bucket`,
-      `Get the value of a default-event-based hold for "my-bucket".`
-    )
-    .example(
-      `node $0 set-event-based-hold my-bucket my-file`,
-      `Sets an event-based hold on "my-file".`
-    )
-    .example(
-      `node $0 release-event-based-hold my-bucket my-file`,
-      `Releases an event-based hold on "my-file".`
-    )
-    .example(
-      `node $0 set-temporary-hold my-bucket my-file`,
-      `Sets a temporary hold on "my-file".`
-    )
-    .example(
-      `node $0 release-temporary-hold my-bucket my-file`,
-      `Releases a temporary hold on "my-file".`
+      `node $0 activate-hmac-key GOOG0234230X00`,
+      `Activate HMAC key GOOG0234230X00`
     )
     .wrap(120)
     .recommendCommands()
