@@ -1,7 +1,7 @@
 {
   "name": "@google-cloud/storage",
   "description": "Cloud Storage Client Library for Node.js",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
@@ -93,8 +93,8 @@
     "@types/uuid": "^3.4.4",
     "@types/xdg-basedir": "^2.0.0",
     "codecov": "^3.0.0",
-    "eslint": "^5.0.0",
-    "eslint-config-prettier": "^4.0.0",
+    "eslint": "^6.0.0",
+    "eslint-config-prettier": "^6.0.0",
     "eslint-plugin-node": "^9.0.0",
     "eslint-plugin-prettier": "^3.0.0",
     "gts": "^1.0.0",
