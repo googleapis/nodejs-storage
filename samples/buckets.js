@@ -193,9 +193,12 @@ async function getUniformBucketLevelAccess(bucketName) {
   const [metadata] = await storage.bucket(bucketName).getMetadata();
 
   if (metadata.iamConfiguration) {
-    const uniformBucketLevelAccess = metadata.iamConfiguration.uniformBucketLevelAccess;
+    const uniformBucketLevelAccess =
+      metadata.iamConfiguration.uniformBucketLevelAccess;
     console.log(`Uniform bucket-level access is enabled for ${bucketName}.`);
-    console.log(`Bucket will be locked on ${uniformBucketLevelAccess.lockedTime}.`);
+    console.log(
+      `Bucket will be locked on ${uniformBucketLevelAccess.lockedTime}.`
+    );
   } else {
     console.log(
       `Uniform bucket-level access is not enabled for ${bucketName}.`

@@ -71,7 +71,7 @@ it(`should enable a bucket's uniform bucket-level access`, async () => {
 
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
-    metadata[0].iamConfiguration.bucketPolicyOnly.enabled,
+    metadata[0].iamConfiguration.uniformBucketLevelAccess.enabled,
     true
   );
 });
