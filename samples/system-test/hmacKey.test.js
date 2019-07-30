@@ -25,15 +25,16 @@ const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 const storage = new Storage();
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
 const bucket = storage.bucket(bucketName);
+const serviceAccountEmail = "";
 const cmd = 'node buckets.js';
 
 after(async () => {
   return bucket.delete().catch(console.error);
 });
 
-it('should create a bucket', async () => {
-  const output = execSync(`${cmd} create ${bucketName}`);
-  assert.match(output, new RegExp(`Bucket ${bucketName} created.`));
+it('should create an HMAC Key', async () => {
+  const output = execSync(`${cmd} create-hmac-key ${serviceAccountEmail}`);
+  assert.match(output, new RegExp(`The base64 encoded secret is:`));
   const [exists] = await bucket.exists();
   assert.strictEqual(exists, true);
 });
