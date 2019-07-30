@@ -788,7 +788,8 @@ describe('storage', () => {
       let file: File;
 
       const validateUniformBucketLevelAccessEnabledError = (err: ApiError) => {
-        assert(err.message.match(/uniform bucket-level access is enabled/));
+        /** WORKAROUND UNTIL UBLA IS PROPERLY SUPPORTED */
+        assert(err.message.match(/Bucket Policy Only is enabled/));
         assert.strictEqual(err.code, 400);
         return true;
       };
