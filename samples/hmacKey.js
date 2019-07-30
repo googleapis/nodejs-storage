@@ -200,6 +200,12 @@ async function main() {
       {},
       opts => deactivateHmacKey(opts.hmacKeyAccessId)
     )
+    .command(
+      `delete-hmac-key <hmacKeyAccessId>`,
+      `Delete an HMAC key`,
+      {},
+      opts => deleteHmacKey(opts.hmacKeyAccessId)
+    )
     .example(
       `node $0 list-hmac-keys`,
       `Get list of HMAC Keys for project set in GOOGLE_CLOUD_PROJECT.`
@@ -209,16 +215,20 @@ async function main() {
       `Create a new HMAC key for service-account@example.com`
     )
     .example(
-      `node $0 delete-hmac-key GOOG0234230X00`,
-      `Delete HMAC key with ID GOOG0234230X00`
+      `node $0 get-hmac-key GOOG0234230X00`,
+      `Get metadata for HMAC Key GOOG0234230X00`
+    )
+    .example(
+      `node $0 activate-hmac-key GOOG0234230X00`,
+      `Activate HMAC key GOOG0234230X00`
     )
     .example(
       `node $0 deactivate-hmac-key GOOG0234230X00`,
       `Deactivate HMAC key GOOG0234230X00`
     )
     .example(
-      `node $0 activate-hmac-key GOOG0234230X00`,
-      `Activate HMAC key GOOG0234230X00`
+      `node $0 delete-hmac-key GOOG0234230X00`,
+      `Delete HMAC key with ID GOOG0234230X00`
     )
     .wrap(120)
     .recommendCommands()

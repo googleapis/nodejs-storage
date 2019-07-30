@@ -18,15 +18,13 @@
 const {Storage} = require(`@google-cloud/storage`);
 const {assert} = require('chai');
 const cp = require('child_process');
-const uuid = require('uuid');
 
 const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
 const storage = new Storage();
-const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
-const bucket = storage.bucket(bucketName);
-const serviceAccountEmail = "";
-const cmd = 'node buckets.js';
+const serviceAccountEmail = process.env.HMAC_SERVICE_ACCOUNT;
+const hmacKey = storage.createHmacKey(serviceAccountEmail);
+const cmd = 'node hmacKey.js';
 
 after(async () => {
   return bucket.delete().catch(console.error);
@@ -35,78 +33,32 @@ after(async () => {
 it('should create an HMAC Key', async () => {
   const output = execSync(`${cmd} create-hmac-key ${serviceAccountEmail}`);
   assert.match(output, new RegExp(`The base64 encoded secret is:`));
-  const [exists] = await bucket.exists();
   assert.strictEqual(exists, true);
 });
 
-it('should list buckets', () => {
-  const output = execSync(`${cmd} list`);
-  assert.match(output, /Buckets:/);
-  assert.match(output, new RegExp(bucketName));
+it('should list HMAC Keys', () => {
+  const output = execSync(`${cmd} list-hmac-keys`);
+  assert.match(output, /Service Account Email:/);
 });
 
-it('should set a buckets default KMS key', async () => {
-  const output = execSync(
-    `${cmd} enable-default-kms-key ${bucketName} ${defaultKmsKeyName}`
-  );
-  assert.include(
-    output,
-    `Default KMS key for ${bucketName} was set to ${defaultKmsKeyName}.`
-  );
-  const metadata = await bucket.getMetadata();
-  assert.strictEqual(
-    metadata[0].encryption.defaultKmsKeyName,
-    defaultKmsKeyName
-  );
+it('should get HMAC Key', () => {
+  const output = execSync(`${cmd} get-hmac-keys ${hmacKey}`);
+  assert.match(output, /The HMAC key metadata is:/);
 });
 
-it(`should enable a bucket's Bucket Policy Only`, async () => {
-  const output = execSync(`${cmd} enable-bucket-policy-only ${bucketName}`);
-  assert.match(
-    output,
-    new RegExp(`Bucket Policy Only was enabled for ${bucketName}.`)
-  );
-
-  const metadata = await bucket.getMetadata();
-  assert.strictEqual(
-    metadata[0].iamConfiguration.bucketPolicyOnly.enabled,
-    true
-  );
+it('should deactivate HMAC Key', () => {
+  const output = execSync(`${cmd} deactivate-hmac-key ${hmacKey}`);
+  assert.match(output, /The HMAC key is now inactive./);
 });
 
-it(`should get a bucket's Bucket Policy Only metadata`, async () => {
-  const output = execSync(`${cmd} get-bucket-policy-only ${bucketName}`);
-
-  assert.match(
-    output,
-    new RegExp(`Bucket Policy Only is enabled for ${bucketName}.`)
-  );
-
-  const [metadata] = await bucket.getMetadata();
-  assert.ok(metadata.iamConfiguration.bucketPolicyOnly.enabled);
-  assert.strictEqual(
-    metadata.iamConfiguration.bucketPolicyOnly.lockedTime !== null,
-    true
-  );
+it('should activate HMAC Key', () => {
+  const output = execSync(`${cmd} activate-hmac-key ${hmacKey}`);
+  assert.match(output, /The HMAC key is now active./);
 });
 
-it(`should disable a bucket's Bucket Policy Only`, async () => {
-  const output = execSync(`${cmd} disable-bucket-policy-only ${bucketName}`);
-  assert.match(
-    output,
-    new RegExp(`Bucket Policy Only was disabled for ${bucketName}.`)
-  );
-
-  const metadata = await bucket.getMetadata();
-  assert.strictEqual(
-    metadata[0].iamConfiguration.bucketPolicyOnly.enabled,
-    false
-  );
-});
-
-it(`should delete a bucket`, async () => {
-  const output = execSync(`${cmd} delete ${bucketName}`);
-  assert.match(output, new RegExp(`Bucket ${bucketName} deleted.`));
-  const [exists] = await bucket.exists();
-  assert.strictEqual(exists, false);
+it(`should delete HMAC key`, async () => {
+  // Deactivate then delete
+  execSync(`${cmd} deactivate-hmac-key ${hmacKey}`);
+  const output = execSync(`${cmd} delete-hmac-key ${hmacKey}`);
+  assert.match(output, new RegExp(`The key is deleted, though it may still appear in getHmacKeys() results.`));
 });
