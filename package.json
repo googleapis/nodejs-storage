@@ -73,7 +73,7 @@
     "xdg-basedir": "^4.0.0"
   },
   "devDependencies": {
-    "@google-cloud/pubsub": "^0.29.0",
+    "@google-cloud/pubsub": "^0.30.0",
     "@types/compressible": "^2.0.0",
     "@types/concat-stream": "^1.6.0",
     "@types/configstore": "^4.0.0",
@@ -100,7 +100,7 @@
     "gts": "^1.0.0",
     "intelli-espower-loader": "^1.0.1",
     "jsdoc": "^3.6.2",
-    "jsdoc-baseline": "^0.1.0",
+    "jsdoc-fresh": "^1.0.1",
     "linkinator": "^1.5.0",
     "mocha": "^6.0.0",
     "nock": "^10.0.1",
