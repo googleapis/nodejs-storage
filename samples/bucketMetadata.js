@@ -29,7 +29,7 @@ function main(bucketName = 'my-bucket') {
   // Creates a client
   const storage = new Storage();
 
-  async function getBucketMetadata(bucketName) {
+  async function getBucketMetadata() {
     // Get bucket metadata.
     /**
      * TODO(developer): Uncomment the following line before running the sample.
@@ -39,7 +39,7 @@ function main(bucketName = 'my-bucket') {
     // Get Bucket Metadata
     const [metadata] = await storage.bucket(bucketName).getMetadata();
 
-    for (let [key, value] of Object.entries(metadata)) {
+    for (const [key, value] of Object.entries(metadata)) {
       console.log(`${key}: ${value}`);
     }
   }
