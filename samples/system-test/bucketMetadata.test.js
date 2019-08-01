@@ -31,7 +31,7 @@ describe(`Buckets`, () => {
 
   before(async () => {
     await storage.createBucket(bucketName, {
-      location: 'ASIA',
+      location: 'us-central1',
       storageClass: 'STANDARD',
     });
   });
@@ -40,9 +40,8 @@ describe(`Buckets`, () => {
     return bucket.delete().catch(console.error);
   });
 
-  it('should get bucket metadata', () => {
+  it('should get bucket metadata', async () => {
     const output = execSync(`node bucketMetadata.js ${bucketName}`);
     assert.match(output, /name: ${bucketName}/);
-    assert.match(output, new RegExp(bucketName));
   });
 });
