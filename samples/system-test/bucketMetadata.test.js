@@ -42,6 +42,6 @@ describe(`Buckets`, () => {
 
   it('should get bucket metadata', async () => {
     const output = execSync(`node bucketMetadata.js ${bucketName}`);
-    assert.match(output, /name: ${bucketName}/);
+    assert.include(output, bucketName);
   });
 });
