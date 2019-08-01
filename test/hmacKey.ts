@@ -60,10 +60,6 @@ describe('HmacKey', () => {
       hmacKey = new HmacKey(STORAGE, ACCESS_ID);
     });
 
-    it('should assign Storage instance', () => {
-      assert.strictEqual(hmacKey.parent, STORAGE);
-    });
-
     it('should inherit from ServiceObject', () => {
       assert(hmacKey instanceof ServiceObject);
       const ctorArg = serviceObjectSpy.firstCall.args[0];
