@@ -96,7 +96,7 @@ async function getBucketMetadata(bucketName) {
   console.log(`RetentionPolicy: ${metadata.retentionPolicy}`);
   console.log(`RequesterPays: ${metadata.billing}`);
   console.log(`VersioningEnabled: ${metadata.versioning}`);
-  console.log(`Bucket Logging: ${metadata.logging}`);
+  console.log(`Logging: ${metadata.logging}`);
   console.log(`Labels: ${metadata.labels}`);
   // [END storage_get_bucket_metadata]
 }
