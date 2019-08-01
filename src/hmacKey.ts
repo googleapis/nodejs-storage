@@ -15,10 +15,7 @@
  */
 
 import {Metadata, ServiceObject} from '@google-cloud/common';
-import {promisifyAll} from '@google-cloud/promisify';
-
 import {Storage} from './storage';
-import {normalize} from './util';
 
 export interface HmacKeyMetadata {
   accessId: string;
@@ -314,10 +311,3 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
     });
   }
 }
-
-/*! Developer Documentation
- *
- * All async methods (except for streams) will return a Promise in the event
- * that a callback is omitted.
- */
-promisifyAll(HmacKey);
