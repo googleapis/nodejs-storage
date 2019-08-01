@@ -67,40 +67,6 @@ async function listBuckets() {
   // [END storage_list_buckets]
 }
 
-async function getBucketMetadata(bucketName) {
-  // [START storage_get_bucket_metadata]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Get Bucket Metadata
-  const [metadata] = await storage.bucket(bucketName).getMetadata();
-
-  console.log(`BucketName: ${metadata.name}`);
-  console.log(`Location: ${metadata.location}`);
-  console.log(`LocationType: ${metadata.locationType}`);
-  console.log(`StorageClass: ${metadata.storageClass}`);
-  console.log(`TimeCreated: ${metadata.timeCreated}`);
-  console.log(`Metageneration: ${metadata.metageneration}`);
-  console.log(`DefaultObjectAcl: ${metadata.defaultObjectAcl}`);
-  console.log(`DefaultKmsKeyName: ${metadata.encryption}`);
-  console.log(`Website: ${metadata.website}`);
-  console.log(`DefaultEventBasedHold: ${metadata.defaultEventBasedHold}`);
-  console.log(`RetentionPolicy: ${metadata.retentionPolicy}`);
-  console.log(`RequesterPays: ${metadata.billing}`);
-  console.log(`VersioningEnabled: ${metadata.versioning}`);
-  console.log(`Logging: ${metadata.logging}`);
-  console.log(`Labels: ${metadata.labels}`);
-  // [END storage_get_bucket_metadata]
-}
-
 async function deleteBucket(bucketName) {
   // [START storage_delete_bucket]
   // Imports the Google Cloud client library
@@ -233,12 +199,6 @@ require(`yargs`)
   )
   .command(`list`, `Lists all buckets in the current project.`, {}, listBuckets)
   .command(
-    `get-metadata <bucket>`,
-    `Get bucket metadata for the specified bucket.`,
-    {},
-    opts => getBucketMetadata(opts.bucket)
-  )
-  .command(
     `enable-default-kms-key <bucket> <defaultKmsKeyName>`,
     `Sets the default KMS key for the specified bucket.`,
     {},
@@ -270,7 +230,6 @@ require(`yargs`)
     `Creates a new bucket named "my-bucket".`
   )
   .example(`node $0 list`, `Lists all buckets in the current project.`)
-  .example(`node $0 get-metadata my-bucket`, `Get metadata for my-bucket.`)
   .example(
     `node $0 enable-default-kms-key my-bucket my-key`,
     `Sets the default KMS key for my-bucket.`

@@ -1,22 +1,3 @@
-Skip to content
-
-Search or jump to…
-
-Pull requests
-Issues
-Marketplace
-Explore
-
-@frankyn
-1,019
-21
-140 84 googleapis/nodejs-bigquery
- Code  Issues 13  Pull requests 1  Actions  Security  Insights
-nodejs-bigquery/samples/getModel.js
-@steffnay steffnay docs(samples): Adds samples (#488)
-06f5981 29 days ago
-49 lines (41 sloc)  1.52 KB
-
 /**
  * Copyright 2019 Google LLC
  *
