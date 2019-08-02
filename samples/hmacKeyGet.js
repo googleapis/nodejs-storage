@@ -41,13 +41,11 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
         console.error(err);
         return;
       }
-      console.log(`The HMAC key metadata is: `);
-      console.log(
-        `Service Account Email: ${hmacKey.metadata.serviceAccountEmail}`
-      );
-      console.log(`Access Id: ${hmacKey.metadata.accessId}`);
-      console.log(`State: ${hmacKey.metadata.state}`);
-      console.log(`Etag: ${hmacKey.metadata.etag}`);
+
+      console.log(`The HMAC key metadata is:`);
+      for (const [key, value] of Object.entries(hmacKey.metadata)) {
+        console.log(`${key}: ${value}`);
+      }
     });
   }
   // [END storage_get_hmac_key]

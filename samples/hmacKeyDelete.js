@@ -43,6 +43,7 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
         console.error(err);
         return;
       }
+
       console.log(
         `The key is deleted, though it may still appear in getHmacKeys() results.`
       );

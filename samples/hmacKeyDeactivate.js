@@ -44,7 +44,6 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
         return;
       }
       console.log(`The HMAC key is now inactive.`);
-      console.log(hmacKeyMetadata);
     });
   }
   // [END storage_deactivate_hmac_key]

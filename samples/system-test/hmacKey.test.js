@@ -67,19 +67,28 @@ describe('HMAC SA Key samples', () => {
   });
 
   it('should deactivate HMAC Key', async () => {
-    const output = execSync(`node hmacKeyDeactivate.js ${hmacKey.metadata.accessId}`);
+    const output = execSync(
+      `node hmacKeyDeactivate.js ${hmacKey.metadata.accessId}`
+    );
     assert.match(output, /The HMAC key is now inactive./);
   });
 
   it('should activate HMAC Key', async () => {
-    const output = execSync(`node hmacKeyActivate.js ${hmacKey.metadata.accessId}`);
+    const output = execSync(
+      `node hmacKeyActivate.js ${hmacKey.metadata.accessId}`
+    );
     assert.match(output, /The HMAC key is now active./);
   });
 
   it.only(`should delete HMAC key`, async () => {
     // Deactivate then delete
     execSync(`node hmacKeyDeactivate.js ${hmacKey.metadata.accessId}`);
-    const output = execSync(`node hmacKeyDelete.js ${hmacKey.metadata.accessId}`);
-    assert.include(output, `The key is deleted, though it may still appear in getHmacKeys() results.`);
+    const output = execSync(
+      `node hmacKeyDelete.js ${hmacKey.metadata.accessId}`
+    );
+    assert.include(
+      output,
+      `The key is deleted, though it may still appear in getHmacKeys() results.`
+    );
   });
 });
