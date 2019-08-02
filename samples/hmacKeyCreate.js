@@ -43,7 +43,8 @@ function main(serviceAccountEmail = 'service-account@example.com') {
 
       console.log(`The base64 encoded secret is: ${secret}`);
       console.log(`Do not miss that secret, there is no API to recover it.`);
-      console.log(`The HMAC key metadata is: ${hmacKey}`);
+      console.log(`The HMAC key metadata is::`);
+
     });
   }
   // [END storage_create_hmac_key]

@@ -25,58 +25,61 @@ const storage = new Storage({
   projectId: process.env.POOL_PROJECT_ID,
   keyFilename: process.env.POOL_PROJECT_CREDENTIALS,
 });
-
 const leasedServiceAccount = process.env.HMAC_SERVICE_ACCOUNT;
 
-before(async () => {
-  await cleanUpHmacKeys(leasedServiceAccount);
-  var [hmacKey, _] = await storage.createHmacKey(leasedServiceAccount);
-});
+describe('HMAC SA Key samples', () => {
+  let hmacKey;
 
-async function cleanUpHmacKeys(serviceAccountEmail) {
-  // list all HMAC keys for the given service account.
-  const [hmacKeys] = await storage.getHmacKeys({
-    serviceAccountEmail: serviceAccountEmail,
+  before(async () => {
+    await cleanUpHmacKeys(leasedServiceAccount);
+    [hmacKey] = await storage.createHmacKey(leasedServiceAccount);
   });
-  // deactivate and delete the key
-  for (const hmacKey of hmacKeys) {
-    await hmacKey.setMetadata({state: 'INACTIVE'});
-    await hmacKey.delete();
+
+  async function cleanUpHmacKeys(serviceAccountEmail) {
+    // list all HMAC keys for the given service account.
+    const [hmacKeys] = await storage.getHmacKeys({
+      serviceAccountEmail: serviceAccountEmail,
+    });
+    // deactivate and delete the key
+    for (const hmacKey of hmacKeys) {
+      await hmacKey.setMetadata({state: 'INACTIVE'});
+      await hmacKey.delete();
+    }
   }
-}
 
-after(async () => {
-  await cleanUpHmacKeys(leasedServiceAccount);
-});
+  after(async () => {
+    await cleanUpHmacKeys(leasedServiceAccount);
+  });
 
-it.only('should create an HMAC Key', async () => {
-  const output = execSync(`node hmacKeyCreate.js ${leasedServiceAccount}`);
-  assert.match(output, new RegExp(`The base64 encoded secret is:`));
-});
+  it('should create an HMAC Key', async () => {
+    const output = execSync(`node hmacKeyCreate.js ${leasedServiceAccount}`);
+    assert.match(output, new RegExp(`The base64 encoded secret is:`));
+  });
 
-it.only('should list HMAC Keys', () => {
-  const output = execSync(`node hmacKeysList.js list-hmac-keys`);
-  assert.include(output, `Service Account Email: ${leasedServiceAccount}`);
-});
+  it('should list HMAC Keys', async () => {
+    const output = execSync(`node hmacKeysList.js`);
+    assert.include(output, `Service Account Email: ${leasedServiceAccount}`);
+  });
 
-it.only('should get HMAC Key', () => {
-  const output = execSync(`node hmacKeyGet.js get-hmac-keys ${hmacKey}`);
-  assert.match(output, /The HMAC key metadata is:/);
-});
+  it('should get HMAC Key', async () => {
+    const output = execSync(`node hmacKeyGet.js ${hmacKey.metadata.accessId}`);
+    assert.match(output, /The HMAC key metadata is:/);
+  });
 
-it.only('should deactivate HMAC Key', () => {
-  const output = execSync(`node hmacKeyDeactivate.js ${hmacKey}`);
-  assert.match(output, /The HMAC key is now inactive./);
-});
+  it('should deactivate HMAC Key', async () => {
+    const output = execSync(`node hmacKeyDeactivate.js ${hmacKey.metadata.accessId}`);
+    assert.match(output, /The HMAC key is now inactive./);
+  });
 
-it.only('should activate HMAC Key', () => {
-  const output = execSync(`node hmacKeyActivate.js ${hmacKey}`);
-  assert.match(output, /The HMAC key is now active./);
-});
+  it('should activate HMAC Key', async () => {
+    const output = execSync(`node hmacKeyActivate.js ${hmacKey.metadata.accessId}`);
+    assert.match(output, /The HMAC key is now active./);
+  });
 
-it.only(`should delete HMAC key`, async () => {
-  // Deactivate then delete
-  execSync(`node hmacKeyDeactivate.js ${hmacKey}`);
-  const output = execSync(`node hmacKeyDelete.js ${hmacKey}`);
-  assert.match(output, new RegExp(`The key is deleted, though it may still appear in getHmacKeys() results.`));
+  it.only(`should delete HMAC key`, async () => {
+    // Deactivate then delete
+    execSync(`node hmacKeyDeactivate.js ${hmacKey.metadata.accessId}`);
+    const output = execSync(`node hmacKeyDelete.js ${hmacKey.metadata.accessId}`);
+    assert.include(output, `The key is deleted, though it may still appear in getHmacKeys() results.`);
+  });
 });

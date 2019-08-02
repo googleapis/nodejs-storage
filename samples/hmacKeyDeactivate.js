@@ -36,9 +36,9 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
      */
     // const hmacKeyAccessId = 'HMAC Access Key Id to update, e.g. GOOG0234230X00';
 
-    const [hmacKey] = await storage.hmacKey(hmacKeyAccessId);
+    const hmacKey = storage.hmacKey(hmacKeyAccessId);
 
-    hmacKey.update({state: 'INACTIVE'}, (err, hmacKeyMetadata) => {
+    hmacKey.setMetadata({state: 'INACTIVE'}, (err, hmacKeyMetadata) => {
       if (err) {
         console.error(err);
         return;

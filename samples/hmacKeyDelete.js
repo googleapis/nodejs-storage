@@ -36,7 +36,7 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
      */
     // const hmacKeyAccessId = 'Inactive HMAC Access Key Id to delete, e.g. GOOG0234230X00';
 
-    const [hmacKey] = await storage.hmacKey(hmacKeyAccessId);
+    const hmacKey = storage.hmacKey(hmacKeyAccessId);
 
     hmacKey.delete(err => {
       if (err) {
