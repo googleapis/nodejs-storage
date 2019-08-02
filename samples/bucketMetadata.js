@@ -47,4 +47,4 @@ function main(bucketName = 'my-bucket') {
   getBucketMetadata();
 }
 
-main(...process.argv.slice(1));
+main(...process.argv.slice(2));
