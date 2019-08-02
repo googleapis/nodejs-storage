@@ -32,8 +32,8 @@ function main(
 
   // Creates a client
   const storage = new Storage({
-    projectId: projectId,
-    keyFilename: credentialsFile,
+    projectId: projectId, // ProjectId of where to create a new HMAC SA Keys.
+    keyFilename: credentialsFile, // Credentials to ProjectId
   });
 
   // Create HMAC SA Key
@@ -43,18 +43,14 @@ function main(
      */
     // const serviceAccountEmail = 'Service Account Email to associate HMAC Key';
 
-    storage.createHmacKey(serviceAccountEmail, function(err, hmacKey, secret) {
-      if (err) {
-        console.error(err);
-      }
+    const [hmacKey, secret] = await storage.createHmacKey(serviceAccountEmail);
 
-      console.log(`The base64 encoded secret is: ${secret}`);
-      console.log(`Do not miss that secret, there is no API to recover it.`);
-      console.log(`The HMAC key metadata is:`);
-      for (const [key, value] of Object.entries(hmacKey.metadata)) {
-        console.log(`${key}: ${value}`);
-      }
-    });
+    console.log(`The base64 encoded secret is: ${secret}`);
+    console.log(`Do not miss that secret, there is no API to recover it.`);
+    console.log(`The HMAC key metadata is:`);
+    for (const [key, value] of Object.entries(hmacKey.metadata)) {
+      console.log(`${key}: ${value}`);
+    }
   }
   // [END storage_create_hmac_key]
   createHmacKey();

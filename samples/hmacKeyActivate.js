@@ -37,19 +37,13 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
     // const hmacKeyAccessId = 'HMAC Access Key Id to update, e.g. GOOG0234230X00';
 
     const hmacKey = storage.hmacKey(hmacKeyAccessId);
+    const [hmacKeyMMetadata] = await hmacKey.setMetadata({state: 'ACTIVE'});
 
-    hmacKey.setMetadata({state: 'ACTIVE'}, (err, hmacKeyMetadata) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-
-      console.log(`The HMAC key is now active.`);
-      console.log(`The HMAC key metadata is:`);
-      for (const [key, value] of Object.entries(hmacKey.metadata)) {
-        console.log(`${key}: ${value}`);
-      }
-    });
+    console.log(`The HMAC key is now active.`);
+    console.log(`The HMAC key metadata is:`);
+    for (const [key, value] of Object.entries(hmacKeyMMetadata)) {
+      console.log(`${key}: ${value}`);
+    }
   }
   // [END storage_activate_hmac_key]
   activateHmacKey();

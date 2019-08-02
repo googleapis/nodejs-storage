@@ -37,22 +37,18 @@ function main(
 
   // List HMAC SA Keys' Metadata
   async function listHmacKeys() {
-    storage.getHmacKeys(function(err, hmacKeys) {
-      if (err) {
-        console.error(err);
-      }
+    const [hmacKeys] = await storage.getHmacKeys();
 
-      // hmacKeys is an array of HmacKey objects.
-      for (const hmacKey of hmacKeys) {
-        console.log(
-          `Service Account Email: ${hmacKey.metadata.serviceAccountEmail}`
-        );
-        console.log(`Access Id: ${hmacKey.metadata.accessId}`);
-      }
-    });
+    // hmacKeys is an array of HmacKey objects.
+    for (const hmacKey of hmacKeys) {
+      console.log(
+        `Service Account Email: ${hmacKey.metadata.serviceAccountEmail}`
+      );
+      console.log(`Access Id: ${hmacKey.metadata.accessId}`);
+    }
   }
   // [END storage_list_hmac_keys]
   listHmacKeys();
 }
 
-main();
+main(...process.argv.slice(2));

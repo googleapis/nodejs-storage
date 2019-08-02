@@ -36,17 +36,12 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
      */
     // const hmacKeyAccessId = 'HMAC Access Key Id to get, e.g. GOOG0234230X00';
 
-    storage.hmacKey(hmacKeyAccessId).get((err, hmacKey) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
+    const [hmacKey] = await storage.hmacKey(hmacKeyAccessId).get();
 
-      console.log(`The HMAC key metadata is:`);
-      for (const [key, value] of Object.entries(hmacKey.metadata)) {
-        console.log(`${key}: ${value}`);
-      }
-    });
+    console.log(`The HMAC key metadata is:`);
+    for (const [key, value] of Object.entries(hmacKey.metadata)) {
+      console.log(`${key}: ${value}`);
+    }
   }
   // [END storage_get_hmac_key]
   getHmacKey();

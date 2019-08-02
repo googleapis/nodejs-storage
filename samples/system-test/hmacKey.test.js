@@ -29,7 +29,7 @@ const storage = new Storage({
 });
 const leasedServiceAccount = process.env.HMAC_SERVICE_ACCOUNT;
 
-describe('HMAC SA Key samples', () => {
+describe.only('HMAC SA Key samples', () => {
   let hmacKey;
 
   before(async () => {
@@ -57,7 +57,7 @@ describe('HMAC SA Key samples', () => {
     const output = execSync(
       `node hmacKeyCreate.js ${poolProjectId} ${poolProjectCredentials} ${leasedServiceAccount}`
     );
-    assert.match(output, new RegExp(`The base64 encoded secret is:`));
+    assert.include(output, 'The base64 encoded secret is:');
   });
 
   it('should list HMAC Keys', async () => {
@@ -69,21 +69,21 @@ describe('HMAC SA Key samples', () => {
 
   it('should get HMAC Key', async () => {
     const output = execSync(`node hmacKeyGet.js ${hmacKey.metadata.accessId}`);
-    assert.match(output, /The HMAC key metadata is:/);
+    assert.include(output, 'The HMAC key metadata is:');
   });
 
   it('should deactivate HMAC Key', async () => {
     const output = execSync(
       `node hmacKeyDeactivate.js ${hmacKey.metadata.accessId}`
     );
-    assert.match(output, /The HMAC key is now inactive./);
+    assert.include(output, 'The HMAC key is now inactive.');
   });
 
   it('should activate HMAC Key', async () => {
     const output = execSync(
       `node hmacKeyActivate.js ${hmacKey.metadata.accessId}`
     );
-    assert.match(output, /The HMAC key is now active./);
+    assert.include(output, 'The HMAC key is now active.');
   });
 
   it(`should delete HMAC key`, async () => {

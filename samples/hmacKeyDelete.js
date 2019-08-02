@@ -38,16 +38,11 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
 
     const hmacKey = storage.hmacKey(hmacKeyAccessId);
 
-    hmacKey.delete(err => {
-      if (err) {
-        console.error(err);
-        return;
-      }
+    await hmacKey.delete();
 
-      console.log(
-        `The key is deleted, though it may still appear in getHmacKeys() results.`
-      );
-    });
+    console.log(
+      `The key is deleted, though it may still appear in getHmacKeys() results.`
+    );
   }
   // [END storage_delete_hmac_key]
   deleteHmacKey();
