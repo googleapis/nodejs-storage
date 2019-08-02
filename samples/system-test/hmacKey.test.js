@@ -18,27 +18,43 @@
 const {Storage} = require(`@google-cloud/storage`);
 const {assert} = require('chai');
 const cp = require('child_process');
-
+const cmd = 'node hmacKey.js';
 const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
-const storage = new Storage();
-const serviceAccountEmail = process.env.HMAC_SERVICE_ACCOUNT;
-const hmacKey = storage.createHmacKey(serviceAccountEmail);
-const cmd = 'node hmacKey.js';
+const storage = new Storage({
+  projectId: POOL_PROJECT_ID,
+  keyFilename: POOL_PROJECT_CREDENTIALS
+});
+
+const leasedServiceAccount = process.env.HMAC_SERVICE_ACCOUNT;
+const [hmacKey, secret] = await cleanUpHmacKeys(leasedServiceAccount);
+
+async function cleanUpHmacKeys(serviceAccountEmail) {
+  // list all HMAC keys for the given service account.
+  const [hmacKeys] =
+    await storage.getHmacKeys({
+      serviceAccountEmail: serviceAccountEmail,
+    });
+  // deactivate and delete the key
+  for (hmacKey of hmacKeys) {
+    await hmacKey.setMetadata({state: 'INACTIVE'});
+    await hmacKey.delete();
+  }
+}
 
 after(async () => {
   return bucket.delete().catch(console.error);
 });
 
 it('should create an HMAC Key', async () => {
-  const output = execSync(`${cmd} create-hmac-key ${serviceAccountEmail}`);
+  const output = execSync(`${cmd} create-hmac-key ${leasedServiceAccount}`);
   assert.match(output, new RegExp(`The base64 encoded secret is:`));
   assert.strictEqual(exists, true);
 });
 
 it('should list HMAC Keys', () => {
   const output = execSync(`${cmd} list-hmac-keys`);
-  assert.match(output, /Service Account Email:/);
+  assert.contains(output, `Service Account Email: ${leasedServiceAccount}`);
 });
 
 it('should get HMAC Key', () => {
