@@ -246,7 +246,7 @@ describe('Storage', () => {
     it('should throw without a serviceAccountEmail', () => {
       assert.throws(
         () => storage.createHmacKey(),
-        /The first argument must be a service account email to create an HMAC key\./,
+        /The first argument must be a service account email to create an HMAC key\./
       );
     });
 

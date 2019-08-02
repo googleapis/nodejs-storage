@@ -19,9 +19,9 @@
 // sample-metadata:
 //   title: List HMAC SA Keys Metadata.
 //   description: List HMAC SA Keys Metadata.
-//   usage: node hmacKeyList.js <serviceAccountEmail>
+//   usage: node hmacKeyList.js
 
-function main(serviceAccountEmail = 'service-account@example.com') {
+function main() {
   // [START storage_list_hmac_keys]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -37,9 +37,9 @@ function main(serviceAccountEmail = 'service-account@example.com') {
       }
 
       // hmacKeys is an array of HmacKey objects.
-      for (hmacKey in hmacKeys) {
-        console.log(`Service Account Email: ${hmacKey.serviceAccountEmail}`);
-        console.log(`Access Id: ${hmacKey.accessId}`);
+      for (const hmacKey of hmacKeys) {
+        console.log(`Service Account Email: ${hmacKey.metadata.serviceAccountEmail}`);
+        console.log(`Access Id: ${hmacKey.metadata.accessId}`);
       }
     });
   }
@@ -47,4 +47,4 @@ function main(serviceAccountEmail = 'service-account@example.com') {
   listHmacKeys();
 }
 
-main(...process.argv.slice(2));
+main();

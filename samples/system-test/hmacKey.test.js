@@ -22,43 +22,41 @@ const cp = require('child_process');
 const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
 const storage = new Storage({
-  projectId: POOL_PROJECT_ID,
-  keyFilename: POOL_PROJECT_CREDENTIALS
+  projectId: process.env.POOL_PROJECT_ID,
+  keyFilename: process.env.POOL_PROJECT_CREDENTIALS,
 });
 
 const leasedServiceAccount = process.env.HMAC_SERVICE_ACCOUNT;
 
+before(async () => {
+  await cleanUpHmacKeys(leasedServiceAccount);
+  var [hmacKey, _] = await storage.createHmacKey(leasedServiceAccount);
+});
+
 async function cleanUpHmacKeys(serviceAccountEmail) {
   // list all HMAC keys for the given service account.
-  const [hmacKeys] =
-    await storage.getHmacKeys({
-      serviceAccountEmail: serviceAccountEmail,
-    });
+  const [hmacKeys] = await storage.getHmacKeys({
+    serviceAccountEmail: serviceAccountEmail,
+  });
   // deactivate and delete the key
-  for (hmacKey of hmacKeys) {
+  for (const hmacKey of hmacKeys) {
     await hmacKey.setMetadata({state: 'INACTIVE'});
     await hmacKey.delete();
   }
 }
 
-before(async () => {
-  await cleanUpHmacKeys(leasedServiceAccount);
-  const [hmacKey, secret] = await storage.createHmacKey(leasedServiceAccount);
-});
-
 after(async () => {
-  return bucket.delete().catch(console.error);
+  await cleanUpHmacKeys(leasedServiceAccount);
 });
 
 it.only('should create an HMAC Key', async () => {
   const output = execSync(`node hmacKeyCreate.js ${leasedServiceAccount}`);
   assert.match(output, new RegExp(`The base64 encoded secret is:`));
-  assert.strictEqual(exists, true);
 });
 
 it.only('should list HMAC Keys', () => {
   const output = execSync(`node hmacKeysList.js list-hmac-keys`);
-  assert.contains(output, `Service Account Email: ${leasedServiceAccount}`);
+  assert.include(output, `Service Account Email: ${leasedServiceAccount}`);
 });
 
 it.only('should get HMAC Key', () => {

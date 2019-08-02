@@ -39,13 +39,15 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
     const [hmacKeyMetadata] = await storage.hmacKey(hmacKeyAccessId);
 
     console.log(`The HMAC key metadata is: `);
-    console.log(`Service Account Email: ${hmacKeyMetadata.serviceAccountEmail}`);
+    console.log(
+      `Service Account Email: ${hmacKeyMetadata.serviceAccountEmail}`
+    );
     console.log(`Access Id: ${hmacKeyMetadata.accessId}`);
     console.log(`State: ${hmacKeyMetadata.state}`);
     console.log(`Etag: ${hmacKeyMetadata.etag}`);
   }
   // [END storage_get_hmac_key]
-  deactivateHmacKey();
+  getHmacKey();
 }
 
 main(...process.argv.slice(2));
