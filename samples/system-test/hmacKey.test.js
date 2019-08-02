@@ -20,10 +20,12 @@ const {assert} = require('chai');
 const cp = require('child_process');
 
 const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
+const poolProjectId = process.env.POOL_PROJECT_ID;
+const poolProjectCredentials = process.env.POOL_PROJECT_CREDENTIALS;
 
 const storage = new Storage({
-  projectId: process.env.POOL_PROJECT_ID,
-  keyFilename: process.env.POOL_PROJECT_CREDENTIALS,
+  projectId: poolProjectId,
+  keyFilename: poolProjectCredentials,
 });
 const leasedServiceAccount = process.env.HMAC_SERVICE_ACCOUNT;
 
@@ -52,12 +54,16 @@ describe('HMAC SA Key samples', () => {
   });
 
   it('should create an HMAC Key', async () => {
-    const output = execSync(`node hmacKeyCreate.js ${leasedServiceAccount}`);
+    const output = execSync(
+      `node hmacKeyCreate.js ${poolProjectId} ${poolProjectCredentials} ${leasedServiceAccount}`
+    );
     assert.match(output, new RegExp(`The base64 encoded secret is:`));
   });
 
   it('should list HMAC Keys', async () => {
-    const output = execSync(`node hmacKeysList.js`);
+    const output = execSync(
+      `node hmacKeysList.js ${poolProjectId} ${poolProjectCredentials}`
+    );
     assert.include(output, `Service Account Email: ${leasedServiceAccount}`);
   });
 
@@ -80,7 +86,7 @@ describe('HMAC SA Key samples', () => {
     assert.match(output, /The HMAC key is now active./);
   });
 
-  it.only(`should delete HMAC key`, async () => {
+  it(`should delete HMAC key`, async () => {
     // Deactivate then delete
     execSync(`node hmacKeyDeactivate.js ${hmacKey.metadata.accessId}`);
     const output = execSync(

@@ -44,6 +44,10 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
         return;
       }
       console.log(`The HMAC key is now inactive.`);
+      console.log(`The HMAC key metadata is:`);
+      for (const [key, value] of Object.entries(hmacKey.metadata)) {
+        console.log(`${key}: ${value}`);
+      }
     });
   }
   // [END storage_deactivate_hmac_key]

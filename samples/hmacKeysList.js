@@ -19,15 +19,21 @@
 // sample-metadata:
 //   title: List HMAC SA Keys Metadata.
 //   description: List HMAC SA Keys Metadata.
-//   usage: node hmacKeyList.js
+//   usage: node hmacKeyList.js <projectId> <credentialsFile>
 
-function main() {
+function main(
+  projectId = 'serviceAccountProjectId',
+  credentialsFile = 'serviceAccountCredentials'
+) {
   // [START storage_list_hmac_keys]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
-  const storage = new Storage();
+  const storage = new Storage({
+    projectId: projectId, // ProjectId from where to list HMAC SA Keys
+    keyFilename: credentialsFile, // Credentials to ProjectId
+  });
 
   // List HMAC SA Keys' Metadata
   async function listHmacKeys() {
