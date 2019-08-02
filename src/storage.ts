@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import {GoogleAuthOptions, Service} from '@google-cloud/common';
+import {GoogleAuthOptions, Metadata, Service} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
-import * as arrify from 'arrify';
-import * as r from 'request';  // Only for type declarations.
+
+import arrify = require('arrify');
 import {Readable} from 'stream';
-import {teenyRequest} from 'teeny-request';
 
 import {Bucket} from './bucket';
 import {Channel} from './channel';
@@ -33,10 +32,13 @@ export interface GetServiceAccountOptions {
 export interface ServiceAccount {
   emailAddress?: string;
 }
-export type GetServiceAccountResponse = [ServiceAccount, r.Response];
+export type GetServiceAccountResponse = [ServiceAccount, Metadata];
 export interface GetServiceAccountCallback {
-  (err: Error|null, serviceAccount?: ServiceAccount,
-   apiResponse?: r.Response): void;
+  (
+    err: Error | null,
+    serviceAccount?: ServiceAccount,
+    apiResponse?: Metadata
+  ): void;
 }
 
 export interface CreateBucketQuery {
@@ -48,6 +50,11 @@ export interface StorageOptions extends GoogleAuthOptions {
   autoRetry?: boolean;
   maxRetries?: number;
   promise?: typeof Promise;
+  /**
+   * The API endpoint of the service used to make requests.
+   * Defaults to `www.googleapis.com`.
+   */
+  apiEndpoint?: string;
 }
 
 export interface BucketOptions {
@@ -67,15 +74,20 @@ export interface CreateBucketRequest {
   location?: string;
 }
 
-export type CreateBucketResponse = [Bucket, r.Response];
+export type CreateBucketResponse = [Bucket, Metadata];
 
 export interface BucketCallback {
-  (err: Error|null, bucket?: Bucket|null, apiResponse?: r.Response): void;
+  (err: Error | null, bucket?: Bucket | null, apiResponse?: Metadata): void;
 }
 
-export type GetBucketsResponse = [Bucket[]];
+export type GetBucketsResponse = [Bucket[], {}, Metadata];
 export interface GetBucketsCallback {
-  (err: Error|null, buckets: Bucket[]): void;
+  (
+    err: Error | null,
+    buckets: Bucket[],
+    nextQuery?: {},
+    apiResponse?: Metadata
+  ): void;
 }
 export interface GetBucketsRequest {
   prefix?: string;
@@ -86,7 +98,6 @@ export interface GetBucketsRequest {
   pageToken?: string;
   userProject?: string;
 }
-
 
 /*! Developer Documentation
  *
@@ -279,15 +290,17 @@ export class Storage extends Service {
    * @param {StorageOptions} [options] Configuration options.
    */
   constructor(options: StorageOptions = {}) {
+    options.apiEndpoint = options.apiEndpoint || 'www.googleapis.com';
     const config = {
-      baseUrl: 'https://www.googleapis.com/storage/v1',
+      apiEndpoint: options.apiEndpoint,
+      baseUrl: `https://${options.apiEndpoint}/storage/v1`,
       projectIdRequired: false,
       scopes: [
         'https://www.googleapis.com/auth/iam',
         'https://www.googleapis.com/auth/cloud-platform',
         'https://www.googleapis.com/auth/devstorage.full_control',
       ],
-      packageJson: require('../../package.json')
+      packageJson: require('../../package.json'),
     };
 
     super(config, options);
@@ -346,15 +359,21 @@ export class Storage extends Service {
     return new Channel(this, id, resourceId);
   }
 
-  createBucket(name: string, metadata?: CreateBucketRequest):
-      Promise<CreateBucketResponse>;
+  createBucket(
+    name: string,
+    metadata?: CreateBucketRequest
+  ): Promise<CreateBucketResponse>;
   createBucket(name: string, callback: BucketCallback): void;
   createBucket(
-      name: string, metadata: CreateBucketRequest,
-      callback: BucketCallback): void;
+    name: string,
+    metadata: CreateBucketRequest,
+    callback: BucketCallback
+  ): void;
   createBucket(
-      name: string, metadata: CreateBucketRequest,
-      callback: BucketCallback): void;
+    name: string,
+    metadata: CreateBucketRequest,
+    callback: BucketCallback
+  ): void;
   /**
    * @typedef {array} CreateBucketResponse
    * @property {Bucket} 0 The new {@link Bucket}.
@@ -459,8 +478,10 @@ export class Storage extends Service {
    * Another example:
    */
   createBucket(
-      name: string, metadataOrCallback?: BucketCallback|CreateBucketRequest,
-      callback?: BucketCallback): Promise<CreateBucketResponse>|void {
+    name: string,
+    metadataOrCallback?: BucketCallback | CreateBucketRequest,
+    callback?: BucketCallback
+  ): Promise<CreateBucketResponse> | void {
     if (!name) {
       throw new Error('A name is required to create a bucket.');
     }
@@ -473,8 +494,9 @@ export class Storage extends Service {
       metadata = metadataOrCallback as CreateBucketRequest;
     }
 
-    const body =
-        Object.assign({}, metadata, {name}) as {[index: string]: string | {}};
+    const body = Object.assign({}, metadata, {name}) as {
+      [index: string]: string | {};
+    };
 
     const storageClasses = {
       coldline: 'COLDLINE',
@@ -508,23 +530,24 @@ export class Storage extends Service {
     }
 
     this.request(
-        {
-          method: 'POST',
-          uri: '/b',
-          qs: query,
-          json: body,
-        },
-        (err, resp) => {
-          if (err) {
-            callback!(err, null, resp);
-            return;
-          }
+      {
+        method: 'POST',
+        uri: '/b',
+        qs: query,
+        json: body,
+      },
+      (err, resp) => {
+        if (err) {
+          callback!(err, null, resp);
+          return;
+        }
 
-          const bucket = this.bucket(name);
-          bucket.metadata = resp;
+        const bucket = this.bucket(name);
+        bucket.metadata = resp;
 
-          callback!(null, bucket, resp);
-        });
+        callback!(null, bucket, resp);
+      }
+    );
   }
 
   getBuckets(options?: GetBucketsRequest): Promise<GetBucketsResponse>;
@@ -606,42 +629,48 @@ export class Storage extends Service {
    * Another example:
    */
   getBuckets(
-      optionsOrCallback?: GetBucketsRequest|GetBucketsCallback,
-      cb?: GetBucketsCallback): void|Promise<GetBucketsResponse> {
-    const {options, callback} =
-        normalize<GetBucketsRequest>(optionsOrCallback, cb);
+    optionsOrCallback?: GetBucketsRequest | GetBucketsCallback,
+    cb?: GetBucketsCallback
+  ): void | Promise<GetBucketsResponse> {
+    const {options, callback} = normalize<GetBucketsRequest>(
+      optionsOrCallback,
+      cb
+    );
     options.project = options.project || this.projectId;
 
     this.request(
-        {
-          uri: '/b',
-          qs: options,
-        },
-        (err, resp) => {
-          if (err) {
-            callback(err, null, null, resp);
-            return;
-          }
+      {
+        uri: '/b',
+        qs: options,
+      },
+      (err, resp) => {
+        if (err) {
+          callback(err, null, null, resp);
+          return;
+        }
 
-          const buckets = arrify(resp.items).map(bucket => {
-            const bucketInstance = this.bucket(bucket.id);
-            bucketInstance.metadata = bucket;
-            return bucketInstance;
-          });
-
-          const nextQuery = resp.nextPageToken ?
-              Object.assign({}, options, {pageToken: resp.nextPageToken}) :
-              null;
-
-          callback(null, buckets, nextQuery, resp);
+        const buckets = arrify(resp.items).map((bucket: Metadata) => {
+          const bucketInstance = this.bucket(bucket.id);
+          bucketInstance.metadata = bucket;
+          return bucketInstance;
         });
+
+        const nextQuery = resp.nextPageToken
+          ? Object.assign({}, options, {pageToken: resp.nextPageToken})
+          : null;
+
+        callback(null, buckets, nextQuery, resp);
+      }
+    );
   }
 
-  getServiceAccount(options?: GetServiceAccountOptions):
-      Promise<GetServiceAccountResponse>;
   getServiceAccount(
-      options: GetServiceAccountOptions,
-      callback: GetServiceAccountCallback): void;
+    options?: GetServiceAccountOptions
+  ): Promise<GetServiceAccountResponse>;
+  getServiceAccount(
+    options: GetServiceAccountOptions,
+    callback: GetServiceAccountCallback
+  ): void;
   getServiceAccount(callback: GetServiceAccountCallback): void;
   /**
    * @typedef {array} GetServiceAccountResponse
@@ -692,33 +721,38 @@ export class Storage extends Service {
    * });
    */
   getServiceAccount(
-      optionsOrCallback?: GetServiceAccountOptions|GetServiceAccountCallback,
-      cb?: GetServiceAccountCallback): void|Promise<GetServiceAccountResponse> {
-    const {options, callback} =
-        normalize<GetServiceAccountOptions>(optionsOrCallback, cb);
+    optionsOrCallback?: GetServiceAccountOptions | GetServiceAccountCallback,
+    cb?: GetServiceAccountCallback
+  ): void | Promise<GetServiceAccountResponse> {
+    const {options, callback} = normalize<GetServiceAccountOptions>(
+      optionsOrCallback,
+      cb
+    );
     this.request(
-        {
-          uri: `/projects/${this.projectId}/serviceAccount`,
-          qs: options,
-        },
-        (err, resp) => {
-          if (err) {
-            callback(err, null, resp);
-            return;
+      {
+        uri: `/projects/${this.projectId}/serviceAccount`,
+        qs: options,
+      },
+      (err, resp) => {
+        if (err) {
+          callback(err, null, resp);
+          return;
+        }
+
+        const camelCaseResponse = {} as {[index: string]: string};
+
+        for (const prop in resp) {
+          if (resp.hasOwnProperty(prop)) {
+            const camelCaseProp = prop.replace(/_(\w)/g, (_, match) =>
+              match.toUpperCase()
+            );
+            camelCaseResponse[camelCaseProp] = resp[prop];
           }
+        }
 
-          const camelCaseResponse = {} as {[index: string]: string};
-
-          for (const prop in resp) {
-            if (resp.hasOwnProperty(prop)) {
-              const camelCaseProp =
-                  prop.replace(/_(\w)/g, (_, match) => match.toUpperCase());
-              camelCaseResponse[camelCaseProp] = resp[prop];
-            }
-          }
-
-          callback(null, camelCaseResponse, resp);
-        });
+        callback(null, camelCaseResponse, resp);
+      }
+    );
   }
 }
 

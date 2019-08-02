@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import {DecorateRequestOptions, util} from '@google-cloud/common';
+import {DecorateRequestOptions, Metadata, util} from '@google-cloud/common';
 import * as assert from 'assert';
-import * as async from 'async';
 import * as proxyquire from 'proxyquire';
-import * as r from 'request';
 
 // tslint:disable-next-line:variable-name no-any
 let Acl: any;
@@ -88,7 +86,7 @@ describe('storage/acl', () => {
         generation: 8,
       };
 
-      acl.request = (reqOpts: r.Options) => {
+      acl.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.qs.generation, options.generation);
         done();
       };
@@ -103,7 +101,7 @@ describe('storage/acl', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      acl.request = (reqOpts: r.Options) => {
+      acl.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.qs.userProject, options.userProject);
         done();
       };
@@ -150,11 +148,12 @@ describe('storage/acl', () => {
       };
 
       acl.add(
-          {entity: ENTITY, role: ROLE},
-          (err: Error, acls: {}, apiResponse: r.Response) => {
-            assert.deepStrictEqual(resp, apiResponse);
-            done();
-          });
+        {entity: ENTITY, role: ROLE},
+        (err: Error, acls: {}, apiResponse: Metadata) => {
+          assert.deepStrictEqual(resp, apiResponse);
+          done();
+        }
+      );
     });
   });
 
@@ -176,7 +175,7 @@ describe('storage/acl', () => {
         generation: 8,
       };
 
-      acl.request = (reqOpts: r.Options) => {
+      acl.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.qs.generation, options.generation);
         done();
       };
@@ -191,7 +190,7 @@ describe('storage/acl', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      acl.request = (reqOpts: r.Options) => {
+      acl.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.qs.userProject, options.userProject);
         done();
       };
@@ -217,7 +216,7 @@ describe('storage/acl', () => {
         callback(null, resp);
       };
 
-      acl.delete({entity: ENTITY}, (err: Error, apiResponse: r.Response) => {
+      acl.delete({entity: ENTITY}, (err: Error, apiResponse: Metadata) => {
         assert.deepStrictEqual(resp, apiResponse);
         done();
       });
@@ -239,7 +238,7 @@ describe('storage/acl', () => {
       it('should accept a configuration object', done => {
         const generation = 1;
 
-        acl.request = (reqOpts: r.Options) => {
+        acl.request = (reqOpts: DecorateRequestOptions) => {
           assert.strictEqual(reqOpts.qs.generation, generation);
 
           done();
@@ -293,7 +292,7 @@ describe('storage/acl', () => {
       it('should accept a configuration object', done => {
         const generation = 1;
 
-        acl.request = (reqOpts: r.Options) => {
+        acl.request = (reqOpts: DecorateRequestOptions) => {
           assert.strictEqual(reqOpts.qs.generation, generation);
 
           done();
@@ -308,7 +307,7 @@ describe('storage/acl', () => {
           userProject: 'grape-spaceship-123',
         };
 
-        acl.request = (reqOpts: r.Options) => {
+        acl.request = (reqOpts: DecorateRequestOptions) => {
           assert.strictEqual(reqOpts.qs.userProject, options.userProject);
           done();
         };
@@ -354,7 +353,7 @@ describe('storage/acl', () => {
         callback(null, resp);
       };
 
-      acl.get((err: Error, acls: Array<{}>, apiResponse: r.Response) => {
+      acl.get((err: Error, acls: Array<{}>, apiResponse: Metadata) => {
         assert.deepStrictEqual(resp, apiResponse);
         done();
       });
@@ -381,7 +380,7 @@ describe('storage/acl', () => {
         generation: 8,
       };
 
-      acl.request = (reqOpts: r.Options) => {
+      acl.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.qs.generation, options.generation);
         done();
       };
@@ -396,7 +395,7 @@ describe('storage/acl', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      acl.request = (reqOpts: r.Options) => {
+      acl.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.qs.userProject, options.userProject);
         done();
       };
@@ -443,10 +442,12 @@ describe('storage/acl', () => {
 
       const config = {entity: ENTITY, role: ROLE};
       acl.update(
-          config, (err: Error, acls: Array<{}>, apiResponse: r.Response) => {
-            assert.deepStrictEqual(resp, apiResponse);
-            done();
-          });
+        config,
+        (err: Error, acls: Array<{}>, apiResponse: Metadata) => {
+          assert.deepStrictEqual(resp, apiResponse);
+          done();
+        }
+      );
     });
   });
 
@@ -484,7 +485,7 @@ describe('storage/acl', () => {
       acl.request_ = (reqOpts_: DecorateRequestOptions, callback: Function) => {
         assert.strictEqual(reqOpts_, reqOpts);
         assert.strictEqual(reqOpts_.uri, PATH_PREFIX + uri);
-        callback();  // done()
+        callback(); // done()
       };
 
       acl.request(reqOpts, done);
@@ -535,42 +536,30 @@ describe('storage/AclRoleAccessorMethods', () => {
   });
 
   describe('_assignAccessMethods', () => {
-    it('should call parent method', done => {
+    it('should call parent method', async () => {
       const userName = 'email@example.com';
       const role = 'fakerole';
 
-      aclEntity.add = (options: {}, callback: Function) => {
+      aclEntity.add = async (options: {}) => {
         assert.deepStrictEqual(options, {
           entity: 'user-' + userName,
           role,
         });
-
-        callback();
       };
 
-      aclEntity.delete = (options: {}, callback: Function) => {
+      aclEntity.delete = async (options: {}) => {
         assert.deepStrictEqual(options, {
           entity: 'allUsers',
           role,
         });
-
-        callback();
       };
 
       aclEntity._assignAccessMethods(role);
 
-      async.parallel(
-          [
-            next => {
-              // The method name should be in plural form. (fakeroles vs
-              // fakerole)
-              aclEntity.fakeroles.addUser(userName, next);
-            },
-            next => {
-              aclEntity.fakeroles.deleteAllUsers(next);
-            },
-          ],
-          done);
+      await Promise.all([
+        aclEntity.fakeroles.addUser(userName),
+        aclEntity.fakeroles.deleteAllUsers(),
+      ]);
     });
 
     it('should return the parent methods return value', () => {
@@ -604,11 +593,12 @@ describe('storage/AclRoleAccessorMethods', () => {
       };
 
       const expectedOptions = Object.assign(
-          {
-            entity: 'user-' + fakeUser,
-            role: fakeRole,
-          },
-          fakeOptions);
+        {
+          entity: 'user-' + fakeUser,
+          role: fakeRole,
+        },
+        fakeOptions
+      );
 
       aclEntity.add = (options: {}) => {
         assert.deepStrictEqual(options, expectedOptions);

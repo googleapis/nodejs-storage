@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-import {ApiError, MetadataCallback, ServiceObject, util} from '@google-cloud/common';
+import {
+  ApiError,
+  Metadata,
+  MetadataCallback,
+  ServiceObject,
+  util,
+} from '@google-cloud/common';
 import {ResponseBody} from '@google-cloud/common/build/src/util';
 import {promisifyAll} from '@google-cloud/promisify';
-import * as request from 'request';  // Only for type declarations.
-import {teenyRequest} from 'teeny-request';
 
 import {Bucket} from './bucket';
 
@@ -35,7 +39,7 @@ export interface GetNotificationMetadataOptions {
  * @property {object} 0 The notification metadata.
  * @property {object} 1 The full API response.
  */
-export type GetNotificationMetadataResponse = [ResponseBody, request.Response];
+export type GetNotificationMetadataResponse = [ResponseBody, Metadata];
 
 /**
  * @callback GetNotificationMetadataCallback
@@ -44,8 +48,7 @@ export type GetNotificationMetadataResponse = [ResponseBody, request.Response];
  * @param {object} apiResponse The full API response.
  */
 export interface GetNotificationMetadataCallback {
-  (err: Error|null, metadata?: ResponseBody,
-   apiResponse?: request.Response): void;
+  (err: Error | null, metadata?: ResponseBody, apiResponse?: Metadata): void;
 }
 
 /**
@@ -53,7 +56,7 @@ export interface GetNotificationMetadataCallback {
  * @property {Notification} 0 The {@link Notification}
  * @property {object} 1 The full API response.
  */
-export type GetNotificationResponse = [Notification, request.Response];
+export type GetNotificationResponse = [Notification, Metadata];
 
 export interface GetNotificationOptions {
   /**
@@ -74,8 +77,11 @@ export interface GetNotificationOptions {
  * @param {object} apiResponse The full API response.
  */
 export interface GetNotificationCallback {
-  (err: Error|null, notification?: Notification|null,
-   apiResponse?: request.Response): void;
+  (
+    err: Error | null,
+    notification?: Notification | null,
+    apiResponse?: Metadata
+  ): void;
 }
 
 /**
@@ -84,9 +90,8 @@ export interface GetNotificationCallback {
  * @param {object} apiResponse The full API response.
  */
 export interface DeleteNotificationCallback {
-  (err: Error|null, apiResponse?: request.Response): void;
+  (err: Error | null, apiResponse?: Metadata): void;
 }
-
 
 /**
  * A Notification object is created from your {@link Bucket} object using
@@ -192,14 +197,15 @@ class Notification extends ServiceObject {
       baseUrl: '/notificationConfigs',
       id: id.toString(),
       createMethod: bucket.createNotification.bind(bucket),
-      methods
+      methods,
     });
   }
 
-  delete(options?: DeleteNotificationOptions): Promise<[request.Response]>;
+  delete(options?: DeleteNotificationOptions): Promise<[Metadata]>;
   delete(
-      options: DeleteNotificationOptions,
-      callback: DeleteNotificationCallback): void;
+    options: DeleteNotificationOptions,
+    callback: DeleteNotificationCallback
+  ): void;
   delete(callback: DeleteNotificationCallback): void;
   /**
    * @typedef {array} DeleteNotificationResponse
@@ -236,19 +242,21 @@ class Notification extends ServiceObject {
    * Another example:
    */
   delete(
-      optionsOrCallback?: DeleteNotificationOptions|DeleteNotificationCallback,
-      callback?: DeleteNotificationCallback): void|Promise<[request.Response]> {
+    optionsOrCallback?: DeleteNotificationOptions | DeleteNotificationCallback,
+    callback?: DeleteNotificationCallback
+  ): void | Promise<[Metadata]> {
     const options =
-        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+      typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
-        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
     this.request(
-        {
-          method: 'DELETE',
-          uri: '',
-          qs: options,
-        },
-        callback || util.noop);
+      {
+        method: 'DELETE',
+        uri: '',
+        qs: options,
+      },
+      callback || util.noop
+    );
   }
 
   get(options?: GetNotificationOptions): Promise<GetNotificationResponse>;
@@ -286,32 +294,35 @@ class Notification extends ServiceObject {
    *   const apiResponse = data[1];
    * });
    */
-  get(optionsOrCallback?: GetNotificationOptions|GetNotificationCallback,
-      callback?: GetNotificationCallback):
-      void|Promise<GetNotificationResponse> {
+  get(
+    optionsOrCallback?: GetNotificationOptions | GetNotificationCallback,
+    callback?: GetNotificationCallback
+  ): void | Promise<GetNotificationResponse> {
     const options =
-        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+      typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
-        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
     const autoCreate = options.autoCreate;
     delete options.autoCreate;
 
-    const onCreate =
-        (err: ApiError|null, notification: Notification,
-         apiResponse: request.Response) => {
-          if (err) {
-            if (err.code === 409) {
-              this.get(options, callback!);
-              return;
-            }
+    const onCreate = (
+      err: ApiError | null,
+      notification: Notification,
+      apiResponse: Metadata
+    ) => {
+      if (err) {
+        if (err.code === 409) {
+          this.get(options, callback!);
+          return;
+        }
 
-            callback!(err, null, apiResponse);
-            return;
-          }
+        callback!(err, null, apiResponse);
+        return;
+      }
 
-          callback!(null, notification, apiResponse);
-        };
+      callback!(null, notification, apiResponse);
+    };
 
     this.getMetadata(options, (err, metadata) => {
       if (err) {
@@ -337,11 +348,13 @@ class Notification extends ServiceObject {
     });
   }
 
-  getMetadata(options?: GetNotificationMetadataOptions):
-      Promise<GetNotificationMetadataResponse>;
   getMetadata(
-      options: GetNotificationMetadataOptions,
-      callback: MetadataCallback): void;
+    options?: GetNotificationMetadataOptions
+  ): Promise<GetNotificationMetadataResponse>;
+  getMetadata(
+    options: GetNotificationMetadataOptions,
+    callback: MetadataCallback
+  ): void;
   getMetadata(callback: MetadataCallback): void;
   /**
    * Get the notification's metadata.
@@ -375,26 +388,27 @@ class Notification extends ServiceObject {
    * Another example:
    */
   getMetadata(
-      optionsOrCallback?: GetNotificationMetadataOptions|MetadataCallback,
-      callback?: MetadataCallback):
-      void|Promise<GetNotificationMetadataResponse> {
+    optionsOrCallback?: GetNotificationMetadataOptions | MetadataCallback,
+    callback?: MetadataCallback
+  ): void | Promise<GetNotificationMetadataResponse> {
     const options =
-        typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+      typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
-        typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+      typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
     this.request(
-        {
-          uri: '',
-          qs: options,
-        },
-        (err, resp) => {
-          if (err) {
-            callback!(err, null, resp);
-            return;
-          }
-          this.metadata = resp;
-          callback!(null, this.metadata, resp);
-        });
+      {
+        uri: '',
+        qs: options,
+      },
+      (err, resp) => {
+        if (err) {
+          callback!(err, null, resp);
+          return;
+        }
+        this.metadata = resp;
+        callback!(null, this.metadata, resp);
+      }
+    );
   }
 }
 

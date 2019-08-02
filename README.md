@@ -79,6 +79,7 @@ npm install @google-cloud/storage
   }
 
   createBucket();
+
 ```
 
 
@@ -92,11 +93,13 @@ has instructions for running the samples.
 | --------------------------- | --------------------------------- | ------ |
 | Acl | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/acl.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/acl.js,samples/README.md) |
 | Bucket Lock | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/bucketLock.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/bucketLock.js,samples/README.md) |
+| Storage Get Bucket Metadata. | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/bucketMetadata.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/bucketMetadata.js,samples/README.md) |
 | Buckets | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/buckets.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/buckets.js,samples/README.md) |
 | Encryption | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/encryption.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/encryption.js,samples/README.md) |
 | Files | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/files.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/files.js,samples/README.md) |
 | Iam | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/iam.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/iam.js,samples/README.md) |
 | Notifications | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/notifications.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/notifications.js,samples/README.md) |
+| Quickstart | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/quickstart.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/quickstart.js,samples/README.md) |
 | Requester Pays | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/requesterPays.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/requesterPays.js,samples/README.md) |
 
 
@@ -133,10 +136,12 @@ Apache Version 2.0
 
 See [LICENSE](https://github.com/googleapis/nodejs-storage/blob/master/LICENSE)
 
-[client-docs]: https://cloud.google.com/nodejs/docs/reference/storage/latest/
+[client-docs]: https://googleapis.dev/nodejs/storage/latest#reference
 [product-docs]: https://cloud.google.com/storage
 [shell_img]: https://gstatic.com/cloudssh/images/open-btn.png
 [projects]: https://console.cloud.google.com/project
 [billing]: https://support.google.com/cloud/answer/6293499#enable-billing
 [enable_api]: https://console.cloud.google.com/flows/enableapi?apiid=storage-api.googleapis.com
 [auth]: https://cloud.google.com/docs/authentication/getting-started
+
+<a name="reference"></a>

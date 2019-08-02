@@ -20,7 +20,7 @@ module.exports = {
   opts: {
     readme: './README.md',
     package: './package.json',
-    template: './node_modules/jsdoc-baseline',
+    template: './node_modules/jsdoc-fresh',
     recurse: true,
     verbose: true,
     destination: './docs/'
@@ -41,5 +41,8 @@ module.exports = {
     sourceFiles: false,
     systemName: '@google-cloud/storage',
     theme: 'lumen'
+  },
+  markdown: {
+    idInHeadings: true
   }
 };

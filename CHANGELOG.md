@@ -4,6 +4,110 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [3.0.4](https://www.github.com/googleapis/nodejs-storage/compare/v3.0.3...v3.0.4) (2019-07-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency pumpify to v2 ([#740](https://www.github.com/googleapis/nodejs-storage/issues/740)) ([71a4f59](https://www.github.com/googleapis/nodejs-storage/commit/71a4f59))
+
+### [3.0.3](https://www.github.com/googleapis/nodejs-storage/compare/v3.0.2...v3.0.3) (2019-07-16)
+
+
+### Bug Fixes
+
+* **typescript:** make SetLabelOptions optional ([#766](https://www.github.com/googleapis/nodejs-storage/issues/766)) ([4336882](https://www.github.com/googleapis/nodejs-storage/commit/4336882))
+
+### [3.0.2](https://www.github.com/googleapis/nodejs-storage/compare/v3.0.1...v3.0.2) (2019-07-01)
+
+
+### Bug Fixes
+
+* **docs:** fix sample code in docs ([#759](https://www.github.com/googleapis/nodejs-storage/issues/759)) ([f9e5fd8](https://www.github.com/googleapis/nodejs-storage/commit/f9e5fd8))
+* **docs:** link to reference docs section on googleapis.dev ([#753](https://www.github.com/googleapis/nodejs-storage/issues/753)) ([5e3a96b](https://www.github.com/googleapis/nodejs-storage/commit/5e3a96b))
+
+### [3.0.1](https://www.github.com/googleapis/nodejs-storage/compare/v3.0.0...v3.0.1) (2019-06-14)
+
+
+### Bug Fixes
+
+* async should be dependency ([#743](https://www.github.com/googleapis/nodejs-storage/issues/743)) ([e542b8b](https://www.github.com/googleapis/nodejs-storage/commit/e542b8b))
+
+## [3.0.0](https://www.github.com/googleapis/nodejs-storage/compare/v2.5.0...v3.0.0) (2019-06-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* upgrade engines field to >=8.10.0 (#688)
+
+### Bug Fixes
+
+* **deps:** update dependency @google-cloud/common to v1 ([#705](https://www.github.com/googleapis/nodejs-storage/issues/705)) ([72a9f51](https://www.github.com/googleapis/nodejs-storage/commit/72a9f51))
+* **deps:** update dependency @google-cloud/paginator to v1 ([#695](https://www.github.com/googleapis/nodejs-storage/issues/695)) ([ada995e](https://www.github.com/googleapis/nodejs-storage/commit/ada995e))
+* **deps:** update dependency @google-cloud/promisify to v1 ([#693](https://www.github.com/googleapis/nodejs-storage/issues/693)) ([5df2f83](https://www.github.com/googleapis/nodejs-storage/commit/5df2f83))
+* **deps:** update dependency @google-cloud/pubsub to ^0.29.0 ([#714](https://www.github.com/googleapis/nodejs-storage/issues/714)) ([3ee1a2c](https://www.github.com/googleapis/nodejs-storage/commit/3ee1a2c))
+* **deps:** update dependency arrify to v2 ([#667](https://www.github.com/googleapis/nodejs-storage/issues/667)) ([ce02c27](https://www.github.com/googleapis/nodejs-storage/commit/ce02c27))
+* validate action of getSignedUrl() function ([#684](https://www.github.com/googleapis/nodejs-storage/issues/684)) ([1b09d24](https://www.github.com/googleapis/nodejs-storage/commit/1b09d24))
+* **deps:** update dependency date-and-time to ^0.7.0 ([#736](https://www.github.com/googleapis/nodejs-storage/issues/736)) ([7071f26](https://www.github.com/googleapis/nodejs-storage/commit/7071f26))
+* **deps:** update dependency xdg-basedir to v4 ([#681](https://www.github.com/googleapis/nodejs-storage/issues/681)) ([8b40e6a](https://www.github.com/googleapis/nodejs-storage/commit/8b40e6a))
+* **docs:** move to new client docs URL ([#738](https://www.github.com/googleapis/nodejs-storage/issues/738)) ([a637f99](https://www.github.com/googleapis/nodejs-storage/commit/a637f99))
+* **ts:** improve return types for response metadata ([#666](https://www.github.com/googleapis/nodejs-storage/issues/666)) ([da42bed](https://www.github.com/googleapis/nodejs-storage/commit/da42bed))
+* **types:** fix signatures of listing methods ([#703](https://www.github.com/googleapis/nodejs-storage/issues/703)) ([42937a8](https://www.github.com/googleapis/nodejs-storage/commit/42937a8))
+
+
+### Build System
+
+* upgrade engines field to >=8.10.0 ([#688](https://www.github.com/googleapis/nodejs-storage/issues/688)) ([6a1fa0f](https://www.github.com/googleapis/nodejs-storage/commit/6a1fa0f))
+
+
+### Features
+
+* add file.isPublic() function ([#708](https://www.github.com/googleapis/nodejs-storage/issues/708)) ([f86cadb](https://www.github.com/googleapis/nodejs-storage/commit/f86cadb))
+* support apiEndpoint override ([#728](https://www.github.com/googleapis/nodejs-storage/issues/728)) ([61eeb64](https://www.github.com/googleapis/nodejs-storage/commit/61eeb64))
+
+## v2.5.0
+
+04-04-2019 12:27 PDT
+
+This release brings an option to file#getSignedURL to create a version 4 Signed URL.
+
+```javascript
+file.getSignedUrl({
+  version: 'v4', // optional, defaults to v2 (existing version)
+  action: 'read',
+  expires: FUTURE_DATE,
+})
+```
+
+### New Features
+- feat: introduce v4 signed url ([#637](https://github.com/googleapis/nodejs-storage/pull/637))
+
+### Dependencies
+- chore(deps): update dependency @types/node to v11.13.0 ([#662](https://github.com/googleapis/nodejs-storage/pull/662))
+- chore(deps): update dependency @types/tmp to v0.1.0
+- chore(deps): upgrade to newest version of @google-cloud/common ([#657](https://github.com/googleapis/nodejs-storage/pull/657))
+- chore(deps): update dependency typescript to ~3.4.0
+- chore(deps): update dependency tmp to ^0.1.0 ([#641](https://github.com/googleapis/nodejs-storage/pull/641))
+
+### Documentation
+- docs: regenerate the samples/README.md ([#649](https://github.com/googleapis/nodejs-storage/pull/649))
+- docs: slight difference in how nightly synthtool run generated README ([#650](https://github.com/googleapis/nodejs-storage/pull/650))
+- docs: new synthtool generated README ([#645](https://github.com/googleapis/nodejs-storage/pull/645))
+- docs(samples): refactor the quickstart to match the new rubric ([#647](https://github.com/googleapis/nodejs-storage/pull/647))
+- docs: update README format
+- docs: add requires_billing, retire .cloud-repo-tools.json ([#644](https://github.com/googleapis/nodejs-storage/pull/644))
+- docs: add additional api_id field ([#640](https://github.com/googleapis/nodejs-storage/pull/640))
+- docs: document destination option ([#633](https://github.com/googleapis/nodejs-storage/pull/633))
+- docs: clarify in docs, the meaning of ASIA and coldline ([#632](https://github.com/googleapis/nodejs-storage/pull/632))
+- docs: add a .repo-metadata.json ([#639](https://github.com/googleapis/nodejs-storage/pull/639))
+
+### Internal / Testing Changes
+- test(v2-sign): add multi-valued headers system-test ([#646](https://github.com/googleapis/nodejs-storage/pull/646))
+- refactor: replace once with onetime ([#660](https://github.com/googleapis/nodejs-storage/pull/660))
+- fix: do not download cached files ([#643](https://github.com/googleapis/nodejs-storage/pull/643))
+- chore: publish to npm using wombat ([#634](https://github.com/googleapis/nodejs-storage/pull/634))
+- build: use per-repo npm publish token ([#630](https://github.com/googleapis/nodejs-storage/pull/630))
+
 ## v2.4.3
 
 03-13-2019 17:10 PDT
@@ -377,4 +481,3 @@ request(url).pipe(writeStream);
 - Fix permission of bash script for Kokoro (#223)
 - chore(package): update nyc to version 12.0.2 (#216)
 - chore: fix prettier incompatibility (#211)
-

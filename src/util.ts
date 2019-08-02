@@ -15,10 +15,23 @@
  */
 
 export function normalize<T = {}, U = Function>(
-    optionsOrCallback?: T|U, cb?: U) {
-  const options =
-      (typeof optionsOrCallback === 'object' ? optionsOrCallback : {}) as T;
-  const callback =
-      (typeof optionsOrCallback === 'function' ? optionsOrCallback : cb)! as U;
+  optionsOrCallback?: T | U,
+  cb?: U
+) {
+  const options = (typeof optionsOrCallback === 'object'
+    ? optionsOrCallback
+    : {}) as T;
+  const callback = (typeof optionsOrCallback === 'function'
+    ? optionsOrCallback
+    : cb)! as U;
   return {options, callback};
+}
+
+/**
+ * Flatten an object into an Array of arrays, [[key, value], ..].
+ * Implements Object.entries() for Node.js <8
+ * @internal
+ */
+export function objectEntries<T>(obj: {[key: string]: T}): Array<[string, T]> {
+  return Object.keys(obj).map(key => [key, obj[key]] as [string, T]);
 }

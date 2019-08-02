@@ -34,9 +34,7 @@ async function setRetentionPolicy(bucketName, retentionPeriod) {
     .bucket(bucketName)
     .setRetentionPeriod(retentionPeriod);
   console.log(
-    `Bucket ${bucketName} retention period set for ${
-      metadata.retentionPolicy.retentionPeriod
-    } seconds.`
+    `Bucket ${bucketName} retention period set for ${metadata.retentionPolicy.retentionPeriod} seconds.`
   );
   // [END storage_set_retention_policy]
 }
@@ -49,12 +47,12 @@ async function getRetentionPolicy(bucketName) {
   // Creates a client
   const storage = new Storage();
   const [metadata] = await storage.bucket(bucketName).getMetadata();
-  if (metadata.hasOwnProperty('retentionPolicy')) {
+  if (metadata.retentionPolicy) {
     const retentionPolicy = metadata.retentionPolicy;
     console.log('A retention policy exists!');
     console.log(`Period: ${retentionPolicy.retentionPeriod}`);
     console.log(`Effective time: ${retentionPolicy.effectiveTime}`);
-    if (retentionPolicy.hasOwnProperty('isLocked')) {
+    if (retentionPolicy.isLocked) {
       console.log('Policy is locked');
     } else {
       console.log('Policy is unlocked');
@@ -71,10 +69,7 @@ async function removeRetentionPolicy(bucketName) {
   // Creates a client
   const storage = new Storage();
   const [metadata] = await storage.bucket(bucketName).getMetadata();
-  if (
-    metadata.hasOwnProperty('retentionPolicy') &&
-    metadata.retentionPolicy.hasOwnProperty('isLocked')
-  ) {
+  if (metadata.retentionPolicy && metadata.retentionPolicy.isLocked) {
     console.log(
       'Unable to remove retention period as retention policy is locked.'
     );
@@ -104,9 +99,7 @@ async function lockRetentionPolicy(bucketName) {
     .lock(unlockedMetadata.metageneration);
   console.log(`Retention policy for ${bucketName} is now locked.`);
   console.log(
-    `Retention policy effective as of ${
-      lockedMetadata.retentionPolicy.effectiveTime
-    }`
+    `Retention policy effective as of ${lockedMetadata.retentionPolicy.effectiveTime}`
   );
 
   return lockedMetadata;
