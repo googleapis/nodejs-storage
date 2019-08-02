@@ -113,6 +113,7 @@ describe('Storage', () => {
 
     it('should streamify the correct methods', () => {
       assert.strictEqual(storage.getBucketsStream, 'getBuckets');
+      assert.strictEqual(storage.getHmacKeysStream, 'getHmacKeys');
     });
 
     it('should promisify all the things', () => {
@@ -196,7 +197,7 @@ describe('Storage', () => {
     it('should throw if accessId is not provided', () => {
       assert.throws(() => {
         storage.hmacKey();
-      }, /access ID is needed/);
+      }, /An access ID is needed to create an HmacKey object./);
     });
   });
 
@@ -245,7 +246,7 @@ describe('Storage', () => {
     it('should throw without a serviceAccountEmail', () => {
       assert.throws(
         () => storage.createHmacKey(),
-        /must be a service account email/
+        /The first argument must be a service account email to create an HMAC key\./,
       );
     });
 
@@ -255,7 +256,7 @@ describe('Storage', () => {
           storage.createHmacKey({
             userProject: 'my-project',
           }),
-        /must be a service account email/
+        /The first argument must be a service account email to create an HMAC key\./
       );
     });
 

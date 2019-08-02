@@ -28,9 +28,6 @@ let hmacKey: any;
 
 const ACCESS_ID = 'fake-access-id';
 
-const SERVICE_ACCOUNT_EMAIL = 'service-account@gserviceaccount.com';
-const PROJECT_ID = 'project-id';
-
 describe('HmacKey', () => {
   beforeEach(() => {
     sandbox = sinon.createSandbox();
@@ -41,7 +38,6 @@ describe('HmacKey', () => {
   });
 
   describe('initialization', () => {
-    let promisifyAllStub: sinon.SinonStub;
     // tslint:disable-next-line: no-any
     let serviceObjectSpy: sinon.SinonSpy;
     // tslint:disable-next-line: no-any
@@ -50,15 +46,11 @@ describe('HmacKey', () => {
     let HmacKey: any;
 
     beforeEach(() => {
-      promisifyAllStub = sandbox.stub();
       commonModule = {ServiceObject};
       serviceObjectSpy = sandbox.spy(commonModule, 'ServiceObject');
 
       HmacKey = proxyquire('../src/hmacKey', {
         '@google-cloud/common': commonModule,
-        '@google-cloud/promisify': {
-          promisifyAll: promisifyAllStub,
-        },
       }).HmacKey;
 
       STORAGE = {
@@ -66,14 +58,6 @@ describe('HmacKey', () => {
       };
 
       hmacKey = new HmacKey(STORAGE, ACCESS_ID);
-    });
-
-    it('should promisify all the things', () => {
-      assert(promisifyAllStub.calledOnce);
-    });
-
-    it('should assign Storage instance', () => {
-      assert.strictEqual(hmacKey.parent, STORAGE);
     });
 
     it('should inherit from ServiceObject', () => {
