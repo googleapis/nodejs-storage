@@ -18,7 +18,7 @@
 const {Storage} = require(`@google-cloud/storage`);
 const {assert} = require('chai');
 const cp = require('child_process');
-const cmd = 'node hmacKey.js';
+
 const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
 const storage = new Storage({
@@ -27,7 +27,6 @@ const storage = new Storage({
 });
 
 const leasedServiceAccount = process.env.HMAC_SERVICE_ACCOUNT;
-const [hmacKey, secret] = await cleanUpHmacKeys(leasedServiceAccount);
 
 async function cleanUpHmacKeys(serviceAccountEmail) {
   // list all HMAC keys for the given service account.
@@ -42,39 +41,44 @@ async function cleanUpHmacKeys(serviceAccountEmail) {
   }
 }
 
+before(async () => {
+  await cleanUpHmacKeys(leasedServiceAccount);
+  const [hmacKey, secret] = await storage.createHmacKey(leasedServiceAccount);
+});
+
 after(async () => {
   return bucket.delete().catch(console.error);
 });
 
-it('should create an HMAC Key', async () => {
-  const output = execSync(`${cmd} create-hmac-key ${leasedServiceAccount}`);
+it.only('should create an HMAC Key', async () => {
+  const output = execSync(`node hmacKeyCreate.js ${leasedServiceAccount}`);
   assert.match(output, new RegExp(`The base64 encoded secret is:`));
   assert.strictEqual(exists, true);
 });
 
-it('should list HMAC Keys', () => {
-  const output = execSync(`${cmd} list-hmac-keys`);
+it.only('should list HMAC Keys', () => {
+  const output = execSync(`node hmacKeysList.js list-hmac-keys`);
   assert.contains(output, `Service Account Email: ${leasedServiceAccount}`);
 });
 
-it('should get HMAC Key', () => {
-  const output = execSync(`${cmd} get-hmac-keys ${hmacKey}`);
+it.only('should get HMAC Key', () => {
+  const output = execSync(`node hmacKeyGet.js get-hmac-keys ${hmacKey}`);
   assert.match(output, /The HMAC key metadata is:/);
 });
 
-it('should deactivate HMAC Key', () => {
-  const output = execSync(`${cmd} deactivate-hmac-key ${hmacKey}`);
+it.only('should deactivate HMAC Key', () => {
+  const output = execSync(`node hmacKeyDeactivate.js ${hmacKey}`);
   assert.match(output, /The HMAC key is now inactive./);
 });
 
-it('should activate HMAC Key', () => {
-  const output = execSync(`${cmd} activate-hmac-key ${hmacKey}`);
+it.only('should activate HMAC Key', () => {
+  const output = execSync(`node hmacKeyActivate.js ${hmacKey}`);
   assert.match(output, /The HMAC key is now active./);
 });
 
-it(`should delete HMAC key`, async () => {
+it.only(`should delete HMAC key`, async () => {
   // Deactivate then delete
-  execSync(`${cmd} deactivate-hmac-key ${hmacKey}`);
-  const output = execSync(`${cmd} delete-hmac-key ${hmacKey}`);
+  execSync(`node hmacKeyDeactivate.js ${hmacKey}`);
+  const output = execSync(`node hmacKeyDelete.js ${hmacKey}`);
   assert.match(output, new RegExp(`The key is deleted, though it may still appear in getHmacKeys() results.`));
 });
