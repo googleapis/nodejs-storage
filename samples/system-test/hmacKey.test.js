@@ -29,7 +29,7 @@ const storage = new Storage({
 });
 const leasedServiceAccount = process.env.HMAC_SERVICE_ACCOUNT;
 
-describe.only('HMAC SA Key samples', () => {
+describe('HMAC SA Key samples', () => {
   let hmacKey;
 
   before(async () => {
