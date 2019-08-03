@@ -20,14 +20,14 @@ const {assert} = require('chai');
 const cp = require('child_process');
 
 const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
-const poolProjectId = process.env.POOL_PROJECT_ID;
-const poolProjectCredentials = process.env.POOL_PROJECT_CREDENTIALS;
+const poolProjectId = process.env.POOL_SAMPLES_PROJECT_ID;
+const poolProjectCredentials = process.env.POOL_SAMPLES_PROJECT_CREDENTIALS;
 
 const storage = new Storage({
   projectId: poolProjectId,
   keyFilename: poolProjectCredentials,
 });
-const leasedServiceAccount = process.env.HMAC_SERVICE_ACCOUNT;
+const leasedServiceAccount = process.env.SAMPLES_HMAC_SERVICE_ACCOUNT;
 
 describe('HMAC SA Key samples', () => {
   let hmacKey;
