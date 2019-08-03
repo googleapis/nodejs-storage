@@ -26,4 +26,4 @@ export GOOGLE_CLOUD_KMS_KEY_US="projects/long-door-651/locations/us/keyRings/tes
 # TODO: Switch with service-account pool
 export POOL_SAMPLES_PROJECT_ID=long-door-651
 export POOL_SAMPLES_PROJECT_CREDENTIALS="${KOKORO_GFILE_DIR}/storage-hmac-samples-key.json"
-export SAMPLES_HMAC_SERVICE_ACCOUNT=storage-"key-hmac-samples@long-door-651.iam.gserviceaccount.com"
+export SAMPLES_HMAC_SERVICE_ACCOUNT="storage-key-hmac-samples@long-door-651.iam.gserviceaccount.com"
