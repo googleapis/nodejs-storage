@@ -22,3 +22,8 @@ export GCN_STORAGE_2ND_PROJECT_KEY=${KOKORO_GFILE_DIR}/no-whitelist-key.json
 
 export GOOGLE_CLOUD_KMS_KEY_ASIA="projects/long-door-651/locations/asia/keyRings/test-key-asia/cryptoKeys/test-key-asia"
 export GOOGLE_CLOUD_KMS_KEY_US="projects/long-door-651/locations/us/keyRings/test-key-us/cryptoKeys/test-key-us"
+
+# TODO: Switch with service-account pool
+export POOL_SAMPLES_PROJECT_ID=long-door-651
+export POOL_SAMPLES_PROJECT_CREDENTIALS="${KOKORO_GFILE_DIR}/storage-hmac-samples-key.json"
+export SAMPLES_HMAC_SERVICE_ACCOUNT="storage-key-hmac-samples@long-door-651.iam.gserviceaccount.com"
