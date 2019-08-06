@@ -22,7 +22,7 @@
 //   usage: node hmacKeyGet.js <hmacKeyAccessId>
 
 function main(hmacKeyAccessId = 'GOOG0234230X00') {
-  // [START storage_deactivate_hmac_key]
+  // [START storage_get_hmac_key]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
