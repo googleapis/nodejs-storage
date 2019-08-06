@@ -2191,7 +2191,9 @@ describe('storage', () => {
                     // stop sending data half way through.
                     this.push(chunk);
                     this.destroy();
-                    ws.destroy(new Error('Interrupted.'));
+                    process.nextTick(() =>
+                      ws.destroy(new Error('Interrupted.'))
+                    );
                   } else {
                     this.push(chunk);
                     next();
