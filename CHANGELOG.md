@@ -4,6 +4,15 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [3.0.5](https://www.github.com/googleapis/nodejs-storage/compare/v3.0.4...v3.0.5) (2019-08-07)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @google-cloud/paginator to v2 ([#781](https://www.github.com/googleapis/nodejs-storage/issues/781)) ([23244e9](https://www.github.com/googleapis/nodejs-storage/commit/23244e9))
+* **deps:** update dependency @google-cloud/pubsub to ^0.30.0 ([#778](https://www.github.com/googleapis/nodejs-storage/issues/778)) ([7256650](https://www.github.com/googleapis/nodejs-storage/commit/7256650))
+* allow calls with no request, add JSON proto ([30fff15](https://www.github.com/googleapis/nodejs-storage/commit/30fff15))
+
 ### [3.0.4](https://www.github.com/googleapis/nodejs-storage/compare/v3.0.3...v3.0.4) (2019-07-25)
 
 
