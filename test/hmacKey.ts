@@ -55,6 +55,7 @@ describe('HmacKey', () => {
 
       STORAGE = {
         request: util.noop,
+        projectId: 'my-project',
       };
 
       hmacKey = new HmacKey(STORAGE, ACCESS_ID);
@@ -65,6 +66,7 @@ describe('HmacKey', () => {
       const ctorArg = serviceObjectSpy.firstCall.args[0];
       assert(ctorArg.parent, STORAGE);
       assert(ctorArg.id, ACCESS_ID);
+      assert(ctorArg.baseUrl, '/projects/my-project/hmacKeys');
       assert.deepStrictEqual(ctorArg.methods, {
         delete: true,
         get: true,
@@ -75,6 +77,12 @@ describe('HmacKey', () => {
           },
         },
       });
+    });
+
+    it('should use projectId in options as baseUrl if given', () => {
+      hmacKey = new HmacKey(STORAGE, ACCESS_ID, {projectId: 'another-project'});
+      const ctorArg = serviceObjectSpy.firstCall.args[0];
+      assert(ctorArg.baseUrl, '/projects/another-project/hmacKeys');
     });
   });
 });

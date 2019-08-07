@@ -33,6 +33,9 @@ import sinon = require('sinon');
 import {HmacKey} from '../src/hmacKey';
 import {HmacKeyResourceResponse} from '../src/storage';
 
+const hmacKeyModule = require('../src/hmacKey');
+const FakeHmacKey = hmacKeyModule.HmacKey;
+
 class FakeChannel {
   calledWith_: Array<{}>;
   constructor(...args: Array<{}>) {
@@ -98,6 +101,7 @@ describe('Storage', () => {
         Service: FakeService,
       },
       './channel.js': {Channel: FakeChannel},
+      './hmacKey': hmacKeyModule,
     }).Storage;
     Bucket = Storage.Bucket;
   });
@@ -194,10 +198,29 @@ describe('Storage', () => {
   });
 
   describe('hmacKey', () => {
+    let hmacKeyCtor: sinon.SinonSpy;
+    beforeEach(() => {
+      hmacKeyCtor = sinon.spy(hmacKeyModule, 'HmacKey');
+    });
+
+    afterEach(() => {
+      hmacKeyCtor.restore();
+    });
+
     it('should throw if accessId is not provided', () => {
       assert.throws(() => {
         storage.hmacKey();
       }, /An access ID is needed to create an HmacKey object./);
+    });
+
+    it('should pass options object to HmacKey constructor', () => {
+      const options = {myOpts: 'a'};
+      storage.hmacKey('access-id', options);
+      assert.deepStrictEqual(hmacKeyCtor.getCall(0).args, [
+        storage,
+        'access-id',
+        options,
+      ]);
     });
   });
 
@@ -221,6 +244,15 @@ describe('Storage', () => {
     const OPTIONS = {
       some: 'value',
     };
+
+    let hmacKeyCtor: sinon.SinonSpy;
+    beforeEach(() => {
+      hmacKeyCtor = sinon.spy(hmacKeyModule, 'HmacKey');
+    });
+
+    afterEach(() => {
+      hmacKeyCtor.restore();
+    });
 
     it('should make correct API request', done => {
       storage.request = (
@@ -296,7 +328,11 @@ describe('Storage', () => {
         (err: Error, hmacKey: HmacKey, secret: string) => {
           assert.ifError(err);
           assert.strictEqual(secret, response.secret);
-          assert(hmacKey instanceof HmacKey);
+          assert.deepStrictEqual(hmacKeyCtor.getCall(0).args, [
+            storage,
+            response.metadata.accessId,
+            {projectId: response.metadata.projectId},
+          ]);
           assert.strictEqual(hmacKey.metadata, metadataResponse);
           done();
         }
@@ -683,6 +719,15 @@ describe('Storage', () => {
       });
     });
 
+    let hmacKeyCtor: sinon.SinonSpy;
+    beforeEach(() => {
+      hmacKeyCtor = sinon.spy(hmacKeyModule, 'HmacKey');
+    });
+
+    afterEach(() => {
+      hmacKeyCtor.restore();
+    });
+
     it('should get HmacKeys without a query', done => {
       storage.getHmacKeys(() => {
         const firstArg = storage.request.firstCall.args[0];
@@ -790,7 +835,11 @@ describe('Storage', () => {
 
       storage.getHmacKeys((err: Error, hmacKeys: HmacKey[]) => {
         assert.ifError(err);
-        assert(hmacKeys![0] instanceof HmacKey);
+        assert.deepStrictEqual(hmacKeyCtor.getCall(0).args, [
+          storage,
+          metadataResponse.accessId,
+          {projectId: metadataResponse.projectId}
+        ]);
         assert.deepStrictEqual(hmacKeys[0].metadata, metadataResponse);
         done();
       });

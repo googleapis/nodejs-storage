@@ -17,6 +17,10 @@
 import {Metadata, ServiceObject} from '@google-cloud/common';
 import {Storage} from './storage';
 
+export interface HmacKeyOptions {
+  projectId?: string;
+}
+
 export interface HmacKeyMetadata {
   accessId: string;
   etag?: string;
@@ -59,6 +63,12 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
   metadata: HmacKeyMetadata | undefined;
 
   /**
+   * @typedef {object} HmacKeyOptions
+   * @property {string} [projectId] The project ID of the project that owns
+   *     the service account of the requested HMAC key. If not provided,
+   *     the project ID used to instantiate the Storage client will be used.
+   */
+  /**
    * Constructs an HmacKey object.
    *
    * Note: this only create a local reference to an HMAC key, to create
@@ -67,12 +77,13 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
    * @param {Storage} storage The Storage instance this HMAC key is
    *     attached to.
    * @param {string} accessId The unique accessId for this HMAC key.
+   * @param {HmacKeyOptions} options Constructor configurations.
    * @example
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const hmacKey = storage.hmacKey('access-id');
    */
-  constructor(storage: Storage, accessId: string) {
+  constructor(storage: Storage, accessId: string, options?: HmacKeyOptions) {
     const methods = {
       /**
        * @typedef {object} DeleteHmacKeyOptions
@@ -303,10 +314,14 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
       },
     };
 
+    const projectId =
+      (options && options.projectId) ||
+      storage.projectId;
+
     super({
       parent: storage,
-      baseUrl: `/projects/${storage.projectId}/hmacKeys`,
       id: accessId,
+      baseUrl: `/projects/${projectId}/hmacKeys`,
       methods,
     });
   }
