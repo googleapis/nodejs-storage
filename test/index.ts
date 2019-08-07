@@ -34,7 +34,6 @@ import {HmacKey} from '../src/hmacKey';
 import {HmacKeyResourceResponse} from '../src/storage';
 
 const hmacKeyModule = require('../src/hmacKey');
-const FakeHmacKey = hmacKeyModule.HmacKey;
 
 class FakeChannel {
   calledWith_: Array<{}>;
@@ -838,7 +837,7 @@ describe('Storage', () => {
         assert.deepStrictEqual(hmacKeyCtor.getCall(0).args, [
           storage,
           metadataResponse.accessId,
-          {projectId: metadataResponse.projectId}
+          {projectId: metadataResponse.projectId},
         ]);
         assert.deepStrictEqual(hmacKeys[0].metadata, metadataResponse);
         done();

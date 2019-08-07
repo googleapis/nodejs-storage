@@ -314,9 +314,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
       },
     };
 
-    const projectId =
-      (options && options.projectId) ||
-      storage.projectId;
+    const projectId = (options && options.projectId) || storage.projectId;
 
     super({
       parent: storage,
