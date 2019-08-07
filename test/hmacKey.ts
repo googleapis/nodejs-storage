@@ -79,7 +79,7 @@ describe('HmacKey', () => {
       });
     });
 
-    it('should use projectId in options as baseUrl if given', () => {
+    it('should form baseUrl using options.projectId if given', () => {
       hmacKey = new HmacKey(STORAGE, ACCESS_ID, {projectId: 'another-project'});
       const ctorArg = serviceObjectSpy.firstCall.args[0];
       assert(ctorArg.baseUrl, '/projects/another-project/hmacKeys');
