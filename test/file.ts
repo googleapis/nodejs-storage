@@ -1020,12 +1020,12 @@ describe('File', () => {
 
         it('should emit errors from the request stream', done => {
           const error = new Error('Error.');
-          const rawResponseStream = through();
+          const rawResponseStream = new stream.PassThrough();
           // tslint:disable-next-line:no-any
           (rawResponseStream as any).toJSON = () => {
             return {headers: {}};
           };
-          const requestStream = through();
+          const requestStream = new stream.PassThrough();
 
           handleRespOverride = (
             err: Error,
@@ -1057,12 +1057,12 @@ describe('File', () => {
 
         it('should not handle both error and end events', done => {
           const error = new Error('Error.');
-          const rawResponseStream = through();
+          const rawResponseStream = new stream.PassThrough();
           // tslint:disable-next-line:no-any
           (rawResponseStream as any).toJSON = () => {
             return {headers: {}};
           };
-          const requestStream = through();
+          const requestStream = new stream.PassThrough();
 
           handleRespOverride = (
             err: Error,

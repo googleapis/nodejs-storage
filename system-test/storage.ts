@@ -2033,17 +2033,21 @@ describe('storage', () => {
       });
     });
 
-    it('should support readable[Symbol.asyncIterator]()', async () => {
-      const fileContents = fs.readFileSync(FILES.big.path);
+    (Number(process.versions.node.split('.')[0]) < 10
+      ? describe
+      : describe.skip)('Node 10 and up', () => {
+      it('should support readable[Symbol.asyncIterator]()', async () => {
+        const fileContents = fs.readFileSync(FILES.big.path);
 
-      const [file] = await bucket.upload(FILES.big.path);
-      const stream = file.createReadStream();
-      const chunks: Buffer[] = [];
-      for await (const chunk of stream) {
-        chunks.push(chunk);
-      }
-      const remoteContents = Buffer.concat(chunks).toString();
-      assert.strictEqual(String(fileContents), String(remoteContents));
+        const [file] = await bucket.upload(FILES.big.path);
+        const stream = file.createReadStream();
+        const chunks: Buffer[] = [];
+        for await (const chunk of stream) {
+          chunks.push(chunk);
+        }
+        const remoteContents = Buffer.concat(chunks).toString();
+        assert.strictEqual(String(fileContents), String(remoteContents));
+      });
     });
 
     it('should download a file to memory', done => {
