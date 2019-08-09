@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {Metadata, ServiceObject} from '@google-cloud/common';
+import {Metadata, ServiceObject, Methods} from '@google-cloud/common';
 import {Storage} from './storage';
 
 export interface HmacKeyOptions {
@@ -312,7 +312,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
           method: 'PUT',
         },
       },
-    };
+    } as Methods;
 
     const projectId = (options && options.projectId) || storage.projectId;
 
