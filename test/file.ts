@@ -2024,6 +2024,21 @@ describe('File', () => {
     });
   });
 
+  describe('deleteResumableCache', () => {
+    it('should delete resumable file upload cache', done => {
+      resumableUploadOverride = {
+        upload() {
+          return {
+            deleteConfig: () => {
+              done();
+            },
+          };
+        },
+      };
+      file.deleteResumableCache();
+    });
+  });
+
   describe('download', () => {
     let fileReadStream: Readable;
 
@@ -3971,21 +3986,6 @@ describe('File', () => {
       };
 
       file.setUserProject(userProject);
-    });
-  });
-
-  describe('deleteResumableCache', () => {
-    it('should delete resumable file upload cache', done => {
-      resumableUploadOverride = {
-        upload() {
-          return {
-            deleteConfig: () => {
-              done();
-            },
-          };
-        },
-      };
-      file.deleteResumableCache();
     });
   });
 });
