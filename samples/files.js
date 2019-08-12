@@ -218,10 +218,10 @@ async function uploadDirectory(bucketName, directoryPath) {
       })
     );
 
+    const successfulUploads =
+      fileList.length - resp.filter(r => r.status instanceof Error).length;
     console.log(
-      `${fileList.length -
-        resp.filter(r => r.status instanceof Error)
-          .length} files uploaded to ${bucketName} successfully.`
+      `${successfulUploads} files uploaded to ${bucketName} successfully.`
     );
   }
   // [END upload_directory]
