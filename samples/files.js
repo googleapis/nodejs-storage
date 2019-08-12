@@ -154,6 +154,11 @@ async function uploadFileWithKmsKey(bucketName, filename, kmsKeyName) {
   // [END storage_upload_with_kms_key]
 }
 
+// sample-metadata:
+//   title: Upload a diretory to a bucket.
+//   description: Uploads full hierarchy of a local directory to a bucket.
+//   usage: node files.js <bucketName> <directoryPath>
+
 async function uploadDirectory(bucketName, directoryPath) {
   // [START upload_directory]
   // Imports the Google Cloud client library
