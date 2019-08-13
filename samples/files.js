@@ -157,7 +157,7 @@ async function uploadFileWithKmsKey(bucketName, filename, kmsKeyName) {
 // sample-metadata:
 //   title: Upload a diretory to a bucket.
 //   description: Uploads full hierarchy of a local directory to a bucket.
-//   usage: node files.js <bucketName> <directoryPath>
+//   usage: node files.js upload-directory <bucketName> <directoryPath>
 
 async function uploadDirectory(bucketName, directoryPath) {
   // [START upload_directory]
