@@ -179,6 +179,7 @@ export type PredefinedAcl =
   | 'publicRead';
 
 export interface CreateResumableUploadOptions {
+  configPath?: string;
   metadata?: Metadata;
   origin?: string;
   offset?: number;
@@ -1426,6 +1427,10 @@ class File extends ServiceObject<File> {
    */
   /**
    * @typedef {object} CreateResumableUploadOptions
+   * @property {string} [configPath] Where the `gcs-resumable-upload`
+   *     configuration file should be stored on your system. This maps to the
+   *     [configstore option by the same
+   * name](https://github.com/yeoman/configstore/tree/0df1ec950d952b1f0dfb39ce22af8e505dffc71a#configpath).
    * @property {object} [metadata] Metadata to set on the file.
    * @property {string} [origin] Origin header to set for the upload.
    * @property {string} [predefinedAcl] Apply a predefined set of access
@@ -1509,6 +1514,7 @@ class File extends ServiceObject<File> {
       {
         authClient: this.storage.authClient,
         bucket: this.bucket.name,
+        configPath: options.configPath,
         file: this.name,
         generation: this.generation,
         key: this.encryptionKey,
@@ -1527,6 +1533,10 @@ class File extends ServiceObject<File> {
 
   /**
    * @typedef {object} CreateWriteStreamOptions Configuration options for File#createWriteStream().
+   * @property {string} [configPath] **This only applies to resumable
+   *     uploads.** Where the `gcs-resumable-upload` configuration file should
+   * be stored on your system. This maps to the [configstore option by the same
+   * name](https://github.com/yeoman/configstore/tree/0df1ec950d952b1f0dfb39ce22af8e505dffc71a#configpath).
    * @property {string} [contentType] Alias for
    *     `options.metadata.contentType`. If set to `auto`, the file name is used
    *     to determine the contentType.
@@ -2304,6 +2314,8 @@ class File extends ServiceObject<File> {
    *     for this HTTP header in its request.
    * @param {*} config.expires A timestamp when this link will expire. Any value
    *     given is passed to `new Date()`.
+   *     Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
+   *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
    * @param {object} [config.extensionHeaders] If these headers are used, the
    *     server will check to make sure that the client provides matching
    * values. See [Canonical extension
@@ -3255,6 +3267,7 @@ class File extends ServiceObject<File> {
     const uploadStream = resumableUpload.upload({
       authClient: this.storage.authClient,
       bucket: this.bucket.name,
+      configPath: options.configPath,
       file: this.name,
       generation: this.generation,
       key: this.encryptionKey,

@@ -959,6 +959,46 @@ describe('storage', () => {
       assert.strictEqual(metadata.storageClass, 'MULTI_REGIONAL');
     });
 
+    describe('locationType', () => {
+      const types = ['multi-region', 'region', 'dual-region'];
+
+      beforeEach(() => {
+        delete bucket.metadata;
+      });
+
+      it('should be available from getting a bucket', async () => {
+        const [metadata] = await bucket.getMetadata();
+        assert(types.includes(metadata.locationType));
+      });
+
+      it('should be available from creating a bucket', async () => {
+        const [bucket] = await storage.createBucket(generateName());
+        assert(types.includes(bucket.metadata.locationType));
+        return bucket.delete();
+      });
+
+      it('should be available from listing buckets', async () => {
+        const [buckets] = await storage.getBuckets();
+
+        assert(buckets.length > 0);
+
+        buckets.forEach(bucket => {
+          assert(types.includes(bucket.metadata.locationType));
+        });
+      });
+
+      it('should be available from setting retention policy', async () => {
+        await bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS);
+        assert(types.includes(bucket.metadata.locationType));
+        await bucket.removeRetentionPeriod();
+      });
+
+      it('should be available from updating a bucket', async () => {
+        await bucket.setLabels({a: 'b'});
+        assert(types.includes(bucket.metadata.locationType));
+      });
+    });
+
     describe('labels', () => {
       const LABELS = {
         label: 'labelvalue', // no caps or spaces allowed (?)
@@ -1968,6 +2008,34 @@ describe('storage', () => {
         });
     });
 
+    it('should thow orignal error message on non JSON response on large metadata', async () => {
+      const largeCustomMeta = (size: number) => {
+        let str = '';
+        for (let i = 0; i < size; i++) {
+          str += 'a';
+        }
+        return str;
+      };
+
+      const file = bucket.file('large-metadata-error-test');
+      // Save file with metadata size more then 2MB.
+      await assert.rejects(
+        async () => {
+          await file.save('test', {
+            resumable: false,
+            metadata: {
+              metadata: {
+                custom: largeCustomMeta(2.1e6),
+              },
+            },
+          });
+        },
+        {
+          message: 'Cannot parse response as JSON: Metadata part is too large.',
+        }
+      );
+    });
+
     it('should read a byte range from a file', done => {
       bucket.upload(FILES.big.path, (err: Error | null, file?: File | null) => {
         assert.ifError(err);
@@ -2138,7 +2206,9 @@ describe('storage', () => {
                     // stop sending data half way through.
                     this.push(chunk);
                     this.destroy();
-                    ws.destroy(new Error('Interrupted.'));
+                    process.nextTick(() => {
+                      ws.destroy(new Error('Interrupted.'));
+                    });
                   } else {
                     this.push(chunk);
                     next();

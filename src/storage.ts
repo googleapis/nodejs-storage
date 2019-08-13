@@ -25,7 +25,7 @@ import {Bucket} from './bucket';
 import {Channel} from './channel';
 import {File} from './file';
 import {normalize} from './util';
-import {HmacKey, HmacKeyMetadata} from './hmacKey';
+import {HmacKey, HmacKeyMetadata, HmacKeyOptions} from './hmacKey';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -108,6 +108,7 @@ export interface HmacKeyResourceResponse {
 export type CreateHmacKeyResponse = [HmacKey, string, HmacKeyResourceResponse];
 
 export interface CreateHmacKeyOptions {
+  projectId?: string;
   userProject?: string;
 }
 
@@ -121,6 +122,7 @@ export interface CreateHmacKeyCallback {
 }
 
 export interface GetHmacKeysOptions {
+  projectId?: string;
   serviceAccountEmail?: string;
   showDeletedKeys?: boolean;
   autoPaginate?: boolean;
@@ -189,6 +191,15 @@ export class Storage extends Service {
    * @type {Constructor}
    */
   static File: typeof File = File;
+
+  /**
+   * {@link HmacKey} class.
+   *
+   * @name Storage.HmacKey
+   * @see HmacKey
+   * @type {Constructor}
+   */
+  static HmacKey: typeof HmacKey = HmacKey;
 
   /**
    * Cloud Storage uses access control lists (ACLs) to manage object and
@@ -362,9 +373,12 @@ export class Storage extends Service {
    */
   constructor(options: StorageOptions = {}) {
     options.apiEndpoint = options.apiEndpoint || 'www.googleapis.com';
+    const url =
+      process.env.STORAGE_EMULATOR_HOST ||
+      `https://${options.apiEndpoint}/storage/v1`;
     const config = {
       apiEndpoint: options.apiEndpoint,
-      baseUrl: `https://${options.apiEndpoint}/storage/v1`,
+      baseUrl: url,
       projectIdRequired: false,
       scopes: [
         'https://www.googleapis.com/auth/iam',
@@ -637,6 +651,9 @@ export class Storage extends Service {
   ): void;
   /**
    * @typedef {object} CreateHmacKeyOptions
+   * @property {string} [projectId] The project ID of the project that owns
+   *     the service account of the requested HMAC key. If not provided,
+   *     the project ID used to instantiate the Storage client will be used.
    * @property {string} [userProject] This parameter is currently ignored.
    */
   /**
@@ -719,11 +736,13 @@ export class Storage extends Service {
       CreateHmacKeyCallback
     >(optionsOrCb, cb);
     const query = Object.assign({}, options, {serviceAccountEmail});
+    const projectId = query.projectId || this.projectId;
+    delete query.projectId;
 
     this.request(
       {
         method: 'POST',
-        uri: `/projects/${this.projectId}/hmacKeys`,
+        uri: `/projects/${projectId}/hmacKeys`,
         qs: query,
       },
       (err, resp: HmacKeyResourceResponse) => {
@@ -732,7 +751,10 @@ export class Storage extends Service {
           return;
         }
 
-        const hmacKey = new HmacKey(this, resp.metadata.accessId);
+        const metadata = resp.metadata;
+        const hmacKey = this.hmacKey(metadata.accessId, {
+          projectId: metadata.projectId,
+        });
         hmacKey.metadata = resp.metadata;
 
         callback!(null, hmacKey, resp.secret, resp);
@@ -858,6 +880,9 @@ export class Storage extends Service {
    * Query object for listing HMAC keys.
    *
    * @typedef {object} GetHmacKeysOptions
+   * @property {string} [projectId] The project ID of the project that owns
+   *     the service account of the requested HMAC key. If not provided,
+   *     the project ID used to instantiate the Storage client will be used.
    * @property {string} [serviceAccountEmail] If present, only HMAC keys for the
    *     given service account are returned.
    * @property {boolean} [showDeletedKeys=false] If true, include keys in the DELETE
@@ -932,11 +957,14 @@ export class Storage extends Service {
     cb?: GetHmacKeysCallback
   ): Promise<GetHmacKeysResponse> | void {
     const {options, callback} = normalize<GetHmacKeysOptions>(optionsOrCb, cb);
+    const query = Object.assign({}, options);
+    const projectId = query.projectId || this.projectId;
+    delete query.projectId;
 
     this.request(
       {
-        uri: `/projects/${this.projectId}/hmacKeys`,
-        qs: options,
+        uri: `/projects/${projectId}/hmacKeys`,
+        qs: query,
       },
       (err, resp) => {
         if (err) {
@@ -944,8 +972,10 @@ export class Storage extends Service {
           return;
         }
 
-        const hmacKeys = arrify(resp.items).map((hmacKey: Metadata) => {
-          const hmacKeyInstance = this.hmacKey(hmacKey.accessId);
+        const hmacKeys = arrify(resp.items).map((hmacKey: HmacKeyMetadata) => {
+          const hmacKeyInstance = this.hmacKey(hmacKey.accessId, {
+            projectId: hmacKey.projectId,
+          });
           hmacKeyInstance.metadata = hmacKey;
           return hmacKeyInstance;
         });
@@ -1058,7 +1088,12 @@ export class Storage extends Service {
    * Note: this does not fetch the HMAC key's metadata. Use HmacKey#get() to
    * retrieve and populate the metadata.
    *
+   * To get a reference to an HMAC key that's not created for a service
+   * account in the same project used to instantiate the Storage client,
+   * supply the project's ID as `projectId` in the `options` argument.
+   *
    * @param {string} accessId The HMAC key's access ID.
+   * @param {HmacKeyOptions} options HmacKey constructor owptions.
    * @returns {HmacKey}
    * @see HmacKey
    *
@@ -1067,8 +1102,12 @@ export class Storage extends Service {
    * const storage = new Storage();
    * const hmacKey = storage.hmacKey('ACCESS_ID');
    */
-  hmacKey(accessId: string) {
-    return new HmacKey(this, accessId);
+  hmacKey(accessId: string, options?: HmacKeyOptions) {
+    if (!accessId) {
+      throw new Error('An access ID is needed to create an HmacKey object.');
+    }
+
+    return new HmacKey(this, accessId, options);
   }
 }
 

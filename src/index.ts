@@ -186,9 +186,8 @@ export {
   HmacKeyMetadata,
   HmacKeyMetadataCallback,
   HmacKeyMetadataResponse,
-  ToggleHmacKeyOptions,
-  UpdateHmacKeyMetadata,
-  UpdateHmacKeyOptions,
+  SetHmacKeyMetadata,
+  SetHmacKeyMetadataOptions,
 } from './hmacKey';
 export {
   GetPolicyCallback,

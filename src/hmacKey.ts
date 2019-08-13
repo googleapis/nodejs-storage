@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import {Metadata, ServiceObject} from '@google-cloud/common';
-import {promisifyAll} from '@google-cloud/promisify';
-
+import {Metadata, ServiceObject, Methods} from '@google-cloud/common';
 import {Storage} from './storage';
-import {normalize} from './util';
+
+export interface HmacKeyOptions {
+  projectId?: string;
+}
 
 export interface HmacKeyMetadata {
   accessId: string;
@@ -31,19 +32,15 @@ export interface HmacKeyMetadata {
   updated?: string;
 }
 
-export interface UpdateHmacKeyOptions {
+export interface SetHmacKeyMetadataOptions {
   /**
    * This parameter is currently ignored.
    */
   userProject?: string;
 }
 
-export interface UpdateHmacKeyMetadata {
+export interface SetHmacKeyMetadata {
   state?: 'ACTIVE' | 'INACTIVE';
-  etag?: string;
-}
-
-export interface ToggleHmacKeyOptions {
   etag?: string;
 }
 
@@ -63,9 +60,14 @@ export type HmacKeyMetadataResponse = [HmacKeyMetadata, Metadata];
  * @class
  */
 export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
-  accessId: string;
   metadata: HmacKeyMetadata | undefined;
 
+  /**
+   * @typedef {object} HmacKeyOptions
+   * @property {string} [projectId] The project ID of the project that owns
+   *     the service account of the requested HMAC key. If not provided,
+   *     the project ID used to instantiate the Storage client will be used.
+   */
   /**
    * Constructs an HmacKey object.
    *
@@ -75,16 +77,13 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
    * @param {Storage} storage The Storage instance this HMAC key is
    *     attached to.
    * @param {string} accessId The unique accessId for this HMAC key.
+   * @param {HmacKeyOptions} options Constructor configurations.
    * @example
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const hmacKey = storage.hmacKey('access-id');
    */
-  constructor(storage: Storage, accessId: string) {
-    if (!accessId) {
-      throw new Error('An access ID is needed to create an HmacKey object.');
-    }
-
+  constructor(storage: Storage, accessId: string, options?: HmacKeyOptions) {
     const methods = {
       /**
        * @typedef {object} DeleteHmacKeyOptions
@@ -119,7 +118,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        * // Delete HMAC key after making the key inactive.
        * //-
        * const hmacKey = storage.hmacKey('ACCESS_ID');
-       * hmacKey.update({state: 'INACTIVE'}, (err, hmacKeyMetadata) => {
+       * hmacKey.setMetadata({state: 'INACTIVE'}, (err, hmacKeyMetadata) => {
        *     if (err) {
        *       // The request was an error.
        *       console.error(err);
@@ -131,7 +130,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        *         return;
        *       }
        *       // The HMAC key is deleted.
-       *     })
+       *     });
        *   });
        *
        * //-
@@ -139,59 +138,12 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        * //-
        * const hmacKey = storage.hmacKey('ACCESS_ID');
        * hmacKey
-       *   .update({state: 'INACTIVE'})
+       *   .setMetadata({state: 'INACTIVE'})
        *   .then(() => {
        *     return hmacKey.delete();
        *   });
        */
       delete: true,
-      /**
-       * @typedef {object} GetHmacKeyMetadataOptions
-       * @property {string} [userProject] This parameter is currently ignored.
-       */
-      /**
-       * Retrieves and populate an HMAC key's metadata, and return
-       * the HMAC key's metadata as an object.
-       *
-       * HmacKey.getMetadata() does not give the HMAC key secret, as
-       * it is only returned on creation.
-       *
-       * The authenticated user must have `storage.hmacKeys.get` permission
-       * for the project in which the key exists.
-       *
-       * @method HmacKey#getMetadata
-       * @param {GetHmacKeyMetadataOptions} [options] Configuration options.
-       * @param {HmacKeyMetadataCallback} [callback] Callback function.
-       * @returns {Promise<HmacKeyMetadataResponse>}
-       *
-       * @example
-       * const {Storage} = require('@google-cloud/storage');
-       * const storage = new Storage();
-       *
-       * //-
-       * // Get the HmacKey's metadata and populate to the metadata property.
-       * //-
-       * storage.hmacKey('ACCESS_ID')
-       *   .getMetadata((err, hmacKeyMetadata) => {
-       *     if (err) {
-       *       // The request was an error.
-       *       console.error(err);
-       *       return;
-       *     }
-       *     console.log(hmacKeyMetadata);
-       *   });
-       *
-       * //-
-       * // If the callback is omitted, a promise is returned.
-       * //-
-       * storage.hmacKey('ACCESS_ID')
-       *   .getMetadata()
-       *   .then((data) => {
-       *     const hmacKeyMetadata = data[0];
-       *     console.log(hmacKeyMetadata);
-       *   });
-       */
-      getMetadata: true,
       /**
        * @callback GetHmacKeyCallback
        * @param {?Error} err Request error, if any.
@@ -249,130 +201,126 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        *   });
        */
       get: true,
-    };
+      /**
+       * @typedef {object} GetHmacKeyMetadataOptions
+       * @property {string} [userProject] This parameter is currently ignored.
+       */
+      /**
+       * Retrieves and populate an HMAC key's metadata, and return
+       * the HMAC key's metadata as an object.
+       *
+       * HmacKey.getMetadata() does not give the HMAC key secret, as
+       * it is only returned on creation.
+       *
+       * The authenticated user must have `storage.hmacKeys.get` permission
+       * for the project in which the key exists.
+       *
+       * @method HmacKey#getMetadata
+       * @param {GetHmacKeyMetadataOptions} [options] Configuration options.
+       * @param {HmacKeyMetadataCallback} [callback] Callback function.
+       * @returns {Promise<HmacKeyMetadataResponse>}
+       *
+       * @example
+       * const {Storage} = require('@google-cloud/storage');
+       * const storage = new Storage();
+       *
+       * //-
+       * // Get the HmacKey's metadata and populate to the metadata property.
+       * //-
+       * storage.hmacKey('ACCESS_ID')
+       *   .getMetadata((err, hmacKeyMetadata) => {
+       *     if (err) {
+       *       // The request was an error.
+       *       console.error(err);
+       *       return;
+       *     }
+       *     console.log(hmacKeyMetadata);
+       *   });
+       *
+       * //-
+       * // If the callback is omitted, a promise is returned.
+       * //-
+       * storage.hmacKey('ACCESS_ID')
+       *   .getMetadata()
+       *   .then((data) => {
+       *     const hmacKeyMetadata = data[0];
+       *     console.log(hmacKeyMetadata);
+       *   });
+       */
+      getMetadata: true,
+      /**
+       * @typedef {object} SetHmacKeyMetadata Subset of {@link HmacKeyMetadata} to update.
+       * @property {string} state New state of the HmacKey. Either 'ACTIVE' or 'INACTIVE'.
+       * @property {string} [etag] Include an etag from a previous get HMAC key request
+       *    to perform safe read-modify-write.
+       */
+      /**
+       * @typedef {object} SetHmacKeyMetadataOptions
+       * @property {string} [userProject] This parameter is currently ignored.
+       */
+      /**
+       * @callback HmacKeyMetadataCallback
+       * @param {?Error} err Request error, if any.
+       * @param {HmacKeyMetadata} metadata The updated {@link HmacKeyMetadata} object.
+       * @param {object} apiResponse The full API response.
+       */
+      /**
+       * @typedef {array} HmacKeyMetadataResponse
+       * @property {HmacKeyMetadata} 0 The updated {@link HmacKeyMetadata} object.
+       * @property {object} 1 The full API response.
+       */
+      /**
+       * Updates the state of an HMAC key. See {@link SetHmacKeyMetadata} for
+       * valid states.
+       *
+       * @method HmacKey#setMetadata
+       * @param {SetHmacKeyMetadata} metadata The new metadata.
+       * @param {SetHmacKeyMetadataOptions} [options] Configuration options.
+       * @param {HmacKeyMetadataCallback} [callback] Callback function.
+       * @returns {Promise<HmacKeyMetadataResponse>}
+       *
+       * @example
+       * const {Storage} = require('@google-cloud/storage');
+       * const storage = new Storage();
+       *
+       * const metadata = {
+       *   state: 'INACTIVE',
+       * };
+       *
+       * storage.hmacKey('ACCESS_ID')
+       *   .setMetadata(metadata, (err, hmacKeyMetadata) => {
+       *     if (err) {
+       *       // The request was an error.
+       *       console.error(err);
+       *       return;
+       *     }
+       *     console.log(hmacKeyMetadata);
+       *   });
+       *
+       * //-
+       * // If the callback is omitted, a promise is returned.
+       * //-
+       * storage.hmacKey('ACCESS_ID')
+       *   .setMetadata(metadata)
+       *   .then((data) => {
+       *     const hmacKeyMetadata = data[0];
+       *     console.log(hmacKeyMetadata);
+       *   });
+       */
+      setMetadata: {
+        reqOpts: {
+          method: 'PUT',
+        },
+      },
+    } as Methods;
+
+    const projectId = (options && options.projectId) || storage.projectId;
 
     super({
       parent: storage,
-      baseUrl: `/projects/${storage.projectId}/hmacKeys`,
       id: accessId,
+      baseUrl: `/projects/${projectId}/hmacKeys`,
       methods,
     });
-
-    this.accessId = accessId;
-  }
-
-  update(
-    metadata: UpdateHmacKeyMetadata,
-    options?: UpdateHmacKeyOptions
-  ): Promise<HmacKeyMetadataResponse>;
-  update(
-    metadata: UpdateHmacKeyMetadata,
-    callback: HmacKeyMetadataCallback
-  ): void;
-  update(
-    metadata: UpdateHmacKeyMetadata,
-    options: UpdateHmacKeyOptions,
-    callback: HmacKeyMetadataCallback
-  ): void;
-  /**
-   * @typedef {object} UpdateHmacKeyMetadata Subset of {@link HmacKeyMetadata} to update.
-   * @property {string} state New state of the HmacKey. Either 'ACTIVE' or 'INACTIVE'.
-   * @property {string} [etag] Include an etag from a previous get HMAC key request
-   *    to perform safe read-modify-write.
-   */
-  /**
-   * @typedef {object} UpdateHmacKeyOptions
-   * @property {string} [userProject] This parameter is currently ignored.
-   */
-  /**
-   * @callback HmacKeyMetadataCallback
-   * @param {?Error} err Request error, if any.
-   * @param {HmacKeyMetadata} metadata The updated {@link HmacKeyMetadata} object.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
-   * @typedef {array} HmacKeyMetadataResponse
-   * @property {HmacKeyMetadata} 0 The updated {@link HmacKeyMetadata} object.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * Updates the state of an HMAC key. See {@link UpdateHmacKeyMetadata} for
-   * valid states.
-   *
-   * @param {UpdateHmacKeyMetadata} metadata The new metadata.
-   * @param {UpdateHmacKeyOptions} [options] Configuration options.
-   * @param {HmacKeyMetadataCallback} [callback] Callback function.
-   * @returns {Promise<HmacKeyMetadataResponse>}
-   *
-   * @example
-   * const {Storage} = require('@google-cloud/storage');
-   * const storage = new Storage();
-   *
-   * const metadata = {
-   *   state: 'INACTIVE',
-   * };
-   *
-   * storage.hmacKey('ACCESS_ID')
-   *   .update(metadata, (err, hmacKeyMetadata) => {
-   *     if (err) {
-   *       // The request was an error.
-   *       console.error(err);
-   *       return;
-   *     }
-   *     console.log(hmacKeyMetadata);
-   *   });
-   *
-   * //-
-   * // If the callback is omitted, a promise is returned.
-   * //-
-   * storage.hmacKey('ACCESS_ID')
-   *   .update(metadata)
-   *   .then((data) => {
-   *     const hmacKeyMetadata = data[0];
-   *     console.log(hmacKeyMetadata);
-   *   });
-   */
-  update(
-    metadata: UpdateHmacKeyMetadata,
-    optionsOrCb?: UpdateHmacKeyOptions | HmacKeyMetadataCallback,
-    cb?: HmacKeyMetadataCallback
-  ): Promise<HmacKeyMetadataResponse> | void {
-    if (
-      typeof metadata !== 'object' ||
-      Object.getOwnPropertyNames(metadata).length === 0
-    ) {
-      throw new Error(
-        'Cannot update HmacKey with an undefined/empty options object.'
-      );
-    }
-
-    const {options, callback} = normalize<
-      UpdateHmacKeyOptions,
-      HmacKeyMetadataCallback
-    >(optionsOrCb, cb);
-
-    this.request(
-      {
-        uri: '/',
-        method: 'put',
-        qs: options,
-        json: metadata,
-      },
-      (err: Error | null, metadata?: HmacKeyMetadata, res?: Metadata) => {
-        if (err) {
-          callback!(err);
-          return;
-        }
-        this.metadata = metadata!;
-        callback!(err, metadata, res);
-      }
-    );
   }
 }
-
-/*! Developer Documentation
- *
- * All async methods (except for streams) will return a Promise in the event
- * that a callback is omitted.
- */
-promisifyAll(HmacKey);
