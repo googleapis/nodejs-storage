@@ -2691,30 +2691,29 @@ describe('storage', () => {
     // This is generally a valid service account for a project.
     const ALTERNATE_SERVICE_ACCOUNT = `${process.env.PROJECT_ID}@appspot.gserviceaccount.com`;
     const SERVICE_ACCOUNT = process.env.HMAC_KEY_TEST_SERVICE_ACCOUNT || ALTERNATE_SERVICE_ACCOUNT;
+    const HMAC_PROJECT = process.env.HMAC_KEY_TEST_SERVICE_ACCOUNT ? process.env.HMAC_KEY_TEST_PROJECT : process.env.PROJECT_ID;
     // Second service account to test listing HMAC keys from different accounts.
     const SECOND_SERVICE_ACCOUNT = process.env.HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT;
 
     let accessId: string;
 
     before(async () => {
-      await deleteHmacKeys(SERVICE_ACCOUNT);
-      await deleteHmacKeys(ALTERNATE_SERVICE_ACCOUNT);
+      await deleteHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
     });
 
     after(async () => {
-      await deleteHmacKeys(SERVICE_ACCOUNT);
-      await deleteHmacKeys(ALTERNATE_SERVICE_ACCOUNT);
+      await deleteHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
     });
 
     it('should create an HMAC key for a service account', async () => {
-      const [hmacKey, secret] = await storage.createHmacKey(SERVICE_ACCOUNT);
+      const [hmacKey, secret] = await storage.createHmacKey(SERVICE_ACCOUNT, {projectId: HMAC_PROJECT});
       // We should always get a 40 character secret, which is valid base64.
       assert.strictEqual(secret.length, 40);
-      accessId = hmacKey.accessId;
+      accessId = hmacKey.id!;
       const metadata = hmacKey.metadata!;
       assert.strictEqual(metadata.accessId, accessId);
       assert.strictEqual(metadata.state, 'ACTIVE');
-      assert.strictEqual(metadata.projectId, process.env.PROJECT_ID);
+      assert.strictEqual(metadata.projectId, HMAC_PROJECT);
       assert.strictEqual(metadata.serviceAccountEmail, SERVICE_ACCOUNT);
       assert(typeof metadata.etag === 'string');
       assert(typeof metadata.timeCreated === 'string');
@@ -2722,22 +2721,22 @@ describe('storage', () => {
     });
 
     it('should get metadata for an HMAC key', async () => {
-      const hmacKey = storage.hmacKey(accessId);
+      const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
       const [metadata] = await hmacKey.getMetadata();
       assert.strictEqual(metadata.accessId, accessId);
     });
 
     it('should show up from getHmacKeys() without serviceAccountEmail param', async () => {
-      const [hmacKeys] = await storage.getHmacKeys();
+      const [hmacKeys] = await storage.getHmacKeys({projectId: HMAC_PROJECT});
       assert(hmacKeys.length > 0);
       assert(
-        hmacKeys.some((hmacKey) => hmacKey.accessId === accessId),
+        hmacKeys.some((hmacKey) => hmacKey.id === accessId),
         'created HMAC key not found from getHmacKeys result');
     });
 
     it('should make the key INACTIVE', async () => {
-      const hmacKey = storage.hmacKey(accessId);
-      let [metadata] = await hmacKey.update({state: 'INACTIVE'});
+      const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
+      let [metadata] = await hmacKey.setMetadata({state: 'INACTIVE'});
       assert.strictEqual(metadata.state, 'INACTIVE');
 
       [metadata] = await hmacKey.getMetadata();
@@ -2745,7 +2744,7 @@ describe('storage', () => {
     });
 
     it('should delete the key', async () => {
-      const hmacKey = storage.hmacKey(accessId);
+      const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
       await hmacKey.delete();
       const [metadata] = await hmacKey.getMetadata();
       assert.strictEqual(metadata.state, 'DELETED');
@@ -2753,27 +2752,31 @@ describe('storage', () => {
     });
 
     it('deleted key should not show up from getHmacKeys() by default', async () => {
-      const [hmacKeys] = await storage.getHmacKeys();
+      const [hmacKeys] = await storage.getHmacKeys({serviceAccountEmail: SERVICE_ACCOUNT, projectId: HMAC_PROJECT});
       assert(Array.isArray(hmacKeys));
       assert(
-        !hmacKeys.some((hmacKey) => hmacKey.accessId === accessId),
+        !hmacKeys.some((hmacKey) => hmacKey.id === accessId),
         'deleted HMAC key is found from getHmacKeys result');
     });
 
     describe('second service account', () => {
-      before(function () {
+      before(async function () {
         if (!SECOND_SERVICE_ACCOUNT) {
           this.skip();
           return;
         }
+        await deleteHmacKeys(SECOND_SERVICE_ACCOUNT, HMAC_PROJECT!);
       });
 
       it('should create key for a second service account', async () => {
-        const [hmacKey] = await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!);
+        const _ = await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {projectId: HMAC_PROJECT});
       });
 
       it('get HMAC keys for both service accounts', async () => {
-        const [hmacKeys] = await storage.getHmacKeys();
+        // Create a key for the first service account
+        const _ = await storage.createHmacKey(SERVICE_ACCOUNT!, {projectId: HMAC_PROJECT});
+
+        const [hmacKeys] = await storage.getHmacKeys({projectId: HMAC_PROJECT});
         assert(hmacKeys.some((hmacKey) =>
           hmacKey.metadata!.serviceAccountEmail === SERVICE_ACCOUNT),
           `Expected at least 1 key for service account: ${SERVICE_ACCOUNT}`
@@ -2785,7 +2788,7 @@ describe('storage', () => {
       });
 
       it('filter by service account email', async () => {
-        const [hmacKeys] = await storage.getHmacKeys({serviceAccountEmail: SECOND_SERVICE_ACCOUNT});
+        const [hmacKeys] = await storage.getHmacKeys({serviceAccountEmail: SECOND_SERVICE_ACCOUNT, projectId: HMAC_PROJECT});
         assert(hmacKeys.every((hmacKey) =>
           hmacKey.metadata!.serviceAccountEmail === SECOND_SERVICE_ACCOUNT),
           'HMAC key belonging to other service accounts unexpected'
@@ -3342,12 +3345,12 @@ describe('storage', () => {
     }
   }
 
-  async function deleteHmacKeys(serviceAccountEmail: string) {
-    const [hmacKeys] = await storage.getHmacKeys({ serviceAccountEmail });
+  async function deleteHmacKeys(serviceAccountEmail: string, projectId: string) {
+    const [hmacKeys] = await storage.getHmacKeys({ serviceAccountEmail, projectId });
     const limit = pLimit(10);
     await Promise.all(hmacKeys.map((hmacKey) => limit(async () => {
       if (hmacKey.metadata!.state === 'ACTIVE') {
-        await hmacKey.update({state:'INACTIVE' });
+        await hmacKey.setMetadata({state:'INACTIVE' });
       }
       await hmacKey.delete();
     })));
