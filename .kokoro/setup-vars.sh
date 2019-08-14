@@ -31,5 +31,12 @@ chmod +x gimmeproj
 
 export HMAC_KEY_TEST_SERVICE_ACCOUNT=$(./gimmeproj -project=$HMAC_PROJECT lease 15m)
 echo Leased service account: $HMAC_KEY_TEST_SERVICE_ACCOUNT
+export LEASED_SERVICE_ACCOUNTS=$HMAC_KEY_TEST_SERVICE_ACCOUNT
 
-trap "./gimmeproj -project=$HMAC_PROJECT done $HMAC_KEY_TEST_SERVICE_ACCOUNT" EXIT
+cleanup_service_accounts () {
+    for i in $LEASED_SERVICE_ACCOUNTS; do
+        ./gimmeproj -project=$HMAC_PROJECT "done" $LEASED_SERVICE_ACCOUNTS
+    done
+}
+
+trap cleanup_service_accounts EXIT
