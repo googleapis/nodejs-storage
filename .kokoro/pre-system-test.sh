@@ -17,5 +17,5 @@
 . .kokoro/setup-vars.sh
 
 # Lease a second service account for testing listing with multiple service accounts
-export HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT=$(./gimme-acc -project gimme-acc lease 15m)
-trap "./gimme-acc -project gimme-acc done $HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT" EXIT
+export HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT=$(./gimmeproj -project=$HMAC_PROJECT lease 15m)
+trap "./gimmeproj -project gimme-acc done $HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT" EXIT
