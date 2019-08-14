@@ -23,9 +23,20 @@ export GCN_STORAGE_2ND_PROJECT_KEY=${KOKORO_GFILE_DIR}/no-whitelist-key.json
 export GOOGLE_CLOUD_KMS_KEY_ASIA="projects/long-door-651/locations/asia/keyRings/test-key-asia/cryptoKeys/test-key-asia"
 export GOOGLE_CLOUD_KMS_KEY_US="projects/long-door-651/locations/us/keyRings/test-key-us/cryptoKeys/test-key-us"
 
-# Second service account for testing HMAC feature
-export HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT="gcs-hmac-system-test-alt@long-door-651.iam.gserviceaccount.com"
-# TODO: Switch with service-account pool
-export POOL_SAMPLES_PROJECT_ID=long-door-651
-export POOL_SAMPLES_PROJECT_CREDENTIALS="${KOKORO_GFILE_DIR}/storage-hmac-samples-key.json"
-export SAMPLES_HMAC_SERVICE_ACCOUNT="storage-key-hmac-samples@long-door-651.iam.gserviceaccount.com"
+# For testing SA HMAC
+export HMAC_PROJECT=gimme-acc
+curl https://storage.googleapis.com/gimme-proj/linux_amd64/gimmeproj > gimmeproj
+chmod +x gimmeproj
+./gimmeproj version
+
+export HMAC_KEY_TEST_SERVICE_ACCOUNT=$(./gimmeproj -project=$HMAC_PROJECT lease 15m)
+echo Leased service account: $HMAC_KEY_TEST_SERVICE_ACCOUNT
+export LEASED_SERVICE_ACCOUNTS=$HMAC_KEY_TEST_SERVICE_ACCOUNT
+
+cleanup_service_accounts () {
+    for i in $LEASED_SERVICE_ACCOUNTS; do
+        ./gimmeproj -project=$HMAC_PROJECT "done" $i
+    done
+}
+
+trap cleanup_service_accounts EXIT

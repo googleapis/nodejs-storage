@@ -19,9 +19,12 @@
 // sample-metadata:
 //   title: Deactivate HMAC SA Key.
 //   description: Deactivate HMAC SA Key.
-//   usage: node hmacKeyDeactivate.js <hmacKeyAccessId>
+//   usage: node hmacKeyDeactivate.js <hmacKeyAccessId> [projectId]
 
-function main(hmacKeyAccessId = 'GOOG0234230X00') {
+function main(
+  hmacKeyAccessId = 'GOOG0234230X00',
+  projectId = 'serviceAccountProjectId'
+) {
   // [START storage_deactivate_hmac_key]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -35,8 +38,9 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
      * TODO(developer): Uncomment the following line before running the sample.
      */
     // const hmacKeyAccessId = 'HMAC Access Key Id to update, e.g. GOOG0234230X00';
+    // const projectId = 'The project Id this service account belongs to, e.g. serviceAccountProjectId';
 
-    const hmacKey = storage.hmacKey(hmacKeyAccessId);
+    const hmacKey = storage.hmacKey(hmacKeyAccessId, {projectId});
     const [hmacKeyMetadata] = await hmacKey.setMetadata({state: 'INACTIVE'});
 
     console.log(`The HMAC key is now inactive.`);
