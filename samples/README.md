@@ -24,6 +24,12 @@ objects to users via direct download.
   * [Buckets](#buckets)
   * [Encryption](#encryption)
   * [Files](#files)
+  * [Activate HMAC SA Key.](#activate-hmac-sa-key.)
+  * [Create HMAC SA Key.](#create-hmac-sa-key.)
+  * [Deactivate HMAC SA Key.](#deactivate-hmac-sa-key.)
+  * [Delete HMAC SA Key.](#delete-hmac-sa-key.)
+  * [Get HMAC SA Key Metadata.](#get-hmac-sa-key-metadata.)
+  * [List HMAC SA Keys Metadata.](#list-hmac-sa-keys-metadata.)
   * [Iam](#iam)
   * [Notifications](#notifications)
   * [Quickstart](#quickstart)
@@ -135,6 +141,120 @@ __Usage:__
 
 
 `node files.js`
+
+
+-----
+
+
+
+
+### Activate HMAC SA Key.
+
+Activate HMAC SA Key.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/hmacKeyActivate.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/hmacKeyActivate.js,samples/README.md)
+
+__Usage:__
+
+
+`node hmacKeyActivate.js <projectId> <hmacKeyAccessId>`
+
+
+-----
+
+
+
+
+### Create HMAC SA Key.
+
+Create HMAC SA Key.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/hmacKeyCreate.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/hmacKeyCreate.js,samples/README.md)
+
+__Usage:__
+
+
+`node hmacKeyCreate.js <projectId> <serviceAccountEmail>`
+
+
+-----
+
+
+
+
+### Deactivate HMAC SA Key.
+
+Deactivate HMAC SA Key.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/hmacKeyDeactivate.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/hmacKeyDeactivate.js,samples/README.md)
+
+__Usage:__
+
+
+`node hmacKeyDeactivate.js <projectId> <hmacKeyAccessId>`
+
+
+-----
+
+
+
+
+### Delete HMAC SA Key.
+
+Delete HMAC SA Key.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/hmacKeyDelete.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/hmacKeyDelete.js,samples/README.md)
+
+__Usage:__
+
+
+`node hmacKeyDelete.js <projectId> <hmacKeyAccessId>`
+
+
+-----
+
+
+
+
+### Get HMAC SA Key Metadata.
+
+Get HMAC SA Key Metadata.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/hmacKeyGet.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/hmacKeyGet.js,samples/README.md)
+
+__Usage:__
+
+
+`node hmacKeyGet.js <projectId> <hmacKeyAccessId>`
+
+
+-----
+
+
+
+
+### List HMAC SA Keys Metadata.
+
+List HMAC SA Keys Metadata.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/hmacKeysList.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/hmacKeysList.js,samples/README.md)
+
+__Usage:__
+
+
+`node hmacKeyList.js <projectId>`
 
 
 -----

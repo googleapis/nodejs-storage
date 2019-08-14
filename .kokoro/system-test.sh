@@ -22,10 +22,6 @@ export NPM_CONFIG_PREFIX=/home/node/.npm-global
 export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_GFILE_DIR}/service-account.json
 export GCLOUD_PROJECT=long-door-651
 
-# For SA HMAC feature samples test
-export HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT=$(./gimme-acc -project gimme-acc lease 15m)
-trap "./gimme-acc -project gimme-acc done $HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT" EXIT
-
 cd $(dirname $0)/..
 
 # Run a pre-test hook, if a pre-system-test.sh is in the project
