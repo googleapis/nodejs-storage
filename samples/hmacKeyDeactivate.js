@@ -38,6 +38,7 @@ function main(
      * TODO(developer): Uncomment the following line before running the sample.
      */
     // const hmacKeyAccessId = 'HMAC Access Key Id to update, e.g. GOOG0234230X00';
+    // const projectId = 'The project Id this service account belongs to, e.g. serviceAccountProjectId';
 
     const hmacKey = storage.hmacKey(hmacKeyAccessId, {projectId});
     const [hmacKeyMetadata] = await hmacKey.setMetadata({state: 'INACTIVE'});
