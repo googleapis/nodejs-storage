@@ -30,7 +30,7 @@ describe('HMAC SA Key samples', () => {
 
   before(async () => {
     await cleanUpHmacKeys(SERVICE_ACCOUNT_EMAIL, SERVICE_ACCOUNT_PROJECT);
-    [hmacKey] = await storage.createHmacKey(SERVICE_ACCOUNT_EMAIL);
+    [hmacKey] = await storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, {projectId: SERVICE_ACCOUNT_PROJECT});
   });
 
   after(async () => {
