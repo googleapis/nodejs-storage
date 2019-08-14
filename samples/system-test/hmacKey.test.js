@@ -95,7 +95,7 @@ async function cleanUpHmacKeys(serviceAccountEmail, projectId) {
   });
   // deactivate and delete the key
   for (const hmacKey of hmacKeys) {
-    if (hmacKey.state === 'ACTIVE') {
+    if (hmacKey.metadata.state === 'ACTIVE') {
       await hmacKey.setMetadata({state: 'INACTIVE'});
     }
     await hmacKey.delete();
