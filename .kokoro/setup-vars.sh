@@ -29,7 +29,7 @@ curl https://storage.googleapis.com/gimme-acc/linux_amd64/gimme-acc > gimme-acc
 chmod +x gimme-acc
 ./gimme-acc version
 
-export HMAC_KEY_TEST_SERVICE_ACCOUNT=(./gimme-acc -project gimme-acc lease 15m)
+export HMAC_KEY_TEST_SERVICE_ACCOUNT=$(./gimme-acc -project gimme-acc lease 15m)
 trap "./gimme-acc -project gimme-acc done $HMAC_KEY_TEST_SERVICE_ACCOUNT" EXIT
 
 echo Using $HMAC_KEY_TEST_SERVICE_ACCOUNT
