@@ -22,8 +22,8 @@
 //   usage: node hmacKeyActivate.js <projectId> <hmacKeyAccessId>
 
 function main(
-  hmacKeyAccessId = 'GOOG0234230X00',
   projectId = 'serviceAccountProjectId',
+  hmacKeyAccessId = 'GOOG0234230X00',
 ) {
   // [START storage_activate_hmac_key]
   // Imports the Google Cloud client library
