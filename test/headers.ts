@@ -15,36 +15,55 @@
  */
 
 import * as assert from 'assert';
-import {Storage} from '../src';
-import * as nock from 'nock';
+import * as proxyquire from 'proxyquire';
+
+const error = Error('not implemented');
+
+interface Request {
+  headers: {
+    [key: string]: string;
+  };
+}
 
 describe('headers', () => {
-  before(() => {
-    nock.disableNetConnect();
+  const requests: Request[] = [];
+  const {Storage} = proxyquire('../src', {
+    'google-auth-library': {
+      GoogleAuth: class {
+        async getProjectId() {
+          return 'foo-project';
+        }
+        async getClient() {
+          return class {
+            async request() {
+              return {};
+            }
+          };
+        }
+        getCredentials() {
+          return {};
+        }
+        async authorizeRequest(req: Request) {
+          requests.push(req);
+          throw error;
+        }
+      },
+      '@global': true,
+    },
   });
+
   it('populates x-goog-api-client header', async () => {
-    const storage = new Storage({
-      projectId: 'foo',
-    });
+    const storage = new Storage();
     const bucket = storage.bucket('foo-bucket');
-    const metadata = nock('http://metadata.google.internal.')
-      .get('/computeMetadata/v1/instance')
-      .replyWithError({code: 'ENOTFOUND'});
-    const req = nock('https://www.googleapis.com')
-      .post('/storage/v1/b?project=foo')
-      .reply(200, function() {
-        assert.ok(
-          /^gl-node\/[0-9]+\.[0-9]+\.[-.\w]+ gccl\/[0-9]+\.[0-9]+\.[-.\w]+$/.test(
-            this.req.headers['x-goog-api-client'][0]
-          )
-        );
-        return {};
-      });
-    await bucket.create();
-    metadata.done();
-    req.done();
-  });
-  after(() => {
-    nock.enableNetConnect();
+    try {
+      await bucket.create();
+    } catch (err) {
+      if (err !== error) throw err;
+    }
+    assert.ok(
+      /^gl-node\/[0-9]+\.[0-9]+\.[-.\w]+ gccl\/[0-9]+\.[0-9]+\.[-.\w]+$/.test(
+        requests[0].headers['x-goog-api-client']
+      )
+    );
   });
 });
