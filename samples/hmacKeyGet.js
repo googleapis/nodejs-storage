@@ -21,7 +21,10 @@
 //   description: Get HMAC SA Key Metadata.
 //   usage: node hmacKeyGet.js <hmacKeyAccessId>
 
-function main(hmacKeyAccessId = 'GOOG0234230X00') {
+function main(
+  projectId = 'serviceAccountProjectId',
+  hmacKeyAccessId = 'GOOG0234230X00',
+) {
   // [START storage_get_hmac_key]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -35,8 +38,11 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
      * TODO(developer): Uncomment the following line before running the sample.
      */
     // const hmacKeyAccessId = 'HMAC Access Key Id to get, e.g. GOOG0234230X00';
+    // const projectId = 'The project Id this service account belongs to, e.g. serviceAccountProjectId';
 
-    const [hmacKey] = await storage.hmacKey(hmacKeyAccessId).get();
+    const hmacKey = storage.hmacKey(hmacKeyAccessId, {projectId});
+    // Populate the hmacKey object with metadata from server.
+    await storage.getMetadata();
 
     console.log(`The HMAC key metadata is:`);
     for (const [key, value] of Object.entries(hmacKey.metadata)) {

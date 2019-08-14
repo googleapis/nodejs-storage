@@ -21,7 +21,10 @@
 //   description: Delete HMAC SA Key.
 //   usage: node hmacKeyDelete.js <hmacKeyAccessId>
 
-function main(hmacKeyAccessId = 'GOOG0234230X00') {
+function main(
+  projectId = 'serviceAccountProjectId',
+  hmacKeyAccessId = 'GOOG0234230X00',
+) {
   // [START storage_delete_hmac_key]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -35,9 +38,9 @@ function main(hmacKeyAccessId = 'GOOG0234230X00') {
      * TODO(developer): Uncomment the following line before running the sample.
      */
     // const hmacKeyAccessId = 'Inactive HMAC Access Key Id to delete, e.g. GOOG0234230X00';
+    // const projectId = 'The project Id this service account belongs to, e.g. serviceAccountProjectId';
 
-    const hmacKey = storage.hmacKey(hmacKeyAccessId);
-
+    const hmacKey = storage.hmacKey(hmacKeyAccessId, {projectId});
     await hmacKey.delete();
 
     console.log(

@@ -23,9 +23,11 @@ export GCN_STORAGE_2ND_PROJECT_KEY=${KOKORO_GFILE_DIR}/no-whitelist-key.json
 export GOOGLE_CLOUD_KMS_KEY_ASIA="projects/long-door-651/locations/asia/keyRings/test-key-asia/cryptoKeys/test-key-asia"
 export GOOGLE_CLOUD_KMS_KEY_US="projects/long-door-651/locations/us/keyRings/test-key-us/cryptoKeys/test-key-us"
 
-# Second service account for testing HMAC feature
-export HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT="gcs-hmac-system-test-alt@long-door-651.iam.gserviceaccount.com"
-# TODO: Switch with service-account pool
-export POOL_SAMPLES_PROJECT_ID=long-door-651
-export POOL_SAMPLES_PROJECT_CREDENTIALS="${KOKORO_GFILE_DIR}/storage-hmac-samples-key.json"
-export SAMPLES_HMAC_SERVICE_ACCOUNT="storage-key-hmac-samples@long-door-651.iam.gserviceaccount.com"
+# For testing SA HMAC
+export HMAC_PROJECT=gimme-acc
+curl https://storage.googleapis.com/gimme-acc/linux_amd64/gimme-acc > gimme-acc
+chmod +x gimme-acc
+./gimme-acc version
+
+export HMAC_KEY_TEST_SERVICE_ACCOUNT=(./gimme-acc -project gimme-acc lease 15m)
+trap "./gimme-acc -project gimme-acc done $HMAC_KEY_TEST_SERVICE_ACCOUNT" EXIT

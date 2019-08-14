@@ -23,7 +23,6 @@
 
 function main(
   projectId = 'serviceAccountProjectId',
-  credentialsFile = 'serviceAccountCredentials',
   serviceAccountEmail = 'service-account@example.com'
 ) {
   // [START storage_create_hmac_key]
@@ -31,10 +30,7 @@ function main(
   const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
-  const storage = new Storage({
-    projectId: projectId, // ProjectId of where to create a new HMAC SA Keys.
-    keyFilename: credentialsFile, // Credentials to ProjectId
-  });
+  const storage = new Storage();
 
   // Create HMAC SA Key
   async function createHmacKey() {
@@ -42,8 +38,9 @@ function main(
      * TODO(developer): Uncomment the following line before running the sample.
      */
     // const serviceAccountEmail = 'Service Account Email to associate HMAC Key';
+    // const projectId = 'The project Id this service account to be created in, e.g. serviceAccountProjectId';
 
-    const [hmacKey, secret] = await storage.createHmacKey(serviceAccountEmail);
+    const [hmacKey, secret] = await storage.createHmacKey(serviceAccountEmail, {projectId});
 
     console.log(`The base64 encoded secret is: ${secret}`);
     console.log(`Do not miss that secret, there is no API to recover it.`);
