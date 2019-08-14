@@ -54,7 +54,7 @@ describe('HMAC SA Key samples', () => {
 
   it('should create an HMAC Key', async () => {
     const output = execSync(
-      `node hmacKeyCreate.js ${SERVICE_ACCOUNT_PROJECT} ${SERVICE_ACCOUNT_EMAIL}`
+      `node hmacKeyCreate.js ${SERVICE_ACCOUNT_EMAIL} ${SERVICE_ACCOUNT_PROJECT}`
     );
     assert.include(output, 'The base64 encoded secret is:');
   });
@@ -67,29 +67,29 @@ describe('HMAC SA Key samples', () => {
   });
 
   it('should get HMAC Key', async () => {
-    const output = execSync(`node hmacKeyGet.js ${SERVICE_ACCOUNT_PROJECT} ${hmacKey.metadata.accessId}`);
+    const output = execSync(`node hmacKeyGet.js ${hmacKey.metadata.accessId} ${SERVICE_ACCOUNT_PROJECT}`);
     assert.include(output, 'The HMAC key metadata is:');
   });
 
   it('should deactivate HMAC Key', async () => {
     const output = execSync(
-      `node hmacKeyDeactivate.js ${SERVICE_ACCOUNT_PROJECT} ${hmacKey.metadata.accessId}`
+      `node hmacKeyDeactivate.js ${hmacKey.metadata.accessId} ${SERVICE_ACCOUNT_PROJECT}`
     );
     assert.include(output, 'The HMAC key is now inactive.');
   });
 
   it('should activate HMAC Key', async () => {
     const output = execSync(
-      `node hmacKeyActivate.js ${SERVICE_ACCOUNT_PROJECT} ${hmacKey.metadata.accessId}`
+      `node hmacKeyActivate.js ${hmacKey.metadata.accessId} ${SERVICE_ACCOUNT_PROJECT}`
     );
     assert.include(output, 'The HMAC key is now active.');
   });
 
   it(`should delete HMAC key`, async () => {
     // Deactivate then delete
-    execSync(`node hmacKeyDeactivate.js ${SERVICE_ACCOUNT_PROJECT} ${hmacKey.metadata.accessId}`);
+    execSync(`node hmacKeyDeactivate.js ${hmacKey.metadata.accessId} ${SERVICE_ACCOUNT_PROJECT}`);
     const output = execSync(
-      `node hmacKeyDelete.js ${SERVICE_ACCOUNT_PROJECT} ${hmacKey.metadata.accessId}`
+      `node hmacKeyDelete.js ${hmacKey.metadata.accessId} ${SERVICE_ACCOUNT_PROJECT}`
     );
     assert.include(
       output,

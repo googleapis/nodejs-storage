@@ -19,11 +19,11 @@
 // sample-metadata:
 //   title: Create HMAC SA Key.
 //   description: Create HMAC SA Key.
-//   usage: node hmacKeyCreate.js <projectId> <serviceAccountEmail>
+//   usage: node hmacKeyCreate.js <serviceAccountEmail> [projectId]
 
 function main(
+  serviceAccountEmail = 'service-account@example.com',
   projectId = 'serviceAccountProjectId',
-  serviceAccountEmail = 'service-account@example.com'
 ) {
   // [START storage_create_hmac_key]
   // Imports the Google Cloud client library

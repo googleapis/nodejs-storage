@@ -19,11 +19,11 @@
 // sample-metadata:
 //   title: Get HMAC SA Key Metadata.
 //   description: Get HMAC SA Key Metadata.
-//   usage: node hmacKeyGet.js <projectId> <hmacKeyAccessId>
+//   usage: node hmacKeyGet.js <hmacKeyAccessId> [projectId]
 
 function main(
-  projectId = 'serviceAccountProjectId',
   hmacKeyAccessId = 'GOOG0234230X00',
+  projectId = 'serviceAccountProjectId',
 ) {
   // [START storage_get_hmac_key]
   // Imports the Google Cloud client library

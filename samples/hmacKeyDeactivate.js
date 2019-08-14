@@ -19,11 +19,11 @@
 // sample-metadata:
 //   title: Deactivate HMAC SA Key.
 //   description: Deactivate HMAC SA Key.
-//   usage: node hmacKeyDeactivate.js <projectId> <hmacKeyAccessId>
+//   usage: node hmacKeyDeactivate.js <hmacKeyAccessId> [projectId]
 
 function main(
-  projectId = 'serviceAccountProjectId',
   hmacKeyAccessId = 'GOOG0234230X00',
+  projectId = 'serviceAccountProjectId',
 ) {
   // [START storage_deactivate_hmac_key]
   // Imports the Google Cloud client library
