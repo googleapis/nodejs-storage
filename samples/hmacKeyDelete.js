@@ -23,7 +23,7 @@
 
 function main(
   hmacKeyAccessId = 'GOOG0234230X00',
-  projectId = 'serviceAccountProjectId',
+  projectId = 'serviceAccountProjectId'
 ) {
   // [START storage_delete_hmac_key]
   // Imports the Google Cloud client library
