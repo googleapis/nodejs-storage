@@ -19,7 +19,7 @@
 // sample-metadata:
 //   title: Delete HMAC SA Key.
 //   description: Delete HMAC SA Key.
-//   usage: node hmacKeyDelete.js <hmacKeyAccessId>
+//   usage: node hmacKeyDelete.js <projectId> <hmacKeyAccessId>
 
 function main(
   projectId = 'serviceAccountProjectId',

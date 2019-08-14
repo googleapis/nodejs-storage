@@ -19,7 +19,7 @@
 // sample-metadata:
 //   title: Deactivate HMAC SA Key.
 //   description: Deactivate HMAC SA Key.
-//   usage: node hmacKeyDeactivate.js <hmacKeyAccessId>
+//   usage: node hmacKeyDeactivate.js <projectId> <hmacKeyAccessId>
 
 function main(
   projectId = 'serviceAccountProjectId',

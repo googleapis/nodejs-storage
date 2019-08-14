@@ -19,7 +19,7 @@
 // sample-metadata:
 //   title: Create HMAC SA Key.
 //   description: Create HMAC SA Key.
-//   usage: node hmacKeyCreate.js <projectId> <credentialsFile> <serviceAccountEmail>
+//   usage: node hmacKeyCreate.js <projectId> <serviceAccountEmail>
 
 function main(
   projectId = 'serviceAccountProjectId',

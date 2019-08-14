@@ -19,7 +19,7 @@
 // sample-metadata:
 //   title: List HMAC SA Keys Metadata.
 //   description: List HMAC SA Keys Metadata.
-//   usage: node hmacKeyList.js <projectId> <credentialsFile>
+//   usage: node hmacKeyList.js <projectId>
 
 function main(projectId = 'serviceAccountProjectId') {
   // [START storage_list_hmac_keys]

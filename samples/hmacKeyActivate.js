@@ -19,7 +19,7 @@
 // sample-metadata:
 //   title: Activate HMAC SA Key.
 //   description: Activate HMAC SA Key.
-//   usage: node hmacKeyActivate.js <hmacKeyAccessId> <projectId>
+//   usage: node hmacKeyActivate.js <projectId> <hmacKeyAccessId>
 
 function main(
   hmacKeyAccessId = 'GOOG0234230X00',

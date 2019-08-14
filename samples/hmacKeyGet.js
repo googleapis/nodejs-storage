@@ -19,7 +19,7 @@
 // sample-metadata:
 //   title: Get HMAC SA Key Metadata.
 //   description: Get HMAC SA Key Metadata.
-//   usage: node hmacKeyGet.js <hmacKeyAccessId>
+//   usage: node hmacKeyGet.js <projectId> <hmacKeyAccessId>
 
 function main(
   projectId = 'serviceAccountProjectId',
