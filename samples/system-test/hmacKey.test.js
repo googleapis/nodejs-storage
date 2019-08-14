@@ -33,23 +33,8 @@ describe('HMAC SA Key samples', () => {
     [hmacKey] = await storage.createHmacKey(SERVICE_ACCOUNT_EMAIL);
   });
 
-  async function cleanUpHmacKeys(serviceAccountEmail, projectId) {
-    // list all HMAC keys for the given service account.
-    const [hmacKeys] = await storage.getHmacKeys({
-      projectId,
-      serviceAccountEmail: serviceAccountEmail,
-    });
-    // deactivate and delete the key
-    for (const hmacKey of hmacKeys) {
-      if (hmacKey.state === 'ACTIVE') {
-        await hmacKey.setMetadata({state: 'INACTIVE'});
-      }
-      await hmacKey.delete();
-    }
-  }
-
   after(async () => {
-    await cleanUpHmacKeys(SERVICE_ACCOUNT_EMAIL);
+    await cleanUpHmacKeys(SERVICE_ACCOUNT_EMAIL, SERVICE_ACCOUNT_PROJECT);
   });
 
   it('should create an HMAC Key', async () => {
@@ -97,3 +82,18 @@ describe('HMAC SA Key samples', () => {
     );
   });
 });
+
+async function cleanUpHmacKeys(serviceAccountEmail, projectId) {
+  // list all HMAC keys for the given service account.
+  const [hmacKeys] = await storage.getHmacKeys({
+    projectId,
+    serviceAccountEmail: serviceAccountEmail,
+  });
+  // deactivate and delete the key
+  for (const hmacKey of hmacKeys) {
+    if (hmacKey.state === 'ACTIVE') {
+      await hmacKey.setMetadata({ state: 'INACTIVE' });
+    }
+    await hmacKey.delete();
+  }
+}
