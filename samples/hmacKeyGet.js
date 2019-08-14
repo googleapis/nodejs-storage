@@ -42,7 +42,7 @@ function main(
 
     const hmacKey = storage.hmacKey(hmacKeyAccessId, {projectId});
     // Populate the hmacKey object with metadata from server.
-    await storage.getMetadata();
+    await hmacKey.getMetadata();
 
     console.log(`The HMAC key metadata is:`);
     for (const [key, value] of Object.entries(hmacKey.metadata)) {
