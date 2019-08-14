@@ -159,7 +159,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 __Usage:__
 
 
-`node hmacKeyActivate.js <projectId> <hmacKeyAccessId>`
+`node hmacKeyActivate.js <hmacKeyAccessId> [projectId]`
 
 
 -----
@@ -178,7 +178,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 __Usage:__
 
 
-`node hmacKeyCreate.js <projectId> <serviceAccountEmail>`
+`node hmacKeyCreate.js <serviceAccountEmail> [projectId]`
 
 
 -----
@@ -197,7 +197,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 __Usage:__
 
 
-`node hmacKeyDeactivate.js <projectId> <hmacKeyAccessId>`
+`node hmacKeyDeactivate.js <hmacKeyAccessId> [projectId]`
 
 
 -----
@@ -216,7 +216,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 __Usage:__
 
 
-`node hmacKeyDelete.js <projectId> <hmacKeyAccessId>`
+`node hmacKeyDelete.js <hmacKeyAccessId> [projectId]`
 
 
 -----
@@ -235,7 +235,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 __Usage:__
 
 
-`node hmacKeyGet.js <projectId> <hmacKeyAccessId>`
+`node hmacKeyGet.js <hmacKeyAccessId> [projectId]`
 
 
 -----
@@ -254,7 +254,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 __Usage:__
 
 
-`node hmacKeyList.js <projectId>`
+`node hmacKeyList.js [projectId]`
 
 
 -----
