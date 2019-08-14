@@ -2691,7 +2691,7 @@ describe('storage', () => {
     // This is generally a valid service account for a project.
     const ALTERNATE_SERVICE_ACCOUNT = `${process.env.PROJECT_ID}@appspot.gserviceaccount.com`;
     const SERVICE_ACCOUNT = process.env.HMAC_KEY_TEST_SERVICE_ACCOUNT || ALTERNATE_SERVICE_ACCOUNT;
-    const HMAC_PROJECT = process.env.HMAC_KEY_TEST_SERVICE_ACCOUNT ? process.env.HMAC_KEY_TEST_PROJECT : process.env.PROJECT_ID;
+    const HMAC_PROJECT = process.env.HMAC_KEY_TEST_SERVICE_ACCOUNT ? process.env.HMAC_PROJECT : process.env.PROJECT_ID;
     // Second service account to test listing HMAC keys from different accounts.
     const SECOND_SERVICE_ACCOUNT = process.env.HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT;
 
