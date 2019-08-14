@@ -32,7 +32,7 @@ function read(call, callback) {
     .bucket(bucketName)
     .file(objectName)
     .download({validation: false})
-    .then(function(data) {
+    .then(function() {
       // Do nothing with contents.
     });
 
