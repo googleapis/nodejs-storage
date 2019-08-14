@@ -35,7 +35,7 @@ export LEASED_SERVICE_ACCOUNTS=$HMAC_KEY_TEST_SERVICE_ACCOUNT
 
 cleanup_service_accounts () {
     for i in $LEASED_SERVICE_ACCOUNTS; do
-        ./gimmeproj -project=$HMAC_PROJECT "done" $LEASED_SERVICE_ACCOUNTS
+        ./gimmeproj -project=$HMAC_PROJECT "done" $i
     done
 }
 
