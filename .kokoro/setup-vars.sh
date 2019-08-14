@@ -31,3 +31,5 @@ chmod +x gimme-acc
 
 export HMAC_KEY_TEST_SERVICE_ACCOUNT=(./gimme-acc -project gimme-acc lease 15m)
 trap "./gimme-acc -project gimme-acc done $HMAC_KEY_TEST_SERVICE_ACCOUNT" EXIT
+
+echo Using $HMAC_KEY_TEST_SERVICE_ACCOUNT
