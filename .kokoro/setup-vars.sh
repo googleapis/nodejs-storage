@@ -25,11 +25,11 @@ export GOOGLE_CLOUD_KMS_KEY_US="projects/long-door-651/locations/us/keyRings/tes
 
 # For testing SA HMAC
 export HMAC_PROJECT=gimme-acc
-curl https://storage.googleapis.com/gimme-acc/linux_amd64/gimme-acc > gimme-acc
-chmod +x gimme-acc
-./gimme-acc version
+curl https://storage.googleapis.com/gimme-proj/linux_amd64/gimmeproj > gimmeproj
+chmod +x gimmeproj
+./gimmeproj version
 
-export HMAC_KEY_TEST_SERVICE_ACCOUNT=$(./gimme-acc -project gimme-acc lease 15m)
-trap "./gimme-acc -project gimme-acc done $HMAC_KEY_TEST_SERVICE_ACCOUNT" EXIT
+export HMAC_KEY_TEST_SERVICE_ACCOUNT=$(./gimmeproj -project=$HMAC_PROJECT lease 15m)
+echo Leased service account: $HMAC_KEY_TEST_SERVICE_ACCOUNT
 
-echo Using $HMAC_KEY_TEST_SERVICE_ACCOUNT
+trap "./gimmeproj -project=$HMAC_PROJECT done $HMAC_KEY_TEST_SERVICE_ACCOUNT" EXIT
