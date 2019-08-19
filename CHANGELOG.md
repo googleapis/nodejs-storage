@@ -4,6 +4,15 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [3.1.1](https://www.github.com/googleapis/nodejs-storage/compare/v3.1.0...v3.1.1) (2019-08-19)
+
+
+### Bug Fixes
+
+* **deps:** update @google-cloud/common with fixes for http ([#809](https://www.github.com/googleapis/nodejs-storage/issues/809)) ([8598631](https://www.github.com/googleapis/nodejs-storage/commit/8598631))
+* **deps:** update dependency @google-cloud/pubsub to ^0.31.0 ([#814](https://www.github.com/googleapis/nodejs-storage/issues/814)) ([604e564](https://www.github.com/googleapis/nodejs-storage/commit/604e564))
+* **deps:** update dependency date-and-time to ^0.9.0 ([#805](https://www.github.com/googleapis/nodejs-storage/issues/805)) ([8739a7d](https://www.github.com/googleapis/nodejs-storage/commit/8739a7d))
+
 ## [3.1.0](https://www.github.com/googleapis/nodejs-storage/compare/v3.0.4...v3.1.0) (2019-08-09)
 
 
