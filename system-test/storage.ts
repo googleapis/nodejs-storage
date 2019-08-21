@@ -106,7 +106,7 @@ const RUNNING_IN_VPCSC = !!process.env['GOOGLE_CLOUD_TESTS_IN_VPCSC'];
 
 // block all attempts to chat with the metadata server (kokoro runs on GCE)
 nock('http://metadata.google.internal')
-  .get((url: any) => true)
+  .get(url => true)
   .replyWithError({code: 'ENOTFOUND'})
   .persist();
 
