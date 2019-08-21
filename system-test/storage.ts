@@ -93,7 +93,7 @@ import {
   DeleteNotificationCallback,
   Iam,
 } from '../src';
-import * as nock from 'nock';
+import nock from 'nock';
 
 interface ErrorCallbackFunction {
   (err: Error | null): void;
