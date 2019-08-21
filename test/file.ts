@@ -244,6 +244,17 @@ describe('File', () => {
       assert.strictEqual(file.name, 'name');
     });
 
+    it('should strip two leading slashes', () => {
+      const file = new File(BUCKET, '//name');
+      assert.strictEqual(file.name, 'name');
+    });
+
+    it('should keep leading slashes when specified in options', () => {
+      const keepLeadingSlashes = true;
+      const file = new File(BUCKET, '/name', {keepLeadingSlashes});
+      assert.strictEqual(file.name, '/name');
+    })
+
     it('should assign KMS key name', () => {
       const kmsKeyName = 'kms-key-name';
       const file = new File(BUCKET, '/name', {kmsKeyName});

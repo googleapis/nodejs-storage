@@ -291,6 +291,7 @@ export interface FileOptions {
   generation?: number | string;
   kmsKeyName?: string;
   userProject?: string;
+  keepLeadingSlashes?: boolean;
 }
 
 export interface CopyOptions {
@@ -497,7 +498,9 @@ class File extends ServiceObject<File> {
    * const file = myBucket.file('my-file');
    */
   constructor(bucket: Bucket, name: string, options: FileOptions = {}) {
-    name = name.replace(/^\/+/, '');
+    if (options.keepLeadingSlashes !== true) {
+      name = name.replace(/^\/+/, '');
+    }
 
     const requestQueryObject: {generation?: number; userProject?: string} = {};
 
