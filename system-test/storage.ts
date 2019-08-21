@@ -93,7 +93,7 @@ import {
   DeleteNotificationCallback,
   Iam,
 } from '../src';
-import * as nock from 'nock';
+const nock = require('nock');
 
 interface ErrorCallbackFunction {
   (err: Error | null): void;
@@ -106,7 +106,8 @@ const RUNNING_IN_VPCSC = !!process.env['GOOGLE_CLOUD_TESTS_IN_VPCSC'];
 
 // block all attempts to chat with the metadata server (kokoro runs on GCE)
 nock('http://metadata.google.internal')
-  .get(url => true)
+  // tslint:disable-next-line no-any
+  .get((url: any) => true)
   .replyWithError({code: 'ENOTFOUND'})
   .persist();
 
