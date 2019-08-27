@@ -23,7 +23,7 @@ objects to users via direct download.
   * [Storage Get Bucket Metadata.](#storage-get-bucket-metadata.)
   * [Buckets](#buckets)
   * [Encryption](#encryption)
-  * [Files](#files)
+  * [Upload a diretory to a bucket.](#upload-a-diretory-to-a-bucket.)
   * [Activate HMAC SA Key.](#activate-hmac-sa-key.)
   * [Create HMAC SA Key.](#create-hmac-sa-key.)
   * [Deactivate HMAC SA Key.](#deactivate-hmac-sa-key.)
@@ -131,7 +131,9 @@ __Usage:__
 
 
 
-### Files
+### Upload a diretory to a bucket.
+
+Uploads full hierarchy of a local directory to a bucket.
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/files.js).
 
@@ -140,7 +142,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/
 __Usage:__
 
 
-`node files.js`
+`node files.js upload-directory <bucketName> <directoryPath>`
 
 
 -----
