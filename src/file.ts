@@ -859,7 +859,8 @@ class File extends ServiceObject<File> {
    *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
    *     that will be used to encrypt the object. Overwrites the object
    * metadata's `kms_key_name` value, if any.
-   * @property {string} [keepAcl] Retain the ACL for the new file.
+   * @property {string} [keepAcl] This parameter is not supported and will be
+   *     removed in the next major.
    * @property {string} [predefinedAcl] Set the ACL for the new file.
    * @property {string} [token] A previously-returned `rewriteToken` from an
    *     unfinished rewrite request.
@@ -984,6 +985,13 @@ class File extends ServiceObject<File> {
       callback = optionsOrCallback;
     } else if (optionsOrCallback) {
       options = optionsOrCallback;
+    }
+
+    if (options.hasOwnProperty('keepAcl')) {
+      // TODO: remove keepAcl from interface in next major.
+      console.warn(
+        'keepAcl parameter is not supported and will be removed in the next major'
+      );
     }
 
     options = extend(true, {}, options);

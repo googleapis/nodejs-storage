@@ -345,6 +345,14 @@ describe('File', () => {
   });
 
   describe('copy', () => {
+    it('should warn if `keepAcl` parameter is passed', () => {
+      const consoleStub = sinon.stub(console, "warn");
+      file.request = util.noop;
+      file.copy('newFile', {keepAcl: 'private'}, assert.ifError);
+      assert.ok(consoleStub.calledWith('keepAcl parameter is not supported and will be removed in the next major'));
+      sinon.restore();
+    });
+
     it('should throw if no destination is provided', () => {
       assert.throws(() => {
         file.copy();
