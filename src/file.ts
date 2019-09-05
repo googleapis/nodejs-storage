@@ -37,8 +37,9 @@ import * as once from 'onetime';
 import * as os from 'os';
 const pumpify = require('pumpify');
 import * as resumableUpload from 'gcs-resumable-upload';
-import {Duplex, Writable, Readable, PassThrough} from 'stream';
+import {Duplex, Writable, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
+import * as through from 'through2';
 import * as xdgBasedir from 'xdg-basedir';
 import * as querystring from 'querystring';
 import * as zlib from 'zlib';
@@ -264,64 +265,6 @@ class ResumableUploadError extends Error {
  */
 class SigningError extends Error {
   name = 'SigningError';
-}
-
-/**
- * Basic Passthrough Stream that overrides destroy method for Node 8 to also
- * emit 'close'.
- *
- * @private
- */
-class ThroughStream extends PassThrough {
-  destroyed: boolean;
-  errorEmitted: boolean;
-  closeEmitted: boolean;
-  constructor() {
-    super();
-    this.destroyed = false;
-    this.errorEmitted = false;
-    this.closeEmitted = false;
-  }
-
-  destroy(err: Error) {
-    if (Number(process.versions.node.split('.')[0]) < 10) {
-      if (this.destroyed) {
-        if (err && !this.errorEmitted) {
-          this.errorEmitted = true;
-          process.nextTick(this.emitError, this, err);
-        }
-        return this;
-      }
-      this.destroyed = true;
-      if (err) {
-        if (!this.errorEmitted) {
-          this.errorEmitted = true;
-          process.nextTick(() => {
-            this.emitError(this, err);
-            this.emitClose(this);
-          });
-        } else {
-          process.nextTick(this.emitClose, this);
-        }
-      }
-      return this;
-    } else {
-      PassThrough.prototype.destroy.call(this, err);
-    }
-    return this;
-  }
-
-  emitError(self: ThroughStream, err: Error) {
-    self.emit('error', err);
-  }
-
-  emitClose(self: ThroughStream) {
-    if (!this.closeEmitted) {
-      this.closeEmitted = true;
-      self.emit('close');
-    }
-    return;
-  }
 }
 
 /**
@@ -1247,7 +1190,7 @@ class File extends ServiceObject<File> {
 
     // tslint:disable-next-line:no-any
     let validateStream: any; // Created later, if necessary.
-    const throughStream = streamEvents(new ThroughStream());
+    const throughStream = streamEvents(through()) as Duplex;
 
     let crc32c = true;
     let md5 = false;
@@ -1784,7 +1727,7 @@ class File extends ServiceObject<File> {
 
     const stream = streamEvents(
       pumpify([
-        gzip ? zlib.createGzip() : new ThroughStream(),
+        gzip ? zlib.createGzip() : through(),
         validateStream,
         fileWriteStream,
       ])
