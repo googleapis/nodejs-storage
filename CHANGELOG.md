@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [3.2.2](https://www.github.com/googleapis/nodejs-storage/compare/v3.2.1...v3.2.2) (2019-09-06)
+
+
+### Bug Fixes
+
+* remove unsupported keepAcl param ([#837](https://www.github.com/googleapis/nodejs-storage/issues/837)) ([5f69a3d](https://www.github.com/googleapis/nodejs-storage/commit/5f69a3d))
+
 ### [3.2.1](https://www.github.com/googleapis/nodejs-storage/compare/v3.2.0...v3.2.1) (2019-08-28)
 
 
