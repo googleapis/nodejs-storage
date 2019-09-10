@@ -6,8 +6,9 @@ bencharmking purposes.
 ## Running
 
 ```
+npm install -g typescript
 cd nodejs-storage
 npm install
-export STORAGE_EMULATOR_HOST=localhost:8080
+export STORAGE_EMULATOR_HOST=http://localhost:8080
 npm run benchwrapper -- --port 8081
 ```
