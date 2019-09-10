@@ -251,18 +251,20 @@ it('should get metadata for a file', () => {
 });
 
 it('should set metadata for a file', () => {
-  // set in sample
+  // used in sample
   const userMetadata = {
-    my: 'custom',
-    properties: 'go here',
+    description: 'file description...',
+    modified: '1900-01-01',
   };
   const output = execSync(
     `node fileSetMetadata.js ${bucketName} ${copiedFileName}`
   );
-  const metadata = eval(`(${output})`);
-  assert.strictEqual(metadata.name, copiedFileName);
-  assert.strictEqual(metadata.bucket, bucketName);
-  assert.deepStrictEqual(metadata.metadata, userMetadata);
+
+  assert.match(
+    output,
+    new RegExp(`description: '${userMetadata.description}'`)
+  );
+  assert.match(output, new RegExp(`modified: '${userMetadata.modified}'`));
 });
 
 it('should delete a file', async () => {

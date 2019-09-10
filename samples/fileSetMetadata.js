@@ -35,22 +35,22 @@ async function main(bucketName = 'my-bucket', filename = 'file.txt') {
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
   // const filename = 'File to access, e.g. file.txt';
 
-  // user define custom metadata
-  const userMetadata = {
-    my: 'custom',
-    properties: 'go here',
-  };
-
-  //metadata Properties
-  const contextMetadata = {
-    contentType: 'application/x-font-ttf',
-    metadata: userMetadata,
-  };
-
   const [metadata] = await storage
     .bucket(bucketName)
     .file(filename)
-    .setMetadata(contextMetadata);
+    .setMetadata({
+      // Predefinded metadata for server e.g. 'cacheControl', 'contentDisposition',
+      // 'contentEncoding', 'contentEncoding', 'contentLanguage', 'contentType'
+      contentDisposition: 'attachment; filename*=utf-8\'\'"anotherImage.jpg"',
+      contentType: 'image/jpeg',
+
+      // Note or actionable items for user e.g. uniqueId,
+      // object description or other useful information.
+      metadata: {
+        description: 'file description...',
+        modified: '1900-01-01',
+      },
+    });
 
   console.log(metadata);
 
