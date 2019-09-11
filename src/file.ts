@@ -359,7 +359,7 @@ export interface CreateReadStreamOptions {
   validation?: 'md5' | 'crc32c' | false | true;
   start?: number;
   end?: number;
-  returnCompressed?: boolean;
+  decompress?: boolean;
 }
 
 export interface SaveOptions extends CreateWriteStreamOptions {}
@@ -1113,8 +1113,8 @@ class File extends ServiceObject<File> {
    *     NOTE: Byte ranges are inclusive; that is, `options.start = 0` and
    *     `options.end = 999` represent the first 1000 bytes in a file or object.
    *     NOTE: when specifying a byte range, data integrity is not available.
-   * @property {booblean} [returnCompressed] Disable auto decompression of the
-   *     received data. By default this option set to `false`.
+   * @property {booblean} [decompress] Disable auto decompression of the
+   *     received data. By default this option set to `true`.
    *     Applicable in cases where the data was uploaded with
    *     `gzip: true` option. See {@link File#createWriteStream}.
    */
@@ -1189,6 +1189,7 @@ class File extends ServiceObject<File> {
    *   .pipe(fs.createWriteStream('/Users/stephen/logfile.txt'));
    */
   createReadStream(options: CreateReadStreamOptions = {}): Readable {
+    options = Object.assign({decompress: true}, options);
     const rangeRequest =
       typeof options.start === 'number' || typeof options.end === 'number';
     const tailRequest = options.end! < 0;
@@ -1309,7 +1310,7 @@ class File extends ServiceObject<File> {
           throughStreams.push(validateStream);
         }
 
-        if (isCompressed && !options.returnCompressed) {
+        if (isCompressed && options.decompress) {
           throughStreams.push(zlib.createGunzip());
         }
 

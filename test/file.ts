@@ -1146,7 +1146,7 @@ describe('File', () => {
 
       it('should not gunzip the response if "retunCompressed: true" is passed', done => {
         file
-          .createReadStream({returnCompressed: true})
+          .createReadStream({decompress: false})
           .once('error', done)
           .on('data', (data: {}) => {
             assert.strictEqual(data, GZIPPED_DATA);
