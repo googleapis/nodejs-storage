@@ -989,7 +989,7 @@ class File extends ServiceObject<File> {
 
     if (options.hasOwnProperty('keepAcl')) {
       // TODO: remove keepAcl from interface in next major.
-      emitWarning()
+      emitWarning();
     }
 
     options = extend(true, {}, options);
@@ -3426,10 +3426,11 @@ promisifyAll(File, {
 
 let warned = false;
 export function emitWarning() {
-  if(!warned) {
+  if (!warned) {
     warned = true;
     process.emitWarning(
-      'keepAcl parameter is not supported and will be removed in the next major', 'DeprecationWarning'
+      'keepAcl parameter is not supported and will be removed in the next major',
+      'DeprecationWarning'
     );
   }
 }
