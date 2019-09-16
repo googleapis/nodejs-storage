@@ -345,17 +345,59 @@ describe('File', () => {
   });
 
   describe('copy', () => {
-    it('should warn if `keepAcl` parameter is passed', () => {
-      const consoleStub = sinon.stub(console, 'warn');
-      file.request = util.noop;
-      file.copy('newFile', {keepAcl: 'private'}, assert.ifError);
-      assert.ok(
-        consoleStub.calledWith(
-          'keepAcl parameter is not supported and will be removed in the next major'
-        )
-      );
-      sinon.restore();
-    });
+    describe('depricate `keepAcl`', () => {
+      // tslint:disable-next-line: no-any
+      let STORAGE2: any;
+      // tslint:disable-next-line: no-any
+      let BUCKET2: any;
+      // tslint:disable-next-line: no-any
+      let file2: any;
+      beforeEach(() => {
+        STORAGE2 = {
+          createBucket: util.noop,
+          request: util.noop,
+          // tslint:disable-next-line: no-any
+          makeAuthenticatedRequest(req: {}, callback: any) {
+            if (callback) {
+              (callback.onAuthenticated || callback)(null, req);
+            }
+          },
+          bucket(name: string) {
+            return new Bucket(this, name);
+          },
+        };
+        BUCKET2 = new Bucket(STORAGE, 'bucket-name');
+        file2 = new File(BUCKET, FILE_NAME);
+      })
+
+      it('should warn if `keepAcl` parameter is passed', done => {
+        file.request = util.noop;
+  
+        // since --throw-deprication is enabled using try=>catch block
+        try {
+          file.copy('newFile', {keepAcl: 'private'}, assert.ifError);
+        } catch (err) {
+          assert.strictEqual(err.message, "keepAcl parameter is not supported and will be removed in the next major");
+          assert.strictEqual(err.name, 'DeprecationWarning');
+          done();
+        }
+      });
+  
+      it('should warn only once `keepAcl` parameter is passed', done => {
+        file.request = util.noop;
+  
+        // since --throw-deprication is enabled using try=>catch block
+        try {
+          file.copy('newFile', {keepAcl: 'private'}, assert.ifError);
+        } catch (err) {
+          assert.strictEqual(err.message, "keepAcl parameter is not supported and will be removed in the next major");
+          assert.strictEqual(err.name, 'DeprecationWarning');
+        }
+        file2.copy('newFile2', {keepAcl: 'private'}, assert.ifError);
+        done();
+      });
+
+    })  
 
     it('should throw if no destination is provided', () => {
       assert.throws(() => {
