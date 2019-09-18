@@ -61,7 +61,7 @@
     "duplexify": "^3.5.0",
     "extend": "^3.0.2",
     "gaxios": "^2.0.1",
-    "gcs-resumable-upload": "^2.0.0",
+    "gcs-resumable-upload": "^2.2.4",
     "hash-stream-validation": "^0.2.1",
     "mime": "^2.2.0",
     "mime-types": "^2.0.8",
@@ -75,7 +75,7 @@
     "xdg-basedir": "^4.0.0"
   },
   "devDependencies": {
-    "@google-cloud/pubsub": "^0.32.0",
+    "@google-cloud/pubsub": "^1.0.0",
     "@grpc/proto-loader": "^0.5.1",
     "@types/compressible": "^2.0.0",
     "@types/concat-stream": "^1.6.0",
