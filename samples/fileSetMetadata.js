@@ -21,7 +21,7 @@
 //   description: Set file metadata.
 //   usage: node fileSetMetadata.js <BUCKET_NAME> <FILE_NAME>
 
-async function main(bucketName = 'my-bucket', filename = 'file.txt') {
+function main(bucketName = 'my-bucket', filename = 'file.txt') {
   // [START storage_set_metadata]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -34,27 +34,29 @@ async function main(bucketName = 'my-bucket', filename = 'file.txt') {
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
   // const filename = 'File to access, e.g. file.txt';
+  async function setFileMetadata() {
+    // Set file metadata.
+    const [metadata] = await storage
+      .bucket(bucketName)
+      .file(filename)
+      .setMetadata({
+        // Predefinded metadata for server e.g. 'cacheControl', 'contentDisposition',
+        // 'contentEncoding', 'contentEncoding', 'contentLanguage', 'contentType'
+        contentDisposition: 'attachment; filename*=utf-8\'\'"anotherImage.jpg"',
+        contentType: 'image/jpeg',
 
-  const [metadata] = await storage
-    .bucket(bucketName)
-    .file(filename)
-    .setMetadata({
-      // Predefinded metadata for server e.g. 'cacheControl', 'contentDisposition',
-      // 'contentEncoding', 'contentEncoding', 'contentLanguage', 'contentType'
-      contentDisposition: 'attachment; filename*=utf-8\'\'"anotherImage.jpg"',
-      contentType: 'image/jpeg',
+        // Note or actionable items for user e.g. uniqueId,
+        // object description or other useful information.
+        metadata: {
+          description: 'file description...',
+          modified: '1900-01-01',
+        },
+      });
 
-      // Note or actionable items for user e.g. uniqueId,
-      // object description or other useful information.
-      metadata: {
-        description: 'file description...',
-        modified: '1900-01-01',
-      },
-    });
-
-  console.log(metadata);
-
+    console.log(metadata);
+  }
   // [END storage_set_metadata]
+  setFileMetadata();
 }
 
-main(...process.argv.slice(2)).catch(console.error);
+main(...process.argv.slice(2));
