@@ -3224,8 +3224,10 @@ class File extends ServiceObject<File> {
    * @see [Per-Object Storage Class]{@link https://cloud.google.com/storage/docs/per-object-storage-class}
    * @see [Storage Classes]{@link https://cloud.google.com/storage/docs/storage-classes}
    *
-   * @param {string} storageClass The new storage class. (`multi_regional`,
-   *     `regional`, `nearline`, `coldline`)
+   * @param {string} storageClass The new storage class. (`standard`,
+   *     `nearline`, or `coldline`)
+   *     **Note:** The storage classes `multi_regional` and `regional`
+   *     are now legacy and will be deprecated in the future.
    * @param {SetStorageClassOptions} [options] Configuration options.
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
@@ -3233,7 +3235,7 @@ class File extends ServiceObject<File> {
    * @returns {Promise<SetStorageClassResponse>}
    *
    * @example
-   * file.setStorageClass('regional', function(err, apiResponse) {
+   * file.setStorageClass('nearline', function(err, apiResponse) {
    *   if (err) {
    *     // Error handling omitted.
    *   }
@@ -3244,7 +3246,7 @@ class File extends ServiceObject<File> {
    * //-
    * // If the callback is omitted, we'll return a Promise.
    * //-
-   * file.setStorageClass('regional').then(function() {});
+   * file.setStorageClass('nearline').then(function() {});
    */
   setStorageClass(
     storageClass: string,
