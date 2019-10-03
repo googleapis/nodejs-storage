@@ -3455,7 +3455,7 @@ describe('File', () => {
         // })
         file.request = (config: {}, callback: Function) => {
           callback(null, {});
-        }
+        };
         // file.copy = (destination: {}, options: {}, callback: Function) => {
         //   callback(null);
         // };
@@ -3472,10 +3472,10 @@ describe('File', () => {
               assert.ok(stub.notCalled);
               stub.reset();
               done();
-            })
-          })
-        })
-      })
+            });
+          });
+        });
+      });
 
       it('should pass options to delete', done => {
         const options = {};
