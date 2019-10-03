@@ -45,10 +45,11 @@
     "clean": "gts clean",
     "compile": "tsc -p .",
     "fix": "gts fix && eslint --fix '**/*.js'",
-    "prepare": "npm run compile",
+    "prepare": "npm run snyk-protect && npm run compile",
     "docs-test": "linkinator docs",
     "predocs-test": "npm run docs",
-    "benchwrapper": "node bin/benchwrapper.js"
+    "benchwrapper": "node bin/benchwrapper.js",
+    "snyk-protect": "snyk protect"
   },
   "dependencies": {
     "@google-cloud/common": "^2.1.1",
@@ -72,7 +73,8 @@
     "snakeize": "^0.1.0",
     "stream-events": "^1.0.1",
     "through2": "^3.0.0",
-    "xdg-basedir": "^4.0.0"
+    "xdg-basedir": "^4.0.0",
+    "snyk": "^1.230.5"
   },
   "devDependencies": {
     "@google-cloud/pubsub": "^1.0.0",
@@ -120,5 +122,6 @@
     "typescript": "~3.6.0",
     "uuid": "^3.1.0",
     "yargs": "^14.0.0"
-  }
+  },
+  "snyk": true
 }
