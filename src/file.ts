@@ -1122,7 +1122,7 @@ class File extends ServiceObject<File> {
    *     `options.end = 999` represent the first 1000 bytes in a file or object.
    *     NOTE: when specifying a byte range, data integrity is not available.
    * @property {boolean} [decompress=true] Disable auto decompression of the
-   *     received data. By default this option set to `true`.
+   *     received data. By default this option is set to `true`.
    *     Applicable in cases where the data was uploaded with
    *     `gzip: true` option. See {@link File#createWriteStream}.
    */
