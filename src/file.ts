@@ -3028,9 +3028,12 @@ class File extends ServiceObject<File> {
         return;
       }
 
-      this.delete(options, (err, apiResponse) => {
-        callback!(err, destinationFile, apiResponse);
-      });
+      if (this.name !== destinationFile!.name || this.bucket.name !== destinationFile!.bucket.name) {
+        this.delete(options, (err, apiResponse) => {
+          callback!(err, destinationFile, apiResponse);
+        });
+      }
+      callback!(null, destinationFile, apiResponse);
     });
   }
 
