@@ -2603,7 +2603,7 @@ describe('storage', () => {
       const copyOpts = {predefinedAcl: 'publicRead'};
       const [copiedFile] = await file.copy('CloudLogoCopy', copyOpts);
       const publicAcl = await isFilePublicAsync(copiedFile);
-      assert.strictEqual(publicAcl, true)
+      assert.strictEqual(publicAcl, true);
       await Promise.all([file.delete, copiedFile.delete()]);
     });
 
