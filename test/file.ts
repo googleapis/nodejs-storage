@@ -1203,7 +1203,7 @@ describe('File', () => {
           .resume();
       });
 
-      it('should not gunzip the response if "retunCompressed: true" is passed', done => {
+      it('should not gunzip the response if "decompress: false" is passed', done => {
         file
           .createReadStream({decompress: false})
           .once('error', done)
