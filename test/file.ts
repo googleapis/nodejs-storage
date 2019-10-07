@@ -3461,15 +3461,9 @@ describe('File', () => {
       });
 
       it('should not delete the destination is same as origin', done => {
-        // sinon.stub(file, 'request').callsFake((callback: Function) => {
-        //   callback(null, null);
-        // })
         file.request = (config: {}, callback: Function) => {
           callback(null, {});
         };
-        // file.copy = (destination: {}, options: {}, callback: Function) => {
-        //   callback(null);
-        // };
         const stub = sinon.stub(file, 'delete');
         // destination is same bucket as object
         file.move(BUCKET, (err: Error) => {
