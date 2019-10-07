@@ -3426,12 +3426,31 @@ describe('File', () => {
         };
         file.move('new-filename', (err: Error) => {
           assert.strictEqual(err, error);
+          assert.ok(err.message.includes('copy'));
           done();
         });
       });
     });
 
     describe('delete original file', () => {
+      it('should call the callback with destinationFile and copyApiResponse', done => {
+        const copyApiResponse = {};
+        const newFile = new File(BUCKET, 'new-filename'); 
+        file.copy = (destination: {}, options: {}, callback: Function) => {
+          callback(null, newFile, copyApiResponse);
+        };
+        file.delete = ({}, callback: Function) => {
+          callback();
+        }
+
+        file.move('new-filename', (err: Error, destinationFile: File, apiResponse: {}) => {
+          assert.ifError(err);
+          assert.strictEqual(destinationFile, newFile);
+          assert.strictEqual(apiResponse, copyApiResponse);
+          done();
+        })
+      });
+
       it('should delete if copy is successful', done => {
         file.copy = (destination: {}, options: {}, callback: Function) => {
           callback(null);
@@ -3484,6 +3503,7 @@ describe('File', () => {
         };
         file.move('new-filename', (err: Error) => {
           assert.strictEqual(err, error);
+          assert.ok(err.message.includes('delete'));
           done();
         });
       });
