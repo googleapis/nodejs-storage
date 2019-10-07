@@ -3041,8 +3041,9 @@ class File extends ServiceObject<File> {
         this.delete(options, (err, apiResponse) => {
           callback!(err, destinationFile, apiResponse);
         });
+      } else {
+        callback!(null, destinationFile, apiResponse);
       }
-      callback!(null, destinationFile, apiResponse);
     });
   }
 
