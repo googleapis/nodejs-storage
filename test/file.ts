@@ -550,6 +550,23 @@ describe('File', () => {
       file.copy(newFile, {destinationKmsKeyName}, assert.ifError);
     });
 
+    it('should accept predefined Acl', done => {
+      const options = {
+        predefinedAcl: 'authenticatedRead',
+      };
+      const newFile = new File(BUCKET, 'new-file');
+      file.request = (reqOpts: DecorateRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.qs.destinationPredefinedAcl,
+          options.predefinedAcl
+        );
+        assert.strictEqual(reqOpts.json.destinationPredefinedAcl, undefined);
+        done();
+      };
+
+      file.copy(newFile, options, assert.ifError);
+    });
+
     it('should favor the option over the File KMS name', done => {
       const newFile = new File(BUCKET, 'new-file');
       newFile.kmsKeyName = 'incorrect-kms-key-name';
@@ -3455,8 +3472,9 @@ describe('File', () => {
       });
 
       it('should delete if copy is successful', done => {
+        const destinationFile = {bucket: {}};
         file.copy = (destination: {}, options: {}, callback: Function) => {
-          callback(null);
+          callback(null, destinationFile);
         };
         Object.assign(file, {
           delete() {
@@ -3481,11 +3499,34 @@ describe('File', () => {
         });
       });
 
+      it('should not delete the destination is same as origin', done => {
+        file.request = (config: {}, callback: Function) => {
+          callback(null, {});
+        };
+        const stub = sinon.stub(file, 'delete');
+        // destination is same bucket as object
+        file.move(BUCKET, (err: Error) => {
+          assert.ifError(err);
+          // destination is same file as object
+          file.move(file, (err: Error) => {
+            assert.ifError(err);
+            // destination is same file name as string
+            file.move(file.name, (err: Error) => {
+              assert.ifError(err);
+              assert.ok(stub.notCalled);
+              stub.reset();
+              done();
+            });
+          });
+        });
+      });
+
       it('should pass options to delete', done => {
         const options = {};
+        const destinationFile = {bucket: {}};
 
         file.copy = (destination: {}, options: {}, callback: Function) => {
-          callback();
+          callback(null, destinationFile);
         };
 
         file.delete = (options_: {}) => {
@@ -3498,8 +3539,9 @@ describe('File', () => {
 
       it('should fail if delete fails', done => {
         const error = new Error('Error.');
+        const destinationFile = {bucket: {}};
         file.copy = (destination: {}, options: {}, callback: Function) => {
-          callback();
+          callback(null, destinationFile);
         };
         file.delete = (options: {}, callback: Function) => {
           callback(error);
