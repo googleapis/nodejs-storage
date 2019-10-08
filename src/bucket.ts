@@ -1870,22 +1870,25 @@ class Bucket extends ServiceObject {
     }
 
     (async () => {
+      let setMetadataResponse;
+
       try {
         await this.acl.add({
           entity: 'group-cloud-storage-analytics@google.com',
           role: 'WRITER',
         });
-        const [setMetadataResponse] = await this.setMetadata({
+        [setMetadataResponse] = await this.setMetadata({
           logging: {
             logBucket,
             logObjectPrefix: config.prefix,
           },
         });
-        callback!(null, setMetadataResponse);
       } catch (e) {
         callback!(e);
         return;
       }
+
+      callback!(null, setMetadataResponse);
     })();
   }
 
