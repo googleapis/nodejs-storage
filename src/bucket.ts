@@ -1833,9 +1833,7 @@ class Bucket extends ServiceObject {
    *   }
    * });
    *
-   * //-
-   * // Optionally, provide a destination bucket.
-   * //-
+   * @example <caption>Optionally, provide a destination bucket.</caption>
    * const config = {
    *   prefix: 'log',
    *   bucket: 'destination-bucket'
@@ -1843,9 +1841,8 @@ class Bucket extends ServiceObject {
    *
    * bucket.enableLogging(config, function(err, apiResponse) {});
    *
-   * //-
-   * // If the callback is omitted, we'll return a Promise.
-   * //-
+   * @example <caption>If the callback is omitted, we'll return a Promise.
+   *     </caption>
    * bucket.enableLogging(config).then(function(data) {
    *   const apiResponse = data[0];
    * });
