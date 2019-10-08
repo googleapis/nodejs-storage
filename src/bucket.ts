@@ -103,10 +103,6 @@ export interface EnableLoggingOptions {
   bucket?: string | Bucket;
   prefix: string;
 }
-export type EnableLoggingResponse = [];
-export interface EnableLoggingCallback {
-  (err: Error | null): void;
-}
 
 export interface GetFilesOptions {
   autoPaginate?: boolean;
@@ -1801,6 +1797,10 @@ class Bucket extends ServiceObject {
   enableLogging(
     config: EnableLoggingOptions
   ): Promise<SetBucketMetadataResponse>;
+  enableLogging(
+    config: EnableLoggingOptions,
+    callback: SetBucketMetadataCallback
+  ): void;
   /**
    * Configuration object for enabling logging.
    *
