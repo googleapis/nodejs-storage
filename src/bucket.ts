@@ -1841,8 +1841,7 @@ class Bucket extends ServiceObject {
    *
    * bucket.enableLogging(config, function(err, apiResponse) {});
    *
-   * @example <caption>If the callback is omitted, we'll return a Promise.
-   *     </caption>
+   * @example <caption>If the callback is omitted, we'll return a Promise.</caption>
    * bucket.enableLogging(config).then(function(data) {
    *   const apiResponse = data[0];
    * });
