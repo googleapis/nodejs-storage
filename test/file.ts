@@ -3437,13 +3437,14 @@ describe('File', () => {
       });
 
       it('should fail if copy fails', done => {
-        const error = new Error('Error.');
+        const originalErrorMessage = 'Original error message.';
+        const error = new Error(originalErrorMessage);
         file.copy = (destination: {}, options: {}, callback: Function) => {
           callback(error);
         };
         file.move('new-filename', (err: Error) => {
           assert.strictEqual(err, error);
-          assert.ok(err.message.includes('copy'));
+          assert.strictEqual(err.message, `file#copy failed with an error - ${originalErrorMessage}`);
           done();
         });
       });
@@ -3538,7 +3539,8 @@ describe('File', () => {
       });
 
       it('should fail if delete fails', done => {
-        const error = new Error('Error.');
+        const originalErrorMessage = 'Original error message.';
+        const error = new Error(originalErrorMessage);
         const destinationFile = {bucket: {}};
         file.copy = (destination: {}, options: {}, callback: Function) => {
           callback(null, destinationFile);
@@ -3548,7 +3550,7 @@ describe('File', () => {
         };
         file.move('new-filename', (err: Error) => {
           assert.strictEqual(err, error);
-          assert.ok(err.message.includes('delete'));
+          assert.strictEqual(err.message, `file#delete failed with an error - ${originalErrorMessage}`);
           done();
         });
       });
