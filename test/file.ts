@@ -3444,7 +3444,10 @@ describe('File', () => {
         };
         file.move('new-filename', (err: Error) => {
           assert.strictEqual(err, error);
-          assert.strictEqual(err.message, `file#copy failed with an error - ${originalErrorMessage}`);
+          assert.strictEqual(
+            err.message,
+            `file#copy failed with an error - ${originalErrorMessage}`
+          );
           done();
         });
       });
@@ -3550,7 +3553,10 @@ describe('File', () => {
         };
         file.move('new-filename', (err: Error) => {
           assert.strictEqual(err, error);
-          assert.strictEqual(err.message, `file#delete failed with an error - ${originalErrorMessage}`);
+          assert.strictEqual(
+            err.message,
+            `file#delete failed with an error - ${originalErrorMessage}`
+          );
           done();
         });
       });
