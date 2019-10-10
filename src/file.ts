@@ -3052,6 +3052,7 @@ class File extends ServiceObject<File> {
           if (err) {
             err.message = 'file#delete failed with an error - ' + err.message;
             callback!(err, destinationFile, apiResponse);
+            return;
           }
           callback!(null, destinationFile, copyApiResponse);
         });
