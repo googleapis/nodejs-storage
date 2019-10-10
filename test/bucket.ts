@@ -1220,8 +1220,8 @@ describe('Bucket', () => {
           assert.deepStrictEqual(policy_.bindings, [
             policy.bindings[0],
             {
-              members: ['cloud-storage-analytics@google.com'],
-              role: 'roles/storage.objectAdmin',
+              members: ['group:cloud-storage-analytics@google.com'],
+              role: 'roles/storage.objectCreator',
             },
           ]);
           setImmediate(done);
