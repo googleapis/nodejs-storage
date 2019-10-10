@@ -47,6 +47,7 @@ import {
   SetBucketMetadataResponse,
 } from '../src/bucket';
 import {AddAclOptions} from '../src/acl';
+import {Policy} from '../src/iam';
 
 class FakeFile {
   calledWith_: IArguments;
@@ -1177,8 +1178,9 @@ describe('Bucket', () => {
     const PREFIX = 'prefix';
 
     beforeEach(() => {
-      bucket.acl = {
-        add: () => Promise.resolve(),
+      bucket.iam = {
+        getPolicy: () => Promise.resolve([{bindings: []}]),
+        setPolicy: () => Promise.resolve(),
       };
       bucket.setMetadata = () => Promise.resolve([]);
       fakeUtil.isCustomType = util.isCustomType;
@@ -1207,13 +1209,21 @@ describe('Bucket', () => {
       }, /A configuration object with a prefix is required\./);
     });
 
-    it('should add ACL permissions', done => {
-      bucket.acl = {
-        add: (config: AddAclOptions) => {
-          assert.deepStrictEqual(config, {
-            entity: 'group-cloud-storage-analytics@google.com',
-            role: 'WRITER',
-          });
+    it('should add IAM permissions', done => {
+      const policy = {
+        bindings: [{}],
+      };
+      bucket.iam = {
+        getPolicy: () => Promise.resolve([policy]),
+        setPolicy: (policy_: Policy) => {
+          assert.deepStrictEqual(policy, policy_);
+          assert.deepStrictEqual(policy_.bindings, [
+            policy.bindings[0],
+            {
+              members: ['cloud-storage-analytics@google.com'],
+              role: 'roles/storage.objectAdmin',
+            },
+          ]);
           setImmediate(done);
           return Promise.resolve();
         },
@@ -1222,13 +1232,24 @@ describe('Bucket', () => {
       bucket.enableLogging({prefix: PREFIX}, assert.ifError);
     });
 
-    it('should return an error from the ACL update failing', done => {
+    it('should return an error from getting the IAM policy', done => {
       const error = new Error('Error.');
 
-      bucket.acl = {
-        add: () => {
-          throw error;
-        },
+      bucket.iam.getPolicy = () => {
+        throw error;
+      };
+
+      bucket.enableLogging({prefix: PREFIX}, (err: Error | null) => {
+        assert.strictEqual(err, error);
+        done();
+      });
+    });
+
+    it('should return an error from setting the IAM policy', done => {
+      const error = new Error('Error.');
+
+      bucket.iam.setPolicy = () => {
+        throw error;
       };
 
       bucket.enableLogging({prefix: PREFIX}, (err: Error | null) => {

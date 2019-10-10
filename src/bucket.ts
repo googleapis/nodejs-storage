@@ -1872,10 +1872,12 @@ class Bucket extends ServiceObject {
       let setMetadataResponse;
 
       try {
-        await this.acl.add({
-          entity: 'group-cloud-storage-analytics@google.com',
-          role: 'WRITER',
+        const [policy] = await this.iam.getPolicy();
+        policy.bindings.push({
+          members: ['cloud-storage-analytics@google.com'],
+          role: 'roles/storage.objectAdmin',
         });
+        await this.iam.setPolicy(policy);
         [setMetadataResponse] = await this.setMetadata({
           logging: {
             logBucket,
