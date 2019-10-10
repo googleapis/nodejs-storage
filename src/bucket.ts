@@ -1874,8 +1874,8 @@ class Bucket extends ServiceObject {
       try {
         const [policy] = await this.iam.getPolicy();
         policy.bindings.push({
-          members: ['cloud-storage-analytics@google.com'],
-          role: 'roles/storage.objectAdmin',
+          members: ['group:cloud-storage-analytics@google.com'],
+          role: 'roles/storage.objectCreator',
         });
         await this.iam.setPolicy(policy);
         [setMetadataResponse] = await this.setMetadata({
