@@ -1183,7 +1183,6 @@ describe('Bucket', () => {
         setPolicy: () => Promise.resolve(),
       };
       bucket.setMetadata = () => Promise.resolve([]);
-      fakeUtil.isCustomType = util.isCustomType;
     });
 
     it('should throw if a config object is not provided', () => {

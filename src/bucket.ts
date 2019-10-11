@@ -1858,15 +1858,9 @@ class Bucket extends ServiceObject {
       throw new Error('A configuration object with a prefix is required.');
     }
 
-    let logBucket = this.id;
-
-    if (typeof config.bucket !== 'undefined') {
-      if (util.isCustomType(config.bucket, 'Bucket')) {
-        logBucket = (config.bucket as Bucket).id;
-      } else if (typeof config.bucket === 'string') {
-        logBucket = config.bucket;
-      }
-    }
+    const logBucket = config.bucket
+      ? (config.bucket as Bucket).id || config.bucket
+      : this.id;
 
     (async () => {
       let setMetadataResponse;
