@@ -625,7 +625,9 @@ describe('File', () => {
         const newFileName = '/new-file-name.png';
         const newFile = new File(BUCKET, newFileName);
         // File uri encodes file name when calling this.request during copy
-        const expectedPath = `/rewriteTo/b/${file.bucket.name}/o/${encodeURIComponent(newFile.name)}`;
+        const expectedPath = `/rewriteTo/b/${
+          file.bucket.name
+        }/o/${encodeURIComponent(newFile.name)}`;
         assertPathEquals(file, expectedPath, done);
         file.copy(newFileName);
       });
