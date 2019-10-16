@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [3.5.1](https://www.github.com/googleapis/nodejs-storage/compare/v3.5.0...v3.5.1) (2019-10-16)
+
+
+### Bug Fixes
+
+* **deps:** update hash-stream-validation ([#884](https://www.github.com/googleapis/nodejs-storage/issues/884)) ([96a7fc2](https://www.github.com/googleapis/nodejs-storage/commit/96a7fc297a563819b09727990eb9ee15a421310b))
+
 ## [3.5.0](https://www.github.com/googleapis/nodejs-storage/compare/v3.4.0...v3.5.0) (2019-10-14)
 
 
