@@ -25,7 +25,7 @@ function main(
 
   // Creates a client
   const storage = new Storage();
-  // Creates a client from the Firebase Admin SDK service key
+  // Creates a client from a Google service account key.
   // const storage = new Storage({keyFilename: "key.json"}); 
 
   /**
