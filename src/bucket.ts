@@ -548,6 +548,28 @@ class Bucket extends ServiceObject {
    *   .on('data', function(file) {
    *     this.end();
    *   });
+   *
+   * //-
+   * // If you're filtering files with a delimiter, you should use
+   * // {@link Bucket#getFiles} and set `autoPaginate: false` in order to
+   * // preserve the `apiResponse` argument.
+   * //-
+   * const prefixes = [];
+   *
+   * function callback(err, files, nextQuery, apiResponse) {
+   *   prefixes = prefixes.concat(apiResponse.prefixes);
+   *
+   *   if (nextQuery) {
+   *     bucket.getFiles(nextQuery, callback);
+   *   } else {
+   *     // prefixes = The finished array of prefixes.
+   *   }
+   * }
+   *
+   * bucket.getFiles({
+   *   autoPaginate: false,
+   *   delimiter: '/'
+   * }, callback);
    */
   getFilesStream: Function;
 
@@ -2067,6 +2089,27 @@ class Bucket extends ServiceObject {
    *
    * bucket.getFiles({
    *   autoPaginate: false
+   * }, callback);
+   *
+   * //-
+   * // If you're filtering files with a delimiter, set `autoPaginate: false` in
+   * // order to preserve the `apiResponse` argument.
+   * //-
+   * const prefixes = [];
+   *
+   * function callback(err, files, nextQuery, apiResponse) {
+   *   prefixes = prefixes.concat(apiResponse.prefixes);
+   *
+   *   if (nextQuery) {
+   *     bucket.getFiles(nextQuery, callback);
+   *   } else {
+   *     // prefixes = The finished array of prefixes.
+   *   }
+   * }
+   *
+   * bucket.getFiles({
+   *   autoPaginate: false,
+   *   delimiter: '/'
    * }, callback);
    *
    * //-
