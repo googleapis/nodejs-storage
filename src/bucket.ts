@@ -2092,25 +2092,52 @@ class Bucket extends ServiceObject {
    * }, callback);
    *
    * //-
-   * // If you're filtering files with a delimiter, set `autoPaginate: false` in
-   * // order to preserve the `apiResponse` argument.
+   * // With `autoPaginate: false`, it's possible to iterate over files which
+   * // incorporate a common structure using a delimiter.
+   * //
+   * // Consider the following remote objects:
+   * //
+   * //   1. "a"
+   * //   2. "a/b/c/d"
+   * //   3. "b/d/e"
+   * //
+   * // Using a delimiter of `/` will return a single file, "a".
+   * //
+   * // Check the `apiResponse` argument for the `prefixes` property to see what
+   * // "sub-directories" were found.
    * //-
-   * const prefixes = [];
-   *
-   * function callback(err, files, nextQuery, apiResponse) {
-   *   prefixes = prefixes.concat(apiResponse.prefixes);
-   *
-   *   if (nextQuery) {
-   *     bucket.getFiles(nextQuery, callback);
-   *   } else {
-   *     // prefixes = The finished array of prefixes.
-   *   }
-   * }
-   *
    * bucket.getFiles({
    *   autoPaginate: false,
    *   delimiter: '/'
-   * }, callback);
+   * }, function(err, files, nextQuery, apiResponse) {
+   *   // files = [
+   *   //   {File} // File object for file "a"
+   *   // ]
+   *
+   *   // apiResponse.prefixes = [
+   *   //   'a/',
+   *   //   'b/'
+   *   // ]
+   * });
+   *
+   * //-
+   * // Using prefixes, it's now possible to simulate a file system with
+   * // follow-up requests.
+   * //-
+   * bucket.getFiles({
+   *   autoPaginate: false,
+   *   delimiter: '/',
+   *   prefix: 'a/'
+   * }, function(err, files, nextQuery, apiResponse) {
+   *   // No files found within "directory" a.
+   *   // files = []
+   *
+   *   // However, a "sub-directory" was found.
+   *   // This prefix can be used to continue traversing the "file system".
+   *   // apiResponse.prefixes = [
+   *   //   'a/b/'
+   *   // ]
+   * });
    *
    * //-
    * // If the callback is omitted, we'll return a Promise.
