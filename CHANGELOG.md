@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [4.0.1](https://www.github.com/googleapis/nodejs-storage/compare/v4.0.0...v4.0.1) (2019-10-23)
+
+
+### Bug Fixes
+
+* **docs:** missing quote in signed url jsdoc ([#896](https://www.github.com/googleapis/nodejs-storage/issues/896)) ([f2d567f](https://www.github.com/googleapis/nodejs-storage/commit/f2d567f279fee0f48c2d6a607f4066c9da372549))
+
 ## [4.0.0](https://www.github.com/googleapis/nodejs-storage/compare/v3.5.0...v4.0.0) (2019-10-17)
 
 
