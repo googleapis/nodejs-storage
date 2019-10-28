@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import * as querystring from 'querystring';
+
 export function normalize<T = {}, U = Function>(
   optionsOrCallback?: T | U,
   cb?: U
@@ -34,4 +36,43 @@ export function normalize<T = {}, U = Function>(
  */
 export function objectEntries<T>(obj: {[key: string]: T}): Array<[string, T]> {
   return Object.keys(obj).map(key => [key, obj[key]] as [string, T]);
+}
+
+/**
+ * URI encode the given string for generating signed URLs.
+ *
+ * This implementation differs from encodeURIComponent() in these ways:
+ *  - `! * ' ( )` characters are encoded;
+ *  - `/` is not encoded if encodeSlash is true.
+ * @param {string} uri The URI to encode.
+ * @param {boolean=false} encodeSlash If `true`, the "/" character is not encoded.
+ * @return {string} The encoded string.
+ */
+export function encodeURI(uri: string, encodeSlash: boolean): string {
+  // Encode using JavaScript's encodeURIComponent, excluding "/" if encodeSlash is
+  // `true`.
+  let encoded = uri.split('/')
+    .map(encodeURIComponent)
+    .join(encodeSlash ? '%2F' : '/')
+
+  // Encode additional characters not encoded by encodeURIComponent.
+  return encoded
+    .replace('!', '%21')
+    .replace('*', '%2A')
+    .replace('\'', '%27')
+    .replace('(', '%28')
+    .replace(')', '%29');
+}
+
+/**
+ * Serialize an object to a URL query string using util.encodeURI(uri, true).
+ * @param {string} url The object to serialize.
+ * @return {string} Serialized string.
+ */
+export function qsStringify(qs: querystring.ParsedUrlQueryInput): string {
+  return querystring.stringify(qs, '&', '=', {
+    encodeURIComponent:
+      (component: string) =>
+        encodeURI(component, true),
+  });
 }
