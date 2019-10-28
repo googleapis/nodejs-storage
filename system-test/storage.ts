@@ -765,7 +765,7 @@ describe('storage', () => {
         iamConfiguration: {
           uniformBucketLevelAccess: {
             enabled,
-          }
+          },
         },
       });
 
@@ -783,7 +783,7 @@ describe('storage', () => {
       let file: File;
 
       const validateUniformBucketLevelAccessEnabledError = (err: ApiError) => {
-        assert(err.message.match(/Uniform Bucket-Level Access is enabled/));
+        assert(err.message.match(/Bucket Policy Only is enabled/));
         assert.strictEqual(err.code, 400);
         return true;
       };
