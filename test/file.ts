@@ -3010,7 +3010,7 @@ describe('File', () => {
 
       it('should URI encode file names', done => {
         directoryFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert(signedUrl.includes(encodeURIComponent(directoryFile.name)));
+          assert(signedUrl.includes(directoryFile.name));
           done();
         });
       });
