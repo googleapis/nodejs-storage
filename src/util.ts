@@ -51,15 +51,16 @@ export function objectEntries<T>(obj: {[key: string]: T}): Array<[string, T]> {
 export function encodeURI(uri: string, encodeSlash: boolean): string {
   // Encode using JavaScript's encodeURIComponent, excluding "/" if encodeSlash is
   // `true`.
-  let encoded = uri.split('/')
+  const encoded = uri
+    .split('/')
     .map(encodeURIComponent)
-    .join(encodeSlash ? '%2F' : '/')
+    .join(encodeSlash ? '%2F' : '/');
 
   // Encode additional characters not encoded by encodeURIComponent.
   return encoded
     .replace('!', '%21')
     .replace('*', '%2A')
-    .replace('\'', '%27')
+    .replace("'", '%27')
     .replace('(', '%28')
     .replace(')', '%29');
 }
@@ -71,8 +72,6 @@ export function encodeURI(uri: string, encodeSlash: boolean): string {
  */
 export function qsStringify(qs: querystring.ParsedUrlQueryInput): string {
   return querystring.stringify(qs, '&', '=', {
-    encodeURIComponent:
-      (component: string) =>
-        encodeURI(component, true),
+    encodeURIComponent: (component: string) => encodeURI(component, true),
   });
 }

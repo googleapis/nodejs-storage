@@ -2629,7 +2629,7 @@ class File extends ServiceObject<File> {
         'X-Goog-Credential': credential,
         'X-Goog-Date': dateISO,
         'X-Goog-Expires': expiresPeriodInSeconds,
-        'X-Goog-SignedHeaders': signedHeaders
+        'X-Goog-SignedHeaders': signedHeaders,
       };
 
       // tslint:disable-next-line:no-any
