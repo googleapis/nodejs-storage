@@ -2816,7 +2816,7 @@ describe('File', () => {
 
         const CANONICAL_REQUEST = [
           'GET',
-          `/${BUCKET.name}/${encodeURIComponent(file.name)}`,
+          `/${BUCKET.name}/${file.name}`,
           EXPECTED_QUERY_PARAM,
           EXPECTED_CANONICAL_HEADERS,
           EXPECTED_SIGNED_HEADERS,
@@ -2897,9 +2897,9 @@ describe('File', () => {
         });
       });
 
-      it('should URI encode file names', done => {
+      it('should use plain file names', done => {
         directoryFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert(signedUrl.includes(encodeURIComponent(directoryFile.name)));
+          assert(signedUrl.includes(directoryFile.name));
           done();
         });
       });
@@ -2950,7 +2950,7 @@ describe('File', () => {
               '',
               '',
               Math.round(Number(CONFIG.expires) / 1000),
-              `/${BUCKET.name}/${encodeURIComponent(file.name)}`,
+              `/${BUCKET.name}/${file.name}`,
             ].join('\n')
           );
           return Promise.resolve('signature');
@@ -3008,9 +3008,9 @@ describe('File', () => {
         });
       });
 
-      it('should URI encode file names', done => {
+      it('should use plain file names', done => {
         directoryFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert(signedUrl.includes(encodeURIComponent(directoryFile.name)));
+          assert(signedUrl.includes(directoryFile.name));
           done();
         });
       });

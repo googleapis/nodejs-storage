@@ -2490,7 +2490,7 @@ class File extends ServiceObject<File> {
       throw new Error('The action is not provided or invalid.');
     }
 
-    const name = encodeURIComponent(this.name);
+    const name = this.name;
     const resource = `/${this.bucket.name}/${name}`;
 
     const version = cfg.version || DEFAULT_SIGNING_VERSION;
