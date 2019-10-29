@@ -2934,6 +2934,51 @@ describe('File', () => {
           done();
         });
       });
+
+      describe('canonical headers', () => {
+        it('should collapse spaces from header value', () => {
+          const extensionHeaders = { collapsed: "abc    def" };
+
+          const canonicalizedHeaders = file.getCanonicalHeaders(extensionHeaders);
+          assert.strictEqual(canonicalizedHeaders, 'collapsed:abc def\n');
+        });
+
+        it('should trim leading spaces from header value', () => {
+          const extensionHeaders = { leading: "  abc" };
+
+          const canonicalizedHeaders = file.getCanonicalHeaders(extensionHeaders);
+          assert.strictEqual(canonicalizedHeaders, 'leading:abc\n');
+        });
+
+        it('should trim trailing spaces from header value', () => {
+          const extensionHeaders = { trailing: "def   " };
+
+          const canonicalizedHeaders = file.getCanonicalHeaders(extensionHeaders);
+          assert.strictEqual(canonicalizedHeaders, 'trailing:def\n');
+        });
+
+        it('should trim and collapse tabs from header value', () => {
+          const extensionHeaders = { tabs: "\t\t123\t\t\tabc\t\t" };
+
+          const canonicalizedHeaders = file.getCanonicalHeaders(extensionHeaders);
+          assert.strictEqual(canonicalizedHeaders, 'tabs:123\tabc\n');
+        });
+
+        it('should order headers', () => {
+          const extensionHeaders = {
+            c: 'value',
+            b: 'value',
+            a: 'value',
+          };
+
+          const canonicalizedHeaders = file.getCanonicalHeaders(extensionHeaders);
+          assert.strictEqual(canonicalizedHeaders, [
+            'a:value',
+            'b:value',
+            'c:value',
+          ].join('\n') + '\n')
+        });
+      });
     });
 
     describe('v2 signed URL', () => {
