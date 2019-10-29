@@ -41,7 +41,8 @@ const testFile = fs.readFileSync(
   'utf-8'
 );
 
-const testCases = JSON.parse(testFile).signingV4Tests as V4SignedURLConformanceTestCases[];
+const testCases = JSON.parse(testFile)
+  .signingV4Tests as V4SignedURLConformanceTestCases[];
 
 const SERVICE_ACCOUNT = path.join(
   __dirname,
