@@ -3471,8 +3471,8 @@ class File extends ServiceObject<File> {
         // - Trim leading and trailing spaces.
         // - Convert sequential (2+) spaces into a single space
         const canonicalValue = `${value}`
-         .trim()
-         .replace(/\s+/g, (match: string) => match[match.length-1]);
+          .trim()
+          .replace(/\s+/g, (match: string) => match[match.length - 1]);
 
         return `${headerName}:${canonicalValue}\n`;
       })
