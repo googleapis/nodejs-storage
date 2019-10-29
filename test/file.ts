@@ -239,9 +239,9 @@ describe('File', () => {
       assert.strictEqual(file.storage, BUCKET.storage);
     });
 
-    it('should strip a single leading slash', () => {
+    it('should not strip leading slashes', () => {
       const file = new File(BUCKET, '/name');
-      assert.strictEqual(file.name, 'name');
+      assert.strictEqual(file.name, '/name');
     });
 
     it('should assign KMS key name', () => {
@@ -302,11 +302,11 @@ describe('File', () => {
       });
     });
 
-    it('should use stripped leading slash name in ServiceObject', () => {
+    it('should not strip leading slash name in ServiceObject', () => {
       const file = new File(BUCKET, '/name');
       const calledWith = file.calledWith_[0];
 
-      assert.strictEqual(calledWith.id, 'name');
+      assert.strictEqual(calledWith.id, encodeURIComponent('/name'));
     });
 
     it('should set a custom encryption key', done => {
@@ -345,6 +345,65 @@ describe('File', () => {
   });
 
   describe('copy', () => {
+    describe('depricate `keepAcl`', () => {
+      // tslint:disable-next-line: no-any
+      let STORAGE2: any;
+      // tslint:disable-next-line: no-any
+      let BUCKET2: any;
+      // tslint:disable-next-line: no-any
+      let file2: any;
+      beforeEach(() => {
+        STORAGE2 = {
+          createBucket: util.noop,
+          request: util.noop,
+          // tslint:disable-next-line: no-any
+          makeAuthenticatedRequest(req: {}, callback: any) {
+            if (callback) {
+              (callback.onAuthenticated || callback)(null, req);
+            }
+          },
+          bucket(name: string) {
+            return new Bucket(this, name);
+          },
+        };
+        BUCKET2 = new Bucket(STORAGE, 'bucket-name');
+        file2 = new File(BUCKET, FILE_NAME);
+      });
+
+      it('should warn if `keepAcl` parameter is passed', done => {
+        file.request = util.noop;
+
+        // since --throw-deprication is enabled using try=>catch block
+        try {
+          file.copy('newFile', {keepAcl: 'private'}, assert.ifError);
+        } catch (err) {
+          assert.strictEqual(
+            err.message,
+            'keepAcl parameter is not supported and will be removed in the next major'
+          );
+          assert.strictEqual(err.name, 'DeprecationWarning');
+          done();
+        }
+      });
+
+      it('should warn only once `keepAcl` parameter is passed', done => {
+        file.request = util.noop;
+
+        // since --throw-deprication is enabled using try=>catch block
+        try {
+          file.copy('newFile', {keepAcl: 'private'}, assert.ifError);
+        } catch (err) {
+          assert.strictEqual(
+            err.message,
+            'keepAcl parameter is not supported and will be removed in the next major'
+          );
+          assert.strictEqual(err.name, 'DeprecationWarning');
+        }
+        file2.copy('newFile2', {keepAcl: 'private'}, assert.ifError);
+        done();
+      });
+    });
+
     it('should throw if no destination is provided', () => {
       assert.throws(() => {
         file.copy();
@@ -491,6 +550,23 @@ describe('File', () => {
       file.copy(newFile, {destinationKmsKeyName}, assert.ifError);
     });
 
+    it('should accept predefined Acl', done => {
+      const options = {
+        predefinedAcl: 'authenticatedRead',
+      };
+      const newFile = new File(BUCKET, 'new-file');
+      file.request = (reqOpts: DecorateRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.qs.destinationPredefinedAcl,
+          options.predefinedAcl
+        );
+        assert.strictEqual(reqOpts.json.destinationPredefinedAcl, undefined);
+        done();
+      };
+
+      file.copy(newFile, options, assert.ifError);
+    });
+
     it('should favor the option over the File KMS name', done => {
       const newFile = new File(BUCKET, 'new-file');
       newFile.kmsKeyName = 'incorrect-kms-key-name';
@@ -538,9 +614,20 @@ describe('File', () => {
       }
 
       it('should allow a string', done => {
-        const newFileName = '/new-file-name.png';
+        const newFileName = 'new-file-name.png';
         const newFile = new File(BUCKET, newFileName);
         const expectedPath = `/rewriteTo/b/${file.bucket.name}/o/${newFile.name}`;
+        assertPathEquals(file, expectedPath, done);
+        file.copy(newFileName);
+      });
+
+      it('should allow a string with leading slash.', done => {
+        const newFileName = '/new-file-name.png';
+        const newFile = new File(BUCKET, newFileName);
+        // File uri encodes file name when calling this.request during copy
+        const expectedPath = `/rewriteTo/b/${
+          file.bucket.name
+        }/o/${encodeURIComponent(newFile.name)}`;
         assertPathEquals(file, expectedPath, done);
         file.copy(newFileName);
       });
@@ -1139,6 +1226,17 @@ describe('File', () => {
           .once('error', done)
           .on('data', (data: {}) => {
             assert.strictEqual(data.toString(), DATA);
+            done();
+          })
+          .resume();
+      });
+
+      it('should not gunzip the response if "decompress: false" is passed', done => {
+        file
+          .createReadStream({decompress: false})
+          .once('error', done)
+          .on('data', (data: {}) => {
+            assert.strictEqual(data, GZIPPED_DATA);
             done();
           })
           .resume();
@@ -2021,6 +2119,28 @@ describe('File', () => {
           done();
         });
       });
+    });
+  });
+
+  describe('deleteResumableCache', () => {
+    it('should delete resumable file upload cache', done => {
+      file.generation = 123;
+
+      resumableUploadOverride = {
+        // tslint:disable-next-line no-any
+        upload(opts: any) {
+          assert.strictEqual(opts.bucket, file.bucket.name);
+          assert.strictEqual(opts.file, file.name);
+          assert.strictEqual(opts.generation, file.generation);
+
+          return {
+            deleteConfig: () => {
+              done();
+            },
+          };
+        },
+      };
+      file.deleteResumableCache();
     });
   });
 
@@ -2959,6 +3079,29 @@ describe('File', () => {
           }
         );
       });
+
+      it('should generate v4 signed url with provided cname', done => {
+        const host = 'http://www.example.com';
+
+        file.getSignedUrl(
+          {
+            action: 'read',
+            cname: host,
+            version: 'v4',
+            expires: Date.now() + 2000,
+          },
+          (err: Error, signedUrl: string) => {
+            assert.ifError(err);
+            const expected =
+              'http://www.example.com/file-name.png?' +
+              'X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=client-email' +
+              '%2F20190318%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20190318T000000Z&' +
+              'X-Goog-Expires=2&X-Goog-SignedHeaders=host&X-Goog-Signature=b228276adbab';
+            assert.strictEqual(signedUrl, expected);
+            done();
+          }
+        );
+      });
     });
 
     describe('promptSaveAs', () => {
@@ -3305,21 +3448,48 @@ describe('File', () => {
       });
 
       it('should fail if copy fails', done => {
-        const error = new Error('Error.');
+        const originalErrorMessage = 'Original error message.';
+        const error = new Error(originalErrorMessage);
         file.copy = (destination: {}, options: {}, callback: Function) => {
           callback(error);
         };
         file.move('new-filename', (err: Error) => {
           assert.strictEqual(err, error);
+          assert.strictEqual(
+            err.message,
+            `file#copy failed with an error - ${originalErrorMessage}`
+          );
           done();
         });
       });
     });
 
     describe('delete original file', () => {
-      it('should delete if copy is successful', done => {
+      it('should call the callback with destinationFile and copyApiResponse', done => {
+        const copyApiResponse = {};
+        const newFile = new File(BUCKET, 'new-filename');
         file.copy = (destination: {}, options: {}, callback: Function) => {
-          callback(null);
+          callback(null, newFile, copyApiResponse);
+        };
+        file.delete = ({}, callback: Function) => {
+          callback();
+        };
+
+        file.move(
+          'new-filename',
+          (err: Error, destinationFile: File, apiResponse: {}) => {
+            assert.ifError(err);
+            assert.strictEqual(destinationFile, newFile);
+            assert.strictEqual(apiResponse, copyApiResponse);
+            done();
+          }
+        );
+      });
+
+      it('should delete if copy is successful', done => {
+        const destinationFile = {bucket: {}};
+        file.copy = (destination: {}, options: {}, callback: Function) => {
+          callback(null, destinationFile);
         };
         Object.assign(file, {
           delete() {
@@ -3344,11 +3514,34 @@ describe('File', () => {
         });
       });
 
+      it('should not delete the destination is same as origin', done => {
+        file.request = (config: {}, callback: Function) => {
+          callback(null, {});
+        };
+        const stub = sinon.stub(file, 'delete');
+        // destination is same bucket as object
+        file.move(BUCKET, (err: Error) => {
+          assert.ifError(err);
+          // destination is same file as object
+          file.move(file, (err: Error) => {
+            assert.ifError(err);
+            // destination is same file name as string
+            file.move(file.name, (err: Error) => {
+              assert.ifError(err);
+              assert.ok(stub.notCalled);
+              stub.reset();
+              done();
+            });
+          });
+        });
+      });
+
       it('should pass options to delete', done => {
         const options = {};
+        const destinationFile = {bucket: {}};
 
         file.copy = (destination: {}, options: {}, callback: Function) => {
-          callback();
+          callback(null, destinationFile);
         };
 
         file.delete = (options_: {}) => {
@@ -3360,15 +3553,21 @@ describe('File', () => {
       });
 
       it('should fail if delete fails', done => {
-        const error = new Error('Error.');
+        const originalErrorMessage = 'Original error message.';
+        const error = new Error(originalErrorMessage);
+        const destinationFile = {bucket: {}};
         file.copy = (destination: {}, options: {}, callback: Function) => {
-          callback();
+          callback(null, destinationFile);
         };
         file.delete = (options: {}, callback: Function) => {
           callback(error);
         };
         file.move('new-filename', (err: Error) => {
           assert.strictEqual(err, error);
+          assert.strictEqual(
+            err.message,
+            `file#delete failed with an error - ${originalErrorMessage}`
+          );
           done();
         });
       });
@@ -3822,7 +4021,7 @@ describe('File', () => {
             predefinedAcl: options.predefinedAcl,
           },
           uri:
-            'https://www.googleapis.com/upload/storage/v1/b/' +
+            'https://storage.googleapis.com/upload/storage/v1/b/' +
             file.bucket.name +
             '/o',
         });
