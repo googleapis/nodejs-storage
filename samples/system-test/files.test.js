@@ -76,7 +76,7 @@ it('should upload a file with a kms key', async () => {
 
 it('should upload a local directory', done => {
   const output = execSync(
-    `${cmd} upload-directory ${bucketName} ${folderPath}`
+    `node uploadDirectory.js ${bucketName} ${folderPath}`
   );
 
   const fileList = [];
@@ -248,6 +248,23 @@ it('should get metadata for a file', () => {
   );
   assert.match(output, new RegExp(`File: ${copiedFileName}`));
   assert.match(output, new RegExp(`Bucket: ${bucketName}`));
+});
+
+it('should set metadata for a file', () => {
+  // used in sample
+  const userMetadata = {
+    description: 'file description...',
+    modified: '1900-01-01',
+  };
+  const output = execSync(
+    `node fileSetMetadata.js ${bucketName} ${copiedFileName}`
+  );
+
+  assert.match(
+    output,
+    new RegExp(`description: '${userMetadata.description}'`)
+  );
+  assert.match(output, new RegExp(`modified: '${userMetadata.modified}'`));
 });
 
 it('should delete a file', async () => {

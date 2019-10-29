@@ -96,6 +96,7 @@ has instructions for running the samples.
 | Storage Get Bucket Metadata. | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/bucketMetadata.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/bucketMetadata.js,samples/README.md) |
 | Buckets | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/buckets.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/buckets.js,samples/README.md) |
 | Encryption | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/encryption.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/encryption.js,samples/README.md) |
+| Storage Set File Metadata. | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/fileSetMetadata.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/fileSetMetadata.js,samples/README.md) |
 | Files | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/files.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/files.js,samples/README.md) |
 | Activate HMAC SA Key. | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/hmacKeyActivate.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/hmacKeyActivate.js,samples/README.md) |
 | Create HMAC SA Key. | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/hmacKeyCreate.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/hmacKeyCreate.js,samples/README.md) |
@@ -107,6 +108,7 @@ has instructions for running the samples.
 | Notifications | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/notifications.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/notifications.js,samples/README.md) |
 | Quickstart | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/quickstart.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/quickstart.js,samples/README.md) |
 | Requester Pays | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/requesterPays.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/requesterPays.js,samples/README.md) |
+| Upload a directory to a bucket. | [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/uploadDirectory.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadDirectory.js,samples/README.md) |
 
 
 
@@ -142,12 +144,10 @@ Apache Version 2.0
 
 See [LICENSE](https://github.com/googleapis/nodejs-storage/blob/master/LICENSE)
 
-[client-docs]: https://googleapis.dev/nodejs/storage/latest#reference
+[client-docs]: https://googleapis.dev/nodejs/storage/latest
 [product-docs]: https://cloud.google.com/storage
 [shell_img]: https://gstatic.com/cloudssh/images/open-btn.png
 [projects]: https://console.cloud.google.com/project
 [billing]: https://support.google.com/cloud/answer/6293499#enable-billing
 [enable_api]: https://console.cloud.google.com/flows/enableapi?apiid=storage-api.googleapis.com
 [auth]: https://cloud.google.com/docs/authentication/getting-started
-
-<a name="reference"></a>

@@ -953,9 +953,9 @@ describe('storage', () => {
       await bucket.create();
       let [metadata] = await bucket.getMetadata();
       assert.strictEqual(metadata.storageClass, 'STANDARD');
-      await bucket.setStorageClass('multi-regional');
+      await bucket.setStorageClass('coldline');
       [metadata] = await bucket.getMetadata();
-      assert.strictEqual(metadata.storageClass, 'MULTI_REGIONAL');
+      assert.strictEqual(metadata.storageClass, 'COLDLINE');
     });
 
     describe('locationType', () => {
@@ -1362,6 +1362,32 @@ describe('storage', () => {
             done();
           });
         });
+      });
+    });
+  });
+
+  describe('bucket logging', () => {
+    const PREFIX = 'sys-test';
+
+    it('should enable logging on current bucket by default', async () => {
+      const [metadata] = await bucket.enableLogging({prefix: PREFIX});
+      assert.deepStrictEqual(metadata.logging, {
+        logBucket: bucket.id,
+        logObjectPrefix: PREFIX,
+      });
+    });
+
+    it('should enable logging on another bucket', async () => {
+      const bucketForLogging = storage.bucket(generateName());
+      await bucketForLogging.create();
+
+      const [metadata] = await bucket.enableLogging({
+        bucket: bucketForLogging,
+        prefix: PREFIX,
+      });
+      assert.deepStrictEqual(metadata.logging, {
+        logBucket: bucketForLogging.id,
+        logObjectPrefix: PREFIX,
       });
     });
   });
@@ -2060,6 +2086,19 @@ describe('storage', () => {
       });
     });
 
+    it('should support readable[Symbol.asyncIterator]()', async () => {
+      const fileContents = fs.readFileSync(FILES.big.path);
+
+      const [file] = await bucket.upload(FILES.big.path);
+      const stream = file.createReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+      const remoteContents = Buffer.concat(chunks).toString();
+      assert.strictEqual(String(fileContents), String(remoteContents));
+    });
+
     it('should download a file to memory', done => {
       const fileContents = fs.readFileSync(FILES.big.path);
       bucket.upload(FILES.big.path, (err: Error | null, file?: File | null) => {
@@ -2583,6 +2622,16 @@ describe('storage', () => {
       await Promise.all([file.delete, copiedFile.delete()]);
     });
 
+    it('should respect predefined Acl at file#copy', async () => {
+      const opts = {destination: 'CloudLogo'};
+      const [file] = await bucket.upload(FILES.logo.path, opts);
+      const copyOpts = {predefinedAcl: 'publicRead'};
+      const [copiedFile] = await file.copy('CloudLogoCopy', copyOpts);
+      const publicAcl = await isFilePublicAsync(copiedFile);
+      assert.strictEqual(publicAcl, true);
+      await Promise.all([file.delete, copiedFile.delete()]);
+    });
+
     it('should copy a large file', async () => {
       const otherBucket = storage.bucket(generateName());
       const file = bucket.file('Big');
@@ -2988,6 +3037,29 @@ describe('storage', () => {
         files![0].metadata.generation,
         files![1].metadata.generation
       );
+    });
+
+    it('should throw an error Precondition Failed on overwrite with version 0, then save file with and without resumable', async () => {
+      const fileName = `test-${Date.now()}.txt`;
+
+      await bucketWithVersioning
+        .file(fileName)
+        .save('hello1', {resumable: false});
+      await assert.rejects(
+        async () => {
+          await bucketWithVersioning
+            .file(fileName, {generation: 0})
+            .save('hello2');
+        },
+        {
+          code: 412,
+          message: 'Precondition Failed',
+        }
+      );
+      await bucketWithVersioning
+        .file(fileName)
+        .save('hello3', {resumable: false});
+      await bucketWithVersioning.file(fileName).save('hello4');
     });
   });
 

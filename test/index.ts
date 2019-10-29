@@ -128,7 +128,7 @@ describe('Storage', () => {
 
       const calledWith = storage.calledWith_[0];
 
-      const baseUrl = 'https://www.googleapis.com/storage/v1';
+      const baseUrl = 'https://storage.googleapis.com/storage/v1';
       assert.strictEqual(calledWith.baseUrl, baseUrl);
       assert.strictEqual(calledWith.projectIdRequired, false);
       assert.deepStrictEqual(calledWith.scopes, [
@@ -547,6 +547,15 @@ describe('Storage', () => {
         };
 
         storage.createBucket(BUCKET_NAME, {regional: true}, assert.ifError);
+      });
+
+      it('should expand metadata.standard', done => {
+        storage.request = (reqOpts: DecorateRequestOptions) => {
+          assert.strictEqual(reqOpts.json.storageClass, 'STANDARD');
+          done();
+        };
+
+        storage.createBucket(BUCKET_NAME, {standard: true}, assert.ifError);
       });
     });
 
