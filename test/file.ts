@@ -3023,7 +3023,8 @@ describe('File', () => {
       it('should URI encode file name with special characters', done => {
         specialCharsFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
           assert.ifError(err);
-          assert(signedUrl.includes("special/azAZ%21%2A%28%29%2A%25/file.jpg"));
+          assert(signedUrl.includes("special/azAZ%21%2A%27%28%29%2A%25/file.jpg"));
+          done();
         });
       });
 
