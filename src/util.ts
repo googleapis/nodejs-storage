@@ -15,6 +15,7 @@
  */
 
 import * as querystring from 'querystring';
+import { encode } from 'punycode';
 
 export function normalize<T = {}, U = Function>(
   optionsOrCallback?: T | U,
@@ -58,11 +59,11 @@ export function encodeURI(uri: string, encodeSlash: boolean): string {
 
   // Encode additional characters not encoded by encodeURIComponent.
   return encoded
-    .replace('!', '%21')
-    .replace('*', '%2A')
-    .replace("'", '%27')
-    .replace('(', '%28')
-    .replace(')', '%29');
+    .replace(/!/g, '%21')
+    .replace(/\*/g, '%2A')
+    .replace(/'/g, '%27')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29');
 }
 
 /**
