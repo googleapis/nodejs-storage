@@ -783,7 +783,6 @@ describe('storage', () => {
       let file: File;
 
       const validateUniformBucketLevelAccessEnabledError = (err: ApiError) => {
-        assert(err.message.match(/Bucket Policy Only is enabled/));
         assert.strictEqual(err.code, 400);
         return true;
       };
