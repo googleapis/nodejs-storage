@@ -2092,20 +2092,13 @@ class Bucket extends ServiceObject {
    * }, callback);
    *
    * //-
-   * // With `autoPaginate: false`, it's possible to iterate over files which
-   * // incorporate a common structure using a delimiter.
-   * //
-   * // Consider the following remote objects:
-   * //
-   * //   1. "a"
-   * //   2. "a/b/c/d"
-   * //   3. "b/d/e"
-   * //
-   * // Using a delimiter of `/` will return a single file, "a".
-   * //
-   * // Check the `apiResponse` argument for the `prefixes` property to see what
-   * // "sub-directories" were found.
+   * // If the callback is omitted, we'll return a Promise.
    * //-
+   * bucket.getFiles().then(function(data) {
+   *   const files = data[0];
+   * });
+   *
+   * @example <caption><h6>Simulating a File System</h6><p>With `autoPaginate: false`, it's possible to iterate over files which incorporate a common structure using a delimiter.</p><p>Consider the following remote objects:</p><ol><li>"a"</li><li>"a/b/c/d"</li><li>"b/d/e"</li></ol><p>Using a delimiter of `/` will return a single file, "a".</p><p>`apiResponse.prefixes` will return the "sub-directories" that were found:</p><ol><li>"a/"</li><li>"b/"</li></ol></caption>
    * bucket.getFiles({
    *   autoPaginate: false,
    *   delimiter: '/'
@@ -2120,10 +2113,7 @@ class Bucket extends ServiceObject {
    *   // ]
    * });
    *
-   * //-
-   * // Using prefixes, it's now possible to simulate a file system with
-   * // follow-up requests.
-   * //-
+   * @example <caption>Using prefixes, it's now possible to simulate a file system with follow-up requests.</caption>
    * bucket.getFiles({
    *   autoPaginate: false,
    *   delimiter: '/',
@@ -2137,13 +2127,6 @@ class Bucket extends ServiceObject {
    *   // apiResponse.prefixes = [
    *   //   'a/b/'
    *   // ]
-   * });
-   *
-   * //-
-   * // If the callback is omitted, we'll return a Promise.
-   * //-
-   * bucket.getFiles().then(function(data) {
-   *   const files = data[0];
    * });
    *
    * @example <caption>include:samples/files.js</caption>
