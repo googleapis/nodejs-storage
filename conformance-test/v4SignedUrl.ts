@@ -51,7 +51,7 @@ const SERVICE_ACCOUNT = path.join(
 describe('v4 signed url', () => {
   const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
 
-  [testCases[7]].forEach(testCase => {
+  testCases.forEach(testCase => {
     it(testCase.description, async function() {
       // v4 signed URL does not support Bucket operations (list bucket, etc) yet
       // Remove this conditional once it is supported.
