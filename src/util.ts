@@ -45,7 +45,7 @@ export function objectEntries<T>(obj: {[key: string]: T}): Array<[string, T]> {
  *  - `! * ' ( )` characters are encoded;
  *  - `/` is not encoded if encodeSlash is true.
  * @param {string} uri The URI to encode.
- * @param {boolean=false} encodeSlash If `true`, the "/" character is not encoded.
+ * @param [boolean=false] encodeSlash If `true`, the "/" character is not encoded.
  * @return {string} The encoded string.
  */
 export function encodeURI(uri: string, encodeSlash: boolean): string {
