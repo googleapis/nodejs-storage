@@ -167,6 +167,7 @@ describe('File', () => {
   // tslint:disable-next-line: no-any
   let directoryFile: any;
 
+  // tslint:disable-next-line: no-any
   let specialCharsFile: any;
 
   // tslint:disable-next-line: no-any
@@ -3021,11 +3022,16 @@ describe('File', () => {
       });
 
       it('should URI encode file name with special characters', done => {
-        specialCharsFile.getSignedUrl(CONFIG, (err: Error, signedUrl: string) => {
-          assert.ifError(err);
-          assert(signedUrl.includes("special/azAZ%21%2A%27%28%29%2A%25/file.jpg"));
-          done();
-        });
+        specialCharsFile.getSignedUrl(
+          CONFIG,
+          (err: Error, signedUrl: string) => {
+            assert.ifError(err);
+            assert(
+              signedUrl.includes('special/azAZ%21%2A%27%28%29%2A%25/file.jpg')
+            );
+            done();
+          }
+        );
       });
 
       it('should add response-content-type parameter', done => {
