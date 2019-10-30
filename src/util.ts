@@ -15,7 +15,6 @@
  */
 
 import * as querystring from 'querystring';
-import {encode} from 'punycode';
 
 export function normalize<T = {}, U = Function>(
   optionsOrCallback?: T | U,
