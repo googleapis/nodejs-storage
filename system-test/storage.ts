@@ -3068,7 +3068,7 @@ describe('storage', () => {
     const localFile = fs.readFileSync(FILES.logo.path);
     let file: File;
 
-    beforeEach(done => {
+    before(done => {
       file = bucket.file('LogoToSign.jpg');
       fs.createReadStream(FILES.logo.path)
         .pipe(file.createWriteStream())
@@ -3086,21 +3086,6 @@ describe('storage', () => {
       const res = await fetch(signedReadUrl);
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
-      await file.delete();
-    });
-
-    it('should create a signed delete url', async () => {
-      const [signedDeleteUrl] = await file.getSignedUrl({
-        version: 'v2',
-        action: 'delete',
-        expires: Date.now() + 5000,
-      });
-
-      await fetch(signedDeleteUrl, {method: 'DELETE'});
-      assert.rejects(
-        () => file.getMetadata(),
-        (err: ApiError) => err.code === 404
-      );
     });
 
     it('should work with multi-valued extension headers', async () => {
@@ -3118,6 +3103,21 @@ describe('storage', () => {
       });
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
+    });
+
+    it('should create a signed delete url', async () => {
+      await file.delete();
+      const [signedDeleteUrl] = await file.getSignedUrl({
+        version: 'v2',
+        action: 'delete',
+        expires: Date.now() + 5000,
+      });
+
+      await fetch(signedDeleteUrl, {method: 'DELETE'});
+      assert.rejects(
+        () => file.getMetadata(),
+        (err: ApiError) => err.code === 404
+      );
     });
   });
 
@@ -3152,18 +3152,12 @@ describe('storage', () => {
     const localFile = fs.readFileSync(FILES.logo.path);
     let file: File;
 
-    beforeEach(done => {
+    before(done => {
       file = bucket.file('LogoToSign.jpg');
       fs.createReadStream(FILES.logo.path)
         .pipe(file.createWriteStream())
         .on('error', done)
         .on('finish', done.bind(null, null));
-    });
-
-    afterEach(async () => {
-      try {
-        await file.delete();
-      } catch {}
     });
 
     it('should create a signed read url', async () => {
@@ -3176,17 +3170,6 @@ describe('storage', () => {
       const res = await fetch(signedReadUrl);
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
-    });
-
-    it('should create a signed delete url', async () => {
-      const [signedDeleteUrl] = await file.getSignedUrl({
-        version: 'v4',
-        action: 'delete',
-        expires: Date.now() + 5000,
-      });
-      await fetch(signedDeleteUrl!, {method: 'DELETE'});
-      const [exists] = await file.exists();
-      assert.strictEqual(exists, false);
     });
 
     it('should work with special characters in extension headers', async () => {
@@ -3205,6 +3188,17 @@ describe('storage', () => {
       });
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
+    });
+
+    it('should create a signed delete url', async () => {
+      const [signedDeleteUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'delete',
+        expires: Date.now() + 5000,
+      });
+      await fetch(signedDeleteUrl!, {method: 'DELETE'});
+      const [exists] = await file.exists();
+      assert.strictEqual(exists, false);
     });
   });
 
