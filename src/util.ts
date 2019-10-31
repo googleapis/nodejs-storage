@@ -39,11 +39,12 @@ export function objectEntries<T>(obj: {[key: string]: T}): Array<[string, T]> {
 }
 
 /**
- * URI encode the given string for generating signed URLs.
+ * URI encode the given string for generating signed URLs:
+ * Encode every byte except `A-Z a-Z 0-9 ~ - . _`.
  *
- * This implementation differs from encodeURIComponent() in these ways:
- *  - `! * ' ( )` characters are encoded;
- *  - `/` is not encoded if encodeSlash is true.
+ * encodeURI patches encodeURIComponent() by:
+ *  - additionally encoding `! * ' ( )` characters;
+ *  - conditionally encoding `/` if encodeSlash is `true`.
  * @param {string} uri The URI to encode.
  * @param [boolean=false] encodeSlash If `true`, the "/" character is not encoded.
  * @return {string} The encoded string.
@@ -57,12 +58,9 @@ export function encodeURI(uri: string, encodeSlash: boolean): string {
     .join(encodeSlash ? '%2F' : '/');
 
   // Encode additional characters not encoded by encodeURIComponent.
-  return encoded
-    .replace('!', '%21')
-    .replace('*', '%2A')
-    .replace("'", '%27')
-    .replace('(', '%28')
-    .replace(')', '%29');
+  return encoded.replace(
+    /[!'()*]/g,
+    (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
 }
 
 /**
