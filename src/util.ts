@@ -39,26 +39,16 @@ export function objectEntries<T>(obj: {[key: string]: T}): Array<[string, T]> {
 }
 
 /**
- * URI encode the given string for generating signed URLs:
- * Encode every byte except `A-Z a-Z 0-9 ~ - . _`.
+ * Encode `str` with encodeURIComponent, plus these
+ * reserved characters: `! * ' ( )`.
  *
- * encodeURI patches encodeURIComponent() by:
- *  - additionally encoding `! * ' ( )` characters (@see [MDN: fixedEncodeURIComponent]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent}
- *  - conditionally encoding `/` if encodeSlash is `true`.
- * @param {string} uri The URI to encode.
- * @param [boolean=false] encodeSlash If `true`, the "/" character is not encoded.
+ * @see [MDN: fixedEncodeURIComponent]{@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent}
+ *
+ * @param {string} str The URI component to encode.
  * @return {string} The encoded string.
  */
-export function encodeURI(uri: string, encodeSlash: boolean): string {
-  // Encode using JavaScript's encodeURIComponent, excluding "/" if encodeSlash is
-  // `true`.
-  const encoded = uri
-    .split('/')
-    .map(encodeURIComponent)
-    .join(encodeSlash ? '%2F' : '/');
-
-  // Encode additional characters not encoded by encodeURIComponent.
-  return encoded.replace(
+export function fixedEncodeURIComponent(str: string): string {
+  return encodeURIComponent(str).replace(
     /[!'()*]/g,
     c =>
       '%' +
@@ -67,6 +57,24 @@ export function encodeURI(uri: string, encodeSlash: boolean): string {
         .toString(16)
         .toUpperCase()
   );
+}
+
+/**
+ * URI encode `uri` for generating signed URLs, using fixedEncodeURIComponent.
+ *
+ * Encode every byte except `A-Z a-Z 0-9 ~ - . _`.
+ *
+ * @param {string} uri The URI to encode.
+ * @param [boolean=false] encodeSlash If `true`, the "/" character is not encoded.
+ * @return {string} The encoded string.
+ */
+export function encodeURI(uri: string, encodeSlash: boolean): string {
+  // Split the string by `/`, and conditionally rejoin them with either
+  // %2F if encodeSlash is `true`, or '/' if `false`.
+  return uri
+    .split('/')
+    .map(fixedEncodeURIComponent)
+    .join(encodeSlash ? '%2F' : '/');
 }
 
 /**
