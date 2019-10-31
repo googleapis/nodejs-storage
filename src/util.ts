@@ -58,12 +58,9 @@ export function encodeURI(uri: string, encodeSlash: boolean): string {
     .join(encodeSlash ? '%2F' : '/');
 
   // Encode additional characters not encoded by encodeURIComponent.
-  return encoded
-    .replace(/!/g, '%21')
-    .replace(/\*/g, '%2A')
-    .replace(/'/g, '%27')
-    .replace(/\(/g, '%28')
-    .replace(/\)/g, '%29');
+  return encoded.replace(
+    /[!'()*]/g,
+    (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
 }
 
 /**
