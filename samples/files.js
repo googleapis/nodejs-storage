@@ -99,7 +99,6 @@ async function listFilesByPrefix(bucketName, prefix, delimiter) {
   // [END storage_list_files_with_prefix]
 }
 
-
 async function uploadFileWithKmsKey(bucketName, filename, kmsKeyName) {
   // [START storage_upload_with_kms_key]
   // Imports the Google Cloud client library
