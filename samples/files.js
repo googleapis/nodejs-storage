@@ -431,12 +431,6 @@ require(`yargs`)
     }
   )
   .command(
-    `upload <bucketName> <srcFileName>`,
-    `Uploads a local file to a bucket.`,
-    {},
-    opts => uploadFile(opts.bucketName, opts.srcFileName)
-  )
-  .command(
     `upload-with-kms-key <bucketName> <srcFileName> <kmsKeyName>`,
     `Uploads a local file to a bucket using a KMS key.`,
     {},
