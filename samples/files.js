@@ -1,10 +1,11 @@
 /**
- * Copyright 2017, Google, Inc.
+ * Copyright 2019 Google LLC
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -96,38 +97,6 @@ async function listFilesByPrefix(bucketName, prefix, delimiter) {
     console.log(file.name);
   });
   // [END storage_list_files_with_prefix]
-}
-
-async function uploadFile(bucketName, filename) {
-  // [START storage_upload_file]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'Local file to upload, e.g. ./local/path/to/file.txt';
-
-  // Uploads a local file to the bucket
-  await storage.bucket(bucketName).upload(filename, {
-    // Support for HTTP requests made with `Accept-Encoding: gzip`
-    gzip: true,
-    // By setting the option `destination`, you can change the name of the
-    // object you are uploading to a bucket.
-    metadata: {
-      // Enable long-lived HTTP caching headers
-      // Use only if the contents of the file will never change
-      // (If the contents will change, use cacheControl: 'no-cache')
-      cacheControl: 'public, max-age=31536000',
-    },
-  });
-
-  console.log(`${filename} uploaded to ${bucketName}.`);
-  // [END storage_upload_file]
 }
 
 async function uploadFileWithKmsKey(bucketName, filename, kmsKeyName) {
@@ -461,12 +430,6 @@ require(`yargs`)
     }
   )
   .command(
-    `upload <bucketName> <srcFileName>`,
-    `Uploads a local file to a bucket.`,
-    {},
-    opts => uploadFile(opts.bucketName, opts.srcFileName)
-  )
-  .command(
     `upload-with-kms-key <bucketName> <srcFileName> <kmsKeyName>`,
     `Uploads a local file to a bucket using a KMS key.`,
     {},
@@ -545,6 +508,10 @@ require(`yargs`)
   .example(
     `node $0 upload-with-kms-key my-bucket ./file.txt my-key`,
     `Uploads "./file.txt" to "my-bucket" using "my-key".`
+  )
+  .example(
+    `node $0 upload-directory my-bucket ./my-folder`,
+    `Uploads full hierarchy of "./my-folder directory to "my-bucket.`
   )
   .example(
     `node $0 download my-bucket file.txt ./file.txt`,

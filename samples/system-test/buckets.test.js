@@ -1,10 +1,11 @@
 /**
- * Copyright 2017, Google, Inc.
+ * Copyright 2019 Google LLC
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -65,46 +66,52 @@ it('should set a buckets default KMS key', async () => {
   );
 });
 
-it(`should enable a bucket's Bucket Policy Only`, async () => {
-  const output = execSync(`${cmd} enable-bucket-policy-only ${bucketName}`);
+it(`should enable a bucket's uniform bucket-level access`, async () => {
+  const output = execSync(
+    `${cmd} enable-uniform-bucket-level-access ${bucketName}`
+  );
   assert.match(
     output,
-    new RegExp(`Bucket Policy Only was enabled for ${bucketName}.`)
+    new RegExp(`Uniform bucket-level access was enabled for ${bucketName}.`)
   );
 
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
-    metadata[0].iamConfiguration.bucketPolicyOnly.enabled,
+    metadata[0].iamConfiguration.uniformBucketLevelAccess.enabled,
     true
   );
 });
 
-it(`should get a bucket's Bucket Policy Only metadata`, async () => {
-  const output = execSync(`${cmd} get-bucket-policy-only ${bucketName}`);
+it(`should get a bucket's uniform bucket-level access metadata`, async () => {
+  const output = execSync(
+    `${cmd} get-uniform-bucket-level-access ${bucketName}`
+  );
 
   assert.match(
     output,
-    new RegExp(`Bucket Policy Only is enabled for ${bucketName}.`)
+    new RegExp(`Uniform bucket-level access is enabled for ${bucketName}.`)
   );
 
   const [metadata] = await bucket.getMetadata();
-  assert.ok(metadata.iamConfiguration.bucketPolicyOnly.enabled);
+  assert.ok(metadata.iamConfiguration.uniformBucketLevelAccess.enabled);
   assert.strictEqual(
-    metadata.iamConfiguration.bucketPolicyOnly.lockedTime !== null,
+    metadata.iamConfiguration.uniformBucketLevelAccess.lockedTime !== null,
     true
   );
 });
 
-it(`should disable a bucket's Bucket Policy Only`, async () => {
-  const output = execSync(`${cmd} disable-bucket-policy-only ${bucketName}`);
+it(`should disable a bucket's uniform bucket-level access`, async () => {
+  const output = execSync(
+    `${cmd} disable-uniform-bucket-level-access ${bucketName}`
+  );
   assert.match(
     output,
-    new RegExp(`Bucket Policy Only was disabled for ${bucketName}.`)
+    new RegExp(`Uniform bucket-level access was disabled for ${bucketName}.`)
   );
 
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
-    metadata[0].iamConfiguration.bucketPolicyOnly.enabled,
+    metadata[0].iamConfiguration.uniformBucketLevelAccess.enabled,
     false
   );
 });

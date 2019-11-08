@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2017 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,6 +97,11 @@ export interface LifecycleRule {
   action: {type: string; storageClass?: string} | string;
   condition: {[key: string]: boolean | Date | number | string};
   storageClass?: string;
+}
+
+export interface EnableLoggingOptions {
+  bucket?: string | Bucket;
+  prefix: string;
 }
 
 export interface GetFilesOptions {
@@ -543,6 +548,28 @@ class Bucket extends ServiceObject {
    *   .on('data', function(file) {
    *     this.end();
    *   });
+   *
+   * //-
+   * // If you're filtering files with a delimiter, you should use
+   * // {@link Bucket#getFiles} and set `autoPaginate: false` in order to
+   * // preserve the `apiResponse` argument.
+   * //-
+   * const prefixes = [];
+   *
+   * function callback(err, files, nextQuery, apiResponse) {
+   *   prefixes = prefixes.concat(apiResponse.prefixes);
+   *
+   *   if (nextQuery) {
+   *     bucket.getFiles(nextQuery, callback);
+   *   } else {
+   *     // prefixes = The finished array of prefixes.
+   *   }
+   * }
+   *
+   * bucket.getFiles({
+   *   autoPaginate: false,
+   *   delimiter: '/'
+   * }, callback);
    */
   getFilesStream: Function;
 
@@ -1789,6 +1816,99 @@ class Bucket extends ServiceObject {
     );
   }
 
+  enableLogging(
+    config: EnableLoggingOptions
+  ): Promise<SetBucketMetadataResponse>;
+  enableLogging(
+    config: EnableLoggingOptions,
+    callback: SetBucketMetadataCallback
+  ): void;
+  /**
+   * Configuration object for enabling logging.
+   *
+   * @typedef {object} EnableLoggingOptions
+   * @property {string|Bucket} [bucket] The bucket for the log entries. By
+   *     default, the current bucket is used.
+   * @property {string} prefix A unique prefix for log object names.
+   */
+  /**
+   * Enable logging functionality for this bucket. This will make two API
+   * requests, first to grant Cloud Storage WRITE permission to the bucket, then
+   * to set the appropriate configuration on the Bucket's metadata.
+   *
+   * @param {EnableLoggingOptions} config Configuration options.
+   * @param {SetBucketMetadataCallback} [callback] Callback function.
+   * @returns {Promise<SetBucketMetadataResponse>}
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const bucket = storage.bucket('albums');
+   *
+   * const config = {
+   *   prefix: 'log'
+   * };
+   *
+   * bucket.enableLogging(config, function(err, apiResponse) {
+   *   if (!err) {
+   *     // Logging functionality enabled successfully.
+   *   }
+   * });
+   *
+   * @example <caption>Optionally, provide a destination bucket.</caption>
+   * const config = {
+   *   prefix: 'log',
+   *   bucket: 'destination-bucket'
+   * };
+   *
+   * bucket.enableLogging(config, function(err, apiResponse) {});
+   *
+   * @example <caption>If the callback is omitted, we'll return a Promise.</caption>
+   * bucket.enableLogging(config).then(function(data) {
+   *   const apiResponse = data[0];
+   * });
+   */
+  enableLogging(
+    config: EnableLoggingOptions,
+    callback?: SetBucketMetadataCallback
+  ): Promise<SetBucketMetadataResponse> | void {
+    if (
+      !config ||
+      typeof config === 'function' ||
+      typeof config.prefix === 'undefined'
+    ) {
+      throw new Error('A configuration object with a prefix is required.');
+    }
+
+    const logBucket = config.bucket
+      ? (config.bucket as Bucket).id || config.bucket
+      : this.id;
+
+    (async () => {
+      let setMetadataResponse;
+
+      try {
+        const [policy] = await this.iam.getPolicy();
+        policy.bindings.push({
+          members: ['group:cloud-storage-analytics@google.com'],
+          role: 'roles/storage.objectCreator',
+        });
+        await this.iam.setPolicy(policy);
+        [setMetadataResponse] = await this.setMetadata({
+          logging: {
+            logBucket,
+            logObjectPrefix: config.prefix,
+          },
+        });
+      } catch (e) {
+        callback!(e);
+        return;
+      }
+
+      callback!(null, setMetadataResponse);
+    })();
+  }
+
   enableRequesterPays(): Promise<EnableRequesterPaysResponse>;
   enableRequesterPays(callback: EnableRequesterPaysCallback): void;
   /**
@@ -1976,6 +2096,37 @@ class Bucket extends ServiceObject {
    * //-
    * bucket.getFiles().then(function(data) {
    *   const files = data[0];
+   * });
+   *
+   * @example <caption><h6>Simulating a File System</h6><p>With `autoPaginate: false`, it's possible to iterate over files which incorporate a common structure using a delimiter.</p><p>Consider the following remote objects:</p><ol><li>"a"</li><li>"a/b/c/d"</li><li>"b/d/e"</li></ol><p>Using a delimiter of `/` will return a single file, "a".</p><p>`apiResponse.prefixes` will return the "sub-directories" that were found:</p><ol><li>"a/"</li><li>"b/"</li></ol></caption>
+   * bucket.getFiles({
+   *   autoPaginate: false,
+   *   delimiter: '/'
+   * }, function(err, files, nextQuery, apiResponse) {
+   *   // files = [
+   *   //   {File} // File object for file "a"
+   *   // ]
+   *
+   *   // apiResponse.prefixes = [
+   *   //   'a/',
+   *   //   'b/'
+   *   // ]
+   * });
+   *
+   * @example <caption>Using prefixes, it's now possible to simulate a file system with follow-up requests.</caption>
+   * bucket.getFiles({
+   *   autoPaginate: false,
+   *   delimiter: '/',
+   *   prefix: 'a/'
+   * }, function(err, files, nextQuery, apiResponse) {
+   *   // No files found within "directory" a.
+   *   // files = []
+   *
+   *   // However, a "sub-directory" was found.
+   *   // This prefix can be used to continue traversing the "file system".
+   *   // apiResponse.prefixes = [
+   *   //   'a/b/'
+   *   // ]
    * });
    *
    * @example <caption>include:samples/files.js</caption>
@@ -2767,7 +2918,7 @@ class Bucket extends ServiceObject {
    * const storage = new Storage();
    * const bucket = storage.bucket('albums');
    *
-   * bucket.setStorageClass('regional', function(err, apiResponse) {
+   * bucket.setStorageClass('nearline', function(err, apiResponse) {
    *   if (err) {
    *     // Error handling omitted.
    *   }
@@ -2778,7 +2929,7 @@ class Bucket extends ServiceObject {
    * //-
    * // If the callback is omitted, we'll return a Promise.
    * //-
-   * bucket.setStorageClass('regional').then(function() {});
+   * bucket.setStorageClass('nearline').then(function() {});
    */
   setStorageClass(
     storageClass: string,

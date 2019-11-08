@@ -1,5 +1,5 @@
-/*!
- * Copyright 2014 Google Inc. All Rights Reserved.
+/**
+ * Copyright 2019 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import {Duplex, Writable, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as through from 'through2';
 import * as xdgBasedir from 'xdg-basedir';
-import * as querystring from 'querystring';
 import * as zlib from 'zlib';
 import * as url from 'url';
 import * as http from 'http';
@@ -56,7 +55,7 @@ import {
   DuplexifyConstructor,
 } from '@google-cloud/common/build/src/util';
 const duplexify: DuplexifyConstructor = require('duplexify');
-import {normalize, objectEntries} from './util';
+import {normalize, objectEntries, encodeURI, qsStringify} from './util';
 import {GaxiosError, Headers, request as gaxiosRequest} from 'gaxios';
 
 export type GetExpirationDateResponse = [Date];
@@ -278,7 +277,7 @@ const STORAGE_DOWNLOAD_BASE_URL = 'https://storage.googleapis.com';
  * @private
  */
 const STORAGE_UPLOAD_BASE_URL =
-  'https://www.googleapis.com/upload/storage/v1/b';
+  'https://storage.googleapis.com/upload/storage/v1/b';
 
 /**
  * @const {RegExp}
@@ -323,6 +322,7 @@ interface CopyQuery {
   rewriteToken?: string;
   userProject?: string;
   destinationKmsKeyName?: string;
+  destinationPredefinedAcl?: string;
 }
 
 interface FileQuery {
@@ -360,6 +360,7 @@ export interface CreateReadStreamOptions {
   validation?: 'md5' | 'crc32c' | false | true;
   start?: number;
   end?: number;
+  decompress?: boolean;
 }
 
 export interface SaveOptions extends CreateWriteStreamOptions {}
@@ -497,8 +498,6 @@ class File extends ServiceObject<File> {
    * const file = myBucket.file('my-file');
    */
   constructor(bucket: Bucket, name: string, options: FileOptions = {}) {
-    name = name.replace(/^\/+/, '');
-
     const requestQueryObject: {generation?: number; userProject?: string} = {};
 
     let generation: number;
@@ -832,7 +831,10 @@ class File extends ServiceObject<File> {
     });
   }
 
-  copy(destination: string | Bucket | File): Promise<CopyResponse>;
+  copy(
+    destination: string | Bucket | File,
+    options?: CopyOptions
+  ): Promise<CopyResponse>;
   copy(destination: string | Bucket | File, callback: CopyCallback): void;
   copy(
     destination: string | Bucket | File,
@@ -859,7 +861,8 @@ class File extends ServiceObject<File> {
    *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
    *     that will be used to encrypt the object. Overwrites the object
    * metadata's `kms_key_name` value, if any.
-   * @property {string} [keepAcl] Retain the ACL for the new file.
+   * @property {string} [keepAcl] This parameter is not supported and will be
+   *     removed in the next major.
    * @property {string} [predefinedAcl] Set the ACL for the new file.
    * @property {string} [token] A previously-returned `rewriteToken` from an
    *     unfinished rewrite request.
@@ -986,6 +989,11 @@ class File extends ServiceObject<File> {
       options = optionsOrCallback;
     }
 
+    if (options.hasOwnProperty('keepAcl')) {
+      // TODO: remove keepAcl from interface in next major.
+      emitWarning();
+    }
+
     options = extend(true, {}, options);
     callback = callback || util.noop;
 
@@ -1023,6 +1031,10 @@ class File extends ServiceObject<File> {
     if (options.userProject !== undefined) {
       query.userProject = options.userProject;
       delete options.userProject;
+    }
+    if (options.predefinedAcl !== undefined) {
+      query.destinationPredefinedAcl = options.predefinedAcl;
+      delete options.predefinedAcl;
     }
 
     newFile = newFile! || destBucket.file(destName);
@@ -1114,6 +1126,10 @@ class File extends ServiceObject<File> {
    *     NOTE: Byte ranges are inclusive; that is, `options.start = 0` and
    *     `options.end = 999` represent the first 1000 bytes in a file or object.
    *     NOTE: when specifying a byte range, data integrity is not available.
+   * @property {boolean} [decompress=true] Disable auto decompression of the
+   *     received data. By default this option is set to `true`.
+   *     Applicable in cases where the data was uploaded with
+   *     `gzip: true` option. See {@link File#createWriteStream}.
    */
   /**
    * Create a readable stream to read the contents of the remote file. It can be
@@ -1164,7 +1180,7 @@ class File extends ServiceObject<File> {
    *
    * //-
    * // To limit the downloaded data to only a byte range, pass an options
-   * object.
+   * // object.
    * //-
    * const logFile = myBucket.file('access_log');
    * logFile.createReadStream({
@@ -1186,12 +1202,16 @@ class File extends ServiceObject<File> {
    *   .pipe(fs.createWriteStream('/Users/stephen/logfile.txt'));
    */
   createReadStream(options: CreateReadStreamOptions = {}): Readable {
+    options = Object.assign({decompress: true}, options);
     const rangeRequest =
       typeof options.start === 'number' || typeof options.end === 'number';
     const tailRequest = options.end! < 0;
 
     // tslint:disable-next-line:no-any
     let validateStream: any; // Created later, if necessary.
+
+    // TODO: remove `through2` dependency in favor of native PassThrough
+    // once Node 8 support is discontinued
     const throughStream = streamEvents(through()) as Duplex;
 
     let crc32c = true;
@@ -1303,7 +1323,7 @@ class File extends ServiceObject<File> {
           throughStreams.push(validateStream);
         }
 
-        if (isCompressed) {
+        if (isCompressed && options.decompress) {
           throughStreams.push(zlib.createGunzip());
         }
 
@@ -1847,6 +1867,47 @@ class File extends ServiceObject<File> {
     return stream as Writable;
   }
 
+  /**
+   * Delete failed resumable upload file cache.
+   *
+   * Resumable file upload cache the config file to restart upload in case of
+   * failure. In certain scenarios, the resumable upload will not works and
+   * upload file cache needs to be deleted to upload the same file.
+   *
+   * Following are some of the scenarios.
+   *
+   * Resumable file upload failed even though the file is successfully saved
+   * on the google storage and need to clean up a resumable file cache to
+   * update the same file.
+   *
+   * Resumable file upload failed due to pre-condition
+   * (i.e generation number is not matched) and want to upload a same
+   * file with the new generation number.
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const myBucket = storage.bucket('my-bucket');
+   *
+   * const file = myBucket.file('my-file', { generation: 0 });
+   * const contents = 'This is the contents of the file.';
+   *
+   * file.save(contents, function(err) {
+   *   if (err) {
+   *     file.deleteResumableCache();
+   *   }
+   * });
+   *
+   */
+  deleteResumableCache() {
+    const uploadStream = resumableUpload.upload({
+      bucket: this.bucket.name,
+      file: this.name,
+      generation: this.generation,
+    });
+    uploadStream.deleteConfig();
+  }
+
   download(options?: DownloadOptions): Promise<DownloadResponse>;
   download(options: DownloadOptions, callback: DownloadCallback): void;
   download(callback: DownloadCallback): void;
@@ -2301,7 +2362,7 @@ class File extends ServiceObject<File> {
    *     When using "resumable", the header `X-Goog-Resumable: start` has
    *     to be sent when making a request with the signed URL.
    * @param {string} [config.version='v2'] The signing version to use, either
-   *     'v2' or 'v4.
+   *     'v2' or 'v4'.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
    * @param {string} [config.contentMd5] The MD5 digest value in base64. Just like
@@ -2428,7 +2489,7 @@ class File extends ServiceObject<File> {
       throw new Error('The action is not provided or invalid.');
     }
 
-    const name = encodeURIComponent(this.name);
+    const name = encodeURI(this.name, false);
     const resource = `/${this.bucket.name}/${name}`;
 
     const version = cfg.version || DEFAULT_SIGNING_VERSION;
@@ -2471,7 +2532,7 @@ class File extends ServiceObject<File> {
       const signedUrl = new url.URL(config.cname || STORAGE_DOWNLOAD_BASE_URL);
       signedUrl.pathname = config.cname ? name : `${this.bucket.name}/${name}`;
       // tslint:disable-next-line:no-any
-      signedUrl.search = querystring.stringify(query as any);
+      signedUrl.search = qsStringify(query as any);
 
       callback!(null, signedUrl.href);
     }, callback!);
@@ -2537,7 +2598,8 @@ class File extends ServiceObject<File> {
     }
 
     const extensionHeaders = Object.assign({}, config.extensionHeaders);
-    extensionHeaders.host = 'storage.googleapis.com';
+    const fqdn = new url.URL(config.cname || STORAGE_DOWNLOAD_BASE_URL);
+    extensionHeaders.host = fqdn.host;
     if (config.method === 'POST') {
       extensionHeaders['x-goog-resumable'] = 'start';
     }
@@ -2571,11 +2633,11 @@ class File extends ServiceObject<File> {
       };
 
       // tslint:disable-next-line:no-any
-      const canonicalQueryParams = querystring.stringify(queryParams as any);
+      const canonicalQueryParams = qsStringify(queryParams as any);
 
       const canonicalRequest = [
         config.method,
-        config.resource,
+        config.cname ? `/${config.name}` : config.resource,
         canonicalQueryParams,
         extensionHeadersString,
         signedHeaders,
@@ -2861,7 +2923,8 @@ class File extends ServiceObject<File> {
    * location) and {@link File#delete} (from the old location). While
    * unlikely, it is possible that an error returned to your callback could be
    * triggered from either one of these API calls failing, which could leave a
-   * duplicate file lingering.
+   * duplicate file lingering. The error message will indicate what operation
+   * has failed.
    *
    * @see [Objects: copy API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/copy}
    *
@@ -2971,15 +3034,28 @@ class File extends ServiceObject<File> {
 
     callback = callback || util.noop;
 
-    this.copy(destination, options, (err, destinationFile, apiResponse) => {
+    this.copy(destination, options, (err, destinationFile, copyApiResponse) => {
       if (err) {
-        callback!(err, null, apiResponse);
+        err.message = 'file#copy failed with an error - ' + err.message;
+        callback!(err, null, copyApiResponse);
         return;
       }
 
-      this.delete(options, (err, apiResponse) => {
-        callback!(err, destinationFile, apiResponse);
-      });
+      if (
+        this.name !== destinationFile!.name ||
+        this.bucket.name !== destinationFile!.bucket.name
+      ) {
+        this.delete(options, (err, apiResponse) => {
+          if (err) {
+            err.message = 'file#delete failed with an error - ' + err.message;
+            callback!(err, destinationFile, apiResponse);
+            return;
+          }
+          callback!(null, destinationFile, copyApiResponse);
+        });
+      } else {
+        callback!(null, destinationFile, copyApiResponse);
+      }
     });
   }
 
@@ -3168,8 +3244,10 @@ class File extends ServiceObject<File> {
    * @see [Per-Object Storage Class]{@link https://cloud.google.com/storage/docs/per-object-storage-class}
    * @see [Storage Classes]{@link https://cloud.google.com/storage/docs/storage-classes}
    *
-   * @param {string} storageClass The new storage class. (`multi_regional`,
-   *     `regional`, `nearline`, `coldline`)
+   * @param {string} storageClass The new storage class. (`standard`,
+   *     `nearline`, or `coldline`)
+   *     **Note:** The storage classes `multi_regional` and `regional`
+   *     are now legacy and will be deprecated in the future.
    * @param {SetStorageClassOptions} [options] Configuration options.
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
@@ -3177,7 +3255,7 @@ class File extends ServiceObject<File> {
    * @returns {Promise<SetStorageClassResponse>}
    *
    * @example
-   * file.setStorageClass('regional', function(err, apiResponse) {
+   * file.setStorageClass('nearline', function(err, apiResponse) {
    *   if (err) {
    *     // Error handling omitted.
    *   }
@@ -3188,7 +3266,7 @@ class File extends ServiceObject<File> {
    * //-
    * // If the callback is omitted, we'll return a Promise.
    * //-
-   * file.setStorageClass('regional').then(function() {});
+   * file.setStorageClass('nearline').then(function() {});
    */
   setStorageClass(
     storageClass: string,
@@ -3414,6 +3492,17 @@ promisifyAll(File, {
     'getDate',
   ],
 });
+
+let warned = false;
+export function emitWarning() {
+  if (!warned) {
+    warned = true;
+    process.emitWarning(
+      'keepAcl parameter is not supported and will be removed in the next major',
+      'DeprecationWarning'
+    );
+  }
+}
 
 /**
  * Reference to the {@link File} class.
