@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -747,7 +747,7 @@ describe('storage', () => {
     });
   });
 
-  describe('bucket policy only', () => {
+  describe('uniform bucket-level access', () => {
     let bucket: Bucket;
 
     const customAcl = {
@@ -760,10 +760,10 @@ describe('storage', () => {
       return bucket.create();
     };
 
-    const setBucketPolicyOnly = (bucket: Bucket, enabled: boolean) =>
+    const setUniformBucketLevelAccess = (bucket: Bucket, enabled: boolean) =>
       bucket.setMetadata({
         iamConfiguration: {
-          bucketPolicyOnly: {
+          uniformBucketLevelAccess: {
             enabled,
           },
         },
@@ -773,7 +773,7 @@ describe('storage', () => {
       before(createBucket);
 
       it('can be written to the bucket by project owner w/o configuration', async () => {
-        await setBucketPolicyOnly(bucket, true);
+        await setUniformBucketLevelAccess(bucket, true);
         const file = bucket.file('file');
         return assert.doesNotReject(() => file.save('data'));
       });
@@ -782,15 +782,14 @@ describe('storage', () => {
     describe('disables file ACL', () => {
       let file: File;
 
-      const validateBucketPolicyOnlyEnabledError = (err: ApiError) => {
-        assert(err.message.match(/Bucket Policy Only is enabled/));
+      const validateUniformBucketLevelAccessEnabledError = (err: ApiError) => {
         assert.strictEqual(err.code, 400);
         return true;
       };
 
       before(async () => {
         await createBucket();
-        await setBucketPolicyOnly(bucket, true);
+        await setUniformBucketLevelAccess(bucket, true);
 
         file = bucket.file('file');
         await file.save('data');
@@ -799,27 +798,27 @@ describe('storage', () => {
       it('should fail to get file ACL', () => {
         return assert.rejects(
           () => file.acl.get(),
-          validateBucketPolicyOnlyEnabledError
+          validateUniformBucketLevelAccessEnabledError
         );
       });
 
       it('should fail to update file ACL', () => {
         return assert.rejects(
           () => file.acl.update(customAcl),
-          validateBucketPolicyOnlyEnabledError
+          validateUniformBucketLevelAccessEnabledError
         );
       });
     });
 
-    describe('preserves bucket/file ACL over bucket policy only on/off', () => {
+    describe('preserves bucket/file ACL over uniform bucket-level access on/off', () => {
       beforeEach(createBucket);
 
       it('should preserve default bucket ACL', async () => {
         await bucket.acl.default.update(customAcl);
         const [aclBefore] = await bucket.acl.default.get();
 
-        await setBucketPolicyOnly(bucket, true);
-        await setBucketPolicyOnly(bucket, false);
+        await setUniformBucketLevelAccess(bucket, true);
+        await setUniformBucketLevelAccess(bucket, false);
 
         const [aclAfter] = await bucket.acl.default.get();
         assert.deepStrictEqual(aclAfter, aclBefore);
@@ -832,8 +831,8 @@ describe('storage', () => {
         await file.acl.update(customAcl);
         const [aclBefore] = await file.acl.get();
 
-        await setBucketPolicyOnly(bucket, true);
-        await setBucketPolicyOnly(bucket, false);
+        await setUniformBucketLevelAccess(bucket, true);
+        await setUniformBucketLevelAccess(bucket, false);
 
         const [aclAfter] = await file.acl.get();
         assert.deepStrictEqual(aclAfter, aclBefore);
@@ -954,9 +953,9 @@ describe('storage', () => {
       await bucket.create();
       let [metadata] = await bucket.getMetadata();
       assert.strictEqual(metadata.storageClass, 'STANDARD');
-      await bucket.setStorageClass('multi-regional');
+      await bucket.setStorageClass('coldline');
       [metadata] = await bucket.getMetadata();
-      assert.strictEqual(metadata.storageClass, 'MULTI_REGIONAL');
+      assert.strictEqual(metadata.storageClass, 'COLDLINE');
     });
 
     describe('locationType', () => {
@@ -1363,6 +1362,32 @@ describe('storage', () => {
             done();
           });
         });
+      });
+    });
+  });
+
+  describe('bucket logging', () => {
+    const PREFIX = 'sys-test';
+
+    it('should enable logging on current bucket by default', async () => {
+      const [metadata] = await bucket.enableLogging({prefix: PREFIX});
+      assert.deepStrictEqual(metadata.logging, {
+        logBucket: bucket.id,
+        logObjectPrefix: PREFIX,
+      });
+    });
+
+    it('should enable logging on another bucket', async () => {
+      const bucketForLogging = storage.bucket(generateName());
+      await bucketForLogging.create();
+
+      const [metadata] = await bucket.enableLogging({
+        bucket: bucketForLogging,
+        prefix: PREFIX,
+      });
+      assert.deepStrictEqual(metadata.logging, {
+        logBucket: bucketForLogging.id,
+        logObjectPrefix: PREFIX,
       });
     });
   });
@@ -2061,6 +2086,19 @@ describe('storage', () => {
       });
     });
 
+    it('should support readable[Symbol.asyncIterator]()', async () => {
+      const fileContents = fs.readFileSync(FILES.big.path);
+
+      const [file] = await bucket.upload(FILES.big.path);
+      const stream = file.createReadStream();
+      const chunks: Buffer[] = [];
+      for await (const chunk of stream) {
+        chunks.push(chunk);
+      }
+      const remoteContents = Buffer.concat(chunks).toString();
+      assert.strictEqual(String(fileContents), String(remoteContents));
+    });
+
     it('should download a file to memory', done => {
       const fileContents = fs.readFileSync(FILES.big.path);
       bucket.upload(FILES.big.path, (err: Error | null, file?: File | null) => {
@@ -2584,6 +2622,16 @@ describe('storage', () => {
       await Promise.all([file.delete, copiedFile.delete()]);
     });
 
+    it('should respect predefined Acl at file#copy', async () => {
+      const opts = {destination: 'CloudLogo'};
+      const [file] = await bucket.upload(FILES.logo.path, opts);
+      const copyOpts = {predefinedAcl: 'publicRead'};
+      const [copiedFile] = await file.copy('CloudLogoCopy', copyOpts);
+      const publicAcl = await isFilePublicAsync(copiedFile);
+      assert.strictEqual(publicAcl, true);
+      await Promise.all([file.delete, copiedFile.delete()]);
+    });
+
     it('should copy a large file', async () => {
       const otherBucket = storage.bucket(generateName());
       const file = bucket.file('Big');
@@ -2684,6 +2732,141 @@ describe('storage', () => {
       await Promise.all(
         sourceFiles.concat([destinationFile]).map(file => deleteFileAsync(file))
       );
+    });
+  });
+
+  describe('HMAC keys', () => {
+    // This is generally a valid service account for a project.
+    const ALTERNATE_SERVICE_ACCOUNT = `${process.env.PROJECT_ID}@appspot.gserviceaccount.com`;
+    const SERVICE_ACCOUNT =
+      process.env.HMAC_KEY_TEST_SERVICE_ACCOUNT || ALTERNATE_SERVICE_ACCOUNT;
+    const HMAC_PROJECT = process.env.HMAC_KEY_TEST_SERVICE_ACCOUNT
+      ? process.env.HMAC_PROJECT
+      : process.env.PROJECT_ID;
+    // Second service account to test listing HMAC keys from different accounts.
+    const SECOND_SERVICE_ACCOUNT =
+      process.env.HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT;
+
+    let accessId: string;
+
+    before(async () => {
+      await deleteHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
+    });
+
+    after(async () => {
+      await deleteHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
+    });
+
+    it('should create an HMAC key for a service account', async () => {
+      const [hmacKey, secret] = await storage.createHmacKey(SERVICE_ACCOUNT, {
+        projectId: HMAC_PROJECT,
+      });
+      // We should always get a 40 character secret, which is valid base64.
+      assert.strictEqual(secret.length, 40);
+      accessId = hmacKey.id!;
+      const metadata = hmacKey.metadata!;
+      assert.strictEqual(metadata.accessId, accessId);
+      assert.strictEqual(metadata.state, 'ACTIVE');
+      assert.strictEqual(metadata.projectId, HMAC_PROJECT);
+      assert.strictEqual(metadata.serviceAccountEmail, SERVICE_ACCOUNT);
+      assert(typeof metadata.etag === 'string');
+      assert(typeof metadata.timeCreated === 'string');
+      assert(typeof metadata.updated === 'string');
+    });
+
+    it('should get metadata for an HMAC key', async () => {
+      const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
+      const [metadata] = await hmacKey.getMetadata();
+      assert.strictEqual(metadata.accessId, accessId);
+    });
+
+    it('should show up from getHmacKeys() without serviceAccountEmail param', async () => {
+      const [hmacKeys] = await storage.getHmacKeys({projectId: HMAC_PROJECT});
+      assert(hmacKeys.length > 0);
+      assert(
+        hmacKeys.some(hmacKey => hmacKey.id === accessId),
+        'created HMAC key not found from getHmacKeys result'
+      );
+    });
+
+    it('should make the key INACTIVE', async () => {
+      const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
+      let [metadata] = await hmacKey.setMetadata({state: 'INACTIVE'});
+      assert.strictEqual(metadata.state, 'INACTIVE');
+
+      [metadata] = await hmacKey.getMetadata();
+      assert.strictEqual(metadata.state, 'INACTIVE');
+    });
+
+    it('should delete the key', async () => {
+      const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
+      await hmacKey.delete();
+      const [metadata] = await hmacKey.getMetadata();
+      assert.strictEqual(metadata.state, 'DELETED');
+      assert.strictEqual(hmacKey.metadata!.state, 'DELETED');
+    });
+
+    it('deleted key should not show up from getHmacKeys() by default', async () => {
+      const [hmacKeys] = await storage.getHmacKeys({
+        serviceAccountEmail: SERVICE_ACCOUNT,
+        projectId: HMAC_PROJECT,
+      });
+      assert(Array.isArray(hmacKeys));
+      assert(
+        !hmacKeys.some(hmacKey => hmacKey.id === accessId),
+        'deleted HMAC key is found from getHmacKeys result'
+      );
+    });
+
+    describe('second service account', () => {
+      before(async function() {
+        if (!SECOND_SERVICE_ACCOUNT) {
+          this.skip();
+        }
+        await deleteHmacKeys(SECOND_SERVICE_ACCOUNT, HMAC_PROJECT!);
+      });
+
+      it('should create key for a second service account', async () => {
+        const _ = await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {
+          projectId: HMAC_PROJECT,
+        });
+      });
+
+      it('get HMAC keys for both service accounts', async () => {
+        // Create a key for the first service account
+        const _ = await storage.createHmacKey(SERVICE_ACCOUNT!, {
+          projectId: HMAC_PROJECT,
+        });
+
+        const [hmacKeys] = await storage.getHmacKeys({projectId: HMAC_PROJECT});
+        assert(
+          hmacKeys.some(
+            hmacKey => hmacKey.metadata!.serviceAccountEmail === SERVICE_ACCOUNT
+          ),
+          `Expected at least 1 key for service account: ${SERVICE_ACCOUNT}`
+        );
+        assert(
+          hmacKeys.some(
+            hmacKey =>
+              hmacKey.metadata!.serviceAccountEmail === SECOND_SERVICE_ACCOUNT
+          ),
+          `Expected at least 1 key for service account: ${SECOND_SERVICE_ACCOUNT}`
+        );
+      });
+
+      it('filter by service account email', async () => {
+        const [hmacKeys] = await storage.getHmacKeys({
+          serviceAccountEmail: SECOND_SERVICE_ACCOUNT,
+          projectId: HMAC_PROJECT,
+        });
+        assert(
+          hmacKeys.every(
+            hmacKey =>
+              hmacKey.metadata!.serviceAccountEmail === SECOND_SERVICE_ACCOUNT
+          ),
+          'HMAC key belonging to other service accounts unexpected'
+        );
+      });
     });
   });
 
@@ -2854,13 +3037,36 @@ describe('storage', () => {
         files![1].metadata.generation
       );
     });
+
+    it('should throw an error Precondition Failed on overwrite with version 0, then save file with and without resumable', async () => {
+      const fileName = `test-${Date.now()}.txt`;
+
+      await bucketWithVersioning
+        .file(fileName)
+        .save('hello1', {resumable: false});
+      await assert.rejects(
+        async () => {
+          await bucketWithVersioning
+            .file(fileName, {generation: 0})
+            .save('hello2');
+        },
+        {
+          code: 412,
+          message: 'Precondition Failed',
+        }
+      );
+      await bucketWithVersioning
+        .file(fileName)
+        .save('hello3', {resumable: false});
+      await bucketWithVersioning.file(fileName).save('hello4');
+    });
   });
 
   describe('v2 signed urls', () => {
     const localFile = fs.readFileSync(FILES.logo.path);
     let file: File;
 
-    beforeEach(done => {
+    before(done => {
       file = bucket.file('LogoToSign.jpg');
       fs.createReadStream(FILES.logo.path)
         .pipe(file.createWriteStream())
@@ -2878,21 +3084,6 @@ describe('storage', () => {
       const res = await fetch(signedReadUrl);
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
-      await file.delete();
-    });
-
-    it('should create a signed delete url', async () => {
-      const [signedDeleteUrl] = await file.getSignedUrl({
-        version: 'v2',
-        action: 'delete',
-        expires: Date.now() + 5000,
-      });
-
-      await fetch(signedDeleteUrl, {method: 'DELETE'});
-      assert.rejects(
-        () => file.getMetadata(),
-        (err: ApiError) => err.code === 404
-      );
     });
 
     it('should work with multi-valued extension headers', async () => {
@@ -2908,6 +3099,48 @@ describe('storage', () => {
       const res = await fetch(signedReadUrl, {
         headers: {'x-goog-custom-header': 'value1,value2'},
       });
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
+    });
+
+    it('should create a signed delete url', async () => {
+      await file.delete();
+      const [signedDeleteUrl] = await file.getSignedUrl({
+        version: 'v2',
+        action: 'delete',
+        expires: Date.now() + 5000,
+      });
+
+      await fetch(signedDeleteUrl, {method: 'DELETE'});
+      assert.rejects(
+        () => file.getMetadata(),
+        (err: ApiError) => err.code === 404
+      );
+    });
+  });
+
+  describe('v2 signed url with special characters in file name', () => {
+    const localFile = fs.readFileSync(FILES.logo.path);
+    let file: File;
+
+    before(done => {
+      file = bucket.file("special/azAZ!*'()*%/file.jpg");
+      fs.createReadStream(FILES.logo.path)
+        .pipe(file.createWriteStream())
+        .on('error', done)
+        .on('finish', done.bind(null, null));
+    });
+
+    after(() => file.delete());
+
+    it('should create a signed read url and fetch a file', async () => {
+      const [signedUrl] = await file.getSignedUrl({
+        version: 'v2',
+        action: 'read',
+        expires: Date.now() + 5000,
+      });
+
+      const res = await fetch(signedUrl);
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
     });
@@ -2935,7 +3168,24 @@ describe('storage', () => {
       const res = await fetch(signedReadUrl);
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
-      await file.delete();
+    });
+
+    it('should work with special characters in extension headers', async () => {
+      const HEADERS = {
+        'x-goog-custom-header': ['value1', "azAZ!*'()*%"],
+      };
+      const [signedReadUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        expires: Date.now() + 5000,
+        extensionHeaders: HEADERS,
+      });
+
+      const res = await fetch(signedReadUrl, {
+        headers: {'x-goog-custom-header': "value1,azAZ!*'()*%"},
+      });
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
     });
 
     it('should create a signed delete url', async () => {
@@ -2945,10 +3195,35 @@ describe('storage', () => {
         expires: Date.now() + 5000,
       });
       await fetch(signedDeleteUrl!, {method: 'DELETE'});
-      assert.rejects(
-        () => file.getMetadata(),
-        (err: ApiError) => err.code === 404
-      );
+      const [exists] = await file.exists();
+      assert.strictEqual(exists, false);
+    });
+  });
+
+  describe('v4 signed url with special characters in file name', () => {
+    const localFile = fs.readFileSync(FILES.logo.path);
+    let file: File;
+
+    before(done => {
+      file = bucket.file("special/azAZ!*'()*%/file.jpg");
+      fs.createReadStream(FILES.logo.path)
+        .pipe(file.createWriteStream())
+        .on('error', done)
+        .on('finish', done.bind(null, null));
+    });
+
+    after(async () => file.delete());
+
+    it('should create a signed read url and fetch a file', async () => {
+      const [signedUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        expires: Date.now() + 5000,
+      });
+
+      const res = await fetch(signedUrl);
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
     });
   });
 
@@ -3233,6 +3508,27 @@ describe('storage', () => {
         throw error;
       }
     }
+  }
+
+  async function deleteHmacKeys(
+    serviceAccountEmail: string,
+    projectId: string
+  ) {
+    const [hmacKeys] = await storage.getHmacKeys({
+      serviceAccountEmail,
+      projectId,
+    });
+    const limit = pLimit(10);
+    await Promise.all(
+      hmacKeys.map(hmacKey =>
+        limit(async () => {
+          if (hmacKey.metadata!.state === 'ACTIVE') {
+            await hmacKey.setMetadata({state: 'INACTIVE'});
+          }
+          await hmacKey.delete();
+        })
+      )
+    );
   }
 
   // tslint:disable-next-line no-any

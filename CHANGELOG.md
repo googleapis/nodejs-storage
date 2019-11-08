@@ -4,6 +4,110 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [4.1.1](https://www.github.com/googleapis/nodejs-storage/compare/v4.1.0...v4.1.1) (2019-11-07)
+
+
+### Bug Fixes
+
+* update format for upload sample ([#918](https://www.github.com/googleapis/nodejs-storage/issues/918)) ([d77208b](https://www.github.com/googleapis/nodejs-storage/commit/d77208bee82dc2d76c72fbe8d5db1bfeb8e392ff))
+
+## [4.1.0](https://www.github.com/googleapis/nodejs-storage/compare/v4.0.1...v4.1.0) (2019-10-31)
+
+
+### Features
+
+* [Storage] Support UniformBucketLevelAccess ([#903](https://www.github.com/googleapis/nodejs-storage/issues/903)) ([35b1bd9](https://www.github.com/googleapis/nodejs-storage/commit/35b1bd9f6db351ad1e51b135a3f25cc5e1566600))
+
+### [4.0.1](https://www.github.com/googleapis/nodejs-storage/compare/v4.0.0...v4.0.1) (2019-10-31)
+
+
+### Bug Fixes
+
+* **docs:** missing quote in signed url jsdoc ([#896](https://www.github.com/googleapis/nodejs-storage/issues/896)) ([f2d567f](https://www.github.com/googleapis/nodejs-storage/commit/f2d567f279fee0f48c2d6a607f4066c9da372549))
+* use storage.googleapis.com for api endpoint ([862fb16](https://www.github.com/googleapis/nodejs-storage/commit/862fb16db2990c958c0097252a44c775431a7b3f))
+* **signed-url:** replace encodeURIComponent with custom encoding function ([#905](https://www.github.com/googleapis/nodejs-storage/issues/905)) ([ba41517](https://www.github.com/googleapis/nodejs-storage/commit/ba415179f1d5951742c1b239e0500bbd2a815ddd))
+
+## [4.0.0](https://www.github.com/googleapis/nodejs-storage/compare/v3.5.0...v4.0.0) (2019-10-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* allow leading slashes in file name (#820)
+
+### Bug Fixes
+
+* **deps:** update hash-stream-validation ([#884](https://www.github.com/googleapis/nodejs-storage/issues/884)) ([96a7fc2](https://www.github.com/googleapis/nodejs-storage/commit/96a7fc297a563819b09727990eb9ee15a421310b))
+* allow leading slashes in file name ([#820](https://www.github.com/googleapis/nodejs-storage/issues/820)) ([92e115d](https://www.github.com/googleapis/nodejs-storage/commit/92e115dca81604909fc34e983abcf47409d3f417))
+
+## [3.5.0](https://www.github.com/googleapis/nodejs-storage/compare/v3.4.0...v3.5.0) (2019-10-14)
+
+
+### Features
+
+* **bucket:** add enableLogging method ([#876](https://www.github.com/googleapis/nodejs-storage/issues/876)) ([b09ecac](https://www.github.com/googleapis/nodejs-storage/commit/b09ecac79b70bf99e19f0f23ffcecd17e34516bb))
+
+## [3.4.0](https://www.github.com/googleapis/nodejs-storage/compare/v3.3.1...v3.4.0) (2019-10-10)
+
+
+### Bug Fixes
+
+* file#move do not delete origin file if same as destination ([#874](https://www.github.com/googleapis/nodejs-storage/issues/874)) ([dcaba8a](https://www.github.com/googleapis/nodejs-storage/commit/dcaba8a))
+* pass predefined acl as destinationPredefinedAcl to qs ([#872](https://www.github.com/googleapis/nodejs-storage/issues/872)) ([09b8fa4](https://www.github.com/googleapis/nodejs-storage/commit/09b8fa4))
+
+
+### Features
+
+* add flag to allow disabling auto decompression by client ([#850](https://www.github.com/googleapis/nodejs-storage/issues/850)) ([9ebface](https://www.github.com/googleapis/nodejs-storage/commit/9ebface))
+* allow setting standard Bucket storage class ([#873](https://www.github.com/googleapis/nodejs-storage/issues/873)) ([12a99e9](https://www.github.com/googleapis/nodejs-storage/commit/12a99e9))
+
+### [3.3.1](https://www.github.com/googleapis/nodejs-storage/compare/v3.3.0...v3.3.1) (2019-09-30)
+
+
+### Bug Fixes
+
+* create correct v4 signed url with cname ([#868](https://www.github.com/googleapis/nodejs-storage/issues/868)) ([ace3b5e](https://www.github.com/googleapis/nodejs-storage/commit/ace3b5e))
+
+## [3.3.0](https://www.github.com/googleapis/nodejs-storage/compare/v3.2.1...v3.3.0) (2019-09-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @google-cloud/pubsub to ^0.32.0 ([#849](https://www.github.com/googleapis/nodejs-storage/issues/849)) ([fdf70bb](https://www.github.com/googleapis/nodejs-storage/commit/fdf70bb))
+* add warning for unsupported keepAcl param in file#copy ([#841](https://www.github.com/googleapis/nodejs-storage/issues/841)) ([473bda0](https://www.github.com/googleapis/nodejs-storage/commit/473bda0))
+* remove unsupported keepAcl param ([#837](https://www.github.com/googleapis/nodejs-storage/issues/837)) ([5f69a3d](https://www.github.com/googleapis/nodejs-storage/commit/5f69a3d))
+* use storage.googleapis.com for api endpoint ([#854](https://www.github.com/googleapis/nodejs-storage/issues/854)) ([27fa02f](https://www.github.com/googleapis/nodejs-storage/commit/27fa02f))
+* **deps:** update dependency @google-cloud/pubsub to v1 ([#858](https://www.github.com/googleapis/nodejs-storage/issues/858)) ([31466f4](https://www.github.com/googleapis/nodejs-storage/commit/31466f4))
+* **deps:** update dependency date-and-time to ^0.10.0 ([#857](https://www.github.com/googleapis/nodejs-storage/issues/857)) ([e9ec9cf](https://www.github.com/googleapis/nodejs-storage/commit/e9ec9cf))
+
+
+### Features
+
+* adds support for  asyncIterators (via readable-stream@3 dependency) ([dd5ae7f](https://www.github.com/googleapis/nodejs-storage/commit/dd5ae7f))
+* allow removal of resumable upload cache ([#773](https://www.github.com/googleapis/nodejs-storage/issues/773)) ([da943db](https://www.github.com/googleapis/nodejs-storage/commit/da943db)), closes [#217](https://www.github.com/googleapis/nodejs-storage/issues/217)
+
+### [3.2.1](https://www.github.com/googleapis/nodejs-storage/compare/v3.2.0...v3.2.1) (2019-08-28)
+
+
+### Bug Fixes
+
+* **docs:** stop redirecting reference docs to anchor, add new sample to README ([bbb5537](https://www.github.com/googleapis/nodejs-storage/commit/bbb5537))
+* **samples:** fix failing sample view IAM member-role groups ([1c4f21f](https://www.github.com/googleapis/nodejs-storage/commit/1c4f21f))
+
+## [3.2.0](https://www.github.com/googleapis/nodejs-storage/compare/v3.1.0...v3.2.0) (2019-08-22)
+
+
+### Bug Fixes
+
+* **deps:** update @google-cloud/common with fixes for http ([#809](https://www.github.com/googleapis/nodejs-storage/issues/809)) ([8598631](https://www.github.com/googleapis/nodejs-storage/commit/8598631))
+* **deps:** update dependency @google-cloud/pubsub to ^0.31.0 ([#814](https://www.github.com/googleapis/nodejs-storage/issues/814)) ([604e564](https://www.github.com/googleapis/nodejs-storage/commit/604e564))
+* **deps:** update dependency date-and-time to ^0.9.0 ([#805](https://www.github.com/googleapis/nodejs-storage/issues/805)) ([8739a7d](https://www.github.com/googleapis/nodejs-storage/commit/8739a7d))
+* **ts:** fix nock @~11.0.0 ([#819](https://www.github.com/googleapis/nodejs-storage/issues/819)) ([48f9b44](https://www.github.com/googleapis/nodejs-storage/commit/48f9b44))
+
+
+### Features
+
+* hmac service account ([#751](https://www.github.com/googleapis/nodejs-storage/issues/751)) ([ed1ec7b](https://www.github.com/googleapis/nodejs-storage/commit/ed1ec7b))
+
 ## [3.1.0](https://www.github.com/googleapis/nodejs-storage/compare/v3.0.4...v3.1.0) (2019-08-09)
 
 
