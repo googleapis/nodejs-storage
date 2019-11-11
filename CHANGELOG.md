@@ -4,6 +4,14 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [4.1.2](https://www.github.com/googleapis/nodejs-storage/compare/v4.1.1...v4.1.2) (2019-11-11)
+
+
+### Bug Fixes
+
+* do not check access of configPath ([#915](https://www.github.com/googleapis/nodejs-storage/issues/915)) ([a21a644](https://www.github.com/googleapis/nodejs-storage/commit/a21a6443346f91f275233a9a07fb79550035e157))
+* missing snippets with jsdoc-region-tag ([#924](https://www.github.com/googleapis/nodejs-storage/issues/924)) ([310ba90](https://www.github.com/googleapis/nodejs-storage/commit/310ba90a48c6f02a31c1254037dfcdb4da4b7150))
+
 ### [4.1.1](https://www.github.com/googleapis/nodejs-storage/compare/v4.1.0...v4.1.1) (2019-11-07)
 
 
