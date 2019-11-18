@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [4.1.3](https://www.github.com/googleapis/nodejs-storage/compare/v4.1.2...v4.1.3) (2019-11-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency yargs to v15 ([#933](https://www.github.com/googleapis/nodejs-storage/issues/933)) ([f40fe0c](https://www.github.com/googleapis/nodejs-storage/commit/f40fe0c5bd4e9b89ebe007e59986580fae4d7e09))
+
 ### [4.1.2](https://www.github.com/googleapis/nodejs-storage/compare/v4.1.1...v4.1.2) (2019-11-12)
 
 
