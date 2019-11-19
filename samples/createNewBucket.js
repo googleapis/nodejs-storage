@@ -15,36 +15,35 @@
  */
 
 function main(bucketName = 'my-bucket') {
-    // [START storage_create_bucket]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // [START storage_create_bucket]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
 
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
 
-    // Creates a client
-    const storage = new Storage();
+  // Creates a client
+  const storage = new Storage();
 
-    async function createBucket() {
-        // Creates a new bucket in the Asia region with the coldline default storage
-        // class. Leave the second argument blank for default settings.
-        //
-        // For default values see: https://cloud.google.com/storage/docs/locations and
-        // https://cloud.google.com/storage/docs/storage-classes
-        
-        await storage.createBucket(bucketName, {
-            location: 'ASIA',
-            storageClass: 'COLDLINE',
-        });
+  async function createBucket() {
+    // Creates a new bucket in the Asia region with the coldline default storage
+    // class. Leave the second argument blank for default settings.
+    //
+    // For default values see: https://cloud.google.com/storage/docs/locations and
+    // https://cloud.google.com/storage/docs/storage-classes
 
-        console.log(`Bucket ${bucketName} created.`);
-    }
+    await storage.createBucket(bucketName, {
+      location: 'ASIA',
+      storageClass: 'COLDLINE',
+    });
 
-    createBucket();
-    // [END storage_create_bucket]
+    console.log(`Bucket ${bucketName} created.`);
+  }
 
+  createBucket();
+  // [END storage_create_bucket]
 }
 
 main(...process.argv.slice(2));
