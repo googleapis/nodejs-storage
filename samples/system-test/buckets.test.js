@@ -33,7 +33,7 @@ after(async () => {
   return bucket.delete().catch(console.error);
 });
 
-it.only('should create a bucket', async () => {
+it('should create a bucket', async () => {
   const output = execSync(`node createNewBucket.js ${bucketName}`);
   assert.match(output, new RegExp(`Bucket ${bucketName} created.`));
   const [exists] = await bucket.exists();
