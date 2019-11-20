@@ -243,6 +243,7 @@ describe('storage', () => {
 
       it('should not upload a file', done => {
         file.save('new data', err => {
+          console.info(process.env.GOOGLE_APPLICATION_CREDENTIALS);
           console.info('>>>>', err);
           assert(
             err!.message.indexOf('Could not load the default credentials') > -1
