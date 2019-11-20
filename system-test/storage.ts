@@ -165,6 +165,13 @@ describe('storage', () => {
       });
   });
 
+  // Some tests delete the application credential environment variable, we
+  // should ensure it's set back to the appropriate value after each run:
+  const ORIGINAL_CREDENTIALS = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  afterEach(() => {
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = ORIGINAL_CREDENTIALS;
+  });
+
   after(() => {
     return Promise.all([deleteAllBucketsAsync(), deleteAllTopicsAsync()]);
   });
