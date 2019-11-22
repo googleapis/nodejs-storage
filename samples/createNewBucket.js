@@ -34,7 +34,7 @@ function main(bucketName = 'my-bucket') {
     // For default values see: https://cloud.google.com/storage/docs/locations and
     // https://cloud.google.com/storage/docs/storage-classes
 
-    await storage.createBucket(bucketName, {
+    const [bucket] = await storage.createBucket(bucketName, {
       location: 'ASIA',
       storageClass: 'COLDLINE',
     });
