@@ -24,7 +24,6 @@
 
 'use strict';
 
-
 async function listBuckets() {
   // [START storage_list_buckets]
   // Imports the Google Cloud client library
@@ -174,9 +173,6 @@ async function getUniformBucketLevelAccess(bucketName) {
 
 require(`yargs`)
   .demand(1)
-  .command(`create <bucket>`, `Creates a new bucket.`, {}, opts =>
-    createBucket(opts.bucket)
-  )
   .command(`list`, `Lists all buckets in the current project.`, {}, listBuckets)
   .command(
     `enable-default-kms-key <bucket> <defaultKmsKeyName>`,
