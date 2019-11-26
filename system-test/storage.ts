@@ -176,25 +176,21 @@ describe('storage', () => {
     let GOOGLE_APPLICATION_CREDENTIALS: string | undefined;
 
     before(done => {
+      // CI authentication is done with ADC. Cache it here, restore it `after`
+      GOOGLE_APPLICATION_CREDENTIALS =
+        process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
       privateBucket = bucket; // `bucket` was created in the global `before`
       privateFile = privateBucket.file('file-name');
+      privateFile.save('data', done);
+    });
 
-      privateFile.save('data', err => {
-        if (err) {
-          done(err);
-          return;
-        }
+    beforeEach(() => {
+      delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+      delete require.cache[require.resolve('../src')];
 
-        // CI authentication is done with ADC. Cache it here, restore it `after`
-        GOOGLE_APPLICATION_CREDENTIALS =
-          process.env.GOOGLE_APPLICATION_CREDENTIALS;
-        delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
-        delete require.cache[require.resolve('../src')];
-
-        const {Storage} = require('../src');
-        storageWithoutAuth = new Storage();
-        done();
-      });
+      const {Storage} = require('../src');
+      storageWithoutAuth = new Storage();
     });
 
     after(() => {
@@ -240,7 +236,7 @@ describe('storage', () => {
         );
       });
 
-      it.only('should not upload a file', done => {
+      it('should not upload a file', done => {
         file.save('new data', err => {
           console.log(err);
           assert(
