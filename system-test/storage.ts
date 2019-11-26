@@ -240,8 +240,9 @@ describe('storage', () => {
         );
       });
 
-      it('should not upload a file', done => {
+      it.only('should not upload a file', done => {
         file.save('new data', err => {
+          console.log(err);
           assert(
             err!.message.indexOf('Could not load the default credentials') > -1
           );
