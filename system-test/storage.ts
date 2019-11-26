@@ -204,7 +204,7 @@ describe('storage', () => {
 
       let bucket: Bucket;
 
-      before(() => {
+      beforeEach(() => {
         bucket = storageWithoutAuth.bucket('gcp-public-data-landsat');
       });
 
@@ -221,7 +221,7 @@ describe('storage', () => {
       let bucket: Bucket;
       let file: File;
 
-      before(() => {
+      beforeEach(() => {
         bucket = storageWithoutAuth.bucket(privateBucket.id!);
         file = bucket.file(privateFile.id!);
       });
