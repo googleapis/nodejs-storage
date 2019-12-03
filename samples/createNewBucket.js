@@ -39,7 +39,7 @@ function main(bucketName = 'my-bucket') {
       storageClass: 'COLDLINE',
     });
 
-    console.log(`Bucket ${bucketName} created.`);
+    console.log(`Bucket ${bucket.name} created.`);
   }
 
   createBucket();
