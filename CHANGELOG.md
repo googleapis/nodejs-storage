@@ -4,6 +4,37 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [4.1.3](https://www.github.com/googleapis/nodejs-storage/compare/v4.1.2...v4.1.3) (2019-11-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency date-and-time to ^0.11.0 ([#934](https://www.github.com/googleapis/nodejs-storage/issues/934)) ([c4bf1c6](https://www.github.com/googleapis/nodejs-storage/commit/c4bf1c616d0a9402237708bddac1341c620f0542))
+* **deps:** update dependency yargs to v15 ([#933](https://www.github.com/googleapis/nodejs-storage/issues/933)) ([f40fe0c](https://www.github.com/googleapis/nodejs-storage/commit/f40fe0c5bd4e9b89ebe007e59986580fae4d7e09))
+
+### [4.1.2](https://www.github.com/googleapis/nodejs-storage/compare/v4.1.1...v4.1.2) (2019-11-12)
+
+
+### Bug Fixes
+
+* do not check access of configPath ([#915](https://www.github.com/googleapis/nodejs-storage/issues/915)) ([a21a644](https://www.github.com/googleapis/nodejs-storage/commit/a21a6443346f91f275233a9a07fb79550035e157))
+* missing snippets with jsdoc-region-tag ([#924](https://www.github.com/googleapis/nodejs-storage/issues/924)) ([310ba90](https://www.github.com/googleapis/nodejs-storage/commit/310ba90a48c6f02a31c1254037dfcdb4da4b7150))
+* **docs:** add jsdoc-region-tag plugin ([#929](https://www.github.com/googleapis/nodejs-storage/issues/929)) ([74526e7](https://www.github.com/googleapis/nodejs-storage/commit/74526e7f42cfa92c18ff332d0b9e10ea3b1324cf))
+
+### [4.1.1](https://www.github.com/googleapis/nodejs-storage/compare/v4.1.0...v4.1.1) (2019-11-07)
+
+
+### Bug Fixes
+
+* update format for upload sample ([#918](https://www.github.com/googleapis/nodejs-storage/issues/918)) ([d77208b](https://www.github.com/googleapis/nodejs-storage/commit/d77208bee82dc2d76c72fbe8d5db1bfeb8e392ff))
+
+## [4.1.0](https://www.github.com/googleapis/nodejs-storage/compare/v4.0.1...v4.1.0) (2019-10-31)
+
+
+### Features
+
+* [Storage] Support UniformBucketLevelAccess ([#903](https://www.github.com/googleapis/nodejs-storage/issues/903)) ([35b1bd9](https://www.github.com/googleapis/nodejs-storage/commit/35b1bd9f6db351ad1e51b135a3f25cc5e1566600))
+
 ### [4.0.1](https://www.github.com/googleapis/nodejs-storage/compare/v4.0.0...v4.0.1) (2019-10-31)
 
 

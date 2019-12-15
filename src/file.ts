@@ -1,18 +1,16 @@
-/**
- * Copyright 2019 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2019 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 import {
   BodyResponseCallback,
@@ -108,9 +106,9 @@ export interface GetSignedUrlCallback {
 }
 
 export interface PolicyDocument {
-  expiration: string;
-  conditions: Array<Array<string | number>>;
   string: string;
+  base64: string;
+  signature: string;
 }
 
 export type GetSignedPolicyResponse = [PolicyDocument];
@@ -1180,7 +1178,7 @@ class File extends ServiceObject<File> {
    *
    * //-
    * // To limit the downloaded data to only a byte range, pass an options
-   * object.
+   * // object.
    * //-
    * const logFile = myBucket.file('access_log');
    * logFile.createReadStream({
@@ -1340,10 +1338,7 @@ class File extends ServiceObject<File> {
         rawResponseStream
           .on('error', onComplete)
           .on('end', onComplete)
-          .pipe(
-            throughStream,
-            {end: false}
-          );
+          .pipe(throughStream, {end: false});
       };
 
       // This is hooked to the `complete` event from the request stream. This is
@@ -1447,9 +1442,9 @@ class File extends ServiceObject<File> {
    */
   /**
    * @typedef {object} CreateResumableUploadOptions
-   * @property {string} [configPath] Where the `gcs-resumable-upload`
-   *     configuration file should be stored on your system. This maps to the
-   *     [configstore option by the same
+   * @property {string} [configPath] A full JSON file path to use with
+   *     `gcs-resumable-upload`. This maps to the [configstore option by the
+   *     same
    * name](https://github.com/yeoman/configstore/tree/0df1ec950d952b1f0dfb39ce22af8e505dffc71a#configpath).
    * @property {object} [metadata] Metadata to set on the file.
    * @property {string} [origin] Origin header to set for the upload.
@@ -1554,8 +1549,8 @@ class File extends ServiceObject<File> {
   /**
    * @typedef {object} CreateWriteStreamOptions Configuration options for File#createWriteStream().
    * @property {string} [configPath] **This only applies to resumable
-   *     uploads.** Where the `gcs-resumable-upload` configuration file should
-   * be stored on your system. This maps to the [configstore option by the same
+   *     uploads.** A full JSON file path to use with `gcs-resumable-upload`.
+   *     This maps to the [configstore option by the same
    * name](https://github.com/yeoman/configstore/tree/0df1ec950d952b1f0dfb39ce22af8e505dffc71a#configpath).
    * @property {string} [contentType] Alias for
    *     `options.metadata.contentType`. If set to `auto`, the file name is used
@@ -1759,6 +1754,11 @@ class File extends ServiceObject<File> {
     stream.on('writing', () => {
       if (options.resumable === false) {
         this.startSimpleUpload_(fileWriteStream, options);
+        return;
+      }
+
+      if (options.configPath) {
+        this.startResumableUpload_(fileWriteStream, options);
         return;
       }
 

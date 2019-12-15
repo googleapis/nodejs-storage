@@ -22,6 +22,7 @@ objects to users via direct download.
   * [Bucket Lock](#bucket-lock)
   * [Storage Get Bucket Metadata.](#storage-get-bucket-metadata.)
   * [Buckets](#buckets)
+  * [Create New Bucket](#create-new-bucket)
   * [Encryption](#encryption)
   * [Storage Set File Metadata.](#storage-set-file-metadata.)
   * [Files](#files)
@@ -36,6 +37,7 @@ objects to users via direct download.
   * [Quickstart](#quickstart)
   * [Requester Pays](#requester-pays)
   * [Upload a directory to a bucket.](#upload-a-directory-to-a-bucket.)
+  * [Upload File](#upload-file)
 
 ## Before you begin
 
@@ -109,6 +111,23 @@ __Usage:__
 
 
 `node buckets.js`
+
+
+-----
+
+
+
+
+### Create New Bucket
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/createNewBucket.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createNewBucket.js,samples/README.md)
+
+__Usage:__
+
+
+`node createNewBucket.js`
 
 
 -----
@@ -363,6 +382,23 @@ __Usage:__
 
 
 `node files.js upload-directory <bucketName> <directoryPath>`
+
+
+-----
+
+
+
+
+### Upload File
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/uploadFile.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadFile.js,samples/README.md)
+
+__Usage:__
+
+
+`node uploadFile.js`
 
 
 
