@@ -737,7 +737,8 @@ describe('storage', () => {
 
         const [policy] = await bucket.iam.getPolicy();
 
-        const serviceAccount = (await storage.authClient.getCredentials()).client_email;
+        const serviceAccount = (await storage.authClient.getCredentials())
+          .client_email;
         const conditionalBinding = {
           role: 'roles/storage.objectViewer',
           members: [`serviceAccount:${serviceAccount}`],
@@ -753,7 +754,9 @@ describe('storage', () => {
 
         await bucket.iam.setPolicy(policy);
 
-        const [newPolicy] = await bucket.iam.getPolicy({requestedPolicyVersion: 3});
+        const [newPolicy] = await bucket.iam.getPolicy({
+          requestedPolicyVersion: 3,
+        });
         assert.deepStrictEqual(newPolicy.bindings, policy.bindings);
       });
 
