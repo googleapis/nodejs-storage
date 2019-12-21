@@ -23,20 +23,11 @@ import arrify = require('arrify');
 import {Bucket} from './bucket';
 import {normalize} from './util';
 
-/**
- * @typedef {object} GetPolicyOptions
- * @property {string} [userProject] The ID of the project which will be billed for
- *     the request.
- */
 export interface GetPolicyOptions {
   userProject?: string;
+  requestedPolicyVersion?: number;
 }
 
-/**
- * @typedef {array} GetPolicyResponse
- * @property {object} 0 The policy.
- * @property {object} 1 The full API response.
- */
 export type GetPolicyResponse = [Policy, Metadata];
 
 /**
@@ -75,19 +66,20 @@ export interface SetPolicyCallback {
   (err?: Error | null, acl?: Policy, apiResponse?: object): void;
 }
 
-/**
- * @typedef {object} Policy
- * @property {array} policy.bindings Bindings associate members with roles.
- * @property {string} [policy.etag] Etags are used to perform a read-modify-write.
- */
 export interface Policy {
   bindings: PolicyBinding[];
+  version?: number;
   etag?: string;
 }
 
 export interface PolicyBinding {
   role: string;
   members: string[];
+  condition?: {
+    title?: string;
+    description?: string;
+    expression?: string;
+  }
 }
 
 /**
@@ -118,6 +110,11 @@ export interface TestIamPermissionsCallback {
  */
 export interface TestIamPermissionsOptions {
   userProject?: string;
+}
+
+interface GetPolicyRequest {
+  userProject?: string;
+  optionsRequestedPolicyVersion?: number;
 }
 
 /**
@@ -153,9 +150,37 @@ class Iam {
   getPolicy(options: GetPolicyOptions, callback: GetPolicyCallback): void;
   getPolicy(callback: GetPolicyCallback): void;
   /**
+   * @typedef {object} GetPolicyOptions Requested options for IAM#getPolicy().
+   * @param {number} [requestedPolicyVersion] The version of IAM policies to
+   *     request. If a policy with a condition is requested without setting
+   *     this, the server will return an error. This must be set to a value
+   *     of 3 to retrieve IAM policies containing conditions. This is to
+   *     prevent client code that isn't aware of IAM conditions from
+   *     interpreting and modifying policies incorrectly. The service might
+   *     return a policy with version lower than the one that was requested,
+   *     based on the feature syntax in the policy fetched.
+   *     @see [IAM Policy versions]{@link https://cloud.google.com/iam/docs/policies#versions}
+   * @param {string} [userProject] The ID of the project which will be
+   *     billed for the request.
+   */
+  /**
+   * @typedef {array} GetPolicyResponse
+   * @property {Policy} 0 The policy.
+   * @property {object} 1 The full API response.
+   */
+  /**
+   * @typedef {object} Policy
+   * @property {array} policy.bindings Bindings associate members with roles.
+   * @property {string} [policy.etag] Etags are used to perform a read-modify-write.
+   * @property {number} [policy.version] The syntax schema version of the Policy.
+   *      To set an IAM policy with conditional binding, this field must be set to
+   *      3 or greater.
+   *     @see [IAM Policy versions]{@link https://cloud.google.com/iam/docs/policies#versions}
+   */
+  /**
    * Get the IAM policy.
    *
-   * @param {GetPolicyRequest} [options] Request options.
+   * @param {GetPolicyOptions} [options] Request options.
    * @param {GetPolicyCallback} [callback] Callback function.
    * @returns {Promise<GetPolicyResponse>}
    *
@@ -165,15 +190,22 @@ class Iam {
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const bucket = storage.bucket('my-bucket');
-   * bucket.iam.getPolicy(function(err, policy, apiResponse) {});
+   *
+   * bucket.iam.getPolicy(
+   *     {requestedPolicyVersion: 3},
+   *     function(err, policy, apiResponse) {
+   *
+   *     },
+   * );
    *
    * //-
    * // If the callback is omitted, we'll return a Promise.
    * //-
-   * bucket.iam.getPolicy().then(function(data) {
-   *   const policy = data[0];
-   *   const apiResponse = data[1];
-   * });
+   * bucket.iam.getPolicy({requestedPolicyVersion: 3})
+   *   .then(function(data) {
+   *     const policy = data[0];
+   *     const apiResponse = data[1];
+   *   });
    *
    * @example <caption>include:samples/iam.js</caption>
    * region_tag:storage_view_bucket_iam_members
@@ -188,10 +220,19 @@ class Iam {
       GetPolicyCallback
     >(optionsOrCallback, callback);
 
+    const qs: GetPolicyRequest = {};
+    if (options.userProject) {
+      qs.userProject = options.userProject;
+    }
+
+    if (options.requestedPolicyVersion != null) {
+      qs.optionsRequestedPolicyVersion = options.requestedPolicyVersion;
+    }
+
     this.request_(
       {
         uri: '/iam',
-        qs: options,
+        qs: qs,
       },
       cb!
     );
