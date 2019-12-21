@@ -75,11 +75,13 @@ export interface Policy {
 export interface PolicyBinding {
   role: string;
   members: string[];
-  condition?: {
-    title?: string;
-    description?: string;
-    expression?: string;
-  }
+  condition?: Expr;
+}
+
+export interface Expr {
+  title?: string;
+  description?: string;
+  expression: string;
 }
 
 /**
@@ -151,7 +153,7 @@ class Iam {
   getPolicy(callback: GetPolicyCallback): void;
   /**
    * @typedef {object} GetPolicyOptions Requested options for IAM#getPolicy().
-   * @param {number} [requestedPolicyVersion] The version of IAM policies to
+   * @property {number} [requestedPolicyVersion] The version of IAM policies to
    *     request. If a policy with a condition is requested without setting
    *     this, the server will return an error. This must be set to a value
    *     of 3 to retrieve IAM policies containing conditions. This is to
@@ -160,7 +162,7 @@ class Iam {
    *     return a policy with version lower than the one that was requested,
    *     based on the feature syntax in the policy fetched.
    *     @see [IAM Policy versions]{@link https://cloud.google.com/iam/docs/policies#versions}
-   * @param {string} [userProject] The ID of the project which will be
+   * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
    */
   /**
@@ -170,12 +172,33 @@ class Iam {
    */
   /**
    * @typedef {object} Policy
-   * @property {array} policy.bindings Bindings associate members with roles.
+   * @property {PolicyBinding[]} policy.bindings Bindings associate members with roles.
    * @property {string} [policy.etag] Etags are used to perform a read-modify-write.
    * @property {number} [policy.version] The syntax schema version of the Policy.
    *      To set an IAM policy with conditional binding, this field must be set to
    *      3 or greater.
    *     @see [IAM Policy versions]{@link https://cloud.google.com/iam/docs/policies#versions}
+   */
+  /**
+   * @typedef {object} PolicyBinding
+   * @property {string} role Role that is assigned to members.
+   * @property {string[]} members Specifies the identities requesting access for the bucket.
+   * @property {Expr} [condition] The condition that is associated with this binding.
+   */
+  /**
+   * @typedef {object} Expr
+   * @property {string} [title] An optional title for the expression, i.e. a
+   *     short string describing its purpose. This can be used e.g. in UIs
+   *     which allow to enter the expression.
+   * @property {string} [description] An optional description of the
+   *     expression. This is a longer text which describes the expression,
+   *     e.g. when hovered over it in a UI.
+   * @property {string} expression Textual representation of an expression in
+   *     Common Expression Language syntax. The application context of the
+   *     containing message determines which well-known feature set of CEL
+   *     is supported.The condition that is associated with this binding.
+   *
+   * @see [Condition] https://cloud.google.com/storage/docs/access-control/iam#conditions
    */
   /**
    * Get the IAM policy.
@@ -232,7 +255,7 @@ class Iam {
     this.request_(
       {
         uri: '/iam',
-        qs: qs,
+        qs,
       },
       cb!
     );
