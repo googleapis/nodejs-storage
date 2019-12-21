@@ -1,5 +1,5 @@
 {
-  "updateTime": "2019-12-10T12:25:21.122410Z",
+  "updateTime": "2019-12-21T12:28:10.401119Z",
   "sources": [
     {
       "template": {
@@ -7,6 +7,464 @@
         "origin": "synthtool.gcp",
         "version": "2019.10.17"
       }
+    }
+  ],
+  "newFiles": [
+    {
+      "path": ".repo-metadata.json"
+    },
+    {
+      "path": ".readme-partials.yaml"
+    },
+    {
+      "path": "README.md"
+    },
+    {
+      "path": "package.json"
+    },
+    {
+      "path": "CHANGELOG.md"
+    },
+    {
+      "path": ".gitignore"
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md"
+    },
+    {
+      "path": "CONTRIBUTING.md"
+    },
+    {
+      "path": ".prettierrc"
+    },
+    {
+      "path": ".eslintignore"
+    },
+    {
+      "path": "linkinator.config.json"
+    },
+    {
+      "path": ".eslintrc.yml"
+    },
+    {
+      "path": "renovate.json"
+    },
+    {
+      "path": "synth.metadata"
+    },
+    {
+      "path": ".prettierignore"
+    },
+    {
+      "path": "synth.py"
+    },
+    {
+      "path": "codecov.yaml"
+    },
+    {
+      "path": "tslint.json"
+    },
+    {
+      "path": ".jsdoc.js"
+    },
+    {
+      "path": "LICENSE"
+    },
+    {
+      "path": ".nycrc"
+    },
+    {
+      "path": "tsconfig.json"
+    },
+    {
+      "path": "src/channel.ts"
+    },
+    {
+      "path": "src/util.ts"
+    },
+    {
+      "path": "src/storage.ts"
+    },
+    {
+      "path": "src/hmacKey.ts"
+    },
+    {
+      "path": "src/index.ts"
+    },
+    {
+      "path": "src/bucket.ts"
+    },
+    {
+      "path": "src/file.ts"
+    },
+    {
+      "path": "src/notification.ts"
+    },
+    {
+      "path": "src/acl.ts"
+    },
+    {
+      "path": "src/iam.ts"
+    },
+    {
+      "path": "__pycache__/synth.cpython-36.pyc"
+    },
+    {
+      "path": "samples/buckets.js"
+    },
+    {
+      "path": "samples/README.md"
+    },
+    {
+      "path": "samples/package.json"
+    },
+    {
+      "path": "samples/files.js"
+    },
+    {
+      "path": "samples/bucketLock.js"
+    },
+    {
+      "path": "samples/hmacKeyActivate.js"
+    },
+    {
+      "path": "samples/bucketMetadata.js"
+    },
+    {
+      "path": "samples/requesterPays.js"
+    },
+    {
+      "path": "samples/acl.js"
+    },
+    {
+      "path": "samples/.eslintrc.yml"
+    },
+    {
+      "path": "samples/hmacKeyDelete.js"
+    },
+    {
+      "path": "samples/hmacKeyGet.js"
+    },
+    {
+      "path": "samples/fileSetMetadata.js"
+    },
+    {
+      "path": "samples/encryption.js"
+    },
+    {
+      "path": "samples/quickstart.js"
+    },
+    {
+      "path": "samples/hmacKeyCreate.js"
+    },
+    {
+      "path": "samples/iam.js"
+    },
+    {
+      "path": "samples/createNewBucket.js"
+    },
+    {
+      "path": "samples/notifications.js"
+    },
+    {
+      "path": "samples/uploadFile.js"
+    },
+    {
+      "path": "samples/hmacKeysList.js"
+    },
+    {
+      "path": "samples/uploadDirectory.js"
+    },
+    {
+      "path": "samples/hmacKeyDeactivate.js"
+    },
+    {
+      "path": "samples/system-test/encryption.test.js"
+    },
+    {
+      "path": "samples/system-test/bucketLock.test.js"
+    },
+    {
+      "path": "samples/system-test/quickstart.test.js"
+    },
+    {
+      "path": "samples/system-test/files.test.js"
+    },
+    {
+      "path": "samples/system-test/notifications.test.js"
+    },
+    {
+      "path": "samples/system-test/iam.test.js"
+    },
+    {
+      "path": "samples/system-test/acl.test.js"
+    },
+    {
+      "path": "samples/system-test/.eslintrc.yml"
+    },
+    {
+      "path": "samples/system-test/buckets.test.js"
+    },
+    {
+      "path": "samples/system-test/requesterPays.test.js"
+    },
+    {
+      "path": "samples/system-test/hmacKey.test.js"
+    },
+    {
+      "path": "samples/scripts/cleanup"
+    },
+    {
+      "path": "samples/resources/.gitignore"
+    },
+    {
+      "path": "samples/resources/test.txt"
+    },
+    {
+      "path": "samples/resources/resourcesSub1/testSub1.txt"
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md"
+    },
+    {
+      "path": ".github/release-please.yml"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/support_request.md"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.md"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.md"
+    },
+    {
+      "path": "bin/README.md"
+    },
+    {
+      "path": "bin/storage.proto"
+    },
+    {
+      "path": "bin/benchwrapper.js"
+    },
+    {
+      "path": ".kokoro/pre-system-test.sh"
+    },
+    {
+      "path": ".kokoro/pre-samples-test.sh"
+    },
+    {
+      "path": ".kokoro/setup-vars.sh"
+    },
+    {
+      "path": ".kokoro/test.sh"
+    },
+    {
+      "path": ".kokoro/docs.sh"
+    },
+    {
+      "path": ".kokoro/samples-test.sh"
+    },
+    {
+      "path": ".kokoro/.gitattributes"
+    },
+    {
+      "path": ".kokoro/trampoline.sh"
+    },
+    {
+      "path": ".kokoro/lint.sh"
+    },
+    {
+      "path": ".kokoro/publish.sh"
+    },
+    {
+      "path": ".kokoro/test.bat"
+    },
+    {
+      "path": ".kokoro/common.cfg"
+    },
+    {
+      "path": ".kokoro/system-test.sh"
+    },
+    {
+      "path": ".kokoro/release/docs.cfg"
+    },
+    {
+      "path": ".kokoro/release/docs.sh"
+    },
+    {
+      "path": ".kokoro/release/publish.cfg"
+    },
+    {
+      "path": ".kokoro/release/common.cfg"
+    },
+    {
+      "path": ".kokoro/continuous/node10/lint.cfg"
+    },
+    {
+      "path": ".kokoro/continuous/node10/docs.cfg"
+    },
+    {
+      "path": ".kokoro/continuous/node10/test.cfg"
+    },
+    {
+      "path": ".kokoro/continuous/node10/system-test.cfg"
+    },
+    {
+      "path": ".kokoro/continuous/node10/samples-test.cfg"
+    },
+    {
+      "path": ".kokoro/continuous/node10/common.cfg"
+    },
+    {
+      "path": ".kokoro/continuous/node8/test.cfg"
+    },
+    {
+      "path": ".kokoro/continuous/node8/common.cfg"
+    },
+    {
+      "path": ".kokoro/continuous/node12/test.cfg"
+    },
+    {
+      "path": ".kokoro/continuous/node12/common.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/node10/lint.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/node10/docs.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/node10/test.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/node10/system-test.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/node10/samples-test.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/node10/common.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/node8/test.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/node8/common.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/node12/test.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/node12/common.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/windows/test.cfg"
+    },
+    {
+      "path": ".kokoro/presubmit/windows/common.cfg"
+    },
+    {
+      "path": ".git/packed-refs"
+    },
+    {
+      "path": ".git/HEAD"
+    },
+    {
+      "path": ".git/config"
+    },
+    {
+      "path": ".git/index"
+    },
+    {
+      "path": ".git/shallow"
+    },
+    {
+      "path": ".git/logs/HEAD"
+    },
+    {
+      "path": ".git/logs/refs/remotes/origin/HEAD"
+    },
+    {
+      "path": ".git/logs/refs/heads/autosynth"
+    },
+    {
+      "path": ".git/logs/refs/heads/master"
+    },
+    {
+      "path": ".git/refs/remotes/origin/HEAD"
+    },
+    {
+      "path": ".git/refs/heads/autosynth"
+    },
+    {
+      "path": ".git/refs/heads/master"
+    },
+    {
+      "path": ".git/objects/pack/pack-b14b03ea70060afe4b8e9657bf52c1c2b13e4a14.idx"
+    },
+    {
+      "path": ".git/objects/pack/pack-b14b03ea70060afe4b8e9657bf52c1c2b13e4a14.pack"
+    },
+    {
+      "path": "test/channel.ts"
+    },
+    {
+      "path": "test/hmacKey.ts"
+    },
+    {
+      "path": "test/headers.ts"
+    },
+    {
+      "path": "test/index.ts"
+    },
+    {
+      "path": "test/bucket.ts"
+    },
+    {
+      "path": "test/file.ts"
+    },
+    {
+      "path": "test/notification.ts"
+    },
+    {
+      "path": "test/acl.ts"
+    },
+    {
+      "path": "test/iam.ts"
+    },
+    {
+      "path": "test/mocha.opts"
+    },
+    {
+      "path": "test/testdata/testfile.json"
+    },
+    {
+      "path": "test/testdata/textfile.txt"
+    },
+    {
+      "path": "system-test/storage.ts"
+    },
+    {
+      "path": "system-test/data/long-html-file.html.gz"
+    },
+    {
+      "path": "system-test/data/long-html-file.html"
+    },
+    {
+      "path": "system-test/data/CloudPlatform_128px_Retina.png"
+    },
+    {
+      "path": "system-test/data/three-mb-file.tif"
+    },
+    {
+      "path": "conformance-test/v4SignedUrl.ts"
+    },
+    {
+      "path": "conformance-test/test-data/v4SignedUrl.json"
+    },
+    {
+      "path": "conformance-test/fixtures/signing-service-account.json"
     }
   ]
 }
