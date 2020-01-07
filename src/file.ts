@@ -1339,7 +1339,7 @@ class File extends ServiceObject<File> {
           .on('error', onComplete)
           .on('end', onComplete)
           .pipe(throughStream, {end: false});
-       };
+      };
 
       // This is hooked to the `complete` event from the request stream. This is
       // our chance to validate the data and let the user know if anything went
