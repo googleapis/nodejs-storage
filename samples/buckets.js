@@ -59,7 +59,6 @@ async function deleteBucket(bucketName) {
   // [END storage_delete_bucket]
 }
 
-
 async function enableUniformBucketLevelAccess(bucketName) {
   // [START storage_enable_uniform_bucket_level_access]
   // Imports the Google Cloud client library
@@ -146,12 +145,6 @@ async function getUniformBucketLevelAccess(bucketName) {
 require(`yargs`)
   .demand(1)
   .command(`list`, `Lists all buckets in the current project.`, {}, listBuckets)
-  .command(
-    `enable-default-kms-key <bucket> <defaultKmsKeyName>`,
-    `Sets the default KMS key for the specified bucket.`,
-    {},
-    opts => enableDefaultKMSKey(opts.bucket, opts.defaultKmsKeyName)
-  )
   .command(
     `enable-uniform-bucket-level-access <bucket>`,
     `Enables uniform bucket-level access for the specified bucket.`,
