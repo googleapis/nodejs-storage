@@ -101,7 +101,7 @@ it(`should get a bucket's uniform bucket-level access metadata`, async () => {
 
 it(`should disable a bucket's uniform bucket-level access`, async () => {
   const output = execSync(
-    `${cmd} disable-uniform-bucket-level-access ${bucketName}`
+    `node disableUniformBucketLevelAccess.js ${bucketName}`
   );
   assert.match(
     output,
