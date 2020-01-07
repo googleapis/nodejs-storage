@@ -93,6 +93,7 @@ import {
   Iam,
 } from '../src';
 import * as nock from 'nock';
+import * as readline from 'readline';
 
 interface ErrorCallbackFunction {
   (err: Error | null): void;
@@ -2788,6 +2789,21 @@ describe('storage', () => {
       await file.setStorageClass('standard');
       const [metadata] = await file.getMetadata();
       assert.strictEqual(metadata.storageClass, 'STANDARD');
+    });
+  });
+
+  describe('bucket upload with progress', () => {
+    it('show bytes sent', async () => {
+      const fileSize = fs.statSync(FILES.big.path).size;
+      await bucket.upload(FILES.big.path, {
+        onUploadProgress: evt => {
+          const progress = (evt.bytesRead / fileSize) * 100;
+
+          readline.clearLine(process.stdout, 0);
+          readline.cursorTo(process.stdout, 0, 0);
+          process.stdout.write(`${Math.round(progress)}% complete`);
+        },
+      });
     });
   });
 

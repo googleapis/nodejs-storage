@@ -35,7 +35,7 @@ import * as once from 'onetime';
 import * as os from 'os';
 const pumpify = require('pumpify');
 import * as resumableUpload from 'gcs-resumable-upload';
-import {Duplex, Writable, Readable} from 'stream';
+import {Duplex, Writable, Readable, Transform} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as through from 'through2';
 import * as xdgBasedir from 'xdg-basedir';
@@ -198,6 +198,8 @@ export interface CreateWriteStreamOptions extends CreateResumableUploadOptions {
   gzip?: string | boolean;
   resumable?: boolean;
   validation?: string | boolean;
+  // tslint:disable-next-line:no-any
+  onUploadProgress?: (progressEvent: any) => void;
 }
 
 export interface MakeFilePrivateOptions {
@@ -1339,7 +1341,10 @@ class File extends ServiceObject<File> {
         rawResponseStream
           .on('error', onComplete)
           .on('end', onComplete)
-          .pipe(throughStream, {end: false});
+          .pipe(
+            throughStream,
+            {end: false}
+          );
       };
       // This is hooked to the `complete` event from the request stream. This is
       // our chance to validate the data and let the user know if anything went
@@ -1752,12 +1757,20 @@ class File extends ServiceObject<File> {
       md5,
     });
 
+    const progressStream = new ProgressStream();
+    progressStream.on('progress', bytesRead => {
+      if (options.onUploadProgress) {
+        options.onUploadProgress({bytesRead});
+      }
+    });
+
     const fileWriteStream = duplexify();
 
     const stream = streamEvents(
       pumpify([
         gzip ? zlib.createGzip() : through(),
         validateStream,
+        progressStream,
         fileWriteStream,
       ])
     ) as Duplex;
@@ -3486,6 +3499,25 @@ class File extends ServiceObject<File> {
         return `${headerName}:${canonicalValue}\n`;
       })
       .join('');
+  }
+}
+
+/**
+ * Basic Passthrough Stream that records the number of bytes read
+ * every time the cursor is moved.
+ */
+class ProgressStream extends Transform {
+  bytesRead: number;
+  constructor() {
+    super(...arguments);
+    this.bytesRead = 0;
+  }
+  // tslint:disable-next-line: no-any
+  _transform(chunk: any, encoding: string, callback: Function) {
+    this.bytesRead += chunk.length;
+    this.emit('progress', this.bytesRead);
+    this.push(chunk);
+    callback();
   }
 }
 
