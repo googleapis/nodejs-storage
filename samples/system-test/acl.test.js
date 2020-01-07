@@ -78,7 +78,7 @@ it('should print a users acl for a bucket', async () => {
 });
 
 it('should add a user as an owner on a bucket', () => {
-  const out = execSync(`${cmd} add-bucket-owner ${bucketName} ${userEmail}`);
+  const out = execSync(`node addBucketOwnerAcl.js ${bucketName} ${userEmail}`);
   assert.match(
     out,
     new RegExp(`Added user ${userEmail} as an owner on bucket ${bucketName}.`)
