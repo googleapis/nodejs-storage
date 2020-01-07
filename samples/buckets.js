@@ -59,32 +59,6 @@ async function deleteBucket(bucketName) {
   // [END storage_delete_bucket]
 }
 
-async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
-  // [START storage_set_bucket_default_kms_key]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const defaultKmsKeyName = 'KMS key resource id, e.g. my-key';
-
-  // Enables a default KMS key for the bucket
-  await storage.bucket(bucketName).setMetadata({
-    encryption: {
-      defaultKmsKeyName,
-    },
-  });
-
-  console.log(
-    `Default KMS key for ${bucketName} was set to ${defaultKmsKeyName}.`
-  );
-  // [END storage_set_bucket_default_kms_key]
-}
 
 async function enableUniformBucketLevelAccess(bucketName) {
   // [START storage_enable_uniform_bucket_level_access]
