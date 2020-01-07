@@ -220,34 +220,6 @@ async function printFileAclForUser(bucketName, filename, userEmail) {
   // [END storage_print_file_acl_for_user]
 }
 
-async function addFileOwner(bucketName, filename, userEmail) {
-  // [START storage_add_file_owner]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'Name of file to access, e.g. file.txt';
-  // const userEmail = 'Email of user to add, e.g. developer@company.com';
-
-  // Makes the user an owner of the file. You can use addAllUsers(),
-  // addDomain(), addProject(), addGroup(), and addAllAuthenticatedUsers()
-  // to grant access to different types of entities. You can also use "readers"
-  // and "writers" to grant different roles.
-  await storage
-    .bucket(bucketName)
-    .file(filename)
-    .acl.owners.addUser(userEmail);
-
-  console.log(`Added user ${userEmail} as an owner on file ${filename}.`);
-  // [END storage_add_file_owner]
-}
-
 // [START storage_remove_file_owner]
 async function removeFileOwner(bucketName, filename, userEmail) {
   // Imports the Google Cloud client library
@@ -324,12 +296,6 @@ require(`yargs`)
     `Prints a user's ACL for a file.`,
     {},
     opts => printFileAclForUser(opts.bucketName, opts.fileName, opts.userEmail)
-  )
-  .command(
-    `add-file-owner <bucketName> <fileName> <userEmail>`,
-    `Adds a user as an owner of a file.`,
-    {},
-    opts => addFileOwner(opts.bucketName, opts.fileName, opts.userEmail)
   )
   .command(
     `remove-file-owner <bucketName> <fileName> <userEmail>`,

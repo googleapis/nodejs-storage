@@ -124,7 +124,7 @@ it('should print a users acl for a file', async () => {
 
 it('should add a user as an owner on a bucket', () => {
   const out = execSync(
-    `${cmd} add-file-owner ${bucketName} ${fileName} ${userEmail}`
+    `node addFileOwnerAcl.js ${bucketName} ${fileName} ${userEmail}`
   );
   assert.match(
     out,
