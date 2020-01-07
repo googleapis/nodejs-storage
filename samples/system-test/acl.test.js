@@ -71,7 +71,7 @@ it('should print acl for a file', () => {
 it('should print a users acl for a bucket', async () => {
   await bucket.acl.readers.addUser(userEmail);
   const out = execSync(
-    `${cmd} print-bucket-acl-for-user ${bucketName} ${userEmail}`
+    `node printBucketAclForUser.js ${bucketName} ${userEmail}`
   );
   assert.match(out, new RegExp(`READER: user-${userEmail}`));
   await bucket.acl.readers.deleteUser(userEmail);

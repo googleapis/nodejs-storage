@@ -44,32 +44,6 @@ async function printBucketAcl(bucketName) {
   // [END storage_print_bucket_acl]
 }
 
-async function printBucketAclForUser(bucketName, userEmail) {
-  // [START storage_print_bucket_acl_for_user]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const userEmail = 'Email of user to check, e.g. developer@company.com';
-
-  const options = {
-    // Specify the user
-    entity: `user-${userEmail}`,
-  };
-
-  // Gets the user's ACL for the bucket
-  const [aclObject] = await storage.bucket(bucketName).acl.get(options);
-
-  console.log(`${aclObject.role}: ${aclObject.entity}`);
-  // [END storage_print_bucket_acl_for_user]
-}
-
 async function addBucketOwner(bucketName, userEmail) {
   // [START storage_add_bucket_owner]
   // Imports the Google Cloud client library
@@ -282,12 +256,6 @@ require(`yargs`)
     `Prints the ACL for a bucket.`,
     {},
     opts => printBucketAcl(opts.bucketName)
-  )
-  .command(
-    `print-bucket-acl-for-user <bucketName> <userEmail>`,
-    `Prints a user's ACL for a bucket.`,
-    {},
-    opts => printBucketAclForUser(opts.bucketName, opts.userEmail)
   )
   .command(
     `add-bucket-owner <bucketName> <userEmail>`,
