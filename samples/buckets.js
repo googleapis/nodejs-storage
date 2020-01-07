@@ -110,6 +110,7 @@ async function disableUniformBucketLevelAccess(bucketName) {
   // [END storage_disable_uniform_bucket_level_access]
 }
 
+<<<<<<< HEAD
 =======
 >>>>>>> 1481e20d8332ee2806116166fb16028506487d2d
 async function getUniformBucketLevelAccess(bucketName) {
@@ -143,6 +144,8 @@ async function getUniformBucketLevelAccess(bucketName) {
   // [END storage_get_uniform_bucket_level_access]
 }
 
+=======
+>>>>>>> fix: refactor getUniformBucketLevelAccess into its own file
 require(`yargs`)
   .demand(1)
   .command(`list`, `Lists all buckets in the current project.`, {}, listBuckets)
@@ -166,6 +169,7 @@ require(`yargs`)
     {},
     opts => disableUniformBucketLevelAccess(opts.bucket)
   )
+<<<<<<< HEAD
   .command(
 =======
 >>>>>>> 1481e20d8332ee2806116166fb16028506487d2d
@@ -173,6 +177,10 @@ require(`yargs`)
     `Get uniform bucket-level access metadata for the specified bucket.`,
     {},
     opts => getUniformBucketLevelAccess(opts.bucket)
+=======
+  .command(`delete <bucket>`, `Deletes a bucket.`, {}, opts =>
+    deleteBucket(opts.bucket)
+>>>>>>> fix: refactor getUniformBucketLevelAccess into its own file
   )
   .example(
     `node $0 create my-bucket`,
