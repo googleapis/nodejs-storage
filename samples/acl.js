@@ -22,28 +22,6 @@
 
 'use strict';
 
-async function printBucketAcl(bucketName) {
-  // [START storage_print_bucket_acl]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Gets the ACL for the bucket
-  const [acls] = await storage.bucket(bucketName).acl.get();
-
-  acls.forEach(acl => {
-    console.log(`${acl.role}: ${acl.entity}`);
-  });
-  // [END storage_print_bucket_acl]
-}
-
 async function printBucketAclForUser(bucketName, userEmail) {
   // [START storage_print_bucket_acl_for_user]
   // Imports the Google Cloud client library
@@ -277,12 +255,6 @@ async function removeFileOwner(bucketName, filename, userEmail) {
 
 require(`yargs`)
   .demand(1)
-  .command(
-    `print-bucket-acl <bucketName>`,
-    `Prints the ACL for a bucket.`,
-    {},
-    opts => printBucketAcl(opts.bucketName)
-  )
   .command(
     `print-bucket-acl-for-user <bucketName> <userEmail>`,
     `Prints a user's ACL for a bucket.`,

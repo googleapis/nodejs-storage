@@ -55,7 +55,7 @@ after(async () => {
 });
 
 it('should print acl for a bucket', () => {
-  const out = execSync(`${cmd} print-bucket-acl ${bucketName}`);
+  const out = execSync(`node printBucketAcl.js ${bucketName}`);
   assert.match(out, /OWNER: project-editors-/);
   assert.match(out, /OWNER: project-owners-/);
   assert.match(out, /READER: project-viewers-/);
