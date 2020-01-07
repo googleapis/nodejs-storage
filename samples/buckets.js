@@ -176,9 +176,6 @@ require(`yargs`)
     {},
     opts => getUniformBucketLevelAccess(opts.bucket)
   )
-  .command(`delete <bucket>`, `Deletes a bucket.`, {}, opts =>
-    deleteBucket(opts.bucket)
-  )
   .example(
     `node $0 create my-bucket`,
     `Creates a new bucket named "my-bucket".`
