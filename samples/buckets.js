@@ -22,23 +22,6 @@
 
 'use strict';
 
-async function listBuckets() {
-  // [START storage_list_buckets]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  // Lists all buckets in the current project
-  const [buckets] = await storage.getBuckets();
-  console.log('Buckets:');
-  buckets.forEach(bucket => {
-    console.log(bucket.name);
-  });
-  // [END storage_list_buckets]
-}
-
 async function deleteBucket(bucketName) {
   // [START storage_delete_bucket]
   // Imports the Google Cloud client library
@@ -171,7 +154,6 @@ async function getUniformBucketLevelAccess(bucketName) {
 
 require(`yargs`)
   .demand(1)
-  .command(`list`, `Lists all buckets in the current project.`, {}, listBuckets)
   .command(
     `enable-default-kms-key <bucket> <defaultKmsKeyName>`,
     `Sets the default KMS key for the specified bucket.`,

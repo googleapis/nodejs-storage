@@ -40,7 +40,7 @@ it('should create a bucket', async () => {
 });
 
 it('should list buckets', () => {
-  const output = execSync(`${cmd} list`);
+  const output = execSync(`node listBuckets.js`);
   assert.match(output, /Buckets:/);
   assert.match(output, new RegExp(bucketName));
 });
