@@ -169,31 +169,6 @@ async function getDefaultEventBasedHold(bucketName) {
   // [END storage_get_default_event_based_hold]
 }
 
-async function setEventBasedHold(bucketName, fileName) {
-  // [START storage_set_event_based_hold]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'File to access, e.g. file.txt';
-
-  // Set event-based hold
-  await storage
-    .bucket(bucketName)
-    .file(fileName)
-    .setMetadata({
-      eventBasedHold: true,
-    });
-  console.log(`Event-based hold was set for ${fileName}.`);
-  // [END storage_set_event_based_hold]
-}
-
 async function releaseEventBasedHold(bucketName, fileName) {
   // [START storage_release_event_based_hold]
   // Imports the Google Cloud client library
@@ -310,12 +285,6 @@ async function main() {
       `Get default event-based hold for a given bucket.`,
       {},
       opts => getDefaultEventBasedHold(opts.bucketName)
-    )
-    .command(
-      `set-event-based-hold <bucketName> <fileName>`,
-      `Set an event-based hold for a given file.`,
-      {},
-      opts => setEventBasedHold(opts.bucketName, opts.fileName)
     )
     .command(
       `release-event-based-hold <bucketName> <fileName>`,
