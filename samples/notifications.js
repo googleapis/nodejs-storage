@@ -22,27 +22,6 @@
 
 'use strict';
 
-async function createNotification(bucketName, topic) {
-  // [START storage_create_notification]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const topic = 'Name of a topic, e.g. my-topic';
-
-  // Creates a notification
-  await storage.bucket(bucketName).createNotification(topic);
-
-  console.log('Notification subscription created.');
-  // [END storage_create_notification]
-}
-
 async function listNotifications(bucketName) {
   // [START storage_list_notifications]
   // Imports the Google Cloud client library
@@ -124,12 +103,6 @@ async function deleteNotification(bucketName, notificationId) {
 
 require(`yargs`)
   .demand(1)
-  .command(
-    `create <bucketName> <topic>`,
-    `Creates a new notification`,
-    {},
-    opts => createNotification(opts.bucketName, opts.topic)
-  )
   .command(
     `list <bucketName>`,
     `Lists notifications for a given bucket.`,

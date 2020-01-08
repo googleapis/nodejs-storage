@@ -52,7 +52,9 @@ after(async () => {
 });
 
 it('should create a notification', async () => {
-  const output = execSync(`${cmd} create ${bucketName} ${topicName}`);
+  const output = execSync(
+    `node createNotification.js ${bucketName} ${topicName}`
+  );
   assert.match(output, /Notification subscription created./);
   const [exists] = await notification.exists();
   assert.strictEqual(exists, true);
