@@ -21,22 +21,6 @@
  */
 
 'use strict';
-async function setRetentionPolicy(bucketName, retentionPeriod) {
-  // [START storage_set_retention_policy]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  const [metadata] = await storage
-    .bucket(bucketName)
-    .setRetentionPeriod(retentionPeriod);
-  console.log(
-    `Bucket ${bucketName} retention period set for ${metadata.retentionPolicy.retentionPeriod} seconds.`
-  );
-  // [END storage_set_retention_policy]
-}
 
 async function getRetentionPolicy(bucketName) {
   // [START storage_get_retention_policy]
@@ -269,12 +253,6 @@ async function releaseTemporaryHold(bucketName, fileName) {
 async function main() {
   require(`yargs`)
     .demand(1)
-    .command(
-      `set-retention-policy <bucketName> <period>`,
-      `Defines a retention policy on a given bucket.`,
-      {},
-      opts => setRetentionPolicy(opts.bucketName, opts.period)
-    )
     .command(
       `remove-retention-policy <bucketName>`,
       `Removes a retention policy on a given bucket if the policy is unlocked.`,
