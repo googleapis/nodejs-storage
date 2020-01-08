@@ -53,7 +53,7 @@ after(async () => {
 it('should set a retention policy on a bucket', () => {
   const retentionPeriod = 5;
   const output = execSync(
-    `${cmd} set-retention-policy ${bucketName} ${retentionPeriod}`
+    `node setRetentionPolicy.js ${bucketName} ${retentionPeriod}`
   );
   assert.match(
     output,
@@ -64,7 +64,7 @@ it('should set a retention policy on a bucket', () => {
 });
 
 it('should get a retention policy on a bucket', () => {
-  const output = execSync(`node setRetentionPolicy.js ${bucketName}`);
+  const output = execSync(`${cmd} get-retention-policy ${bucketName}`);
   assert.match(output, /A retention policy exists!/);
 });
 
