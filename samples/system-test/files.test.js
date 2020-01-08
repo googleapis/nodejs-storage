@@ -131,7 +131,7 @@ it('should download a file', () => {
 
 it('should move a file', async () => {
   const output = execSync(
-    `${cmd} move ${bucketName} ${fileName} ${movedFileName}`
+    `node moveFile.js ${bucketName} ${fileName} ${movedFileName}`
   );
   assert.match(
     output,

@@ -353,33 +353,6 @@ async function generateV4UploadSignedUrl(bucketName, filename) {
   // [END storage_generate_upload_signed_url_v4]
 }
 
-async function moveFile(bucketName, srcFilename, destFilename) {
-  // [START storage_move_file]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const srcFilename = 'File to move, e.g. file.txt';
-  // const destFilename = 'Destination for file, e.g. moved.txt';
-
-  // Moves the file within the bucket
-  await storage
-    .bucket(bucketName)
-    .file(srcFilename)
-    .move(destFilename);
-
-  console.log(
-    `gs://${bucketName}/${srcFilename} moved to gs://${bucketName}/${destFilename}.`
-  );
-  // [END storage_move_file]
-}
-
 async function copyFile(
   srcBucketName,
   srcFilename,
@@ -475,12 +448,6 @@ require(`yargs`)
     'Generates a v4 signed URL for uploading a file.',
     {},
     opts => generateV4UploadSignedUrl(opts.bucketName, opts.fileName)
-  )
-  .command(
-    `move <bucketName> <srcFileName> <destFileName>`,
-    `Moves a file to a new location within the same bucket, i.e. rename the file.`,
-    {},
-    opts => moveFile(opts.bucketName, opts.srcFileName, opts.destFileName)
   )
   .command(
     `copy <srcBucketName> <srcFileName> <destBucketName> <destFileName>`,
