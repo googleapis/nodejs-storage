@@ -127,7 +127,7 @@ it('should set an temporary hold on a file', () => {
 
 it('should release an temporary hold on a file', () => {
   const output = execSync(
-    `${cmd} release-temporary-hold ${bucketName} ${fileName}`
+    `node releaseTemporaryHold.js ${bucketName} ${fileName}`
   );
   assert.match(
     output,

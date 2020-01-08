@@ -242,30 +242,6 @@ async function setTemporarydHold(bucketName, fileName) {
   // [END storage_set_temporary_hold]
 }
 
-async function releaseTemporaryHold(bucketName, fileName) {
-  // [START storage_release_temporary_hold]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'File to access, e.g. file.txt';
-
-  await storage
-    .bucket(bucketName)
-    .file(fileName)
-    .setMetadata({
-      temporaryHold: false,
-    });
-  console.log(`Temporary hold was released for ${fileName}.`);
-  // [END storage_release_temporary_hold]
-}
-
 async function main() {
   require(`yargs`)
     .demand(1)
@@ -328,12 +304,6 @@ async function main() {
       `Set a temporary hold for a given file.`,
       {},
       opts => setTemporarydHold(opts.bucketName, opts.fileName)
-    )
-    .command(
-      `release-temporary-hold <bucketName> <fileName>`,
-      `Release a temporary hold for a given file.`,
-      {},
-      opts => releaseTemporaryHold(opts.bucketName, opts.fileName)
     )
     .example(
       `node $0 set-retention-policy my-bucket 5`,
