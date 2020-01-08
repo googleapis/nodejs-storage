@@ -62,7 +62,7 @@ it('should print acl for a bucket', () => {
 });
 
 it('should print acl for a file', () => {
-  const out = execSync(`${cmd} print-file-acl ${bucketName} ${fileName}`);
+  const out = execSync(`node printFileAcl.js ${bucketName} ${fileName}`);
   assert.match(out, /OWNER: project-editors-/);
   assert.match(out, /OWNER: project-owners-/);
   assert.match(out, /READER: project-viewers-/);
@@ -116,7 +116,7 @@ it('should remove a default user from a bucket', () => {
 it('should print a users acl for a file', async () => {
   await bucket.file(fileName).acl.readers.addUser(userEmail);
   const out = execSync(
-    `node printFileAcl.js ${bucketName} ${fileName} ${userEmail}`
+    `${cmd} print-file-acl-for-user ${bucketName} ${fileName} ${userEmail}`
   );
   assert.match(out, new RegExp(`READER: user-${userEmail}`));
   await bucket.file(fileName).acl.readers.deleteUser(userEmail);
