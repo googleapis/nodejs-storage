@@ -137,7 +137,7 @@ it('should release an temporary hold on a file', () => {
 
 it('should lock a bucket with a retention policy', () => {
   const retentionPeriod = 5;
-  execSync(`${cmd} set-retention-policy ${bucketName} ${retentionPeriod}`);
+  execSync(`node setRetentionPolicy.js ${bucketName} ${retentionPeriod}`);
   const output = execSync(`${cmd} lock-retention-policy ${bucketName}`);
   assert.match(
     output,
