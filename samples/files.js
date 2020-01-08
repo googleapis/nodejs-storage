@@ -249,37 +249,6 @@ async function makePublic(bucketName, filename) {
   // [END storage_make_public]
 }
 
-async function generateSignedUrl(bucketName, filename) {
-  // [START storage_generate_signed_url]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'File to access, e.g. file.txt';
-
-  // These options will allow temporary read access to the file
-  const options = {
-    version: 'v2', // defaults to 'v2' if missing.
-    action: 'read',
-    expires: Date.now() + 1000 * 60 * 60, // one hour
-  };
-
-  // Get a v2 signed URL for the file
-  const [url] = await storage
-    .bucket(bucketName)
-    .file(filename)
-    .getSignedUrl(options);
-
-  console.log(`The signed url for ${filename} is ${url}.`);
-  // [END storage_generate_signed_url]
-}
-
 async function generateV4ReadSignedUrl(bucketName, filename) {
   // [START storage_generate_signed_url_v4]
   // Imports the Google Cloud client library
@@ -457,12 +426,6 @@ require(`yargs`)
     `Makes a file public.`,
     {},
     opts => makePublic(opts.bucketName, opts.fileName)
-  )
-  .command(
-    `generate-signed-url <bucketName> <fileName>`,
-    `Generates a signed URL for a file.`,
-    {},
-    opts => generateSignedUrl(opts.bucketName, opts.fileName)
   )
   .command(
     'generate-v4-read-signed-url <bucketName> <fileName>',

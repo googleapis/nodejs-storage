@@ -186,7 +186,7 @@ it('should make a file public', () => {
 
 it('should generate a v2 signed URL for a file', async () => {
   const output = await execSync(
-    `${cmd} generate-signed-url ${bucketName} ${copiedFileName}`
+    `node getSignedUrl.js ${bucketName} ${copiedFileName}`
   );
   assert.match(output, new RegExp(`The signed url for ${copiedFileName} is `));
 });
