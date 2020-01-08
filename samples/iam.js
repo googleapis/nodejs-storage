@@ -14,38 +14,6 @@
 
 'use strict';
 
-async function viewBucketIamMembers(bucketName) {
-  // [START storage_view_bucket_iam_members]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Gets and displays the bucket's IAM policy
-  const results = await storage.bucket(bucketName).iam.getPolicy();
-
-  const policy = results[0].bindings;
-
-  // Displays the roles in the bucket's IAM policy
-  console.log(`Roles for bucket ${bucketName}:`);
-  policy.forEach(role => {
-    console.log(`  Role: ${role.role}`);
-    console.log(`  Members:`);
-
-    const members = role.members;
-    members.forEach(member => {
-      console.log(`    ${member}`);
-    });
-  });
-  // [END storage_view_bucket_iam_members]
-}
-
 async function addBucketIamMember(bucketName, roleName, members) {
   // [START storage_add_bucket_iam_member]
   // Imports the Google Cloud client library
@@ -147,12 +115,6 @@ async function removeBucketIamMember(bucketName, roleName, members) {
 require(`yargs`)
   .demand(1)
   .array('members')
-  .command(
-    `view-members <bucketName>`,
-    `Lists IAM member-role groups for a given Google Cloud Storage bucket.`,
-    {},
-    opts => viewBucketIamMembers(opts.bucketName)
-  )
   .command(
     `add-members <bucketName> <roleName> [members..]`,
     `Adds one or more IAM member-role groups to a Google Cloud Storage bucket.`,

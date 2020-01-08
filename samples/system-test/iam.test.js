@@ -50,7 +50,7 @@ it('should add multiple members to a role on a bucket', async () => {
 });
 
 it('should list members of a role on a bucket', async () => {
-  const output = execSync(`${cmd} view-members ${bucketName}`);
+  const output = execSync(`node viewBucketIamMembers.js ${bucketName}`);
   assert.match(output, new RegExp(`Roles for bucket ${bucketName}:`));
   assert.match(output, new RegExp(`Role: ${roleName}`));
   assert.match(output, new RegExp(`Members:`));
