@@ -81,30 +81,6 @@ async function removeRetentionPolicy(bucketName) {
   // [END storage_remove_retention_policy]
 }
 
-async function lockRetentionPolicy(bucketName) {
-  // [START storage_lock_retention_policy]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-  // get_bucket gets the current metageneration value for the bucket,
-  // required by lock_retention_policy.
-  const [unlockedMetadata] = await storage.bucket(bucketName).getMetadata();
-  // Warning: Once a retention policy is locked it cannot be unlocked
-  // and retention period can only be increased.
-  const [lockedMetadata] = await storage
-    .bucket(bucketName)
-    .lock(unlockedMetadata.metageneration);
-  console.log(`Retention policy for ${bucketName} is now locked.`);
-  console.log(
-    `Retention policy effective as of ${lockedMetadata.retentionPolicy.effectiveTime}`
-  );
-
-  return lockedMetadata;
-  // [END storage_lock_retention_policy]
-}
-
 async function enableDefaultEventBasedHold(bucketName) {
   // [START storage_enable_default_event_based_hold]
   // Imports the Google Cloud client library
@@ -286,12 +262,6 @@ async function main() {
       `Get a retention policy for a given bucket.`,
       {},
       opts => getRetentionPolicy(opts.bucketName)
-    )
-    .command(
-      `lock-retention-policy <bucketName>`,
-      `Lock a retention policy for a given bucket.`,
-      {},
-      opts => lockRetentionPolicy(opts.bucketName)
     )
     .command(
       `enable-default-event-based-hold <bucketName>`,
