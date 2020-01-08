@@ -79,16 +79,8 @@ it('should download a file', () => {
 });
 
 it('should rotate keys', () => {
-<<<<<<< HEAD
-  let output = execSync(`${cmd} generate-encryption-key`);
-=======
   // Generate a new key
-<<<<<<< HEAD
   let output = execSync(`node generateEncyrptionKeys.js`);
->>>>>>> fix: refactor generateEncryptionKey sample into its own file
-=======
-  let output = execSync(`node generateEncyrptionKey.js`);
->>>>>>> fix: typo
   assert.match(output, /Base 64 encoded encryption key:/);
   const test = /^Base 64 encoded encryption key: ([^\s]+)/;
   const newKey = output.match(test)[1];
