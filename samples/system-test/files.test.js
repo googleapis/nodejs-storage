@@ -193,7 +193,7 @@ it('should generate a v2 signed URL for a file', async () => {
 
 it('should generate a v4 signed URL and read a file', async () => {
   const output = await execSync(
-    `${cmd} generate-v4-read-signed-url ${bucketName} ${copiedFileName}`
+    `node generateV4ReadSignedUrl.js ${bucketName} ${copiedFileName}`
   );
 
   const expected = /URL:\n([^\s]+)/;
