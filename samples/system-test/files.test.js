@@ -145,7 +145,7 @@ it('should move a file', async () => {
 
 it('should copy a file', async () => {
   const output = execSync(
-    `${cmd} copy ${bucketName} ${movedFileName} ${bucketName} ${copiedFileName}`
+    `node copyFile.js ${bucketName} ${movedFileName} ${bucketName} ${copiedFileName}`
   );
   assert.match(
     output,

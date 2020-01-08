@@ -380,39 +380,6 @@ async function moveFile(bucketName, srcFilename, destFilename) {
   // [END storage_move_file]
 }
 
-async function copyFile(
-  srcBucketName,
-  srcFilename,
-  destBucketName,
-  destFilename
-) {
-  // [START storage_copy_file]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const srcBucketName = 'Name of the source bucket, e.g. my-bucket';
-  // const srcFilename = 'Name of the source file, e.g. file.txt';
-  // const destBucketName = 'Name of the destination bucket, e.g. my-other-bucket';
-  // const destFilename = 'Destination name of file, e.g. file.txt';
-
-  // Copies the file to the other bucket
-  await storage
-    .bucket(srcBucketName)
-    .file(srcFilename)
-    .copy(storage.bucket(destBucketName).file(destFilename));
-
-  console.log(
-    `gs://${srcBucketName}/${srcFilename} copied to gs://${destBucketName}/${destFilename}.`
-  );
-  // [END storage_copy_file]
-}
-
 require(`yargs`)
   .demand(1)
   .command(
@@ -481,18 +448,6 @@ require(`yargs`)
     `Moves a file to a new location within the same bucket, i.e. rename the file.`,
     {},
     opts => moveFile(opts.bucketName, opts.srcFileName, opts.destFileName)
-  )
-  .command(
-    `copy <srcBucketName> <srcFileName> <destBucketName> <destFileName>`,
-    `Copies a file in a bucket to another bucket.`,
-    {},
-    opts =>
-      copyFile(
-        opts.srcBucketName,
-        opts.srcFileName,
-        opts.destBucketName,
-        opts.destFileName
-      )
   )
   .example(`node $0 list my-bucket`, `Lists files in "my-bucket".`)
   .example(
