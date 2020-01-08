@@ -59,7 +59,7 @@ it('should list members of a role on a bucket', async () => {
 
 it('should remove multiple members from a role on a bucket', async () => {
   const output = execSync(
-    `${cmd} remove-members ${bucketName} ${roleName} "user:${userEmail}"`
+    `node removeBucketIamMember.js ${bucketName} ${roleName} "user:${userEmail}"`
   );
   assert.ok(
     output.includes(
