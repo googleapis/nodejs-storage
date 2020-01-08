@@ -102,7 +102,7 @@ it('should set an event-based hold on a file', () => {
 
 it('should release an event-based hold on a file', () => {
   const output = execSync(
-    `${cmd} release-event-based-hold ${bucketName} ${fileName}`
+    `node releaseEventBasedHold.js ${bucketName} ${fileName}`
   );
   assert.match(
     output,
