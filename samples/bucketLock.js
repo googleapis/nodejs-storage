@@ -105,29 +105,6 @@ async function lockRetentionPolicy(bucketName) {
   // [END storage_lock_retention_policy]
 }
 
-async function enableDefaultEventBasedHold(bucketName) {
-  // [START storage_enable_default_event_based_hold]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Enables a default event-based hold for the bucket.
-  await storage.bucket(bucketName).setMetadata({
-    defaultEventBasedHold: true,
-  });
-
-  console.log(`Default event-based hold was enabled for ${bucketName}.`);
-
-  // [END storage_enable_default_event_based_hold]
-}
-
 async function disableDefaultEventBasedHold(bucketName) {
   // [START storage_disable_default_event_based_hold]
   // Imports the Google Cloud client library
@@ -292,12 +269,6 @@ async function main() {
       `Lock a retention policy for a given bucket.`,
       {},
       opts => lockRetentionPolicy(opts.bucketName)
-    )
-    .command(
-      `enable-default-event-based-hold <bucketName>`,
-      `Enable default event-based hold for a given bucket.`,
-      {},
-      opts => enableDefaultEventBasedHold(opts.bucketName)
     )
     .command(
       `disable-default-event-based-hold <bucketName>`,
