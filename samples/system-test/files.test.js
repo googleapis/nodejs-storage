@@ -267,7 +267,7 @@ it('should set metadata for a file', () => {
 });
 
 it('should delete a file', async () => {
-  const output = execSync(`${cmd} delete ${bucketName} ${copiedFileName}`);
+  const output = execSync(`node deleteFile.js ${bucketName} ${copiedFileName}`);
   assert.match(
     output,
     new RegExp(`gs://${bucketName}/${copiedFileName} deleted.`)

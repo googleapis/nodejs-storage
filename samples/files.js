@@ -153,30 +153,6 @@ async function downloadFile(bucketName, srcFilename, destFilename) {
   // [END storage_download_file]
 }
 
-async function deleteFile(bucketName, filename) {
-  // [START storage_delete_file]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'File to delete, e.g. file.txt';
-
-  // Deletes the file from the bucket
-  await storage
-    .bucket(bucketName)
-    .file(filename)
-    .delete();
-
-  console.log(`gs://${bucketName}/${filename} deleted.`);
-  // [END storage_delete_file]
-}
-
 async function getMetadata(bucketName, filename) {
   // [START storage_get_metadata]
   // Imports the Google Cloud client library
@@ -439,12 +415,6 @@ require(`yargs`)
     `Downloads a file from a bucket.`,
     {},
     opts => downloadFile(opts.bucketName, opts.srcFileName, opts.destFileName)
-  )
-  .command(
-    `delete <bucketName> <fileName>`,
-    `Deletes a file from a bucket.`,
-    {},
-    opts => deleteFile(opts.bucketName, opts.fileName)
   )
   .command(
     `get-metadata <bucketName> <fileName>`,
