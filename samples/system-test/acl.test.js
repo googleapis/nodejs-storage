@@ -134,7 +134,7 @@ it('should add a user as an owner on a bucket', () => {
 
 it('should remove a user from a bucket', () => {
   const out = execSync(
-    `${cmd} remove-file-owner ${bucketName} ${fileName} ${userEmail}`
+    `node removeFileOwnerAcl.js ${bucketName} ${fileName} ${userEmail}`
   );
   assert.match(
     out,

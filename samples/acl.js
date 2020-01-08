@@ -248,33 +248,6 @@ async function addFileOwner(bucketName, filename, userEmail) {
   // [END storage_add_file_owner]
 }
 
-// [START storage_remove_file_owner]
-async function removeFileOwner(bucketName, filename, userEmail) {
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'Name of file to access, e.g. file.txt';
-  // const userEmail = 'Email of user to remove, e.g. developer@company.com';
-
-  // Removes the user from the access control list of the file. You can use
-  // deleteAllUsers(), deleteDomain(), deleteProject(), deleteGroup(), and
-  // deleteAllAuthenticatedUsers() to remove access for different types of entities.
-  await storage
-    .bucket(bucketName)
-    .file(filename)
-    .acl.owners.deleteUser(userEmail);
-
-  console.log(`Removed user ${userEmail} from file ${filename}.`);
-  // [END storage_remove_file_owner]
-}
-
 require(`yargs`)
   .demand(1)
   .command(
@@ -330,12 +303,6 @@ require(`yargs`)
     `Adds a user as an owner of a file.`,
     {},
     opts => addFileOwner(opts.bucketName, opts.fileName, opts.userEmail)
-  )
-  .command(
-    `remove-file-owner <bucketName> <fileName> <userEmail>`,
-    `Removes a user from the ACL of a file.`,
-    {},
-    opts => removeFileOwner(opts.bucketName, opts.fileName, opts.userEmail)
   )
   .example(`node $0 print-bucket-acl my-bucket`)
   .example(`node $0 print-bucket-acl-for-user my-bucket bob@company.com`)
