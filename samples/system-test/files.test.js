@@ -158,19 +158,19 @@ it('should copy a file', async () => {
 });
 
 it('should list files', () => {
-  const output = execSync(`${cmd} list ${bucketName}`);
+  const output = execSync(`node listFiles.js ${bucketName}`);
   assert.match(output, /Files:/);
   assert.match(output, new RegExp(movedFileName));
   assert.match(output, new RegExp(copiedFileName));
 });
 
 it('should list files by a prefix', () => {
-  let output = execSync(`${cmd} list ${bucketName} test "/"`);
+  let output = execSync(`node listFilesByPrefix.js ${bucketName} test "/"`);
   assert.match(output, /Files:/);
   assert.match(output, new RegExp(movedFileName));
   assert.match(output, new RegExp(copiedFileName));
 
-  output = execSync(`${cmd} list ${bucketName} foo`);
+  output = execSync(`node listFilesByPrefix.js ${bucketName} foo`);
   assert.match(output, /Files:/);
   assert.notMatch(output, new RegExp(movedFileName));
   assert.notMatch(output, new RegExp(copiedFileName));

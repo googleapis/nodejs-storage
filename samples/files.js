@@ -22,81 +22,6 @@
 
 'use strict';
 
-async function listFiles(bucketName) {
-  // [START storage_list_files]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Lists files in the bucket
-  const [files] = await storage.bucket(bucketName).getFiles();
-
-  console.log('Files:');
-  files.forEach(file => {
-    console.log(file.name);
-  });
-  // [END storage_list_files]
-}
-
-async function listFilesByPrefix(bucketName, prefix, delimiter) {
-  // [START storage_list_files_with_prefix]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const prefix = 'Prefix by which to filter, e.g. public/';
-  // const delimiter = 'Delimiter to use, e.g. /';
-
-  /**
-   * This can be used to list all blobs in a "folder", e.g. "public/".
-   *
-   * The delimiter argument can be used to restrict the results to only the
-   * "files" in the given "folder". Without the delimiter, the entire tree under
-   * the prefix is returned. For example, given these blobs:
-   *
-   *   /a/1.txt
-   *   /a/b/2.txt
-   *
-   * If you just specify prefix = '/a', you'll get back:
-   *
-   *   /a/1.txt
-   *   /a/b/2.txt
-   *
-   * However, if you specify prefix='/a' and delimiter='/', you'll get back:
-   *
-   *   /a/1.txt
-   */
-  const options = {
-    prefix: prefix,
-  };
-
-  if (delimiter) {
-    options.delimiter = delimiter;
-  }
-
-  // Lists files in the bucket, filtered by a prefix
-  const [files] = await storage.bucket(bucketName).getFiles(options);
-
-  console.log('Files:');
-  files.forEach(file => {
-    console.log(file.name);
-  });
-  // [END storage_list_files_with_prefix]
-}
-
 async function uploadFileWithKmsKey(bucketName, filename, kmsKeyName) {
   // [START storage_upload_with_kms_key]
   // Imports the Google Cloud client library
@@ -415,18 +340,6 @@ async function copyFile(
 
 require(`yargs`)
   .demand(1)
-  .command(
-    `list <bucketName> [prefix] [delimiter]`,
-    `Lists files in a bucket, optionally filtering by a prefix.`,
-    {},
-    opts => {
-      if (opts.prefix) {
-        listFilesByPrefix(opts.bucketName, opts.prefix, opts.delimiter);
-      } else {
-        listFiles(opts.bucketName);
-      }
-    }
-  )
   .command(
     `upload-with-kms-key <bucketName> <srcFileName> <kmsKeyName>`,
     `Uploads a local file to a bucket using a KMS key.`,
