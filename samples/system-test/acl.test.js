@@ -116,7 +116,7 @@ it('should remove a default user from a bucket', () => {
 it('should print a users acl for a file', async () => {
   await bucket.file(fileName).acl.readers.addUser(userEmail);
   const out = execSync(
-    `${cmd} print-file-acl-for-user ${bucketName} ${fileName} ${userEmail}`
+    `node printFileAclForUser.js ${bucketName} ${fileName} ${userEmail}`
   );
   assert.match(out, new RegExp(`READER: user-${userEmail}`));
   await bucket.file(fileName).acl.readers.deleteUser(userEmail);
