@@ -79,7 +79,7 @@ it('should enable default event-based hold on a bucket', () => {
 });
 
 it('should get default event-based hold on a bucket', () => {
-  const output = execSync(`${cmd} get-default-event-based-hold ${bucketName}`);
+  const output = execSync(`node getDefaultEventBasedHold.js ${bucketName}`);
   assert.match(output, /Default event-based hold: true./);
 });
 
