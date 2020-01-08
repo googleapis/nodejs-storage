@@ -117,30 +117,6 @@ async function removeBucketOwner(bucketName, userEmail) {
   // [END storage_remove_bucket_owner]
 }
 
-async function addBucketDefaultOwner(bucketName, userEmail) {
-  // [START storage_add_bucket_default_owner]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const userEmail = 'Email of user to add, e.g. developer@company.com';
-
-  // Makes the user an owner in the default ACL of the bucket. You can use
-  // addAllUsers(), addDomain(), addProject(), addGroup(), and
-  // addAllAuthenticatedUsers() to grant access to different types of entities.
-  // You can also use "readers" and "writers" to grant different roles.
-  await storage.bucket(bucketName).acl.default.owners.addUser(userEmail);
-
-  console.log(`Added user ${userEmail} as an owner on bucket ${bucketName}.`);
-  // [END storage_add_bucket_default_owner]
-}
-
 async function removeBucketDefaultOwner(bucketName, userEmail) {
   // [START storage_remove_bucket_default_owner]
   // Imports the Google Cloud client library
@@ -300,12 +276,6 @@ require(`yargs`)
     `Removes a user from the ACL of a bucket.`,
     {},
     opts => removeBucketOwner(opts.bucketName, opts.userEmail)
-  )
-  .command(
-    `add-bucket-default-owner <bucketName> <userEmail>`,
-    `Adds a user as an owner in the default ACL of a bucket.`,
-    {},
-    opts => addBucketDefaultOwner(opts.bucketName, opts.userEmail)
   )
   .command(
     `remove-bucket-default-owner <bucketName> <userEmail>`,

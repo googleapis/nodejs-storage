@@ -95,7 +95,7 @@ it('should remove a user from a bucket', () => {
 
 it('should add a user as a default owner on a bucket', () => {
   const out = execSync(
-    `${cmd} add-bucket-default-owner ${bucketName} ${userEmail}`
+    `node addBucketDefaultOwnerAcl.js ${bucketName} ${userEmail}`
   );
   assert.match(
     out,
