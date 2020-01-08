@@ -207,7 +207,7 @@ it('should generate a v4 signed URL and read a file', async () => {
 
 it('should generate a v4 signed URL and upload a file', async () => {
   const output = execSync(
-    `${cmd} generate-v4-upload-signed-url ${bucketName} ${signedFileName}`
+    `node generateV4UploadSignedUrl.js ${bucketName} ${signedFileName}`
   );
 
   const expected = /URL:\n([^\s]+)/;
