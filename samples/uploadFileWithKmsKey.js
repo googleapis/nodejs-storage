@@ -33,6 +33,12 @@ function main(
   // const filename = 'Local file to upload, e.g. ./local/path/to/file.txt';
   // const kmsKeyName = 'KMS key resource id, e.g. my-key';
 
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
   async function uploadFileWithKmsKey() {
     // Uploads a local file to the bucket with the kms key
     await storage.bucket(bucketName).upload(filename, {
