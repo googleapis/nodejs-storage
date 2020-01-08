@@ -39,7 +39,7 @@ after(async () => {
 
 it('should add multiple members to a role on a bucket', async () => {
   const output = execSync(
-    `${cmd} add-members ${bucketName} ${roleName} "user:${userEmail}"`
+    `node addBucketIamMember.js ${bucketName} ${roleName} "user:${userEmail}"`
   );
   assert.ok(
     output.includes(
