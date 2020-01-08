@@ -194,6 +194,30 @@ async function setEventBasedHold(bucketName, fileName) {
   // [END storage_set_event_based_hold]
 }
 
+async function releaseEventBasedHold(bucketName, fileName) {
+  // [START storage_release_event_based_hold]
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'File to access, e.g. file.txt';
+
+  await storage
+    .bucket(bucketName)
+    .file(fileName)
+    .setMetadata({
+      eventBasedHold: false,
+    });
+  console.log(`Event-based hold was released for ${fileName}.`);
+  // [END storage_release_event_based_hold]
+}
+
 async function releaseTemporaryHold(bucketName, fileName) {
   // [START storage_release_temporary_hold]
   // Imports the Google Cloud client library
