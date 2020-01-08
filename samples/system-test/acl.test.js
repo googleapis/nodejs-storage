@@ -86,7 +86,9 @@ it('should add a user as an owner on a bucket', () => {
 });
 
 it('should remove a user from a bucket', () => {
-  const out = execSync(`${cmd} remove-bucket-owner ${bucketName} ${userEmail}`);
+  const out = execSync(
+    `node removeBucketOwnerAcl.js ${bucketName} ${userEmail}`
+  );
   assert.match(
     out,
     new RegExp(`Removed user ${userEmail} from bucket ${bucketName}.`)
