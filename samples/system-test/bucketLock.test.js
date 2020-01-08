@@ -84,9 +84,7 @@ it('should get default event-based hold on a bucket', () => {
 });
 
 it('should disable default event-based hold on a bucket', () => {
-  const output = execSync(
-    `${cmd} disable-default-event-based-hold ${bucketName}`
-  );
+  const output = execSync(`node DisableDefaultEventBasedHold.js ${bucketName}`);
   assert.match(
     output,
     new RegExp(`Default event-based hold was disabled for ${bucketName}.`)

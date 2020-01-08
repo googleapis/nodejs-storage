@@ -128,27 +128,6 @@ async function enableDefaultEventBasedHold(bucketName) {
   // [END storage_enable_default_event_based_hold]
 }
 
-async function disableDefaultEventBasedHold(bucketName) {
-  // [START storage_disable_default_event_based_hold]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Disables a default event-based hold for a bucket.
-  await storage.bucket(bucketName).setMetadata({
-    defaultEventBasedHold: false,
-  });
-  console.log(`Default event-based hold was disabled for ${bucketName}.`);
-  // [END storage_disable_default_event_based_hold]
-}
-
 async function getDefaultEventBasedHold(bucketName) {
   // [START storage_get_default_event_based_hold]
   // Imports the Google Cloud client library
@@ -298,12 +277,6 @@ async function main() {
       `Enable default event-based hold for a given bucket.`,
       {},
       opts => enableDefaultEventBasedHold(opts.bucketName)
-    )
-    .command(
-      `disable-default-event-based-hold <bucketName>`,
-      `Disable default event-based hold for a given bucket.`,
-      {},
-      opts => disableDefaultEventBasedHold(opts.bucketName)
     )
     .command(
       `get-default-event-based-hold <bucketName>`,
