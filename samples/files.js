@@ -225,30 +225,6 @@ async function getMetadata(bucketName, filename) {
   // [END storage_get_metadata]
 }
 
-async function makePublic(bucketName, filename) {
-  // [START storage_make_public]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'File to make public, e.g. file.txt';
-
-  // Makes the file public
-  await storage
-    .bucket(bucketName)
-    .file(filename)
-    .makePublic();
-
-  console.log(`gs://${bucketName}/${filename} is now public.`);
-  // [END storage_make_public]
-}
-
 async function generateSignedUrl(bucketName, filename) {
   // [START storage_generate_signed_url]
   // Imports the Google Cloud client library
@@ -451,12 +427,6 @@ require(`yargs`)
     `Gets the metadata for a file.`,
     {},
     opts => getMetadata(opts.bucketName, opts.fileName)
-  )
-  .command(
-    `make-public <bucketName> <fileName>`,
-    `Makes a file public.`,
-    {},
-    opts => makePublic(opts.bucketName, opts.fileName)
   )
   .command(
     `generate-signed-url <bucketName> <fileName>`,

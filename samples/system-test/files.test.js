@@ -177,7 +177,7 @@ it('should list files by a prefix', () => {
 });
 
 it('should make a file public', () => {
-  const output = execSync(`${cmd} make-public ${bucketName} ${copiedFileName}`);
+  const output = execSync(`node makePublic.js ${bucketName} ${copiedFileName}`);
   assert.match(
     output,
     new RegExp(`gs://${bucketName}/${copiedFileName} is now public.`)
