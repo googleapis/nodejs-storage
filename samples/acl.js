@@ -141,29 +141,6 @@ async function addBucketDefaultOwner(bucketName, userEmail) {
   // [END storage_add_bucket_default_owner]
 }
 
-async function removeBucketDefaultOwner(bucketName, userEmail) {
-  // [START storage_remove_bucket_default_owner]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const userEmail = 'Email of user to remove, e.g. developer@company.com';
-
-  // Removes the user from the access control list of the bucket. You can use
-  // deleteAllUsers(), deleteDomain(), deleteProject(), deleteGroup(), and
-  // deleteAllAuthenticatedUsers() to remove access for different types of entities.
-  await storage.bucket(bucketName).acl.default.owners.deleteUser(userEmail);
-
-  console.log(`Removed user ${userEmail} from bucket ${bucketName}.`);
-  // [END storage_remove_bucket_default_owner]
-}
-
 async function printFileAcl(bucketName, filename) {
   // [START storage_print_file_acl]
   // Imports the Google Cloud client library
@@ -306,12 +283,6 @@ require(`yargs`)
     `Adds a user as an owner in the default ACL of a bucket.`,
     {},
     opts => addBucketDefaultOwner(opts.bucketName, opts.userEmail)
-  )
-  .command(
-    `remove-bucket-default-owner <bucketName> <userEmail>`,
-    `Removes a user from the default ACL of a bucket.`,
-    {},
-    opts => removeBucketDefaultOwner(opts.bucketName, opts.userEmail)
   )
   .command(
     `print-file-acl <bucketName> <fileName>`,
