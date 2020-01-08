@@ -60,27 +60,6 @@ async function getRetentionPolicy(bucketName) {
   // [END storage_get_retention_policy]
 }
 
-async function removeRetentionPolicy(bucketName) {
-  // [START storage_remove_retention_policy]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-  const [metadata] = await storage.bucket(bucketName).getMetadata();
-  if (metadata.retentionPolicy && metadata.retentionPolicy.isLocked) {
-    console.log(
-      'Unable to remove retention period as retention policy is locked.'
-    );
-    return null;
-  } else {
-    const results = await storage.bucket(bucketName).removeRetentionPeriod();
-    console.log(`Removed bucket ${bucketName} retention policy.`);
-    return results;
-  }
-  // [END storage_remove_retention_policy]
-}
-
 async function lockRetentionPolicy(bucketName) {
   // [START storage_lock_retention_policy]
   // Imports the Google Cloud client library
@@ -274,12 +253,6 @@ async function main() {
       `Defines a retention policy on a given bucket.`,
       {},
       opts => setRetentionPolicy(opts.bucketName, opts.period)
-    )
-    .command(
-      `remove-retention-policy <bucketName>`,
-      `Removes a retention policy on a given bucket if the policy is unlocked.`,
-      {},
-      opts => removeRetentionPolicy(opts.bucketName)
     )
     .command(
       `get-retention-policy <bucketName>`,

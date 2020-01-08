@@ -111,7 +111,7 @@ it('should release an event-based hold on a file', () => {
 });
 
 it('should remove a retention policy on a bucket', () => {
-  const output = execSync(`${cmd} remove-retention-policy ${bucketName}`);
+  const output = execSync(`node removeRetentionPolicy.js ${bucketName}`);
   assert.match(
     output,
     new RegExp(`Removed bucket ${bucketName} retention policy.`)
