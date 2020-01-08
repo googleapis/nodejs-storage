@@ -118,7 +118,7 @@ it('should upload a local directory', done => {
 
 it('should download a file', () => {
   const output = execSync(
-    `${cmd} download ${bucketName} ${fileName} ${downloadFilePath}`
+    `node downloadFile.js ${bucketName} ${fileName} ${downloadFilePath}`
   );
   assert.match(
     output,

@@ -121,38 +121,6 @@ async function uploadFileWithKmsKey(bucketName, filename, kmsKeyName) {
   // [END storage_upload_with_kms_key]
 }
 
-async function downloadFile(bucketName, srcFilename, destFilename) {
-  // [START storage_download_file]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const srcFilename = 'Remote file to download, e.g. file.txt';
-  // const destFilename = 'Local destination for file, e.g. ./local/path/to/file.txt';
-
-  const options = {
-    // The path to which the file should be downloaded, e.g. "./file.txt"
-    destination: destFilename,
-  };
-
-  // Downloads the file
-  await storage
-    .bucket(bucketName)
-    .file(srcFilename)
-    .download(options);
-
-  console.log(
-    `gs://${bucketName}/${srcFilename} downloaded to ${destFilename}.`
-  );
-  // [END storage_download_file]
-}
-
 async function deleteFile(bucketName, filename) {
   // [START storage_delete_file]
   // Imports the Google Cloud client library
@@ -433,12 +401,6 @@ require(`yargs`)
     {},
     opts =>
       uploadFileWithKmsKey(opts.bucketName, opts.srcFileName, opts.kmsKeyName)
-  )
-  .command(
-    `download <bucketName> <srcFileName> <destFileName>`,
-    `Downloads a file from a bucket.`,
-    {},
-    opts => downloadFile(opts.bucketName, opts.srcFileName, opts.destFileName)
   )
   .command(
     `delete <bucketName> <fileName>`,
