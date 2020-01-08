@@ -270,6 +270,12 @@ async function main() {
       opts => setEventBasedHold(opts.bucketName, opts.fileName)
     )
     .command(
+      `release-event-based-hold <bucketName> <fileName>`,
+      `Release an event-based hold for a given file.`,
+      {},
+      opts => releaseEventBasedHold(opts.bucketName, opts.fileName)
+    )
+    .command(
       `release-temporary-hold <bucketName> <fileName>`,
       `Release a temporary hold for a given file.`,
       {},
