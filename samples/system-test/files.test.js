@@ -63,7 +63,7 @@ it('should upload a file', async () => {
 
 it('should upload a file with a kms key', async () => {
   const output = execSync(
-    `${cmd} upload-with-kms-key ${bucketName} ${filePath} ${kmsKeyName}`
+    `node uploadFileWithKmsKey.js ${bucketName} ${filePath} ${kmsKeyName}`
   );
   assert.include(
     output,
