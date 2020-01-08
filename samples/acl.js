@@ -164,32 +164,6 @@ async function removeBucketDefaultOwner(bucketName, userEmail) {
   // [END storage_remove_bucket_default_owner]
 }
 
-async function printFileAcl(bucketName, filename) {
-  // [START storage_print_file_acl]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'File to access, e.g. file.txt';
-
-  // Gets the ACL for the file
-  const [acls] = await storage
-    .bucket(bucketName)
-    .file(filename)
-    .acl.get();
-
-  acls.forEach(acl => {
-    console.log(`${acl.role}: ${acl.entity}`);
-  });
-  // [END storage_print_file_acl]
-}
-
 async function printFileAclForUser(bucketName, filename, userEmail) {
   // [START storage_print_file_acl_for_user]
   // Imports the Google Cloud client library
@@ -312,12 +286,6 @@ require(`yargs`)
     `Removes a user from the default ACL of a bucket.`,
     {},
     opts => removeBucketDefaultOwner(opts.bucketName, opts.userEmail)
-  )
-  .command(
-    `print-file-acl <bucketName> <fileName>`,
-    `Prints the ACL for a file.`,
-    {},
-    opts => printFileAcl(opts.bucketName, opts.fileName)
   )
   .command(
     `print-file-acl-for-user <bucketName> <fileName> <userEmail>`,
