@@ -88,7 +88,7 @@ it(`should fetch requester-pays status on a modified bucket`, () => {
 
 it(`should download a file using requester-pays requests`, () => {
   const out = execSync(
-    `node downloadFileUsingRequesterPays.js`
+    `node downloadFileUsingRequesterPays.js ${projectId} ${bucketName} ${fileName} ${downloadFilePath}`
   );
   assert.include(
     out,
