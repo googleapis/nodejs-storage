@@ -17,6 +17,8 @@ function main(
   roleName = 'roles/storage.objectViewer',
   members = 'user:test@example.com'
 ) {
+  //including this logic to remove yargs functionality
+  members = members.split(',');
   // [START storage_remove_bucket_iam_member]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
