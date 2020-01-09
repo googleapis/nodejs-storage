@@ -86,7 +86,7 @@ it(`should fetch requester-pays status on a modified bucket`, () => {
   );
 });
 
-it(`should download a file using requester-pays requests`, () => {
+it.only(`should download a file using requester-pays requests`, () => {
   const out = execSync(
     `node downloadFileUsingRequesterPays.js ${projectId} ${bucketName} ${fileName} ${downloadFilePath}`
   );
