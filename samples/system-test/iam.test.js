@@ -37,7 +37,7 @@ after(async () => {
   await bucket.delete().catch(console.error);
 });
 
-it('should add multiple members to a role on a bucket', async () => {
+it.only('should add multiple members to a role on a bucket', async () => {
   const output = execSync(
     `node addBucketIamMember.js ${bucketName} ${roleName} "user:${userEmail}"`
   );
