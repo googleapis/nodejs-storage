@@ -67,7 +67,7 @@ it('should list notifications', async () => {
 it('should get metadata', async () => {
   const metadata = await notification.getMetadata();
   const output = execSync(
-    `${cmd} get-metadata ${bucketName} ${notificationId}`
+    `node getMetadataNotifications.js ${bucketName} ${notificationId}`
   );
   assert.match(output, /ID:/);
   assert.match(output, new RegExp(metadata.id));
