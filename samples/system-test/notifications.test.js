@@ -89,7 +89,9 @@ it('should get metadata', async () => {
 });
 
 it('should delete a notification', async () => {
-  const output = execSync(`${cmd} delete ${bucketName} ${notificationId}`);
+  const output = execSync(
+    `node deleteNotification.js ${bucketName} ${notificationId}`
+  );
   assert.match(output, new RegExp(`Notification ${notificationId} deleted.`));
   const [exists] = await notification.exists();
   assert.strictEqual(exists, false);

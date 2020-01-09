@@ -98,30 +98,6 @@ async function getMetadata(bucketName, notificationId) {
   // [END storage_notifications_get_metadata]
 }
 
-async function deleteNotification(bucketName, notificationId) {
-  // [START storage_delete_notification]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const notificationId = 'ID of notification to delete, e.g. 1';
-
-  // Deletes the notification from the bucket
-  await storage
-    .bucket(bucketName)
-    .notification(notificationId)
-    .delete();
-
-  console.log(`Notification ${notificationId} deleted.`);
-  // [END storage_delete_notification]
-}
-
 require(`yargs`)
   .demand(1)
   .command(
@@ -141,12 +117,6 @@ require(`yargs`)
     `Gets metadata for a notification.`,
     {},
     opts => getMetadata(opts.bucketName, opts.notificationId)
-  )
-  .command(
-    `delete <bucketName> <notificationId>`,
-    `Deletes a notification from a bucket.`,
-    {},
-    opts => deleteNotification(opts.bucketName, opts.notificationId)
   )
   .example(
     `node $0 create my-bucket my-topic`,
