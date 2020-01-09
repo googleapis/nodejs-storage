@@ -43,29 +43,6 @@ async function createNotification(bucketName, topic) {
   // [END storage_create_notification]
 }
 
-async function listNotifications(bucketName) {
-  // [START storage_list_notifications]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Lists notifications in the bucket
-  const [notifications] = await storage.bucket(bucketName).getNotifications();
-
-  console.log('Notifications:');
-  notifications.forEach(notification => {
-    console.log(notification.id);
-  });
-  // [END storage_list_notifications]
-}
-
 async function getMetadata(bucketName, notificationId) {
   // [START storage_notifications_get_metadata]
   // Imports the Google Cloud client library
@@ -129,12 +106,6 @@ require(`yargs`)
     `Creates a new notification`,
     {},
     opts => createNotification(opts.bucketName, opts.topic)
-  )
-  .command(
-    `list <bucketName>`,
-    `Lists notifications for a given bucket.`,
-    {},
-    opts => listNotifications(opts.bucketName)
   )
   .command(
     `get-metadata <bucketName> <notificationId>`,

@@ -59,7 +59,7 @@ it('should create a notification', async () => {
 });
 
 it('should list notifications', async () => {
-  const output = execSync(`${cmd} list ${bucketName}`);
+  const output = execSync(`node listNotifications.js ${bucketName}`);
   assert.match(output, /Notifications:/);
   assert.match(output, new RegExp(notificationId));
 });
