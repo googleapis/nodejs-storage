@@ -31,6 +31,8 @@ const cmd = 'node requesterPays.js';
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
 const fileName = 'test.txt';
 const bucket = storage.bucket(bucketName);
+//adding in a real projectId to pass as an argument to download the file, previously was not specified
+const projectId =  'cloud-devrel-public-resources';
 
 const uploadFilePath = path.join(cwd, 'resources', fileName);
 const downloadFilePath = path.join(__dirname, `test_${uuid.v4()}.txt`);
@@ -51,7 +53,7 @@ after(async () => {
 
 it.skip(`should error on requester-pays requests if they are disabled`, () => {
   const result = execSync(
-    `${cmd} download ${bucketName} ${fileName} ${downloadFilePath}`
+    `node downloadFileUsingRequesterPays.js ${projectId} ${bucketName} ${fileName} ${downloadFilePath}`
   );
   assert.ok(result.stderr);
   assert.match(
@@ -85,8 +87,9 @@ it(`should fetch requester-pays status on a modified bucket`, () => {
 });
 
 it(`should download a file using requester-pays requests`, () => {
+  console.log(process.env.GCLOUD_PROJECT);
   const out = execSync(
-    `${cmd} download ${bucketName} ${fileName} ${downloadFilePath}`
+    `node downloadFileUsingRequesterPays.js ${projectId} ${bucketName} ${fileName} ${downloadFilePath}`
   );
   assert.include(
     out,

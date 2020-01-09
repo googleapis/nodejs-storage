@@ -94,47 +94,6 @@ async function getRequesterPaysStatus(bucketName) {
   // [END storage_get_requester_pays_status]
 }
 
-async function downloadFileUsingRequesterPays(
-  projectId,
-  bucketName,
-  srcFilename,
-  destFilename
-) {
-  // [START storage_download_file_requester_pays]
-  // Imports the Google Cloud client library
-  const {Storage} = require(`@google-cloud/storage`);
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const projectId = 'The project ID to bill from, e.g. some-project-id';
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const srcFilename = 'Name of file to download, e.g. file.txt';
-  // const destFilename = 'Local destination of file, e.g. ./local/path/to/file.txt';
-
-  const options = {
-    // The path to which the file should be downloaded, e.g. "./file.txt"
-    destination: destFilename,
-
-    // The project to bill from, if requester-pays requests are enabled
-    userProject: projectId,
-  };
-
-  // Downloads the file
-  await storage
-    .bucket(bucketName)
-    .file(srcFilename)
-    .download(options);
-
-  console.log(
-    `gs://${bucketName}/${srcFilename} downloaded to ${destFilename} using requester-pays requests.`
-  );
-  // [END storage_download_file_requester_pays]
-}
-
 require(`yargs`)
   .demand(1)
   .command(
@@ -154,24 +113,6 @@ require(`yargs`)
     `Determines whether requester-pays requests are enabled on a bucket.`,
     {},
     opts => getRequesterPaysStatus(opts.bucket)
-  )
-  .command(
-    `download <bucketName> <srcFileName> <destFileName>`,
-    `Downloads a file from a bucket using requester-pays requests.`,
-    {
-      projectId: {
-        type: `string`,
-        alias: `p`,
-        default: process.env.GCLOUD_PROJECT,
-      },
-    },
-    opts =>
-      downloadFileUsingRequesterPays(
-        opts.projectId,
-        opts.bucketName,
-        opts.srcFileName,
-        opts.destFileName
-      )
   )
   .example(
     `node $0 enable my-bucket`,
