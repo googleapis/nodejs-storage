@@ -22,28 +22,6 @@
 
 'use strict';
 
-async function enableRequesterPays(bucketName) {
-  // [START storage_enable_requester_pays]
-  // Imports the Google Cloud client library
-  const {Storage} = require(`@google-cloud/storage`);
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Enables requester-pays requests
-  await storage.bucket(bucketName).enableRequesterPays();
-
-  console.log(
-    `Requester-pays requests have been enabled for bucket ${bucketName}.`
-  );
-  // [END storage_enable_requester_pays]
-}
-
 async function disableRequesterPays(bucketName) {
   // [START storage_disable_requester_pays]
   // Imports the Google Cloud client library
@@ -137,12 +115,6 @@ async function downloadFileUsingRequesterPays(
 
 require(`yargs`)
   .demand(1)
-  .command(
-    `enable <bucket>`,
-    `Enables requester-pays requests on a bucket.`,
-    {},
-    opts => enableRequesterPays(opts.bucket)
-  )
   .command(
     `disable <bucket>`,
     `Disables requester-pays requests on a bucket.`,

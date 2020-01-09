@@ -69,7 +69,7 @@ it(`should fetch requester-pays status on a default bucket`, () => {
 });
 
 it(`should enable requester-pays requests`, () => {
-  const out = execSync(`${cmd} enable ${bucketName}`);
+  const out = execSync(`node enableRequesterPays.js ${bucketName}`);
   assert.include(
     out,
     `Requester-pays requests have been enabled for bucket ${bucketName}.`
