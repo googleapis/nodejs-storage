@@ -25,7 +25,7 @@ const path = require('path');
 
 function main(
   projectId = 'cloud-devrel-public-resources',
-  bucketName = 'my-bucket',
+  bucketName = `nodejs-storage-samples-${uuid.v4()}`,
   srcFilename = 'test.txt',
   destFilename = path.join(__dirname, `test_${uuid.v4()}.txt`)
 ) {
