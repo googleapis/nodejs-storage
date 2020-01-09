@@ -96,7 +96,7 @@ it(`should download a file using requester-pays requests`, () => {
 });
 
 it(`should disable requester-pays requests`, () => {
-  const out = execSync(`${cmd} disable ${bucketName}`);
+  const out = execSync(`node disableRequesterPays.js ${bucketName}`);
   assert.include(
     out,
     `Requester-pays requests have been disabled for bucket ${bucketName}.`

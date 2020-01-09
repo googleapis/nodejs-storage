@@ -44,28 +44,6 @@ async function enableRequesterPays(bucketName) {
   // [END storage_enable_requester_pays]
 }
 
-async function disableRequesterPays(bucketName) {
-  // [START storage_disable_requester_pays]
-  // Imports the Google Cloud client library
-  const {Storage} = require(`@google-cloud/storage`);
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Disables requester-pays requests
-  await storage.bucket(bucketName).disableRequesterPays();
-
-  console.log(
-    `Requester-pays requests have been disabled for bucket ${bucketName}.`
-  );
-  // [END storage_disable_requester_pays]
-}
-
 async function getRequesterPaysStatus(bucketName) {
   // [START storage_get_requester_pays_status]
   // Imports the Google Cloud client library
@@ -142,12 +120,6 @@ require(`yargs`)
     `Enables requester-pays requests on a bucket.`,
     {},
     opts => enableRequesterPays(opts.bucket)
-  )
-  .command(
-    `disable <bucket>`,
-    `Disables requester-pays requests on a bucket.`,
-    {},
-    opts => disableRequesterPays(opts.bucket)
   )
   .command(
     `get-status <bucket>`,
