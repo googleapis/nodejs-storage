@@ -62,10 +62,10 @@ export interface BucketOptions {
 }
 
 export interface Cors {
-  maxAgeSeconds : number;
-  method : string[];
-  origin : string[];
-  responseHeader : string[];
+  maxAgeSeconds? : number;
+  method? : string[];
+  origin? : string[];
+  responseHeader? : string[];
 }
 
 export interface CreateBucketRequest {
