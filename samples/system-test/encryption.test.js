@@ -69,7 +69,7 @@ it('should upload a file', async () => {
 
 it('should download a file', () => {
   const output = execSync(
-    `${cmd} download ${bucketName} ${fileName} ${downloadFilePath} ${key}`
+    `node downloadEncryptedFile.js ${bucketName} ${fileName} ${downloadFilePath} ${key}`
   );
   assert.match(
     output,
