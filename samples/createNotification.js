@@ -19,8 +19,12 @@
  * For more information, see the README.md under /storage and the documentation
  * at https://cloud.google.com/storage/docs.
  */
+const uuid = require('uuid');
 
-function main(bucketName = 'my-bucket', topic = 'my-topic') {
+function main(
+  bucketName = 'my-bucket',
+  topic = `nodejs-storage-samples-${uuid.v4()}`
+) {
   // [START storage_create_notification]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
