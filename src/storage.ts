@@ -61,11 +61,19 @@ export interface BucketOptions {
   userProject?: string;
 }
 
+export interface Cors {
+  maxAgeSeconds : number;
+  method : string[];
+  origin : string[];
+  responseHeader : string[];
+}
+
 export interface CreateBucketRequest {
   archive?: boolean;
   coldline?: boolean;
   dra?: boolean;
   multiRegional?: boolean;
+  cors?: Cors[]
   nearline?: boolean;
   regional?: boolean;
   requesterPays?: boolean;
