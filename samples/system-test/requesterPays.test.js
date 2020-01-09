@@ -32,7 +32,7 @@ const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
 const fileName = 'test.txt';
 const bucket = storage.bucket(bucketName);
 //adding in a real projectId to pass as an argument to download the file, previously was not specified
-const projectId =  'cloud-devrel-public-resources';
+const projectId = 'cloud-devrel-public-resources';
 
 const uploadFilePath = path.join(cwd, 'resources', fileName);
 const downloadFilePath = path.join(__dirname, `test_${uuid.v4()}.txt`);
