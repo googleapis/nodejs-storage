@@ -86,8 +86,7 @@ it(`should fetch requester-pays status on a modified bucket`, () => {
   );
 });
 
-it(`should download a file using requester-pays requests`, () => {
-  console.log(process.env.GCLOUD_PROJECT);
+it.only(`should download a file using requester-pays requests`, () => {
   const out = execSync(
     `node downloadFileUsingRequesterPays.js ${projectId} ${bucketName} ${fileName} ${downloadFilePath}`
   );
