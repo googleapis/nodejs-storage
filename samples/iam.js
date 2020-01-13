@@ -191,7 +191,8 @@ async function removeBucketIamMember(bucketName, roleName, members) {
 
   // Finds and updates the appropriate role-member group, without a condition.
   const index = policy.bindings.findIndex(
-    binding => binding.role === roleName && !binding.condition);
+    binding => binding.role === roleName && !binding.condition
+  );
 
   const role = policy.bindings[index];
   if (role) {
