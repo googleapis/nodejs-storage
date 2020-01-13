@@ -189,8 +189,10 @@ async function removeBucketIamMember(bucketName, roleName, members) {
   // Gets and updates the bucket's IAM policy
   const [policy] = await bucket.iam.getPolicy({requestedPolicyVersion: 3});
 
-  // Finds and updates the appropriate role-member group
-  const index = policy.bindings.findIndex(role => role.role === roleName);
+  // Finds and updates the appropriate role-member group, without a condition.
+  const index = policy.bindings.findIndex(
+    binding => binding.role === roleName && !binding.condition);
+
   const role = policy.bindings[index];
   if (role) {
     role.members = role.members.filter(
