@@ -22,30 +22,6 @@
 
 'use strict';
 
-<<<<<<< HEAD
-// [START storage_generate_encryption_key]
-const crypto = require('crypto');
-
-/**
- * Generates a 256 bit (32 byte) AES encryption key and prints the base64
- * representation.
- *
- * This is included for demonstration purposes. You should generate your own
- * key. Please remember that encryption keys should be handled with a
- * comprehensive security policy.
- *
- * @returns {string} The encryption key.
- */
-function generateEncryptionKey() {
-  const buffer = crypto.randomBytes(32);
-  const encodedKey = buffer.toString('base64');
-
-  console.log(`Base 64 encoded encryption key: ${encodedKey}`);
-
-  return encodedKey;
-}
-// [END storage_generate_encryption_key]
-=======
 async function uploadEncryptedFile(bucketName, srcFilename, destFilename, key) {
   // [START storage_upload_encrypted_file]
   // Imports the Google Cloud client library
@@ -81,7 +57,6 @@ async function uploadEncryptedFile(bucketName, srcFilename, destFilename, key) {
   );
   // [END storage_upload_encrypted_file]
 }
->>>>>>> fix: refactor generateEncryptionKey sample into its own file
 
 async function downloadEncryptedFile(
   bucketName,
@@ -126,12 +101,6 @@ async function downloadEncryptedFile(
 require(`yargs`)
   .demand(1)
   .command(
-<<<<<<< HEAD
-    `generate-encryption-key`,
-    `Generate a sample encryption key.`,
-    {},
-    generateEncryptionKey
-=======
     `upload <bucketName> <srcFilename> <destFilename> <key>`,
     `Encrypts and uploads a file.`,
     {},
@@ -142,7 +111,6 @@ require(`yargs`)
         opts.destFilename,
         opts.key
       )
->>>>>>> fix: refactor generateEncryptionKey sample into its own file
   )
   .command(
     `download <bucketName> <srcFilename> <destFilename> <key>`,
