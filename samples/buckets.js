@@ -39,26 +39,6 @@ async function listBuckets() {
   // [END storage_list_buckets]
 }
 
-async function deleteBucket(bucketName) {
-  // [START storage_delete_bucket]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Deletes the bucket
-  await storage.bucket(bucketName).delete();
-
-  console.log(`Bucket ${bucketName} deleted.`);
-  // [END storage_delete_bucket]
-}
-
 async function getUniformBucketLevelAccess(bucketName) {
   // [START storage_get_uniform_bucket_level_access]
   // Imports the Google Cloud client library
@@ -93,12 +73,6 @@ async function getUniformBucketLevelAccess(bucketName) {
 require(`yargs`)
   .demand(1)
   .command(`list`, `Lists all buckets in the current project.`, {}, listBuckets)
-  .command(
-    `enable-uniform-bucket-level-access <bucket>`,
-    `Enables uniform bucket-level access for the specified bucket.`,
-    {},
-    opts => enableUniformBucketLevelAccess(opts.bucket)
-  )
   .command(
     `get-uniform-bucket-level-access <bucket>`,
     `Get uniform bucket-level access metadata for the specified bucket.`,
