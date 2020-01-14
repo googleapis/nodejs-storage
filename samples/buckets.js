@@ -39,8 +39,13 @@ async function listBuckets() {
   // [END storage_list_buckets]
 }
 
+<<<<<<< HEAD
 async function deleteBucket(bucketName) {
   // [START storage_delete_bucket]
+=======
+async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
+  // [START storage_set_bucket_default_kms_key]
+>>>>>>> 5364a1bc7a58585f1df30c40acc62b8f8813612d
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
@@ -48,6 +53,7 @@ async function deleteBucket(bucketName) {
   const storage = new Storage();
 
   /**
+<<<<<<< HEAD
    * TODO(developer): Uncomment the following line before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
@@ -57,6 +63,24 @@ async function deleteBucket(bucketName) {
 
   console.log(`Bucket ${bucketName} deleted.`);
   // [END storage_delete_bucket]
+=======
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const defaultKmsKeyName = 'KMS key resource id, e.g. my-key';
+
+  // Enables a default KMS key for the bucket
+  await storage.bucket(bucketName).setMetadata({
+    encryption: {
+      defaultKmsKeyName,
+    },
+  });
+
+  console.log(
+    `Default KMS key for ${bucketName} was set to ${defaultKmsKeyName}.`
+  );
+  // [END storage_set_bucket_default_kms_key]
+>>>>>>> 5364a1bc7a58585f1df30c40acc62b8f8813612d
 }
 
 async function enableUniformBucketLevelAccess(bucketName) {
@@ -162,9 +186,6 @@ require(`yargs`)
     `Get uniform bucket-level access metadata for the specified bucket.`,
     {},
     opts => getUniformBucketLevelAccess(opts.bucket)
-  )
-  .command(`delete <bucket>`, `Deletes a bucket.`, {}, opts =>
-    deleteBucket(opts.bucket)
   )
   .example(
     `node $0 create my-bucket`,
