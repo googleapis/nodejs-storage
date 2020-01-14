@@ -39,13 +39,8 @@ async function listBuckets() {
   // [END storage_list_buckets]
 }
 
-<<<<<<< HEAD
-async function deleteBucket(bucketName) {
-  // [START storage_delete_bucket]
-=======
 async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
   // [START storage_set_bucket_default_kms_key]
->>>>>>> 5364a1bc7a58585f1df30c40acc62b8f8813612d
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
@@ -53,17 +48,6 @@ async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
   const storage = new Storage();
 
   /**
-<<<<<<< HEAD
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Deletes the bucket
-  await storage.bucket(bucketName).delete();
-
-  console.log(`Bucket ${bucketName} deleted.`);
-  // [END storage_delete_bucket]
-=======
    * TODO(developer): Uncomment the following lines before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
