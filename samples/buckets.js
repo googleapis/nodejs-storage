@@ -159,12 +159,6 @@ require(`yargs`)
     opts => enableUniformBucketLevelAccess(opts.bucket)
   )
   .command(
-    `disable-uniform-bucket-level-access <bucket>`,
-    `Disables uniform bucket-level access for the specified bucket.`,
-    {},
-    opts => disableUniformBucketLevelAccess(opts.bucket)
-  )
-  .command(
     `get-uniform-bucket-level-access <bucket>`,
     `Get uniform bucket-level access metadata for the specified bucket.`,
     {},
