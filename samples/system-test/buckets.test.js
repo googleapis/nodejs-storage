@@ -52,7 +52,7 @@ it('should get bucket metadata', async () => {
 
 it('should set a buckets default KMS key', async () => {
   const output = execSync(
-    `${cmd} enable-default-kms-key ${bucketName} ${defaultKmsKeyName}`
+    `node enableDefaultKMSKey.js ${bucketName} ${defaultKmsKeyName}`
   );
   assert.include(
     output,
