@@ -39,8 +39,10 @@ async function listBuckets() {
   // [END storage_list_buckets]
 }
 
+
 async function deleteBucket(bucketName) {
   // [START storage_delete_bucket]
+
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
@@ -162,9 +164,6 @@ require(`yargs`)
     `Get uniform bucket-level access metadata for the specified bucket.`,
     {},
     opts => getUniformBucketLevelAccess(opts.bucket)
-  )
-  .command(`delete <bucket>`, `Deletes a bucket.`, {}, opts =>
-    deleteBucket(opts.bucket)
   )
   .example(
     `node $0 create my-bucket`,
