@@ -39,13 +39,8 @@ async function listBuckets() {
   // [END storage_list_buckets]
 }
 
-<<<<<<< HEAD
 async function deleteBucket(bucketName) {
   // [START storage_delete_bucket]
-=======
-async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
-  // [START storage_set_bucket_default_kms_key]
->>>>>>> 5364a1bc7a58585f1df30c40acc62b8f8813612d
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
@@ -53,7 +48,6 @@ async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
   const storage = new Storage();
 
   /**
-<<<<<<< HEAD
    * TODO(developer): Uncomment the following line before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
@@ -63,24 +57,6 @@ async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
 
   console.log(`Bucket ${bucketName} deleted.`);
   // [END storage_delete_bucket]
-=======
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const defaultKmsKeyName = 'KMS key resource id, e.g. my-key';
-
-  // Enables a default KMS key for the bucket
-  await storage.bucket(bucketName).setMetadata({
-    encryption: {
-      defaultKmsKeyName,
-    },
-  });
-
-  console.log(
-    `Default KMS key for ${bucketName} was set to ${defaultKmsKeyName}.`
-  );
-  // [END storage_set_bucket_default_kms_key]
->>>>>>> 5364a1bc7a58585f1df30c40acc62b8f8813612d
 }
 
 async function getUniformBucketLevelAccess(bucketName) {
@@ -118,17 +94,10 @@ require(`yargs`)
   .demand(1)
   .command(`list`, `Lists all buckets in the current project.`, {}, listBuckets)
   .command(
-<<<<<<< HEAD
     `enable-uniform-bucket-level-access <bucket>`,
     `Enables uniform bucket-level access for the specified bucket.`,
     {},
     opts => enableUniformBucketLevelAccess(opts.bucket)
-=======
-    `enable-default-kms-key <bucket> <defaultKmsKeyName>`,
-    `Sets the default KMS key for the specified bucket.`,
-    {},
-    opts => enableDefaultKMSKey(opts.bucket, opts.defaultKmsKeyName)
->>>>>>> 79e9e669f0f89251e220026faf95aaafca60a487
   )
   .command(
     `get-uniform-bucket-level-access <bucket>`,
