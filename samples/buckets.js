@@ -40,6 +40,7 @@ async function listBuckets() {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 async function deleteBucket(bucketName) {
   // [START storage_delete_bucket]
 =======
@@ -109,6 +110,8 @@ async function disableUniformBucketLevelAccess(bucketName) {
   // [END storage_disable_uniform_bucket_level_access]
 }
 
+=======
+>>>>>>> 1481e20d8332ee2806116166fb16028506487d2d
 async function getUniformBucketLevelAccess(bucketName) {
   // [START storage_get_uniform_bucket_level_access]
   // Imports the Google Cloud client library
@@ -145,6 +148,7 @@ require(`yargs`)
   .command(`list`, `Lists all buckets in the current project.`, {}, listBuckets)
   .command(
 <<<<<<< HEAD
+<<<<<<< HEAD
     `enable-uniform-bucket-level-access <bucket>`,
     `Enables uniform bucket-level access for the specified bucket.`,
     {},
@@ -163,6 +167,8 @@ require(`yargs`)
     opts => disableUniformBucketLevelAccess(opts.bucket)
   )
   .command(
+=======
+>>>>>>> 1481e20d8332ee2806116166fb16028506487d2d
     `get-uniform-bucket-level-access <bucket>`,
     `Get uniform bucket-level access metadata for the specified bucket.`,
     {},
