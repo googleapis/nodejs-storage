@@ -1758,11 +1758,11 @@ class File extends ServiceObject<File> {
     });
 
     const progressStream = new ProgressStream();
-    progressStream.on('progress', bytesRead => {
-      if (options.onUploadProgress) {
-        options.onUploadProgress({bytesRead});
-      }
-    });
+    if (options.onUploadProgress) {
+      progressStream.on('progress', bytesRead => {
+        options.onUploadProgress!({bytesRead});
+      });
+    }
 
     const fileWriteStream = duplexify();
 
