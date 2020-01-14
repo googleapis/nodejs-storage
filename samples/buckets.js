@@ -39,14 +39,8 @@ async function listBuckets() {
   // [END storage_list_buckets]
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-async function deleteBucket(bucketName) {
-  // [START storage_delete_bucket]
-=======
 async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
   // [START storage_set_bucket_default_kms_key]
->>>>>>> 5364a1bc7a58585f1df30c40acc62b8f8813612d
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
@@ -54,17 +48,6 @@ async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
   const storage = new Storage();
 
   /**
-<<<<<<< HEAD
-   * TODO(developer): Uncomment the following line before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Deletes the bucket
-  await storage.bucket(bucketName).delete();
-
-  console.log(`Bucket ${bucketName} deleted.`);
-  // [END storage_delete_bucket]
-=======
    * TODO(developer): Uncomment the following lines before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
@@ -81,38 +64,8 @@ async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
     `Default KMS key for ${bucketName} was set to ${defaultKmsKeyName}.`
   );
   // [END storage_set_bucket_default_kms_key]
->>>>>>> 5364a1bc7a58585f1df30c40acc62b8f8813612d
 }
 
-async function disableUniformBucketLevelAccess(bucketName) {
-  // [START storage_disable_uniform_bucket_level_access]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Disables uniform bucket-level access for the bucket
-  await storage.bucket(bucketName).setMetadata({
-    iamConfiguration: {
-      uniformBucketLevelAccess: {
-        enabled: false,
-      },
-    },
-  });
-
-  console.log(`Uniform bucket-level access was disabled for ${bucketName}.`);
-  // [END storage_disable_uniform_bucket_level_access]
-}
-
-<<<<<<< HEAD
-=======
->>>>>>> 1481e20d8332ee2806116166fb16028506487d2d
 async function getUniformBucketLevelAccess(bucketName) {
   // [START storage_get_uniform_bucket_level_access]
   // Imports the Google Cloud client library
@@ -144,43 +97,20 @@ async function getUniformBucketLevelAccess(bucketName) {
   // [END storage_get_uniform_bucket_level_access]
 }
 
-=======
->>>>>>> fix: refactor getUniformBucketLevelAccess into its own file
 require(`yargs`)
   .demand(1)
   .command(`list`, `Lists all buckets in the current project.`, {}, listBuckets)
   .command(
-<<<<<<< HEAD
-<<<<<<< HEAD
-    `enable-uniform-bucket-level-access <bucket>`,
-    `Enables uniform bucket-level access for the specified bucket.`,
-    {},
-    opts => enableUniformBucketLevelAccess(opts.bucket)
-=======
     `enable-default-kms-key <bucket> <defaultKmsKeyName>`,
     `Sets the default KMS key for the specified bucket.`,
     {},
     opts => enableDefaultKMSKey(opts.bucket, opts.defaultKmsKeyName)
->>>>>>> 79e9e669f0f89251e220026faf95aaafca60a487
   )
   .command(
-    `disable-uniform-bucket-level-access <bucket>`,
-    `Disables uniform bucket-level access for the specified bucket.`,
-    {},
-    opts => disableUniformBucketLevelAccess(opts.bucket)
-  )
-<<<<<<< HEAD
-  .command(
-=======
->>>>>>> 1481e20d8332ee2806116166fb16028506487d2d
     `get-uniform-bucket-level-access <bucket>`,
     `Get uniform bucket-level access metadata for the specified bucket.`,
     {},
     opts => getUniformBucketLevelAccess(opts.bucket)
-=======
-  .command(`delete <bucket>`, `Deletes a bucket.`, {}, opts =>
-    deleteBucket(opts.bucket)
->>>>>>> fix: refactor getUniformBucketLevelAccess into its own file
   )
   .example(
     `node $0 create my-bucket`,
