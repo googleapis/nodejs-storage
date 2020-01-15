@@ -21,33 +21,33 @@
  */
 
 function main(bucketName = 'my-bucket', userEmail = 'jdobry@google.com') {
-    // [START storage_print_bucket_acl_for_user]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const userEmail = 'Email of user to check, e.g. developer@company.com';   
-    
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function printBucketAclForUser() {
-      const options = {
-        // Specify the user
-        entity: `user-${userEmail}`,
-      };
-  
-      // Gets the user's ACL for the bucket
-      const [aclObject] = await storage.bucket(bucketName).acl.get(options);
-  
-      console.log(`${aclObject.role}: ${aclObject.entity}`);
-    }
-  
-    printBucketAclForUser();
-    // [END storage_print_bucket_acl_for_user]
+  // [START storage_print_bucket_acl_for_user]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const userEmail = 'Email of user to check, e.g. developer@company.com';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function printBucketAclForUser() {
+    const options = {
+      // Specify the user
+      entity: `user-${userEmail}`,
+    };
+
+    // Gets the user's ACL for the bucket
+    const [aclObject] = await storage.bucket(bucketName).acl.get(options);
+
+    console.log(`${aclObject.role}: ${aclObject.entity}`);
   }
-  
-  main(...process.argv.slice(2));
+
+  printBucketAclForUser();
+  // [END storage_print_bucket_acl_for_user]
+}
+
+main(...process.argv.slice(2));

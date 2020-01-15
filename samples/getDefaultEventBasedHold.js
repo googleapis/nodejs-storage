@@ -21,25 +21,25 @@
  */
 
 function main(bucketName = 'my-bucket') {
-    // [START storage_get_default_event_based_hold]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function getDefaultEventBasedHold() {
-      // get bucketName metadata
-      const [metadata] = await storage.bucket(bucketName).getMetadata();
-      console.log(`Default event-based hold: ${metadata.defaultEventBasedHold}.`);
-    }
-  
-    getDefaultEventBasedHold();
-    // [END storage_get_default_event_based_hold]
+  // [START storage_get_default_event_based_hold]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function getDefaultEventBasedHold() {
+    // get bucketName metadata
+    const [metadata] = await storage.bucket(bucketName).getMetadata();
+    console.log(`Default event-based hold: ${metadata.defaultEventBasedHold}.`);
   }
-  main(...process.argv.slice(2));
+
+  getDefaultEventBasedHold();
+  // [END storage_get_default_event_based_hold]
+}
+main(...process.argv.slice(2));

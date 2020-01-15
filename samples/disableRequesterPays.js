@@ -21,29 +21,29 @@
  */
 
 function main(bucketName = 'my-bucket') {
-    // [START storage_disable_requester_pays]
-  
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require(`@google-cloud/storage`);
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function disableRequesterPays() {
-      // Disables requester-pays requests
-      await storage.bucket(bucketName).disableRequesterPays();
-  
-      console.log(
-        `Requester-pays requests have been disabled for bucket ${bucketName}.`
-      );
-    }
-  
-    disableRequesterPays();
-    // [END storage_disable_requester_pays]
+  // [START storage_disable_requester_pays]
+
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require(`@google-cloud/storage`);
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function disableRequesterPays() {
+    // Disables requester-pays requests
+    await storage.bucket(bucketName).disableRequesterPays();
+
+    console.log(
+      `Requester-pays requests have been disabled for bucket ${bucketName}.`
+    );
   }
-  main(...process.argv.slice(2));
+
+  disableRequesterPays();
+  // [END storage_disable_requester_pays]
+}
+main(...process.argv.slice(2));

@@ -21,30 +21,30 @@
  */
 
 function main(bucketName = 'my-bucket', fileName = 'test.txt') {
-    // [START storage_set_temporary_hold]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const filename = 'File to access, e.g. file.txt';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function setTemporarydHold() {
-      await storage
-        .bucket(bucketName)
-        .file(fileName)
-        .setMetadata({
-          temporaryHold: true,
-        });
-      console.log(`Temporary hold was set for ${fileName}.`);
-    }
-  
-    setTemporarydHold();
-    // [END storage_set_temporary_hold]
+  // [START storage_set_temporary_hold]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'File to access, e.g. file.txt';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function setTemporarydHold() {
+    await storage
+      .bucket(bucketName)
+      .file(fileName)
+      .setMetadata({
+        temporaryHold: true,
+      });
+    console.log(`Temporary hold was set for ${fileName}.`);
   }
-  main(...process.argv.slice(2));
+
+  setTemporarydHold();
+  // [END storage_set_temporary_hold]
+}
+main(...process.argv.slice(2));

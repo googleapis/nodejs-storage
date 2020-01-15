@@ -21,34 +21,34 @@
  */
 
 function main(
-    bucketName = 'my-bucket',
-    filename = 'test.txt',
-    kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US
-  ) {
-    // [START storage_upload_with_kms_key]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const filename = 'Local file to upload, e.g. ./local/path/to/file.txt';
-    // const kmsKeyName = 'KMS key resource id, e.g. my-key';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function uploadFileWithKmsKey() {
-      // Uploads a local file to the bucket with the kms key
-      await storage.bucket(bucketName).upload(filename, {
-        kmsKeyName,
-      });
-  
-      console.log(`${filename} uploaded to ${bucketName} using ${kmsKeyName}.`);
-    }
-  
-    uploadFileWithKmsKey();
-    // [END storage_upload_with_kms_key]
+  bucketName = 'my-bucket',
+  filename = 'test.txt',
+  kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US
+) {
+  // [START storage_upload_with_kms_key]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'Local file to upload, e.g. ./local/path/to/file.txt';
+  // const kmsKeyName = 'KMS key resource id, e.g. my-key';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function uploadFileWithKmsKey() {
+    // Uploads a local file to the bucket with the kms key
+    await storage.bucket(bucketName).upload(filename, {
+      kmsKeyName,
+    });
+
+    console.log(`${filename} uploaded to ${bucketName} using ${kmsKeyName}.`);
   }
-  main(...process.argv.slice(2));
+
+  uploadFileWithKmsKey();
+  // [END storage_upload_with_kms_key]
+}
+main(...process.argv.slice(2));

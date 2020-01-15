@@ -31,7 +31,6 @@ const notification = bucket.notification(notificationId);
 const topicName = `nodejs-storage-samples-${uuid.v4()}`;
 const pubsub = new PubSub();
 const topic = pubsub.topic(topicName);
-const cmd = 'node notifications.js';
 
 before(async () => {
   await bucket.create();
@@ -54,7 +53,7 @@ after(async () => {
 it('should create a notification', async () => {
   const output = execSync(
     `node createNotification.js ${bucketName} ${topicName}`
-  );  
+  );
   assert.match(output, /Notification subscription created./);
   const [exists] = await notification.exists();
   assert.strictEqual(exists, true);

@@ -21,30 +21,30 @@
  */
 
 function main(bucketName = 'my-bucket', notificationId = '1') {
-    // [START storage_delete_notification]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const notificationId = 'ID of notification to delete, e.g. 1';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function deleteNotification() {
-      // Deletes the notification from the bucket
-      await storage
-        .bucket(bucketName)
-        .notification(notificationId)
-        .delete();
-  
-      console.log(`Notification ${notificationId} deleted.`);
-    }
-  
-    deleteNotification();
-    // [END storage_delete_notification]
+  // [START storage_delete_notification]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const notificationId = 'ID of notification to delete, e.g. 1';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function deleteNotification() {
+    // Deletes the notification from the bucket
+    await storage
+      .bucket(bucketName)
+      .notification(notificationId)
+      .delete();
+
+    console.log(`Notification ${notificationId} deleted.`);
   }
-  main(...process.argv.slice(2));
+
+  deleteNotification();
+  // [END storage_delete_notification]
+}
+main(...process.argv.slice(2));

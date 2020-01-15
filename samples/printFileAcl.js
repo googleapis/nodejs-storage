@@ -21,32 +21,32 @@
  */
 
 function main(bucketName = 'my-bucket', filename = 'test.txt') {
-    // [START storage_print_file_acl]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const filename = 'File to access, e.g. file.txt';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function printFileAcl() {
-      // Gets the ACL for the file
-      const [acls] = await storage
-        .bucket(bucketName)
-        .file(filename)
-        .acl.get();
-  
-      acls.forEach(acl => {
-        console.log(`${acl.role}: ${acl.entity}`);
-      });
-    }
-  
-    printFileAcl();
-    // [END storage_print_file_acl]
+  // [START storage_print_file_acl]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'File to access, e.g. file.txt';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function printFileAcl() {
+    // Gets the ACL for the file
+    const [acls] = await storage
+      .bucket(bucketName)
+      .file(filename)
+      .acl.get();
+
+    acls.forEach(acl => {
+      console.log(`${acl.role}: ${acl.entity}`);
+    });
   }
-  main(...process.argv.slice(2));
+
+  printFileAcl();
+  // [END storage_print_file_acl]
+}
+main(...process.argv.slice(2));

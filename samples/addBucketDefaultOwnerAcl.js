@@ -21,29 +21,29 @@
  */
 
 function main(bucketName = 'my-bucket', userEmail = 'jdobry@google.com') {
-    // [START storage_add_bucket_default_owner]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const userEmail = 'Email of user to add, e.g. developer@company.com';
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function addBucketDefaultOwner() {
-      // Makes the user an owner in the default ACL of the bucket. You can use
-      // addAllUsers(), addDomain(), addProject(), addGroup(), and
-      // addAllAuthenticatedUsers() to grant access to different types of entities.
-      // You can also use "readers" and "writers" to grant different roles.
-      await storage.bucket(bucketName).acl.default.owners.addUser(userEmail);
-  
-      console.log(`Added user ${userEmail} as an owner on bucket ${bucketName}.`);
-    }
-  
-    addBucketDefaultOwner();
-    // [END storage_add_bucket_default_owner]
+  // [START storage_add_bucket_default_owner]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const userEmail = 'Email of user to add, e.g. developer@company.com';
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function addBucketDefaultOwner() {
+    // Makes the user an owner in the default ACL of the bucket. You can use
+    // addAllUsers(), addDomain(), addProject(), addGroup(), and
+    // addAllAuthenticatedUsers() to grant access to different types of entities.
+    // You can also use "readers" and "writers" to grant different roles.
+    await storage.bucket(bucketName).acl.default.owners.addUser(userEmail);
+
+    console.log(`Added user ${userEmail} as an owner on bucket ${bucketName}.`);
   }
-  main(...process.argv.slice(2));
+
+  addBucketDefaultOwner();
+  // [END storage_add_bucket_default_owner]
+}
+main(...process.argv.slice(2));

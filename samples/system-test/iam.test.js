@@ -26,7 +26,6 @@ const storage = new Storage();
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
 const bucket = storage.bucket(bucketName);
 const userEmail = 'test@example.com';
-const cmd = 'node iam.js';
 const roleName = 'roles/storage.objectViewer';
 
 before(async () => {

@@ -21,34 +21,34 @@
  */
 
 function main(
-    bucketName = 'my-bucket',
-    filename = 'test.txt',
-    userEmail = 'jdobry@google.com'
-  ) {
-    // [START storage_add_file_owner]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const filename = 'Name of file to access, e.g. file.txt';
-    // const userEmail = 'Email of user to add, e.g. developer@company.com';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function addFileOwner() {
-      await storage
-        .bucket(bucketName)
-        .file(filename)
-        .acl.owners.addUser(userEmail);
-  
-      console.log(`Added user ${userEmail} as an owner on file ${filename}.`);
-    }
-  
-    addFileOwner();
-    // [END storage_add_file_owner]
+  bucketName = 'my-bucket',
+  filename = 'test.txt',
+  userEmail = 'jdobry@google.com'
+) {
+  // [START storage_add_file_owner]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'Name of file to access, e.g. file.txt';
+  // const userEmail = 'Email of user to add, e.g. developer@company.com';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function addFileOwner() {
+    await storage
+      .bucket(bucketName)
+      .file(filename)
+      .acl.owners.addUser(userEmail);
+
+    console.log(`Added user ${userEmail} as an owner on file ${filename}.`);
   }
-  main(...process.argv.slice(2));
+
+  addFileOwner();
+  // [END storage_add_file_owner]
+}
+main(...process.argv.slice(2));

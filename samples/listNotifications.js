@@ -21,29 +21,29 @@
  */
 
 function main(bucketName = 'my-bucket') {
-    // [START storage_list_notifications]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function listNotifications() {
-      // Lists notifications in the bucket
-      const [notifications] = await storage.bucket(bucketName).getNotifications();
-  
-      console.log('Notifications:');
-      notifications.forEach(notification => {
-        console.log(notification.id);
-      });
-    }
-  
-    listNotifications();
-    // [END storage_list_notifications]
+  // [START storage_list_notifications]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function listNotifications() {
+    // Lists notifications in the bucket
+    const [notifications] = await storage.bucket(bucketName).getNotifications();
+
+    console.log('Notifications:');
+    notifications.forEach(notification => {
+      console.log(notification.id);
+    });
   }
-  main(...process.argv.slice(2));
+
+  listNotifications();
+  // [END storage_list_notifications]
+}
+main(...process.argv.slice(2));

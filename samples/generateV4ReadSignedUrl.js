@@ -21,40 +21,40 @@
  */
 
 function main(bucketName = 'my-bucket', filename = 'test.txt') {
-    // [START storage_generate_signed_url_v4]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const filename = 'File to access, e.g. file.txt';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function generateV4ReadSignedUrl() {
-      // These options will allow temporary read access to the file
-      const options = {
-        version: 'v4',
-        action: 'read',
-        expires: Date.now() + 15 * 60 * 1000, // 15 minutes
-      };
-  
-      // Get a v4 signed URL for reading the file
-      const [url] = await storage
-        .bucket(bucketName)
-        .file(filename)
-        .getSignedUrl(options);
-  
-      console.log('Generated GET signed URL:');
-      console.log(url);
-      console.log('You can use this URL with any user agent, for example:');
-      console.log(`curl '${url}'`);
-    }
-  
-    generateV4ReadSignedUrl();
-    // [END storage_generate_signed_url_v4]
+  // [START storage_generate_signed_url_v4]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'File to access, e.g. file.txt';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function generateV4ReadSignedUrl() {
+    // These options will allow temporary read access to the file
+    const options = {
+      version: 'v4',
+      action: 'read',
+      expires: Date.now() + 15 * 60 * 1000, // 15 minutes
+    };
+
+    // Get a v4 signed URL for reading the file
+    const [url] = await storage
+      .bucket(bucketName)
+      .file(filename)
+      .getSignedUrl(options);
+
+    console.log('Generated GET signed URL:');
+    console.log(url);
+    console.log('You can use this URL with any user agent, for example:');
+    console.log(`curl '${url}'`);
   }
-  main(...process.argv.slice(2));
+
+  generateV4ReadSignedUrl();
+  // [END storage_generate_signed_url_v4]
+}
+main(...process.argv.slice(2));

@@ -21,30 +21,30 @@
  */
 
 function main(bucketName = 'my-bucket', filename = 'test.txt') {
-    // [START storage_make_public]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const filename = 'File to make public, e.g. file.txt';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function makePublic() {
-      // Makes the file public
-      await storage
-        .bucket(bucketName)
-        .file(filename)
-        .makePublic();
-  
-      console.log(`gs://${bucketName}/${filename} is now public.`);
-    }
-  
-    makePublic();
-    // [END storage_make_public]
+  // [START storage_make_public]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'File to make public, e.g. file.txt';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function makePublic() {
+    // Makes the file public
+    await storage
+      .bucket(bucketName)
+      .file(filename)
+      .makePublic();
+
+    console.log(`gs://${bucketName}/${filename} is now public.`);
   }
-  main(...process.argv.slice(2));
+
+  makePublic();
+  // [END storage_make_public]
+}
+main(...process.argv.slice(2));

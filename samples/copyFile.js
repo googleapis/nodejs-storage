@@ -21,39 +21,39 @@
  */
 
 function main(
-    srcBucketName = 'my-bucket',
-    srcFilename = 'test2.txt',
-    destBucketName = 'my-bucket',
-    destFilename = 'test3.txt'
-  ) {
-    // [START storage_copy_file]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const srcBucketName = 'Name of the source bucket, e.g. my-bucket';
-    // const srcFilename = 'Name of the source file, e.g. file.txt';
-    // const destBucketName = 'Name of the destination bucket, e.g. my-other-bucket';
-    // const destFilename = 'Destination name of file, e.g. file.txt';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function copyFile() {
-      // Copies the file to the other bucket
-      await storage
-        .bucket(srcBucketName)
-        .file(srcFilename)
-        .copy(storage.bucket(destBucketName).file(destFilename));
-  
-      console.log(
-        `gs://${srcBucketName}/${srcFilename} copied to gs://${destBucketName}/${destFilename}.`
-      );
-    }
-  
-    copyFile();
-    // [END storage_copy_file]
+  srcBucketName = 'my-bucket',
+  srcFilename = 'test2.txt',
+  destBucketName = 'my-bucket',
+  destFilename = 'test3.txt'
+) {
+  // [START storage_copy_file]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const srcBucketName = 'Name of the source bucket, e.g. my-bucket';
+  // const srcFilename = 'Name of the source file, e.g. file.txt';
+  // const destBucketName = 'Name of the destination bucket, e.g. my-other-bucket';
+  // const destFilename = 'Destination name of file, e.g. file.txt';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function copyFile() {
+    // Copies the file to the other bucket
+    await storage
+      .bucket(srcBucketName)
+      .file(srcFilename)
+      .copy(storage.bucket(destBucketName).file(destFilename));
+
+    console.log(
+      `gs://${srcBucketName}/${srcFilename} copied to gs://${destBucketName}/${destFilename}.`
+    );
   }
-  main(...process.argv.slice(2));
+
+  copyFile();
+  // [END storage_copy_file]
+}
+main(...process.argv.slice(2));
