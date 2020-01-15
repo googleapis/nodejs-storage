@@ -52,14 +52,16 @@ after(async () => {
 });
 
 it('should create a notification', async () => {
-  const output = execSync(`${cmd} create ${bucketName} ${topicName}`);
+  const output = execSync(
+    `node createNotification.js ${bucketName} ${topicName}`
+  );  
   assert.match(output, /Notification subscription created./);
   const [exists] = await notification.exists();
   assert.strictEqual(exists, true);
 });
 
 it('should list notifications', async () => {
-  const output = execSync(`${cmd} list ${bucketName}`);
+  const output = execSync(`node listNotifications.js ${bucketName}`);
   assert.match(output, /Notifications:/);
   assert.match(output, new RegExp(notificationId));
 });
@@ -67,7 +69,7 @@ it('should list notifications', async () => {
 it('should get metadata', async () => {
   const metadata = await notification.getMetadata();
   const output = execSync(
-    `${cmd} get-metadata ${bucketName} ${notificationId}`
+    `node getMetadataNotifications.js ${bucketName} ${notificationId}`
   );
   assert.match(output, /ID:/);
   assert.match(output, new RegExp(metadata.id));
@@ -89,7 +91,9 @@ it('should get metadata', async () => {
 });
 
 it('should delete a notification', async () => {
-  const output = execSync(`${cmd} delete ${bucketName} ${notificationId}`);
+  const output = execSync(
+    `node deleteNotification.js ${bucketName} ${notificationId}`
+  );
   assert.match(output, new RegExp(`Notification ${notificationId} deleted.`));
   const [exists] = await notification.exists();
   assert.strictEqual(exists, false);
