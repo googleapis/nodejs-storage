@@ -21,24 +21,24 @@
  */
 
 function main(bucketName = 'my-bucket', retentionPeriod = 5) {
-    // [START storage_set_retention_policy]
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function setRetentionPolicy() {
-      const [metadata] = await storage
-        .bucket(bucketName)
-        .setRetentionPeriod(retentionPeriod);
-      console.log(
-        `Bucket ${bucketName} retention period set for ${metadata.retentionPolicy.retentionPeriod} seconds.`
-      );
-    }
-  
-    setRetentionPolicy();
-    // [END storage_set_retention_policy]
+  // [START storage_set_retention_policy]
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function setRetentionPolicy() {
+    const [metadata] = await storage
+      .bucket(bucketName)
+      .setRetentionPeriod(retentionPeriod);
+    console.log(
+      `Bucket ${bucketName} retention period set for ${metadata.retentionPolicy.retentionPeriod} seconds.`
+    );
   }
-  main(...process.argv.slice(2));
+
+  setRetentionPolicy();
+  // [END storage_set_retention_policy]
+}
+main(...process.argv.slice(2));

@@ -21,38 +21,38 @@
  */
 
 function main(bucketName = 'my-bucket', notificationId = '1') {
-    // [START storage_notifications_get_metadata]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const notificationId = 'ID of notification to get, e.g. 1';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function getMetadata() {
-      // Get the notification metadata
-      const [metadata] = await storage
-        .bucket(bucketName)
-        .notification(notificationId)
-        .getMetadata();
-  
-      console.log(`ID: ${metadata.id}`);
-      console.log(`Topic: ${metadata.topic}`);
-      console.log(`Event Types: ${metadata.event_types}`);
-      console.log(`Custom Attributes: ${metadata.custom_attributes}`);
-      console.log(`Payload Format: ${metadata.payload_format}`);
-      console.log(`Object Name Prefix: ${metadata.object_name_prefix}`);
-      console.log(`Etag: ${metadata.etag}`);
-      console.log(`Self Link: ${metadata.selfLink}`);
-      console.log(`Kind: ${metadata.kind}`);
-    }
-  
-    getMetadata();
-    // [END storage_notifications_get_metadata]
+  // [START storage_notifications_get_metadata]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const notificationId = 'ID of notification to get, e.g. 1';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function getMetadata() {
+    // Get the notification metadata
+    const [metadata] = await storage
+      .bucket(bucketName)
+      .notification(notificationId)
+      .getMetadata();
+
+    console.log(`ID: ${metadata.id}`);
+    console.log(`Topic: ${metadata.topic}`);
+    console.log(`Event Types: ${metadata.event_types}`);
+    console.log(`Custom Attributes: ${metadata.custom_attributes}`);
+    console.log(`Payload Format: ${metadata.payload_format}`);
+    console.log(`Object Name Prefix: ${metadata.object_name_prefix}`);
+    console.log(`Etag: ${metadata.etag}`);
+    console.log(`Self Link: ${metadata.selfLink}`);
+    console.log(`Kind: ${metadata.kind}`);
   }
-  main(...process.argv.slice(2));
+
+  getMetadata();
+  // [END storage_notifications_get_metadata]
+}
+main(...process.argv.slice(2));

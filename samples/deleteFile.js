@@ -21,30 +21,30 @@
  */
 
 function main(bucketName = 'my-bucket', filename = 'test.txt') {
-    // [START storage_delete_file]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const filename = 'File to delete, e.g. file.txt';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function deleteFile() {
-      // Deletes the file from the bucket
-      await storage
-        .bucket(bucketName)
-        .file(filename)
-        .delete();
-  
-      console.log(`gs://${bucketName}/${filename} deleted.`);
-    }
-  
-    deleteFile();
-    // [END storage_delete_file]
+  // [START storage_delete_file]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'File to delete, e.g. file.txt';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function deleteFile() {
+    // Deletes the file from the bucket
+    await storage
+      .bucket(bucketName)
+      .file(filename)
+      .delete();
+
+    console.log(`gs://${bucketName}/${filename} deleted.`);
   }
-  main(...process.argv.slice(2));
+
+  deleteFile();
+  // [END storage_delete_file]
+}
+main(...process.argv.slice(2));

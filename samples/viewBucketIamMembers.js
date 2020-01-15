@@ -13,38 +13,38 @@
 // limitations under the License.
 
 function main(bucketName = 'my-bucket') {
-    // [START storage_view_bucket_iam_members]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function viewBucketIamMembers() {
-      // Gets and displays the bucket's IAM policy
-      const results = await storage.bucket(bucketName).iam.getPolicy();
-  
-      const policy = results[0].bindings;
-  
-      // Displays the roles in the bucket's IAM policy
-      console.log(`Roles for bucket ${bucketName}:`);
-      policy.forEach(role => {
-        console.log(`  Role: ${role.role}`);
-        console.log(`  Members:`);
-  
-        const members = role.members;
-        members.forEach(member => {
-          console.log(`    ${member}`);
-        });
+  // [START storage_view_bucket_iam_members]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function viewBucketIamMembers() {
+    // Gets and displays the bucket's IAM policy
+    const results = await storage.bucket(bucketName).iam.getPolicy();
+
+    const policy = results[0].bindings;
+
+    // Displays the roles in the bucket's IAM policy
+    console.log(`Roles for bucket ${bucketName}:`);
+    policy.forEach(role => {
+      console.log(`  Role: ${role.role}`);
+      console.log(`  Members:`);
+
+      const members = role.members;
+      members.forEach(member => {
+        console.log(`    ${member}`);
       });
-    }
-  
-    viewBucketIamMembers();
-    // [END storage_view_bucket_iam_members]
+    });
   }
-  main(...process.argv.slice(2));
+
+  viewBucketIamMembers();
+  // [END storage_view_bucket_iam_members]
+}
+main(...process.argv.slice(2));

@@ -21,30 +21,30 @@
  */
 
 function main(bucketName = 'my-bucket', fileName = 'test.txt') {
-    // [START storage_release_event_based_hold]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const filename = 'File to access, e.g. file.txt';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function releaseEventBasedHold() {
-      await storage
-        .bucket(bucketName)
-        .file(fileName)
-        .setMetadata({
-          eventBasedHold: false,
-        });
-      console.log(`Event-based hold was released for ${fileName}.`);
-    }
-  
-    releaseEventBasedHold();
-    // [END storage_release_event_based_hold]
+  // [START storage_release_event_based_hold]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'File to access, e.g. file.txt';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function releaseEventBasedHold() {
+    await storage
+      .bucket(bucketName)
+      .file(fileName)
+      .setMetadata({
+        eventBasedHold: false,
+      });
+    console.log(`Event-based hold was released for ${fileName}.`);
   }
-  main(...process.argv.slice(2));
+
+  releaseEventBasedHold();
+  // [END storage_release_event_based_hold]
+}
+main(...process.argv.slice(2));

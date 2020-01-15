@@ -21,37 +21,37 @@
  */
 
 function main(
-    bucketName = 'my-bucket',
-    srcFilename = 'test.txt',
-    destFilename = 'test2.txt'
-  ) {
-    // [START storage_move_file]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const srcFilename = 'File to move, e.g. file.txt';
-    // const destFilename = 'Destination for file, e.g. moved.txt';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function moveFile() {
-      // Moves the file within the bucket
-      await storage
-        .bucket(bucketName)
-        .file(srcFilename)
-        .move(destFilename);
-  
-      console.log(
-        `gs://${bucketName}/${srcFilename} moved to gs://${bucketName}/${destFilename}.`
-      );
-    }
-  
-    moveFile();
-    // [END storage_move_file]
+  bucketName = 'my-bucket',
+  srcFilename = 'test.txt',
+  destFilename = 'test2.txt'
+) {
+  // [START storage_move_file]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const srcFilename = 'File to move, e.g. file.txt';
+  // const destFilename = 'Destination for file, e.g. moved.txt';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function moveFile() {
+    // Moves the file within the bucket
+    await storage
+      .bucket(bucketName)
+      .file(srcFilename)
+      .move(destFilename);
+
+    console.log(
+      `gs://${bucketName}/${srcFilename} moved to gs://${bucketName}/${destFilename}.`
+    );
   }
-  main(...process.argv.slice(2));
+
+  moveFile();
+  // [END storage_move_file]
+}
+main(...process.argv.slice(2));

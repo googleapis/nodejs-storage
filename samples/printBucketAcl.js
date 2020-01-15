@@ -21,28 +21,28 @@
  */
 
 function main(bucketName = 'my-bucket') {
-    // [START storage_print_bucket_acl]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function printBucketAcl() {
-      // Gets the ACL for the bucket
-      const [acls] = await storage.bucket(bucketName).acl.get();
-  
-      acls.forEach(acl => {
-        console.log(`${acl.role}: ${acl.entity}`);
-      });
-    }
-    printBucketAcl();
-    // [END storage_print_bucket_acl]
+  // [START storage_print_bucket_acl]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function printBucketAcl() {
+    // Gets the ACL for the bucket
+    const [acls] = await storage.bucket(bucketName).acl.get();
+
+    acls.forEach(acl => {
+      console.log(`${acl.role}: ${acl.entity}`);
+    });
   }
-  
-  main(...process.argv.slice(2));
+  printBucketAcl();
+  // [END storage_print_bucket_acl]
+}
+
+main(...process.argv.slice(2));

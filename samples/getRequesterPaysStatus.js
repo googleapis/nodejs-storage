@@ -21,34 +21,34 @@
  */
 
 function main(bucketName = 'my-bucket') {
-    // [START storage_get_requester_pays_status]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require(`@google-cloud/storage`);
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function getRequesterPaysStatus() {
-      // Gets the requester-pays status of a bucket
-      const [metadata] = await storage.bucket(bucketName).getMetadata();
-  
-      let status;
-      if (metadata && metadata.billing && metadata.billing.requesterPays) {
-        status = `enabled`;
-      } else {
-        status = `disabled`;
-      }
-      console.log(
-        `Requester-pays requests are ${status} for bucket ${bucketName}.`
-      );
+  // [START storage_get_requester_pays_status]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require(`@google-cloud/storage`);
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function getRequesterPaysStatus() {
+    // Gets the requester-pays status of a bucket
+    const [metadata] = await storage.bucket(bucketName).getMetadata();
+
+    let status;
+    if (metadata && metadata.billing && metadata.billing.requesterPays) {
+      status = `enabled`;
+    } else {
+      status = `disabled`;
     }
-  
-    getRequesterPaysStatus();
-    // [END storage_get_requester_pays_status]
+    console.log(
+      `Requester-pays requests are ${status} for bucket ${bucketName}.`
+    );
   }
-  main(...process.argv.slice(2));
+
+  getRequesterPaysStatus();
+  // [END storage_get_requester_pays_status]
+}
+main(...process.argv.slice(2));

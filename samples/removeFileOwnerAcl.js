@@ -21,38 +21,38 @@
  */
 
 function main(
-    bucketName = 'my-bucket',
-    filename = 'test.txt',
-    userEmail = 'jdobry@google.com'
-  ) {
-    // [START storage_remove_file_owner]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-    // const filename = 'Name of file to access, e.g. file.txt';
-    // const userEmail = 'Email of user to remove, e.g. developer@company.com';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function removeFileOwner() {
-      // Removes the user from the access control list of the file. You can use
-      // deleteAllUsers(), deleteDomain(), deleteProject(), deleteGroup(), and
-      // deleteAllAuthenticatedUsers() to remove access for different types of entities.
-      await storage
-        .bucket(bucketName)
-        .file(filename)
-        .acl.owners.deleteUser(userEmail);
-  
-      console.log(`Removed user ${userEmail} from file ${filename}.`);
-    }
-  
-    removeFileOwner();
-    // [END storage_remove_file_owner]
+  bucketName = 'my-bucket',
+  filename = 'test.txt',
+  userEmail = 'jdobry@google.com'
+) {
+  // [START storage_remove_file_owner]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const filename = 'Name of file to access, e.g. file.txt';
+  // const userEmail = 'Email of user to remove, e.g. developer@company.com';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function removeFileOwner() {
+    // Removes the user from the access control list of the file. You can use
+    // deleteAllUsers(), deleteDomain(), deleteProject(), deleteGroup(), and
+    // deleteAllAuthenticatedUsers() to remove access for different types of entities.
+    await storage
+      .bucket(bucketName)
+      .file(filename)
+      .acl.owners.deleteUser(userEmail);
+
+    console.log(`Removed user ${userEmail} from file ${filename}.`);
   }
-  
-  main(...process.argv.slice(2));
+
+  removeFileOwner();
+  // [END storage_remove_file_owner]
+}
+
+main(...process.argv.slice(2));

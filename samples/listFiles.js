@@ -21,29 +21,29 @@
  */
 
 function main(bucketName = 'my-bucket') {
-    // [START storage_list_files]
-    /**
-     * TODO(developer): Uncomment the following line before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function listFiles() {
-      // Lists files in the bucket
-      const [files] = await storage.bucket(bucketName).getFiles();
-  
-      console.log('Files:');
-      files.forEach(file => {
-        console.log(file.name);
-      });
-    }
-  
-    listFiles();
-    // [END storage_list_files]
+  // [START storage_list_files]
+  /**
+   * TODO(developer): Uncomment the following line before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function listFiles() {
+    // Lists files in the bucket
+    const [files] = await storage.bucket(bucketName).getFiles();
+
+    console.log('Files:');
+    files.forEach(file => {
+      console.log(file.name);
+    });
   }
-  main(...process.argv.slice(2));
+
+  listFiles();
+  // [END storage_list_files]
+}
+main(...process.argv.slice(2));
