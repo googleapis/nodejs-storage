@@ -39,7 +39,7 @@ after(async () => {
 
 it('should add multiple members to a role on a bucket', async () => {
   const output = execSync(
-    `${cmd} add-members ${bucketName} ${roleName} "user:${userEmail}"`
+    `node addBucketIamMember.js ${bucketName} ${roleName} "user:${userEmail}"`
   );
   assert.ok(
     output.includes(
@@ -50,7 +50,7 @@ it('should add multiple members to a role on a bucket', async () => {
 });
 
 it('should list members of a role on a bucket', async () => {
-  const output = execSync(`${cmd} view-members ${bucketName}`);
+  const output = execSync(`node viewBucketIamMembers.js ${bucketName}`);
   assert.match(output, new RegExp(`Roles for bucket ${bucketName}:`));
   assert.match(output, new RegExp(`Role: ${roleName}`));
   assert.match(output, new RegExp(`Members:`));
@@ -59,7 +59,7 @@ it('should list members of a role on a bucket', async () => {
 
 it('should remove multiple members from a role on a bucket', async () => {
   const output = execSync(
-    `${cmd} remove-members ${bucketName} ${roleName} "user:${userEmail}"`
+    `node removeBucketIamMember.js ${bucketName} ${roleName} "user:${userEmail}"`
   );
   assert.ok(
     output.includes(

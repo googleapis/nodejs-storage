@@ -28,7 +28,6 @@ const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 const storage = new Storage();
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
 const bucket = storage.bucket(bucketName);
-const cmd = `node encryption.js`;
 
 const fileName = `test.txt`;
 const filePath = path.join(__dirname, `../resources`, fileName);
@@ -69,7 +68,7 @@ it('should upload a file', async () => {
 
 it('should download a file', () => {
   const output = execSync(
-    `${cmd} download ${bucketName} ${fileName} ${downloadFilePath} ${key}`
+    `node downloadEncryptedFile.js ${bucketName} ${fileName} ${downloadFilePath} ${key}`
   );
   assert.match(
     output,
