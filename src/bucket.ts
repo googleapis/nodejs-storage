@@ -2825,7 +2825,6 @@ class Bucket extends ServiceObject {
     duration: number,
     callback: SetBucketMetadataCallback
   ): void;
-
   /**
    * Lock all objects contained in the bucket, based on their creation time. Any
    * attempt to overwrite or delete objects younger than the retention period
@@ -2874,16 +2873,16 @@ class Bucket extends ServiceObject {
       callback!
     );
   }
-
-
-  setCorsConfiguration(corsConfiguration: Cors[]): Promise<SetBucketMetadataResponse>;
+  setCorsConfiguration(
+    corsConfiguration: Cors[]
+  ): Promise<SetBucketMetadataResponse>;
   setCorsConfiguration(
     corsConfiguration: Cors[],
     callback: SetBucketMetadataCallback
-  ): void;  
+  ): void;
   /**
-   * This can be used to set the CORS configuration on the bucket. 
-   * 
+   * This can be used to set the CORS configuration on the bucket.
+   *
    * The configuration will be overwriteten with the value passed into this.
    *
    * @param {Cors[]} corsConfiguration The new CORS configuration to set
@@ -2894,7 +2893,7 @@ class Bucket extends ServiceObject {
    * const storage = require('@google-cloud/storage')();
    * const bucket = storage.bucket('albums');
    *
-   * const corsConfiguration = [{"maxAgeSeconds": 3600}]; // 1 hour
+   * const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
    * bucket.setCorsConfiguration(corsConfiguration);
    *
    * //-
@@ -2910,11 +2909,11 @@ class Bucket extends ServiceObject {
   ): Promise<SetBucketMetadataResponse> | void {
     this.setMetadata(
       {
-        cors: corsConfiguration
+        cors: corsConfiguration,
       },
       callback!
     );
-  }  
+  }
 
   setStorageClass(
     storageClass: string,

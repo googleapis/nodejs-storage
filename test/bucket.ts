@@ -2059,13 +2059,11 @@ describe('Bucket', () => {
 
   describe('setCorsConfiguration', () => {
     it('should call setMetadata correctly', done => {
-      const corsConfiguration = [
-        {maxAgeSeconds: 3600}
-      ];
+      const corsConfiguration = [{maxAgeSeconds: 3600}];
 
       bucket.setMetadata = (metadata: {}, callback: Function) => {
         assert.deepStrictEqual(metadata, {
-          cors: corsConfiguration
+          cors: corsConfiguration,
         });
 
         callback(); // done()
@@ -2073,7 +2071,7 @@ describe('Bucket', () => {
 
       bucket.setCorsConfiguration(corsConfiguration, done);
     });
-  });  
+  });
 
   describe('setStorageClass', () => {
     const STORAGE_CLASS = 'NEW_STORAGE_CLASS';
