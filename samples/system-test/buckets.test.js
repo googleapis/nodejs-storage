@@ -52,7 +52,7 @@ it('should get bucket metadata', async () => {
 
 it('should set a buckets default KMS key', async () => {
   const output = execSync(
-    `${cmd} enable-default-kms-key ${bucketName} ${defaultKmsKeyName}`
+    `node enableDefaultKMSKey.js ${bucketName} ${defaultKmsKeyName}`
   );
   assert.include(
     output,
@@ -67,7 +67,7 @@ it('should set a buckets default KMS key', async () => {
 
 it(`should enable a bucket's uniform bucket-level access`, async () => {
   const output = execSync(
-    `${cmd} enable-uniform-bucket-level-access ${bucketName}`
+    `node enableUniformBucketLevelAccess.js ${bucketName}`
   );
   assert.match(
     output,
@@ -82,9 +82,7 @@ it(`should enable a bucket's uniform bucket-level access`, async () => {
 });
 
 it(`should get a bucket's uniform bucket-level access metadata`, async () => {
-  const output = execSync(
-    `${cmd} get-uniform-bucket-level-access ${bucketName}`
-  );
+  const output = execSync(`node getUniformBucketLevelAccess.js ${bucketName}`);
 
   assert.match(
     output,
@@ -101,7 +99,7 @@ it(`should get a bucket's uniform bucket-level access metadata`, async () => {
 
 it(`should disable a bucket's uniform bucket-level access`, async () => {
   const output = execSync(
-    `${cmd} disable-uniform-bucket-level-access ${bucketName}`
+    `node disableUniformBucketLevelAccess.js ${bucketName}`
   );
   assert.match(
     output,
@@ -116,7 +114,7 @@ it(`should disable a bucket's uniform bucket-level access`, async () => {
 });
 
 it(`should delete a bucket`, async () => {
-  const output = execSync(`${cmd} delete ${bucketName}`);
+  const output = execSync(`node deleteBucket.js ${bucketName}`);
   assert.match(output, new RegExp(`Bucket ${bucketName} deleted.`));
   const [exists] = await bucket.exists();
   assert.strictEqual(exists, false);
