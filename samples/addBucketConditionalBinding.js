@@ -28,6 +28,7 @@ function main(
   expression = 'resource.name.startsWith("projects/_/buckets/bucket-name/objects/prefix-a-")',
   members = 'user:test@example.com'
 ) {
+  members = members.split(',');
   // [START storage_add_bucket_conditional_iam_binding]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
