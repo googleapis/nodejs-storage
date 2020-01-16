@@ -66,32 +66,6 @@ async function enableDefaultKMSKey(bucketName, defaultKmsKeyName) {
   // [END storage_set_bucket_default_kms_key]
 }
 
-async function disableUniformBucketLevelAccess(bucketName) {
-  // [START storage_disable_uniform_bucket_level_access]
-  // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
-
-  // Creates a client
-  const storage = new Storage();
-
-  /**
-   * TODO(developer): Uncomment the following lines before running the sample.
-   */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
-  // Disables uniform bucket-level access for the bucket
-  await storage.bucket(bucketName).setMetadata({
-    iamConfiguration: {
-      uniformBucketLevelAccess: {
-        enabled: false,
-      },
-    },
-  });
-
-  console.log(`Uniform bucket-level access was disabled for ${bucketName}.`);
-  // [END storage_disable_uniform_bucket_level_access]
-}
-
 async function getUniformBucketLevelAccess(bucketName) {
   // [START storage_get_uniform_bucket_level_access]
   // Imports the Google Cloud client library
@@ -131,12 +105,6 @@ require(`yargs`)
     `Sets the default KMS key for the specified bucket.`,
     {},
     opts => enableDefaultKMSKey(opts.bucket, opts.defaultKmsKeyName)
-  )
-  .command(
-    `disable-uniform-bucket-level-access <bucket>`,
-    `Disables uniform bucket-level access for the specified bucket.`,
-    {},
-    opts => disableUniformBucketLevelAccess(opts.bucket)
   )
   .command(
     `get-uniform-bucket-level-access <bucket>`,
