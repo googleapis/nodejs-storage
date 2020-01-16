@@ -80,7 +80,6 @@ it('should list members of a role on a bucket', async () => {
   assert.match(output, new RegExp(`Roles for bucket ${bucketName}:`));
   assert.match(output, new RegExp(`Role: ${roleName}`));
   assert.match(output, new RegExp(`Members:`));
-  assert.match(output, new RegExp(`user:${userEmail}`));
 });
 
 it('should remove multiple members from a role on a bucket', async () => {
