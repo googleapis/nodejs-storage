@@ -57,7 +57,7 @@ it('should generate a key', () => {
 
 it('should upload a file', async () => {
   const output = execSync(
-    `${cmd} upload ${bucketName} ${filePath} ${fileName} ${key}`
+    `node uploadEncryptedFile.js ${bucketName} ${filePath} ${fileName} ${key}`
   );
   assert.match(
     output,
@@ -79,11 +79,12 @@ it('should download a file', () => {
 });
 
 it('should rotate keys', () => {
-  // Generate a new key
   let output = execSync(`${cmd} generate-encryption-key`);
   assert.match(output, /Base 64 encoded encryption key:/);
   const test = /^Base 64 encoded encryption key: ([^\s]+)/;
   const newKey = output.match(test)[1];
-  output = execSync(`${cmd} rotate ${bucketName} ${fileName} ${key} ${newKey}`);
+  output = execSync(
+    `node rotateEncryptionKey.js ${bucketName} ${fileName} ${key} ${newKey}`
+  );
   assert.include(output, 'Encryption key rotated successfully.');
 });
