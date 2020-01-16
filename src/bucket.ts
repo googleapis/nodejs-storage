@@ -2883,7 +2883,7 @@ class Bucket extends ServiceObject {
   /**
    * This can be used to set the CORS configuration on the bucket.
    *
-   * The configuration will be overwriteten with the value passed into this.
+   * The configuration will be overwritten with the value passed into this.
    *
    * @param {Cors[]} corsConfiguration The new CORS configuration to set
    * @param {SetBucketMetadataCallback} [callback] Callback function.
