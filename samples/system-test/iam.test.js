@@ -28,6 +28,12 @@ const bucket = storage.bucket(bucketName);
 const userEmail = 'test@example.com';
 const roleName = 'roles/storage.objectViewer';
 
+// Condition
+const title = 'match-prefix';
+const description = 'Applies to objects matching a prefix';
+const expression =
+  'resource.name.startsWith("projects/_/buckets/bucket-name/objects/prefix-a-")';
+
 before(async () => {
   await bucket.create();
 });
@@ -54,6 +60,20 @@ it('should list members of a role on a bucket', async () => {
   assert.match(output, new RegExp(`Role: ${roleName}`));
   assert.match(output, new RegExp(`Members:`));
   assert.match(output, new RegExp(`user:${userEmail}`));
+});
+
+it('should add conditional binding to a bucket', async () => {
+  const output = execSync(
+    `node addBucketConditionalBinding.js ${bucketName} ${roleName} '${title}' '${description}' '${expression}' "user:${userEmail}"`
+  );
+  assert.include(
+    output,
+    `Added the following member(s) with role ${roleName} to ${bucketName}:`
+  );
+  assert.include(output, `with condition:`);
+  assert.include(output, `Title: ${title}`);
+  assert.include(output, `Description: ${description}`);
+  assert.include(output, `Expression: ${expression}`);
 });
 
 it('should remove multiple members from a role on a bucket', async () => {
