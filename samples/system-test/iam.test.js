@@ -63,7 +63,7 @@ it('should add multiple members to a role on a bucket', async () => {
 
 it('should add conditional binding to a bucket', async () => {
   const output = execSync(
-    `${cmd} add-conditional-binding ${bucketName} ${roleName} '${title}' '${description}' '${expression}' "user:${userEmail}"`
+    `node addBucketConditionalBinding.js ${bucketName} ${roleName} '${title}' '${description}' '${expression}' "user:${userEmail}"`
   );
   assert.include(
     output,
@@ -76,30 +76,11 @@ it('should add conditional binding to a bucket', async () => {
 });
 
 it('should list members of a role on a bucket', async () => {
-<<<<<<< HEAD
-  const output = execSync(`${cmd} view-members ${bucketName}`);
-  assert.match(output, new RegExp(`Bindings for bucket ${bucketName}:`));
-=======
   const output = execSync(`node viewBucketIamMembers.js ${bucketName}`);
   assert.match(output, new RegExp(`Roles for bucket ${bucketName}:`));
->>>>>>> finished encryption, notifications, iam and requesterpays
   assert.match(output, new RegExp(`Role: ${roleName}`));
   assert.match(output, new RegExp(`Members:`));
   assert.match(output, new RegExp(`user:${userEmail}`));
-});
-
-it('should add conditional binding to a bucket', async () => {
-  const output = execSync(
-    `node addBucketConditionalBinding.js ${bucketName} ${roleName} '${title}' '${description}' '${expression}' "user:${userEmail}"`
-  );
-  assert.include(
-    output,
-    `Added the following member(s) with role ${roleName} to ${bucketName}:`
-  );
-  assert.include(output, `with condition:`);
-  assert.include(output, `Title: ${title}`);
-  assert.include(output, `Description: ${description}`);
-  assert.include(output, `Expression: ${expression}`);
 });
 
 it('should remove multiple members from a role on a bucket', async () => {
