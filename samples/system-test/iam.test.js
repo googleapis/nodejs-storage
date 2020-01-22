@@ -94,4 +94,3 @@ it('should remove multiple members from a role on a bucket', async () => {
   );
   assert.match(output, new RegExp(`user:${userEmail}`));
 });
-
