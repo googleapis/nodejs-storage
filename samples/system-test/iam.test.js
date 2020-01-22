@@ -76,7 +76,7 @@ it('should add conditional binding to a bucket', async () => {
 });
 
 it('should list members of a role on a bucket', async () => {
-  const output = execSync(`node viewBucketIamMember.js ${bucketName}`);
+  const output = execSync(`node viewBucketIamMembers.js ${bucketName}`);
   assert.match(output, new RegExp(`Bindings for bucket ${bucketName}:`));
   assert.match(output, new RegExp(`Role: ${roleName}`));
   assert.match(output, new RegExp(`Members:`));
