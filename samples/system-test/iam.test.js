@@ -95,16 +95,3 @@ it('should remove multiple members from a role on a bucket', async () => {
   assert.match(output, new RegExp(`user:${userEmail}`));
 });
 
-it('should add conditional binding to a bucket', async () => {
-  const output = execSync(
-    `node addBucketConditionalBinding.js ${bucketName} ${roleName} '${title}' '${description}' '${expression}' "user:${userEmail}"`
-  );
-  assert.include(
-    output,
-    `Added the following member(s) with role ${roleName} to ${bucketName}:`
-  );
-  assert.include(output, `with condition:`);
-  assert.include(output, `Title: ${title}`);
-  assert.include(output, `Description: ${description}`);
-  assert.include(output, `Expression: ${expression}`);
-});
