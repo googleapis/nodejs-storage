@@ -180,8 +180,7 @@ describe('storage', () => {
       // CI authentication is done with ADC. Cache it here, restore it `after`
       GOOGLE_APPLICATION_CREDENTIALS =
         process.env.GOOGLE_APPLICATION_CREDENTIALS;
-      GOOGLE_CLOUD_PROJECT =
-        process.env.GOOGLE_CLOUD_PROJECT;
+      GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT;
 
       privateBucket = bucket; // `bucket` was created in the global `before`
       privateFile = privateBucket.file('file-name');
@@ -243,7 +242,6 @@ describe('storage', () => {
 
       it('should not upload a file', done => {
         file.save('new data', err => {
-          console.log(err);
           assert(
             err!.message.indexOf('Could not load the default credentials') > -1
           );
