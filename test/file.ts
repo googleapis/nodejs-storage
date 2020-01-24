@@ -2388,7 +2388,7 @@ describe('File', () => {
       };
     });
 
-    it.only('should create a signed policy', done => {
+    it('should create a signed policy', done => {
       BUCKET.storage.authClient.sign = (blobToSign: string) => {
         const policy = Buffer.from(blobToSign, 'base64').toString();
         assert.strictEqual(typeof JSON.parse(policy), 'object');
