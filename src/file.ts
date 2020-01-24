@@ -2238,7 +2238,6 @@ class File extends ServiceObject<File> {
     }
 
     if (expires.valueOf() < Date.now()) {
-      console.log('WINDOWS DEBUG', expires.valueOf(), Date.now());
       throw new Error('An expiration date cannot be in the past.');
     }
 
