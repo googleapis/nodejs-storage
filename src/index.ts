@@ -154,9 +154,6 @@ export {
   GetSignedPolicyCallback,
   GetSignedPolicyOptions,
   GetSignedPolicyResponse,
-  GetSignedUrlCallback,
-  GetSignedUrlConfig,
-  GetSignedUrlResponse,
   MakeFilePrivateCallback,
   MakeFilePrivateOptions,
   MakeFilePrivateResponse,
@@ -234,3 +231,8 @@ export {
   Storage,
   StorageOptions,
 } from './storage';
+export {
+  GetSignedUrlCallback,
+  GetSignedUrlConfig,
+  GetSignedUrlResponse,
+} from './signer';
