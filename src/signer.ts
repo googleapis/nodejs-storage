@@ -349,7 +349,7 @@ export class UrlSigner {
    * @param headers
    * @private
    */
-  private getCanonicalHeaders(headers: http.OutgoingHttpHeaders) {
+  public getCanonicalHeaders(headers: http.OutgoingHttpHeaders) {
     // Sort headers by their lowercased names
     const sortedHeaders = objectEntries(headers)
       // Convert header names to lowercase

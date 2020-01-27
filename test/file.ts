@@ -46,6 +46,7 @@ import {
   PolicyDocument,
   SetFileMetadataOptions,
 } from '../src';
+import { UrlSigner } from '../src/signer';
 
 let promisified = false;
 let makeWritableStreamOverride: Function | null;
@@ -2884,12 +2885,13 @@ describe('File', () => {
           action: 'resumable',
         });
 
-        const spy = sinon.spy(file, 'getCanonicalHeaders');
+        const signer = new UrlSigner(file.storage.authClient, file.bucket, file);
+        const getCanonicalHeaders = sinon.stub(signer, 'getCanonicalHeaders').returns('');
+        file.signer = signer;
 
         file.getSignedUrl(config, (err: Error) => {
           assert.ifError(err);
-          assert(spy.returnValues[0].includes('x-goog-resumable:start'));
-          spy.restore();
+          assert.strictEqual(getCanonicalHeaders.args[0][0]['x-goog-resumable'], 'start');
           done();
         });
       });
