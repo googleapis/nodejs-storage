@@ -3165,10 +3165,6 @@ promisifyAll(File, {
   exclude: [
     'request',
     'setEncryptionKey',
-    'getSignedUrlV2',
-    'getSignedUrlV4',
-    'getCanonicalHeaders',
-    'getDate',
   ],
 });
 

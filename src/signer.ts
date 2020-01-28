@@ -17,21 +17,22 @@ import * as dateFormat from 'date-and-time';
 import * as http from 'http';
 import * as url from 'url';
 import {encodeURI, qsStringify, objectEntries} from './util';
+import { promisifyAll } from '@google-cloud/promisify';
 
 interface GetCredentialsResponse {
   client_email?: string;
 }
 
-interface AuthClient {
+export interface AuthClient {
   sign(blobToSign: string): Promise<string>;
   getCredentials(): Promise<GetCredentialsResponse>;
 }
 
-interface BucketI {
+export interface BucketI {
   name: string;
 }
 
-interface FileI {
+export interface FileI {
   name: string;
   generation?: number;
 }
@@ -373,6 +374,10 @@ export class UrlSigner {
       .join('');
   }
 }
+
+promisifyAll(UrlSigner, {
+  exclude: ['getSignedUrlV2', 'getSignedUrlV4', 'getCanonicalHeaders'],
+});
 
 /**
  * Custom error type for errors related to getting signed errors and policies.
