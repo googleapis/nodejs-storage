@@ -19,6 +19,7 @@ import {
   BucketI,
   FileI,
   GetSignedUrlConfig,
+  PATH_STYLED_HOST,
 } from '../src/signer';
 import * as assert from 'assert';
 import * as crypto from 'crypto';
@@ -74,8 +75,8 @@ describe('signer', () => {
       });
 
       it('should default to v2 if version is not given', async () => {
-        // tslint:disable-next-line no-any
         const v2 = sandbox
+          // tslint:disable-next-line no-any
           .stub<any, any>(signer, 'getSignedUrlV2')
           .resolves({});
 
@@ -373,6 +374,16 @@ describe('signer', () => {
             'X-Goog-Expires=2&X-Goog-SignedHeaders=host&X-Goog-Signature=b228276adbab';
           assert.strictEqual(signedUrl, expected);
         });
+
+        it('should generate bucket signed url without filename', async () => {
+          const host = 'http://www.example.com';
+          CONFIG.cname = host;
+          CONFIG.version = 'v4';
+
+          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const expected = new RegExp(`${host}/?`);
+          assert(signedUrl.match(expected));
+        });
       });
 
       describe('promptSaveAs', () => {
@@ -475,9 +486,27 @@ describe('signer', () => {
           const signStub = sinon.stub(authClient, 'sign').resolves('signature');
 
           await signer.getSignedUrl(CONFIG);
-          const headers = 'x-goog-acl:public-read\nx-foo:bar\n';
+          // headers should be sorted.
+          const headers = 'x-foo:bar\nx-goog-acl:public-read\n';
           const blobToSign = signStub.getCall(0).args[0];
           assert(blobToSign.indexOf(headers) > -1);
+        });
+      });
+
+      describe('bucket operations', () => {
+        beforeEach(() => {
+          signer = new UrlSigner(authClient, bucket);
+        });
+
+        it('should construct a UrlSigner without a file', () => {
+          assert.strictEqual(signer['file'], undefined);
+        });
+
+        it('should generate signed URL with correct path', async () => {
+          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          assert(
+            signedUrl.match(new RegExp(`${PATH_STYLED_HOST}/${BUCKET_NAME}\?`))
+          );
         });
       });
     });

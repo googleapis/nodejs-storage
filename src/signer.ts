@@ -40,8 +40,8 @@ export interface FileI {
 interface GetSignedUrlConfigInternal {
   expiration: number;
   method: string;
-  name: string;
-  resource?: string;
+  bucket: string;
+  file?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
   contentMd5?: string;
   contentType?: string;
@@ -114,14 +114,14 @@ const SEVEN_DAYS = 604800;
  * @const {string}
  * @private
  */
-const PATH_STYLED_HOST = 'https://storage.googleapis.com';
+export const PATH_STYLED_HOST = 'https://storage.googleapis.com';
 
 export class UrlSigner {
   private authClient: AuthClient;
   private bucket: BucketI;
-  private file: FileI;
+  private file?: FileI;
 
-  constructor(authClient: AuthClient, bucket: BucketI, file: FileI) {
+  constructor(authClient: AuthClient, bucket: BucketI, file?: FileI) {
     this.bucket = bucket;
     this.file = file;
     this.authClient = authClient;
@@ -151,17 +151,14 @@ export class UrlSigner {
       throw new Error('The action is not provided or invalid.');
     }
 
-    const name = encodeURI(this.file.name, false);
-    const resource = `/${this.bucket.name}/${name}`;
-
-    const version = cfg.version || DEFAULT_SIGNING_VERSION;
-
     const config: GetSignedUrlConfigInternal = Object.assign({}, cfg, {
       method,
       expiration: expiresInSeconds,
-      resource,
-      name,
+      bucket: this.bucket.name,
+      file: this.file ? encodeURI(this.file.name, false) : undefined,
     });
+
+    const version = cfg.version || DEFAULT_SIGNING_VERSION;
 
     let promise: Promise<SignedUrlQuery>;
     if (version === 'v2') {
@@ -187,12 +184,16 @@ export class UrlSigner {
         query['response-content-disposition'] = config.responseDisposition!;
       }
 
-      if (this.file.generation) {
+      if (this.file && this.file.generation) {
         query.generation = this.file.generation;
       }
 
       const signedUrl = new url.URL(config.cname || PATH_STYLED_HOST);
-      signedUrl.pathname = config.cname ? name : `${this.bucket.name}/${name}`;
+      signedUrl.pathname = this.getResourcePath(
+        !!config.cname,
+        this.bucket.name,
+        config.file
+      );
       // tslint:disable-next-line:no-any
       signedUrl.search = qsStringify(query as any);
 
@@ -203,26 +204,27 @@ export class UrlSigner {
   private getSignedUrlV2(
     config: GetSignedUrlConfigInternal
   ): Promise<SignedUrlQuery> {
-    let extensionHeadersString = '';
-
     if (config.method === 'POST') {
       config.extensionHeaders = Object.assign({}, config.extensionHeaders, {
         'x-goog-resumable': 'start',
       });
     }
 
-    if (config.extensionHeaders) {
-      for (const headerName of Object.keys(config.extensionHeaders)) {
-        extensionHeadersString += `${headerName}:${config.extensionHeaders[headerName]}\n`;
-      }
-    }
+    const canonicalHeadersString = this.getCanonicalHeaders(
+      config.extensionHeaders || {}
+    );
+    const resourcePath = this.getResourcePath(
+      false,
+      config.bucket,
+      config.file
+    );
 
     const blobToSign = [
       config.method,
       config.contentMd5 || '',
       config.contentType || '',
       config.expiration,
-      extensionHeadersString + config.resource,
+      canonicalHeadersString + resourcePath,
     ].join('\n');
 
     const authClient = this.authClient;
@@ -299,7 +301,7 @@ export class UrlSigner {
 
       const canonicalRequest = [
         config.method,
-        config.cname ? `/${config.name}` : config.resource,
+        this.getResourcePath(!!config.cname, config.bucket, config.file),
         canonicalQueryParams,
         extensionHeadersString,
         signedHeaders,
@@ -373,10 +375,20 @@ export class UrlSigner {
       })
       .join('');
   }
+
+  getResourcePath(cname: boolean, bucket: string, file?: string) {
+    const filePart = file ? `/${file}` : '';
+    return cname ? filePart : `/${bucket}${filePart}`;
+  }
 }
 
 promisifyAll(UrlSigner, {
-  exclude: ['getSignedUrlV2', 'getSignedUrlV4', 'getCanonicalHeaders'],
+  exclude: [
+    'getResourcePath',
+    'getSignedUrlV2',
+    'getSignedUrlV4',
+    'getCanonicalHeaders',
+  ],
 });
 
 /**
