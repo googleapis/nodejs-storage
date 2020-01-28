@@ -44,7 +44,13 @@ import * as http from 'http';
 import {Storage} from './storage';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
-import {GetSignedUrlConfig, GetSignedUrlResponse, SigningError, GetSignedUrlCallback, UrlSigner} from './signer';
+import {
+  GetSignedUrlConfig,
+  GetSignedUrlResponse,
+  SigningError,
+  GetSignedUrlCallback,
+  UrlSigner,
+} from './signer';
 import {
   ResponseBody,
   ApiError,
@@ -3162,10 +3168,7 @@ class File extends ServiceObject<File> {
  * that a callback is omitted.
  */
 promisifyAll(File, {
-  exclude: [
-    'request',
-    'setEncryptionKey',
-  ],
+  exclude: ['request', 'setEncryptionKey'],
 });
 
 let warned = false;

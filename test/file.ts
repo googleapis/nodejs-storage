@@ -67,10 +67,7 @@ const fakePromisify = {
     }
 
     promisified = true;
-    assert.deepStrictEqual(options.exclude, [
-      'request',
-      'setEncryptionKey',
-    ]);
+    assert.deepStrictEqual(options.exclude, ['request', 'setEncryptionKey']);
   },
 };
 
@@ -2738,37 +2735,46 @@ describe('File', () => {
   describe('getSignedUrl', () => {
     it('should construct a UrlSigner and call getSignedUrl', done => {
       const EXPECTED_SIGNED_URL = 'https://signed-url';
-      const signerGetSignedUrlStub = sinon.stub().callsFake((_cfg: {}, cb: Function) => {
-        cb(null, EXPECTED_SIGNED_URL);
-      });
+      const signerGetSignedUrlStub = sinon
+        .stub()
+        .callsFake((_cfg: {}, cb: Function) => {
+          cb(null, EXPECTED_SIGNED_URL);
+        });
 
       const signer = {
         getSignedUrl: signerGetSignedUrlStub,
       };
-      const urlSignerStub = (sinon.stub as any)(fakeSigner, 'UrlSigner').returns(signer);
+      // tslint:disable-next-line no-any
+      const urlSignerStub = (sinon.stub as any)(
+        fakeSigner,
+        'UrlSigner'
+      ).returns(signer);
 
       const SIGNED_URL_CONFIG = {
         version: 'v4',
         expires: new Date(),
         action: 'read',
-      }
+      };
 
       // assert signer is lazily-initialized.
       assert.strictEqual(file.signer, undefined);
-      file.getSignedUrl(SIGNED_URL_CONFIG, (err: Error | null, signedUrl: string) => {
-        assert.ifError(err);
-        assert.strictEqual(file.signer, signer);
-        assert.strictEqual(signedUrl, EXPECTED_SIGNED_URL);
+      file.getSignedUrl(
+        SIGNED_URL_CONFIG,
+        (err: Error | null, signedUrl: string) => {
+          assert.ifError(err);
+          assert.strictEqual(file.signer, signer);
+          assert.strictEqual(signedUrl, EXPECTED_SIGNED_URL);
 
-        const ctorArgs = urlSignerStub.getCall(0).args;
-        assert.strictEqual(ctorArgs[0], file.storage.authClient);
-        assert.strictEqual(ctorArgs[1], file.bucket);
-        assert.strictEqual(ctorArgs[2], file);
+          const ctorArgs = urlSignerStub.getCall(0).args;
+          assert.strictEqual(ctorArgs[0], file.storage.authClient);
+          assert.strictEqual(ctorArgs[1], file.bucket);
+          assert.strictEqual(ctorArgs[2], file);
 
-        const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
-        assert.strictEqual(getSignedUrlArgs[0], SIGNED_URL_CONFIG);
-        done();
-      });
+          const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
+          assert.strictEqual(getSignedUrlArgs[0], SIGNED_URL_CONFIG);
+          done();
+        }
+      );
     });
   });
 

@@ -17,7 +17,7 @@ import * as dateFormat from 'date-and-time';
 import * as http from 'http';
 import * as url from 'url';
 import {encodeURI, qsStringify, objectEntries} from './util';
-import { promisifyAll } from '@google-cloud/promisify';
+import {promisifyAll} from '@google-cloud/promisify';
 
 interface GetCredentialsResponse {
   client_email?: string;
@@ -350,7 +350,7 @@ export class UrlSigner {
    * @param headers
    * @private
    */
-  public getCanonicalHeaders(headers: http.OutgoingHttpHeaders) {
+  getCanonicalHeaders(headers: http.OutgoingHttpHeaders) {
     // Sort headers by their lowercased names
     const sortedHeaders = objectEntries(headers)
       // Convert header names to lowercase

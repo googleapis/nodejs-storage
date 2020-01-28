@@ -12,7 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {UrlSigner, SigningError, AuthClient, BucketI, FileI, GetSignedUrlConfig} from '../src/signer';
+import {
+  UrlSigner,
+  SigningError,
+  AuthClient,
+  BucketI,
+  FileI,
+  GetSignedUrlConfig,
+} from '../src/signer';
 import * as assert from 'assert';
 import * as crypto from 'crypto';
 import * as sinon from 'sinon';
@@ -24,7 +31,7 @@ describe('signer', () => {
   const CLIENT_EMAIL = 'client-email';
 
   let sandbox: sinon.SinonSandbox;
-  beforeEach(() => sandbox = sinon.createSandbox());
+  beforeEach(() => (sandbox = sinon.createSandbox()));
   afterEach(() => sandbox.restore());
 
   describe('UrlSigner', () => {
@@ -35,15 +42,16 @@ describe('signer', () => {
     const NOW = new Date('2019-03-18T00:00:00Z');
     let fakeTimers: sinon.SinonFakeTimers;
 
-    beforeEach(() => fakeTimers = sinon.useFakeTimers(NOW));
+    beforeEach(() => (fakeTimers = sinon.useFakeTimers(NOW)));
     afterEach(() => fakeTimers.restore());
 
     beforeEach(() => {
-      authClient = { sign: async (_blobToSign: string) => 'signature',
-        getCredentials: async () => ({ client_email: CLIENT_EMAIL }),
+      authClient = {
+        sign: async (_blobToSign: string) => 'signature',
+        getCredentials: async () => ({client_email: CLIENT_EMAIL}),
       };
-      bucket = { name: BUCKET_NAME };
-      file = { name: FILE_NAME };
+      bucket = {name: BUCKET_NAME};
+      file = {name: FILE_NAME};
     });
 
     it('should construct a UrlSigner', () => {
@@ -66,7 +74,9 @@ describe('signer', () => {
       });
 
       it('should default to v2 if version is not given', async () => {
-        const v2 = sandbox.stub<any, any>(signer, 'getSignedUrlV2')
+        // tslint:disable-next-line no-any
+        const v2 = sandbox
+          .stub<any, any>(signer, 'getSignedUrlV2')
           .resolves({});
 
         await signer.getSignedUrl(CONFIG);
@@ -74,17 +84,19 @@ describe('signer', () => {
       });
 
       it('should error for an invalid version', () => {
-        const config = Object.assign({}, CONFIG, { version: 'v42' });
+        const config = Object.assign({}, CONFIG, {version: 'v42'});
 
-        assert.throws(() => signer.getSignedUrl(config, () => { }),
-          /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./);
+        assert.throws(
+          () => signer.getSignedUrl(config, () => {}),
+          /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./
+        );
       });
 
       it('should error if action is null', () => {
-        const config = Object.assign({}, CONFIG, { action: null });
+        const config = Object.assign({}, CONFIG, {action: null});
 
         assert.throws(() => {
-          signer.getSignedUrl(config, () => { });
+          signer.getSignedUrl(config, () => {});
         }, /The action is not provided or invalid./);
       });
 
@@ -92,19 +104,19 @@ describe('signer', () => {
         const config = Object.assign({}, CONFIG);
         delete config.action;
         assert.throws(() => {
-          signer.getSignedUrl(config, () => { });
+          signer.getSignedUrl(config, () => {});
         }, /The action is not provided or invalid./);
       });
 
       it('should error for an invalid action', () => {
-        const config = Object.assign({}, CONFIG, { action: 'watch' });
+        const config = Object.assign({}, CONFIG, {action: 'watch'});
         assert.throws(() => {
-          signer.getSignedUrl(config, () => { });
+          signer.getSignedUrl(config, () => {});
         }, /The action is not provided or invalid./);
       });
 
       describe('v4 signed URL', () => {
-        beforeEach(() => CONFIG.version = 'v4');
+        beforeEach(() => (CONFIG.version = 'v4'));
 
         it('should create a v4 signed url when specified', async () => {
           const SCOPE = '20190318/auto/storage/goog4_request';
@@ -137,7 +149,7 @@ describe('signer', () => {
               .createHash('sha256')
               .update(CANONICAL_REQUEST)
               .digest('hex'),
-          ].join('\n')
+          ].join('\n');
 
           const signSpy = sandbox.spy(authClient, 'sign');
 
@@ -155,7 +167,7 @@ describe('signer', () => {
             expires: NOW.valueOf() + 7.1 * 24 * 60 * 60 * 1000,
           });
           assert.throws(() => {
-            signer.getSignedUrl(config, () => { });
+            signer.getSignedUrl(config, () => {});
           }, /Max allowed expiration is seven days/);
         });
 
@@ -164,10 +176,15 @@ describe('signer', () => {
             action: 'resumable',
           });
 
-          const getCanonicalHeaders = sandbox.stub(signer, 'getCanonicalHeaders').returns('');
+          const getCanonicalHeaders = sandbox
+            .stub(signer, 'getCanonicalHeaders')
+            .returns('');
 
           await signer.getSignedUrl(config);
-          assert.strictEqual(getCanonicalHeaders.args[0][0]['x-goog-resumable'], 'start');
+          assert.strictEqual(
+            getCanonicalHeaders.args[0][0]['x-goog-resumable'],
+            'start'
+          );
         });
 
         it('should add response-content-type parameter', async () => {
@@ -190,7 +207,7 @@ describe('signer', () => {
         });
 
         it('should URI encode file names', async () => {
-          file.name = 'directory/file.jpg'
+          file.name = 'directory/file.jpg';
           const [signedUrl] = await signer.getSignedUrl(CONFIG);
           assert(signedUrl.includes(file.name));
         });
@@ -221,20 +238,20 @@ describe('signer', () => {
       });
 
       describe('v2 signed URL', () => {
-        beforeEach(() => CONFIG.version = 'v2');
+        beforeEach(() => (CONFIG.version = 'v2'));
 
         it('should create a v2 signed url when specified', async () => {
-          const signStub = sandbox.stub(authClient, 'sign')
-            .resolves( 'signature');
+          const signStub = sandbox
+            .stub(authClient, 'sign')
+            .resolves('signature');
 
-          const EXPECTED_BLOB_TO_SIGN =
-            [
-              'GET',
-              '',
-              '',
-              Math.round(Number(CONFIG.expires) / 1000),
-              `/${bucket.name}/${encodeURIComponent(file.name)}`,
-            ].join('\n');
+          const EXPECTED_BLOB_TO_SIGN = [
+            'GET',
+            '',
+            '',
+            Math.round(Number(CONFIG.expires) / 1000),
+            `/${bucket.name}/${encodeURIComponent(file.name)}`,
+          ].join('\n');
 
           const [signedUrl] = await signer.getSignedUrl(CONFIG);
 
@@ -246,7 +263,10 @@ describe('signer', () => {
             expires +
             '&Signature=signature';
           assert.strictEqual(signedUrl, expected);
-          assert.deepStrictEqual(signStub.getCall(0).args[0], EXPECTED_BLOB_TO_SIGN);
+          assert.deepStrictEqual(
+            signStub.getCall(0).args[0],
+            EXPECTED_BLOB_TO_SIGN
+          );
         });
 
         it('should not modify the configuration object', async () => {
@@ -261,8 +281,8 @@ describe('signer', () => {
             action: 'resumable',
           });
 
-
-          const signStub = sandbox.stub(authClient, 'sign')
+          const signStub = sandbox
+            .stub(authClient, 'sign')
             .resolves('signature');
 
           await signer.getSignedUrl(config);
@@ -275,8 +295,7 @@ describe('signer', () => {
         it('should return an error if signBlob errors', async () => {
           const error = new Error('Error.');
 
-          sandbox.stub(authClient, 'sign')
-            .rejects(error);
+          sandbox.stub(authClient, 'sign').rejects(error);
 
           await assert.rejects(() => signer.getSignedUrl(CONFIG), {
             name: 'SigningError',
@@ -319,7 +338,7 @@ describe('signer', () => {
       describe('cname', () => {
         it('should use a provided cname', async () => {
           const host = 'http://www.example.com';
-          const configWithCname = Object.assign({ cname: host }, CONFIG);
+          const configWithCname = Object.assign({cname: host}, CONFIG);
 
           const [signedUrl] = await signer.getSignedUrl(configWithCname);
           const expires = Math.round(Number(CONFIG.expires) / 1000);
@@ -368,7 +387,7 @@ describe('signer', () => {
       describe('responseDisposition', () => {
         it('should add response-content-disposition', async () => {
           const disposition = 'attachment; filename="fname.ext"';
-          CONFIG.responseDisposition = disposition
+          CONFIG.responseDisposition = disposition;
 
           const [signedUrl] = await signer.getSignedUrl(CONFIG);
           assert(signedUrl.indexOf(encodeURIComponent(disposition)) > -1);
@@ -400,7 +419,9 @@ describe('signer', () => {
 
         it('should accept numbers', async () => {
           const expires = Date.now() + 1000 * 60;
-          const expectedExpires = Math.round(new Date(expires).valueOf() / 1000);
+          const expectedExpires = Math.round(
+            new Date(expires).valueOf() / 1000
+          );
 
           CONFIG.expires = expires;
 
@@ -411,7 +432,9 @@ describe('signer', () => {
 
         it('should accept strings', async () => {
           const expires = '12-12-2099';
-          const expectedExpires = Math.round(new Date(expires).valueOf() / 1000);
+          const expectedExpires = Math.round(
+            new Date(expires).valueOf() / 1000
+          );
 
           CONFIG.expires = expires;
 
@@ -426,7 +449,7 @@ describe('signer', () => {
           CONFIG.expires = expires;
 
           assert.throws(() => {
-            signer.getSignedUrl(CONFIG, () => { });
+            signer.getSignedUrl(CONFIG, () => {});
           }, /The expiration date provided was invalid\./);
         });
 
@@ -435,7 +458,7 @@ describe('signer', () => {
           CONFIG.expires = expires;
 
           assert.throws(() => {
-            signer.getSignedUrl(CONFIG, () => { });
+            signer.getSignedUrl(CONFIG, () => {});
           }, /An expiration date cannot be in the past\./);
         });
       });
