@@ -322,9 +322,6 @@ class RequestError extends Error {
   errors?: Error[];
 }
 
-type ValueOf<T> = T[keyof T];
-type HeaderValue = ValueOf<http.OutgoingHttpHeaders>;
-
 /**
  * A File object is created from your {@link Bucket} object using
  * {@link Bucket#file}.
