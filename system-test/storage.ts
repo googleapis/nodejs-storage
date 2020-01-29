@@ -3278,6 +3278,18 @@ describe('storage', () => {
       const [exists] = await file.exists();
       assert.strictEqual(exists, false);
     });
+
+    it('should create a signed list bucket url', async () => {
+      const [signedUrl] = await bucket.getSignedUrl({
+        version: 'v4',
+        action: 'list',
+        expires: Date.now() + 5000,
+      });
+      const res = await fetch(signedUrl!, {method: 'GET'});
+      const body = await res.text();
+      assert.strictEqual(res.status, 200);
+      assert(body.includes('ListBucketResult'));
+    });
   });
 
   describe('v4 signed url with special characters in file name', () => {
