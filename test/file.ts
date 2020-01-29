@@ -2910,7 +2910,7 @@ describe('File', () => {
     });
 
     it('should add generation to query parameter', done => {
-      file.generation = "246680131";
+      file.generation = '246680131';
 
       file.getSignedUrl(
         SIGNED_URL_CONFIG,
@@ -2918,7 +2918,7 @@ describe('File', () => {
           assert.ifError(err);
           const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
           assert.deepStrictEqual(getSignedUrlArgs[0]['queryParams'], {
-            'generation': file.generation,
+            generation: file.generation,
           });
           done();
         }
