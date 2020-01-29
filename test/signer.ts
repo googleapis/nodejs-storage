@@ -88,7 +88,7 @@ describe('signer', () => {
         const config = Object.assign({}, CONFIG, {version: 'v42'});
 
         assert.throws(
-          () => signer.getSignedUrl(config, () => {}),
+          () => signer.getSignedUrl(config),
           /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./
         );
       });
@@ -135,7 +135,7 @@ describe('signer', () => {
             expires: NOW.valueOf() + 2000,
           });
 
-          const [signedUrl] = await signer.getSignedUrl(config);
+          const signedUrl = await signer.getSignedUrl(config);
           assert.strictEqual(typeof signedUrl, 'string');
           assert.strictEqual(signSpy.getCall(0).args[0], EXPECTED_PAYLOAD);
         });
@@ -145,13 +145,13 @@ describe('signer', () => {
             expires: NOW.valueOf() + 7.1 * 24 * 60 * 60 * 1000,
           });
           assert.throws(() => {
-            signer.getSignedUrl(config, () => {});
+            signer.getSignedUrl(config);
           }, /Max allowed expiration is seven days/);
         });
 
         it('should URI encode file names', async () => {
           file.name = 'directory/file.jpg';
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           assert(signedUrl.includes(file.name));
         });
 
@@ -164,7 +164,7 @@ describe('signer', () => {
             contentType: 'image/png',
           };
 
-          const [signedUrl] = await signer.getSignedUrl(config);
+          const signedUrl = await signer.getSignedUrl(config);
           assert(signedUrl.includes('content-md5'));
           assert(signedUrl.includes('content-type'));
         });
@@ -196,7 +196,7 @@ describe('signer', () => {
             `/${bucket.name}/${encodeURIComponent(file.name)}`,
           ].join('\n');
 
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
 
           assert.strictEqual(typeof signedUrl, 'string');
           const expires = Math.round(Number(CONFIG.expires) / 1000);
@@ -232,13 +232,13 @@ describe('signer', () => {
 
         it('should URI encode file names', async () => {
           file.name = 'directory/name.png';
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           assert(signedUrl.includes(file.name));
         });
 
         it('should URI encode file name with special characters', async () => {
           file.name = "special/azAZ!*'()*%/file.jpg";
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           assert(
             signedUrl.includes('special/azAZ%21%2A%27%28%29%2A%25/file.jpg')
           );
@@ -250,7 +250,7 @@ describe('signer', () => {
           const host = 'http://www.example.com';
           const configWithCname = Object.assign({cname: host}, CONFIG);
 
-          const [signedUrl] = await signer.getSignedUrl(configWithCname);
+          const signedUrl = await signer.getSignedUrl(configWithCname);
           const expires = Math.round(Number(CONFIG.expires) / 1000);
           const expected =
             'http://www.example.com/file-name.png?' +
@@ -265,7 +265,7 @@ describe('signer', () => {
           const host = 'http://www.example.com//';
           CONFIG.cname = host;
 
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           assert.strictEqual(signedUrl.indexOf(host), -1);
           assert.strictEqual(signedUrl.indexOf(host.substr(0, -1)), 0);
         });
@@ -275,7 +275,7 @@ describe('signer', () => {
           CONFIG.cname = host;
           CONFIG.version = 'v4';
 
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           const expected =
             'http://www.example.com/file-name.png?' +
             'X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=client-email' +
@@ -289,7 +289,7 @@ describe('signer', () => {
           CONFIG.cname = host;
           CONFIG.version = 'v4';
 
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           const expected = new RegExp(`${host}/?`);
           assert(signedUrl.match(expected));
         });
@@ -302,7 +302,7 @@ describe('signer', () => {
 
           CONFIG.expires = expires;
 
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           const expires_ = url.parse(signedUrl, true).query.Expires;
           assert.strictEqual(expires_, expectedExpires.toString());
         });
@@ -315,7 +315,7 @@ describe('signer', () => {
 
           CONFIG.expires = expires;
 
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           const expires_ = url.parse(signedUrl, true).query.Expires;
           assert.strictEqual(expires_, expectedExpires.toString());
         });
@@ -328,7 +328,7 @@ describe('signer', () => {
 
           CONFIG.expires = expires;
 
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           const expires_ = url.parse(signedUrl, true).query.Expires;
           assert.strictEqual(expires_, expectedExpires.toString());
         });
@@ -339,7 +339,7 @@ describe('signer', () => {
           CONFIG.expires = expires;
 
           assert.throws(() => {
-            signer.getSignedUrl(CONFIG, () => {});
+            signer.getSignedUrl(CONFIG);
           }, /The expiration date provided was invalid\./);
         });
 
@@ -348,7 +348,7 @@ describe('signer', () => {
           CONFIG.expires = expires;
 
           assert.throws(() => {
-            signer.getSignedUrl(CONFIG, () => {});
+            signer.getSignedUrl(CONFIG);
           }, /An expiration date cannot be in the past\./);
         });
       });
@@ -379,7 +379,7 @@ describe('signer', () => {
           };
 
           CONFIG.queryParams = queryParams;
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           // headers should be sorted.
           const qs = 'response-content-type=application%2Fjson';
 
@@ -397,7 +397,7 @@ describe('signer', () => {
         });
 
         it('should generate signed URL with correct path', async () => {
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          const signedUrl = await signer.getSignedUrl(CONFIG);
           assert(
             signedUrl.match(new RegExp(`${PATH_STYLED_HOST}/${BUCKET_NAME}\?`))
           );

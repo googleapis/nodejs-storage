@@ -2450,7 +2450,9 @@ class File extends ServiceObject<File> {
       this.signer = new UrlSigner(this.storage.authClient, this.bucket, this);
     }
 
-    this.signer.getSignedUrl(signConfig, callback!);
+    this.signer
+      .getSignedUrl(signConfig)
+      .then(signedUrl => callback!(null, signedUrl), callback!);
   }
 
   isPublic(): Promise<IsPublicResponse>;

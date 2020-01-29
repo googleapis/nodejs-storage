@@ -1742,11 +1742,7 @@ describe('Bucket', () => {
     beforeEach(() => {
       sandbox = sinon.createSandbox();
 
-      signerGetSignedUrlStub = sandbox
-        .stub()
-        .callsFake((_cfg: {}, cb: Function) => {
-          cb(null, EXPECTED_SIGNED_URL);
-        });
+      signerGetSignedUrlStub = sandbox.stub().resolves(EXPECTED_SIGNED_URL);
 
       signer = {
         getSignedUrl: signerGetSignedUrlStub,

@@ -17,7 +17,6 @@ import * as dateFormat from 'date-and-time';
 import * as http from 'http';
 import * as url from 'url';
 import {encodeURI, qsStringify, objectEntries} from './util';
-import {promisifyAll} from '@google-cloud/promisify';
 
 interface GetCredentialsResponse {
   client_email?: string;
@@ -82,7 +81,7 @@ export interface SignerGetSignedUrlConfig {
   contentType?: string;
 }
 
-export type GetSignedUrlResponse = [string];
+export type GetSignedUrlResponse = string;
 
 export interface GetSignedUrlCallback {
   (err: Error | null, url?: string): void;
@@ -114,15 +113,7 @@ export class UrlSigner {
     this.authClient = authClient;
   }
 
-  getSignedUrl(cfg: SignerGetSignedUrlConfig): Promise<GetSignedUrlResponse>;
-  getSignedUrl(
-    cfg: SignerGetSignedUrlConfig,
-    callback: GetSignedUrlCallback
-  ): void;
-  getSignedUrl(
-    cfg: SignerGetSignedUrlConfig,
-    callback?: GetSignedUrlCallback
-  ): void | Promise<GetSignedUrlResponse> {
+  getSignedUrl(cfg: SignerGetSignedUrlConfig): Promise<GetSignedUrlResponse> {
     const expiresInSeconds = this.parseExpires(cfg.expires);
     const method = cfg.method;
 
@@ -146,7 +137,7 @@ export class UrlSigner {
       );
     }
 
-    promise.then(query => {
+    return promise.then(query => {
       query = Object.assign(query, cfg.queryParams);
 
       const signedUrl = new url.URL(config.cname || PATH_STYLED_HOST);
@@ -157,9 +148,8 @@ export class UrlSigner {
       );
       // tslint:disable-next-line:no-any
       signedUrl.search = qsStringify(query as any);
-
-      callback!(null, signedUrl.href);
-    }, callback!);
+      return signedUrl.href;
+    });
   }
 
   private getSignedUrlV2(
@@ -182,24 +172,24 @@ export class UrlSigner {
       canonicalHeadersString + resourcePath,
     ].join('\n');
 
-    const authClient = this.authClient;
-    return authClient
-      .sign(blobToSign)
-      .then(signature =>
-        authClient.getCredentials().then(
-          credentials =>
-            ({
-              GoogleAccessId: credentials.client_email!,
-              Expires: config.expiration,
-              Signature: signature,
-            } as V2SignedUrlQuery)
-        )
-      )
-      .catch(err => {
+    const sign = async () => {
+      const authClient = this.authClient;
+      try {
+        const signature = await authClient.sign(blobToSign);
+        const credentials = await authClient.getCredentials();
+
+        return {
+          GoogleAccessId: credentials.client_email!,
+          Expires: config.expiration,
+          Signature: signature,
+        } as V2SignedUrlQuery;
+      } catch (err) {
         const signingErr = new SigningError(err.message);
         signingErr.stack = err.stack;
         throw signingErr;
-      });
+      }
+    };
+    return sign();
   }
 
   private getSignedUrlV4(
@@ -236,7 +226,8 @@ export class UrlSigner {
     const datestamp = dateFormat.format(now, 'YYYYMMDD', true);
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
 
-    return this.authClient.getCredentials().then(credentials => {
+    const sign = async () => {
+      const credentials = await this.authClient.getCredentials();
       const credential = `${credentials.client_email}/${credentialScope}`;
       const dateISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
 
@@ -272,23 +263,21 @@ export class UrlSigner {
         canonicalRequestHash,
       ].join('\n');
 
-      return this.authClient
-        .sign(blobToSign)
-        .then(signature => {
-          const signatureHex = Buffer.from(signature, 'base64').toString('hex');
-
-          const signedQuery: V4SignedUrlQuery = Object.assign({}, queryParams, {
-            'X-Goog-Signature': signatureHex,
-          });
-
-          return signedQuery;
-        })
-        .catch(err => {
-          const signingErr = new SigningError(err.message);
-          signingErr.stack = err.stack;
-          throw signingErr;
+      try {
+        const signature = await this.authClient.sign(blobToSign);
+        const signatureHex = Buffer.from(signature, 'base64').toString('hex');
+        const signedQuery: V4SignedUrlQuery = Object.assign({}, queryParams, {
+          'X-Goog-Signature': signatureHex,
         });
-    });
+        return signedQuery;
+      } catch (err) {
+        const signingErr = new SigningError(err.message);
+        signingErr.stack = err.stack;
+        throw signingErr;
+      }
+    };
+
+    return sign();
   }
 
   /**
@@ -350,16 +339,6 @@ export class UrlSigner {
     return Math.round(expiresInMSeconds / 1000); // The API expects seconds.
   }
 }
-
-promisifyAll(UrlSigner, {
-  exclude: [
-    'getResourcePath',
-    'getSignedUrlV2',
-    'getSignedUrlV4',
-    'getCanonicalHeaders',
-    'parseExpires',
-  ],
-});
 
 /**
  * Custom error type for errors related to getting signed errors and policies.

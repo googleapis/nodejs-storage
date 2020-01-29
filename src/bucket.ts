@@ -2490,7 +2490,9 @@ class Bucket extends ServiceObject {
       this.signer = new UrlSigner(this.storage.authClient, this);
     }
 
-    this.signer.getSignedUrl(signConfig, callback!);
+    this.signer
+      .getSignedUrl(signConfig)
+      .then(signedUrl => callback!(null, signedUrl), callback!);
   }
 
   lock(metageneration: number | string): Promise<BucketLockResponse>;
