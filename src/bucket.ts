@@ -2392,16 +2392,16 @@ class Bucket extends ServiceObject {
    */
   /**
    * @typedef {object} GetBucketSignedUrlConfig
-   * @property {string} config.action Currently only supports "list" (HTTP: GET).
-   * @property {*} config.expires A timestamp when this link will expire. Any value
+   * @property {string} action Currently only supports "list" (HTTP: GET).
+   * @property {*} expires A timestamp when this link will expire. Any value
    *     given is passed to `new Date()`.
    *     Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
-   * @property {string} [config.version='v2'] The signing version to use, either
+   * @property {string} [version='v2'] The signing version to use, either
    *     'v2' or 'v4'.
-   * @property {string} [config.cname] The cname for this bucket, i.e.,
+   * @property {string} [cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
    *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
-   * @property {object} [config.extensionHeaders] If these headers are used, the
+   * @property {object} [extensionHeaders] If these headers are used, the
    *     server will check to make sure that the client provides matching
    * values. See [Canonical extension
    * headers](https://cloud.google.com/storage/docs/access-control/signed-urls#about-canonical-extension-headers)
