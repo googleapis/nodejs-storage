@@ -11,6 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+import * as assert from 'assert';
+import * as crypto from 'crypto';
+import * as sinon from 'sinon';
+import * as url from 'url';
 
 import {
   UrlSigner,
@@ -18,13 +22,9 @@ import {
   AuthClient,
   BucketI,
   FileI,
-  GetSignedUrlConfig,
+  SignerGetSignedUrlConfig,
   PATH_STYLED_HOST,
 } from '../src/signer';
-import * as assert from 'assert';
-import * as crypto from 'crypto';
-import * as sinon from 'sinon';
-import * as url from 'url';
 
 describe('signer', () => {
   const BUCKET_NAME = 'bucket-name';
@@ -64,12 +64,12 @@ describe('signer', () => {
 
     describe('getSignedUrl', () => {
       let signer: UrlSigner;
-      let CONFIG: GetSignedUrlConfig;
+      let CONFIG: SignerGetSignedUrlConfig;
       beforeEach(() => {
         signer = new UrlSigner(authClient, bucket, file);
 
         CONFIG = {
-          action: 'read' as 'read',
+          method: 'GET',
           expires: new Date().valueOf() + 2000,
         };
       });
@@ -91,29 +91,6 @@ describe('signer', () => {
           () => signer.getSignedUrl(config, () => {}),
           /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./
         );
-      });
-
-      it('should error if action is null', () => {
-        const config = Object.assign({}, CONFIG, {action: null});
-
-        assert.throws(() => {
-          signer.getSignedUrl(config, () => {});
-        }, /The action is not provided or invalid./);
-      });
-
-      it('should error if action is undefined', () => {
-        const config = Object.assign({}, CONFIG);
-        delete config.action;
-        assert.throws(() => {
-          signer.getSignedUrl(config, () => {});
-        }, /The action is not provided or invalid./);
-      });
-
-      it('should error for an invalid action', () => {
-        const config = Object.assign({}, CONFIG, {action: 'watch'});
-        assert.throws(() => {
-          signer.getSignedUrl(config, () => {});
-        }, /The action is not provided or invalid./);
       });
 
       describe('v4 signed URL', () => {
@@ -172,41 +149,6 @@ describe('signer', () => {
           }, /Max allowed expiration is seven days/);
         });
 
-        it('should set correct settings if resumable', async () => {
-          const config = Object.assign({}, CONFIG, {
-            action: 'resumable',
-          });
-
-          const getCanonicalHeaders = sandbox
-            .stub(signer, 'getCanonicalHeaders')
-            .returns('');
-
-          await signer.getSignedUrl(config);
-          assert.strictEqual(
-            getCanonicalHeaders.args[0][0]['x-goog-resumable'],
-            'start'
-          );
-        });
-
-        it('should add response-content-type parameter', async () => {
-          const type = 'application/json';
-
-          const config = Object.assign({}, CONFIG, {
-            responseType: type,
-          });
-
-          const [signedUrl] = await signer.getSignedUrl(config);
-          assert(signedUrl.includes(encodeURIComponent(type)));
-        });
-
-        it('should add generation parameter', async () => {
-          const generation = 10003320000;
-          file.generation = generation;
-
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
-          assert(signedUrl.includes(encodeURIComponent(generation.toString())));
-        });
-
         it('should URI encode file names', async () => {
           file.name = 'directory/file.jpg';
           const [signedUrl] = await signer.getSignedUrl(CONFIG);
@@ -215,7 +157,7 @@ describe('signer', () => {
 
         it('should add Content-MD5 and Content-Type headers if given', async () => {
           const config = {
-            action: 'write' as 'write',
+            method: 'PUT' as 'PUT',
             version: 'v4' as 'v4',
             expires: NOW.valueOf() + 2000,
             contentMd5: 'bf2342851dfc2edd281a6b079d806cbe',
@@ -277,22 +219,6 @@ describe('signer', () => {
           assert.deepStrictEqual(CONFIG, originalConfig);
         });
 
-        it('should set correct settings if resumable', async () => {
-          const config = Object.assign({}, CONFIG, {
-            action: 'resumable',
-          });
-
-          const signStub = sandbox
-            .stub(authClient, 'sign')
-            .resolves('signature');
-
-          await signer.getSignedUrl(config);
-
-          const blobToSign = signStub.getCall(0).args[0];
-          assert.strictEqual(blobToSign.indexOf('POST'), 0);
-          assert(blobToSign.includes('x-goog-resumable:start'));
-        });
-
         it('should return an error if signBlob errors', async () => {
           const error = new Error('Error.');
 
@@ -316,23 +242,6 @@ describe('signer', () => {
           assert(
             signedUrl.includes('special/azAZ%21%2A%27%28%29%2A%25/file.jpg')
           );
-        });
-
-        it('should add response-content-type parameter', async () => {
-          const type = 'application/json';
-
-          const config = Object.assign({}, CONFIG, {responseType: type});
-
-          const [signedUrl] = await signer.getSignedUrl(config);
-          assert(signedUrl.includes(encodeURIComponent(type)));
-        });
-
-        it('should add generation parameter', async () => {
-          const GENERATION = 10003320000;
-          file.generation = GENERATION;
-
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
-          assert(signedUrl.includes(encodeURIComponent(GENERATION.toString())));
         });
       });
 
@@ -383,36 +292,6 @@ describe('signer', () => {
           const [signedUrl] = await signer.getSignedUrl(CONFIG);
           const expected = new RegExp(`${host}/?`);
           assert(signedUrl.match(expected));
-        });
-      });
-
-      describe('promptSaveAs', () => {
-        it('should add response-content-disposition', async () => {
-          const disposition = 'attachment; filename="fname.ext"';
-          CONFIG.promptSaveAs = 'fname.ext';
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
-          assert(signedUrl.indexOf(encodeURIComponent(disposition)) > -1);
-        });
-      });
-
-      describe('responseDisposition', () => {
-        it('should add response-content-disposition', async () => {
-          const disposition = 'attachment; filename="fname.ext"';
-          CONFIG.responseDisposition = disposition;
-
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
-          assert(signedUrl.indexOf(encodeURIComponent(disposition)) > -1);
-        });
-
-        it('should ignore promptSaveAs if set', async () => {
-          const saveAs = 'fname2.ext';
-          const disposition = 'attachment; filename="fname.ext"';
-          CONFIG.promptSaveAs = saveAs;
-          CONFIG.responseDisposition = disposition;
-
-          const [signedUrl] = await signer.getSignedUrl(CONFIG);
-          assert(signedUrl.indexOf(encodeURIComponent(disposition)) > -1);
-          assert(signedUrl.indexOf(encodeURIComponent(saveAs)) === -1);
         });
       });
 
@@ -490,6 +369,21 @@ describe('signer', () => {
           const headers = 'x-foo:bar\nx-goog-acl:public-read\n';
           const blobToSign = signStub.getCall(0).args[0];
           assert(blobToSign.indexOf(headers) > -1);
+        });
+      });
+
+      describe('queryParams', () => {
+        it('should make its way to the signed url', async () => {
+          const queryParams = {
+            'response-content-type': 'application/json',
+          };
+
+          CONFIG.queryParams = queryParams;
+          const [signedUrl] = await signer.getSignedUrl(CONFIG);
+          // headers should be sorted.
+          const qs = 'response-content-type=application%2Fjson';
+
+          assert(signedUrl.match(new RegExp(qs)));
         });
       });
 

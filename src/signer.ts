@@ -34,21 +34,17 @@ export interface BucketI {
 
 export interface FileI {
   name: string;
-  generation?: number;
 }
 
 interface GetSignedUrlConfigInternal {
   expiration: number;
   method: string;
-  bucket: string;
-  file?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
+  cname?: string;
   contentMd5?: string;
   contentType?: string;
-  promptSaveAs?: string;
-  responseType?: string;
-  responseDisposition?: string;
-  cname?: string;
+  bucket: string;
+  file?: string;
 }
 
 interface SignedUrlQuery {
@@ -75,24 +71,15 @@ interface V4UrlQuery extends SignedUrlQuery {
   'X-Goog-SignedHeaders': string;
 }
 
-export enum ActionToHTTPMethod {
-  read = 'GET',
-  write = 'PUT',
-  delete = 'DELETE',
-  resumable = 'POST',
-}
-
-export interface GetSignedUrlConfig {
-  action: 'read' | 'write' | 'delete' | 'resumable';
+export interface SignerGetSignedUrlConfig {
+  method: 'GET' | 'PUT' | 'DELETE' | 'POST';
+  expires: string | number | Date;
   version?: 'v2' | 'v4';
   cname?: string;
+  extensionHeaders?: http.OutgoingHttpHeaders;
+  queryParams?: {[key: string]: string};
   contentMd5?: string;
   contentType?: string;
-  expires: string | number | Date;
-  extensionHeaders?: http.OutgoingHttpHeaders;
-  promptSaveAs?: string;
-  responseDisposition?: string;
-  responseType?: string;
 }
 
 export type GetSignedUrlResponse = [string];
@@ -127,29 +114,17 @@ export class UrlSigner {
     this.authClient = authClient;
   }
 
-  getSignedUrl(cfg: GetSignedUrlConfig): Promise<GetSignedUrlResponse>;
-  getSignedUrl(cfg: GetSignedUrlConfig, callback: GetSignedUrlCallback): void;
+  getSignedUrl(cfg: SignerGetSignedUrlConfig): Promise<GetSignedUrlResponse>;
   getSignedUrl(
-    cfg: GetSignedUrlConfig,
+    cfg: SignerGetSignedUrlConfig,
+    callback: GetSignedUrlCallback
+  ): void;
+  getSignedUrl(
+    cfg: SignerGetSignedUrlConfig,
     callback?: GetSignedUrlCallback
   ): void | Promise<GetSignedUrlResponse> {
-    const expiresInMSeconds = new Date(cfg.expires).valueOf();
-
-    if (isNaN(expiresInMSeconds)) {
-      throw new Error('The expiration date provided was invalid.');
-    }
-
-    if (expiresInMSeconds < Date.now()) {
-      throw new Error('An expiration date cannot be in the past.');
-    }
-
-    const expiresInSeconds = Math.round(expiresInMSeconds / 1000); // The API expects seconds.
-
-    const method = ActionToHTTPMethod[cfg.action];
-
-    if (!method) {
-      throw new Error('The action is not provided or invalid.');
-    }
+    const expiresInSeconds = this.parseExpires(cfg.expires);
+    const method = cfg.method;
 
     const config: GetSignedUrlConfigInternal = Object.assign({}, cfg, {
       method,
@@ -172,21 +147,7 @@ export class UrlSigner {
     }
 
     promise.then(query => {
-      if (typeof config.responseType === 'string') {
-        query['response-content-type'] = config.responseType!;
-      }
-
-      if (typeof config.promptSaveAs === 'string') {
-        query['response-content-disposition'] =
-          'attachment; filename="' + config.promptSaveAs + '"';
-      }
-      if (typeof config.responseDisposition === 'string') {
-        query['response-content-disposition'] = config.responseDisposition!;
-      }
-
-      if (this.file && this.file.generation) {
-        query.generation = this.file.generation;
-      }
+      query = Object.assign(query, cfg.queryParams);
 
       const signedUrl = new url.URL(config.cname || PATH_STYLED_HOST);
       signedUrl.pathname = this.getResourcePath(
@@ -204,12 +165,6 @@ export class UrlSigner {
   private getSignedUrlV2(
     config: GetSignedUrlConfigInternal
   ): Promise<SignedUrlQuery> {
-    if (config.method === 'POST') {
-      config.extensionHeaders = Object.assign({}, config.extensionHeaders, {
-        'x-goog-resumable': 'start',
-      });
-    }
-
     const canonicalHeadersString = this.getCanonicalHeaders(
       config.extensionHeaders || {}
     );
@@ -264,9 +219,6 @@ export class UrlSigner {
     const extensionHeaders = Object.assign({}, config.extensionHeaders);
     const fqdn = new url.URL(config.cname || PATH_STYLED_HOST);
     extensionHeaders.host = fqdn.host;
-    if (config.method === 'POST') {
-      extensionHeaders['x-goog-resumable'] = 'start';
-    }
     if (config.contentMd5) {
       extensionHeaders['content-md5'] = config.contentMd5;
     }
@@ -377,8 +329,25 @@ export class UrlSigner {
   }
 
   getResourcePath(cname: boolean, bucket: string, file?: string) {
-    const filePart = file ? `/${file}` : '';
-    return cname ? filePart : `/${bucket}${filePart}`;
+    const filePart = file ? `${file}` : '';
+    return '/' + (cname ? filePart : `${bucket}/${filePart}`);
+  }
+
+  parseExpires(
+    expires: string | number | Date,
+    current: Date = new Date()
+  ): number {
+    const expiresInMSeconds = new Date(expires).valueOf();
+
+    if (isNaN(expiresInMSeconds)) {
+      throw new Error('The expiration date provided was invalid.');
+    }
+
+    if (expiresInMSeconds < current.valueOf()) {
+      throw new Error('An expiration date cannot be in the past.');
+    }
+
+    return Math.round(expiresInMSeconds / 1000); // The API expects seconds.
   }
 }
 
@@ -388,6 +357,7 @@ promisifyAll(UrlSigner, {
     'getSignedUrlV2',
     'getSignedUrlV4',
     'getCanonicalHeaders',
+    'parseExpires',
   ],
 });
 

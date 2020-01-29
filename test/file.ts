@@ -43,6 +43,7 @@ import {
   GetFileMetadataOptions,
   PolicyDocument,
   SetFileMetadataOptions,
+  GetSignedUrlConfig,
 } from '../src';
 
 let promisified = false;
@@ -2733,29 +2734,44 @@ describe('File', () => {
   });
 
   describe('getSignedUrl', () => {
-    it('should construct a UrlSigner and call getSignedUrl', done => {
-      const EXPECTED_SIGNED_URL = 'https://signed-url';
-      const signerGetSignedUrlStub = sinon
+    const EXPECTED_SIGNED_URL = 'signed-url';
+    const CNAME = 'https://www.example.com';
+
+    let sandbox: sinon.SinonSandbox;
+    let signer: {getSignedUrl: Function};
+    let signerGetSignedUrlStub: sinon.SinonStub;
+    let urlSignerStub: sinon.SinonStub;
+    let SIGNED_URL_CONFIG: GetSignedUrlConfig;
+
+    beforeEach(() => {
+      sandbox = sinon.createSandbox();
+
+      signerGetSignedUrlStub = sandbox
         .stub()
         .callsFake((_cfg: {}, cb: Function) => {
           cb(null, EXPECTED_SIGNED_URL);
         });
 
-      const signer = {
+      signer = {
         getSignedUrl: signerGetSignedUrlStub,
       };
-      // tslint:disable-next-line no-any
-      const urlSignerStub = (sinon.stub as any)(
-        fakeSigner,
-        'UrlSigner'
-      ).returns(signer);
 
-      const SIGNED_URL_CONFIG = {
+      // tslint:disable-next-line no-any
+      urlSignerStub = (sandbox.stub as any)(fakeSigner, 'UrlSigner').returns(
+        signer
+      );
+
+      SIGNED_URL_CONFIG = {
         version: 'v4',
         expires: new Date(),
         action: 'read',
+        cname: CNAME,
       };
+    });
 
+    afterEach(() => sandbox.restore());
+
+    it('should construct a UrlSigner and call getSignedUrl', done => {
       // assert signer is lazily-initialized.
       assert.strictEqual(file.signer, undefined);
       file.getSignedUrl(
@@ -2771,7 +2787,127 @@ describe('File', () => {
           assert.strictEqual(ctorArgs[2], file);
 
           const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
-          assert.strictEqual(getSignedUrlArgs[0], SIGNED_URL_CONFIG);
+          assert.deepStrictEqual(getSignedUrlArgs[0], {
+            method: 'GET',
+            version: 'v4',
+            expires: SIGNED_URL_CONFIG.expires,
+            extensionHeaders: {},
+            queryParams: {},
+            cname: CNAME,
+          });
+          done();
+        }
+      );
+    });
+
+    it('should error if action is null', () => {
+      // tslint:disable-next-line:no-any
+      SIGNED_URL_CONFIG.action = null as any;
+
+      assert.throws(() => {
+        file.getSignedUrl(SIGNED_URL_CONFIG, () => {});
+      }, /The action is not provided or invalid./);
+    });
+
+    it('should error if action is undefined', () => {
+      delete SIGNED_URL_CONFIG.action;
+      assert.throws(() => {
+        file.getSignedUrl(SIGNED_URL_CONFIG, () => {});
+      }, /The action is not provided or invalid./);
+    });
+
+    it('should error for an invalid action', () => {
+      // tslint:disable-next-line:no-any
+      SIGNED_URL_CONFIG.action = 'watch' as any;
+
+      assert.throws(() => {
+        file.getSignedUrl(SIGNED_URL_CONFIG, () => {});
+      }, /The action is not provided or invalid./);
+    });
+
+    it('should add "x-goog-resumable: start" header if action is resumable', done => {
+      SIGNED_URL_CONFIG.action = 'resumable';
+      SIGNED_URL_CONFIG.extensionHeaders = {
+        'another-header': 'value',
+      };
+
+      file.getSignedUrl(
+        SIGNED_URL_CONFIG,
+        (err: Error | null, _signedUrl: string) => {
+          assert.ifError(err);
+          const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
+          assert.strictEqual(getSignedUrlArgs[0]['method'], 'POST');
+          assert.deepStrictEqual(getSignedUrlArgs[0]['extensionHeaders'], {
+            'another-header': 'value',
+            'x-goog-resumable': 'start',
+          });
+          done();
+        }
+      );
+    });
+
+    it('should add response-content-type query parameter', done => {
+      SIGNED_URL_CONFIG.responseType = 'application/json';
+      file.getSignedUrl(
+        SIGNED_URL_CONFIG,
+        (err: Error | null, _signedUrl: string) => {
+          assert.ifError(err);
+          const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
+          assert.deepStrictEqual(getSignedUrlArgs[0]['queryParams'], {
+            'response-content-type': 'application/json',
+          });
+          done();
+        }
+      );
+    });
+
+    it('should respect promptSaveAs argument', done => {
+      const filename = 'fname.txt';
+      SIGNED_URL_CONFIG.promptSaveAs = filename;
+      file.getSignedUrl(
+        SIGNED_URL_CONFIG,
+        (err: Error | null, _signedUrl: string) => {
+          assert.ifError(err);
+          const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
+          assert.deepStrictEqual(getSignedUrlArgs[0]['queryParams'], {
+            'response-content-disposition':
+              'attachment; filename="' + filename + '"',
+          });
+          done();
+        }
+      );
+    });
+
+    it('should add response-content-disposition query parameter', done => {
+      const disposition = 'attachment; filename="fname.ext"';
+      SIGNED_URL_CONFIG.responseDisposition = disposition;
+      file.getSignedUrl(
+        SIGNED_URL_CONFIG,
+        (err: Error | null, _signedUrl: string) => {
+          assert.ifError(err);
+          const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
+          assert.deepStrictEqual(getSignedUrlArgs[0]['queryParams'], {
+            'response-content-disposition': disposition,
+          });
+          done();
+        }
+      );
+    });
+
+    it('should ignore promptSaveAs if set', done => {
+      const saveAs = 'fname2.ext';
+      const disposition = 'attachment; filename="fname.ext"';
+      SIGNED_URL_CONFIG.promptSaveAs = saveAs;
+      SIGNED_URL_CONFIG.responseDisposition = disposition;
+
+      file.getSignedUrl(
+        SIGNED_URL_CONFIG,
+        (err: Error | null, _signedUrl: string) => {
+          assert.ifError(err);
+          const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
+          assert.deepStrictEqual(getSignedUrlArgs[0]['queryParams'], {
+            'response-content-disposition': disposition,
+          });
           done();
         }
       );

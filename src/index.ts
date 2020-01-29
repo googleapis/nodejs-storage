@@ -93,6 +93,7 @@ export {
   GetBucketMetadataResponse,
   GetBucketOptions,
   GetBucketResponse,
+  GetBucketSignedUrlConfig,
   GetFilesCallback,
   GetFilesOptions,
   GetFilesResponse,
@@ -154,6 +155,7 @@ export {
   GetSignedPolicyCallback,
   GetSignedPolicyOptions,
   GetSignedPolicyResponse,
+  GetSignedUrlConfig,
   MakeFilePrivateCallback,
   MakeFilePrivateOptions,
   MakeFilePrivateResponse,
@@ -231,8 +233,4 @@ export {
   Storage,
   StorageOptions,
 } from './storage';
-export {
-  GetSignedUrlCallback,
-  GetSignedUrlConfig,
-  GetSignedUrlResponse,
-} from './signer';
+export {GetSignedUrlCallback, GetSignedUrlResponse} from './signer';

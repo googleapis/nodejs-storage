@@ -45,11 +45,11 @@ import {Storage} from './storage';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 import {
-  GetSignedUrlConfig,
   GetSignedUrlResponse,
   SigningError,
   GetSignedUrlCallback,
   UrlSigner,
+  SignerGetSignedUrlConfig,
 } from './signer';
 import {
   ResponseBody,
@@ -90,6 +90,19 @@ export interface GetSignedPolicyOptions {
   successRedirect?: string;
   successStatus?: string;
   contentLengthRange?: {min?: number; max?: number};
+}
+
+export interface GetSignedUrlConfig {
+  action: 'read' | 'write' | 'delete' | 'resumable';
+  version?: 'v2' | 'v4';
+  cname?: string;
+  contentMd5?: string;
+  contentType?: string;
+  expires: string | number | Date;
+  extensionHeaders?: http.OutgoingHttpHeaders;
+  promptSaveAs?: string;
+  responseDisposition?: string;
+  responseType?: string;
 }
 
 export interface GetFileMetadataOptions {
@@ -210,6 +223,13 @@ export interface EncryptionKeyOptions {
 export interface RotateEncryptionKeyCallback extends CopyCallback {}
 
 export type RotateEncryptionKeyResponse = CopyResponse;
+
+export enum ActionToHTTPMethod {
+  read = 'GET',
+  write = 'PUT',
+  delete = 'DELETE',
+  resumable = 'POST',
+}
 
 /**
  * Custom error type for errors related to creating a resumable upload.
@@ -2387,11 +2407,50 @@ class File extends ServiceObject<File> {
     cfg: GetSignedUrlConfig,
     callback?: GetSignedUrlCallback
   ): void | Promise<GetSignedUrlResponse> {
+    const method = ActionToHTTPMethod[cfg.action];
+    if (!method) {
+      throw new Error('The action is not provided or invalid.');
+    }
+    const extensionHeaders = Object.assign({}, cfg.extensionHeaders);
+    if (cfg.action === 'resumable') {
+      extensionHeaders['x-goog-resumable'] = 'start';
+    }
+
+    const queryParams: {[key: string]: string} = {};
+    if (typeof cfg.responseType === 'string') {
+      queryParams['response-content-type'] = cfg.responseType!;
+    }
+    if (typeof cfg.promptSaveAs === 'string') {
+      queryParams['response-content-disposition'] =
+        'attachment; filename="' + cfg.promptSaveAs + '"';
+    }
+    if (typeof cfg.responseDisposition === 'string') {
+      queryParams['response-content-disposition'] = cfg.responseDisposition!;
+    }
+    if (this.generation) {
+      queryParams['generation'] = this.generation.toString();
+    }
+
+    const signConfig = {
+      method,
+      expires: cfg.expires,
+      extensionHeaders,
+      queryParams,
+    } as SignerGetSignedUrlConfig;
+
+    if (cfg.cname) {
+      signConfig.cname = cfg.cname;
+    }
+
+    if (cfg.version) {
+      signConfig.version = cfg.version;
+    }
+
     if (!this.signer) {
       this.signer = new UrlSigner(this.storage.authClient, this.bucket, this);
     }
 
-    this.signer.getSignedUrl(cfg, callback!);
+    this.signer.getSignedUrl(signConfig, callback!);
   }
 
   isPublic(): Promise<IsPublicResponse>;
