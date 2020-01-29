@@ -2908,6 +2908,22 @@ describe('File', () => {
         }
       );
     });
+
+    it('should add generation to query parameter', done => {
+      file.generation = "246680131";
+
+      file.getSignedUrl(
+        SIGNED_URL_CONFIG,
+        (err: Error | null, _signedUrl: string) => {
+          assert.ifError(err);
+          const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
+          assert.deepStrictEqual(getSignedUrlArgs[0]['queryParams'], {
+            'generation': file.generation,
+          });
+          done();
+        }
+      );
+    });
   });
 
   describe('makePrivate', () => {
