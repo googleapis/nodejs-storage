@@ -173,7 +173,7 @@ describe('signer', () => {
           const error = new Error('Error.');
           sandbox.stub(authClient, 'sign').rejects(error);
 
-          await assert.rejects(signer.getSignedUrl(CONFIG), {
+          await assert.rejects(() => signer.getSignedUrl(CONFIG), {
             name: 'SigningError',
             message: error.message,
           });
