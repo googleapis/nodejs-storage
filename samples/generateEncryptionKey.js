@@ -34,13 +34,18 @@ function main() {
      * comprehensive security policy.
      *
      */
-    const buffer = crypto.randomBytes(32);
-    const encodedKey = buffer.toString('base64');
-    console.log(`Base 64 encoded encryption key: ${encodedKey}`);
+    try {
+      const buffer = crypto.randomBytes(32);
+      const encodedKey = buffer.toString('base64');
+      console.log(`Base 64 encoded encryption key: ${encodedKey}`);
 
-    return encodedKey;
+      return encodedKey;
+    } catch (err) {
+      console.error(err)
+    }
   }
-  generateEncryptionKey().catch(console.error);
+  
+  generateEncryptionKey()
   // [END storage_generate_encryption_key]
 }
 main(...process.argv.slice(2));

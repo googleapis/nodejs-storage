@@ -128,25 +128,29 @@ require(`yargs`)
     `create <bucketName> <topic>`,
     `Creates a new notification`,
     {},
-    opts => createNotification(opts.bucketName, opts.topic).catch(console.error)
+    opts => createNotification(opts.bucketName, opts.topic)
+      .catch(console.error)
   )
   .command(
     `list <bucketName>`,
     `Lists notifications for a given bucket.`,
     {},
-    opts => listNotifications(opts.bucketName).catch(console.error)
+    opts => listNotifications(opts.bucketName)
+      .catch(console.error)
   )
   .command(
     `get-metadata <bucketName> <notificationId>`,
     `Gets metadata for a notification.`,
     {},
-    opts => getMetadata(opts.bucketName, opts.notificationId).catch(console.error)
+    opts => getMetadata(opts.bucketName, opts.notificationId)
+      .catch(console.error)
   )
   .command(
     `delete <bucketName> <notificationId>`,
     `Deletes a notification from a bucket.`,
     {},
-    opts => deleteNotification(opts.bucketName, opts.notificationId).catch(console.error)
+    opts => deleteNotification(opts.bucketName, opts.notificationId)
+      .catch(console.error)
   )
   .example(
     `node $0 create my-bucket my-topic`,
