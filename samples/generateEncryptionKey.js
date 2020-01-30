@@ -41,11 +41,10 @@ function main() {
 
       return encodedKey;
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
   }
-  
-  generateEncryptionKey()
+  generateEncryptionKey();
   // [END storage_generate_encryption_key]
 }
 main(...process.argv.slice(2));
