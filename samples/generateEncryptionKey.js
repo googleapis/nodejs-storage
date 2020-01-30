@@ -40,7 +40,7 @@ function main() {
 
     return encodedKey;
   }
-  generateEncryptionKey();
+  generateEncryptionKey().catch(console.error);
   // [END storage_generate_encryption_key]
 }
 main(...process.argv.slice(2));
