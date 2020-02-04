@@ -34,8 +34,12 @@ interface V4SignedURLConformanceTestCases {
   expectedUrl: string;
 }
 
-interface MethodAction {
+interface FileAction {
   [key: string]: 'read' | 'resumable' | 'write' | 'delete';
+}
+
+interface BucketAction {
+  [key: string]: 'list';
 }
 
 const testFile = fs.readFileSync(
@@ -54,40 +58,51 @@ describe('v4 signed url', () => {
   const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
 
   testCases.forEach(testCase => {
-    it(testCase.description, async function() {
-      // v4 signed URL does not support Bucket operations (list bucket, etc) yet
-      // Remove this conditional once it is supported.
-      if (!testCase.object) {
-        this.skip();
-      }
-
+    it(testCase.description, async () => {
       const NOW = dateFormat.parse(
         testCase.timestamp,
         'YYYYMMDD HHmmss ',
         true
       );
+
       const fakeTimer = sinon.useFakeTimers(NOW);
-
       const bucket = storage.bucket(testCase.bucket);
-      const file = bucket.file(testCase.object);
-
-      const action = ({
-        GET: 'read',
-        POST: 'resumable',
-        PUT: 'write',
-        DELETE: 'delete',
-      } as MethodAction)[testCase.method];
-
       const expires = NOW.valueOf() + testCase.expiration * 1000;
 
-      const [signedUrl] = await file.getSignedUrl({
-        version: 'v4',
-        action,
-        expires,
-        extensionHeaders: testCase.headers,
-      });
+      if (testCase.object) {
+        const file = bucket.file(testCase.object);
 
-      assert.strictEqual(signedUrl, testCase.expectedUrl);
+        const action = ({
+          GET: 'read',
+          POST: 'resumable',
+          PUT: 'write',
+          DELETE: 'delete',
+        } as FileAction)[testCase.method];
+
+        const [signedUrl] = await file.getSignedUrl({
+          version: 'v4',
+          action,
+          expires,
+          extensionHeaders: testCase.headers,
+        });
+
+        assert.strictEqual(signedUrl, testCase.expectedUrl);
+      } else {
+        // bucket operation
+        const action = ({
+          GET: 'list',
+        } as BucketAction)[testCase.method];
+
+        const [signedUrl] = await bucket.getSignedUrl({
+          version: 'v4',
+          action,
+          expires,
+          extensionHeaders: testCase.headers,
+        });
+
+        assert.strictEqual(signedUrl, testCase.expectedUrl);
+      }
+
       fakeTimer.restore();
     });
   });
