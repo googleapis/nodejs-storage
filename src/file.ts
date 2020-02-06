@@ -1370,13 +1370,12 @@ class File extends ServiceObject<File> {
 
         onCompleteCalled = true;
 
-        // TODO: Remove once the backend issue is fixed.
+        // TODO(https://github.com/googleapis/nodejs-storage/issues/709):
+        // Remove once the backend issue is fixed.
         // If object is stored compressed (having metadata.contentEncoding === 'gzip')
         // and was served decompressed, then skip checksum validation because the
         // remote checksum is computed against the compressed version of the object.
-        // See https://github.com/googleapis/nodejs-storage/issues/709.
         if (this.metadata.contentEncoding === 'gzip' && !isServedCompressed) {
-          onCompleteCalled = true;
           throughStream.end();
           return;
         }

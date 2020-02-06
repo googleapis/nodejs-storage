@@ -2257,7 +2257,7 @@ describe('storage', () => {
       tmp.setGracefulCleanup();
       const {name: tmpFilePath} = tmp.fileSync();
 
-      const file = bucket.file(filename)
+      const file = bucket.file(filename);
 
       await new Promise((resolve, reject) => {
         file.createReadStream()
