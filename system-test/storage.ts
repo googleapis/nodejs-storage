@@ -2250,31 +2250,26 @@ describe('storage', () => {
       });
     });
 
-    it('should skip validation if file is served decompressed', done => {
+    it('should skip validation if file is served decompressed', async () => {
       const filename = 'logo-gzipped.png';
-      bucket
-        .upload(FILES.logo.path, {
-          destination: filename,
-          gzip: true,
-        })
-        .then(() => {
-          tmp.setGracefulCleanup();
-          tmp.file((err, tmpFilePath) => {
-            assert.ifError(err);
+      await bucket.upload(FILES.logo.path, { destination: filename, gzip: true});
 
-            const file = bucket.file(filename)
-            file.createReadStream()
-              .pipe(fs.createWriteStream(tmpFilePath))
-              .on('error', done)
-              .on('response', (err, body, raw) => {
-                assert.strictEqual(raw.toJSON().headers['content-encoding'], undefined);
-              })
-              .on('finish', () => {
-                file.delete(done);
-              });
-          });
-        })
-        .catch(done);
+      tmp.setGracefulCleanup();
+      const {name: tmpFilePath} = tmp.fileSync();
+
+      const file = bucket.file(filename)
+
+      await new Promise((resolve, reject) => {
+        file.createReadStream()
+          .pipe(fs.createWriteStream(tmpFilePath))
+          .on('response', (_err, _body, raw) => {
+            assert.strictEqual(raw.toJSON().headers['content-encoding'], undefined);
+          })
+          .on('error', reject)
+          .on('finish', resolve);
+      });
+
+      await file.delete();
     });
 
     describe('simple write', () => {
