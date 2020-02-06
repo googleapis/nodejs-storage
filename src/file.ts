@@ -1376,7 +1376,6 @@ class File extends ServiceObject<File> {
         // and was served decompressed, then skip checksum validation because the
         // remote checksum is computed against the compressed version of the object.
         if (this.metadata.contentEncoding === 'gzip' && !isServedCompressed) {
-          onCompleteCalled = true;
           throughStream.end();
           return;
         }
