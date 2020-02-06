@@ -2250,6 +2250,33 @@ describe('storage', () => {
       });
     });
 
+    it('should skip validation if file is served decompressed', done => {
+      const filename = 'logo-gzipped.png';
+      bucket
+        .upload(FILES.logo.path, {
+          destination: filename,
+          gzip: true,
+        })
+        .then(() => {
+          tmp.setGracefulCleanup();
+          tmp.file((err, tmpFilePath) => {
+            assert.ifError(err);
+
+            const file = bucket.file(filename)
+            file.createReadStream()
+              .pipe(fs.createWriteStream(tmpFilePath))
+              .on('error', done)
+              .on('response', (err, body, raw) => {
+                assert.strictEqual(raw.toJSON().headers['content-encoding'], undefined);
+              })
+              .on('finish', () => {
+                file.delete(done);
+              });
+          });
+        })
+        .catch(done);
+    });
+
     describe('simple write', () => {
       it('should save arbitrary data', done => {
         const file = bucket.file('TestFile');
