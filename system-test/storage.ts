@@ -2262,12 +2262,16 @@ describe('storage', () => {
           tmp.file((err, tmpFilePath) => {
             assert.ifError(err);
 
-            const file = bucket.file(filename)
-            file.createReadStream()
+            const file = bucket.file(filename);
+            file
+              .createReadStream()
               .pipe(fs.createWriteStream(tmpFilePath))
               .on('error', done)
               .on('response', (err, body, raw) => {
-                assert.strictEqual(raw.toJSON().headers['content-encoding'], undefined);
+                assert.strictEqual(
+                  raw.toJSON().headers['content-encoding'],
+                  undefined
+                );
               })
               .on('finish', () => {
                 file.delete(done);

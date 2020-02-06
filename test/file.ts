@@ -1293,7 +1293,7 @@ describe('File', () => {
 
     describe('validation', () => {
       const data = 'test';
-      let fakeValidationStream: stream.Stream & {'test': Function};
+      let fakeValidationStream: stream.Stream & {test: Function};
 
       beforeEach(() => {
         file.metadata.mediaLink = 'http://uri';
@@ -1306,10 +1306,7 @@ describe('File', () => {
           callback();
         };
 
-        fakeValidationStream = Object.assign(
-          through(),
-          {test: () => true},
-        );
+        fakeValidationStream = Object.assign(through(), {test: () => true});
         hashStreamValidationOverride = () => {
           return fakeValidationStream;
         };
