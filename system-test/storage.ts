@@ -2261,10 +2261,11 @@ describe('storage', () => {
 
       await new Promise((resolve, reject) => {
         file.createReadStream()
-          .pipe(fs.createWriteStream(tmpFilePath))
-          .on('response', (_err, _body, raw) => {
+          .on('error', reject)
+          .on('response', (raw) => {
             assert.strictEqual(raw.toJSON().headers['content-encoding'], undefined);
           })
+          .pipe(fs.createWriteStream(tmpFilePath))
           .on('error', reject)
           .on('finish', resolve);
       });
