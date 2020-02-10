@@ -121,10 +121,11 @@ export class UrlSigner {
     const method = cfg.method;
 
     let customHost: string|undefined;
+    const urlStyle = cfg.urlStyle || DEFAULT_URL_STYLE;
 
     if (cfg.cname) {
       customHost = cfg.cname;
-    } else if (cfg.urlStyle === 'virtual-host') {
+    } else if (urlStyle === 'virtual-host') {
       customHost = `https://${this.bucket.name}.storage.googleapis.com`;
     }
 
