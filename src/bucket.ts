@@ -244,6 +244,7 @@ export interface GetBucketSignedUrlConfig {
   action: 'list';
   version?: 'v2' | 'v4';
   cname?: string;
+  urlStyle?: 'virtual-host' | 'path';
   expires: string | number | Date;
   extensionHeaders?: http.OutgoingHttpHeaders;
 }
@@ -2398,6 +2399,12 @@ class Bucket extends ServiceObject {
    *     Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
    * @property {string} [version='v2'] The signing version to use, either
    *     'v2' or 'v4'.
+   * @param {string} [config.urlStyle='path'] The URL style to use, either 'path' (e.g.
+   *     'https://storage.googleapis.com/mybucket/...') or 'virtual-host' (e.g.
+   *     'https://mybucket.storage.googleapis.com/...'). Virtual hosted-style URLs
+   *     should generally be preferred instaed of path-style URL.
+   *     Currently defaults to 'path', although this may change in a future
+   *     major-version release.
    * @property {string} [cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
    *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
