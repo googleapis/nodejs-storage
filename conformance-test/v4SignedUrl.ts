@@ -34,9 +34,9 @@ interface V4SignedURLConformanceTestCases {
   object?: string;
   urlStyle?: UrlStyle;
   bucketBoundDomain?: string;
-  scheme: 'https'|'http';
+  scheme: 'https' | 'http';
   headers?: OutgoingHttpHeaders;
-  queryParameters?: {[key: string]: string}
+  queryParameters?: {[key: string]: string};
   method: string;
   expiration: number;
   timestamp: string;
@@ -56,7 +56,8 @@ const testFile = fs.readFileSync(
   'utf-8'
 );
 
-const testCases = JSON.parse(testFile).signingV4Tests as V4SignedURLConformanceTestCases[];
+const testCases = JSON.parse(testFile)
+  .signingV4Tests as V4SignedURLConformanceTestCases[];
 
 const SERVICE_ACCOUNT = path.join(
   __dirname,
@@ -68,13 +69,15 @@ describe('v4 signed url', () => {
 
   testCases.forEach(testCase => {
     it(testCase.description, async () => {
-      const NOW = new Date(testCase.timestamp)
+      const NOW = new Date(testCase.timestamp);
 
       const fakeTimer = sinon.useFakeTimers(NOW);
       const bucket = storage.bucket(testCase.bucket);
       const expires = NOW.valueOf() + testCase.expiration * 1000;
       const version = 'v4' as 'v4';
-      const domain = testCase.bucketBoundDomain ? `${testCase.scheme}://${testCase.bucketBoundDomain}` : undefined;
+      const domain = testCase.bucketBoundDomain
+        ? `${testCase.scheme}://${testCase.bucketBoundDomain}`
+        : undefined;
       const {cname, urlStyle} = parseUrlStyle(testCase.urlStyle, domain);
       const extensionHeaders = testCase.headers;
       const baseConfig = {extensionHeaders, version, expires, cname, urlStyle};
@@ -114,12 +117,15 @@ describe('v4 signed url', () => {
   });
 });
 
-function parseUrlStyle(style?: UrlStyle, domain?: string): {cname?: string, urlStyle?: 'path'|'virtual-host'} {
+function parseUrlStyle(
+  style?: UrlStyle,
+  domain?: string
+): {cname?: string; urlStyle?: 'path' | 'virtual-host'} {
   if (style === UrlStyle.BUCKET_BOUND_DOMAIN) {
     return {cname: domain};
   } else if (style === UrlStyle.VIRTUAL_HOSTED_STYLE) {
     return {urlStyle: 'virtual-host'};
   } else {
-    return {urlStyle: 'path'}
+    return {urlStyle: 'path'};
   }
 }
