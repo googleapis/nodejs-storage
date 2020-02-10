@@ -15,7 +15,6 @@
  */
 import * as assert from 'assert';
 import {describe, it} from 'mocha';
-import * as dateFormat from 'date-and-time';
 import * as fs from 'fs';
 import {OutgoingHttpHeaders} from 'http';
 import * as path from 'path';
@@ -23,11 +22,21 @@ import * as sinon from 'sinon';
 
 import {Storage} from '../src/';
 
+export enum UrlStyle {
+  PATH_STYLE = 'PATH_STYLE',
+  VIRTUAL_HOSTED_STYLE = 'VIRTUAL_HOSTED_STYLE',
+  BUCKET_BOUND_DOMAIN = 'BUCKET_BOUND_DOMAIN',
+}
+
 interface V4SignedURLConformanceTestCases {
   description: string;
   bucket: string;
-  object: string;
+  object?: string;
+  urlStyle?: UrlStyle;
+  bucketBoundDomain?: string;
+  scheme: 'https'|'http';
   headers?: OutgoingHttpHeaders;
+  queryParameters?: {[key: string]: string}
   method: string;
   expiration: number;
   timestamp: string;
@@ -47,7 +56,7 @@ const testFile = fs.readFileSync(
   'utf-8'
 );
 
-const testCases = JSON.parse(testFile) as V4SignedURLConformanceTestCases[];
+const testCases = JSON.parse(testFile).signingV4Tests as V4SignedURLConformanceTestCases[];
 
 const SERVICE_ACCOUNT = path.join(
   __dirname,
@@ -59,15 +68,16 @@ describe('v4 signed url', () => {
 
   testCases.forEach(testCase => {
     it(testCase.description, async () => {
-      const NOW = dateFormat.parse(
-        testCase.timestamp,
-        'YYYYMMDD HHmmss ',
-        true
-      );
+      const NOW = new Date(testCase.timestamp)
 
       const fakeTimer = sinon.useFakeTimers(NOW);
       const bucket = storage.bucket(testCase.bucket);
       const expires = NOW.valueOf() + testCase.expiration * 1000;
+      const version = 'v4' as 'v4';
+      const domain = testCase.bucketBoundDomain ? `${testCase.scheme}://${testCase.bucketBoundDomain}` : undefined;
+      const {cname, urlStyle} = parseUrlStyle(testCase.urlStyle, domain);
+      const extensionHeaders = testCase.headers;
+      const baseConfig = {extensionHeaders, version, expires, cname, urlStyle};
 
       if (testCase.object) {
         const file = bucket.file(testCase.object);
@@ -80,10 +90,8 @@ describe('v4 signed url', () => {
         } as FileAction)[testCase.method];
 
         const [signedUrl] = await file.getSignedUrl({
-          version: 'v4',
           action,
-          expires,
-          extensionHeaders: testCase.headers,
+          ...baseConfig,
         });
 
         assert.strictEqual(signedUrl, testCase.expectedUrl);
@@ -94,10 +102,8 @@ describe('v4 signed url', () => {
         } as BucketAction)[testCase.method];
 
         const [signedUrl] = await bucket.getSignedUrl({
-          version: 'v4',
           action,
-          expires,
-          extensionHeaders: testCase.headers,
+          ...baseConfig,
         });
 
         assert.strictEqual(signedUrl, testCase.expectedUrl);
@@ -107,3 +113,13 @@ describe('v4 signed url', () => {
     });
   });
 });
+
+function parseUrlStyle(style?: UrlStyle, domain?: string): {cname?: string, urlStyle?: 'path'|'virtual-host'} {
+  if (style === UrlStyle.BUCKET_BOUND_DOMAIN) {
+    return {cname: domain};
+  } else if (style === UrlStyle.VIRTUAL_HOSTED_STYLE) {
+    return {urlStyle: 'virtual-host'};
+  } else {
+    return {urlStyle: 'path'}
+  }
+}
