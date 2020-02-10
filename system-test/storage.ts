@@ -3317,6 +3317,19 @@ describe('storage', () => {
       assert.strictEqual(res.status, 200);
       assert(body.includes('ListBucketResult'));
     });
+
+    it('should create a virtual-hosted style URL', async () => {
+      const [signedUrl] = await file.getSignedUrl({
+        urlStyle: 'virtual-host',
+        version: 'v4',
+        action: 'read',
+        expires: Date.now() + 5000,
+      });
+
+      const res = await fetch(signedUrl);
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
+    });
   });
 
   describe('v4 signed url with special characters in file name', () => {
