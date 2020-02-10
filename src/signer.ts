@@ -73,7 +73,7 @@ interface V4UrlQuery extends SignedUrlQuery {
 export interface SignerGetSignedUrlConfig {
   method: 'GET' | 'PUT' | 'DELETE' | 'POST';
   expires: string | number | Date;
-  urlStyle?: 'path'|'virtual-host';
+  urlStyle?: 'path' | 'virtual-host';
   version?: 'v2' | 'v4';
   cname?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
@@ -120,7 +120,7 @@ export class UrlSigner {
     const expiresInSeconds = this.parseExpires(cfg.expires);
     const method = cfg.method;
 
-    let customHost: string|undefined;
+    let customHost: string | undefined;
     const urlStyle = cfg.urlStyle || DEFAULT_URL_STYLE;
 
     if (cfg.cname) {

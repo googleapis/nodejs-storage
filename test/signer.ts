@@ -317,7 +317,9 @@ describe('signer', () => {
           CONFIG.urlStyle = 'virtual-host';
 
           const signedUrl = await signer.getSignedUrl(CONFIG);
-          assert(signedUrl.includes(`https://${bucket.name}.storage.googleapis.com`));
+          assert(
+            signedUrl.includes(`https://${bucket.name}.storage.googleapis.com`)
+          );
         });
       });
 

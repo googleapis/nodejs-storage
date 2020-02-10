@@ -95,7 +95,7 @@ export interface GetSignedPolicyOptions {
 export interface GetSignedUrlConfig {
   action: 'read' | 'write' | 'delete' | 'resumable';
   version?: 'v2' | 'v4';
-  urlStyle?: 'virtual-host'|'path';
+  urlStyle?: 'virtual-host' | 'path';
   cname?: string;
   contentMd5?: string;
   contentType?: string;
