@@ -16,7 +16,7 @@ import * as crypto from 'crypto';
 import * as dateFormat from 'date-and-time';
 import * as http from 'http';
 import * as url from 'url';
-import {encodeURI, qsStringify, objectEntries} from './util';
+import {encodeURI, qsStringify, objectEntries, fixedEncodeURIComponent} from './util';
 
 interface GetCredentialsResponse {
   client_email?: string;
@@ -39,11 +39,16 @@ interface GetSignedUrlConfigInternal {
   expiration: number;
   method: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
+  queryParams?: QueryParams;
   cname?: string;
   contentMd5?: string;
   contentType?: string;
   bucket: string;
   file?: string;
+}
+
+interface QueryParams {
+  [key: string]: string;
 }
 
 interface SignedUrlQuery {
@@ -76,7 +81,7 @@ export interface SignerGetSignedUrlConfig {
   version?: 'v2' | 'v4';
   cname?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
-  queryParams?: {[key: string]: string};
+  queryParams?: QueryParams;
   contentMd5?: string;
   contentType?: string;
 }
@@ -231,16 +236,17 @@ export class UrlSigner {
       const credential = `${credentials.client_email}/${credentialScope}`;
       const dateISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
 
-      const queryParams: V4UrlQuery = {
+      const queryParams: QueryParams = {
         'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
         'X-Goog-Credential': credential,
         'X-Goog-Date': dateISO,
-        'X-Goog-Expires': expiresPeriodInSeconds,
+        'X-Goog-Expires': expiresPeriodInSeconds.toString(10),
         'X-Goog-SignedHeaders': signedHeaders,
+        ...config.queryParams || {},
       };
 
       // tslint:disable-next-line:no-any
-      const canonicalQueryParams = qsStringify(queryParams as any);
+      const canonicalQueryParams = this.getCanonicalQueryParams(queryParams);
 
       const canonicalRequest = [
         config.method,
@@ -266,7 +272,7 @@ export class UrlSigner {
       try {
         const signature = await this.authClient.sign(blobToSign);
         const signatureHex = Buffer.from(signature, 'base64').toString('hex');
-        const signedQuery: V4SignedUrlQuery = Object.assign({}, queryParams, {
+        const signedQuery: QueryParams = Object.assign({}, queryParams, {
           'X-Goog-Signature': signatureHex,
         });
         return signedQuery;
@@ -315,6 +321,17 @@ export class UrlSigner {
         return `${headerName}:${canonicalValue}\n`;
       })
       .join('');
+  }
+
+  getCanonicalQueryParams(query: QueryParams) {
+    return objectEntries(query)
+      .map(([key, value]) => [
+        encodeURI(key, true),
+        encodeURI(value, true)
+      ])
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&');
   }
 
   getResourcePath(cname: boolean, bucket: string, file?: string) {
