@@ -248,19 +248,13 @@ export class UrlSigner {
       // tslint:disable-next-line:no-any
       const canonicalQueryParams = this.getCanonicalQueryParams(queryParams);
 
-      const canonicalRequest = [
+      const canonicalRequestHash = this.getCanonicalRequestHash(
         config.method,
         this.getResourcePath(!!config.cname, config.bucket, config.file),
         canonicalQueryParams,
         extensionHeadersString,
         signedHeaders,
-        'UNSIGNED-PAYLOAD',
-      ].join('\n');
-
-      const canonicalRequestHash = crypto
-        .createHash('sha256')
-        .update(canonicalRequest)
-        .digest('hex');
+      );
 
       const blobToSign = [
         'GOOG4-RSA-SHA256',
@@ -321,6 +315,17 @@ export class UrlSigner {
         return `${headerName}:${canonicalValue}\n`;
       })
       .join('');
+  }
+
+  getCanonicalRequestHash(method: string, path: string, query: string, headers: string, signedHeaders: string) {
+    const canonicalRequest = [
+      method, path, query, headers, signedHeaders, 'UNSIGNED-PAYLOAD'
+    ].join('\n');
+
+    return crypto
+      .createHash('sha256')
+      .update(canonicalRequest)
+      .digest('hex');
   }
 
   getCanonicalQueryParams(query: QueryParams) {
