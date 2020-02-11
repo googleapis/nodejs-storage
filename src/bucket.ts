@@ -54,6 +54,7 @@ import {
   GetSignedUrlCallback,
   SignerGetSignedUrlConfig,
   UrlSigner,
+  QueryParams,
 } from './signer';
 
 interface SourceObject {
@@ -246,6 +247,7 @@ export interface GetBucketSignedUrlConfig {
   cname?: string;
   expires: string | number | Date;
   extensionHeaders?: http.OutgoingHttpHeaders;
+  queryParams?: QueryParams;
 }
 
 export enum BucketActionToHTTPMethod {
@@ -2413,6 +2415,8 @@ class Bucket extends ServiceObject {
    *           no space. Requests made using the signed URL will need to
    *           delimit multi-valued headers using a single `,` as well, or
    *           else the server will report a mismatched signature.
+   * @param {object} [config.queryParams] Additional query parameters to include
+   *     in the signed URL.
    */
   /**
    * Get a signed URL to allow limited time access to a bucket.
@@ -2484,6 +2488,7 @@ class Bucket extends ServiceObject {
       version: cfg.version,
       cname: cfg.cname,
       extensionHeaders: cfg.extensionHeaders || {},
+      queryParams: cfg.queryParams || {},
     } as SignerGetSignedUrlConfig;
 
     if (!this.signer) {

@@ -35,6 +35,10 @@ export interface FileI {
   name: string;
 }
 
+export interface QueryParams {
+  [key: string]: string;
+}
+
 interface GetSignedUrlConfigInternal {
   expiration: number;
   method: string;
@@ -45,10 +49,6 @@ interface GetSignedUrlConfigInternal {
   contentType?: string;
   bucket: string;
   file?: string;
-}
-
-interface QueryParams {
-  [key: string]: string;
 }
 
 interface SignedUrlQuery {
