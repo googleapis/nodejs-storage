@@ -16,7 +16,7 @@ import * as crypto from 'crypto';
 import * as dateFormat from 'date-and-time';
 import * as http from 'http';
 import * as url from 'url';
-import {encodeURI, qsStringify, objectEntries, fixedEncodeURIComponent} from './util';
+import {encodeURI, qsStringify, objectEntries} from './util';
 
 interface GetCredentialsResponse {
   client_email?: string;
