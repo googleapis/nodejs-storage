@@ -83,7 +83,14 @@ describe('v4 signed url', () => {
       const {cname, urlStyle} = parseUrlStyle(testCase.urlStyle, domain);
       const extensionHeaders = testCase.headers;
       const queryParams = testCase.queryParameters;
-      const baseConfig = {extensionHeaders, version, expires, cname, urlStyle, queryParams};
+      const baseConfig = {
+        extensionHeaders,
+        version,
+        expires,
+        cname,
+        urlStyle,
+        queryParams,
+      };
       let signedUrl: string;
 
       if (testCase.object) {
@@ -120,7 +127,8 @@ describe('v4 signed url', () => {
       // Order-insensitive comparison of query params
       assert.deepStrictEqual(
         querystring.parse(actual.search),
-        querystring.parse(expected.search));
+        querystring.parse(expected.search)
+      );
 
       fakeTimer.restore();
     });
