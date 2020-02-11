@@ -242,7 +242,7 @@ export class UrlSigner {
         'X-Goog-Date': dateISO,
         'X-Goog-Expires': expiresPeriodInSeconds.toString(10),
         'X-Goog-SignedHeaders': signedHeaders,
-        ...config.queryParams || {},
+        ...(config.queryParams || {}),
       };
 
       // tslint:disable-next-line:no-any
@@ -253,7 +253,7 @@ export class UrlSigner {
         this.getResourcePath(!!config.cname, config.bucket, config.file),
         canonicalQueryParams,
         extensionHeadersString,
-        signedHeaders,
+        signedHeaders
       );
 
       const blobToSign = [
@@ -317,9 +317,20 @@ export class UrlSigner {
       .join('');
   }
 
-  getCanonicalRequestHash(method: string, path: string, query: string, headers: string, signedHeaders: string) {
+  getCanonicalRequestHash(
+    method: string,
+    path: string,
+    query: string,
+    headers: string,
+    signedHeaders: string
+  ) {
     const canonicalRequest = [
-      method, path, query, headers, signedHeaders, 'UNSIGNED-PAYLOAD'
+      method,
+      path,
+      query,
+      headers,
+      signedHeaders,
+      'UNSIGNED-PAYLOAD',
     ].join('\n');
 
     return crypto
@@ -330,11 +341,8 @@ export class UrlSigner {
 
   getCanonicalQueryParams(query: QueryParams) {
     return objectEntries(query)
-      .map(([key, value]) => [
-        encodeURI(key, true),
-        encodeURI(value, true)
-      ])
-      .sort((a, b) => (a[0] < b[0]) ? -1 : 1)
+      .map(([key, value]) => [encodeURI(key, true), encodeURI(value, true)])
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
       .map(([key, value]) => `${key}=${value}`)
       .join('&');
   }
