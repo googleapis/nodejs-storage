@@ -329,7 +329,7 @@ export class UrlSigner {
         encodeURI(key, true),
         encodeURI(value, true)
       ])
-      .sort((a, b) => a[0].localeCompare(b[0]))
+      .sort((a, b) => (a[0] < b[0]) ? -1 : 1)
       .map(([key, value]) => `${key}=${value}`)
       .join('&');
   }
