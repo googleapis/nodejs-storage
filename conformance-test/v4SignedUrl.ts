@@ -80,7 +80,8 @@ describe('v4 signed url', () => {
         : undefined;
       const {cname, urlStyle} = parseUrlStyle(testCase.urlStyle, domain);
       const extensionHeaders = testCase.headers;
-      const baseConfig = {extensionHeaders, version, expires, cname, urlStyle};
+      const queryParams = testCase.queryParameters;
+      const baseConfig = {extensionHeaders, version, expires, cname, urlStyle, queryParams};
 
       if (testCase.object) {
         const file = bucket.file(testCase.object);
