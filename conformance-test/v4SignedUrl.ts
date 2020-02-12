@@ -19,8 +19,10 @@ import * as fs from 'fs';
 import {OutgoingHttpHeaders} from 'http';
 import * as path from 'path';
 import * as sinon from 'sinon';
+import * as querystring from 'querystring';
 
-import {Storage} from '../src/';
+import {Storage, GetSignedUrlConfig, GetBucketSignedUrlConfig} from '../src/';
+import * as url from 'url';
 
 export enum UrlStyle {
   PATH_STYLE = 'PATH_STYLE',
@@ -83,13 +85,16 @@ describe('v4 signed url', () => {
         domain
       );
       const extensionHeaders = testCase.headers;
+      const queryParams = testCase.queryParameters;
       const baseConfig = {
         extensionHeaders,
         version,
         expires,
         cname,
         virtualHostedStyle,
+        queryParams,
       };
+      let signedUrl: string;
 
       if (testCase.object) {
         const file = bucket.file(testCase.object);
@@ -101,25 +106,35 @@ describe('v4 signed url', () => {
           DELETE: 'delete',
         } as FileAction)[testCase.method];
 
-        const [signedUrl] = await file.getSignedUrl({
-          action,
-          ...baseConfig,
-        });
+        const contentSha256 = testCase.headers && testCase.headers['X-Goog-Content-SHA256'] as string;
 
-        assert.strictEqual(signedUrl, testCase.expectedUrl);
+        [signedUrl] = await file.getSignedUrl({
+          action,
+          contentSha256,
+          ...baseConfig,
+        } as GetSignedUrlConfig);
       } else {
         // bucket operation
         const action = ({
           GET: 'list',
         } as BucketAction)[testCase.method];
 
-        const [signedUrl] = await bucket.getSignedUrl({
+        [signedUrl] = await bucket.getSignedUrl({
           action,
           ...baseConfig,
         });
-
-        assert.strictEqual(signedUrl, testCase.expectedUrl);
       }
+
+      const expected = new url.URL(testCase.expectedUrl);
+      const actual = new url.URL(signedUrl);
+
+      assert.strictEqual(actual.origin, expected.origin);
+      assert.strictEqual(actual.pathname, expected.pathname);
+      // Order-insensitive comparison of query params
+      assert.deepStrictEqual(
+        querystring.parse(actual.search),
+        querystring.parse(expected.search)
+      );
 
       fakeTimer.restore();
     });
