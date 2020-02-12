@@ -69,7 +69,7 @@ const SERVICE_ACCOUNT = path.join(
 describe('v4 signed url', () => {
   const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
 
-  [testCases[15]].forEach(testCase => {
+  testCases.forEach(testCase => {
     it(testCase.description, async () => {
       const NOW = new Date(testCase.timestamp);
 
