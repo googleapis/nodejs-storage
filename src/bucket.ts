@@ -54,7 +54,7 @@ import {
   GetSignedUrlCallback,
   SignerGetSignedUrlConfig,
   UrlSigner,
-  QueryParams,
+  Query,
 } from './signer';
 
 interface SourceObject {
@@ -247,7 +247,7 @@ export interface GetBucketSignedUrlConfig {
   cname?: string;
   expires: string | number | Date;
   extensionHeaders?: http.OutgoingHttpHeaders;
-  queryParams?: QueryParams;
+  queryParams?: Query;
 }
 
 export enum BucketActionToHTTPMethod {

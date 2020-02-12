@@ -50,7 +50,7 @@ import {
   GetSignedUrlCallback,
   UrlSigner,
   SignerGetSignedUrlConfig,
-  QueryParams,
+  Query,
 } from './signer';
 import {
   ResponseBody,
@@ -104,7 +104,7 @@ export interface GetSignedUrlConfig {
   promptSaveAs?: string;
   responseDisposition?: string;
   responseType?: string;
-  queryParams?: QueryParams;
+  queryParams?: Query;
 }
 
 export interface GetFileMetadataOptions {

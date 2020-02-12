@@ -35,7 +35,7 @@ export interface FileI {
   name: string;
 }
 
-export interface QueryParams {
+export interface Query {
   [key: string]: string;
 }
 
@@ -43,7 +43,7 @@ interface GetSignedUrlConfigInternal {
   expiration: number;
   method: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
-  queryParams?: QueryParams;
+  queryParams?: Query;
   cname?: string;
   contentMd5?: string;
   contentType?: string;
@@ -81,7 +81,7 @@ export interface SignerGetSignedUrlConfig {
   version?: 'v2' | 'v4';
   cname?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
-  queryParams?: QueryParams;
+  queryParams?: Query;
   contentMd5?: string;
   contentType?: string;
 }
@@ -236,7 +236,7 @@ export class UrlSigner {
       const credential = `${credentials.client_email}/${credentialScope}`;
       const dateISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
 
-      const queryParams: QueryParams = {
+      const queryParams: Query = {
         'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
         'X-Goog-Credential': credential,
         'X-Goog-Date': dateISO,
@@ -271,7 +271,7 @@ export class UrlSigner {
       try {
         const signature = await this.authClient.sign(blobToSign);
         const signatureHex = Buffer.from(signature, 'base64').toString('hex');
-        const signedQuery: QueryParams = Object.assign({}, queryParams, {
+        const signedQuery: Query = Object.assign({}, queryParams, {
           'X-Goog-Signature': signatureHex,
         });
         return signedQuery;
@@ -339,7 +339,7 @@ export class UrlSigner {
     ].join('\n');
   }
 
-  getCanonicalQueryParams(query: QueryParams) {
+  getCanonicalQueryParams(query: Query) {
     return objectEntries(query)
       .map(([key, value]) => [encodeURI(key, true), encodeURI(value, true)])
       .sort((a, b) => (a[0] < b[0] ? -1 : 1))
