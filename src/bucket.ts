@@ -2401,7 +2401,7 @@ class Bucket extends ServiceObject {
    *     'v2' or 'v4'.
    * @param {boolean} [virtualHostedStyle=false] Use virtual hosted-style
    *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
-   *     ('https://mybucket.storage.googleapis.com/...'). Virtual hosted-style URLs
+   *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
    *     should generally be preferred instaed of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
