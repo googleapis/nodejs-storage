@@ -317,9 +317,14 @@ export class UrlSigner {
       .join('');
   }
 
-  getResourcePath(cname: boolean, bucket: string, file?: string) {
-    const filePart = file ? `${file}` : '';
-    return '/' + (cname ? filePart : `${bucket}/${filePart}`);
+  getResourcePath(cname: boolean, bucket: string, file?: string): string {
+    if (cname) {
+      return file || '';
+    } else if (file) {
+      return `/${bucket}/${file}`;
+    } else {
+      return `/${bucket}`;
+    }
   }
 
   parseExpires(
