@@ -61,7 +61,6 @@ import {
 const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectKeyToLowercase} from './util';
 import {GaxiosError, Headers, request as gaxiosRequest} from 'gaxios';
-import { config } from 'xdg-basedir';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
