@@ -2403,8 +2403,8 @@ class Bucket extends ServiceObject {
    *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
    *     ('https://mybucket.storage.googleapis.com/...'). Virtual hosted-style URLs
    *     should generally be preferred instaed of path-style URL.
-   *     Currently defaults to 'path', although this may change in a future
-   *     major-version release.
+   *     Currently defaults to `false` for path-style, although this may change in a
+   *     future major-version release.
    * @property {string} [cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
    *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
