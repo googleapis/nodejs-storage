@@ -2314,6 +2314,10 @@ class File extends ServiceObject<File> {
    *     "delete" (HTTP: DELETE), "resumable" (HTTP: POST).
    *     When using "resumable", the header `X-Goog-Resumable: start` has
    *     to be sent when making a request with the signed URL.
+   * @param {*} config.expires A timestamp when this link will expire. Any value
+   *     given is passed to `new Date()`.
+   *     Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
+   *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
    * @param {string} [config.version='v2'] The signing version to use, either
    *     'v2' or 'v4'.
    * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
@@ -2324,6 +2328,10 @@ class File extends ServiceObject<File> {
    *     future major-version release.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
+   * @param {string} [config.contentSha256] The SHA256 digest value for the request
+   *     content. If you provide this value, the client must provide the HTTP header
+   *     `X-Goog-Content-SHA256` with the same value in its request, and the service
+   *     will verify that the content's SHA256 digest matches that provided here.
    * @param {string} [config.contentMd5] The MD5 digest value in base64. Just like
    *     if you provide this, the client must provide this HTTP header with this same
    *     value in its request, so to if this parameter is not provided here,
@@ -2332,10 +2340,6 @@ class File extends ServiceObject<File> {
    *     must provide this HTTP header with this same value in its request, so to if
    *     this parameter is not provided here, the client must not provide any value
    *     for this HTTP header in its request.
-   * @param {*} config.expires A timestamp when this link will expire. Any value
-   *     given is passed to `new Date()`.
-   *     Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
-   *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
    * @param {object} [config.extensionHeaders] If these headers are used, the
    *     server will check to make sure that the client provides matching
    * values. See [Canonical extension
