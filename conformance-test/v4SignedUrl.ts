@@ -21,7 +21,7 @@ import * as path from 'path';
 import * as sinon from 'sinon';
 import * as querystring from 'querystring';
 
-import {Storage} from '../src/';
+import {Storage, GetSignedUrlConfig, GetBucketSignedUrlConfig} from '../src/';
 import * as url from 'url';
 
 export enum UrlStyle {
@@ -69,7 +69,7 @@ const SERVICE_ACCOUNT = path.join(
 describe('v4 signed url', () => {
   const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
 
-  testCases.forEach(testCase => {
+  [testCases[15]].forEach(testCase => {
     it(testCase.description, async () => {
       const NOW = new Date(testCase.timestamp);
 
@@ -83,7 +83,7 @@ describe('v4 signed url', () => {
       const {cname, urlStyle} = parseUrlStyle(testCase.urlStyle, domain);
       const extensionHeaders = testCase.headers;
       const queryParams = testCase.queryParameters;
-      const baseConfig = {
+      let baseConfig = {
         extensionHeaders,
         version,
         expires,
@@ -103,10 +103,13 @@ describe('v4 signed url', () => {
           DELETE: 'delete',
         } as FileAction)[testCase.method];
 
+        const contentSha256 = testCase.headers && testCase.headers['X-Goog-Content-SHA256'] as string;
+
         [signedUrl] = await file.getSignedUrl({
           action,
+          contentSha256,
           ...baseConfig,
-        });
+        } as GetSignedUrlConfig);
       } else {
         // bucket operation
         const action = ({
