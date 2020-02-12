@@ -15,19 +15,30 @@
  */
 import * as assert from 'assert';
 import {describe, it} from 'mocha';
-import * as dateFormat from 'date-and-time';
 import * as fs from 'fs';
 import {OutgoingHttpHeaders} from 'http';
 import * as path from 'path';
 import * as sinon from 'sinon';
+import * as querystring from 'querystring';
 
-import {Storage} from '../src/';
+import {Storage, GetSignedUrlConfig, GetBucketSignedUrlConfig} from '../src/';
+import * as url from 'url';
+
+export enum UrlStyle {
+  PATH_STYLE = 'PATH_STYLE',
+  VIRTUAL_HOSTED_STYLE = 'VIRTUAL_HOSTED_STYLE',
+  BUCKET_BOUND_DOMAIN = 'BUCKET_BOUND_DOMAIN',
+}
 
 interface V4SignedURLConformanceTestCases {
   description: string;
   bucket: string;
-  object: string;
+  object?: string;
+  urlStyle?: UrlStyle;
+  bucketBoundDomain?: string;
+  scheme: 'https' | 'http';
   headers?: OutgoingHttpHeaders;
+  queryParameters?: {[key: string]: string};
   method: string;
   expiration: number;
   timestamp: string;
@@ -47,7 +58,8 @@ const testFile = fs.readFileSync(
   'utf-8'
 );
 
-const testCases = JSON.parse(testFile) as V4SignedURLConformanceTestCases[];
+const testCases = JSON.parse(testFile)
+  .signingV4Tests as V4SignedURLConformanceTestCases[];
 
 const SERVICE_ACCOUNT = path.join(
   __dirname,
@@ -59,15 +71,27 @@ describe('v4 signed url', () => {
 
   testCases.forEach(testCase => {
     it(testCase.description, async () => {
-      const NOW = dateFormat.parse(
-        testCase.timestamp,
-        'YYYYMMDD HHmmss ',
-        true
-      );
+      const NOW = new Date(testCase.timestamp);
 
       const fakeTimer = sinon.useFakeTimers(NOW);
       const bucket = storage.bucket(testCase.bucket);
       const expires = NOW.valueOf() + testCase.expiration * 1000;
+      const version = 'v4' as 'v4';
+      const domain = testCase.bucketBoundDomain
+        ? `${testCase.scheme}://${testCase.bucketBoundDomain}`
+        : undefined;
+      const {cname, urlStyle} = parseUrlStyle(testCase.urlStyle, domain);
+      const extensionHeaders = testCase.headers;
+      const queryParams = testCase.queryParameters;
+      let baseConfig = {
+        extensionHeaders,
+        version,
+        expires,
+        cname,
+        urlStyle,
+        queryParams,
+      };
+      let signedUrl: string;
 
       if (testCase.object) {
         const file = bucket.file(testCase.object);
@@ -79,31 +103,50 @@ describe('v4 signed url', () => {
           DELETE: 'delete',
         } as FileAction)[testCase.method];
 
-        const [signedUrl] = await file.getSignedUrl({
-          version: 'v4',
-          action,
-          expires,
-          extensionHeaders: testCase.headers,
-        });
+        const contentSha256 = testCase.headers && testCase.headers['X-Goog-Content-SHA256'] as string;
 
-        assert.strictEqual(signedUrl, testCase.expectedUrl);
+        [signedUrl] = await file.getSignedUrl({
+          action,
+          contentSha256,
+          ...baseConfig,
+        } as GetSignedUrlConfig);
       } else {
         // bucket operation
         const action = ({
           GET: 'list',
         } as BucketAction)[testCase.method];
 
-        const [signedUrl] = await bucket.getSignedUrl({
-          version: 'v4',
+        [signedUrl] = await bucket.getSignedUrl({
           action,
-          expires,
-          extensionHeaders: testCase.headers,
+          ...baseConfig,
         });
-
-        assert.strictEqual(signedUrl, testCase.expectedUrl);
       }
+
+      const expected = new url.URL(testCase.expectedUrl);
+      const actual = new url.URL(signedUrl);
+
+      assert.strictEqual(actual.origin, expected.origin);
+      assert.strictEqual(actual.pathname, expected.pathname);
+      // Order-insensitive comparison of query params
+      assert.deepStrictEqual(
+        querystring.parse(actual.search),
+        querystring.parse(expected.search)
+      );
 
       fakeTimer.restore();
     });
   });
 });
+
+function parseUrlStyle(
+  style?: UrlStyle,
+  domain?: string
+): {cname?: string; urlStyle?: 'path' | 'virtual-host'} {
+  if (style === UrlStyle.BUCKET_BOUND_DOMAIN) {
+    return {cname: domain};
+  } else if (style === UrlStyle.VIRTUAL_HOSTED_STYLE) {
+    return {urlStyle: 'virtual-host'};
+  } else {
+    return {urlStyle: 'path'};
+  }
+}
