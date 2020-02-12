@@ -429,9 +429,26 @@ describe('signer', () => {
           const qs1 = 'Z-Query=value';
           const qs2 = 'response-content-type=application%2Fjson';
 
-          assert(spy.firstCall.args[2].includes(`${qs1}&${qs2}`));
+          assert(spy.firstCall.returnValue.includes(`${qs1}&${qs2}`));
           assert(signedUrl.match(new RegExp(qs1)));
           assert(signedUrl.match(new RegExp(qs2)));
+        });
+      });
+
+      describe('v4 signed payload', () => {
+        it('shuold generate correct signed URL with a signed payload', async () => {
+          const spy = sandbox.spy(signer, 'getCanonicalRequest');
+
+          CONFIG.contentSha256 = 'sha256-hash';
+          CONFIG.version = 'v4';
+          const EXPECTED_HEADER = `x-goog-content-sha256:${CONFIG.contentSha256}`;
+
+          const signedUrl = await signer.getSignedUrl(CONFIG);
+
+          assert(spy.firstCall.returnValue.endsWith(CONFIG.contentSha256));
+          assert(spy.firstCall.args[3].includes(EXPECTED_HEADER));
+
+          assert(signedUrl.includes('X-Goog-SignedHeaders=host%3Bx-goog-content-sha256'));
         });
       });
 
