@@ -1783,6 +1783,7 @@ describe('Bucket', () => {
             version: 'v4',
             expires: SIGNED_URL_CONFIG.expires,
             extensionHeaders: {},
+            queryParams: {},
             cname: CNAME,
           });
           done();
