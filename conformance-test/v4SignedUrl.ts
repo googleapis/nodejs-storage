@@ -78,9 +78,18 @@ describe('v4 signed url', () => {
       const domain = testCase.bucketBoundDomain
         ? `${testCase.scheme}://${testCase.bucketBoundDomain}`
         : undefined;
-      const {cname, virtualHostedStyle} = parseUrlStyle(testCase.urlStyle, domain);
+      const {cname, virtualHostedStyle} = parseUrlStyle(
+        testCase.urlStyle,
+        domain
+      );
       const extensionHeaders = testCase.headers;
-      const baseConfig = {extensionHeaders, version, expires, cname, virtualHostedStyle};
+      const baseConfig = {
+        extensionHeaders,
+        version,
+        expires,
+        cname,
+        virtualHostedStyle,
+      };
 
       if (testCase.object) {
         const file = bucket.file(testCase.object);
