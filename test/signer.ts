@@ -387,7 +387,7 @@ describe('signer', () => {
         });
 
         it('should be sorted when computing v4 signature', async () => {
-          const spy = sandbox.spy(signer, 'getCanonicalRequestHash');
+          const spy = sandbox.spy(signer, 'getCanonicalRequest');
 
           const queryParams = {
             'response-content-type': 'application/json',
