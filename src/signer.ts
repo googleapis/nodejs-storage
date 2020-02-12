@@ -73,7 +73,7 @@ interface V4UrlQuery extends SignedUrlQuery {
 export interface SignerGetSignedUrlConfig {
   method: 'GET' | 'PUT' | 'DELETE' | 'POST';
   expires: string | number | Date;
-  urlStyle?: 'path' | 'virtual-host';
+  virtualHostedStyle?: boolean;
   version?: 'v2' | 'v4';
   cname?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
@@ -94,8 +94,6 @@ type HeaderValue = ValueOf<http.OutgoingHttpHeaders>;
  * Default signing version for getSignedUrl is 'v2'.
  */
 const DEFAULT_SIGNING_VERSION = 'v2';
-
-const DEFAULT_URL_STYLE = 'path';
 
 const SEVEN_DAYS = 604800;
 
@@ -121,11 +119,12 @@ export class UrlSigner {
     const method = cfg.method;
 
     let customHost: string | undefined;
-    const urlStyle = cfg.urlStyle || DEFAULT_URL_STYLE;
+    // Default style is `path`.
+    const isVirtualHostedStyle = cfg.virtualHostedStyle || false;
 
     if (cfg.cname) {
       customHost = cfg.cname;
-    } else if (urlStyle === 'virtual-host') {
+    } else if (isVirtualHostedStyle) {
       customHost = `https://${this.bucket.name}.storage.googleapis.com`;
     }
 

@@ -296,17 +296,17 @@ describe('signer', () => {
       });
 
       describe('urlStyle', () => {
-        it('should return a path-styled v4 URL if not specified', async () => {
+        it('should return a path-styled v4 URL if virtualHostedStyle is undefined', async () => {
           CONFIG.version = 'v4';
-          CONFIG.urlStyle = undefined;
+          CONFIG.virtualHostedStyle = undefined;
 
           const signedUrl = await signer.getSignedUrl(CONFIG);
           assert(signedUrl.includes(PATH_STYLED_HOST));
         });
 
-        it('should return a path-styled v2 URL if not specified', async () => {
+        it('should return a path-styled v2 URL if virtualHostedStyle is undefined', async () => {
           CONFIG.version = 'v2';
-          CONFIG.urlStyle = undefined;
+          CONFIG.virtualHostedStyle = undefined;
 
           const signedUrl = await signer.getSignedUrl(CONFIG);
           assert(signedUrl.includes(PATH_STYLED_HOST));
@@ -314,7 +314,7 @@ describe('signer', () => {
 
         it('should return a virtual-hosted style v4 URL', async () => {
           CONFIG.version = 'v4';
-          CONFIG.urlStyle = 'virtual-host';
+          CONFIG.virtualHostedStyle = true;
 
           const signedUrl = await signer.getSignedUrl(CONFIG);
           assert(

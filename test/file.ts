@@ -2812,6 +2812,8 @@ describe('File', () => {
     afterEach(() => sandbox.restore());
 
     it('should construct a UrlSigner and call getSignedUrl', done => {
+      SIGNED_URL_CONFIG.virtualHostedStyle = true;
+
       // assert signer is lazily-initialized.
       assert.strictEqual(file.signer, undefined);
       file.getSignedUrl(
@@ -2834,6 +2836,7 @@ describe('File', () => {
             extensionHeaders: {},
             queryParams: {},
             cname: CNAME,
+            virtualHostedStyle: true,
           });
           done();
         }

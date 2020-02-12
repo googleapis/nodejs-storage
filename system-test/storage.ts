@@ -3320,7 +3320,7 @@ describe('storage', () => {
 
     it('should create a virtual-hosted style URL', async () => {
       const [signedUrl] = await file.getSignedUrl({
-        urlStyle: 'virtual-host',
+        virtualHostedStyle: true,
         version: 'v4',
         action: 'read',
         expires: Date.now() + 5000,
