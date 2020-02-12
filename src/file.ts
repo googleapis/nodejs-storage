@@ -59,8 +59,9 @@ import {
   DuplexifyConstructor,
 } from '@google-cloud/common/build/src/util';
 const duplexify: DuplexifyConstructor = require('duplexify');
-import {normalize} from './util';
+import {normalize, objectKeyToLowercase} from './util';
 import {GaxiosError, Headers, request as gaxiosRequest} from 'gaxios';
+import { config } from 'xdg-basedir';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -98,6 +99,7 @@ export interface GetSignedUrlConfig {
   version?: 'v2' | 'v4';
   virtualHostedStyle?: boolean;
   cname?: string;
+  contentSha256?: string;
   contentMd5?: string;
   contentType?: string;
   expires: string | number | Date;
@@ -2435,7 +2437,7 @@ class File extends ServiceObject<File> {
     if (!method) {
       throw new Error('The action is not provided or invalid.');
     }
-    const extensionHeaders = Object.assign({}, cfg.extensionHeaders);
+    const extensionHeaders = objectKeyToLowercase(cfg.extensionHeaders || {});
     if (cfg.action === 'resumable') {
       extensionHeaders['x-goog-resumable'] = 'start';
     }
@@ -2460,6 +2462,9 @@ class File extends ServiceObject<File> {
       expires: cfg.expires,
       extensionHeaders,
       queryParams,
+      contentMd5: cfg.contentMd5,
+      contentType: cfg.contentType,
+      contentSha256: cfg.contentSha256,
     } as SignerGetSignedUrlConfig;
 
     if (cfg.cname) {

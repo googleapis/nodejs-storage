@@ -45,6 +45,7 @@ interface GetSignedUrlConfigInternal {
   extensionHeaders?: http.OutgoingHttpHeaders;
   queryParams?: Query;
   cname?: string;
+  contentSha256?: string;
   contentMd5?: string;
   contentType?: string;
   bucket: string;
@@ -83,6 +84,7 @@ export interface SignerGetSignedUrlConfig {
   cname?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
   queryParams?: Query;
+  contentSha256?: string;
   contentMd5?: string;
   contentType?: string;
 }
@@ -235,6 +237,9 @@ export class UrlSigner {
     if (config.contentType) {
       extensionHeaders['content-type'] = config.contentType;
     }
+    if (config.contentSha256) {
+      extensionHeaders['x-goog-content-sha256'] = config.contentSha256;
+    }
 
     const signedHeaders = Object.keys(extensionHeaders)
       .map(header => header.toLowerCase())
@@ -268,7 +273,8 @@ export class UrlSigner {
         this.getResourcePath(!!config.cname, config.bucket, config.file),
         canonicalQueryParams,
         extensionHeadersString,
-        signedHeaders
+        signedHeaders,
+        config.contentSha256,
       );
 
       const hash = crypto
@@ -342,7 +348,8 @@ export class UrlSigner {
     path: string,
     query: string,
     headers: string,
-    signedHeaders: string
+    signedHeaders: string,
+    contentSha256?: string,
   ) {
     return [
       method,
@@ -350,7 +357,7 @@ export class UrlSigner {
       query,
       headers,
       signedHeaders,
-      'UNSIGNED-PAYLOAD',
+      contentSha256 || 'UNSIGNED-PAYLOAD',
     ].join('\n');
   }
 

@@ -2812,12 +2812,17 @@ describe('File', () => {
     afterEach(() => sandbox.restore());
 
     it('should construct a UrlSigner and call getSignedUrl', done => {
-      SIGNED_URL_CONFIG.virtualHostedStyle = true;
-
+      const config = {
+        contentMd5: 'md5-hash',
+        contentSha256: 'sha256-hash',
+        contentType: 'application/json',
+        virtualHostedStyle: true,
+        ...SIGNED_URL_CONFIG,
+      }
       // assert signer is lazily-initialized.
       assert.strictEqual(file.signer, undefined);
       file.getSignedUrl(
-        SIGNED_URL_CONFIG,
+        config,
         (err: Error | null, signedUrl: string) => {
           assert.ifError(err);
           assert.strictEqual(file.signer, signer);
@@ -2832,9 +2837,12 @@ describe('File', () => {
           assert.deepStrictEqual(getSignedUrlArgs[0], {
             method: 'GET',
             version: 'v4',
-            expires: SIGNED_URL_CONFIG.expires,
+            expires: config.expires,
             extensionHeaders: {},
             queryParams: {},
+            contentMd5: config.contentMd5,
+            contentSha256: config.contentSha256,
+            contentType: config.contentType,
             cname: CNAME,
             virtualHostedStyle: true,
           });
