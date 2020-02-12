@@ -83,7 +83,7 @@ describe('v4 signed url', () => {
       const {cname, urlStyle} = parseUrlStyle(testCase.urlStyle, domain);
       const extensionHeaders = testCase.headers;
       const queryParams = testCase.queryParameters;
-      let baseConfig = {
+      const baseConfig = {
         extensionHeaders,
         version,
         expires,
