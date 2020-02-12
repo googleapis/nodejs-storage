@@ -50,6 +50,7 @@ import {
   GetSignedUrlCallback,
   UrlSigner,
   SignerGetSignedUrlConfig,
+  Query,
 } from './signer';
 import {
   ResponseBody,
@@ -103,6 +104,7 @@ export interface GetSignedUrlConfig {
   promptSaveAs?: string;
   responseDisposition?: string;
   responseType?: string;
+  queryParams?: Query;
 }
 
 export interface GetFileMetadataOptions {
@@ -2338,6 +2340,8 @@ class File extends ServiceObject<File> {
    *           no space. Requests made using the signed URL will need to
    *           delimit multi-valued headers using a single `,` as well, or
    *           else the server will report a mismatched signature.
+   * @param {object} [config.queryParams] Additional query parameters to include
+   *     in the signed URL.
    * @param {string} [config.promptSaveAs] The filename to prompt the user to
    *     save the file as when the signed url is accessed. This is ignored if
    *     `config.responseDisposition` is set.
@@ -2429,7 +2433,7 @@ class File extends ServiceObject<File> {
       extensionHeaders['x-goog-resumable'] = 'start';
     }
 
-    const queryParams: {[key: string]: string} = {};
+    const queryParams = Object.assign({}, cfg.queryParams);
     if (typeof cfg.responseType === 'string') {
       queryParams['response-content-type'] = cfg.responseType!;
     }

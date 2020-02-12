@@ -373,7 +373,7 @@ describe('signer', () => {
       });
 
       describe('queryParams', () => {
-        it('should make its way to the signed url', async () => {
+        it('should add queryParams to v2 URL', async () => {
           const queryParams = {
             'response-content-type': 'application/json',
           };
@@ -384,6 +384,26 @@ describe('signer', () => {
           const qs = 'response-content-type=application%2Fjson';
 
           assert(signedUrl.match(new RegExp(qs)));
+        });
+
+        it('should be sorted when computing v4 signature', async () => {
+          const spy = sandbox.spy(signer, 'getCanonicalRequest');
+
+          const queryParams = {
+            'response-content-type': 'application/json',
+            'Z-Query': 'value',
+          };
+
+          CONFIG.queryParams = queryParams;
+          CONFIG.version = 'v4';
+          const signedUrl = await signer.getSignedUrl(CONFIG);
+
+          const qs1 = 'Z-Query=value';
+          const qs2 = 'response-content-type=application%2Fjson';
+
+          assert(spy.firstCall.args[2].includes(`${qs1}&${qs2}`));
+          assert(signedUrl.match(new RegExp(qs1)));
+          assert(signedUrl.match(new RegExp(qs2)));
         });
       });
 

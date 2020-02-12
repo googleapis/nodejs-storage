@@ -35,10 +35,15 @@ export interface FileI {
   name: string;
 }
 
+export interface Query {
+  [key: string]: string;
+}
+
 interface GetSignedUrlConfigInternal {
   expiration: number;
   method: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
+  queryParams?: Query;
   cname?: string;
   contentMd5?: string;
   contentType?: string;
@@ -76,7 +81,7 @@ export interface SignerGetSignedUrlConfig {
   version?: 'v2' | 'v4';
   cname?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
-  queryParams?: {[key: string]: string};
+  queryParams?: Query;
   contentMd5?: string;
   contentType?: string;
 }
@@ -231,27 +236,27 @@ export class UrlSigner {
       const credential = `${credentials.client_email}/${credentialScope}`;
       const dateISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
 
-      const queryParams: V4UrlQuery = {
+      const queryParams: Query = {
         'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
         'X-Goog-Credential': credential,
         'X-Goog-Date': dateISO,
-        'X-Goog-Expires': expiresPeriodInSeconds,
+        'X-Goog-Expires': expiresPeriodInSeconds.toString(10),
         'X-Goog-SignedHeaders': signedHeaders,
+        ...(config.queryParams || {}),
       };
 
       // tslint:disable-next-line:no-any
-      const canonicalQueryParams = qsStringify(queryParams as any);
+      const canonicalQueryParams = this.getCanonicalQueryParams(queryParams);
 
-      const canonicalRequest = [
+      const canonicalRequest = this.getCanonicalRequest(
         config.method,
         this.getResourcePath(!!config.cname, config.bucket, config.file),
         canonicalQueryParams,
         extensionHeadersString,
-        signedHeaders,
-        'UNSIGNED-PAYLOAD',
-      ].join('\n');
+        signedHeaders
+      );
 
-      const canonicalRequestHash = crypto
+      const hash = crypto
         .createHash('sha256')
         .update(canonicalRequest)
         .digest('hex');
@@ -260,13 +265,13 @@ export class UrlSigner {
         'GOOG4-RSA-SHA256',
         dateISO,
         credentialScope,
-        canonicalRequestHash,
+        hash,
       ].join('\n');
 
       try {
         const signature = await this.authClient.sign(blobToSign);
         const signatureHex = Buffer.from(signature, 'base64').toString('hex');
-        const signedQuery: V4SignedUrlQuery = Object.assign({}, queryParams, {
+        const signedQuery: Query = Object.assign({}, queryParams, {
           'X-Goog-Signature': signatureHex,
         });
         return signedQuery;
@@ -315,6 +320,31 @@ export class UrlSigner {
         return `${headerName}:${canonicalValue}\n`;
       })
       .join('');
+  }
+
+  getCanonicalRequest(
+    method: string,
+    path: string,
+    query: string,
+    headers: string,
+    signedHeaders: string
+  ) {
+    return [
+      method,
+      path,
+      query,
+      headers,
+      signedHeaders,
+      'UNSIGNED-PAYLOAD',
+    ].join('\n');
+  }
+
+  getCanonicalQueryParams(query: Query) {
+    return objectEntries(query)
+      .map(([key, value]) => [encodeURI(key, true), encodeURI(value, true)])
+      .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+      .map(([key, value]) => `${key}=${value}`)
+      .join('&');
   }
 
   getResourcePath(cname: boolean, bucket: string, file?: string): string {
