@@ -80,7 +80,10 @@ describe('v4 signed url', () => {
       const domain = testCase.bucketBoundDomain
         ? `${testCase.scheme}://${testCase.bucketBoundDomain}`
         : undefined;
-      const {cname, urlStyle} = parseUrlStyle(testCase.urlStyle, domain);
+      const {cname, virtualHostedStyle} = parseUrlStyle(
+        testCase.urlStyle,
+        domain
+      );
       const extensionHeaders = testCase.headers;
       const queryParams = testCase.queryParameters;
       const baseConfig = {
@@ -88,7 +91,7 @@ describe('v4 signed url', () => {
         version,
         expires,
         cname,
-        urlStyle,
+        virtualHostedStyle,
         queryParams,
       };
       let signedUrl: string;
@@ -141,12 +144,12 @@ describe('v4 signed url', () => {
 function parseUrlStyle(
   style?: UrlStyle,
   domain?: string
-): {cname?: string; urlStyle?: 'path' | 'virtual-host'} {
+): {cname?: string; virtualHostedStyle?: boolean} {
   if (style === UrlStyle.BUCKET_BOUND_DOMAIN) {
     return {cname: domain};
   } else if (style === UrlStyle.VIRTUAL_HOSTED_STYLE) {
-    return {urlStyle: 'virtual-host'};
+    return {virtualHostedStyle: true};
   } else {
-    return {urlStyle: 'path'};
+    return {virtualHostedStyle: false};
   }
 }

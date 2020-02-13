@@ -96,6 +96,7 @@ export interface GetSignedPolicyOptions {
 export interface GetSignedUrlConfig {
   action: 'read' | 'write' | 'delete' | 'resumable';
   version?: 'v2' | 'v4';
+  virtualHostedStyle?: boolean;
   cname?: string;
   contentMd5?: string;
   contentType?: string;
@@ -2314,6 +2315,12 @@ class File extends ServiceObject<File> {
    *     to be sent when making a request with the signed URL.
    * @param {string} [config.version='v2'] The signing version to use, either
    *     'v2' or 'v4'.
+   * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
+   *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
+   *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
+   *     should generally be preferred instaed of path-style URL.
+   *     Currently defaults to `false` for path-style, although this may change in a
+   *     future major-version release.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
    * @param {string} [config.contentMd5] The MD5 digest value in base64. Just like
@@ -2461,6 +2468,10 @@ class File extends ServiceObject<File> {
 
     if (cfg.version) {
       signConfig.version = cfg.version;
+    }
+
+    if (cfg.virtualHostedStyle) {
+      signConfig.virtualHostedStyle = cfg.virtualHostedStyle;
     }
 
     if (!this.signer) {

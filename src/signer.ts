@@ -78,6 +78,7 @@ interface V4UrlQuery extends SignedUrlQuery {
 export interface SignerGetSignedUrlConfig {
   method: 'GET' | 'PUT' | 'DELETE' | 'POST';
   expires: string | number | Date;
+  virtualHostedStyle?: boolean;
   version?: 'v2' | 'v4';
   cname?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
@@ -122,12 +123,26 @@ export class UrlSigner {
     const expiresInSeconds = this.parseExpires(cfg.expires);
     const method = cfg.method;
 
+    let customHost: string | undefined;
+    // Default style is `path`.
+    const isVirtualHostedStyle = cfg.virtualHostedStyle || false;
+
+    if (cfg.cname) {
+      customHost = cfg.cname;
+    } else if (isVirtualHostedStyle) {
+      customHost = `https://${this.bucket.name}.storage.googleapis.com`;
+    }
+
     const config: GetSignedUrlConfigInternal = Object.assign({}, cfg, {
       method,
       expiration: expiresInSeconds,
       bucket: this.bucket.name,
       file: this.file ? encodeURI(this.file.name, false) : undefined,
     });
+
+    if (customHost) {
+      config.cname = customHost;
+    }
 
     const version = cfg.version || DEFAULT_SIGNING_VERSION;
 
