@@ -3295,6 +3295,19 @@ describe('storage', () => {
       assert.strictEqual(body, localFile.toString());
     });
 
+    it('should create a virtual-hosted style URL', async () => {
+      const [signedUrl] = await file.getSignedUrl({
+        virtualHostedStyle: true,
+        version: 'v4',
+        action: 'read',
+        expires: Date.now() + 5000,
+      });
+
+      const res = await fetch(signedUrl);
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
+    });
+
     it('should create a signed delete url', async () => {
       const [signedDeleteUrl] = await file.getSignedUrl({
         version: 'v4',
@@ -3316,19 +3329,6 @@ describe('storage', () => {
       const body = await res.text();
       assert.strictEqual(res.status, 200);
       assert(body.includes('ListBucketResult'));
-    });
-
-    it('should create a virtual-hosted style URL', async () => {
-      const [signedUrl] = await file.getSignedUrl({
-        virtualHostedStyle: true,
-        version: 'v4',
-        action: 'read',
-        expires: Date.now() + 5000,
-      });
-
-      const res = await fetch(signedUrl);
-      const body = await res.text();
-      assert.strictEqual(body, localFile.toString());
     });
   });
 
