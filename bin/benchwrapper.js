@@ -16,6 +16,8 @@ const grpc = require('grpc');
 const protoLoader = require('@grpc/proto-loader');
 const {Storage} = require('../build/src');
 
+process.on('unhandledRejection', up => { throw up })
+
 const argv = require('yargs')
   .option('port', {
     description: 'The port that the Node.js benchwrapper should run on.',
