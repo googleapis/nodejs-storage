@@ -2814,7 +2814,6 @@ describe('File', () => {
     it('should construct a UrlSigner and call getSignedUrl', done => {
       const config = {
         contentMd5: 'md5-hash',
-        contentSha256: 'sha256-hash',
         contentType: 'application/json',
         virtualHostedStyle: true,
         ...SIGNED_URL_CONFIG,
@@ -2841,7 +2840,6 @@ describe('File', () => {
             extensionHeaders: {},
             queryParams: {},
             contentMd5: config.contentMd5,
-            contentSha256: config.contentSha256,
             contentType: config.contentType,
             cname: CNAME,
             virtualHostedStyle: true,

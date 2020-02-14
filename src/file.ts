@@ -98,7 +98,6 @@ export interface GetSignedUrlConfig {
   version?: 'v2' | 'v4';
   virtualHostedStyle?: boolean;
   cname?: string;
-  contentSha256?: string;
   contentMd5?: string;
   contentType?: string;
   expires: string | number | Date;
@@ -2328,10 +2327,6 @@ class File extends ServiceObject<File> {
    *     future major-version release.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
    *     "https://cdn.example.com".
-   * @param {string} [config.contentSha256] The SHA256 digest value for the request
-   *     content. If you provide this value, the client must provide the HTTP header
-   *     `X-Goog-Content-SHA256` with the same value in its request, and the service
-   *     will verify that the content's SHA256 digest matches that provided here.
    * @param {string} [config.contentMd5] The MD5 digest value in base64. Just like
    *     if you provide this, the client must provide this HTTP header with this same
    *     value in its request, so to if this parameter is not provided here,
@@ -2467,7 +2462,6 @@ class File extends ServiceObject<File> {
       queryParams,
       contentMd5: cfg.contentMd5,
       contentType: cfg.contentType,
-      contentSha256: cfg.contentSha256,
     } as SignerGetSignedUrlConfig;
 
     if (cfg.cname) {

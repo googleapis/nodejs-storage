@@ -436,20 +436,36 @@ describe('signer', () => {
       });
 
       describe('v4 signed payload', () => {
-        it('shuold generate correct signed URL with a signed payload', async () => {
+        it('should generate correct signed URL with a signed payload', async () => {
           const spy = sandbox.spy(signer, 'getCanonicalRequest');
 
-          CONFIG.contentSha256 = 'sha256-hash';
+          const SHA = '76af7efae0d034d1e3335ed1b90f24b6cadf2bf1';
           CONFIG.version = 'v4';
-          const EXPECTED_HEADER = `x-goog-content-sha256:${CONFIG.contentSha256}`;
+          CONFIG.extensionHeaders = {
+            ['x-goog-content-sha256']: SHA,
+            ...CONFIG.extensionHeaders,
+          };
+          const EXPECTED_HEADER = `x-goog-content-sha256:${SHA}`;
 
           const signedUrl = await signer.getSignedUrl(CONFIG);
 
-          assert(spy.firstCall.returnValue.endsWith(CONFIG.contentSha256));
+          assert(spy.firstCall.returnValue.endsWith(SHA));
           assert(spy.firstCall.args[3].includes(EXPECTED_HEADER));
 
           assert(signedUrl.includes('X-Goog-SignedHeaders=host%3Bx-goog-content-sha256'));
         });
+
+        it('should error if X-Goog-Content-SHA256 is not a hexadecimal string', () => {
+          const SHA = 'not-a-hash';
+
+          CONFIG.version = 'v4';
+          CONFIG.extensionHeaders = {
+            ['x-goog-content-sha256']: SHA,
+            ...CONFIG.extensionHeaders,
+          };
+
+          assert.throws(() => signer.getSignedUrl(CONFIG), /must be a hexadecimal string/);
+        })
       });
 
       describe('bucket operations', () => {

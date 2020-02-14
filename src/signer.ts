@@ -45,7 +45,6 @@ interface GetSignedUrlConfigInternal {
   extensionHeaders?: http.OutgoingHttpHeaders;
   queryParams?: Query;
   cname?: string;
-  contentSha256?: string;
   contentMd5?: string;
   contentType?: string;
   bucket: string;
@@ -84,7 +83,6 @@ export interface SignerGetSignedUrlConfig {
   cname?: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
   queryParams?: Query;
-  contentSha256?: string;
   contentMd5?: string;
   contentType?: string;
 }
@@ -237,8 +235,14 @@ export class UrlSigner {
     if (config.contentType) {
       extensionHeaders['content-type'] = config.contentType;
     }
-    if (config.contentSha256) {
-      extensionHeaders['x-goog-content-sha256'] = config.contentSha256;
+
+    let contentSha256: string;
+    const sha256Header = extensionHeaders['x-goog-content-sha256'];
+    if (sha256Header) {
+      if (typeof sha256Header !== 'string' || !/[A-Fa-f0-9]{40}/.test(sha256Header)) {
+        throw new Error('The header X-Goog-Content-SHA256 must be a hexadecimal string.');
+      }
+      contentSha256 = sha256Header;
     }
 
     const signedHeaders = Object.keys(extensionHeaders)
@@ -274,7 +278,7 @@ export class UrlSigner {
         canonicalQueryParams,
         extensionHeadersString,
         signedHeaders,
-        config.contentSha256,
+        contentSha256,
       );
 
       const hash = crypto
