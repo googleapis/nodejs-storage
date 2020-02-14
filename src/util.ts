@@ -91,7 +91,7 @@ export function objectKeyToLowercase<T>(object: {[key: string]: T}) {
   for (let key of Object.keys(object)) {
     const value = object[key];
     key = key.toLowerCase();
-    newObj[key] = value
+    newObj[key] = value;
   }
   return newObj;
 }

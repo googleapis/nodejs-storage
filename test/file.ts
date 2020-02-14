@@ -2817,36 +2817,33 @@ describe('File', () => {
         contentType: 'application/json',
         virtualHostedStyle: true,
         ...SIGNED_URL_CONFIG,
-      }
+      };
       // assert signer is lazily-initialized.
       assert.strictEqual(file.signer, undefined);
-      file.getSignedUrl(
-        config,
-        (err: Error | null, signedUrl: string) => {
-          assert.ifError(err);
-          assert.strictEqual(file.signer, signer);
-          assert.strictEqual(signedUrl, EXPECTED_SIGNED_URL);
+      file.getSignedUrl(config, (err: Error | null, signedUrl: string) => {
+        assert.ifError(err);
+        assert.strictEqual(file.signer, signer);
+        assert.strictEqual(signedUrl, EXPECTED_SIGNED_URL);
 
-          const ctorArgs = urlSignerStub.getCall(0).args;
-          assert.strictEqual(ctorArgs[0], file.storage.authClient);
-          assert.strictEqual(ctorArgs[1], file.bucket);
-          assert.strictEqual(ctorArgs[2], file);
+        const ctorArgs = urlSignerStub.getCall(0).args;
+        assert.strictEqual(ctorArgs[0], file.storage.authClient);
+        assert.strictEqual(ctorArgs[1], file.bucket);
+        assert.strictEqual(ctorArgs[2], file);
 
-          const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
-          assert.deepStrictEqual(getSignedUrlArgs[0], {
-            method: 'GET',
-            version: 'v4',
-            expires: config.expires,
-            extensionHeaders: {},
-            queryParams: {},
-            contentMd5: config.contentMd5,
-            contentType: config.contentType,
-            cname: CNAME,
-            virtualHostedStyle: true,
-          });
-          done();
-        }
-      );
+        const getSignedUrlArgs = signerGetSignedUrlStub.getCall(0).args;
+        assert.deepStrictEqual(getSignedUrlArgs[0], {
+          method: 'GET',
+          version: 'v4',
+          expires: config.expires,
+          extensionHeaders: {},
+          queryParams: {},
+          contentMd5: config.contentMd5,
+          contentType: config.contentType,
+          cname: CNAME,
+          virtualHostedStyle: true,
+        });
+        done();
+      });
     });
 
     it('should error if action is null', () => {

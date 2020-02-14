@@ -452,7 +452,11 @@ describe('signer', () => {
           assert(spy.firstCall.returnValue.endsWith(SHA));
           assert(spy.firstCall.args[3].includes(EXPECTED_HEADER));
 
-          assert(signedUrl.includes('X-Goog-SignedHeaders=host%3Bx-goog-content-sha256'));
+          assert(
+            signedUrl.includes(
+              'X-Goog-SignedHeaders=host%3Bx-goog-content-sha256'
+            )
+          );
         });
 
         it('should error if X-Goog-Content-SHA256 is not a hexadecimal string', () => {
@@ -464,8 +468,11 @@ describe('signer', () => {
             ...CONFIG.extensionHeaders,
           };
 
-          assert.throws(() => signer.getSignedUrl(CONFIG), /must be a hexadecimal string/);
-        })
+          assert.throws(
+            () => signer.getSignedUrl(CONFIG),
+            /must be a hexadecimal string/
+          );
+        });
       });
 
       describe('bucket operations', () => {
