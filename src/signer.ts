@@ -364,7 +364,7 @@ export class UrlSigner {
 
   getResourcePath(cname: boolean, bucket: string, file?: string): string {
     if (cname) {
-      return file || '';
+      return '/' + (file || '');
     } else if (file) {
       return `/${bucket}/${file}`;
     } else {
