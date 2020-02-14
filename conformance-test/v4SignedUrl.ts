@@ -106,11 +106,8 @@ describe('v4 signed url', () => {
           DELETE: 'delete',
         } as FileAction)[testCase.method];
 
-        const contentSha256 = testCase.headers && testCase.headers['X-Goog-Content-SHA256'] as string;
-
         [signedUrl] = await file.getSignedUrl({
           action,
-          contentSha256,
           ...baseConfig,
         } as GetSignedUrlConfig);
       } else {

@@ -236,6 +236,15 @@ export class UrlSigner {
       extensionHeaders['content-type'] = config.contentType;
     }
 
+    let contentSha256: string;
+    const sha256Header = extensionHeaders['x-goog-content-sha256'];
+    if (sha256Header) {
+      if (typeof sha256Header !== 'string' || !/[A-Fa-f0-9]{40}/.test(sha256Header)) {
+        throw new Error('The header X-Goog-Content-SHA256 must be a hexadecimal string.');
+      }
+      contentSha256 = sha256Header;
+    }
+
     const signedHeaders = Object.keys(extensionHeaders)
       .map(header => header.toLowerCase())
       .sort()
@@ -268,7 +277,8 @@ export class UrlSigner {
         this.getResourcePath(!!config.cname, config.bucket, config.file),
         canonicalQueryParams,
         extensionHeadersString,
-        signedHeaders
+        signedHeaders,
+        contentSha256,
       );
 
       const hash = crypto
@@ -342,7 +352,8 @@ export class UrlSigner {
     path: string,
     query: string,
     headers: string,
-    signedHeaders: string
+    signedHeaders: string,
+    contentSha256?: string,
   ) {
     return [
       method,
@@ -350,7 +361,7 @@ export class UrlSigner {
       query,
       headers,
       signedHeaders,
-      'UNSIGNED-PAYLOAD',
+      contentSha256 || 'UNSIGNED-PAYLOAD',
     ].join('\n');
   }
 

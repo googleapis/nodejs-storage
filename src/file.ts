@@ -59,7 +59,7 @@ import {
   DuplexifyConstructor,
 } from '@google-cloud/common/build/src/util';
 const duplexify: DuplexifyConstructor = require('duplexify');
-import {normalize} from './util';
+import {normalize, objectKeyToLowercase} from './util';
 import {GaxiosError, Headers, request as gaxiosRequest} from 'gaxios';
 
 export type GetExpirationDateResponse = [Date];
@@ -2313,6 +2313,10 @@ class File extends ServiceObject<File> {
    *     "delete" (HTTP: DELETE), "resumable" (HTTP: POST).
    *     When using "resumable", the header `X-Goog-Resumable: start` has
    *     to be sent when making a request with the signed URL.
+   * @param {*} config.expires A timestamp when this link will expire. Any value
+   *     given is passed to `new Date()`.
+   *     Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
+   *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
    * @param {string} [config.version='v2'] The signing version to use, either
    *     'v2' or 'v4'.
    * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
@@ -2331,10 +2335,6 @@ class File extends ServiceObject<File> {
    *     must provide this HTTP header with this same value in its request, so to if
    *     this parameter is not provided here, the client must not provide any value
    *     for this HTTP header in its request.
-   * @param {*} config.expires A timestamp when this link will expire. Any value
-   *     given is passed to `new Date()`.
-   *     Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
-   *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
    * @param {object} [config.extensionHeaders] If these headers are used, the
    *     server will check to make sure that the client provides matching
    * values. See [Canonical extension
@@ -2435,7 +2435,7 @@ class File extends ServiceObject<File> {
     if (!method) {
       throw new Error('The action is not provided or invalid.');
     }
-    const extensionHeaders = Object.assign({}, cfg.extensionHeaders);
+    const extensionHeaders = objectKeyToLowercase(cfg.extensionHeaders || {});
     if (cfg.action === 'resumable') {
       extensionHeaders['x-goog-resumable'] = 'start';
     }
@@ -2460,6 +2460,8 @@ class File extends ServiceObject<File> {
       expires: cfg.expires,
       extensionHeaders,
       queryParams,
+      contentMd5: cfg.contentMd5,
+      contentType: cfg.contentType,
     } as SignerGetSignedUrlConfig;
 
     if (cfg.cname) {
