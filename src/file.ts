@@ -72,6 +72,7 @@ export interface GetSignedUrlConfig {
   contentMd5?: string;
   contentType?: string;
   expires: string | number | Date;
+  usableFrom?: string | number | Date;
   extensionHeaders?: http.OutgoingHttpHeaders;
   promptSaveAs?: string;
   responseDisposition?: string;
@@ -80,6 +81,7 @@ export interface GetSignedUrlConfig {
 
 interface GetSignedUrlConfigInternal {
   expiration: number;
+  usableFrom: Date;
   method: string;
   name: string;
   resource?: string;
@@ -2409,6 +2411,10 @@ class File extends ServiceObject<File> {
    *     signed url.
    * @param {string} [config.responseType] The response-content-type parameter
    *     of the signed url.
+   * @param {*} [config.usableFrom=Date.now()] A timestamp when this link became usable. Any value
+   *     given is passed to `new Date()`.
+   *     Note: Use for 'v4' only.
+   *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
    * @param {GetSignedUrlCallback} [callback] Callback function.
    * @returns {Promise<GetSignedUrlResponse>}
    *
@@ -2483,17 +2489,30 @@ class File extends ServiceObject<File> {
     cfg: GetSignedUrlConfig,
     callback?: GetSignedUrlCallback
   ): void | Promise<GetSignedUrlResponse> {
+    const usableFromInMSeconds = new Date(
+      cfg.usableFrom || new Date()
+    ).valueOf();
+
+    if (isNaN(usableFromInMSeconds)) {
+      throw new Error('The usable from date provided was invalid.');
+    }
+
     const expiresInMSeconds = new Date(cfg.expires).valueOf();
 
     if (isNaN(expiresInMSeconds)) {
       throw new Error('The expiration date provided was invalid.');
     }
 
-    if (expiresInMSeconds < Date.now()) {
-      throw new Error('An expiration date cannot be in the past.');
+    if (expiresInMSeconds < usableFromInMSeconds) {
+      if (cfg.usableFrom) {
+        throw new Error('An expiration date cannot be before usable date.');
+      } else {
+        throw new Error('An expiration date cannot be in the past.');
+      }
     }
 
     const expiresInSeconds = Math.round(expiresInMSeconds / 1000); // The API expects seconds.
+    const usableFrom = new Date(Math.floor(usableFromInMSeconds / 1000) * 1000); // The API expects seconds.
 
     const method = ActionToHTTPMethod[cfg.action];
 
@@ -2509,6 +2528,7 @@ class File extends ServiceObject<File> {
     const config: GetSignedUrlConfigInternal = Object.assign({}, cfg, {
       method,
       expiration: expiresInSeconds,
+      usableFrom,
       resource,
       name,
     });
@@ -2598,9 +2618,8 @@ class File extends ServiceObject<File> {
   private getSignedUrlV4(
     config: GetSignedUrlConfigInternal
   ): Promise<SignedUrlQuery> {
-    const now = new Date();
-    const nowInSeconds = Math.floor(now.valueOf() / 1000);
-    const expiresPeriodInSeconds = config.expiration - nowInSeconds;
+    const expiresPeriodInSeconds =
+      config.expiration - config.usableFrom.valueOf() / 1000;
 
     // v4 limit expiration to be 7 days maximum
     if (expiresPeriodInSeconds > SEVEN_DAYS) {
@@ -2629,12 +2648,16 @@ class File extends ServiceObject<File> {
 
     const extensionHeadersString = this.getCanonicalHeaders(extensionHeaders);
 
-    const datestamp = dateFormat.format(now, 'YYYYMMDD', true);
+    const datestamp = dateFormat.format(config.usableFrom, 'YYYYMMDD', true);
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
 
     return this.storage.authClient.getCredentials().then(credentials => {
       const credential = `${credentials.client_email}/${credentialScope}`;
-      const dateISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
+      const dateISO = dateFormat.format(
+        config.usableFrom,
+        'YYYYMMDD[T]HHmmss[Z]',
+        true
+      );
 
       const queryParams: V4UrlQuery = {
         'X-Goog-Algorithm': 'GOOG4-RSA-SHA256',
