@@ -3277,6 +3277,19 @@ describe('storage', () => {
       assert.strictEqual(body, localFile.toString());
     });
 
+    it('should create a signed read url with usableFrom', async () => {
+      const [signedReadUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        usableFrom: Date.now() - 5000,
+        expires: Date.now() + 5000,
+      });
+
+      const res = await fetch(signedReadUrl);
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
+    });
+
     it('should work with special characters in extension headers', async () => {
       const HEADERS = {
         'x-goog-custom-header': ['value1', "azAZ!*'()*%"],
