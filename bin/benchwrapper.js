@@ -44,7 +44,7 @@ function read(call, callback) {
   const bucketName = call.request.bucketName;
   const objectName = call.request.objectName;
 
-  storageClient
+  await storageClient
     .bucket(bucketName)
     .file(objectName)
     .download({validation: false});
