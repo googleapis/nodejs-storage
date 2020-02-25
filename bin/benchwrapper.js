@@ -16,8 +16,6 @@ const grpc = require('grpc');
 const protoLoader = require('@grpc/proto-loader');
 const {Storage} = require('../build/src');
 
-process.on('unhandledRejection', up => { throw up })
-
 const argv = require('yargs')
   .option('port', {
     description: 'The port that the Node.js benchwrapper should run on.',
@@ -41,6 +39,8 @@ const storageBenchWrapper = protoDescriptor.storage_bench;
 const storageClient = new Storage();
 
 function read(call, callback) {
+  console.log('starting read');
+
   const bucketName = call.request.bucketName;
   const objectName = call.request.objectName;
 
@@ -50,6 +50,8 @@ function read(call, callback) {
     .download({validation: false});
 
   callback(null, null);
+  console.log('ending read');
+
 }
 
 function write(call, callback) {
