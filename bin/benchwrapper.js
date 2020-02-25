@@ -39,19 +39,14 @@ const storageBenchWrapper = protoDescriptor.storage_bench;
 const storageClient = new Storage();
 
 function read(call, callback) {
-  console.log('starting read');
-
   const bucketName = call.request.bucketName;
   const objectName = call.request.objectName;
 
-  await storageClient
+  storageClient
     .bucket(bucketName)
     .file(objectName)
-    .download({validation: false});
-
-  callback(null, null);
-  console.log('ending read');
-
+    .download({validation: false})
+    .then(() => callback(null, null))
 }
 
 function write(call, callback) {
