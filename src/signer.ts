@@ -39,7 +39,7 @@ export interface Query {
   [key: string]: string;
 }
 
-interface GetSignedUrlConfigInternal {
+export interface GetSignedUrlConfigInternal {
   expiration: number;
   method: string;
   extensionHeaders?: http.OutgoingHttpHeaders;
