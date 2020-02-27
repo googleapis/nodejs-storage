@@ -55,11 +55,23 @@ describe('signer', () => {
       file = {name: FILE_NAME};
     });
 
-    it('should construct a UrlSigner', () => {
-      const signer = new UrlSigner(authClient, bucket, file);
-      assert.strictEqual(signer['authClient'], authClient);
-      assert.strictEqual(signer['bucket'], bucket);
-      assert.strictEqual(signer['file'], file);
+    describe('UrlSigner', () => {
+      let signer: UrlSigner;
+      before(() => {
+        signer = new UrlSigner(authClient, bucket, file);
+      })
+
+      it('should localize authClient', () => {
+        assert.strictEqual(signer['authClient'], authClient);
+      });
+
+      it('should localize bucket', () => {
+        assert.strictEqual(signer['bucket'], bucket);
+      });
+
+      it('should localize file', () => {
+        assert.strictEqual(signer['file'], file);
+      });
     });
 
     describe('getSignedUrl', () => {
