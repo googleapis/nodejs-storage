@@ -149,7 +149,7 @@ Object.defineProperty(fakeXdgBasedir, 'config', {
 });
 
 const fakeSigner = {
-  UrlSigner: () => {},
+  URLSigner: () => {},
 };
 
 describe('File', () => {
@@ -2797,7 +2797,7 @@ describe('File', () => {
       };
 
       // tslint:disable-next-line no-any
-      urlSignerStub = (sandbox.stub as any)(fakeSigner, 'UrlSigner').returns(
+      urlSignerStub = (sandbox.stub as any)(fakeSigner, 'URLSigner').returns(
         signer
       );
 
@@ -2811,7 +2811,7 @@ describe('File', () => {
 
     afterEach(() => sandbox.restore());
 
-    it('should construct a UrlSigner and call getSignedUrl', done => {
+    it('should construct a URLSigner and call getSignedUrl', done => {
       const config = {
         contentMd5: 'md5-hash',
         contentType: 'application/json',

@@ -17,7 +17,7 @@ import * as sinon from 'sinon';
 import * as url from 'url';
 
 import {
-  UrlSigner,
+  URLSigner,
   SigningError,
   AuthClient,
   BucketI,
@@ -35,7 +35,7 @@ describe('signer', () => {
   beforeEach(() => (sandbox = sinon.createSandbox()));
   afterEach(() => sandbox.restore());
 
-  describe('UrlSigner', () => {
+  describe('URLSigner', () => {
     let authClient: AuthClient;
     let bucket: BucketI;
     let file: FileI;
@@ -55,13 +55,14 @@ describe('signer', () => {
       file = {name: FILE_NAME};
     });
 
-    describe('UrlSigner', () => {
-      let signer: UrlSigner;
-      before(() => {
-        signer = new UrlSigner(authClient, bucket, file);
+    describe('URLSigner', () => {
+      let signer: URLSigner;
+      beforeEach(() => {
+        signer = new URLSigner(authClient, bucket, file);
       })
 
       it('should localize authClient', () => {
+        console.log(signer);
         assert.strictEqual(signer['authClient'], authClient);
       });
 
@@ -75,10 +76,10 @@ describe('signer', () => {
     });
 
     describe('getSignedUrl', () => {
-      let signer: UrlSigner;
+      let signer: URLSigner;
       let CONFIG: SignerGetSignedUrlConfig;
       beforeEach(() => {
-        signer = new UrlSigner(authClient, bucket, file);
+        signer = new URLSigner(authClient, bucket, file);
 
         CONFIG = {
           method: 'GET',
@@ -489,10 +490,10 @@ describe('signer', () => {
 
       describe('bucket operations', () => {
         beforeEach(() => {
-          signer = new UrlSigner(authClient, bucket);
+          signer = new URLSigner(authClient, bucket);
         });
 
-        it('should construct a UrlSigner without a file', () => {
+        it('should construct a URLSigner without a file', () => {
           assert.strictEqual(signer['file'], undefined);
         });
 

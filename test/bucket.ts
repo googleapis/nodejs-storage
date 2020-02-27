@@ -153,7 +153,7 @@ class FakeServiceObject extends ServiceObject {
 }
 
 const fakeSigner = {
-  UrlSigner: () => {},
+  URLSigner: () => {},
 };
 
 describe('Bucket', () => {
@@ -1749,7 +1749,7 @@ describe('Bucket', () => {
       };
 
       // tslint:disable-next-line no-any
-      urlSignerStub = (sandbox.stub as any)(fakeSigner, 'UrlSigner').returns(
+      urlSignerStub = (sandbox.stub as any)(fakeSigner, 'URLSigner').returns(
         signer
       );
 
@@ -1763,7 +1763,7 @@ describe('Bucket', () => {
 
     afterEach(() => sandbox.restore());
 
-    it('should construct a UrlSigner and call getSignedUrl', done => {
+    it('should construct a URLSigner and call getSignedUrl', done => {
       // assert signer is lazily-initialized.
       assert.strictEqual(bucket.signer, undefined);
       bucket.getSignedUrl(

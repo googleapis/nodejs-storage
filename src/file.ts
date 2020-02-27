@@ -48,7 +48,7 @@ import {
   GetSignedUrlResponse,
   SigningError,
   GetSignedUrlCallback,
-  UrlSigner,
+  URLSigner,
   SignerGetSignedUrlConfig,
   Query,
 } from './signer';
@@ -401,7 +401,7 @@ class File extends ServiceObject<File> {
   storage: Storage;
   kmsKeyName?: string;
   userProject?: string;
-  signer?: UrlSigner;
+  signer?: URLSigner;
   name: string;
   generation?: number;
   parent!: Bucket;
@@ -2477,7 +2477,7 @@ class File extends ServiceObject<File> {
     }
 
     if (!this.signer) {
-      this.signer = new UrlSigner(this.storage.authClient, this.bucket, this);
+      this.signer = new URLSigner(this.storage.authClient, this.bucket, this);
     }
 
     this.signer

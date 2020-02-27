@@ -53,7 +53,7 @@ import {
   GetSignedUrlResponse,
   GetSignedUrlCallback,
   SignerGetSignedUrlConfig,
-  UrlSigner,
+  URLSigner,
   Query,
 } from './signer';
 
@@ -592,7 +592,7 @@ class Bucket extends ServiceObject {
    * }, callback);
    */
   getFilesStream: Function;
-  signer?: UrlSigner;
+  signer?: URLSigner;
 
   constructor(storage: Storage, name: string, options?: BucketOptions) {
     options = options || {};
@@ -2499,7 +2499,7 @@ class Bucket extends ServiceObject {
     } as SignerGetSignedUrlConfig;
 
     if (!this.signer) {
-      this.signer = new UrlSigner(this.storage.authClient, this);
+      this.signer = new URLSigner(this.storage.authClient, this);
     }
 
     this.signer

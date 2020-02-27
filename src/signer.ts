@@ -108,7 +108,7 @@ const SEVEN_DAYS = 604800;
  */
 export const PATH_STYLED_HOST = 'https://storage.googleapis.com';
 
-export class UrlSigner {
+export class URLSigner {
   private authClient: AuthClient;
   private bucket: BucketI;
   private file?: FileI;
