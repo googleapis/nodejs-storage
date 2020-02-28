@@ -457,10 +457,11 @@ describe('signer', () => {
 
       it('should fail for expirations beyond 7 days', () => {
         CONFIG.expiration = NOW.valueOf() + 7.1 * 24 * 60 * 60;
+        const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
-        assert.throws(() => {
-          signer['getSignedUrlV4'](CONFIG);
-        }, /Max allowed expiration is seven days/);
+        assert.throws(() => { signer['getSignedUrlV4'](CONFIG) }, {
+          message: `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`,
+        });
       });
 
       describe('headers', () => {
@@ -797,7 +798,15 @@ describe('signer', () => {
           SHA
         );
 
-        assert(canonical.endsWith(SHA));
+        const EXPECTED = [
+          'DELETE',
+          'path',
+          'query',
+          'headers',
+          'signedHeaders',
+          SHA,
+        ].join('\n');
+        assert.strictEqual(canonical, EXPECTED);
       });
     });
 
@@ -843,12 +852,12 @@ describe('signer', () => {
         assert.strictEqual(path, `/${file.name}`);
       });
 
-      it('include file name', () => {
+      it('should include file name', () => {
         const path = signer.getResourcePath(false, bucket.name, file.name);
         assert.strictEqual(path, `/${bucket.name}/${file.name}`);
       });
 
-      it('no file name', () => {
+      it('should return path with no file name', () => {
         const path = signer.getResourcePath(false, bucket.name);
         assert.strictEqual(path, `/${bucket.name}`);
       });
