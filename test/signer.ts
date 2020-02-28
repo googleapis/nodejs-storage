@@ -459,9 +459,14 @@ describe('signer', () => {
         CONFIG.expiration = NOW.valueOf() + 7.1 * 24 * 60 * 60;
         const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
-        assert.throws(() => { signer['getSignedUrlV4'](CONFIG) }, {
-          message: `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`,
-        });
+        assert.throws(
+          () => {
+            signer['getSignedUrlV4'](CONFIG);
+          },
+          {
+            message: `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`,
+          }
+        );
       });
 
       describe('headers', () => {
@@ -565,11 +570,10 @@ describe('signer', () => {
       });
 
       describe('query parameters', () => {
-        let getCanonicalQueryParams: sinon.SinonStub;
+        let getCanonicalQueryParams: sinon.SinonStub<[Query]>;
         beforeEach(() => {
-          // tslint:disable-next-line no-any
           getCanonicalQueryParams = sandbox
-            .stub<any, any>(signer, 'getCanonicalQueryParams')
+            .stub(signer, 'getCanonicalQueryParams')
             .returns('');
         });
 
