@@ -2159,6 +2159,34 @@ class File extends ServiceObject<File> {
    * @param {object} policy The document policy.
    */
   /**
+   * @typedef {object} GetSignedPolicyOptions
+   * @param {*} expires - A timestamp when this policy will expire. Any
+   *     value given is passed to `new Date()`.
+   * @param {array|array[]} [equals] Array of request parameters and
+   *     their expected value (e.g. [['$<field>', '<value>']]). Values are
+   *     translated into equality constraints in the conditions field of the
+   *     policy document (e.g. ['eq', '$<field>', '<value>']). If only one
+   *     equality condition is to be specified, equals can be a one-
+   *     dimensional array (e.g. ['$<field>', '<value>']).
+   * @param {array|array[]} [startsWith] Array of request parameters and
+   *     their expected prefixes (e.g. [['$<field>', '<value>']). Values are
+   *     translated into starts-with constraints in the conditions field of the
+   *     policy document (e.g. ['starts-with', '$<field>', '<value>']). If only
+   *     one prefix condition is to be specified, startsWith can be a
+   * one- dimensional array (e.g. ['$<field>', '<value>']).
+   * @param {string} [acl] ACL for the object from possibly predefined
+   *     ACLs.
+   * @param {string} [successRedirect] The URL to which the user client
+   *     is redirected if the upload is successful.
+   * @param {string} [successStatus] - The status of the Google Storage
+   *     response if the upload is successful (must be string).
+   * @param {object} [contentLengthRange]
+   * @param {number} [contentLengthRange.min] Minimum value for the
+   *     request's content length.
+   * @param {number} [contentLengthRange.max] Maximum value for the
+   *     request's content length.
+   */
+  /**
    * Get a signed policy document to allow a user to upload data with a POST
    * request.
    *
@@ -2180,32 +2208,7 @@ class File extends ServiceObject<File> {
    * @throws {Error} If options.startsWith has an array with less or more than two
    *     members.
    *
-   * @param {object} options Configuration options.
-   * @param {array|array[]} [options.equals] Array of request parameters and
-   *     their expected value (e.g. [['$<field>', '<value>']]). Values are
-   *     translated into equality constraints in the conditions field of the
-   *     policy document (e.g. ['eq', '$<field>', '<value>']). If only one
-   *     equality condition is to be specified, options.equals can be a one-
-   *     dimensional array (e.g. ['$<field>', '<value>']).
-   * @param {*} options.expires - A timestamp when this policy will expire. Any
-   *     value given is passed to `new Date()`.
-   * @param {array|array[]} [options.startsWith] Array of request parameters and
-   *     their expected prefixes (e.g. [['$<field>', '<value>']). Values are
-   *     translated into starts-with constraints in the conditions field of the
-   *     policy document (e.g. ['starts-with', '$<field>', '<value>']). If only
-   *     one prefix condition is to be specified, options.startsWith can be a
-   * one- dimensional array (e.g. ['$<field>', '<value>']).
-   * @param {string} [options.acl] ACL for the object from possibly predefined
-   *     ACLs.
-   * @param {string} [options.successRedirect] The URL to which the user client
-   *     is redirected if the upload is successful.
-   * @param {string} [options.successStatus] - The status of the Google Storage
-   *     response if the upload is successful (must be string).
-   * @param {object} [options.contentLengthRange]
-   * @param {number} [options.contentLengthRange.min] Minimum value for the
-   *     request's content length.
-   * @param {number} [options.contentLengthRange.max] Maximum value for the
-   *     request's content length.
+   * @param {GetSignedPolicyOptions} options Configuration options.
    * @param {GetSignedPolicyCallback} [callback] Callback function.
    * @returns {Promise<GetSignedPolicyResponse>}
    *
