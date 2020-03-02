@@ -2804,9 +2804,9 @@ describe('storage', () => {
 
       await bucket.upload(FILES.big.path, {
         resumable: true,
-        onUploadProgress
+        onUploadProgress,
       });
-      
+
       assert.strictEqual(called, true);
     });
 
@@ -2820,9 +2820,9 @@ describe('storage', () => {
       }
       await bucket.upload(FILES.big.path, {
         resumable: false,
-        onUploadProgress
+        onUploadProgress,
       });
-      
+
       assert.strictEqual(called, true);
     });
   });

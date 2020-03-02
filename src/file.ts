@@ -1758,7 +1758,7 @@ class File extends ServiceObject<File> {
       pumpify([
         gzip ? zlib.createGzip() : through(),
         validateStream,
-        fileWriteStream.on('progress', (evt) => stream.emit('progress', evt)),
+        fileWriteStream.on('progress', evt => stream.emit('progress', evt)),
       ])
     ) as Duplex;
 
@@ -3381,7 +3381,7 @@ class File extends ServiceObject<File> {
       .on('finish', () => {
         dup.emit('complete');
       })
-      .on('progress', (evt) => {
+      .on('progress', evt => {
         dup.emit('progress', evt);
       });
 
