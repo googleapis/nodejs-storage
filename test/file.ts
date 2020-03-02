@@ -44,6 +44,7 @@ import {
   PolicyDocument,
   SetFileMetadataOptions,
   GetSignedUrlConfig,
+  GetSignedPolicyOptions,
 } from '../src';
 
 let promisified = false;
@@ -2417,11 +2418,13 @@ describe('File', () => {
   });
 
   describe('getSignedPolicy', () => {
-    const CONFIG = {
-      expires: Date.now() + 2000,
-    };
+    let CONFIG: GetSignedPolicyOptions;
 
     beforeEach(() => {
+      CONFIG = {
+        expires: Date.now() + 2000,
+      };
+
       BUCKET.storage.authClient = {
         sign: () => {
           return Promise.resolve('signature');
