@@ -3316,7 +3316,9 @@ class Bucket extends ServiceObject {
         .on('error', callback!)
         .pipe(
           newFile.createWriteStream(options).on('progress', evt => {
-            options.onUploadProgress!(evt);
+            if (options.onUploadProgress) {
+              options.onUploadProgress!(evt);
+            }
           })
         )
         .on('error', callback!)
