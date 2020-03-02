@@ -198,8 +198,6 @@ export interface CreateWriteStreamOptions extends CreateResumableUploadOptions {
   gzip?: string | boolean;
   resumable?: boolean;
   validation?: string | boolean;
-  // tslint:disable-next-line:no-any
-  onUploadProgress?: (progressEvent: any) => void;
 }
 
 export interface MakeFilePrivateOptions {
@@ -1754,21 +1752,13 @@ class File extends ServiceObject<File> {
       md5,
     });
 
-    const progressStream = new ProgressStream();
-    if (options.onUploadProgress) {
-      progressStream.on('progress', bytesRead => {
-        options.onUploadProgress!({bytesRead});
-      });
-    }
-
     const fileWriteStream = duplexify();
 
     const stream = streamEvents(
       pumpify([
         gzip ? zlib.createGzip() : through(),
         validateStream,
-        progressStream,
-        fileWriteStream,
+        fileWriteStream.on('progress', (evt) => stream.emit('progress', evt)),
       ])
     ) as Duplex;
 
@@ -3390,6 +3380,9 @@ class File extends ServiceObject<File> {
       })
       .on('finish', () => {
         dup.emit('complete');
+      })
+      .on('progress', (evt) => {
+        dup.emit('progress', evt);
       });
 
     dup.setWritable(uploadStream);
@@ -3496,25 +3489,6 @@ class File extends ServiceObject<File> {
         return `${headerName}:${canonicalValue}\n`;
       })
       .join('');
-  }
-}
-
-/**
- * Basic Passthrough Stream that records the number of bytes read
- * every time the cursor is moved.
- */
-class ProgressStream extends Transform {
-  bytesRead: number;
-  constructor() {
-    super(...arguments);
-    this.bytesRead = 0;
-  }
-  // tslint:disable-next-line: no-any
-  _transform(chunk: any, encoding: string, callback: Function) {
-    this.bytesRead += chunk.length;
-    this.emit('progress', this.bytesRead);
-    this.push(chunk);
-    callback();
   }
 }
 
