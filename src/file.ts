@@ -99,6 +99,10 @@ export enum ActionToHTTPMethod {
   resumable = 'POST',
 }
 
+export interface Fields {
+  [key: string]: any;
+}
+
 export type GetSignedUrlResponse = [string];
 
 export interface GetSignedUrlCallback {
@@ -111,13 +115,48 @@ export interface PolicyDocument {
   signature: string;
 }
 
+export interface PolicyDocumentV2 extends PolicyDocument {}
+
 export type GetSignedPolicyResponse = [PolicyDocument];
 
-export interface GetSignedPolicyCallback {
+export type GetSignedPolicyV2Response = GetSignedPolicyResponse;
+
+export type GetSignedPolicyV4Response = [SignedPolicyV4];
+
+export interface SignedPolicyV4Fields {
+  [key: string]: string;
+  key: string;
+  'x-goog-algorithm': string;
+  'x-goog-credential': string;
+  'x-goog-date': string;
+  'x-goog-signature': string;
+  policy: string;
+}
+
+export interface SignedPolicyV4 {
+  url: string;
+  fields: SignedPolicyV4Fields;
+}
+
+export interface GetSignedPolicyV4Callback {
+  (err: Error|null, response?: SignedPolicyV4): void;
+}
+
+export interface GetSignedPolicyCallback extends GetSignedPolicyV2Callback {}
+
+export interface GetSignedPolicyV2Callback {
   (err: Error | null, policy?: PolicyDocument): void;
 }
 
-export interface GetSignedPolicyOptions {
+export interface GetSignedPolicyOptions extends SignedPolicyConditions {}
+
+export interface GetSignedPolicyV2Options extends GetSignedPolicyOptions {}
+
+export interface GetSignedPolicyV4Options extends SignedPolicyConditions {
+  fields: {[key: string]: string};
+}
+
+export interface SignedPolicyConditions {
   equals?: string[] | string[][];
   expires: string | number | Date;
   startsWith?: string[] | string[][];
@@ -2150,13 +2189,19 @@ class File extends ServiceObject<File> {
   ): void;
   getSignedPolicy(callback: GetSignedPolicyCallback): void;
   /**
+   * @typedef {object} PolicyDocument
+   * @param {string} string the policy document in plain text.
+   * @param {string} base64 the policy document in base64.
+   * @param {string} signature the signature in base64
+   */
+  /**
    * @typedef {array} GetSignedPolicyResponse
-   * @property {object} 0 The document policy.
+   * @property {PolicyDocument} 0 The document policy.
    */
   /**
    * @callback GetSignedPolicyCallback
    * @param {?Error} err Request error, if any.
-   * @param {object} policy The document policy.
+   * @param {PolicyDocument} policy The document policy.
    */
   /**
    * @typedef {object} GetSignedPolicyOptions
@@ -2187,7 +2232,7 @@ class File extends ServiceObject<File> {
    *     request's content length.
    */
   /**
-   * Get a signed policy document to allow a user to upload data with a POST
+   * Get a V2 signed policy document to allow a user to upload data with a POST
    * request.
    *
    * In Google Cloud Platform environments, such as Cloud Functions and App
@@ -2201,6 +2246,11 @@ class File extends ServiceObject<File> {
    * enabled.
    *
    * @see [Policy Document Reference]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
+   * 
+   * @deprecated `getSignedPolicy()` is deprecated in favor of `getSignedPolicyV2()`
+   *     and `getSignedPolicyV4()`. Currently, this method is an alias to
+   *     `getSignedPolicyV2()`, and will be removed in a future major release.
+   *     We recommend signing new policies using V4.
    *
    * @throws {Error} If an expiration timestamp from the past is given.
    * @throws {Error} If options.equals has an array with less or more than two
@@ -2244,6 +2294,122 @@ class File extends ServiceObject<File> {
     optionsOrCallback?: GetSignedPolicyOptions | GetSignedPolicyCallback,
     cb?: GetSignedPolicyCallback
   ): void | Promise<GetSignedPolicyResponse> {
+    const args = normalize<GetSignedPolicyOptions, GetSignedPolicyCallback>(optionsOrCallback, cb);
+    let options = args.options;
+    const callback = args.callback;
+
+    this.getSignedPolicyV2(options, callback);
+  }
+
+  getSignedPolicyV2(
+    options: GetSignedPolicyV2Options
+  ): Promise<GetSignedPolicyV2Response>;
+  getSignedPolicyV2(
+    options: GetSignedPolicyV2Options,
+    callback: GetSignedPolicyV2Callback
+  ): void;
+  getSignedPolicyV2(callback: GetSignedPolicyV2Callback): void;
+  /**
+   * @typedef {object} PolicyDocumentV2
+   * @param {string} string the policy document in plain text.
+   * @param {string} base64 the policy document in base64.
+   * @param {string} signature the signature in base64
+   */
+  /**
+   * @typedef {array} GetSignedPolicyV2Response
+   * @property {PolicyDocumentV2} 0 The document policy.
+   */
+  /**
+   * @callback GetSignedPolicyV2Callback
+   * @param {?Error} err Request error, if any.
+   * @param {PolicyDocumentV2} policy The document policy.
+   */
+  /**
+   * @typedef {object} GetSignedPolicyV2Options
+   * @param {*} expires - A timestamp when this policy will expire. Any
+   *     value given is passed to `new Date()`.
+   * @param {array|array[]} [equals] Array of request parameters and
+   *     their expected value (e.g. [['$<field>', '<value>']]). Values are
+   *     translated into equality constraints in the conditions field of the
+   *     policy document (e.g. ['eq', '$<field>', '<value>']). If only one
+   *     equality condition is to be specified, equals can be a one-
+   *     dimensional array (e.g. ['$<field>', '<value>']).
+   * @param {array|array[]} [startsWith] Array of request parameters and
+   *     their expected prefixes (e.g. [['$<field>', '<value>']). Values are
+   *     translated into starts-with constraints in the conditions field of the
+   *     policy document (e.g. ['starts-with', '$<field>', '<value>']). If only
+   *     one prefix condition is to be specified, startsWith can be a
+   * one- dimensional array (e.g. ['$<field>', '<value>']).
+   * @param {string} [acl] ACL for the object from possibly predefined
+   *     ACLs.
+   * @param {string} [successRedirect] The URL to which the user client
+   *     is redirected if the upload is successful.
+   * @param {string} [successStatus] - The status of the Google Storage
+   *     response if the upload is successful (must be string).
+   * @param {object} [contentLengthRange]
+   * @param {number} [contentLengthRange.min] Minimum value for the
+   *     request's content length.
+   * @param {number} [contentLengthRange.max] Maximum value for the
+   *     request's content length.
+   */
+  /**
+   * Get a V2 signed policy document to allow a user to upload data with a POST
+   * request.
+   *
+   * In Google Cloud Platform environments, such as Cloud Functions and App
+   * Engine, you usually don't provide a `keyFilename` or `credentials` during
+   * instantiation. In those environments, we call the
+   * [signBlob
+   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * to create a signed policy. That API requires either the
+   * `https://www.googleapis.com/auth/iam` or
+   * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
+   * enabled.
+   *
+   * @see [Policy Document Reference]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
+   *
+   * @throws {Error} If an expiration timestamp from the past is given.
+   * @throws {Error} If options.equals has an array with less or more than two
+   *     members.
+   * @throws {Error} If options.startsWith has an array with less or more than two
+   *     members.
+   *
+   * @param {GetSignedPolicyV2Options} options Configuration options.
+   * @param {GetSignedPolicyV2Callback} [callback] Callback function.
+   * @returns {Promise<GetSignedPolicyV2Response>}
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const myBucket = storage.bucket('my-bucket');
+   *
+   * const file = myBucket.file('my-file');
+   * const options = {
+   *   equals: ['$Content-Type', 'image/jpeg'],
+   *   expires: '10-25-2022',
+   *   contentLengthRange: {
+   *     min: 0,
+   *     max: 1024
+   *   }
+   * };
+   *
+   * file.getSignedPolicy(options, function(err, policy) {
+   *   // policy.string: the policy document in plain text.
+   *   // policy.base64: the policy document in base64.
+   *   // policy.signature: the policy signature in base64.
+   * });
+   *
+   * //-
+   * // If the callback is omitted, we'll return a Promise.
+   * //-
+   * file.getSignedPolicy(options).then(function(data) {
+   *   const policy = data[0];
+   * });
+   */
+  getSignedPolicyV2(
+    optionsOrCallback?: GetSignedPolicyOptions | GetSignedPolicyCallback,
+    cb?: GetSignedPolicyCallback
+  ): void | Promise<GetSignedPolicyResponse> {
     const args = normalize<GetSignedPolicyOptions>(optionsOrCallback, cb);
     let options = args.options;
     const callback = args.callback;
@@ -2258,71 +2424,19 @@ class File extends ServiceObject<File> {
     }
 
     options = Object.assign({}, options);
+    const expiration = expires.toISOString();
 
-    const conditions = [
-      ['eq', '$key', this.name],
+    const conditions = this.parseConditions(options);
+
+    conditions.push(['eq', '$key', this.name])
+    conditions.push(
       {
         bucket: this.bucket.name,
       },
-    ] as object[];
-
-    if (Array.isArray(options.equals)) {
-      if (!Array.isArray((options.equals as string[][])[0])) {
-        options.equals = [options.equals as string[]];
-      }
-      (options.equals as string[][]).forEach(condition => {
-        if (!Array.isArray(condition) || condition.length !== 2) {
-          throw new Error('Equals condition must be an array of 2 elements.');
-        }
-        conditions.push(['eq', condition[0], condition[1]]);
-      });
-    }
-
-    if (Array.isArray(options.startsWith)) {
-      if (!Array.isArray((options.startsWith as string[][])[0])) {
-        options.startsWith = [options.startsWith as string[]];
-      }
-      (options.startsWith as string[][]).forEach(condition => {
-        if (!Array.isArray(condition) || condition.length !== 2) {
-          throw new Error(
-            'StartsWith condition must be an array of 2 elements.'
-          );
-        }
-        conditions.push(['starts-with', condition[0], condition[1]]);
-      });
-    }
-
-    if (options.acl) {
-      conditions.push({
-        acl: options.acl,
-      });
-    }
-
-    if (options.successRedirect) {
-      conditions.push({
-        success_action_redirect: options.successRedirect,
-      });
-    }
-
-    if (options.successStatus) {
-      conditions.push({
-        success_action_status: options.successStatus,
-      });
-    }
-
-    if (options.contentLengthRange) {
-      const min = options.contentLengthRange.min;
-      const max = options.contentLengthRange.max;
-      if (typeof min !== 'number' || typeof max !== 'number') {
-        throw new Error(
-          'ContentLengthRange must have numeric min & max fields.'
-        );
-      }
-      conditions.push(['content-length-range', min, max]);
-    }
+    );
 
     const policy = {
-      expiration: expires.toISOString(),
+      expiration,
       conditions,
     };
 
@@ -2330,17 +2444,189 @@ class File extends ServiceObject<File> {
     const policyBase64 = Buffer.from(policyString).toString('base64');
 
     this.storage.authClient.sign(policyBase64).then(
-      signature => {
-        callback(null, {
-          string: policyString,
-          base64: policyBase64,
-          signature,
-        });
-      },
-      err => {
-        callback(new SigningError(err.message));
-      }
+      signature => callback(null, {
+        string: policyString,
+        base64: policyBase64,
+        signature,
+      }),
+      err => callback(new SigningError(err.message)),
     );
+  }
+
+  getSignedPolicyV4(
+    options: GetSignedPolicyV4Options
+  ): Promise<GetSignedPolicyV4Response>;
+  getSignedPolicyV4(
+    options: GetSignedPolicyV4Options,
+    callback: GetSignedPolicyV4Callback
+  ): void;
+  getSignedPolicyV4(callback: GetSignedPolicyV4Callback): void;
+  /**
+   * @typedef {object} SignedPolicyV4
+   * @property {string} url The request URL.
+   * @property {object} fields The form fields to include in the POST request.
+   */
+  /**
+   * @typedef {array} GetSignedPolicyV4Response
+   * @property {SignedPolicyV4} 0 The document policy.
+   */
+  /**
+   * @callback GetSignedPolicyV4Callback
+   * @param {?Error} err Request error, if any.
+   * @param {SignedPolicyV4} policy The document policy.
+   */
+  /**
+   * @typedef {object} GetSignedPolicyV4Options
+   * @param {*} expires - A timestamp when this policy will expire. Any
+   *     value given is passed to `new Date()`.
+   * @param {array|array[]} [equals] Array of request parameters and
+   *     their expected value (e.g. [['$<field>', '<value>']]). Values are
+   *     translated into equality constraints in the conditions field of the
+   *     policy document (e.g. ['eq', '$<field>', '<value>']). If only one
+   *     equality condition is to be specified, equals can be a one-
+   *     dimensional array (e.g. ['$<field>', '<value>']).
+   * @param {array|array[]} [startsWith] Array of request parameters and
+   *     their expected prefixes (e.g. [['$<field>', '<value>']). Values are
+   *     translated into starts-with constraints in the conditions field of the
+   *     policy document (e.g. ['starts-with', '$<field>', '<value>']). If only
+   *     one prefix condition is to be specified, startsWith can be a
+   * one- dimensional array (e.g. ['$<field>', '<value>']).
+   * @param {string} [acl] ACL for the object from possibly predefined
+   *     ACLs.
+   * @param {string} [successRedirect] The URL to which the user client
+   *     is redirected if the upload is successful.
+   * @param {string} [successStatus] - The status of the Google Storage
+   *     response if the upload is successful (must be string).
+   * @param {object} [contentLengthRange]
+   * @param {number} [contentLengthRange.min] Minimum value for the
+   *     request's content length.
+   * @param {number} [contentLengthRange.max] Maximum value for the
+   *     request's content length.
+   * @param {object} [fields] Additional form fields that can be used to 
+   *     store additional metadata that is not provided by the other fields.
+   */
+  /**
+   * Get a V4 signed policy document to allow a user to upload data with a POST
+   * request.
+   *
+   * In Google Cloud Platform environments, such as Cloud Functions and App
+   * Engine, you usually don't provide a `keyFilename` or `credentials` during
+   * instantiation. In those environments, we call the
+   * [signBlob
+   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * to create a signed policy. That API requires either the
+   * `https://www.googleapis.com/auth/iam` or
+   * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
+   * enabled.
+   *
+   * @see [Policy Document Reference]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
+   *
+   * @throws {Error} If an expiration timestamp from the past is given.
+   * @throws {Error} If options.equals has an array with less or more than two
+   *     members.
+   * @throws {Error} If options.startsWith has an array with less or more than two
+   *     members.
+   *
+   * @param {GetSignedPolicyV4Options} options Configuration options.
+   * @param {GetSignedPolicyV4Callback} [callback] Callback function.
+   * @returns {Promise<GetSignedPolicyV4Response>}
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const myBucket = storage.bucket('my-bucket');
+   *
+   * const file = myBucket.file('my-file');
+   * const options = {
+   *   equals: ['$Content-Type', 'image/jpeg'],
+   *   expires: '10-25-2022',
+   *   contentLengthRange: {
+   *     min: 0,
+   *     max: 1024
+   *   },
+   *   fields: {
+   *     'x-goog-meta-foo': 'bar', // additional meta fields
+   *     'x-ignore-': '', // fields beginning with 'x-ignore-' is not signed
+   *   } 
+   * };
+   *
+   * file.getSignedPolicy(options, function(err, res) {
+   *   res.url // the request URL.
+   *   res.fields // the fields to include in the form.
+   * });
+   *
+   * //-
+   * // If the callback is omitted, we'll return a Promise.
+   * //-
+   * file.getSignedPolicy(options).then(function(data) {
+   *   const res = data[0];
+   * });
+   */
+  getSignedPolicyV4(
+    optionsOrCallback?: GetSignedPolicyV4Options | GetSignedPolicyV4Callback,
+    cb?: GetSignedPolicyV4Callback
+  ): void | Promise<GetSignedPolicyV4Response> {
+    const args = normalize<GetSignedPolicyV4Options, GetSignedPolicyV4Callback>(optionsOrCallback, cb);
+    let options = args.options;
+    const callback = args.callback;
+    const expires = new Date((options as GetSignedPolicyV4Options).expires);
+
+    if (isNaN(expires.getTime())) {
+      throw new Error('The expiration date provided was invalid.');
+    }
+
+    if (expires.valueOf() < Date.now()) {
+      throw new Error('An expiration date cannot be in the past.');
+    }
+
+    options = Object.assign({}, options);
+    const conditions = this.parseConditions(options);
+    conditions.push({key: this.name});
+
+    const fields = Object.assign({}, options.fields) as SignedPolicyV4Fields;
+
+    const now = new Date();
+    const dateISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
+    const todayISO = dateFormat.format(now, 'YYYYMMDD', true);
+    fields['x-goog-date'] = dateISO;
+    fields['x-goog-algorithm'] = 'GOOG4-HMAC-SHA256'
+
+    const sign = async () => {
+      const { client_email } = await this.storage.authClient.getCredentials();
+      const credential = `${client_email}/${todayISO}/auto/storage/goog4_request`;
+      fields['x-goog-credential'] = credential;
+
+      Object.entries(fields).forEach(([key, value]) => {
+        if (!key.startsWith('x-ignore-')) {
+          conditions.push({[key]: value});
+        }
+      });
+
+      const expiration = expires.toISOString();
+
+      const policy = {
+        expiration,
+        conditions,
+      };
+
+      const policyString = JSON.stringify(policy);
+      const policyBase64 = Buffer.from(policyString).toString('base64');
+
+      try {
+        const signature = await this.storage.authClient.sign(policyBase64);
+        const signatureHex = Buffer.from(signature, 'base64').toString('hex');
+        fields['policy'] = policyBase64;
+        fields['x-goog-signature'] = signatureHex;
+        return {
+          url: `${STORAGE_DOWNLOAD_BASE_URL}/${this.bucket.name}/${this.name}`,
+          fields,
+        }
+      } catch (err) {
+        throw new SigningError(err.message);
+      }
+    }
+
+    sign().then((res) => callback!(null, res), callback!);
   }
 
   getSignedUrl(cfg: GetSignedUrlConfig): Promise<GetSignedUrlResponse>;
@@ -3490,6 +3776,67 @@ class File extends ServiceObject<File> {
       })
       .join('');
   }
+
+  private parseConditions(options: SignedPolicyConditions): object[] {
+    const conditions: object[] = [];
+    if (Array.isArray(options.equals)) {
+      if (!Array.isArray((options.equals as string[][])[0])) {
+        options.equals = [options.equals as string[]];
+      }
+      (options.equals as string[][]).forEach(condition => {
+        if (!Array.isArray(condition) || condition.length !== 2) {
+          throw new Error('Equals condition must be an array of 2 elements.');
+        }
+        conditions.push(['eq', condition[0], condition[1]]);
+      });
+    }
+
+    if (Array.isArray(options.startsWith)) {
+      if (!Array.isArray((options.startsWith as string[][])[0])) {
+        options.startsWith = [options.startsWith as string[]];
+      }
+      (options.startsWith as string[][]).forEach(condition => {
+        if (!Array.isArray(condition) || condition.length !== 2) {
+          throw new Error(
+            'StartsWith condition must be an array of 2 elements.'
+          );
+        }
+        conditions.push(['starts-with', condition[0], condition[1]]);
+      });
+    }
+
+    if (options.acl) {
+      conditions.push({
+        acl: options.acl,
+      });
+    }
+
+    if (options.successRedirect) {
+      conditions.push({
+        success_action_redirect: options.successRedirect,
+      });
+    }
+
+    if (options.successStatus) {
+      conditions.push({
+        success_action_status: options.successStatus,
+      });
+    }
+
+    if (options.contentLengthRange) {
+      const min = options.contentLengthRange.min;
+      const max = options.contentLengthRange.max;
+      if (typeof min !== 'number' || typeof max !== 'number') {
+        throw new Error(
+          'ContentLengthRange must have numeric min & max fields.'
+        );
+      }
+      conditions.push(['content-length-range', min, max]);
+    }
+
+    return conditions;
+  }
+
 }
 
 /*! Developer Documentation
@@ -3505,6 +3852,7 @@ promisifyAll(File, {
     'getSignedUrlV4',
     'getCanonicalHeaders',
     'getDate',
+    'parseConditions',
   ],
 });
 
