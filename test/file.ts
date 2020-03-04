@@ -3828,13 +3828,13 @@ describe('File', () => {
         setImmediate(() => {
           const [progsListns] = writeStream.listeners('progress');
           assert.strictEqual(progsListns, onUploadProgress);
-          done()
+          done();
         });
         return writeStream;
       };
 
       file.save(DATA, {onUploadProgress}, assert.ifError);
-    })
+    });
 
     it('should write the data', done => {
       file.createWriteStream = () => {
