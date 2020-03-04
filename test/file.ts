@@ -2741,7 +2741,7 @@ describe('File', () => {
       });
     });
 
-    describe.only('getSignedPolicyV4', () => {
+    describe('getSignedPolicyV4', () => {
       let CONFIG: GetSignedPolicyV4Options;
       const NOW = new Date('2020-01-01');
       let fakeTimer: sinon.SinonFakeTimers;
