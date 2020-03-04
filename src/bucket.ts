@@ -3312,15 +3312,13 @@ class Bucket extends ServiceObject {
     }
 
     function upload() {
+      const writable = newFile.createWriteStream(options);
+      if (options.onUploadProgress) {
+        writable.on('progress', options.onUploadProgress);
+      }
       fs.createReadStream(pathString)
         .on('error', callback!)
-        .pipe(
-          newFile.createWriteStream(options).on('progress', evt => {
-            if (options.onUploadProgress) {
-              options.onUploadProgress!(evt);
-            }
-          })
-        )
+        .pipe(writable)
         .on('error', callback!)
         .on('finish', () => {
           callback!(null, newFile, newFile.metadata);
