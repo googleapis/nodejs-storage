@@ -2944,7 +2944,7 @@ describe('File', () => {
         });
 
         it('should accept strings', done => {
-          const expires = '12-12-2099';
+          const expires = new Date(Date.now() + 2000).toISOString();
 
           file.getSignedPolicyV4(
             {
@@ -2984,6 +2984,20 @@ describe('File', () => {
               () => {}
             );
           }, /An expiration date cannot be in the past\./);
+        });
+
+        it('should fail for expirations beyond 7 days', () => {
+          const expires = Date.now() + 7.1 * 24 * 60 * 60;
+          const SEVEN_DAYS = 7 * 24 * 60 * 60;
+
+          assert.throws(() => {
+            file.getSignedPolicyV4(
+              {
+                expires,
+              },
+              () => {}
+            );
+          }, {message: `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`});
         });
       });
     });
