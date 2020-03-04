@@ -154,6 +154,12 @@ export {
   GetSignedPolicyCallback,
   GetSignedPolicyOptions,
   GetSignedPolicyResponse,
+  GetSignedPolicyV2Callback,
+  GetSignedPolicyV2Options,
+  GetSignedPolicyV2Response,
+  GetSignedPolicyV4Callback,
+  GetSignedPolicyV4Options,
+  GetSignedPolicyV4Response,
   GetSignedUrlCallback,
   GetSignedUrlConfig,
   GetSignedUrlResponse,
@@ -178,6 +184,8 @@ export {
   SetStorageClassCallback,
   SetStorageClassOptions,
   SetStorageClassResponse,
+  SignedPolicyV4,
+  SignedPolicyV4Fields,
 } from './file';
 export {
   HmacKey,
