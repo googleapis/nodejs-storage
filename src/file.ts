@@ -99,10 +99,6 @@ export enum ActionToHTTPMethod {
   resumable = 'POST',
 }
 
-export interface Fields {
-  [key: string]: any;
-}
-
 export type GetSignedUrlResponse = [string];
 
 export interface GetSignedUrlCallback {
@@ -153,7 +149,7 @@ export interface GetSignedPolicyOptions extends SignedPolicyConditions {}
 export interface GetSignedPolicyV2Options extends GetSignedPolicyOptions {}
 
 export interface GetSignedPolicyV4Options extends SignedPolicyConditions {
-  fields: {[key: string]: string};
+  fields?: {[key: string]: string};
 }
 
 export interface SignedPolicyConditions {
@@ -313,7 +309,7 @@ const STORAGE_DOWNLOAD_BASE_URL = 'https://storage.googleapis.com';
  * @const {string}
  * @private
  */
-const STORAGE_UPLOAD_BASE_URL =
+export const STORAGE_UPLOAD_BASE_URL =
   'https://storage.googleapis.com/upload/storage/v1/b';
 
 /**
@@ -2295,7 +2291,7 @@ class File extends ServiceObject<File> {
     cb?: GetSignedPolicyCallback
   ): void | Promise<GetSignedPolicyResponse> {
     const args = normalize<GetSignedPolicyOptions, GetSignedPolicyCallback>(optionsOrCallback, cb);
-    let options = args.options;
+    const options = args.options;
     const callback = args.callback;
 
     this.getSignedPolicyV2(options, callback);
@@ -2502,7 +2498,7 @@ class File extends ServiceObject<File> {
    *     request's content length.
    * @param {number} [contentLengthRange.max] Maximum value for the
    *     request's content length.
-   * @param {object} [fields] Additional form fields that can be used to 
+   * @param {object} [fields] Additional form fields that can be used to
    *     store additional metadata that is not provided by the other fields.
    */
   /**
@@ -2581,15 +2577,15 @@ class File extends ServiceObject<File> {
 
     options = Object.assign({}, options);
     const conditions = this.parseConditions(options);
-    conditions.push({key: this.name});
 
     const fields = Object.assign({}, options.fields) as SignedPolicyV4Fields;
 
     const now = new Date();
     const dateISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
     const todayISO = dateFormat.format(now, 'YYYYMMDD', true);
-    fields['x-goog-date'] = dateISO;
+    fields['key'] = this.name;
     fields['x-goog-algorithm'] = 'GOOG4-HMAC-SHA256'
+    fields['x-goog-date'] = dateISO;
 
     const sign = async () => {
       const { client_email } = await this.storage.authClient.getCredentials();
@@ -2618,7 +2614,7 @@ class File extends ServiceObject<File> {
         fields['policy'] = policyBase64;
         fields['x-goog-signature'] = signatureHex;
         return {
-          url: `${STORAGE_DOWNLOAD_BASE_URL}/${this.bucket.name}/${this.name}`,
+          url: `${STORAGE_UPLOAD_BASE_URL}/${this.bucket.name}`,
           fields,
         }
       } catch (err) {

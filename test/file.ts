@@ -45,8 +45,8 @@ import {
   GetSignedUrlConfig,
   PolicyDocument,
   SetFileMetadataOptions,
-  GetSignedPolicyOptions,
 } from '../src';
+import { GetSignedPolicyV2Options, GetSignedPolicyV2Callback, PolicyDocumentV2, GetSignedPolicyV4Options, SignedPolicyV4, STORAGE_UPLOAD_BASE_URL } from '../src/file';
 
 let promisified = false;
 let makeWritableStreamOverride: Function | null;
@@ -77,6 +77,7 @@ const fakePromisify = {
       'getSignedUrlV4',
       'getCanonicalHeaders',
       'getDate',
+      'parseConditions',
     ]);
   },
 };
@@ -2421,335 +2422,219 @@ describe('File', () => {
   });
 
   describe('getSignedPolicy', () => {
-    let CONFIG: GetSignedPolicyOptions;
-
+    let sandbox: sinon.SinonSandbox;
     beforeEach(() => {
-      CONFIG = {
+      sandbox = sinon.createSandbox();
+    });
+    afterEach(() => {
+      sandbox.restore();
+    });
+
+    it('should alias to getSignedPolicyV2', done => {
+      const options = {
         expires: Date.now() + 2000,
       };
+      const callback = () => {};
 
-      BUCKET.storage.authClient = {
-        sign: () => {
-          return Promise.resolve('signature');
-        },
-      };
-    });
-
-    it('should create a signed policy', done => {
-      BUCKET.storage.authClient.sign = (blobToSign: string) => {
-        const policy = Buffer.from(blobToSign, 'base64').toString();
-        assert.strictEqual(typeof JSON.parse(policy), 'object');
-        return Promise.resolve('signature');
-      };
-
-      // tslint:disable-next-line no-any
-      file.getSignedPolicy(CONFIG, (err: Error, signedPolicy: any) => {
-        assert.ifError(err);
-        assert.strictEqual(typeof signedPolicy.string, 'string');
-        assert.strictEqual(typeof signedPolicy.base64, 'string');
-        assert.strictEqual(typeof signedPolicy.signature, 'string');
+      file.getSignedPolicyV2 = (argOpts: GetSignedPolicyV2Options, argCb: GetSignedPolicyV2Callback) => {
+        assert.strictEqual(argOpts, options);
+        assert.strictEqual(argCb, callback);
         done();
-      });
+      }
+
+      file.getSignedPolicy(options, callback);
     });
 
-    it('should not modify the configuration object', done => {
-      const originalConfig = Object.assign({}, CONFIG);
-
-      file.getSignedPolicy(CONFIG, (err: Error) => {
-        assert.ifError(err);
-        assert.deepStrictEqual(CONFIG, originalConfig);
-        done();
-      });
-    });
-
-    it('should return an error if signBlob errors', done => {
-      const error = new Error('Error.');
-
-      BUCKET.storage.authClient.sign = () => {
-        return Promise.reject(error);
-      };
-
-      file.getSignedPolicy(CONFIG, (err: Error) => {
-        assert.strictEqual(err.name, 'SigningError');
-        assert.strictEqual(err.message, error.message);
-        done();
-      });
-    });
-
-    it('should add key equality condition', done => {
-      file.getSignedPolicy(
-        CONFIG,
-        (err: Error, signedPolicy: PolicyDocument) => {
-          const conditionString = '["eq","$key","' + file.name + '"]';
-          assert.ifError(err);
-          assert(signedPolicy.string.indexOf(conditionString) > -1);
-          done();
-        }
-      );
-    });
-
-    it('should add ACL condtion', done => {
-      file.getSignedPolicy(
-        {
-          expires: Date.now() + 2000,
-          acl: '<acl>',
-        },
-        (err: Error, signedPolicy: PolicyDocument) => {
-          const conditionString = '{"acl":"<acl>"}';
-          assert.ifError(err);
-          assert(signedPolicy.string.indexOf(conditionString) > -1);
-          done();
-        }
-      );
-    });
-
-    it('should add success redirect', done => {
-      const redirectUrl = 'http://redirect';
-
-      file.getSignedPolicy(
-        {
-          expires: Date.now() + 2000,
-          successRedirect: redirectUrl,
-        },
-        (err: Error, signedPolicy: PolicyDocument) => {
-          assert.ifError(err);
-
-          const policy = JSON.parse(signedPolicy.string);
-
-          assert(
-            // tslint:disable-next-line no-any
-            policy.conditions.some((condition: any) => {
-              return condition.success_action_redirect === redirectUrl;
-            })
-          );
-
-          done();
-        }
-      );
-    });
-
-    it('should add success status', done => {
-      const successStatus = '200';
-
-      file.getSignedPolicy(
-        {
-          expires: Date.now() + 2000,
-          successStatus,
-        },
-        (err: Error, signedPolicy: PolicyDocument) => {
-          assert.ifError(err);
-
-          const policy = JSON.parse(signedPolicy.string);
-
-          assert(
-            // tslint:disable-next-line no-any
-            policy.conditions.some((condition: any) => {
-              return condition.success_action_status === successStatus;
-            })
-          );
-
-          done();
-        }
-      );
-    });
-
-    describe('expires', () => {
-      it('should accept Date objects', done => {
-        const expires = new Date(Date.now() + 1000 * 60);
-
-        file.getSignedPolicy(
-          {
-            expires,
-          },
-          (err: Error, policy: PolicyDocument) => {
-            assert.ifError(err);
-            const expires_ = JSON.parse(policy.string).expiration;
-            assert.strictEqual(expires_, expires.toISOString());
-            done();
-          }
-        );
-      });
-
-      it('should accept numbers', done => {
-        const expires = Date.now() + 1000 * 60;
-
-        file.getSignedPolicy(
-          {
-            expires,
-          },
-          (err: Error, policy: PolicyDocument) => {
-            assert.ifError(err);
-            const expires_ = JSON.parse(policy.string).expiration;
-            assert.strictEqual(expires_, new Date(expires).toISOString());
-            done();
-          }
-        );
-      });
-
-      it('should accept strings', done => {
-        const expires = '12-12-2099';
-
-        file.getSignedPolicy(
-          {
-            expires,
-          },
-          (err: Error, policy: PolicyDocument) => {
-            assert.ifError(err);
-            const expires_ = JSON.parse(policy.string).expiration;
-            assert.strictEqual(expires_, new Date(expires).toISOString());
-            done();
-          }
-        );
-      });
-
-      it('should throw if a date is invalid', () => {
-        const expires = new Date('31-12-2019');
-
-        assert.throws(() => {
-          file.getSignedPolicy(
-            {
-              expires,
-            },
-            () => {}
-          );
-        }, /The expiration date provided was invalid\./);
-      });
-
-      it('should throw if a date from the past is given', () => {
-        const expires = Date.now() - 5;
-
-        assert.throws(() => {
-          file.getSignedPolicy(
-            {
-              expires,
-            },
-            () => {}
-          );
-        }, /An expiration date cannot be in the past\./);
-      });
-    });
-
-    describe('equality condition', () => {
-      it('should add equality conditions (array of arrays)', done => {
-        file.getSignedPolicy(
-          {
-            expires: Date.now() + 2000,
+    describe('parseConditions', () => {
+      describe('equality condition', () => {
+        it('should add equality conditions (array of arrays)', () => {
+          const conditions = {
             equals: [['$<field>', '<value>']],
-          },
-          (err: Error, signedPolicy: PolicyDocument) => {
-            const conditionString = '["eq","$<field>","<value>"]';
-            assert.ifError(err);
-            assert(signedPolicy.string.indexOf(conditionString) > -1);
-            done();
-          }
-        );
-      });
+          };
 
-      it('should add equality condition (array)', done => {
-        file.getSignedPolicy(
-          {
-            expires: Date.now() + 2000,
+          const res = file.parseConditions(conditions);
+          assert.deepStrictEqual(res, [["eq","$<field>","<value>"]])
+        });
+
+        it('should add equality condition (array)', () => {
+          const conditions = {
             equals: ['$<field>', '<value>'],
-          },
-          (err: Error, signedPolicy: PolicyDocument) => {
-            const conditionString = '["eq","$<field>","<value>"]';
-            assert.ifError(err);
-            assert(signedPolicy.string.indexOf(conditionString) > -1);
-            done();
-          }
-        );
+          };
+
+          const res = file.parseConditions(conditions);
+          assert.deepStrictEqual(res, [["eq","$<field>","<value>"]]);
+        });
+
+        it('should throw if equal condition is not an array', () => {
+          assert.throws(() => {
+            file.parseConditions({equals: [{}]});
+          }, /Equals condition must be an array of 2 elements\./);
+        });
+
+        it('should throw if equal condition length is not 2', () => {
+          assert.throws(() => {
+            file.parseConditions({equals: [['1','2','3']]});
+          }, /Equals condition must be an array of 2 elements\./);
+        });
       });
 
-      it('should throw if equal condition is not an array', () => {
-        assert.throws(() => {
-          file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              equals: [{}],
-            },
-            () => {}
-          );
-        }, /Equals condition must be an array of 2 elements\./);
-      });
-
-      it('should throw if equal condition length is not 2', () => {
-        assert.throws(() => {
-          file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              equals: [['1', '2', '3']],
-            },
-            () => {}
-          );
-        }, /Equals condition must be an array of 2 elements\./);
-      });
-    });
-
-    describe('prefix conditions', () => {
-      it('should add prefix conditions (array of arrays)', done => {
-        file.getSignedPolicy(
-          {
-            expires: Date.now() + 2000,
+      describe('prefix conditions', () => {
+        it('should add prefix conditions (array of arrays)', () => {
+          const conditions = {
             startsWith: [['$<field>', '<value>']],
-          },
-          (err: Error, signedPolicy: PolicyDocument) => {
-            const conditionString = '["starts-with","$<field>","<value>"]';
-            assert.ifError(err);
-            assert(signedPolicy.string.indexOf(conditionString) > -1);
-            done();
-          }
-        );
-      });
+          };
+          const res = file.parseConditions(conditions);
+          assert.deepStrictEqual(res, [["starts-with","$<field>","<value>"]]);
+        });
 
-      it('should add prefix condition (array)', done => {
-        file.getSignedPolicy(
-          {
-            expires: Date.now() + 2000,
+        it('should add prefix condition (array)', () => {
+          const conditions = {
             startsWith: ['$<field>', '<value>'],
-          },
-          (err: Error, signedPolicy: PolicyDocument) => {
-            const conditionString = '["starts-with","$<field>","<value>"]';
-            assert.ifError(err);
-            assert(signedPolicy.string.indexOf(conditionString) > -1);
-            done();
+          };
+          const res = file.parseConditions(conditions);
+          assert.deepStrictEqual(res, [["starts-with", "$<field>", "<value>"]]);
+        });
+
+        it('should throw if prexif condition is not an array', () => {
+          assert.throws(() => {
+            file.parseConditions({
+              startsWith: [{}],
+            });
+          }, /StartsWith condition must be an array of 2 elements\./);
+        });
+
+        it('should throw if prefix condition length is not 2', () => {
+          assert.throws(() => {
+            file.parseConditions({
+              startsWith: [['1', '2', '3']],
+            })
+          }, /StartsWith condition must be an array of 2 elements\./);
+        });
+      });
+
+      describe('content length', () => {
+        it('should add content length condition', () => {
+          const conditions = {
+            contentLengthRange: { min: 0, max: 1 },
+          };
+          const res = file.parseConditions(conditions);
+          assert.deepStrictEqual(res, [["content-length-range",0,1]]);
+        });
+
+        it('should throw if content length has no min', () => {
+          assert.throws(() => {
+            const conditions = {
+              contentLengthRange: [{ max: 1 }],
+            };
+            file.parseConditions(conditions);
+          }, /ContentLengthRange must have numeric min & max fields\./);
+        });
+
+        it('should throw if content length has no max', () => {
+          assert.throws(() => {
+            const conditions = {
+              contentLengthRange: [{ min: 0 }],
+            };
+            file.parseConditions(conditions);
+          }, /ContentLengthRange must have numeric min & max fields\./);
+        });
+      });
+
+      it('should add ACL condtion', () => {
+        const res = file.parseConditions(
+          {
+            acl: '<acl>',
           }
         );
+        assert.deepStrictEqual(res, [{"acl":"<acl>"}]);
       });
 
-      it('should throw if prexif condition is not an array', () => {
-        assert.throws(() => {
-          file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              startsWith: [{}],
-            },
-            () => {}
-          );
-        }, /StartsWith condition must be an array of 2 elements\./);
+      it('should add success redirect', () => {
+        const redirectUrl = 'http://redirect';
+
+        const res = file.parseConditions(
+          {
+            successRedirect: redirectUrl,
+          }
+        );
+
+        assert.deepStrictEqual(res, [{success_action_redirect: redirectUrl}]);
       });
 
-      it('should throw if prefix condition length is not 2', () => {
-        assert.throws(() => {
-          file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              startsWith: [['1', '2', '3']],
-            },
-            () => {}
-          );
-        }, /StartsWith condition must be an array of 2 elements\./);
+      it('should add success status', () => {
+        const successStatus = '200';
+
+        const res = file.parseConditions(
+          {
+            successStatus,
+          },
+        );
+
+        assert.deepStrictEqual(res, [{success_action_status: successStatus}])
       });
     });
 
-    describe('content length', () => {
-      it('should add content length condition', done => {
-        file.getSignedPolicy(
-          {
-            expires: Date.now() + 2000,
-            contentLengthRange: {min: 0, max: 1},
+    describe('getSignedPolicyV2', () => {
+      let CONFIG: GetSignedPolicyV2Options;
+
+      beforeEach(() => {
+        CONFIG = {
+          expires: Date.now() + 2000,
+        };
+
+        BUCKET.storage.authClient = {
+          sign: () => {
+            return Promise.resolve('signature');
           },
-          (err: Error, signedPolicy: PolicyDocument) => {
-            const conditionString = '["content-length-range",0,1]';
+        };
+      });
+
+      it('should create a signed policy', done => {
+        BUCKET.storage.authClient.sign = (blobToSign: string) => {
+          const policy = Buffer.from(blobToSign, 'base64').toString();
+          assert.strictEqual(typeof JSON.parse(policy), 'object');
+          return Promise.resolve('signature');
+        };
+
+        // tslint:disable-next-line no-any
+        file.getSignedPolicyV2(CONFIG, (err: Error, signedPolicy: any) => {
+          assert.ifError(err);
+          assert.strictEqual(typeof signedPolicy.string, 'string');
+          assert.strictEqual(typeof signedPolicy.base64, 'string');
+          assert.strictEqual(typeof signedPolicy.signature, 'string');
+          done();
+        });
+      });
+
+      it('should not modify the configuration object', done => {
+        const originalConfig = Object.assign({}, CONFIG);
+
+        file.getSignedPolicyV2(CONFIG, (err: Error) => {
+          assert.ifError(err);
+          assert.deepStrictEqual(CONFIG, originalConfig);
+          done();
+        });
+      });
+
+      it('should return an error if signBlob errors', done => {
+        const error = new Error('Error.');
+
+        BUCKET.storage.authClient.sign = () => {
+          return Promise.reject(error);
+        };
+
+        file.getSignedPolicyV2(CONFIG, (err: Error) => {
+          assert.strictEqual(err.name, 'SigningError');
+          assert.strictEqual(err.message, error.message);
+          done();
+        });
+      });
+
+      it('should add key equality condition', done => {
+        file.getSignedPolicyV2(
+          CONFIG,
+          (err: Error, signedPolicy: PolicyDocumentV2) => {
+            const conditionString = '["eq","$key","' + file.name + '"]';
             assert.ifError(err);
             assert(signedPolicy.string.indexOf(conditionString) > -1);
             done();
@@ -2757,28 +2642,349 @@ describe('File', () => {
         );
       });
 
-      it('should throw if content length has no min', () => {
-        assert.throws(() => {
-          file.getSignedPolicy(
-            {
-              expires: Date.now() + 2000,
-              contentLengthRange: [{max: 1}],
-            },
-            () => {}
-          );
-        }, /ContentLengthRange must have numeric min & max fields\./);
+      it('should parse condition into policy', done => {
+        CONFIG = {
+          equals: ['a', 'b'],
+          acl: '<acl>',
+          ...CONFIG,
+        };
+        const conditions = [
+          {acl: '<acl>'},
+          ['eq', 'a', 'b'],
+        ];
+        sinon.stub(file, 'parseConditions').returns(conditions);
+
+        file.getSignedPolicyV2(CONFIG, (err: Error, signedPolicy: PolicyDocumentV2) => {
+          assert.ifError(err);
+          assert.deepStrictEqual(file.parseConditions.getCall(0).args[0], CONFIG);
+
+          const expectedConditionString = JSON.stringify(conditions);
+          assert(signedPolicy.string.includes(expectedConditionString));
+          done();
+        });
       });
 
-      it('should throw if content length has no max', () => {
-        assert.throws(() => {
-          file.getSignedPolicy(
+      describe('expires', () => {
+        it('should accept Date objects', done => {
+          const expires = new Date(Date.now() + 1000 * 60);
+
+          file.getSignedPolicyV2(
             {
-              expires: Date.now() + 2000,
-              contentLengthRange: [{min: 0}],
+              expires,
             },
-            () => {}
+            (err: Error, policy: PolicyDocument) => {
+              assert.ifError(err);
+              const expires_ = JSON.parse(policy.string).expiration;
+              assert.strictEqual(expires_, expires.toISOString());
+              done();
+            }
           );
-        }, /ContentLengthRange must have numeric min & max fields\./);
+        });
+
+        it('should accept numbers', done => {
+          const expires = Date.now() + 1000 * 60;
+
+          file.getSignedPolicyV2(
+            {
+              expires,
+            },
+            (err: Error, policy: PolicyDocument) => {
+              assert.ifError(err);
+              const expires_ = JSON.parse(policy.string).expiration;
+              assert.strictEqual(expires_, new Date(expires).toISOString());
+              done();
+            }
+          );
+        });
+
+        it('should accept strings', done => {
+          const expires = '12-12-2099';
+
+          file.getSignedPolicyV2(
+            {
+              expires,
+            },
+            (err: Error, policy: PolicyDocument) => {
+              assert.ifError(err);
+              const expires_ = JSON.parse(policy.string).expiration;
+              assert.strictEqual(expires_, new Date(expires).toISOString());
+              done();
+            }
+          );
+        });
+
+        it('should throw if a date is invalid', () => {
+          const expires = new Date('31-12-2019');
+
+          assert.throws(() => {
+            file.getSignedPolicyV2(
+              {
+                expires,
+              },
+              () => {}
+            );
+          }, /The expiration date provided was invalid\./);
+        });
+
+        it('should throw if a date from the past is given', () => {
+          const expires = Date.now() - 5;
+
+          assert.throws(() => {
+            file.getSignedPolicyV2(
+              {
+                expires,
+              },
+              () => {}
+            );
+          }, /An expiration date cannot be in the past\./);
+        });
+      });
+    });
+
+    describe.only('getSignedPolicyV4', () => {
+      let CONFIG: GetSignedPolicyV4Options;
+      const NOW = new Date('2020-01-01');
+      let fakeTimer: sinon.SinonFakeTimers;
+      const CLIENT_EMAIL = 'test@domain.com';
+
+      beforeEach(() => {
+        fakeTimer = sinon.useFakeTimers(NOW);
+        CONFIG = {
+          expires: NOW.valueOf() + 2000,
+        };
+
+        BUCKET.storage.authClient = {
+          sign: () => {
+            return Promise.resolve('signature');
+          },
+          getCredentials() {
+            return Promise.resolve({
+              client_email: CLIENT_EMAIL,
+            });
+          },
+        };
+      });
+
+      afterEach(() => {
+        fakeTimer.restore();
+      })
+
+      it('should create a signed policy', done => {
+        const SIGNATURE = 'signature';
+
+        BUCKET.storage.authClient.sign = (blobToSign: string) => {
+          const policy = Buffer.from(blobToSign, 'base64').toString();
+          assert.strictEqual(typeof JSON.parse(policy), 'object');
+          return Promise.resolve(SIGNATURE);
+        };
+
+        const EXPECTED_SIGNATURE = Buffer.from(SIGNATURE, 'base64').toString('hex');
+        const fields = {
+          key: file.name,
+          'x-goog-algorithm': 'GOOG4-HMAC-SHA256',
+          'x-goog-date': '20200101T000000Z',
+          'x-goog-credential': `${CLIENT_EMAIL}/20200101/auto/storage/goog4_request`,
+        };
+
+        const policy = {
+          expiration: new Date(CONFIG.expires).toISOString(),
+          conditions: Object.entries(fields).map(([key, value]) => ({[key]: value})),
+        };
+
+        const policyString = JSON.stringify(policy);
+        const EXPECTED_POLICY = Buffer.from(policyString).toString('base64');
+
+        // tslint:disable-next-line no-any
+        file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4) => {
+          assert.ifError(err);
+          assert(res.url, `${STORAGE_UPLOAD_BASE_URL}/${BUCKET.name}`);
+
+          assert.deepStrictEqual(res.fields, {
+            ...fields,
+            'x-goog-signature': EXPECTED_SIGNATURE,
+            policy: EXPECTED_POLICY,
+          });
+
+          done();
+        });
+      });
+
+      it('should not modify the configuration object', done => {
+        const originalConfig = Object.assign({}, CONFIG);
+
+        file.getSignedPolicyV4(CONFIG, (err: Error) => {
+          assert.ifError(err);
+          assert.deepStrictEqual(CONFIG, originalConfig);
+          done();
+        });
+      });
+
+      it('should return an error if signBlob errors', done => {
+        const error = new Error('Error.');
+
+        BUCKET.storage.authClient.sign = () => {
+          return Promise.reject(error);
+        };
+
+        file.getSignedPolicyV4(CONFIG, (err: Error) => {
+          assert.strictEqual(err.name, 'SigningError');
+          assert.strictEqual(err.message, error.message);
+          done();
+        });
+      });
+
+      it('should add key condition', done => {
+        file.getSignedPolicyV4(
+          CONFIG,
+          (err: Error, res: SignedPolicyV4) => {
+            assert.ifError(err);
+
+            assert.strictEqual(res.fields['key'], file.name);
+            const EXPECTED_POLICY_ELEMENT = `{"key":"${file.name}"}`;
+            assert(Buffer.from(res.fields.policy, 'base64').toString('utf-8').includes(EXPECTED_POLICY_ELEMENT));
+            done();
+          }
+        );
+      });
+
+      it('should parse condition into policy', done => {
+        CONFIG = {
+          equals: ['a', 'b'],
+          acl: '<acl>',
+          ...CONFIG,
+        };
+        const conditions = [
+          {acl: '<acl>'},
+          ['eq', 'a', 'b'],
+        ];
+        sinon.stub(file, 'parseConditions').returns(conditions);
+
+        file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4) => {
+          assert.ifError(err);
+          assert.deepStrictEqual(file.parseConditions.getCall(0).args[0], CONFIG);
+
+          const expectedConditionString = JSON.stringify(conditions);
+          const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+          assert(decodedPolicy.includes(expectedConditionString));
+          done();
+        });
+      });
+
+      it('should accept custom fields', done => {
+        CONFIG = {
+          fields: {
+            'x-goog-meta-foo': 'bar',
+          },
+          ...CONFIG,
+        };
+
+        file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4) => {
+          assert.ifError(err);
+
+          const expectedConditionString = JSON.stringify(CONFIG.fields);
+          assert.strictEqual(res.fields['x-goog-meta-foo'], 'bar');
+          const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+          assert(decodedPolicy.includes(expectedConditionString));
+          done();
+        });
+      });
+
+      it('should not include fields with x-ignore- prefix', done => {
+        CONFIG = {
+          fields: {
+            'x-ignore-foo': 'bar',
+          },
+          ...CONFIG,
+        };
+
+        file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4) => {
+          assert.ifError(err);
+
+          const expectedConditionString = JSON.stringify(CONFIG.fields);
+          assert.strictEqual(res.fields['x-ignore-foo'], 'bar');
+          const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+          assert(!decodedPolicy.includes(expectedConditionString));
+          done();
+        });
+      });
+
+      describe('expires', () => {
+        it('should accept Date objects', done => {
+          const expires = new Date(NOW.valueOf() + 1000 * 60);
+
+          file.getSignedPolicyV4(
+            {
+              expires,
+            },
+            (err: Error, res: SignedPolicyV4) => {
+              assert.ifError(err);
+              const expectedPolicyElement = '{"expiration":"2020-01-01T00:01:00Z"}';
+              const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+              assert(!decodedPolicy.includes(expectedPolicyElement));
+              done();
+            }
+          );
+        });
+
+        it('should accept numbers', done => {
+          const expires = Date.now() + 1000 * 60;
+
+          file.getSignedPolicyV4(
+            {
+              expires,
+            },
+            (err: Error, res: SignedPolicyV4) => {
+              assert.ifError(err);
+              const expectedPolicyElement = '{"expiration":"2020-01-01T00:01:02Z"}';
+              const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+              assert(!decodedPolicy.includes(expectedPolicyElement));
+              done();
+            },
+          );
+        });
+
+        it('should accept strings', done => {
+          const expires = '12-12-2099';
+
+          file.getSignedPolicyV4(
+            {
+              expires,
+            },
+            (err: Error, res: SignedPolicyV4) => {
+              assert.ifError(err);
+              const expectedPolicyElement = '{"expiration":"2099-12-12T00:00:02Z"}';
+              const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+              assert(!decodedPolicy.includes(expectedPolicyElement));
+              done();
+            },
+          );
+        });
+
+        it('should throw if a date is invalid', () => {
+          const expires = new Date('31-12-2019');
+
+          assert.throws(() => {
+            file.getSignedPolicyV4(
+              {
+                expires,
+              },
+              () => {}
+            );
+          }, /The expiration date provided was invalid\./);
+        });
+
+        it('should throw if a date from the past is given', () => {
+          const expires = Date.now() - 5;
+
+          assert.throws(() => {
+            file.getSignedPolicyV4(
+              {
+                expires,
+              },
+              () => {}
+            );
+          }, /An expiration date cannot be in the past\./);
+        });
       });
     });
   });
