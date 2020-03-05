@@ -2588,7 +2588,7 @@ class File extends ServiceObject<File> {
     const dateISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
     const todayISO = dateFormat.format(now, 'YYYYMMDD', true);
     fields['key'] = this.name;
-    fields['x-goog-algorithm'] = 'GOOG4-HMAC-SHA256'
+    fields['x-goog-algorithm'] = 'GOOG4-RSA-SHA256'
     fields['x-goog-date'] = dateISO;
 
     const sign = async () => {
