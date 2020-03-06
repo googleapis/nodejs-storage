@@ -85,11 +85,12 @@ const testFile = fs.readFileSync(
   'utf-8'
 );
 
+// tslint:disable-next-line no-any
 const testCases: any[] = JSON.parse(testFile).signingV4Tests;
 const v4SignedUrlCases = new Array<V4SignedURLTestCase>();
 const v4SignedPolicyCases = new Array<V4SignedPolicyTestCase>();
 
-for (let testCase of testCases) {
+for (const testCase of testCases) {
   if (testCase.expectedUrl) {
     v4SignedUrlCases.push(testCase);
   } else if (testCase.policyInput) {
@@ -175,6 +176,7 @@ describe('v4 signed url', () => {
   });
 });
 
+// tslint:disable-next-line ban
 describe.skip('v4 signed policy', () => {
   v4SignedPolicyCases.forEach(testCase => {
     // TODO: implement parsing v4 signed policy tests
