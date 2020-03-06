@@ -17,7 +17,6 @@ import {describe, it} from 'mocha';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import fetch, { Request } from 'node-fetch';
-import * as FormData from 'form-data';
 const normalizeNewline = require('normalize-newline');
 import pLimit from 'p-limit';
 import {promisify} from 'util';
@@ -3409,17 +3408,6 @@ describe('storage', () => {
       };
 
       const [policy] = await file.getSignedPolicyV4(options);
-      const form = new FormData();
-      for (let key of Object.keys(policy.fields)) {
-        form.append(key, policy.fields[key]);
-      }
-
-      form.append('file', 'data');
-
-      const res = await fetch(`https://storage-staging-test.googleusercontent.com/${bucket.name}`, {
-        method: 'POST',
-        body: form,
-      });
     });
   });
 
