@@ -102,7 +102,7 @@ export interface SignedPolicyV4 {
 }
 
 export interface GetSignedPolicyV4Callback {
-  (err: Error|null, response?: SignedPolicyV4): void;
+  (err: Error | null, response?: SignedPolicyV4): void;
 }
 
 export interface GetSignedPolicyCallback extends GetSignedPolicyV2Callback {}
@@ -111,22 +111,32 @@ export interface GetSignedPolicyV2Callback {
   (err: Error | null, policy?: PolicyDocument): void;
 }
 
-export interface GetSignedPolicyOptions extends SignedPolicyConditions {}
-
-export interface GetSignedPolicyV2Options extends GetSignedPolicyOptions {}
-
-export interface GetSignedPolicyV4Options extends SignedPolicyConditions {
-  fields?: {[key: string]: string};
+export interface Fields {
+  [key: string]: string;
 }
 
-export interface SignedPolicyConditions {
+export interface SignedPolicyOptionsConditions {
   equals?: string[] | string[][];
-  expires: string | number | Date;
   startsWith?: string[] | string[][];
+  contentLengthRange?: {min?: number; max?: number};
+}
+
+export interface SignedPolicyOptionsFields {
   acl?: string;
   successRedirect?: string;
   successStatus?: string;
-  contentLengthRange?: {min?: number; max?: number};
+}
+
+export interface GetSignedPolicyOptions
+  extends SignedPolicyOptionsConditions,
+    SignedPolicyOptionsFields {
+  expires: string | number | Date;
+}
+
+export interface GetSignedPolicyV2Options extends GetSignedPolicyOptions {}
+
+export interface GetSignedPolicyV4Options extends GetSignedPolicyOptions {
+  fields?: Fields;
 }
 
 export interface GetSignedUrlConfig {
@@ -2185,7 +2195,7 @@ class File extends ServiceObject<File> {
    * enabled.
    *
    * @see [Policy Document Reference]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
-   * 
+   *
    * @deprecated `getSignedPolicy()` is deprecated in favor of `getSignedPolicyV2()`
    *     and `getSignedPolicyV4()`. Currently, this method is an alias to
    *     `getSignedPolicyV2()`, and will be removed in a future major release.
@@ -2233,7 +2243,10 @@ class File extends ServiceObject<File> {
     optionsOrCallback?: GetSignedPolicyOptions | GetSignedPolicyCallback,
     cb?: GetSignedPolicyCallback
   ): void | Promise<GetSignedPolicyResponse> {
-    const args = normalize<GetSignedPolicyOptions, GetSignedPolicyCallback>(optionsOrCallback, cb);
+    const args = normalize<GetSignedPolicyOptions, GetSignedPolicyCallback>(
+      optionsOrCallback,
+      cb
+    );
     const options = args.options;
     const callback = args.callback;
 
@@ -2367,12 +2380,17 @@ class File extends ServiceObject<File> {
 
     const conditions = this.parseConditions(options);
 
-    conditions.push(['eq', '$key', this.name])
-    conditions.push(
-      {
-        bucket: this.bucket.name,
-      },
-    );
+    conditions.push(['eq', '$key', this.name]);
+    conditions.push({
+      bucket: this.bucket.name,
+    });
+
+    const fields = this.parseFieldsFromOptions(options);
+    Object.entries(fields).forEach(([key, value]) => {
+      if (!key.startsWith('x-ignore-')) {
+        conditions.push({[key]: value});
+      }
+    });
 
     const policy = {
       expiration,
@@ -2383,12 +2401,13 @@ class File extends ServiceObject<File> {
     const policyBase64 = Buffer.from(policyString).toString('base64');
 
     this.storage.authClient.sign(policyBase64).then(
-      signature => callback(null, {
-        string: policyString,
-        base64: policyBase64,
-        signature,
-      }),
-      err => callback(new SigningError(err.message)),
+      signature =>
+        callback(null, {
+          string: policyString,
+          base64: policyBase64,
+          signature,
+        }),
+      err => callback(new SigningError(err.message))
     );
   }
 
@@ -2486,7 +2505,7 @@ class File extends ServiceObject<File> {
    *   fields: {
    *     'x-goog-meta-foo': 'bar', // additional meta fields
    *     'x-ignore-': '', // fields beginning with 'x-ignore-' is not signed
-   *   } 
+   *   }
    * };
    *
    * file.getSignedPolicy(options, function(err, res) {
@@ -2505,7 +2524,10 @@ class File extends ServiceObject<File> {
     optionsOrCallback?: GetSignedPolicyV4Options | GetSignedPolicyV4Callback,
     cb?: GetSignedPolicyV4Callback
   ): void | Promise<GetSignedPolicyV4Response> {
-    const args = normalize<GetSignedPolicyV4Options, GetSignedPolicyV4Callback>(optionsOrCallback, cb);
+    const args = normalize<GetSignedPolicyV4Options, GetSignedPolicyV4Callback>(
+      optionsOrCallback,
+      cb
+    );
     let options = args.options;
     const callback = args.callback;
     const expires = new Date((options as GetSignedPolicyV4Options).expires);
@@ -2519,23 +2541,30 @@ class File extends ServiceObject<File> {
     }
 
     if (expires.valueOf() - Date.now() > SEVEN_DAYS) {
-      throw new Error(`Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`);
+      throw new Error(
+        `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`
+      );
     }
 
     options = Object.assign({}, options);
     const conditions = this.parseConditions(options);
 
-    const fields = Object.assign({}, options.fields) as SignedPolicyV4Fields;
+    const fieldsFromOptions = this.parseFieldsFromOptions(options);
+    const fields = Object.assign(
+      {},
+      fieldsFromOptions,
+      options.fields
+    ) as SignedPolicyV4Fields;
 
     const now = new Date();
     const dateISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
     const todayISO = dateFormat.format(now, 'YYYYMMDD', true);
     fields['key'] = this.name;
-    fields['x-goog-algorithm'] = 'GOOG4-RSA-SHA256'
+    fields['x-goog-algorithm'] = 'GOOG4-RSA-SHA256';
     fields['x-goog-date'] = dateISO;
 
     const sign = async () => {
-      const { client_email } = await this.storage.authClient.getCredentials();
+      const {client_email} = await this.storage.authClient.getCredentials();
       const credential = `${client_email}/${todayISO}/auto/storage/goog4_request`;
       fields['x-goog-credential'] = credential;
 
@@ -2563,13 +2592,13 @@ class File extends ServiceObject<File> {
         return {
           url: `${STORAGE_UPLOAD_BASE_URL}/${this.bucket.name}`,
           fields,
-        }
+        };
       } catch (err) {
         throw new SigningError(err.message);
       }
-    }
+    };
 
-    sign().then((res) => callback!(null, res), callback!);
+    sign().then(res => callback!(null, res), callback!);
   }
 
   getSignedUrl(cfg: GetSignedUrlConfig): Promise<GetSignedUrlResponse>;
@@ -3541,7 +3570,24 @@ class File extends ServiceObject<File> {
     });
   }
 
-  private parseConditions(options: SignedPolicyConditions): object[] {
+  private parseFieldsFromOptions(options: SignedPolicyOptionsFields): Fields {
+    const fields: Fields = {};
+    if (options.acl) {
+      fields.acl = options.acl;
+    }
+
+    if (options.successRedirect) {
+      fields.success_action_redirect = options.successRedirect;
+    }
+
+    if (options.successStatus) {
+      fields.success_action_status = options.successStatus;
+    }
+
+    return fields;
+  }
+
+  private parseConditions(options: SignedPolicyOptionsConditions): object[] {
     const conditions: object[] = [];
     if (Array.isArray(options.equals)) {
       if (!Array.isArray((options.equals as string[][])[0])) {
@@ -3569,24 +3615,6 @@ class File extends ServiceObject<File> {
       });
     }
 
-    if (options.acl) {
-      conditions.push({
-        acl: options.acl,
-      });
-    }
-
-    if (options.successRedirect) {
-      conditions.push({
-        success_action_redirect: options.successRedirect,
-      });
-    }
-
-    if (options.successStatus) {
-      conditions.push({
-        success_action_status: options.successStatus,
-      });
-    }
-
     if (options.contentLengthRange) {
       const min = options.contentLengthRange.min;
       const max = options.contentLengthRange.max;
@@ -3600,7 +3628,6 @@ class File extends ServiceObject<File> {
 
     return conditions;
   }
-
 }
 
 /*! Developer Documentation

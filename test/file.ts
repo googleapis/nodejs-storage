@@ -44,7 +44,15 @@ import {
   PolicyDocument,
   SetFileMetadataOptions,
 } from '../src';
-import { GetSignedPolicyV2Options, GetSignedPolicyV2Callback, PolicyDocumentV2, GetSignedPolicyV4Options, SignedPolicyV4, STORAGE_UPLOAD_BASE_URL, GetSignedUrlConfig } from '../src/file';
+import {
+  GetSignedPolicyV2Options,
+  GetSignedPolicyV2Callback,
+  PolicyDocumentV2,
+  GetSignedPolicyV4Options,
+  SignedPolicyV4,
+  STORAGE_UPLOAD_BASE_URL,
+  GetSignedUrlConfig,
+} from '../src/file';
 
 let promisified = false;
 let makeWritableStreamOverride: Function | null;
@@ -68,7 +76,11 @@ const fakePromisify = {
     }
 
     promisified = true;
-    assert.deepStrictEqual(options.exclude, ['request', 'setEncryptionKey', 'parseConditions']);
+    assert.deepStrictEqual(options.exclude, [
+      'request',
+      'setEncryptionKey',
+      'parseConditions',
+    ]);
   },
 };
 
@@ -2431,13 +2443,45 @@ describe('File', () => {
       };
       const callback = () => {};
 
-      file.getSignedPolicyV2 = (argOpts: GetSignedPolicyV2Options, argCb: GetSignedPolicyV2Callback) => {
+      file.getSignedPolicyV2 = (
+        argOpts: GetSignedPolicyV2Options,
+        argCb: GetSignedPolicyV2Callback
+      ) => {
         assert.strictEqual(argOpts, options);
         assert.strictEqual(argCb, callback);
         done();
-      }
+      };
 
       file.getSignedPolicy(options, callback);
+    });
+
+    describe('parseFieldsFromOptions', () => {
+      it('should add ACL condtion', () => {
+        const res = file.parseFieldsFromOptions({
+          acl: '<acl>',
+        });
+        assert.deepStrictEqual(res, {acl: '<acl>'});
+      });
+
+      it('should add success redirect', () => {
+        const redirectUrl = 'http://redirect';
+
+        const res = file.parseFieldsFromOptions({
+          successRedirect: redirectUrl,
+        });
+
+        assert.deepStrictEqual(res, {success_action_redirect: redirectUrl});
+      });
+
+      it('should add success status', () => {
+        const successStatus = '200';
+
+        const res = file.parseFieldsFromOptions({
+          successStatus,
+        });
+
+        assert.deepStrictEqual(res, {success_action_status: successStatus});
+      });
     });
 
     describe('parseConditions', () => {
@@ -2448,7 +2492,7 @@ describe('File', () => {
           };
 
           const res = file.parseConditions(conditions);
-          assert.deepStrictEqual(res, [["eq","$<field>","<value>"]])
+          assert.deepStrictEqual(res, [['eq', '$<field>', '<value>']]);
         });
 
         it('should add equality condition (array)', () => {
@@ -2457,7 +2501,7 @@ describe('File', () => {
           };
 
           const res = file.parseConditions(conditions);
-          assert.deepStrictEqual(res, [["eq","$<field>","<value>"]]);
+          assert.deepStrictEqual(res, [['eq', '$<field>', '<value>']]);
         });
 
         it('should throw if equal condition is not an array', () => {
@@ -2468,7 +2512,7 @@ describe('File', () => {
 
         it('should throw if equal condition length is not 2', () => {
           assert.throws(() => {
-            file.parseConditions({equals: [['1','2','3']]});
+            file.parseConditions({equals: [['1', '2', '3']]});
           }, /Equals condition must be an array of 2 elements\./);
         });
       });
@@ -2479,7 +2523,7 @@ describe('File', () => {
             startsWith: [['$<field>', '<value>']],
           };
           const res = file.parseConditions(conditions);
-          assert.deepStrictEqual(res, [["starts-with","$<field>","<value>"]]);
+          assert.deepStrictEqual(res, [['starts-with', '$<field>', '<value>']]);
         });
 
         it('should add prefix condition (array)', () => {
@@ -2487,7 +2531,7 @@ describe('File', () => {
             startsWith: ['$<field>', '<value>'],
           };
           const res = file.parseConditions(conditions);
-          assert.deepStrictEqual(res, [["starts-with", "$<field>", "<value>"]]);
+          assert.deepStrictEqual(res, [['starts-with', '$<field>', '<value>']]);
         });
 
         it('should throw if prexif condition is not an array', () => {
@@ -2502,7 +2546,7 @@ describe('File', () => {
           assert.throws(() => {
             file.parseConditions({
               startsWith: [['1', '2', '3']],
-            })
+            });
           }, /StartsWith condition must be an array of 2 elements\./);
         });
       });
@@ -2510,16 +2554,16 @@ describe('File', () => {
       describe('content length', () => {
         it('should add content length condition', () => {
           const conditions = {
-            contentLengthRange: { min: 0, max: 1 },
+            contentLengthRange: {min: 0, max: 1},
           };
           const res = file.parseConditions(conditions);
-          assert.deepStrictEqual(res, [["content-length-range",0,1]]);
+          assert.deepStrictEqual(res, [['content-length-range', 0, 1]]);
         });
 
         it('should throw if content length has no min', () => {
           assert.throws(() => {
             const conditions = {
-              contentLengthRange: [{ max: 1 }],
+              contentLengthRange: [{max: 1}],
             };
             file.parseConditions(conditions);
           }, /ContentLengthRange must have numeric min & max fields\./);
@@ -2528,44 +2572,11 @@ describe('File', () => {
         it('should throw if content length has no max', () => {
           assert.throws(() => {
             const conditions = {
-              contentLengthRange: [{ min: 0 }],
+              contentLengthRange: [{min: 0}],
             };
             file.parseConditions(conditions);
           }, /ContentLengthRange must have numeric min & max fields\./);
         });
-      });
-
-      it('should add ACL condtion', () => {
-        const res = file.parseConditions(
-          {
-            acl: '<acl>',
-          }
-        );
-        assert.deepStrictEqual(res, [{"acl":"<acl>"}]);
-      });
-
-      it('should add success redirect', () => {
-        const redirectUrl = 'http://redirect';
-
-        const res = file.parseConditions(
-          {
-            successRedirect: redirectUrl,
-          }
-        );
-
-        assert.deepStrictEqual(res, [{success_action_redirect: redirectUrl}]);
-      });
-
-      it('should add success status', () => {
-        const successStatus = '200';
-
-        const res = file.parseConditions(
-          {
-            successStatus,
-          },
-        );
-
-        assert.deepStrictEqual(res, [{success_action_status: successStatus}])
       });
     });
 
@@ -2640,23 +2651,64 @@ describe('File', () => {
       it('should parse condition into policy', done => {
         CONFIG = {
           equals: ['a', 'b'],
-          acl: '<acl>',
           ...CONFIG,
         };
-        const conditions = [
-          {acl: '<acl>'},
-          ['eq', 'a', 'b'],
-        ];
+        const conditions = [{acl: '<acl>'}, ['eq', 'a', 'b']];
         sinon.stub(file, 'parseConditions').returns(conditions);
 
-        file.getSignedPolicyV2(CONFIG, (err: Error, signedPolicy: PolicyDocumentV2) => {
-          assert.ifError(err);
-          assert.deepStrictEqual(file.parseConditions.getCall(0).args[0], CONFIG);
+        file.getSignedPolicyV2(
+          CONFIG,
+          (err: Error, signedPolicy: PolicyDocumentV2) => {
+            assert.ifError(err);
+            assert.deepStrictEqual(
+              file.parseConditions.getCall(0).args[0],
+              CONFIG
+            );
 
-          const expectedConditionString = JSON.stringify(conditions);
-          assert(signedPolicy.string.includes(expectedConditionString));
-          done();
-        });
+            const expectedConditionString = JSON.stringify(conditions);
+            assert(signedPolicy.string.includes(expectedConditionString));
+            done();
+          }
+        );
+      });
+
+      it('should parse fields from options into policy', done => {
+        const successRedirect = 'http://google.com';
+        const successStatus = '200';
+        const acl = '<acl>';
+
+        CONFIG = {
+          successRedirect,
+          successStatus,
+          acl,
+          ...CONFIG,
+        };
+        const fields = {
+          success_action_redirect: successRedirect,
+          success_action_status: successStatus,
+          acl,
+        };
+        sinon.stub(file, 'parseFieldsFromOptions').returns(fields);
+
+        file.getSignedPolicyV2(
+          CONFIG,
+          (err: Error, signedPolicy: PolicyDocumentV2) => {
+            assert.ifError(err);
+            assert.deepStrictEqual(
+              file.parseFieldsFromOptions.getCall(0).args[0],
+              CONFIG
+            );
+
+            const EXPECTED_POLICY_ELEMENT = [
+              `{"success_action_redirect":"${successRedirect}"}`,
+              `{"success_action_status":"${successStatus}"}`,
+              `{"acl":"${acl}"}`,
+            ].join(',');
+
+            assert(signedPolicy.string.includes(EXPECTED_POLICY_ELEMENT));
+            done();
+          }
+        );
       });
 
       describe('expires', () => {
@@ -2762,7 +2814,7 @@ describe('File', () => {
 
       afterEach(() => {
         fakeTimer.restore();
-      })
+      });
 
       it('should create a signed policy', done => {
         const SIGNATURE = 'signature';
@@ -2773,7 +2825,9 @@ describe('File', () => {
           return Promise.resolve(SIGNATURE);
         };
 
-        const EXPECTED_SIGNATURE = Buffer.from(SIGNATURE, 'base64').toString('hex');
+        const EXPECTED_SIGNATURE = Buffer.from(SIGNATURE, 'base64').toString(
+          'hex'
+        );
         const fields = {
           key: file.name,
           'x-goog-algorithm': 'GOOG4-RSA-SHA256',
@@ -2783,7 +2837,9 @@ describe('File', () => {
 
         const policy = {
           expiration: new Date(CONFIG.expires).toISOString(),
-          conditions: Object.entries(fields).map(([key, value]) => ({[key]: value})),
+          conditions: Object.entries(fields).map(([key, value]) => ({
+            [key]: value,
+          })),
         };
 
         const policyString = JSON.stringify(policy);
@@ -2829,17 +2885,18 @@ describe('File', () => {
       });
 
       it('should add key condition', done => {
-        file.getSignedPolicyV4(
-          CONFIG,
-          (err: Error, res: SignedPolicyV4) => {
-            assert.ifError(err);
+        file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4) => {
+          assert.ifError(err);
 
-            assert.strictEqual(res.fields['key'], file.name);
-            const EXPECTED_POLICY_ELEMENT = `{"key":"${file.name}"}`;
-            assert(Buffer.from(res.fields.policy, 'base64').toString('utf-8').includes(EXPECTED_POLICY_ELEMENT));
-            done();
-          }
-        );
+          assert.strictEqual(res.fields['key'], file.name);
+          const EXPECTED_POLICY_ELEMENT = `{"key":"${file.name}"}`;
+          assert(
+            Buffer.from(res.fields.policy, 'base64')
+              .toString('utf-8')
+              .includes(EXPECTED_POLICY_ELEMENT)
+          );
+          done();
+        });
       });
 
       it('should parse condition into policy', done => {
@@ -2848,19 +2905,62 @@ describe('File', () => {
           acl: '<acl>',
           ...CONFIG,
         };
-        const conditions = [
-          {acl: '<acl>'},
-          ['eq', 'a', 'b'],
-        ];
+        const conditions = [{acl: '<acl>'}, ['eq', 'a', 'b']];
         sinon.stub(file, 'parseConditions').returns(conditions);
 
         file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4) => {
           assert.ifError(err);
-          assert.deepStrictEqual(file.parseConditions.getCall(0).args[0], CONFIG);
+          assert.deepStrictEqual(
+            file.parseConditions.getCall(0).args[0],
+            CONFIG
+          );
 
           const expectedConditionString = JSON.stringify(conditions);
-          const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+          const decodedPolicy = Buffer.from(
+            res.fields.policy,
+            'base64'
+          ).toString('utf-8');
           assert(decodedPolicy.includes(expectedConditionString));
+          done();
+        });
+      });
+
+      it('should parse fields from options into policy', done => {
+        const successRedirect = 'http://google.com';
+        const successStatus = '200';
+        const acl = '<acl>';
+
+        CONFIG = {
+          successRedirect,
+          successStatus,
+          acl,
+          ...CONFIG,
+        };
+        const fields = {
+          success_action_redirect: successRedirect,
+          success_action_status: successStatus,
+          acl,
+        };
+        sinon.stub(file, 'parseFieldsFromOptions').returns(fields);
+
+        const EXPECTED_POLICY_ELEMENT = [
+          `{"success_action_redirect":"${successRedirect}"}`,
+          `{"success_action_status":"${successStatus}"}`,
+          `{"acl":"${acl}"}`,
+        ].join(',');
+
+        file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4) => {
+          assert.ifError(err);
+          assert.deepStrictEqual(
+            file.parseFieldsFromOptions.getCall(0).args[0],
+            CONFIG
+          );
+
+          const decodedPolicy = Buffer.from(
+            res.fields.policy,
+            'base64'
+          ).toString('utf-8');
+          assert(decodedPolicy.includes(EXPECTED_POLICY_ELEMENT));
           done();
         });
       });
@@ -2878,7 +2978,10 @@ describe('File', () => {
 
           const expectedConditionString = JSON.stringify(CONFIG.fields);
           assert.strictEqual(res.fields['x-goog-meta-foo'], 'bar');
-          const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+          const decodedPolicy = Buffer.from(
+            res.fields.policy,
+            'base64'
+          ).toString('utf-8');
           assert(decodedPolicy.includes(expectedConditionString));
           done();
         });
@@ -2897,7 +3000,10 @@ describe('File', () => {
 
           const expectedConditionString = JSON.stringify(CONFIG.fields);
           assert.strictEqual(res.fields['x-ignore-foo'], 'bar');
-          const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+          const decodedPolicy = Buffer.from(
+            res.fields.policy,
+            'base64'
+          ).toString('utf-8');
           assert(!decodedPolicy.includes(expectedConditionString));
           done();
         });
@@ -2913,8 +3019,12 @@ describe('File', () => {
             },
             (err: Error, res: SignedPolicyV4) => {
               assert.ifError(err);
-              const expectedPolicyElement = '{"expiration":"2020-01-01T00:01:00Z"}';
-              const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+              const expectedPolicyElement =
+                '{"expiration":"2020-01-01T00:01:00Z"}';
+              const decodedPolicy = Buffer.from(
+                res.fields.policy,
+                'base64'
+              ).toString('utf-8');
               assert(!decodedPolicy.includes(expectedPolicyElement));
               done();
             }
@@ -2930,11 +3040,15 @@ describe('File', () => {
             },
             (err: Error, res: SignedPolicyV4) => {
               assert.ifError(err);
-              const expectedPolicyElement = '{"expiration":"2020-01-01T00:01:02Z"}';
-              const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+              const expectedPolicyElement =
+                '{"expiration":"2020-01-01T00:01:02Z"}';
+              const decodedPolicy = Buffer.from(
+                res.fields.policy,
+                'base64'
+              ).toString('utf-8');
               assert(!decodedPolicy.includes(expectedPolicyElement));
               done();
-            },
+            }
           );
         });
 
@@ -2947,11 +3061,15 @@ describe('File', () => {
             },
             (err: Error, res: SignedPolicyV4) => {
               assert.ifError(err);
-              const expectedPolicyElement = '{"expiration":"2099-12-12T00:00:02Z"}';
-              const decodedPolicy = Buffer.from(res.fields.policy, 'base64').toString('utf-8');
+              const expectedPolicyElement =
+                '{"expiration":"2099-12-12T00:00:02Z"}';
+              const decodedPolicy = Buffer.from(
+                res.fields.policy,
+                'base64'
+              ).toString('utf-8');
               assert(!decodedPolicy.includes(expectedPolicyElement));
               done();
-            },
+            }
           );
         });
 
@@ -2985,14 +3103,19 @@ describe('File', () => {
           const expires = Date.now() + 7.1 * 24 * 60 * 60;
           const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
-          assert.throws(() => {
-            file.getSignedPolicyV4(
-              {
-                expires,
-              },
-              () => {}
-            );
-          }, {message: `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`});
+          assert.throws(
+            () => {
+              file.getSignedPolicyV4(
+                {
+                  expires,
+                },
+                () => {}
+              );
+            },
+            {
+              message: `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`,
+            }
+          );
         });
       });
     });
