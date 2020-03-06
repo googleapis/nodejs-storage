@@ -98,13 +98,12 @@ for (const testCase of testCases) {
   }
 }
 
-
 const SERVICE_ACCOUNT = path.join(
   __dirname,
   '../../conformance-test/fixtures/signing-service-account.json'
 );
 
-const storage = new Storage({ keyFilename: SERVICE_ACCOUNT });
+const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
 
 describe('v4 signed url', () => {
   v4SignedUrlCases.forEach(testCase => {
@@ -183,11 +182,9 @@ describe.skip('v4 signed policy', () => {
     it(testCase.description, async () => {
       // const input = testCase.policyInput;
       // const NOW = new Date(input.timestamp);
-
       // const fakeTimer = sinon.useFakeTimers(NOW);
       // const bucket = storage.bucket(input.bucket);
       // const expires = NOW.valueOf() + input.expiration * 1000;
-
       // const options = {};
       // const fields = input.fields || {};
       // // fields that Node.js supports as argument to method.
@@ -197,18 +194,15 @@ describe.skip('v4 signed policy', () => {
       // delete fields.successActionStatus;
       // const successActionRedirect = fields.success_action_redirect;
       // delete fields.successActionRedirect;
-
       // const conditions = input.conditions || {} as Conditions;
       // // conditions that Node.js support as argument to method.
       // const startsWith = conditions.startsWith;
       // let contentLengthMin
       // if (conditions.contentLengthRange) {
-
       // }
-
       // fakeTimer.restore();
     });
-  })
+  });
 });
 
 function parseUrlStyle(
