@@ -177,6 +177,7 @@ describe('v4 signed url', () => {
 
 describe.skip('v4 signed policy', () => {
   v4SignedPolicyCases.forEach(testCase => {
+    // TODO: implement parsing v4 signed policy tests
     it(testCase.description, async () => {
       // const input = testCase.policyInput;
       // const NOW = new Date(input.timestamp);
