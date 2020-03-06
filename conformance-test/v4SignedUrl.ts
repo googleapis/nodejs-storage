@@ -87,16 +87,12 @@ const testFile = fs.readFileSync(
 
 // tslint:disable-next-line no-any
 const testCases: any[] = JSON.parse(testFile).signingV4Tests;
-const v4SignedUrlCases = new Array<V4SignedURLTestCase>();
-const v4SignedPolicyCases = new Array<V4SignedPolicyTestCase>();
-
-for (const testCase of testCases) {
-  if (testCase.expectedUrl) {
-    v4SignedUrlCases.push(testCase);
-  } else if (testCase.policyInput) {
-    v4SignedPolicyCases.push(testCase);
-  }
-}
+const v4SignedUrlCases: V4SignedURLTestCase[] = testCases.filter(
+  testCase => testCase.expectedUrl
+);
+const v4SignedPolicyCases: V4SignedPolicyTestCase[] = testCases.filter(
+  testCase => testCase.policyInput
+);
 
 const SERVICE_ACCOUNT = path.join(
   __dirname,
