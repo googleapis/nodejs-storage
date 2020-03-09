@@ -16,7 +16,7 @@ import * as assert from 'assert';
 import {describe, it} from 'mocha';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-import fetch, { Request } from 'node-fetch';
+import fetch, {Request} from 'node-fetch';
 const normalizeNewline = require('normalize-newline');
 import pLimit from 'p-limit';
 import {promisify} from 'util';

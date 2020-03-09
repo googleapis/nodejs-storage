@@ -70,6 +70,7 @@ interface Conditions {
 interface PolicyOutput {
   url: string;
   fields: {[key: string]: string};
+  expectedDecodedPolicy: string;
 }
 
 interface FileAction {
@@ -88,7 +89,8 @@ const testFile = fs.readFileSync(
 // tslint:disable-next-line no-any
 const testCases = JSON.parse(testFile);
 const v4SignedUrlCases: V4SignedURLTestCase[] = testCases.signingV4Tests;
-const v4SignedPolicyCases: V4SignedPolicyTestCase[] = testCases.postPolicyV4Tests;
+const v4SignedPolicyCases: V4SignedPolicyTestCase[] =
+  testCases.postPolicyV4Tests;
 
 const SERVICE_ACCOUNT = path.join(
   __dirname,
@@ -191,14 +193,14 @@ describe('v4 conformance test', () => {
 
         options.fields = fields;
 
-        const conditions = input.conditions || {} as Conditions;
+        const conditions = input.conditions || ({} as Conditions);
         // conditions that Node.js support as argument to method.
         options.startsWith = conditions.startsWith;
         if (conditions.contentLengthRange) {
           options.contentLengthRange = {
             min: conditions.contentLengthRange[0],
             max: conditions.contentLengthRange[1],
-          }
+          };
         }
 
         const file = bucket.file(input.object);
@@ -206,7 +208,14 @@ describe('v4 conformance test', () => {
 
         assert.strictEqual(policy.url, testCase.policyOutput.url);
         const outputFields = testCase.policyOutput.fields;
-        assert.deepStrictEqual(policy.fields, outputFields);
+        const decodedPolicy = Buffer.from(
+          policy.fields.policy,
+          'base64'
+        ).toString();
+        assert.deepStrictEqual(
+          decodedPolicy,
+          testCase.policyOutput.expectedDecodedPolicy
+        );
 
         fakeTimer.restore();
       });

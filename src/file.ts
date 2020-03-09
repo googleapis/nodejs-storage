@@ -302,6 +302,8 @@ export const STORAGE_UPLOAD_BASE_URL =
  */
 const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
 
+export const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
+
 export interface FileOptions {
   encryptionKey?: string | Buffer;
   generation?: number | string;
@@ -2560,13 +2562,13 @@ class File extends ServiceObject<File> {
     const dateISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
     const todayISO = dateFormat.format(now, 'YYYYMMDD', true);
     fields['key'] = this.name;
-    fields['x-goog-algorithm'] = 'GOOG4-RSA-SHA256';
     fields['x-goog-date'] = dateISO;
 
     const sign = async () => {
       const {client_email} = await this.storage.authClient.getCredentials();
       const credential = `${client_email}/${todayISO}/auto/storage/goog4_request`;
       fields['x-goog-credential'] = credential;
+      fields['x-goog-algorithm'] = 'GOOG4-RSA-SHA256';
 
       Object.entries(fields).forEach(([key, value]) => {
         if (!key.startsWith('x-ignore-')) {
@@ -2574,11 +2576,11 @@ class File extends ServiceObject<File> {
         }
       });
 
-      const expiration = expires.toISOString();
+      const expiration = dateFormat.format(expires, 'YYYY-MM-DD[T]HH:mm:ss[Z]', true);
 
       const policy = {
-        expiration,
         conditions,
+        expiration,
       };
 
       const policyString = JSON.stringify(policy);
@@ -2590,7 +2592,7 @@ class File extends ServiceObject<File> {
         fields['policy'] = policyBase64;
         fields['x-goog-signature'] = signatureHex;
         return {
-          url: `${STORAGE_UPLOAD_BASE_URL}/${this.bucket.name}`,
+          url: `${STORAGE_POST_POLICY_BASE_URL}/${this.bucket.name}/`,
           fields,
         };
       } catch (err) {
