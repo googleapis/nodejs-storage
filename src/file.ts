@@ -2586,7 +2586,11 @@ class File extends ServiceObject<File> {
         }
       });
 
-      const expiration = dateFormat.format(expires, 'YYYY-MM-DD[T]HH:mm:ss[Z]', true);
+      const expiration = dateFormat.format(
+        expires,
+        'YYYY-MM-DD[T]HH:mm:ss[Z]',
+        true
+      );
 
       const policy = {
         conditions,
@@ -2608,7 +2612,7 @@ class File extends ServiceObject<File> {
         } else if (options.cname) {
           url = `${options.cname}/`;
         } else {
-          url = `${STORAGE_POST_POLICY_BASE_URL}/${this.bucket.name}/`
+          url = `${STORAGE_POST_POLICY_BASE_URL}/${this.bucket.name}/`;
         }
 
         return {
@@ -3658,7 +3662,12 @@ class File extends ServiceObject<File> {
  * that a callback is omitted.
  */
 promisifyAll(File, {
-  exclude: ['request', 'setEncryptionKey', 'parseConditions', 'parseFieldsFromOptions'],
+  exclude: [
+    'request',
+    'setEncryptionKey',
+    'parseConditions',
+    'parseFieldsFromOptions',
+  ],
 });
 
 let warned = false;

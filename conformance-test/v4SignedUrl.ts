@@ -211,7 +211,7 @@ describe('v4 conformance test', () => {
           : undefined;
         const {cname, virtualHostedStyle} = parseUrlStyle(
           input.urlStyle,
-          domain,
+          domain
         );
         options.virtualHostedStyle = virtualHostedStyle;
         options.cname = cname;

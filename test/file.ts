@@ -2841,7 +2841,11 @@ describe('File', () => {
           conditions: Object.entries(fields).map(([key, value]) => ({
             [key]: value,
           })),
-          expiration: dateFormat.format(new Date(CONFIG.expires), 'YYYY-MM-DD[T]HH:mm:ss[Z]', true),
+          expiration: dateFormat.format(
+            new Date(CONFIG.expires),
+            'YYYY-MM-DD[T]HH:mm:ss[Z]',
+            true
+          ),
         };
 
         const policyString = JSON.stringify(policy);
