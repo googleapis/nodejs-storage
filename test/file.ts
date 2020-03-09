@@ -23,6 +23,7 @@ import {PromisifyAllOptions} from '@google-cloud/promisify';
 import * as assert from 'assert';
 import {describe, it} from 'mocha';
 import * as crypto from 'crypto';
+import * as dateFormat from 'date-and-time';
 import * as duplexify from 'duplexify';
 import * as extend from 'extend';
 import * as fs from 'fs';
@@ -80,6 +81,7 @@ const fakePromisify = {
       'request',
       'setEncryptionKey',
       'parseConditions',
+      'parseFieldsFromOptions',
     ]);
   },
 };
@@ -2830,16 +2832,16 @@ describe('File', () => {
         );
         const fields = {
           key: file.name,
-          'x-goog-algorithm': 'GOOG4-RSA-SHA256',
           'x-goog-date': '20200101T000000Z',
           'x-goog-credential': `${CLIENT_EMAIL}/20200101/auto/storage/goog4_request`,
+          'x-goog-algorithm': 'GOOG4-RSA-SHA256',
         };
 
         const policy = {
-          expiration: new Date(CONFIG.expires).toISOString(),
           conditions: Object.entries(fields).map(([key, value]) => ({
             [key]: value,
           })),
+          expiration: dateFormat.format(new Date(CONFIG.expires), 'YYYY-MM-DD[T]HH:mm:ss[Z]', true),
         };
 
         const policyString = JSON.stringify(policy);
@@ -3005,6 +3007,26 @@ describe('File', () => {
             'base64'
           ).toString('utf-8');
           assert(!decodedPolicy.includes(expectedConditionString));
+          done();
+        });
+      });
+
+      it('should output url with cname', done => {
+        CONFIG.cname = 'http://domain.tld';
+
+        file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4) => {
+          assert.ifError(err);
+          assert(res.url, CONFIG.cname);
+          done();
+        });
+      });
+
+      it('should output a virtualHostedStyle url', done => {
+        CONFIG.virtualHostedStyle = true;
+
+        file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4) => {
+          assert.ifError(err);
+          assert(res.url, `https://${BUCKET.name}.storage.googleapis.com/`);
           done();
         });
       });

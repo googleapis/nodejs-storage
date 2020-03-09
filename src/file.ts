@@ -136,6 +136,8 @@ export interface GetSignedPolicyOptions
 export interface GetSignedPolicyV2Options extends GetSignedPolicyOptions {}
 
 export interface GetSignedPolicyV4Options extends GetSignedPolicyOptions {
+  cname?: string;
+  virtualHostedStyle?: boolean;
   fields?: Fields;
 }
 
@@ -2439,6 +2441,14 @@ class File extends ServiceObject<File> {
    * @typedef {object} GetSignedPolicyV4Options
    * @param {*} expires - A timestamp when this policy will expire. Any
    *     value given is passed to `new Date()`.
+   * @param {string} [config.cname] The cname for this bucket, i.e.,
+   *     "https://cdn.example.com".
+   * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
+   *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
+   *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
+   *     should generally be preferred instaed of path-style URL.
+   *     Currently defaults to `false` for path-style, although this may change in a
+   *     future major-version release.
    * @param {array|array[]} [equals] Array of request parameters and
    *     their expected value (e.g. [['$<field>', '<value>']]). Values are
    *     translated into equality constraints in the conditions field of the
@@ -2591,8 +2601,18 @@ class File extends ServiceObject<File> {
         const signatureHex = Buffer.from(signature, 'base64').toString('hex');
         fields['policy'] = policyBase64;
         fields['x-goog-signature'] = signatureHex;
+
+        let url: string;
+        if (options.virtualHostedStyle) {
+          url = `https://${this.bucket.name}.storage.googleapis.com/`;
+        } else if (options.cname) {
+          url = `${options.cname}/`;
+        } else {
+          url = `${STORAGE_POST_POLICY_BASE_URL}/${this.bucket.name}/`
+        }
+
         return {
-          url: `${STORAGE_POST_POLICY_BASE_URL}/${this.bucket.name}/`,
+          url,
           fields,
         };
       } catch (err) {
@@ -3638,7 +3658,7 @@ class File extends ServiceObject<File> {
  * that a callback is omitted.
  */
 promisifyAll(File, {
-  exclude: ['request', 'setEncryptionKey', 'parseConditions'],
+  exclude: ['request', 'setEncryptionKey', 'parseConditions', 'parseFieldsFromOptions'],
 });
 
 let warned = false;

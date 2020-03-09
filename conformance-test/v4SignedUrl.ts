@@ -57,6 +57,9 @@ interface PolicyInput {
   object: string;
   expiration: number;
   timestamp: string;
+  acl?: string;
+  urlStyle?: UrlStyle;
+  bucketBoundHostname?: string;
   conditions?: Conditions;
   fields?: {[key: string]: string};
 }
@@ -203,6 +206,16 @@ describe('v4 conformance test', () => {
           };
         }
 
+        const domain = input.bucketBoundHostname
+          ? `${input.scheme}://${input.bucketBoundHostname}`
+          : undefined;
+        const {cname, virtualHostedStyle} = parseUrlStyle(
+          input.urlStyle,
+          domain,
+        );
+        options.virtualHostedStyle = virtualHostedStyle;
+        options.cname = cname;
+
         const file = bucket.file(input.object);
         const [policy] = await file.getSignedPolicyV4(options);
 
@@ -216,6 +229,8 @@ describe('v4 conformance test', () => {
           decodedPolicy,
           testCase.policyOutput.expectedDecodedPolicy
         );
+
+        assert.deepStrictEqual(outputFields, testCase.policyOutput.fields);
 
         fakeTimer.restore();
       });
