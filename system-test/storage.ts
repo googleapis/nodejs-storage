@@ -3362,13 +3362,8 @@ describe('storage', () => {
   describe('sign policy', () => {
     let file: File;
 
-    before(done => {
+    before(() => {
       file = bucket.file('LogoToSign.jpg');
-      done();
-      // fs.createReadStream(FILES.logo.path)
-      //   .pipe(file.createWriteStream())
-      //   .on('error', done)
-      //   .on('finish', done.bind(null, null));
     });
 
     beforeEach(function() {
