@@ -45,6 +45,8 @@ import {
   SetFileMetadataOptions,
   GetSignedUrlConfig,
   GetSignedPolicyOptions,
+  GetSignedPolicyV2Options,
+  GetSignedPolicyV2Callback,
 } from '../src';
 
 let promisified = false;
@@ -2418,6 +2420,26 @@ describe('File', () => {
   });
 
   describe('getSignedPolicy', () => {
+    it('should alias to getSignedPolicyV2', done => {
+      const options = {
+        expires: Date.now() + 2000,
+      };
+      const callback = () => {};
+
+      file.getSignedPolicyV2 = (
+        argOpts: GetSignedPolicyV2Options,
+        argCb: GetSignedPolicyV2Callback
+      ) => {
+        assert.strictEqual(argOpts, options);
+        assert.strictEqual(argCb, callback);
+        done();
+      };
+
+      file.getSignedPolicyV2(options, callback);
+    });
+  });
+
+  describe('getSignedPolicyV2', () => {
     let CONFIG: GetSignedPolicyOptions;
 
     beforeEach(() => {
@@ -2440,7 +2462,7 @@ describe('File', () => {
       };
 
       // tslint:disable-next-line no-any
-      file.getSignedPolicy(CONFIG, (err: Error, signedPolicy: any) => {
+      file.getSignedPolicyV2(CONFIG, (err: Error, signedPolicy: any) => {
         assert.ifError(err);
         assert.strictEqual(typeof signedPolicy.string, 'string');
         assert.strictEqual(typeof signedPolicy.base64, 'string');
@@ -2452,7 +2474,7 @@ describe('File', () => {
     it('should not modify the configuration object', done => {
       const originalConfig = Object.assign({}, CONFIG);
 
-      file.getSignedPolicy(CONFIG, (err: Error) => {
+      file.getSignedPolicyV2(CONFIG, (err: Error) => {
         assert.ifError(err);
         assert.deepStrictEqual(CONFIG, originalConfig);
         done();
@@ -2466,7 +2488,7 @@ describe('File', () => {
         return Promise.reject(error);
       };
 
-      file.getSignedPolicy(CONFIG, (err: Error) => {
+      file.getSignedPolicyV2(CONFIG, (err: Error) => {
         assert.strictEqual(err.name, 'SigningError');
         assert.strictEqual(err.message, error.message);
         done();
@@ -2474,7 +2496,7 @@ describe('File', () => {
     });
 
     it('should add key equality condition', done => {
-      file.getSignedPolicy(
+      file.getSignedPolicyV2(
         CONFIG,
         (err: Error, signedPolicy: PolicyDocument) => {
           const conditionString = '["eq","$key","' + file.name + '"]';
@@ -2486,7 +2508,7 @@ describe('File', () => {
     });
 
     it('should add ACL condtion', done => {
-      file.getSignedPolicy(
+      file.getSignedPolicyV2(
         {
           expires: Date.now() + 2000,
           acl: '<acl>',
@@ -2503,7 +2525,7 @@ describe('File', () => {
     it('should add success redirect', done => {
       const redirectUrl = 'http://redirect';
 
-      file.getSignedPolicy(
+      file.getSignedPolicyV2(
         {
           expires: Date.now() + 2000,
           successRedirect: redirectUrl,
@@ -2528,7 +2550,7 @@ describe('File', () => {
     it('should add success status', done => {
       const successStatus = '200';
 
-      file.getSignedPolicy(
+      file.getSignedPolicyV2(
         {
           expires: Date.now() + 2000,
           successStatus,
@@ -2554,7 +2576,7 @@ describe('File', () => {
       it('should accept Date objects', done => {
         const expires = new Date(Date.now() + 1000 * 60);
 
-        file.getSignedPolicy(
+        file.getSignedPolicyV2(
           {
             expires,
           },
@@ -2570,7 +2592,7 @@ describe('File', () => {
       it('should accept numbers', done => {
         const expires = Date.now() + 1000 * 60;
 
-        file.getSignedPolicy(
+        file.getSignedPolicyV2(
           {
             expires,
           },
@@ -2586,7 +2608,7 @@ describe('File', () => {
       it('should accept strings', done => {
         const expires = '12-12-2099';
 
-        file.getSignedPolicy(
+        file.getSignedPolicyV2(
           {
             expires,
           },
@@ -2603,7 +2625,7 @@ describe('File', () => {
         const expires = new Date('31-12-2019');
 
         assert.throws(() => {
-          file.getSignedPolicy(
+          file.getSignedPolicyV2(
             {
               expires,
             },
@@ -2616,7 +2638,7 @@ describe('File', () => {
         const expires = Date.now() - 5;
 
         assert.throws(() => {
-          file.getSignedPolicy(
+          file.getSignedPolicyV2(
             {
               expires,
             },
@@ -2628,7 +2650,7 @@ describe('File', () => {
 
     describe('equality condition', () => {
       it('should add equality conditions (array of arrays)', done => {
-        file.getSignedPolicy(
+        file.getSignedPolicyV2(
           {
             expires: Date.now() + 2000,
             equals: [['$<field>', '<value>']],
@@ -2643,7 +2665,7 @@ describe('File', () => {
       });
 
       it('should add equality condition (array)', done => {
-        file.getSignedPolicy(
+        file.getSignedPolicyV2(
           {
             expires: Date.now() + 2000,
             equals: ['$<field>', '<value>'],
@@ -2659,7 +2681,7 @@ describe('File', () => {
 
       it('should throw if equal condition is not an array', () => {
         assert.throws(() => {
-          file.getSignedPolicy(
+          file.getSignedPolicyV2(
             {
               expires: Date.now() + 2000,
               equals: [{}],
@@ -2671,7 +2693,7 @@ describe('File', () => {
 
       it('should throw if equal condition length is not 2', () => {
         assert.throws(() => {
-          file.getSignedPolicy(
+          file.getSignedPolicyV2(
             {
               expires: Date.now() + 2000,
               equals: [['1', '2', '3']],
@@ -2684,7 +2706,7 @@ describe('File', () => {
 
     describe('prefix conditions', () => {
       it('should add prefix conditions (array of arrays)', done => {
-        file.getSignedPolicy(
+        file.getSignedPolicyV2(
           {
             expires: Date.now() + 2000,
             startsWith: [['$<field>', '<value>']],
@@ -2699,7 +2721,7 @@ describe('File', () => {
       });
 
       it('should add prefix condition (array)', done => {
-        file.getSignedPolicy(
+        file.getSignedPolicyV2(
           {
             expires: Date.now() + 2000,
             startsWith: ['$<field>', '<value>'],
@@ -2715,7 +2737,7 @@ describe('File', () => {
 
       it('should throw if prexif condition is not an array', () => {
         assert.throws(() => {
-          file.getSignedPolicy(
+          file.getSignedPolicyV2(
             {
               expires: Date.now() + 2000,
               startsWith: [{}],
@@ -2727,7 +2749,7 @@ describe('File', () => {
 
       it('should throw if prefix condition length is not 2', () => {
         assert.throws(() => {
-          file.getSignedPolicy(
+          file.getSignedPolicyV2(
             {
               expires: Date.now() + 2000,
               startsWith: [['1', '2', '3']],
@@ -2740,7 +2762,7 @@ describe('File', () => {
 
     describe('content length', () => {
       it('should add content length condition', done => {
-        file.getSignedPolicy(
+        file.getSignedPolicyV2(
           {
             expires: Date.now() + 2000,
             contentLengthRange: {min: 0, max: 1},
@@ -2756,7 +2778,7 @@ describe('File', () => {
 
       it('should throw if content length has no min', () => {
         assert.throws(() => {
-          file.getSignedPolicy(
+          file.getSignedPolicyV2(
             {
               expires: Date.now() + 2000,
               contentLengthRange: [{max: 1}],
@@ -2768,7 +2790,7 @@ describe('File', () => {
 
       it('should throw if content length has no max', () => {
         assert.throws(() => {
-          file.getSignedPolicy(
+          file.getSignedPolicyV2(
             {
               expires: Date.now() + 2000,
               contentLengthRange: [{min: 0}],

@@ -93,6 +93,12 @@ export interface GetSignedPolicyOptions {
   contentLengthRange?: {min?: number; max?: number};
 }
 
+export interface GetSignedPolicyV2Options extends GetSignedPolicyOptions {}
+
+export type GetSignedPolicyV2Response = GetSignedPolicyResponse;
+
+export interface GetSignedPolicyV2Callback extends GetSignedPolicyCallback {}
+
 export interface GetSignedUrlConfig {
   action: 'read' | 'write' | 'delete' | 'resumable';
   version?: 'v2' | 'v4';
@@ -2114,6 +2120,11 @@ class File extends ServiceObject<File> {
    *
    * @see [Policy Document Reference]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
    *
+   * @deprecated `getSignedPolicy()` is deprecated in favor of `getSignedPolicyV2()`
+   *     and `getSignedPolicyV4()`. Currently, this method is an alias to
+   *     `getSignedPolicyV2()`, and will be removed in a future major release.
+   *     We recommend signing new policies using v4.
+   *
    * @throws {Error} If an expiration timestamp from the past is given.
    * @throws {Error} If options.equals has an array with less or more than two
    *     members.
@@ -2181,10 +2192,119 @@ class File extends ServiceObject<File> {
     optionsOrCallback?: GetSignedPolicyOptions | GetSignedPolicyCallback,
     cb?: GetSignedPolicyCallback
   ): void | Promise<GetSignedPolicyResponse> {
-    const args = normalize<GetSignedPolicyOptions>(optionsOrCallback, cb);
+    const args = normalize<GetSignedPolicyOptions, GetSignedPolicyCallback>(
+      optionsOrCallback,
+      cb
+    );
+    const options = args.options;
+    const callback = args.callback;
+    this.getSignedPolicyV2(options, callback);
+  }
+
+  getSignedPolicyV2(
+    options: GetSignedPolicyV2Options
+  ): Promise<GetSignedPolicyV2Response>;
+  getSignedPolicyV2(
+    options: GetSignedPolicyV2Options,
+    callback: GetSignedPolicyV2Callback
+  ): void;
+  getSignedPolicyV2(callback: GetSignedPolicyV2Callback): void;
+  /**
+   * @typedef {array} GetSignedPolicyV2Response
+   * @property {object} 0 The document policy.
+   */
+  /**
+   * @callback GetSignedPolicyV2Callback
+   * @param {?Error} err Request error, if any.
+   * @param {object} policy The document policy.
+   */
+  /**
+   * Get a signed policy document to allow a user to upload data with a POST
+   * request.
+   *
+   * In Google Cloud Platform environments, such as Cloud Functions and App
+   * Engine, you usually don't provide a `keyFilename` or `credentials` during
+   * instantiation. In those environments, we call the
+   * [signBlob
+   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * to create a signed policy. That API requires either the
+   * `https://www.googleapis.com/auth/iam` or
+   * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
+   * enabled.
+   *
+   * @see [Policy Document Reference]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
+   *
+   * @throws {Error} If an expiration timestamp from the past is given.
+   * @throws {Error} If options.equals has an array with less or more than two
+   *     members.
+   * @throws {Error} If options.startsWith has an array with less or more than two
+   *     members.
+   *
+   * @param {object} options Configuration options.
+   * @param {array|array[]} [options.equals] Array of request parameters and
+   *     their expected value (e.g. [['$<field>', '<value>']]). Values are
+   *     translated into equality constraints in the conditions field of the
+   *     policy document (e.g. ['eq', '$<field>', '<value>']). If only one
+   *     equality condition is to be specified, options.equals can be a one-
+   *     dimensional array (e.g. ['$<field>', '<value>']).
+   * @param {*} options.expires - A timestamp when this policy will expire. Any
+   *     value given is passed to `new Date()`.
+   * @param {array|array[]} [options.startsWith] Array of request parameters and
+   *     their expected prefixes (e.g. [['$<field>', '<value>']). Values are
+   *     translated into starts-with constraints in the conditions field of the
+   *     policy document (e.g. ['starts-with', '$<field>', '<value>']). If only
+   *     one prefix condition is to be specified, options.startsWith can be a
+   * one- dimensional array (e.g. ['$<field>', '<value>']).
+   * @param {string} [options.acl] ACL for the object from possibly predefined
+   *     ACLs.
+   * @param {string} [options.successRedirect] The URL to which the user client
+   *     is redirected if the upload is successful.
+   * @param {string} [options.successStatus] - The status of the Google Storage
+   *     response if the upload is successful (must be string).
+   * @param {object} [options.contentLengthRange]
+   * @param {number} [options.contentLengthRange.min] Minimum value for the
+   *     request's content length.
+   * @param {number} [options.contentLengthRange.max] Maximum value for the
+   *     request's content length.
+   * @param {GetSignedPolicyV2Callback} [callback] Callback function.
+   * @returns {Promise<GetSignedPolicyV2Response>}
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const myBucket = storage.bucket('my-bucket');
+   *
+   * const file = myBucket.file('my-file');
+   * const options = {
+   *   equals: ['$Content-Type', 'image/jpeg'],
+   *   expires: '10-25-2022',
+   *   contentLengthRange: {
+   *     min: 0,
+   *     max: 1024
+   *   }
+   * };
+   *
+   * file.getSignedPolicy(options, function(err, policy) {
+   *   // policy.string: the policy document in plain text.
+   *   // policy.base64: the policy document in base64.
+   *   // policy.signature: the policy signature in base64.
+   * });
+   *
+   * //-
+   * // If the callback is omitted, we'll return a Promise.
+   * //-
+   * file.getSignedPolicy(options).then(function(data) {
+   *   const policy = data[0];
+   * });
+   */
+  getSignedPolicyV2(
+    optionsOrCallback?: GetSignedPolicyV2Options | GetSignedPolicyV2Callback,
+    cb?: GetSignedPolicyV2Callback
+  ): void | Promise<GetSignedPolicyV2Response> {
+    const args = normalize<GetSignedPolicyV2Options>(optionsOrCallback, cb);
     let options = args.options;
     const callback = args.callback;
-    const expires = new Date((options as GetSignedPolicyOptions).expires);
+    const expires = new Date((options as GetSignedPolicyV2Options).expires);
 
     if (isNaN(expires.getTime())) {
       throw new Error('The expiration date provided was invalid.');
