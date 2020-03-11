@@ -26,6 +26,7 @@ import {promisifyAll} from '@google-cloud/promisify';
 import compressible = require('compressible');
 import concat = require('concat-stream');
 import * as crypto from 'crypto';
+import * as dateFormat from 'date-and-time';
 import * as extend from 'extend';
 import * as fs from 'fs';
 const hashStreamValidation = require('hash-stream-validation');
@@ -98,6 +99,29 @@ export interface GetSignedPolicyV2Options extends GetSignedPolicyOptions {}
 export type GetSignedPolicyV2Response = GetSignedPolicyResponse;
 
 export interface GetSignedPolicyV2Callback extends GetSignedPolicyCallback {}
+
+export interface PolicyFields {
+  [key: string]: string;
+}
+
+export interface GetSignedPolicyV4Options {
+  expires: string | number | Date;
+  cname?: string;
+  virtualHostedStyle?: boolean;
+  conditions?: object[];
+  fields?: PolicyFields;
+}
+
+export interface GetSignedPolicyV4Callback {
+  (err: Error | null, output?: SignedPolicyV4Output): void;
+}
+
+export type GetSignedPolicyV4Response = [SignedPolicyV4Output];
+
+export interface SignedPolicyV4Output {
+  url: string;
+  fields: PolicyFields;
+}
 
 export interface GetSignedUrlConfig {
   action: 'read' | 'write' | 'delete' | 'resumable';
@@ -257,6 +281,12 @@ const STORAGE_UPLOAD_BASE_URL =
   'https://storage.googleapis.com/upload/storage/v1/b';
 
 /**
+ * @const {string}
+ * @private
+ */
+const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
+
+/**
  * @const {RegExp}
  * @private
  */
@@ -350,6 +380,8 @@ class RequestError extends Error {
   code?: string;
   errors?: Error[];
 }
+
+const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
 /**
  * A File object is created from your {@link Bucket} object using
@@ -2398,6 +2430,108 @@ class File extends ServiceObject<File> {
         callback(new SigningError(err.message));
       }
     );
+  }
+
+  getSignedPolicyV4(
+    options: GetSignedPolicyV4Options
+  ): Promise<GetSignedPolicyV4Response>;
+  getSignedPolicyV4(
+    options: GetSignedPolicyV4Options,
+    callback: GetSignedPolicyV4Callback
+  ): void;
+  getSignedPolicyV4(callback: GetSignedPolicyV4Callback): void;
+  getSignedPolicyV4(
+    optionsOrCallback?: GetSignedPolicyV4Options | GetSignedPolicyV4Callback,
+    cb?: GetSignedPolicyV4Callback
+  ): void | Promise<GetSignedPolicyV4Response> {
+    const args = normalize<GetSignedPolicyV4Options, GetSignedPolicyV4Callback>(
+      optionsOrCallback,
+      cb
+    );
+    let options = args.options;
+    const callback = args.callback;
+    const expires = new Date((options as GetSignedPolicyV4Options).expires);
+
+    if (isNaN(expires.getTime())) {
+      throw new Error('The expiration date provided was invalid.');
+    }
+
+    if (expires.valueOf() < Date.now()) {
+      throw new Error('An expiration date cannot be in the past.');
+    }
+
+    if (expires.valueOf() - Date.now() > SEVEN_DAYS) {
+      throw new Error(
+        `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`
+      );
+    }
+
+    options = Object.assign({}, options);
+    let fields = Object.assign({}, options.fields);
+
+    const now = new Date();
+    const nowISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
+    const todayISO = dateFormat.format(now, 'YYYYMMDD', true);
+
+    const sign = async () => {
+      const {client_email} = await this.storage.authClient.getCredentials();
+      const credential = `${client_email}/${todayISO}/auto/storage/goog4_request`;
+
+      fields = {
+        ...fields,
+        key: this.name,
+        'x-goog-date': nowISO,
+        'x-goog-credential': credential,
+        'x-goog-algorithm': 'GOOG4-RSA-SHA256',
+      };
+
+      const conditions = options.conditions || [];
+
+      Object.entries(fields).forEach(([key, value]) => {
+        if (!key.startsWith('x-ignore-')) {
+          conditions.push({[key]: value});
+        }
+      });
+
+      const expiration = dateFormat.format(
+        expires,
+        'YYYY-MM-DD[T]HH:mm:ss[Z]',
+        true
+      );
+
+      const policy = {
+        conditions,
+        expiration,
+      };
+
+      const policyString = JSON.stringify(policy);
+      const policyBase64 = Buffer.from(policyString).toString('base64');
+
+      try {
+        const signature = await this.storage.authClient.sign(policyBase64);
+        const signatureHex = Buffer.from(signature, 'base64').toString('hex');
+        fields['policy'] = policyBase64;
+        fields['x-goog-signature'] = signatureHex;
+
+        let url: string;
+        if (options.virtualHostedStyle) {
+          url = `https://${this.bucket.name}.storage.googleapis.com/`;
+        } else if (options.cname) {
+          url = `${options.cname}/`;
+        } else {
+          url = `${STORAGE_POST_POLICY_BASE_URL}/${this.bucket.name}/`;
+        }
+
+        return {
+          url,
+          fields,
+        };
+      } catch (err) {
+        throw new SigningError(err.message);
+      }
+    };
+
+    sign().then(res => callback!(null, res), callback!);
   }
 
   getSignedUrl(cfg: GetSignedUrlConfig): Promise<GetSignedUrlResponse>;
