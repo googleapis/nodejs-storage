@@ -21,7 +21,7 @@ import * as path from 'path';
 import * as sinon from 'sinon';
 import * as querystring from 'querystring';
 
-import {Storage, GetSignedUrlConfig} from '../src/';
+import {Storage, GetSignedUrlConfig, GetSignedPolicyV4Options} from '../src/';
 import * as url from 'url';
 
 export enum UrlStyle {
@@ -57,6 +57,9 @@ interface PolicyInput {
   object: string;
   expiration: number;
   timestamp: string;
+  acl?: string;
+  urlStyle?: UrlStyle;
+  bucketBoundHostname?: string;
   conditions?: Conditions;
   fields?: {[key: string]: string};
 }
@@ -70,6 +73,7 @@ interface Conditions {
 interface PolicyOutput {
   url: string;
   fields: {[key: string]: string};
+  expectedDecodedPolicy: string;
 }
 
 interface FileAction {
@@ -86,13 +90,10 @@ const testFile = fs.readFileSync(
 );
 
 // tslint:disable-next-line no-any
-const testCases: any[] = JSON.parse(testFile).signingV4Tests;
-const v4SignedUrlCases: V4SignedURLTestCase[] = testCases.filter(
-  testCase => testCase.expectedUrl
-);
-const v4SignedPolicyCases: V4SignedPolicyTestCase[] = testCases.filter(
-  testCase => testCase.policyInput
-);
+const testCases = JSON.parse(testFile);
+const v4SignedUrlCases: V4SignedURLTestCase[] = testCases.signingV4Tests;
+const v4SignedPolicyCases: V4SignedPolicyTestCase[] =
+  testCases.postPolicyV4Tests;
 
 const SERVICE_ACCOUNT = path.join(
   __dirname,
@@ -101,102 +102,141 @@ const SERVICE_ACCOUNT = path.join(
 
 const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
 
-describe('v4 signed url', () => {
-  v4SignedUrlCases.forEach(testCase => {
-    it(testCase.description, async () => {
-      const NOW = new Date(testCase.timestamp);
+describe('v4 conformance test', () => {
+  describe('v4 signed url', () => {
+    v4SignedUrlCases.forEach(testCase => {
+      it(testCase.description, async () => {
+        const NOW = new Date(testCase.timestamp);
 
-      const fakeTimer = sinon.useFakeTimers(NOW);
-      const bucket = storage.bucket(testCase.bucket);
-      const expires = NOW.valueOf() + testCase.expiration * 1000;
-      const version = 'v4' as 'v4';
-      const domain = testCase.bucketBoundHostname
-        ? `${testCase.scheme}://${testCase.bucketBoundHostname}`
-        : undefined;
-      const {cname, virtualHostedStyle} = parseUrlStyle(
-        testCase.urlStyle,
-        domain
-      );
-      const extensionHeaders = testCase.headers;
-      const queryParams = testCase.queryParameters;
-      const baseConfig = {
-        extensionHeaders,
-        version,
-        expires,
-        cname,
-        virtualHostedStyle,
-        queryParams,
-      };
-      let signedUrl: string;
+        const fakeTimer = sinon.useFakeTimers(NOW);
+        const bucket = storage.bucket(testCase.bucket);
+        const expires = NOW.valueOf() + testCase.expiration * 1000;
+        const version = 'v4' as 'v4';
+        const domain = testCase.bucketBoundHostname
+          ? `${testCase.scheme}://${testCase.bucketBoundHostname}`
+          : undefined;
+        const {cname, virtualHostedStyle} = parseUrlStyle(
+          testCase.urlStyle,
+          domain
+        );
+        const extensionHeaders = testCase.headers;
+        const queryParams = testCase.queryParameters;
+        const baseConfig = {
+          extensionHeaders,
+          version,
+          expires,
+          cname,
+          virtualHostedStyle,
+          queryParams,
+        };
+        let signedUrl: string;
 
-      if (testCase.object) {
-        const file = bucket.file(testCase.object);
+        if (testCase.object) {
+          const file = bucket.file(testCase.object);
 
-        const action = ({
-          GET: 'read',
-          POST: 'resumable',
-          PUT: 'write',
-          DELETE: 'delete',
-        } as FileAction)[testCase.method];
+          const action = ({
+            GET: 'read',
+            POST: 'resumable',
+            PUT: 'write',
+            DELETE: 'delete',
+          } as FileAction)[testCase.method];
 
-        [signedUrl] = await file.getSignedUrl({
-          action,
-          ...baseConfig,
-        } as GetSignedUrlConfig);
-      } else {
-        // bucket operation
-        const action = ({
-          GET: 'list',
-        } as BucketAction)[testCase.method];
+          [signedUrl] = await file.getSignedUrl({
+            action,
+            ...baseConfig,
+          } as GetSignedUrlConfig);
+        } else {
+          // bucket operation
+          const action = ({
+            GET: 'list',
+          } as BucketAction)[testCase.method];
 
-        [signedUrl] = await bucket.getSignedUrl({
-          action,
-          ...baseConfig,
-        });
-      }
+          [signedUrl] = await bucket.getSignedUrl({
+            action,
+            ...baseConfig,
+          });
+        }
 
-      const expected = new url.URL(testCase.expectedUrl);
-      const actual = new url.URL(signedUrl);
+        const expected = new url.URL(testCase.expectedUrl);
+        const actual = new url.URL(signedUrl);
 
-      assert.strictEqual(actual.origin, expected.origin);
-      assert.strictEqual(actual.pathname, expected.pathname);
-      // Order-insensitive comparison of query params
-      assert.deepStrictEqual(
-        querystring.parse(actual.search),
-        querystring.parse(expected.search)
-      );
+        assert.strictEqual(actual.origin, expected.origin);
+        assert.strictEqual(actual.pathname, expected.pathname);
+        // Order-insensitive comparison of query params
+        assert.deepStrictEqual(
+          querystring.parse(actual.search),
+          querystring.parse(expected.search)
+        );
 
-      fakeTimer.restore();
+        fakeTimer.restore();
+      });
     });
   });
-});
 
-// tslint:disable-next-line ban
-describe.skip('v4 signed policy', () => {
-  v4SignedPolicyCases.forEach(testCase => {
-    // TODO: implement parsing v4 signed policy tests
-    it(testCase.description, async () => {
-      // const input = testCase.policyInput;
-      // const NOW = new Date(input.timestamp);
-      // const fakeTimer = sinon.useFakeTimers(NOW);
-      // const bucket = storage.bucket(input.bucket);
-      // const expires = NOW.valueOf() + input.expiration * 1000;
-      // const options = {};
-      // const fields = input.fields || {};
-      // // fields that Node.js supports as argument to method.
-      // const acl = fields.acl;
-      // delete fields.acl;
-      // const successActionStatus = fields.success_action_status;
-      // delete fields.successActionStatus;
-      // const successActionRedirect = fields.success_action_redirect;
-      // delete fields.successActionRedirect;
-      // const conditions = input.conditions || {} as Conditions;
-      // // conditions that Node.js support as argument to method.
-      // const startsWith = conditions.startsWith;
-      // let contentLengthMin
-      // if (conditions.contentLengthRange) {
-      // }
-      // fakeTimer.restore();
+  describe('v4 signed policy', () => {
+    v4SignedPolicyCases.forEach(testCase => {
+      it(testCase.description, async () => {
+        const input = testCase.policyInput;
+        const NOW = new Date(input.timestamp);
+        const fakeTimer = sinon.useFakeTimers(NOW);
+        const bucket = storage.bucket(input.bucket);
+        const expires = NOW.valueOf() + input.expiration * 1000;
+        const options: GetSignedPolicyV4Options = {
+          expires,
+        };
+
+        const fields = input.fields || {};
+
+        if (input.acl) {
+          fields.acl = input.acl;
+        }
+
+        const conditions = [];
+
+        if (input.conditions) {
+          if (input.conditions.startsWith) {
+            const variable = input.conditions.startsWith[0];
+            const prefix = input.conditions.startsWith[1];
+            conditions.push(['starts-with', variable, prefix]);
+          }
+
+          if (input.conditions.contentLengthRange) {
+            const min = input.conditions.contentLengthRange[0];
+            const max = input.conditions.contentLengthRange[1];
+            conditions.push(['content-length-range', min, max]);
+          }
+        }
+
+        const domain = input.bucketBoundHostname
+          ? `${input.scheme}://${input.bucketBoundHostname}`
+          : undefined;
+        const {cname, virtualHostedStyle} = parseUrlStyle(
+          input.urlStyle,
+          domain
+        );
+        options.virtualHostedStyle = virtualHostedStyle;
+        options.cname = cname;
+        options.fields = fields;
+        options.conditions = conditions;
+
+        const file = bucket.file(input.object);
+        const [policy] = await file.getSignedPolicyV4(options);
+
+        assert.strictEqual(policy.url, testCase.policyOutput.url);
+        const outputFields = testCase.policyOutput.fields;
+        const decodedPolicy = Buffer.from(
+          policy.fields.policy,
+          'base64'
+        ).toString();
+        assert.deepStrictEqual(
+          decodedPolicy,
+          testCase.policyOutput.expectedDecodedPolicy
+        );
+
+        assert.deepStrictEqual(outputFields, testCase.policyOutput.fields);
+
+        fakeTimer.restore();
+      });
     });
   });
 });
