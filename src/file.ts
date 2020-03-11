@@ -2137,7 +2137,7 @@ class File extends ServiceObject<File> {
    * @param {object} policy The document policy.
    */
   /**
-   * Get a signed policy document to allow a user to upload data with a POST
+   * Get a v2 signed policy document to allow a user to upload data with a POST
    * request.
    *
    * In Google Cloud Platform environments, such as Cloud Functions and App
@@ -2264,7 +2264,7 @@ class File extends ServiceObject<File> {
    * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
    * enabled.
    *
-   * @see [Policy Document Reference]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
+   * @see [POST Object with the V2 signing process]{@link https://cloud.google.com/storage/docs/xml-api/post-object-v2}
    *
    * @throws {Error} If an expiration timestamp from the past is given.
    * @throws {Error} If options.equals has an array with less or more than two
@@ -2316,7 +2316,7 @@ class File extends ServiceObject<File> {
    *   }
    * };
    *
-   * file.getSignedPolicy(options, function(err, policy) {
+   * file.getSignedPolicyV2(options, function(err, policy) {
    *   // policy.string: the policy document in plain text.
    *   // policy.base64: the policy document in base64.
    *   // policy.signature: the policy signature in base64.
@@ -2325,7 +2325,7 @@ class File extends ServiceObject<File> {
    * //-
    * // If the callback is omitted, we'll return a Promise.
    * //-
-   * file.getSignedPolicy(options).then(function(data) {
+   * file.getSignedPolicyV2(options).then(function(data) {
    *   const policy = data[0];
    * });
    */
@@ -2440,6 +2440,91 @@ class File extends ServiceObject<File> {
     callback: GetSignedPolicyV4Callback
   ): void;
   getSignedPolicyV4(callback: GetSignedPolicyV4Callback): void;
+  /**
+   * @typedef {object} SignedPolicyV4Output
+   * @property {string} url The request URL.
+   * @property {object} fields The form fields to include in the POST request.
+   */
+  /**
+   * @typedef {array} GetSignedPolicyV4Response
+   * @property {SignedPolicyV4Output} 0 An object containing the request URL and form fields.
+   */
+  /**
+   * @callback GetSignedPolicyV4Callback
+   * @param {?Error} err Request error, if any.
+   * @param {SignedPolicyV4Output} output An object containing the request URL and form fields.
+   */
+  /**
+   * Get a v4 signed policy document to allow a user to upload data with a POST
+   * request.
+   *
+   * In Google Cloud Platform environments, such as Cloud Functions and App
+   * Engine, you usually don't provide a `keyFilename` or `credentials` during
+   * instantiation. In those environments, we call the
+   * [signBlob
+   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * to create a signed policy. That API requires either the
+   * `https://www.googleapis.com/auth/iam` or
+   * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
+   * enabled.
+   *
+   * @see [Policy Document Reference]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
+   *
+   * @param {object} options Configuration options.
+   * @param {Date|number|string} options.expires - A timestamp when this policy will expire. Any
+   *     value given is passed to `new Date()`.
+   * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
+   *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
+   *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
+   *     should generally be preferred instaed of path-style URL.
+   *     Currently defaults to `false` for path-style, although this may change in a
+   *     future major-version release.
+   * @param {string} [config.cname] The cname for this bucket, i.e.,
+   *     "https://cdn.example.com".
+   * @param {object} [config.fields] [Form fields]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
+   *     to include in the signed policy. Any fields with key beginning with 'x-ignore-'
+   *     will not be included in the policy to be signed.
+   * @param {object[]} [config.conditions] [Conditions]{@link https://cloud.google.com/storage/docs/authentication/signatures#policy-document}
+   *     to include in the signed policy. All fields given in `config.fields` are
+   *     automatically included in the conditions array, adding the same entry
+   *     in both `fields` and `conditions` will result in duplicate entries.
+   *
+   * @param {GetSignedPolicyV4Callback} [callback] Callback function.
+   * @returns {Promise<GetSignedPolicyV4Response>}
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const myBucket = storage.bucket('my-bucket');
+   *
+   * const file = myBucket.file('my-file');
+   * const options = {
+   *   expires: '10-25-2022',
+   *   conditions: [
+   *     ['eq', '$Content-Type', 'image/jpeg'],
+   *     ['content-length-range', 0, 1024],
+   *   ],
+   *   fields: {
+   *     acl: 'public-read',
+   *     'x-goog-meta-foo': 'bar',
+   *     'x-ignore-mykey': 'data'
+   *   }
+   * };
+   *
+   * file.getSignedPolicyV4(options, function(err, response) {
+   *   // response.url The request URL
+   *   // response.fields The form fields to include in the POST request.
+   * });
+   *
+   * //-
+   * // If the callback is omitted, we'll return a Promise.
+   * //-
+   * file.getSignedPolicyV4(options).then(function(data) {
+   *   const response = data[0];
+   *   // response.url The request URL
+   *   // response.fields The form fields to include in the POST request.
+   * });
+   */
   getSignedPolicyV4(
     optionsOrCallback?: GetSignedPolicyV4Options | GetSignedPolicyV4Callback,
     cb?: GetSignedPolicyV4Callback
@@ -2460,7 +2545,7 @@ class File extends ServiceObject<File> {
       throw new Error('An expiration date cannot be in the past.');
     }
 
-    if (expires.valueOf() - Date.now() > (SEVEN_DAYS * 1000)) {
+    if (expires.valueOf() - Date.now() > SEVEN_DAYS * 1000) {
       throw new Error(
         `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`
       );
