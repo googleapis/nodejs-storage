@@ -171,6 +171,7 @@ export {
   MoveOptions,
   MoveResponse,
   PolicyDocument,
+  PolicyFields,
   PredefinedAcl,
   RotateEncryptionKeyCallback,
   RotateEncryptionKeyOptions,
@@ -183,6 +184,7 @@ export {
   SetStorageClassCallback,
   SetStorageClassOptions,
   SetStorageClassResponse,
+  SignedPolicyV4Output,
 } from './file';
 export {
   HmacKey,
