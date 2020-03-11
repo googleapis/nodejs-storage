@@ -2442,7 +2442,7 @@ describe('File', () => {
         done();
       };
 
-      file.getSignedPolicyV2(options, callback);
+      file.getSignedPolicy(options, callback);
     });
   });
 
