@@ -284,7 +284,7 @@ const STORAGE_UPLOAD_BASE_URL =
  * @const {string}
  * @private
  */
-const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
+export const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
 
 /**
  * @const {RegExp}

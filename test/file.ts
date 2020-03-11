@@ -49,7 +49,8 @@ import {
   GetSignedPolicyV2Options,
   GetSignedPolicyV2Callback,
 } from '../src';
-import { SignedPolicyV4Output } from '../src/file';
+import { SignedPolicyV4Output, GetSignedPolicyV4Options, STORAGE_POST_POLICY_BASE_URL } from '../src/file';
+import { fixedEncodeURIComponent } from '../src/util';
 
 let promisified = false;
 let makeWritableStreamOverride: Function | null;
@@ -2805,15 +2806,209 @@ describe('File', () => {
   });
 
   describe('getSignedPolicyV4', () => {
+    let CONFIG: GetSignedPolicyV4Options;
+
+    const NOW = new Date('2020-01-01');
+    const CLIENT_EMAIL = 'test@domain.com';
+    const SIGNATURE = 'signature';
+
+    let fakeTimer: sinon.SinonFakeTimers;
+    let sandbox: sinon.SinonSandbox;
+
     beforeEach(() => {
-      BUCKET.storage.authClient = {
-        sign: () => {
-          return Promise.resolve('signature');
-        },
-        getCredentials: () => {
-          return Promise.resolve({client_email: 'client-email'});
-        }
+      sandbox = sinon.createSandbox();
+      fakeTimer = sinon.useFakeTimers(NOW);
+      CONFIG = {
+        expires: NOW.valueOf() + 2000,
       };
+
+      BUCKET.storage.authClient = {
+        sign: sandbox.stub().resolves(SIGNATURE),
+        getCredentials: sandbox.stub().resolves({client_email: CLIENT_EMAIL}),
+      };
+    });
+
+    afterEach(() => {
+      sandbox.restore();
+      fakeTimer.restore();
+    });
+
+    it('should create a signed policy', done => {
+      CONFIG.fields = {
+        'x-goog-meta-foo': 'bar',
+      }
+
+      const fields = {
+        ...CONFIG.fields,
+        key: file.name,
+        'x-goog-date': '20200101T000000Z',
+        'x-goog-credential': `${CLIENT_EMAIL}/20200101/auto/storage/goog4_request`,
+        'x-goog-algorithm': 'GOOG4-RSA-SHA256',
+      };
+
+      const policy = {
+        conditions: Object.entries(fields).map(([key, value]) => ({
+          [key]: value,
+        })),
+        expiration: dateFormat.format(
+          new Date(CONFIG.expires),
+          'YYYY-MM-DD[T]HH:mm:ss[Z]',
+          true
+        ),
+      };
+
+      const policyString = JSON.stringify(policy);
+      const EXPECTED_POLICY = Buffer.from(policyString).toString('base64');
+      const EXPECTED_SIGNATURE =
+        Buffer
+          .from(SIGNATURE, 'base64')
+          .toString('hex');
+
+      // tslint:disable-next-line no-any
+      file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4Output) => {
+        assert.ifError(err);
+        assert(res.url, `${STORAGE_POST_POLICY_BASE_URL}/${BUCKET.name}`);
+
+        assert.deepStrictEqual(res.fields, {
+          ...fields,
+          'x-goog-signature': EXPECTED_SIGNATURE,
+          policy: EXPECTED_POLICY,
+        });
+
+        const signStub = BUCKET.storage.authClient.sign;
+        assert.deepStrictEqual(
+          Buffer.from(signStub.getCall(0).args[0], 'base64').toString(),
+          policyString,
+        );
+
+        done();
+      });
+    });
+
+    it('should not modify the configuration object', done => {
+      const originalConfig = Object.assign({}, CONFIG);
+
+      file.getSignedPolicyV4(CONFIG, (err: Error) => {
+        assert.ifError(err);
+        assert.deepStrictEqual(CONFIG, originalConfig);
+        done();
+      });
+    });
+
+    it('should return an error if signBlob errors', done => {
+      const error = new Error('Error.');
+
+      BUCKET.storage.authClient.sign.rejects(error);
+
+      file.getSignedPolicyV4(CONFIG, (err: Error) => {
+        assert.strictEqual(err.name, 'SigningError');
+        assert.strictEqual(err.message, error.message);
+        done();
+      });
+    });
+
+    it('should add key condition', done => {
+      file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4Output) => {
+        assert.ifError(err);
+
+        assert.strictEqual(res.fields['key'], file.name);
+        const EXPECTED_POLICY_ELEMENT = `{"key":"${file.name}"}`;
+        assert(
+          Buffer.from(res.fields.policy, 'base64')
+            .toString('utf-8')
+            .includes(EXPECTED_POLICY_ELEMENT)
+        );
+        done();
+      });
+    });
+
+    it('should include fields in conditions', done => {
+      CONFIG = {
+        fields: {
+          'x-goog-meta-foo': 'bar',
+        },
+        ...CONFIG,
+      };
+
+      file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4Output) => {
+        assert.ifError(err);
+
+        const expectedConditionString = JSON.stringify(CONFIG.fields);
+        assert.strictEqual(res.fields['x-goog-meta-foo'], 'bar');
+        const decodedPolicy = Buffer.from(
+          res.fields.policy,
+          'base64'
+        ).toString('utf-8');
+        assert(decodedPolicy.includes(expectedConditionString));
+        done();
+      });
+    });
+
+    it('should not include fields with x-ignore- prefix in conditions', done => {
+      CONFIG = {
+        fields: {
+          'x-ignore-foo': 'bar',
+        },
+        ...CONFIG,
+      };
+
+      file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4Output) => {
+        assert.ifError(err);
+
+        const expectedConditionString = JSON.stringify(CONFIG.fields);
+        assert.strictEqual(res.fields['x-ignore-foo'], 'bar');
+        const decodedPolicy = Buffer.from(
+          res.fields.policy,
+          'base64'
+        ).toString('utf-8');
+        assert(!decodedPolicy.includes(expectedConditionString));
+
+        const signStub = BUCKET.storage.authClient.sign;
+        assert(!signStub.getCall(0).args[0].includes('x-ignore-foo'));
+        done();
+      });
+    });
+
+    it('should accept conditions', done => {
+      CONFIG = {
+        conditions: [['starts-with', '$key', 'prefix-']],
+        ...CONFIG,
+      }
+
+      file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4Output) => {
+        assert.ifError(err);
+
+        const expectedConditionString = JSON.stringify(CONFIG.conditions);
+        const decodedPolicy = Buffer.from(
+          res.fields.policy,
+          'base64'
+        ).toString('utf-8');
+        assert(decodedPolicy.includes(expectedConditionString));
+
+        const signStub = BUCKET.storage.authClient.sign;
+        assert(!signStub.getCall(0).args[0].includes(expectedConditionString));
+        done();
+      });
+    });
+
+    it('should output url with cname', done => {
+      CONFIG.cname = 'http://domain.tld';
+
+      file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4Output) => {
+        assert.ifError(err);
+        assert(res.url, CONFIG.cname);
+        done();
+      });
+    });
+
+    it('should output a virtualHostedStyle url', done => {
+      CONFIG.virtualHostedStyle = true;
+
+      file.getSignedPolicyV4(CONFIG, (err: Error, res: SignedPolicyV4Output) => {
+        assert.ifError(err);
+        assert(res.url, `https://${BUCKET.name}.storage.googleapis.com/`);
+        done();
+      });
     });
 
     describe('expires', () => {
