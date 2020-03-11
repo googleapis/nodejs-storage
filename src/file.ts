@@ -2460,7 +2460,7 @@ class File extends ServiceObject<File> {
       throw new Error('An expiration date cannot be in the past.');
     }
 
-    if (expires.valueOf() - Date.now() > SEVEN_DAYS) {
+    if (expires.valueOf() - Date.now() > (SEVEN_DAYS * 1000)) {
       throw new Error(
         `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`
       );

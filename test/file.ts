@@ -23,6 +23,7 @@ import {PromisifyAllOptions} from '@google-cloud/promisify';
 import * as assert from 'assert';
 import {describe, it} from 'mocha';
 import * as crypto from 'crypto';
+import * as dateFormat from 'date-and-time';
 import * as duplexify from 'duplexify';
 import * as extend from 'extend';
 import * as fs from 'fs';
@@ -48,6 +49,7 @@ import {
   GetSignedPolicyV2Options,
   GetSignedPolicyV2Callback,
 } from '../src';
+import { SignedPolicyV4Output } from '../src/file';
 
 let promisified = false;
 let makeWritableStreamOverride: Function | null;
@@ -2798,6 +2800,111 @@ describe('File', () => {
             () => {}
           );
         }, /ContentLengthRange must have numeric min & max fields\./);
+      });
+    });
+  });
+
+  describe('getSignedPolicyV4', () => {
+    beforeEach(() => {
+      BUCKET.storage.authClient = {
+        sign: () => {
+          return Promise.resolve('signature');
+        },
+        getCredentials: () => {
+          return Promise.resolve({client_email: 'client-email'});
+        }
+      };
+    });
+
+    describe('expires', () => {
+      it('should accept Date objects', done => {
+        const expires = new Date(Date.now() + 1000 * 60);
+
+        file.getSignedPolicyV4(
+          {
+            expires,
+          },
+          (err: Error, response: SignedPolicyV4Output) => {
+            assert.ifError(err);
+            const policy = JSON.parse(Buffer.from(response.fields.policy, 'base64').toString());
+            assert.strictEqual(policy.expiration, dateFormat.format(expires, 'YYYY-MM-DD[T]HH:mm:ss[Z]', true));
+            done();
+          }
+        );
+      });
+
+      it('should accept numbers', done => {
+        const expires = Date.now() + 1000 * 60;
+
+        file.getSignedPolicyV4(
+          {
+            expires,
+          },
+          (err: Error, response: SignedPolicyV4Output) => {
+            assert.ifError(err);
+            const policy = JSON.parse(Buffer.from(response.fields.policy, 'base64').toString());
+            assert.strictEqual(policy.expiration, dateFormat.format(new Date(expires), 'YYYY-MM-DD[T]HH:mm:ss[Z]', true));
+            done();
+          }
+        );
+      });
+
+      it('should accept strings', done => {
+        const expires = dateFormat.format(
+          new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+          'YYYY-MM-DD',
+          true);
+
+        file.getSignedPolicyV4(
+          {
+            expires,
+          },
+          (err: Error, response: SignedPolicyV4Output) => {
+            assert.ifError(err);
+            const policy = JSON.parse(Buffer.from(response.fields.policy, 'base64').toString());
+            assert.strictEqual(policy.expiration, dateFormat.format(new Date(expires), 'YYYY-MM-DD[T]HH:mm:ss[Z]', true));
+            done();
+          }
+        );
+      });
+
+      it('should throw if a date is invalid', () => {
+        const expires = new Date('31-12-2019');
+
+        assert.throws(() => {
+          file.getSignedPolicyV4(
+            {
+              expires,
+            },
+            () => {}
+          );
+        }, /The expiration date provided was invalid\./);
+      });
+
+      it('should throw if a date from the past is given', () => {
+        const expires = Date.now() - 5;
+
+        assert.throws(() => {
+          file.getSignedPolicyV4(
+            {
+              expires,
+            },
+            () => {}
+          );
+        }, /An expiration date cannot be in the past\./);
+      });
+
+      it('should throw if a date beyond 7 days is given', () => {
+        const expires = Date.now() + 7.1 * 24 * 60 * 60 * 1000;
+
+        assert.throws(() => {
+          file.getSignedPolicyV4(
+            {
+              expires,
+            },
+            () => {}
+          );
+        }, {message: `Max allowed expiration is seven days (604800 seconds).`});
       });
     });
   });
