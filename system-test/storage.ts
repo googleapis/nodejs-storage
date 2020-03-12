@@ -241,7 +241,7 @@ describe('storage', () => {
       });
 
       it('should not upload a file', async () => {
-        assert.rejects(
+        await assert.rejects(
           () => file.save('new data'),
           /Could not load the default credentials/,
         );
