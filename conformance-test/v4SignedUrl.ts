@@ -184,14 +184,7 @@ describe('v4 conformance test', () => {
           expires,
         };
 
-        const fields = input.fields || {};
-
-        if (input.acl) {
-          fields.acl = input.acl;
-        }
-
         const conditions = [];
-
         if (input.conditions) {
           if (input.conditions.startsWith) {
             const variable = input.conditions.startsWith[0];
@@ -215,7 +208,7 @@ describe('v4 conformance test', () => {
         );
         options.virtualHostedStyle = virtualHostedStyle;
         options.cname = cname;
-        options.fields = fields;
+        options.fields = input.fields;
         options.conditions = conditions;
 
         const file = bucket.file(input.object);
