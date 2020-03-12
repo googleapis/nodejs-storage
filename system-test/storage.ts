@@ -240,13 +240,11 @@ describe('storage', () => {
         );
       });
 
-      it('should not upload a file', done => {
-        file.save('new data', err => {
-          assert(
-            err!.message.indexOf('Could not load the default credentials') > -1
-          );
-          done();
-        });
+      it('should not upload a file', async () => {
+        assert.rejects(
+          () => file.save('new data'),
+          /Could not load the default credentials/,
+        );
       });
     });
   });
