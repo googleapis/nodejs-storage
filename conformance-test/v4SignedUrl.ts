@@ -111,12 +111,12 @@ describe('v4 conformance test', () => {
         const bucket = storage.bucket(testCase.bucket);
         const expires = NOW.valueOf() + testCase.expiration * 1000;
         const version = 'v4' as 'v4';
-        const domain = testCase.bucketBoundHostname
+        const origin = testCase.bucketBoundHostname
           ? `${testCase.scheme}://${testCase.bucketBoundHostname}`
           : undefined;
-        const {cname, virtualHostedStyle} = parseUrlStyle(
+        const {bucketBoundHostname, virtualHostedStyle} = parseUrlStyle(
           testCase.urlStyle,
-          domain
+          origin,
         );
         const extensionHeaders = testCase.headers;
         const queryParams = testCase.queryParameters;
@@ -124,7 +124,7 @@ describe('v4 conformance test', () => {
           extensionHeaders,
           version,
           expires,
-          cname,
+          cname: bucketBoundHostname,
           virtualHostedStyle,
           queryParams,
         };
@@ -199,15 +199,15 @@ describe('v4 conformance test', () => {
           }
         }
 
-        const domain = input.bucketBoundHostname
+        const origin = input.bucketBoundHostname
           ? `${input.scheme}://${input.bucketBoundHostname}`
           : undefined;
-        const {cname, virtualHostedStyle} = parseUrlStyle(
+        const {bucketBoundHostname, virtualHostedStyle} = parseUrlStyle(
           input.urlStyle,
-          domain
+          origin,
         );
         options.virtualHostedStyle = virtualHostedStyle;
-        options.cname = cname;
+        options.bucketBoundHostname = bucketBoundHostname;
         options.fields = input.fields;
         options.conditions = conditions;
 
@@ -235,10 +235,10 @@ describe('v4 conformance test', () => {
 
 function parseUrlStyle(
   style?: UrlStyle,
-  domain?: string
-): {cname?: string; virtualHostedStyle?: boolean} {
+  origin?: string
+): {bucketBoundHostname?: string; virtualHostedStyle?: boolean} {
   if (style === UrlStyle.BUCKET_BOUND_HOSTNAME) {
-    return {cname: domain};
+    return {bucketBoundHostname: origin};
   } else if (style === UrlStyle.VIRTUAL_HOSTED_STYLE) {
     return {virtualHostedStyle: true};
   } else {

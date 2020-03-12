@@ -106,7 +106,7 @@ export interface PolicyFields {
 
 export interface GetSignedPolicyV4Options {
   expires: string | number | Date;
-  cname?: string;
+  bucketBoundHostname?: string;
   virtualHostedStyle?: boolean;
   conditions?: object[];
   fields?: PolicyFields;
@@ -2479,8 +2479,8 @@ class File extends ServiceObject<File> {
    *     should generally be preferred instaed of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
-   * @param {string} [config.cname] The cname for this bucket, i.e.,
-   *     "https://cdn.example.com".
+   * @param {string} [config.bucketBoundHostname] The bucket-bound hostname to return in
+   *     the result, e.g. "https://cdn.example.com".
    * @param {object} [config.fields] [Form fields]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
    *     to include in the signed policy. Any fields with key beginning with 'x-ignore-'
    *     will not be included in the policy to be signed.
@@ -2601,8 +2601,8 @@ class File extends ServiceObject<File> {
         let url: string;
         if (options.virtualHostedStyle) {
           url = `https://${this.bucket.name}.storage.googleapis.com/`;
-        } else if (options.cname) {
-          url = `${options.cname}/`;
+        } else if (options.bucketBoundHostname) {
+          url = `${options.bucketBoundHostname}/`;
         } else {
           url = `${STORAGE_POST_POLICY_BASE_URL}/${this.bucket.name}/`;
         }

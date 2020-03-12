@@ -3012,13 +3012,13 @@ describe('File', () => {
     });
 
     it('should output url with cname', done => {
-      CONFIG.cname = 'http://domain.tld';
+      CONFIG.bucketBoundHostname = 'http://domain.tld';
 
       file.getSignedPolicyV4(
         CONFIG,
         (err: Error, res: SignedPolicyV4Output) => {
           assert.ifError(err);
-          assert(res.url, CONFIG.cname);
+          assert(res.url, CONFIG.bucketBoundHostname);
           done();
         }
       );
