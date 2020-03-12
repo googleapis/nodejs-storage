@@ -57,7 +57,6 @@ interface PolicyInput {
   object: string;
   expiration: number;
   timestamp: string;
-  acl?: string;
   urlStyle?: UrlStyle;
   bucketBoundHostname?: string;
   conditions?: Conditions;
