@@ -116,7 +116,7 @@ describe('v4 conformance test', () => {
           : undefined;
         const {bucketBoundHostname, virtualHostedStyle} = parseUrlStyle(
           testCase.urlStyle,
-          origin,
+          origin
         );
         const extensionHeaders = testCase.headers;
         const queryParams = testCase.queryParameters;
@@ -204,7 +204,7 @@ describe('v4 conformance test', () => {
           : undefined;
         const {bucketBoundHostname, virtualHostedStyle} = parseUrlStyle(
           input.urlStyle,
-          origin,
+          origin
         );
         options.virtualHostedStyle = virtualHostedStyle;
         options.bucketBoundHostname = bucketBoundHostname;

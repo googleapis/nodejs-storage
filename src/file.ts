@@ -2513,7 +2513,8 @@ class File extends ServiceObject<File> {
    *
    * file.getSignedPolicyV4(options, function(err, response) {
    *   // response.url The request URL
-   *   // response.fields The form fields to include in the POST request.
+   *   // response.fields The form fields (including the signature) to include
+   *   //     to be used to upload objects by HTML forms.
    * });
    *
    * //-
@@ -2522,7 +2523,8 @@ class File extends ServiceObject<File> {
    * file.getSignedPolicyV4(options).then(function(data) {
    *   const response = data[0];
    *   // response.url The request URL
-   *   // response.fields The form fields to include in the POST request.
+   *   // response.fields The form fields (including the signature) to include
+   *   //     to be used to upload objects by HTML forms.
    * });
    */
   getSignedPolicyV4(
