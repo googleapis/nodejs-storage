@@ -17,6 +17,7 @@ import {describe, it} from 'mocha';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import fetch, {Request} from 'node-fetch';
+import * as FormData from 'form-data';
 const normalizeNewline = require('normalize-newline');
 import pLimit from 'p-limit';
 import {promisify} from 'util';
@@ -3403,7 +3404,19 @@ describe('storage', () => {
       };
 
       const [policy] = await file.getSignedPolicyV4(options);
-      // TODO: make a request with the signed policy against production once available.
+      const form = new FormData();
+      for (const [key, value] of Object.entries(policy.fields)) {
+        form.append(key, value);
+      }
+
+      const CONTENT = 'my-content';
+
+      form.append('file', CONTENT);
+      const res = await fetch(policy.url, {method: 'POST', body: form});
+      assert.strictEqual(res.status, 204);
+
+      const [buf] = await file.download();
+      assert.strictEqual(buf.toString(), CONTENT);
     });
   });
 
