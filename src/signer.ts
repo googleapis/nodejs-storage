@@ -121,7 +121,9 @@ export class URLSigner {
     this.authClient = authClient;
   }
 
-  getSignedUrl(cfg: SignerGetSignedUrlConfig): Promise<SignerGetSignedUrlResponse> {
+  getSignedUrl(
+    cfg: SignerGetSignedUrlConfig
+  ): Promise<SignerGetSignedUrlResponse> {
     const expiresInSeconds = this.parseExpires(cfg.expires);
     const method = cfg.method;
 
