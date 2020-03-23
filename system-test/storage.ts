@@ -3411,7 +3411,7 @@ describe('storage', () => {
         },
       };
 
-      const [policy] = await file.getSignedPolicyV2(options);
+      const [policy] = await file.generateSignedPostPolicyV2(options);
 
       const policyJson = JSON.parse(policy!.string);
       assert.strictEqual(policyJson.expiration, expectedExpiration);
@@ -3428,7 +3428,7 @@ describe('storage', () => {
         fields: {'x-goog-meta-test': 'data'},
       };
 
-      const [policy] = await file.getSignedPolicyV4(options);
+      const [policy] = await file.generateSignedPostPolicyV4(options);
       const form = new FormData();
       for (const [key, value] of Object.entries(policy.fields)) {
         form.append(key, value);

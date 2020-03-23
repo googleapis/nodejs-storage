@@ -94,17 +94,17 @@ export interface GetSignedPolicyOptions {
   contentLengthRange?: {min?: number; max?: number};
 }
 
-export interface GetSignedPolicyV2Options extends GetSignedPolicyOptions {}
+export interface GenerateSignedPostPolicyV2Options extends GetSignedPolicyOptions {}
 
-export type GetSignedPolicyV2Response = GetSignedPolicyResponse;
+export type GenerateSignedPostPolicyV2Response = GetSignedPolicyResponse;
 
-export interface GetSignedPolicyV2Callback extends GetSignedPolicyCallback {}
+export interface GenerateSignedPostPolicyV2Callback extends GetSignedPolicyCallback {}
 
 export interface PolicyFields {
   [key: string]: string;
 }
 
-export interface GetSignedPolicyV4Options {
+export interface GenerateSignedPostPolicyV4Options {
   expires: string | number | Date;
   bucketBoundHostname?: string;
   virtualHostedStyle?: boolean;
@@ -112,13 +112,13 @@ export interface GetSignedPolicyV4Options {
   fields?: PolicyFields;
 }
 
-export interface GetSignedPolicyV4Callback {
-  (err: Error | null, output?: SignedPolicyV4Output): void;
+export interface GenerateSignedPostPolicyV4Callback {
+  (err: Error | null, output?: SignedPostPolicyV4Output): void;
 }
 
-export type GetSignedPolicyV4Response = [SignedPolicyV4Output];
+export type GenerateSignedPostPolicyV4Response = [SignedPostPolicyV4Output];
 
-export interface SignedPolicyV4Output {
+export interface SignedPostPolicyV4Output {
   url: string;
   fields: PolicyFields;
 }
@@ -2152,9 +2152,10 @@ class File extends ServiceObject<File> {
    *
    * @see [Policy Document Reference]{@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument}
    *
-   * @deprecated `getSignedPolicy()` is deprecated in favor of `getSignedPolicyV2()`
-   *     and `getSignedPolicyV4()`. Currently, this method is an alias to
-   *     `getSignedPolicyV2()`, and will be removed in a future major release.
+   * @deprecated `getSignedPolicy()` is deprecated in favor of
+   *     `generateSignedPostPolicyV2()` and `generateSignedPostPolicyV4()`.
+   *     Currently, this method is an alias to `getSignedPolicyV2()`,
+   *     and will be removed in a future major release.
    *     We recommend signing new policies using v4.
    *
    * @throws {Error} If an expiration timestamp from the past is given.
@@ -2230,23 +2231,23 @@ class File extends ServiceObject<File> {
     );
     const options = args.options;
     const callback = args.callback;
-    this.getSignedPolicyV2(options, callback);
+    this.generateSignedPostPolicyV2(options, callback);
   }
 
-  getSignedPolicyV2(
-    options: GetSignedPolicyV2Options
-  ): Promise<GetSignedPolicyV2Response>;
-  getSignedPolicyV2(
-    options: GetSignedPolicyV2Options,
-    callback: GetSignedPolicyV2Callback
+  generateSignedPostPolicyV2(
+    options: GenerateSignedPostPolicyV2Options
+  ): Promise<GenerateSignedPostPolicyV2Response>;
+  generateSignedPostPolicyV2(
+    options: GenerateSignedPostPolicyV2Options,
+    callback: GenerateSignedPostPolicyV2Callback
   ): void;
-  getSignedPolicyV2(callback: GetSignedPolicyV2Callback): void;
+  generateSignedPostPolicyV2(callback: GenerateSignedPostPolicyV2Callback): void;
   /**
-   * @typedef {array} GetSignedPolicyV2Response
+   * @typedef {array} GenerateSignedPostPolicyV2Response
    * @property {object} 0 The document policy.
    */
   /**
-   * @callback GetSignedPolicyV2Callback
+   * @callback GenerateSignedPostPolicyV2Callback
    * @param {?Error} err Request error, if any.
    * @param {object} policy The document policy.
    */
@@ -2298,8 +2299,8 @@ class File extends ServiceObject<File> {
    *     request's content length.
    * @param {number} [options.contentLengthRange.max] Maximum value for the
    *     request's content length.
-   * @param {GetSignedPolicyV2Callback} [callback] Callback function.
-   * @returns {Promise<GetSignedPolicyV2Response>}
+   * @param {GenerateSignedPostPolicyV2Callback} [callback] Callback function.
+   * @returns {Promise<GenerateSignedPostPolicyV2Response>}
    *
    * @example
    * const {Storage} = require('@google-cloud/storage');
@@ -2316,7 +2317,7 @@ class File extends ServiceObject<File> {
    *   }
    * };
    *
-   * file.getSignedPolicyV2(options, function(err, policy) {
+   * file.generateSignedPostPolicyV2(options, function(err, policy) {
    *   // policy.string: the policy document in plain text.
    *   // policy.base64: the policy document in base64.
    *   // policy.signature: the policy signature in base64.
@@ -2325,18 +2326,18 @@ class File extends ServiceObject<File> {
    * //-
    * // If the callback is omitted, we'll return a Promise.
    * //-
-   * file.getSignedPolicyV2(options).then(function(data) {
+   * file.generateSignedPostPolicyV2(options).then(function(data) {
    *   const policy = data[0];
    * });
    */
-  getSignedPolicyV2(
-    optionsOrCallback?: GetSignedPolicyV2Options | GetSignedPolicyV2Callback,
-    cb?: GetSignedPolicyV2Callback
-  ): void | Promise<GetSignedPolicyV2Response> {
-    const args = normalize<GetSignedPolicyV2Options>(optionsOrCallback, cb);
+  generateSignedPostPolicyV2(
+    optionsOrCallback?: GenerateSignedPostPolicyV2Options | GenerateSignedPostPolicyV2Callback,
+    cb?: GenerateSignedPostPolicyV2Callback
+  ): void | Promise<GenerateSignedPostPolicyV2Response> {
+    const args = normalize<GenerateSignedPostPolicyV2Options>(optionsOrCallback, cb);
     let options = args.options;
     const callback = args.callback;
-    const expires = new Date((options as GetSignedPolicyV2Options).expires);
+    const expires = new Date((options as GenerateSignedPostPolicyV2Options).expires);
 
     if (isNaN(expires.getTime())) {
       throw new Error('The expiration date provided was invalid.');
@@ -2432,27 +2433,27 @@ class File extends ServiceObject<File> {
     );
   }
 
-  getSignedPolicyV4(
-    options: GetSignedPolicyV4Options
-  ): Promise<GetSignedPolicyV4Response>;
-  getSignedPolicyV4(
-    options: GetSignedPolicyV4Options,
-    callback: GetSignedPolicyV4Callback
+  generateSignedPostPolicyV4(
+    options: GenerateSignedPostPolicyV4Options
+  ): Promise<GenerateSignedPostPolicyV4Response>;
+  generateSignedPostPolicyV4(
+    options: GenerateSignedPostPolicyV4Options,
+    callback: GenerateSignedPostPolicyV4Callback
   ): void;
-  getSignedPolicyV4(callback: GetSignedPolicyV4Callback): void;
+  generateSignedPostPolicyV4(callback: GenerateSignedPostPolicyV4Callback): void;
   /**
-   * @typedef {object} SignedPolicyV4Output
+   * @typedef {object} SignedPostPolicyV4Output
    * @property {string} url The request URL.
    * @property {object} fields The form fields to include in the POST request.
    */
   /**
-   * @typedef {array} GetSignedPolicyV4Response
-   * @property {SignedPolicyV4Output} 0 An object containing the request URL and form fields.
+   * @typedef {array} GenerateSignedPostPolicyV4Response
+   * @property {SignedPostPolicyV4Output} 0 An object containing the request URL and form fields.
    */
   /**
-   * @callback GetSignedPolicyV4Callback
+   * @callback GenerateSignedPostPolicyV4Callback
    * @param {?Error} err Request error, if any.
-   * @param {SignedPolicyV4Output} output An object containing the request URL and form fields.
+   * @param {SignedPostPolicyV4Output} output An object containing the request URL and form fields.
    */
   /**
    * Get a v4 signed policy document to allow a user to upload data with a POST
@@ -2489,8 +2490,8 @@ class File extends ServiceObject<File> {
    *     automatically included in the conditions array, adding the same entry
    *     in both `fields` and `conditions` will result in duplicate entries.
    *
-   * @param {GetSignedPolicyV4Callback} [callback] Callback function.
-   * @returns {Promise<GetSignedPolicyV4Response>}
+   * @param {GenerateSignedPostPolicyV4Callback} [callback] Callback function.
+   * @returns {Promise<GenerateSignedPostPolicyV4Response>}
    *
    * @example
    * const {Storage} = require('@google-cloud/storage');
@@ -2511,7 +2512,7 @@ class File extends ServiceObject<File> {
    *   }
    * };
    *
-   * file.getSignedPolicyV4(options, function(err, response) {
+   * file.generateSignedPostPolicyV4(options, function(err, response) {
    *   // response.url The request URL
    *   // response.fields The form fields (including the signature) to include
    *   //     to be used to upload objects by HTML forms.
@@ -2520,24 +2521,24 @@ class File extends ServiceObject<File> {
    * //-
    * // If the callback is omitted, we'll return a Promise.
    * //-
-   * file.getSignedPolicyV4(options).then(function(data) {
+   * file.generateSignedPostPolicyV4(options).then(function(data) {
    *   const response = data[0];
    *   // response.url The request URL
    *   // response.fields The form fields (including the signature) to include
    *   //     to be used to upload objects by HTML forms.
    * });
    */
-  getSignedPolicyV4(
-    optionsOrCallback?: GetSignedPolicyV4Options | GetSignedPolicyV4Callback,
-    cb?: GetSignedPolicyV4Callback
-  ): void | Promise<GetSignedPolicyV4Response> {
-    const args = normalize<GetSignedPolicyV4Options, GetSignedPolicyV4Callback>(
+  generateSignedPostPolicyV4(
+    optionsOrCallback?: GenerateSignedPostPolicyV4Options | GenerateSignedPostPolicyV4Callback,
+    cb?: GenerateSignedPostPolicyV4Callback
+  ): void | Promise<GenerateSignedPostPolicyV4Response> {
+    const args = normalize<GenerateSignedPostPolicyV4Options, GenerateSignedPostPolicyV4Callback>(
       optionsOrCallback,
       cb
     );
     let options = args.options;
     const callback = args.callback;
-    const expires = new Date((options as GetSignedPolicyV4Options).expires);
+    const expires = new Date((options as GenerateSignedPostPolicyV4Options).expires);
 
     if (isNaN(expires.getTime())) {
       throw new Error('The expiration date provided was invalid.');

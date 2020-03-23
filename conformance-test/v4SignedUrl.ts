@@ -21,7 +21,7 @@ import * as path from 'path';
 import * as sinon from 'sinon';
 import * as querystring from 'querystring';
 
-import {Storage, GetSignedUrlConfig, GetSignedPolicyV4Options} from '../src/';
+import {Storage, GetSignedUrlConfig, GenerateSignedPostPolicyV4Options} from '../src/';
 import * as url from 'url';
 
 export enum UrlStyle {
@@ -180,7 +180,7 @@ describe('v4 conformance test', () => {
         const fakeTimer = sinon.useFakeTimers(NOW);
         const bucket = storage.bucket(input.bucket);
         const expires = NOW.valueOf() + input.expiration * 1000;
-        const options: GetSignedPolicyV4Options = {
+        const options: GenerateSignedPostPolicyV4Options = {
           expires,
         };
 
@@ -212,7 +212,7 @@ describe('v4 conformance test', () => {
         options.conditions = conditions;
 
         const file = bucket.file(input.object);
-        const [policy] = await file.getSignedPolicyV4(options);
+        const [policy] = await file.generateSignedPostPolicyV4(options);
 
         assert.strictEqual(policy.url, testCase.policyOutput.url);
         const outputFields = testCase.policyOutput.fields;
