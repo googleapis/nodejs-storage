@@ -21,7 +21,11 @@ import * as path from 'path';
 import * as sinon from 'sinon';
 import * as querystring from 'querystring';
 
-import {Storage, GetSignedUrlConfig, GenerateSignedPostPolicyV4Options} from '../src/';
+import {
+  Storage,
+  GetSignedUrlConfig,
+  GenerateSignedPostPolicyV4Options,
+} from '../src/';
 import * as url from 'url';
 
 export enum UrlStyle {

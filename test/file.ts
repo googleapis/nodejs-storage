@@ -2469,13 +2469,16 @@ describe('File', () => {
       };
 
       // tslint:disable-next-line no-any
-      file.generateSignedPostPolicyV2(CONFIG, (err: Error, signedPolicy: any) => {
-        assert.ifError(err);
-        assert.strictEqual(typeof signedPolicy.string, 'string');
-        assert.strictEqual(typeof signedPolicy.base64, 'string');
-        assert.strictEqual(typeof signedPolicy.signature, 'string');
-        done();
-      });
+      file.generateSignedPostPolicyV2(
+        CONFIG,
+        (err: Error, signedPolicy: any) => {
+          assert.ifError(err);
+          assert.strictEqual(typeof signedPolicy.string, 'string');
+          assert.strictEqual(typeof signedPolicy.base64, 'string');
+          assert.strictEqual(typeof signedPolicy.signature, 'string');
+          done();
+        }
+      );
     });
 
     it('should not modify the configuration object', done => {

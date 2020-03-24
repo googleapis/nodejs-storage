@@ -94,11 +94,13 @@ export interface GetSignedPolicyOptions {
   contentLengthRange?: {min?: number; max?: number};
 }
 
-export interface GenerateSignedPostPolicyV2Options extends GetSignedPolicyOptions {}
+export interface GenerateSignedPostPolicyV2Options
+  extends GetSignedPolicyOptions {}
 
 export type GenerateSignedPostPolicyV2Response = GetSignedPolicyResponse;
 
-export interface GenerateSignedPostPolicyV2Callback extends GetSignedPolicyCallback {}
+export interface GenerateSignedPostPolicyV2Callback
+  extends GetSignedPolicyCallback {}
 
 export interface PolicyFields {
   [key: string]: string;
@@ -2241,7 +2243,9 @@ class File extends ServiceObject<File> {
     options: GenerateSignedPostPolicyV2Options,
     callback: GenerateSignedPostPolicyV2Callback
   ): void;
-  generateSignedPostPolicyV2(callback: GenerateSignedPostPolicyV2Callback): void;
+  generateSignedPostPolicyV2(
+    callback: GenerateSignedPostPolicyV2Callback
+  ): void;
   /**
    * @typedef {array} GenerateSignedPostPolicyV2Response
    * @property {object} 0 The document policy.
@@ -2331,13 +2335,20 @@ class File extends ServiceObject<File> {
    * });
    */
   generateSignedPostPolicyV2(
-    optionsOrCallback?: GenerateSignedPostPolicyV2Options | GenerateSignedPostPolicyV2Callback,
+    optionsOrCallback?:
+      | GenerateSignedPostPolicyV2Options
+      | GenerateSignedPostPolicyV2Callback,
     cb?: GenerateSignedPostPolicyV2Callback
   ): void | Promise<GenerateSignedPostPolicyV2Response> {
-    const args = normalize<GenerateSignedPostPolicyV2Options>(optionsOrCallback, cb);
+    const args = normalize<GenerateSignedPostPolicyV2Options>(
+      optionsOrCallback,
+      cb
+    );
     let options = args.options;
     const callback = args.callback;
-    const expires = new Date((options as GenerateSignedPostPolicyV2Options).expires);
+    const expires = new Date(
+      (options as GenerateSignedPostPolicyV2Options).expires
+    );
 
     if (isNaN(expires.getTime())) {
       throw new Error('The expiration date provided was invalid.');
@@ -2440,7 +2451,9 @@ class File extends ServiceObject<File> {
     options: GenerateSignedPostPolicyV4Options,
     callback: GenerateSignedPostPolicyV4Callback
   ): void;
-  generateSignedPostPolicyV4(callback: GenerateSignedPostPolicyV4Callback): void;
+  generateSignedPostPolicyV4(
+    callback: GenerateSignedPostPolicyV4Callback
+  ): void;
   /**
    * @typedef {object} SignedPostPolicyV4Output
    * @property {string} url The request URL.
@@ -2529,16 +2542,20 @@ class File extends ServiceObject<File> {
    * });
    */
   generateSignedPostPolicyV4(
-    optionsOrCallback?: GenerateSignedPostPolicyV4Options | GenerateSignedPostPolicyV4Callback,
+    optionsOrCallback?:
+      | GenerateSignedPostPolicyV4Options
+      | GenerateSignedPostPolicyV4Callback,
     cb?: GenerateSignedPostPolicyV4Callback
   ): void | Promise<GenerateSignedPostPolicyV4Response> {
-    const args = normalize<GenerateSignedPostPolicyV4Options, GenerateSignedPostPolicyV4Callback>(
-      optionsOrCallback,
-      cb
-    );
+    const args = normalize<
+      GenerateSignedPostPolicyV4Options,
+      GenerateSignedPostPolicyV4Callback
+    >(optionsOrCallback, cb);
     let options = args.options;
     const callback = args.callback;
-    const expires = new Date((options as GenerateSignedPostPolicyV4Options).expires);
+    const expires = new Date(
+      (options as GenerateSignedPostPolicyV4Options).expires
+    );
 
     if (isNaN(expires.getTime())) {
       throw new Error('The expiration date provided was invalid.');
