@@ -2471,7 +2471,7 @@ describe('File', () => {
       // tslint:disable-next-line no-any
       file.generateSignedPostPolicyV2(
         CONFIG,
-        (err: Error, signedPolicy: any) => {
+        (err: Error, signedPolicy: PolicyDocument) => {
           assert.ifError(err);
           assert.strictEqual(typeof signedPolicy.string, 'string');
           assert.strictEqual(typeof signedPolicy.base64, 'string');
