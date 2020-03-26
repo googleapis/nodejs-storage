@@ -35,27 +35,30 @@ function main(bucketName = 'my-bucket', filename = 'test.txt') {
   const storage = new Storage();
 
   async function generateV4SignedPolicy() {
+    const bucket = storage.bucket(bucketName);
+    const file = bucket.file('test.txt');
+
     // These options will allow temporary uploading of a file
     // through an HTML form.
-    const file = myBucket.file('my-file');
-    const expires = Date.now() + 600 * 1000; //  10 minutes
+    const expires = Date.now() + 10 * 60 * 1000; //  10 minutes
     const options = {
       expires,
       fields: {'x-goog-meta-test': 'data'},
     };
 
     // Get a v4 signed URL for uploading file
-    await file.getSignedPolicyV4(options, function(err, policy) {
-      // Create an HTML form with the provided policy
-      console.log(`<form action='${policy.url}' method='POST' enctype="multipart/form-data">\n`);
-      // Include all fields returned in the HTML form as they're required
-      for (var k in policy.fields) {
-        console.log(`<input name='${k}' value='${policy.fields[k]}' type='hidden'/>\n`);
-      }
-      console.log("<input type='file' name='file'/>\n");
-      console.log("<input type='submit' value='Upload File' name='submit'/>\n");
-      console.log("</form>\n");
-    });
+    const [response] = await file.getSignedPolicyV4(options);
+
+    // Create an HTML form with the provided policy
+    console.log(`<form action='${response.url}' method='POST' enctype="multipart/form-data">`);
+    // Include all fields returned in the HTML form as they're required
+    for (const name of Object.keys(response.fields)) {
+      const value = response.fields[name];
+      console.log(`  <input name='${name}' value='${value}' type='hidden'/>`);
+    }
+    console.log("  <input type='file' name='file'/>");
+    console.log("  <input type='submit' value='Upload File' name='submit'/>");
+    console.log("</form>");
   }
 
   generateV4SignedPolicy().catch(console.error);
