@@ -47,7 +47,7 @@ function main(bucketName = 'my-bucket', filename = 'test.txt') {
     };
 
     // Get a v4 signed policy for uploading file
-    const [response] = await file.getSignedPolicyV4(options);
+    const [response] = await file.generateSignedPostPolicyV4(options);
 
     // Create an HTML form with the provided policy
     console.log(`<form action='${response.url}' method='POST' enctype="multipart/form-data">`);
