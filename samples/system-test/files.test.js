@@ -240,6 +240,22 @@ it('should generate a v4 signed URL and upload a file', async () => {
   });
 });
 
+it('should generate a v4 signed policy', async () => {
+  const output = execSync(
+    `node generateV4SignedPolicy.js ${bucketName} ${signedFileName}`
+  );
+
+  assert.includes(output, `<form action='https://storage.googleapis.com/${bucketName}/`);
+  assert.includes(output, `<input name='key' value='${signedFileName}'`);
+  assert.includes(output, "<input name='x-goog-signature'");
+  assert.includes(output, "<input name='x-goog-date'");
+  assert.includes(output, "<input name='x-goog-credential'");
+  assert.includes(output, "<input name='x-goog-algorithm' value='GOOG4-RSA-SHA256'");
+  assert.includes(output, "<input name='policy'");
+  assert.includes(output, "<input name='x-goog-meta-test' value='data'");
+  assert.includes(output, "<input type='file' name='file'>");
+});
+
 it('should get metadata for a file', () => {
   const output = execSync(
     `node getMetadata.js ${bucketName} ${copiedFileName}`
