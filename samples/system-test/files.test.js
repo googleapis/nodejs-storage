@@ -259,7 +259,7 @@ it('should generate a v4 signed policy', async () => {
   );
   assert.include(output, "<input name='policy'");
   assert.include(output, "<input name='x-goog-meta-test' value='data'");
-  assert.include(output, "<input type='file' name='file'>");
+  assert.include(output, "<input type='file' name='file'/>");
 });
 
 it('should get metadata for a file', () => {
