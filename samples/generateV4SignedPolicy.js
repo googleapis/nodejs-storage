@@ -46,7 +46,7 @@ function main(bucketName = 'my-bucket', filename = 'test.txt') {
       fields: {'x-goog-meta-test': 'data'},
     };
 
-    // Get a v4 signed URL for uploading file
+    // Get a v4 signed policy for uploading file
     const [response] = await file.getSignedPolicyV4(options);
 
     // Create an HTML form with the provided policy
