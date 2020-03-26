@@ -245,12 +245,18 @@ it('should generate a v4 signed policy', async () => {
     `node generateV4SignedPolicy.js ${bucketName} ${signedFileName}`
   );
 
-  assert.includes(output, `<form action='https://storage.googleapis.com/${bucketName}/`);
+  assert.includes(
+    output,
+    `<form action='https://storage.googleapis.com/${bucketName}/`
+  );
   assert.includes(output, `<input name='key' value='${signedFileName}'`);
   assert.includes(output, "<input name='x-goog-signature'");
   assert.includes(output, "<input name='x-goog-date'");
   assert.includes(output, "<input name='x-goog-credential'");
-  assert.includes(output, "<input name='x-goog-algorithm' value='GOOG4-RSA-SHA256'");
+  assert.includes(
+    output,
+    "<input name='x-goog-algorithm' value='GOOG4-RSA-SHA256'"
+  );
   assert.includes(output, "<input name='policy'");
   assert.includes(output, "<input name='x-goog-meta-test' value='data'");
   assert.includes(output, "<input type='file' name='file'>");

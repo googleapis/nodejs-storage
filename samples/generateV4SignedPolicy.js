@@ -36,7 +36,7 @@ function main(bucketName = 'my-bucket', filename = 'test.txt') {
 
   async function generateV4SignedPolicy() {
     const bucket = storage.bucket(bucketName);
-    const file = bucket.file('test.txt');
+    const file = bucket.file(filename);
 
     // These options will allow temporary uploading of a file
     // through an HTML form.
@@ -50,7 +50,9 @@ function main(bucketName = 'my-bucket', filename = 'test.txt') {
     const [response] = await file.generateSignedPostPolicyV4(options);
 
     // Create an HTML form with the provided policy
-    console.log(`<form action='${response.url}' method='POST' enctype="multipart/form-data">`);
+    console.log(
+      `<form action='${response.url}' method='POST' enctype="multipart/form-data">`
+    );
     // Include all fields returned in the HTML form as they're required
     for (const name of Object.keys(response.fields)) {
       const value = response.fields[name];
@@ -58,7 +60,7 @@ function main(bucketName = 'my-bucket', filename = 'test.txt') {
     }
     console.log("  <input type='file' name='file'/>");
     console.log("  <input type='submit' value='Upload File' name='submit'/>");
-    console.log("</form>");
+    console.log('</form>');
   }
 
   generateV4SignedPolicy().catch(console.error);
