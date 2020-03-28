@@ -2381,19 +2381,74 @@ describe('Bucket', () => {
       bucket.upload(textFilepath, options, assert.ifError);
     });
 
-    it('should force a resumable upload', done => {
-      const fakeFile = new FakeFile(bucket, 'file-name');
-      const options = {destination: fakeFile, resumable: true};
-      fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
-        const ws = new stream.Writable();
-        ws.write = () => true;
-        setImmediate(() => {
-          assert.strictEqual(options_.resumable, options.resumable);
-          done();
-        });
-        return ws;
-      };
-      bucket.upload(filepath, options, assert.ifError);
+    describe('resumable uploads', () => {
+      const dummyLargeFilepath = path.join(
+        __dirname,
+        '../../test/testdata',
+        'dummylargetestfile.txt'
+      );
+      const dummyLargeFileStat = require('fs').statSync(dummyLargeFilepath);
+      // Set size greater than threshold
+      dummyLargeFileStat.size = 5000001;
+
+      let sandbox: sinon.SinonSandbox;
+
+      beforeEach(() => {
+        sandbox = sinon.createSandbox();
+
+        const statStub = sandbox.stub(require('fs'), 'stat');
+        statStub
+          .withArgs(dummyLargeFilepath)
+          .callsArgWithAsync(1, null, dummyLargeFileStat);
+        statStub.callThrough();
+      });
+
+      afterEach(() => sandbox.restore());
+
+      it('should force a resumable upload', done => {
+        const fakeFile = new FakeFile(bucket, 'file-name');
+        const options = {destination: fakeFile, resumable: true};
+        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
+          const ws = new stream.Writable();
+          ws.write = () => true;
+          setImmediate(() => {
+            assert.strictEqual(options_.resumable, options.resumable);
+            done();
+          });
+          return ws;
+        };
+        bucket.upload(filepath, options, assert.ifError);
+      });
+
+      it('should not pass resumable option to createWriteStream when file size is greater than minimum resumable threshold', done => {
+        const fakeFile = new FakeFile(bucket, 'file-name');
+        const options = {destination: fakeFile};
+        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
+          const ws = new stream.Writable();
+          ws.write = () => true;
+          setImmediate(() => {
+            assert.ok(!('resumable' in options_));
+            done();
+          });
+          return ws;
+        };
+        bucket.upload(dummyLargeFilepath, options, assert.ifError);
+      });
+
+      it('should prevent resumable when file size is less than minimum resumable threshold', done => {
+        const fakeFile = new FakeFile(bucket, 'file-name');
+        const options = {destination: fakeFile};
+        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
+          const ws = new stream.Writable();
+          ws.write = () => true;
+          setImmediate(() => {
+            assert.strictEqual(options_.resumable, false);
+            done();
+          });
+          return ws;
+        };
+        bucket.upload(filepath, options, assert.ifError);
+      });
     });
 
     it('should allow overriding content type', done => {
