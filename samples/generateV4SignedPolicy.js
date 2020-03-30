@@ -54,10 +54,10 @@ function main(bucketName = 'my-bucket', filename = 'test.txt') {
     // Include all fields returned in the HTML form as they're required
     for (const name of Object.keys(response.fields)) {
       const value = response.fields[name];
-      output += `  <input name='${name}' value='${value}' type='hidden'/>\n`;
+      output += `${name}: <input name='${name}' value='${value}' type='hidden'/><br />\n`;
     }
-    output += "  <input type='file' name='file'/>\n";
-    output += "  <input type='submit' value='Upload File' name='submit'/>\n";
+    output += "  <input type='file' name='file'/><br />\n";
+    output += "  <input type='submit' value='Upload File' name='submit'/><br />\n";
     output += '</form>';
 
     console.log(output);
