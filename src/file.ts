@@ -1781,6 +1781,9 @@ class File extends ServiceObject<File> {
       });
     });
 
+    // forwards errors
+    fileWriteStream.on('error', stream.emit.bind(stream, 'error'));
+
     fileWriteStream.on('response', stream.emit.bind(stream, 'response'));
 
     // This is to preserve the `finish` event. We wait until the request stream
