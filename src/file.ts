@@ -1697,13 +1697,15 @@ class File extends ServiceObject<File> {
 
     const fileWriteStream = duplexify();
 
+    fileWriteStream.on('progress', evt => {
+      stream.emit('progress', evt);
+    });
+
     const stream = streamEvents(
       pumpify([
         gzip ? zlib.createGzip() : through(),
         validateStream,
-        fileWriteStream.on('progress', evt => {
-          stream.emit('progress', evt);
-        }),
+        fileWriteStream,
       ])
     ) as Duplex;
 
