@@ -4,6 +4,14 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [4.7.1](https://www.github.com/googleapis/nodejs-storage/compare/v4.7.0...v4.7.1) (2020-04-12)
+
+
+### Bug Fixes
+
+* add whitespace to generateV4SignedPolicy ([#1136](https://www.github.com/googleapis/nodejs-storage/issues/1136)) ([dcee78b](https://www.github.com/googleapis/nodejs-storage/commit/dcee78b98da23b02fe7d2f13a9270546bc07bba8))
+* apache license URL ([#468](https://www.github.com/googleapis/nodejs-storage/issues/468)) ([#1151](https://www.github.com/googleapis/nodejs-storage/issues/1151)) ([e8116d3](https://www.github.com/googleapis/nodejs-storage/commit/e8116d3c6fa7412858692e67745b514eef78850e))
+
 ## [4.7.0](https://www.github.com/googleapis/nodejs-storage/compare/v4.6.0...v4.7.0) (2020-03-26)
 
 
