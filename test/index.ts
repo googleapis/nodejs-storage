@@ -168,6 +168,38 @@ describe('Storage', () => {
       );
       assert.strictEqual(calledWith.apiEndpoint, apiEndpoint);
     });
+
+    describe('STORAGE_EMULATOR_HOST', () => {
+      const EMULATOR_HOST = 'https://internal.benchmark.com/path/';
+      before(() => {
+        process.env.STORAGE_EMULATOR_HOST = EMULATOR_HOST;
+      });
+
+      after(() => {
+        delete process.env.STORAGE_EMULATOR_HOST;
+      });
+
+      it('should set baseUrl to env var STORAGE_EMULATOR_HOST', () => {
+        storage = new Storage({
+          projectId: PROJECT_ID,
+        });
+
+        const calledWith = storage.calledWith_[0];
+        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(calledWith.apiEndpoint, 'internal.benchmark.com');
+      });
+
+      it('should override apiEndpoint', () => {
+        storage = new Storage({
+          projectId: PROJECT_ID,
+          apiEndpoint: 'some.api.com',
+        });
+
+        const calledWith = storage.calledWith_[0];
+        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(calledWith.apiEndpoint, 'internal.benchmark.com');
+      });
+    });
   });
 
   describe('bucket', () => {

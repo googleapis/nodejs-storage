@@ -390,7 +390,7 @@ export class Storage extends Service {
       apiEndpoint: options.apiEndpoint || 'storage.googleapis.com',
     });
 
-    // For internal testing benchmarking only; overrides options.apiEndpoint.
+    // Overrides options.apiEndpoint.
     const EMULATOR_HOST = process.env.STORAGE_EMULATOR_HOST;
     if (typeof EMULATOR_HOST === 'string') {
       options.apiEndpoint = new URL(EMULATOR_HOST).host;
