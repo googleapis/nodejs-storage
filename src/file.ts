@@ -29,10 +29,12 @@ import * as crypto from 'crypto';
 import * as dateFormat from 'date-and-time';
 import * as extend from 'extend';
 import * as fs from 'fs';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
 import * as once from 'onetime';
 import * as os from 'os';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const pumpify = require('pumpify');
 import * as resumableUpload from 'gcs-resumable-upload';
 import {Duplex, Writable, Readable} from 'stream';
@@ -59,6 +61,7 @@ import {
   Duplexify,
   DuplexifyConstructor,
 } from '@google-cloud/common/build/src/util';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectKeyToLowercase} from './util';
 import {GaxiosError, Headers, request as gaxiosRequest} from 'gaxios';
@@ -94,13 +97,11 @@ export interface GetSignedPolicyOptions {
   contentLengthRange?: {min?: number; max?: number};
 }
 
-export interface GenerateSignedPostPolicyV2Options
-  extends GetSignedPolicyOptions {}
+export type GenerateSignedPostPolicyV2Options = GetSignedPolicyOptions;
 
 export type GenerateSignedPostPolicyV2Response = GetSignedPolicyResponse;
 
-export interface GenerateSignedPostPolicyV2Callback
-  extends GetSignedPolicyCallback {}
+export type GenerateSignedPostPolicyV2Callback = GetSignedPolicyCallback;
 
 export interface PolicyFields {
   [key: string]: string;
@@ -220,7 +221,7 @@ export interface MakeFilePrivateOptions {
 
 export type MakeFilePrivateResponse = [Metadata];
 
-export interface MakeFilePrivateCallback extends SetFileMetadataCallback {}
+export type MakeFilePrivateCallback = SetFileMetadataCallback;
 
 export interface IsPublicCallback {
   (err: Error | null, resp?: boolean): void;
@@ -255,7 +256,7 @@ export interface EncryptionKeyOptions {
   kmsKeyName?: string;
 }
 
-export interface RotateEncryptionKeyCallback extends CopyCallback {}
+export type RotateEncryptionKeyCallback = CopyCallback;
 
 export type RotateEncryptionKeyResponse = CopyResponse;
 
@@ -341,7 +342,7 @@ export interface CreateReadStreamOptions {
   decompress?: boolean;
 }
 
-export interface SaveOptions extends CreateWriteStreamOptions {}
+export type SaveOptions = CreateWriteStreamOptions;
 
 export interface SaveCallback {
   (err?: Error | null): void;
@@ -472,11 +473,11 @@ class File extends ServiceObject<File> {
     const requestQueryObject: {generation?: number; userProject?: string} = {};
 
     let generation: number;
-    if (options.generation != null) {
+    if (options.generation !== null) {
       if (typeof options.generation === 'string') {
         generation = Number(options.generation);
       } else {
-        generation = options.generation;
+        generation = options.generation!;
       }
       if (!isNaN(generation)) {
         requestQueryObject.generation = generation;
@@ -772,16 +773,16 @@ class File extends ServiceObject<File> {
     });
 
     this.bucket = bucket;
-    // tslint:disable-next-line:no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.storage = (bucket as any).parent as Storage;
 
     // @TODO Can this duplicate code from above be avoided?
-    if (options.generation != null) {
+    if (options.generation !== null) {
       let generation: number;
       if (typeof options.generation === 'string') {
         generation = Number(options.generation);
       } else {
-        generation = options.generation;
+        generation = options.generation!;
       }
       if (!isNaN(generation)) {
         this.generation = generation;
@@ -960,6 +961,7 @@ class File extends ServiceObject<File> {
       options = optionsOrCallback;
     }
 
+    // eslint-disable-next-line no-prototype-builtins
     if (options.hasOwnProperty('keepAcl')) {
       // TODO: remove keepAcl from interface in next major.
       emitWarning();
@@ -1178,7 +1180,7 @@ class File extends ServiceObject<File> {
       typeof options.start === 'number' || typeof options.end === 'number';
     const tailRequest = options.end! < 0;
 
-    // tslint:disable-next-line:no-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let validateStream: any; // Created later, if necessary.
 
     // TODO: remove `through2` dependency in favor of native PassThrough
@@ -1192,7 +1194,7 @@ class File extends ServiceObject<File> {
     let refreshedMetadata = false;
 
     if (typeof options.validation === 'string') {
-      // tslint:disable-next-line:no-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (options as any).validation = (options.validation as string).toLowerCase();
       crc32c = options.validation === 'crc32c';
       md5 = options.validation === 'md5';
@@ -1252,7 +1254,7 @@ class File extends ServiceObject<File> {
         })
         .on('response', res => {
           throughStream.emit('response', res);
-          // tslint:disable-next-line:no-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           util.handleResp(null, res, null, onResponse as any);
         })
         .resume();
@@ -1301,7 +1303,7 @@ class File extends ServiceObject<File> {
 
         if (throughStreams.length === 1) {
           rawResponseStream =
-            // tslint:disable-next-line:no-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             rawResponseStream.pipe(throughStreams[0]) as any;
         } else if (throughStreams.length > 1) {
           rawResponseStream = rawResponseStream.pipe(
@@ -1685,7 +1687,7 @@ class File extends ServiceObject<File> {
    *     // The file upload is complete.
    *   });
    */
-  // tslint:disable-next-line:no-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
     options = Object.assign({metadata: {}}, options);
 
@@ -2038,7 +2040,7 @@ class File extends ServiceObject<File> {
     );
     this.encryptionKeyHash = crypto
       .createHash('sha256')
-      // tslint:disable-next-line:no-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .update(this.encryptionKeyBase64, 'base64' as any)
       .digest('base64');
 
@@ -2972,7 +2974,7 @@ class File extends ServiceObject<File> {
 
     const query = {
       predefinedAcl: options.strict ? 'private' : 'projectPrivate',
-      // tslint:disable-next-line:no-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
     if (options.userProject) {
@@ -3305,9 +3307,11 @@ class File extends ServiceObject<File> {
     this.copy(newFile, callback!);
   }
 
-  // tslint:disable:no-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   save(data: any, options?: SaveOptions): Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   save(data: any, callback: SaveCallback): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   save(data: any, options: SaveOptions, callback: SaveCallback): void;
   /**
    * @typedef {object} SaveOptions
@@ -3358,6 +3362,7 @@ class File extends ServiceObject<File> {
    * file.save(contents).then(function() {});
    */
   save(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any,
     optionsOrCallback?: SaveOptions | SaveCallback,
     callback?: SaveCallback
