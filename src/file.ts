@@ -279,13 +279,6 @@ class ResumableUploadError extends Error {
  * @const {string}
  * @private
  */
-const STORAGE_UPLOAD_BASE_URL =
-  'https://storage.googleapis.com/upload/storage/v1/b';
-
-/**
- * @const {string}
- * @private
- */
 export const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
 
 /**
@@ -3563,11 +3556,15 @@ class File extends ServiceObject<File> {
       options
     );
 
+    const apiEndpoint = this.storage.apiEndpoint;
+    const bucketName = this.bucket.name;
+    const uri = `https://${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
+
     const reqOpts: DecorateRequestOptions = {
       qs: {
         name: this.name,
       },
-      uri: `${STORAGE_UPLOAD_BASE_URL}/${this.bucket.name}/o`,
+      uri: uri,
     };
 
     if (this.generation !== undefined) {

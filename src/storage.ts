@@ -24,6 +24,7 @@ import {Channel} from './channel';
 import {File} from './file';
 import {normalize} from './util';
 import {HmacKey, HmacKeyMetadata, HmacKeyOptions} from './hmacKey';
+import { URL } from 'url';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -388,9 +389,15 @@ export class Storage extends Service {
     options = Object.assign({}, options, {
       apiEndpoint: options.apiEndpoint || 'storage.googleapis.com',
     });
-    const url =
-      process.env.STORAGE_EMULATOR_HOST ||
-      `https://${options.apiEndpoint}/storage/v1`;
+
+    // For internal testing benchmarking only; overrides options.apiEndpoint.
+    const EMULATOR_HOST = process.env.STORAGE_EMULATOR_HOST;
+    if (typeof EMULATOR_HOST === 'string') {
+      options.apiEndpoint = new URL(EMULATOR_HOST).host;
+    }
+
+    const url = EMULATOR_HOST || `https://${options.apiEndpoint}/storage/v1`;
+
     const config = {
       apiEndpoint: options.apiEndpoint!,
       baseUrl: url,
