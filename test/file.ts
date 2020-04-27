@@ -3804,8 +3804,8 @@ describe('File', () => {
       file.createWriteStream = () => {
         const writeStream = new stream.PassThrough();
         setImmediate(() => {
-          const [progsListns] = writeStream.listeners('progress');
-          assert.strictEqual(progsListns, onUploadProgress);
+          const [listener] = writeStream.listeners('progress');
+          assert.strictEqual(listener, onUploadProgress);
           done();
         });
         return writeStream;
