@@ -2829,6 +2829,7 @@ describe('File', () => {
 
       const fields = {
         ...CONFIG.fields,
+        bucket: BUCKET.name,
         key: file.name,
         'x-goog-date': '20200101T000000Z',
         'x-goog-credential': `${CLIENT_EMAIL}/20200101/auto/storage/goog4_request`,

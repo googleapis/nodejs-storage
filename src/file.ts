@@ -2586,6 +2586,7 @@ class File extends ServiceObject<File> {
 
       fields = {
         ...fields,
+        bucket: this.bucket.name,
         key: this.name,
         'x-goog-date': nowISO,
         'x-goog-credential': credential,
