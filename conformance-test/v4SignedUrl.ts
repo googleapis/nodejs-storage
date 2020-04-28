@@ -229,7 +229,7 @@ describe('v4 conformance test', () => {
           testCase.policyOutput.expectedDecodedPolicy
         );
 
-        assert.deepStrictEqual(outputFields, testCase.policyOutput.fields);
+        assert.deepStrictEqual(policy.fields, outputFields);
 
         fakeTimer.restore();
       });
