@@ -1,3 +1,0 @@
-This is a test file!
-
-When using fs.stat should be stubbed to return a large file size

@@ -21,6 +21,8 @@ import {
 } from '@google-cloud/common';
 import arrify = require('arrify');
 import * as assert from 'assert';
+import * as extend from 'extend';
+import * as fs from 'fs';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
 import * as mime from 'mime-types';
 import pLimit from 'p-limit';
@@ -88,6 +90,13 @@ class FakeNotification {
     this.id = id;
   }
 }
+
+let fsStatOverride: Function | null;
+const fakeFs = extend(true, {}, fs, {
+  stat: (filePath: string, callback: Function) => {
+    return (fsStatOverride || fs.stat)(filePath, callback);
+  },
+});
 
 let pLimitOverride: Function | null;
 const fakePLimit = (limit: number) => (pLimitOverride || pLimit)(limit);
@@ -172,6 +181,7 @@ describe('Bucket', () => {
 
   before(() => {
     Bucket = proxyquire('../src/bucket.js', {
+      fs: fakeFs,
       'p-limit': {default: fakePLimit},
       '@google-cloud/promisify': fakePromisify,
       '@google-cloud/paginator': fakePaginator,
@@ -188,6 +198,7 @@ describe('Bucket', () => {
   });
 
   beforeEach(() => {
+    fsStatOverride = null;
     pLimitOverride = null;
     bucket = new Bucket(STORAGE, BUCKET_NAME);
   });
@@ -2382,28 +2393,11 @@ describe('Bucket', () => {
     });
 
     describe('resumable uploads', () => {
-      const dummyLargeFilepath = path.join(
-        __dirname,
-        '../../test/testdata',
-        'dummylargetestfile.txt'
-      );
-      const dummyLargeFileStat = require('fs').statSync(dummyLargeFilepath);
-      // Set size greater than threshold
-      dummyLargeFileStat.size = 5000001;
-
-      let sandbox: sinon.SinonSandbox;
-
       beforeEach(() => {
-        sandbox = sinon.createSandbox();
-
-        const statStub = sandbox.stub(require('fs'), 'stat');
-        statStub
-          .withArgs(dummyLargeFilepath)
-          .callsArgWithAsync(1, null, dummyLargeFileStat);
-        statStub.callThrough();
+        fsStatOverride = (path: string, callback: Function) => {
+          callback(null, {size: 1}); // Small size to guarantee simple upload
+        };
       });
-
-      afterEach(() => sandbox.restore());
 
       it('should force a resumable upload', done => {
         const fakeFile = new FakeFile(bucket, 'file-name');
@@ -2423,16 +2417,20 @@ describe('Bucket', () => {
       it('should not pass resumable option to createWriteStream when file size is greater than minimum resumable threshold', done => {
         const fakeFile = new FakeFile(bucket, 'file-name');
         const options = {destination: fakeFile};
+        fsStatOverride = (path: string, callback: Function) => {
+          // Set size greater than threshold
+          callback(null, {size: 5000001});
+        };
         fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
           const ws = new stream.Writable();
           ws.write = () => true;
           setImmediate(() => {
-            assert.ok(!('resumable' in options_));
+            assert.strictEqual(typeof options_.resumable, 'undefined');
             done();
           });
           return ws;
         };
-        bucket.upload(dummyLargeFilepath, options, assert.ifError);
+        bucket.upload(filepath, options, assert.ifError);
       });
 
       it('should prevent resumable when file size is less than minimum resumable threshold', done => {
