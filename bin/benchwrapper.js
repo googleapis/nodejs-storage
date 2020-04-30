@@ -61,6 +61,10 @@ server.addService(storageBenchWrapper['StorageBenchWrapper']['service'], {
   write: write,
 });
 console.log('starting on localhost:' + argv.port);
-server.bindAsync('0.0.0.0:' + argv.port, grpc.ServerCredentials.createInsecure(), () => {
-  server.start();
-});
+server.bindAsync(
+  '0.0.0.0:' + argv.port,
+  grpc.ServerCredentials.createInsecure(),
+  () => {
+    server.start();
+  }
+);
