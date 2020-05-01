@@ -2601,6 +2601,8 @@ class File extends ServiceObject<File> {
         }
       });
 
+      delete fields.bucket;
+
       const expiration = dateFormat.format(
         expires,
         'YYYY-MM-DD[T]HH:mm:ss[Z]',
