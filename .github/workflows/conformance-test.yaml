@@ -3,9 +3,9 @@ on:
     branches:
       - master
   pull_request:
-name: conformance-test
+name: ci
 jobs:
-  test:
+  conformance-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
