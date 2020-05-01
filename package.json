@@ -75,6 +75,7 @@
   },
   "devDependencies": {
     "@google-cloud/pubsub": "^1.0.0",
+    "@grpc/grpc-js": "^1.0.3",
     "@grpc/proto-loader": "^0.5.1",
     "@types/compressible": "^2.0.0",
     "@types/concat-stream": "^1.6.0",
@@ -91,13 +92,12 @@
     "@types/pumpify": "^1.4.1",
     "@types/sinon": "^9.0.0",
     "@types/through2": "^2.0.33",
-    "@types/tmp": "0.1.0",
+    "@types/tmp": "0.2.0",
     "@types/uuid": "^7.0.0",
     "@types/xdg-basedir": "^2.0.0",
     "c8": "^7.0.0",
     "codecov": "^3.0.0",
     "form-data": "^3.0.0",
-    "grpc": "^1.22.2",
     "gts": "^2.0.0",
     "jsdoc": "^3.6.2",
     "jsdoc-fresh": "^1.0.1",
@@ -111,7 +111,7 @@
     "sinon": "^9.0.0",
     "tmp": "^0.2.0",
     "typescript": "^3.8.3",
-    "uuid": "^7.0.0",
+    "uuid": "^8.0.0",
     "yargs": "^15.0.0"
   }
 }
