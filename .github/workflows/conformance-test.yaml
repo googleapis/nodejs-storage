@@ -3,7 +3,7 @@ on:
     branches:
       - master
   pull_request:
-name: ci
+name: conformance-test
 jobs:
   test:
     runs-on: ubuntu-latest
