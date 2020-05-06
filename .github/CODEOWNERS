@@ -5,8 +5,6 @@
 # https://help.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners#codeowners-syntax
 
 
-# The yoshi-nodejs team is the default owner for anything not
+# The yoshi-nodejs team and @GoogleCloudPlatform/storage-dpe team are the default owner for anything not
 # explicitly taken by someone else.
-*                               @googleapis/yoshi-nodejs
-
-/storage/                          @GoogleCloudPlatform/storage-dpe @googleapis/yoshi-nodejs
+*                               @googleapis/yoshi-nodejs @GoogleCloudPlatform/storage-dpe
