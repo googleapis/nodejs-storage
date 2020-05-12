@@ -1703,7 +1703,11 @@ class File extends ServiceObject<File> {
 
       if (options.metadata.contentType === 'auto') {
         options.metadata.contentType = mime.getType(this.name);
+      } else {
+        options.metadata.contentType = mime.getType(this.name);
       }
+    } else {
+       options.metadata.contentType = mime.getType(this.name);
     }
 
     let gzip = options.gzip;
