@@ -16,8 +16,8 @@ import * as assert from 'assert';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-import fetch from 'node-fetch';
 import * as FormData from 'form-data';
+import {request} from 'gaxios';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const normalizeNewline = require('normalize-newline');
 import pLimit from 'p-limit';
@@ -3208,9 +3208,11 @@ describe('storage', () => {
         expires: Date.now() + 5000,
       });
 
-      const res = await fetch(signedReadUrl);
-      const body = await res.text();
-      assert.strictEqual(body, localFile.toString());
+      const res = await request({
+        url: signedReadUrl,
+        responseType: 'text',
+      });
+      assert.strictEqual(res.data, localFile.toString());
     });
 
     it('should work with multi-valued extension headers', async () => {
@@ -3223,11 +3225,12 @@ describe('storage', () => {
         extensionHeaders: HEADERS,
       });
 
-      const res = await fetch(signedReadUrl, {
+      const res = await request({
+        url: signedReadUrl,
         headers: {'x-goog-custom-header': 'value1,value2'},
+        responseType: 'text',
       });
-      const body = await res.text();
-      assert.strictEqual(body, localFile.toString());
+      assert.strictEqual(res.data, localFile.toString());
     });
 
     it('should create a signed delete url', async () => {
@@ -3238,7 +3241,10 @@ describe('storage', () => {
         expires: Date.now() + 5000,
       });
 
-      await fetch(signedDeleteUrl, {method: 'DELETE'});
+      await request({
+        url: signedDeleteUrl,
+        method: 'DELETE',
+      });
       assert.rejects(
         () => file.getMetadata(),
         (err: ApiError) => err.code === 404
@@ -3267,9 +3273,11 @@ describe('storage', () => {
         expires: Date.now() + 5000,
       });
 
-      const res = await fetch(signedUrl);
-      const body = await res.text();
-      assert.strictEqual(body, localFile.toString());
+      const res = await request({
+        url: signedUrl,
+        responseType: 'text',
+      });
+      assert.strictEqual(res.data, localFile.toString());
     });
   });
 
@@ -3292,9 +3300,11 @@ describe('storage', () => {
         expires: Date.now() + 5000,
       });
 
-      const res = await fetch(signedReadUrl);
-      const body = await res.text();
-      assert.strictEqual(body, localFile.toString());
+      const res = await request({
+        url: signedReadUrl,
+        responseType: 'text',
+      });
+      assert.strictEqual(res.data, localFile.toString());
     });
 
     it('should work with special characters in extension headers', async () => {
@@ -3308,11 +3318,12 @@ describe('storage', () => {
         extensionHeaders: HEADERS,
       });
 
-      const res = await fetch(signedReadUrl, {
+      const res = await request({
+        url: signedReadUrl,
         headers: {'x-goog-custom-header': "value1,azAZ!*'()*%"},
+        responseType: 'text',
       });
-      const body = await res.text();
-      assert.strictEqual(body, localFile.toString());
+      assert.strictEqual(res.data, localFile.toString());
     });
 
     it('should create a virtual-hosted style URL', async () => {
@@ -3323,9 +3334,11 @@ describe('storage', () => {
         expires: Date.now() + 5000,
       });
 
-      const res = await fetch(signedUrl);
-      const body = await res.text();
-      assert.strictEqual(body, localFile.toString());
+      const res = await request({
+        url: signedUrl,
+        responseType: 'text',
+      });
+      assert.strictEqual(res.data, localFile.toString());
     });
 
     it('should create a signed delete url', async () => {
@@ -3334,7 +3347,10 @@ describe('storage', () => {
         action: 'delete',
         expires: Date.now() + 5000,
       });
-      await fetch(signedDeleteUrl!, {method: 'DELETE'});
+      await request({
+        url: signedDeleteUrl!,
+        method: 'DELETE',
+      });
       const [exists] = await file.exists();
       assert.strictEqual(exists, false);
     });
@@ -3345,10 +3361,12 @@ describe('storage', () => {
         action: 'list',
         expires: Date.now() + 5000,
       });
-      const res = await fetch(signedUrl!, {method: 'GET'});
-      const body = await res.text();
+      const res = await request({
+        url: signedUrl!,
+        method: 'GET',
+      });
       assert.strictEqual(res.status, 200);
-      assert(body.includes('ListBucketResult'));
+      assert(JSON.stringify(res.data).includes('ListBucketResult'));
     });
   });
 
@@ -3373,9 +3391,11 @@ describe('storage', () => {
         expires: Date.now() + 5000,
       });
 
-      const res = await fetch(signedUrl);
-      const body = await res.text();
-      assert.strictEqual(body, localFile.toString());
+      const res = await request({
+        url: signedUrl,
+        responseType: 'text',
+      });
+      assert.strictEqual(res.data, localFile.toString());
     });
   });
 
@@ -3431,7 +3451,11 @@ describe('storage', () => {
       const CONTENT = 'my-content';
 
       form.append('file', CONTENT);
-      const res = await fetch(policy.url, {method: 'POST', body: form});
+      const res = await request({
+        url: policy.url,
+        method: 'POST',
+        body: form,
+      });
       assert.strictEqual(res.status, 204);
 
       const [buf] = await file.download();
