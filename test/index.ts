@@ -147,7 +147,7 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
       };
       const expectedCalledWith = Object.assign({}, options, {
-        apiEndpoint: 'storage.googleapis.com',
+        apiEndpoint: 'https://storage.googleapis.com',
       });
       storage = new Storage(options);
       const calledWith = storage.calledWith_[1];
@@ -157,7 +157,7 @@ describe('Storage', () => {
     });
 
     it('should propagate the apiEndpoint option', () => {
-      const apiEndpoint = 'some.fake.endpoint';
+      const apiEndpoint = 'https://some.fake.endpoint';
       storage = new Storage({
         projectId: PROJECT_ID,
         apiEndpoint,
@@ -165,13 +165,41 @@ describe('Storage', () => {
       const calledWith = storage.calledWith_[0];
       assert.strictEqual(
         calledWith.baseUrl,
-        `https://${apiEndpoint}/storage/v1`
+        `${apiEndpoint}/storage/v1`
       );
-      assert.strictEqual(calledWith.apiEndpoint, apiEndpoint);
+      assert.strictEqual(calledWith.apiEndpoint, `${apiEndpoint}`);
+    });
+
+    it('should prepend apiEndpoint with default protocol', () => {
+      const protocollessApiEndpoint = 'some.fake.endpoint';
+      storage = new Storage({
+        projectId: PROJECT_ID,
+        apiEndpoint: protocollessApiEndpoint,
+      });
+      const calledWith = storage.calledWith_[0];
+      assert.strictEqual(
+        calledWith.baseUrl,
+        `https://${protocollessApiEndpoint}/storage/v1`
+      );
+      assert.strictEqual(calledWith.apiEndpoint, `https://${protocollessApiEndpoint}`);
+    });
+
+    it('should strip trailing slash from apiEndpoint', () => {
+      const apiEndpoint = 'https://some.fake.endpoint/';
+      storage = new Storage({
+        projectId: PROJECT_ID,
+        apiEndpoint,
+      });
+      const calledWith = storage.calledWith_[0];
+      assert.strictEqual(
+        calledWith.baseUrl,
+        `${apiEndpoint}storage/v1`
+      );
+      assert.strictEqual(calledWith.apiEndpoint, 'https://some.fake.endpoint');
     });
 
     describe('STORAGE_EMULATOR_HOST', () => {
-      const EMULATOR_HOST = 'https://internal.benchmark.com/path/';
+      const EMULATOR_HOST = 'https://internal.benchmark.com/path';
       before(() => {
         process.env.STORAGE_EMULATOR_HOST = EMULATOR_HOST;
       });
@@ -187,7 +215,7 @@ describe('Storage', () => {
 
         const calledWith = storage.calledWith_[0];
         assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
-        assert.strictEqual(calledWith.apiEndpoint, 'internal.benchmark.com');
+        assert.strictEqual(calledWith.apiEndpoint, 'https://internal.benchmark.com/path');
       });
 
       it('should override apiEndpoint', () => {
@@ -198,7 +226,20 @@ describe('Storage', () => {
 
         const calledWith = storage.calledWith_[0];
         assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
-        assert.strictEqual(calledWith.apiEndpoint, 'internal.benchmark.com');
+        assert.strictEqual(calledWith.apiEndpoint, 'https://internal.benchmark.com/path');
+      });
+
+      it('should prepend default protocol and strip trailing slash', () => {
+        const EMULATOR_HOST = 'internal.benchmark.com/path/';
+        process.env.STORAGE_EMULATOR_HOST = EMULATOR_HOST;
+
+        storage = new Storage({
+          projectId: PROJECT_ID,
+        });
+
+        const calledWith = storage.calledWith_[0];
+        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(calledWith.apiEndpoint, 'https://internal.benchmark.com/path');
       });
     });
   });

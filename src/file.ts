@@ -1513,6 +1513,7 @@ class File extends ServiceObject<File> {
     resumableUpload.createURI(
       {
         authClient: this.storage.authClient,
+        apiEndpoint: this.storage.apiEndpoint,
         bucket: this.bucket.name,
         configPath: options.configPath,
         file: this.name,
@@ -3563,7 +3564,7 @@ class File extends ServiceObject<File> {
 
     const apiEndpoint = this.storage.apiEndpoint;
     const bucketName = this.bucket.name;
-    const uri = `https://${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
+    const uri = `${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
 
     const reqOpts: DecorateRequestOptions = {
       qs: {

@@ -157,6 +157,8 @@ export interface GetHmacKeysCallback {
 
 export type GetHmacKeysResponse = [HmacKey[]];
 
+export const PROTOCOL_REGEX = /^(\w*):\/\//;
+
 /*! Developer Documentation
  *
  * Invoke this method to create a new Storage object bound with pre-determined
@@ -386,21 +388,24 @@ export class Storage extends Service {
    * @param {StorageOptions} [options] Configuration options.
    */
   constructor(options: StorageOptions = {}) {
-    options = Object.assign({}, options, {
-      apiEndpoint: options.apiEndpoint || 'storage.googleapis.com',
-    });
+    let apiEndpoint = 'https://storage.googleapis.com';
+    if (options.apiEndpoint) {
+      apiEndpoint = Storage.sanitizeEndpoint(options.apiEndpoint);
+    }
+
+    options = Object.assign({}, options, {apiEndpoint});
 
     // Overrides options.apiEndpoint.
     const EMULATOR_HOST = process.env.STORAGE_EMULATOR_HOST;
     if (typeof EMULATOR_HOST === 'string') {
-      options.apiEndpoint = new URL(EMULATOR_HOST).host;
+      options.apiEndpoint = Storage.sanitizeEndpoint(EMULATOR_HOST);
     }
 
-    const url = EMULATOR_HOST || `https://${options.apiEndpoint}/storage/v1`;
+    const baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
 
     const config = {
       apiEndpoint: options.apiEndpoint!,
-      baseUrl: url,
+      baseUrl,
       projectIdRequired: false,
       scopes: [
         'https://www.googleapis.com/auth/iam',
@@ -422,6 +427,13 @@ export class Storage extends Service {
 
     this.getBucketsStream = paginator.streamify('getBuckets');
     this.getHmacKeysStream = paginator.streamify('getHmacKeys');
+  }
+
+  private static sanitizeEndpoint(url: string) {
+    if (!PROTOCOL_REGEX.test(url)) {
+      url = `https://${url}`;
+    }
+    return url.replace(/\/+$/, ''); // Remove trailing slashes
   }
 
   /**

@@ -202,7 +202,7 @@ describe('File', () => {
     STORAGE = {
       createBucket: util.noop,
       request: util.noop,
-      apiEndpoint: 'storage.googleapis.com',
+      apiEndpoint: 'https://storage.googleapis.com',
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       makeAuthenticatedRequest(req: {}, callback: any) {
         if (callback) {
