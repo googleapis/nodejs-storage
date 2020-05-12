@@ -3438,12 +3438,6 @@ class Bucket extends ServiceObject {
       });
     }
 
-    const contentType = mime.contentType(path.basename(pathString));
-
-    if (contentType && !options.metadata.contentType) {
-      options.metadata.contentType = contentType;
-    }
-
     if (options.resumable !== null && typeof options.resumable === 'boolean') {
       upload();
     } else {
