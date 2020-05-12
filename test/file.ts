@@ -2824,13 +2824,15 @@ describe('File', () => {
       fakeTimer.restore();
     });
 
+    const fieldsToConditions = (fields: object) =>
+      Object.entries(fields).map(([k, v]) => ({[k]: v}));
+
     it('should create a signed policy', done => {
       CONFIG.fields = {
         'x-goog-meta-foo': 'bar',
       };
 
-      const fields = {
-        ...CONFIG.fields,
+      const requiredFields = {
         key: file.name,
         'x-goog-date': '20200101T000000Z',
         'x-goog-credential': `${CLIENT_EMAIL}/20200101/auto/storage/goog4_request`,
@@ -2838,9 +2840,11 @@ describe('File', () => {
       };
 
       const policy = {
-        conditions: Object.entries(fields).map(([key, value]) => ({
-          [key]: value,
-        })),
+        conditions: [
+          ...fieldsToConditions(CONFIG.fields),
+          {bucket: BUCKET.name},
+          ...fieldsToConditions(requiredFields),
+        ],
         expiration: dateFormat.format(
           new Date(CONFIG.expires),
           'YYYY-MM-DD[T]HH:mm:ss[Z]',
@@ -2853,6 +2857,12 @@ describe('File', () => {
       const EXPECTED_SIGNATURE = Buffer.from(SIGNATURE, 'base64').toString(
         'hex'
       );
+      const EXPECTED_FIELDS = {
+        ...CONFIG.fields,
+        ...requiredFields,
+        'x-goog-signature': EXPECTED_SIGNATURE,
+        policy: EXPECTED_POLICY,
+      };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       file.generateSignedPostPolicyV4(
@@ -2861,11 +2871,7 @@ describe('File', () => {
           assert.ifError(err);
           assert(res.url, `${STORAGE_POST_POLICY_BASE_URL}/${BUCKET.name}`);
 
-          assert.deepStrictEqual(res.fields, {
-            ...fields,
-            'x-goog-signature': EXPECTED_SIGNATURE,
-            policy: EXPECTED_POLICY,
-          });
+          assert.deepStrictEqual(res.fields, EXPECTED_FIELDS);
 
           const signStub = BUCKET.storage.authClient.sign;
           assert.deepStrictEqual(
@@ -2938,6 +2944,30 @@ describe('File', () => {
             'base64'
           ).toString('utf-8');
           assert(decodedPolicy.includes(expectedConditionString));
+          done();
+        }
+      );
+    });
+
+    it('should encode special characters in policy', done => {
+      CONFIG = {
+        fields: {
+          'x-goog-meta-foo': 'bår',
+        },
+        ...CONFIG,
+      };
+
+      file.generateSignedPostPolicyV4(
+        CONFIG,
+        (err: Error, res: SignedPostPolicyV4Output) => {
+          assert.ifError(err);
+
+          assert.strictEqual(res.fields['x-goog-meta-foo'], 'bår');
+          const decodedPolicy = Buffer.from(
+            res.fields.policy,
+            'base64'
+          ).toString('utf-8');
+          assert(decodedPolicy.includes('"x-goog-meta-foo":"b\\u00e5r"'));
           done();
         }
       );

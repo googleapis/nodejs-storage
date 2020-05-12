@@ -3267,7 +3267,7 @@ class Bucket extends ServiceObject {
    * input file is larger than 5 MB.*
    *
    * For faster crc32c computation, you must manually install
-   * [`fast-crc32c`](http://www.gitnpm.com/fast-crc32c):
+   * [`fast-crc32c`](https://www.npmjs.com/package/fast-crc32c):
    *
    *     $ npm install --save fast-crc32c
    *
@@ -3454,7 +3454,10 @@ class Bucket extends ServiceObject {
           return;
         }
 
-        options.resumable = fd.size > RESUMABLE_THRESHOLD;
+        if (fd.size <= RESUMABLE_THRESHOLD) {
+          // Only disable resumable uploads so createWriteStream still attempts them and falls back to simple upload.
+          options.resumable = false;
+        }
 
         upload();
       });
