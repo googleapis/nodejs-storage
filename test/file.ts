@@ -1670,6 +1670,7 @@ describe('File', () => {
           const storage = bucket.storage;
 
           assert.strictEqual(opts.authClient, storage.authClient);
+          assert.strictEqual(opts.apiEndpoint, storage.apiEndpoint);
           assert.strictEqual(opts.bucket, bucket.name);
           assert.strictEqual(opts.configPath, options.configPath);
           assert.strictEqual(opts.file, file.name);
