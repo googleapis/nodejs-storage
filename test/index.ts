@@ -218,17 +218,17 @@ describe('Storage', () => {
         );
       });
 
-      it('should override apiEndpoint', () => {
+      it('should be overriden by apiEndpoint', () => {
         storage = new Storage({
           projectId: PROJECT_ID,
-          apiEndpoint: 'some.api.com',
+          apiEndpoint: 'https://some.api.com',
         });
 
         const calledWith = storage.calledWith_[0];
         assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
         assert.strictEqual(
           calledWith.apiEndpoint,
-          'https://internal.benchmark.com/path'
+          'https://some.api.com'
         );
       });
 

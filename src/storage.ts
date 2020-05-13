@@ -389,17 +389,17 @@ export class Storage extends Service {
    */
   constructor(options: StorageOptions = {}) {
     let apiEndpoint = 'https://storage.googleapis.com';
+
+    const EMULATOR_HOST = process.env.STORAGE_EMULATOR_HOST;
+    if (typeof EMULATOR_HOST === 'string') {
+      apiEndpoint = Storage.sanitizeEndpoint(EMULATOR_HOST);
+    }
+
     if (options.apiEndpoint) {
       apiEndpoint = Storage.sanitizeEndpoint(options.apiEndpoint);
     }
 
     options = Object.assign({}, options, {apiEndpoint});
-
-    // Overrides options.apiEndpoint.
-    const EMULATOR_HOST = process.env.STORAGE_EMULATOR_HOST;
-    if (typeof EMULATOR_HOST === 'string') {
-      options.apiEndpoint = Storage.sanitizeEndpoint(EMULATOR_HOST);
-    }
 
     const baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
 
