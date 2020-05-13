@@ -24,7 +24,7 @@ import {Channel} from './channel';
 import {File} from './file';
 import {normalize} from './util';
 import {HmacKey, HmacKeyMetadata, HmacKeyOptions} from './hmacKey';
-import { URL } from 'url';
+import {URL} from 'url';
 
 export interface GetServiceAccountOptions {
   userProject?: string;

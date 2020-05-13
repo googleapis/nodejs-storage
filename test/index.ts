@@ -163,10 +163,7 @@ describe('Storage', () => {
         apiEndpoint,
       });
       const calledWith = storage.calledWith_[0];
-      assert.strictEqual(
-        calledWith.baseUrl,
-        `${apiEndpoint}/storage/v1`
-      );
+      assert.strictEqual(calledWith.baseUrl, `${apiEndpoint}/storage/v1`);
       assert.strictEqual(calledWith.apiEndpoint, `${apiEndpoint}`);
     });
 
@@ -181,7 +178,10 @@ describe('Storage', () => {
         calledWith.baseUrl,
         `https://${protocollessApiEndpoint}/storage/v1`
       );
-      assert.strictEqual(calledWith.apiEndpoint, `https://${protocollessApiEndpoint}`);
+      assert.strictEqual(
+        calledWith.apiEndpoint,
+        `https://${protocollessApiEndpoint}`
+      );
     });
 
     it('should strip trailing slash from apiEndpoint', () => {
@@ -191,10 +191,7 @@ describe('Storage', () => {
         apiEndpoint,
       });
       const calledWith = storage.calledWith_[0];
-      assert.strictEqual(
-        calledWith.baseUrl,
-        `${apiEndpoint}storage/v1`
-      );
+      assert.strictEqual(calledWith.baseUrl, `${apiEndpoint}storage/v1`);
       assert.strictEqual(calledWith.apiEndpoint, 'https://some.fake.endpoint');
     });
 
@@ -215,7 +212,10 @@ describe('Storage', () => {
 
         const calledWith = storage.calledWith_[0];
         assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
-        assert.strictEqual(calledWith.apiEndpoint, 'https://internal.benchmark.com/path');
+        assert.strictEqual(
+          calledWith.apiEndpoint,
+          'https://internal.benchmark.com/path'
+        );
       });
 
       it('should override apiEndpoint', () => {
@@ -226,7 +226,10 @@ describe('Storage', () => {
 
         const calledWith = storage.calledWith_[0];
         assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
-        assert.strictEqual(calledWith.apiEndpoint, 'https://internal.benchmark.com/path');
+        assert.strictEqual(
+          calledWith.apiEndpoint,
+          'https://internal.benchmark.com/path'
+        );
       });
 
       it('should prepend default protocol and strip trailing slash', () => {
@@ -239,7 +242,10 @@ describe('Storage', () => {
 
         const calledWith = storage.calledWith_[0];
         assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
-        assert.strictEqual(calledWith.apiEndpoint, 'https://internal.benchmark.com/path');
+        assert.strictEqual(
+          calledWith.apiEndpoint,
+          'https://internal.benchmark.com/path'
+        );
       });
     });
   });
