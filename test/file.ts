@@ -4046,6 +4046,7 @@ describe('File', () => {
             const authClient = storage.makeAuthenticatedRequest.authClient;
 
             assert.strictEqual(opts.authClient, authClient);
+            assert.strictEqual(opts.apiEndpoint, storage.apiEndpoint);
             assert.strictEqual(opts.bucket, bucket.name);
             assert.strictEqual(opts.configPath, options.configPath);
             assert.strictEqual(opts.file, file.name);

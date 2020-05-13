@@ -3526,6 +3526,7 @@ class File extends ServiceObject<File> {
 
     const uploadStream = resumableUpload.upload({
       authClient: this.storage.authClient,
+      apiEndpoint: this.storage.apiEndpoint,
       bucket: this.bucket.name,
       configPath: options.configPath,
       file: this.name,
