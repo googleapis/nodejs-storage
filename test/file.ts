@@ -350,65 +350,6 @@ describe('File', () => {
   });
 
   describe('copy', () => {
-    describe('depricate `keepAcl`', () => {
-      // eslint-disable-next-line
-      let STORAGE2: any;
-      // eslint-disable-next-line
-      let BUCKET2: any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let file2: any;
-      beforeEach(() => {
-        STORAGE2 = {
-          createBucket: util.noop,
-          request: util.noop,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          makeAuthenticatedRequest(req: {}, callback: any) {
-            if (callback) {
-              (callback.onAuthenticated || callback)(null, req);
-            }
-          },
-          bucket(name: string) {
-            return new Bucket(this, name);
-          },
-        };
-        BUCKET2 = new Bucket(STORAGE, 'bucket-name');
-        file2 = new File(BUCKET, FILE_NAME);
-      });
-
-      it('should warn if `keepAcl` parameter is passed', done => {
-        file.request = util.noop;
-
-        // since --throw-deprication is enabled using try=>catch block
-        try {
-          file.copy('newFile', {keepAcl: 'private'}, assert.ifError);
-        } catch (err) {
-          assert.strictEqual(
-            err.message,
-            'keepAcl parameter is not supported and will be removed in the next major'
-          );
-          assert.strictEqual(err.name, 'DeprecationWarning');
-          done();
-        }
-      });
-
-      it('should warn only once `keepAcl` parameter is passed', done => {
-        file.request = util.noop;
-
-        // since --throw-deprication is enabled using try=>catch block
-        try {
-          file.copy('newFile', {keepAcl: 'private'}, assert.ifError);
-        } catch (err) {
-          assert.strictEqual(
-            err.message,
-            'keepAcl parameter is not supported and will be removed in the next major'
-          );
-          assert.strictEqual(err.name, 'DeprecationWarning');
-        }
-        file2.copy('newFile2', {keepAcl: 'private'}, assert.ifError);
-        done();
-      });
-    });
-
     it('should throw if no destination is provided', () => {
       assert.throws(() => {
         file.copy();
@@ -1725,6 +1666,53 @@ describe('File', () => {
       writable.write('data');
     });
 
+    it('should emit progress via resumable upload', done => {
+      const progress = {};
+
+      resumableUploadOverride = {
+        upload() {
+          const uploadStream = new stream.PassThrough();
+          setImmediate(() => {
+            uploadStream.emit('progress', progress);
+          });
+
+          return uploadStream;
+        },
+      };
+
+      const writable = file.createWriteStream();
+
+      writable.on('progress', (evt: {}) => {
+        assert.strictEqual(evt, progress);
+        done();
+      });
+
+      writable.write('data');
+    });
+
+    it('should emit progress via simple upload', done => {
+      const progress = {};
+
+      makeWritableStreamOverride = (dup: duplexify.Duplexify) => {
+        const uploadStream = new stream.PassThrough();
+        uploadStream.on('progress', evt => dup.emit('progress', evt));
+
+        dup.setWritable(uploadStream);
+        setImmediate(() => {
+          uploadStream.emit('progress', progress);
+        });
+      };
+
+      const writable = file.createWriteStream({resumable: false});
+
+      writable.on('progress', (evt: {}) => {
+        assert.strictEqual(evt, progress);
+        done();
+      });
+
+      writable.write('data');
+    });
+
     it('should start a simple upload if specified', done => {
       const options = {
         metadata: METADATA,
@@ -1890,6 +1878,29 @@ describe('File', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       file.startResumableUpload_ = (stream: {}, options: any) => {
         assert.strictEqual(options.metadata.contentType, 'image/png');
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should detect contentType if not defined', done => {
+      const writable = file.createWriteStream();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(options.metadata.contentType, 'image/png');
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should not set a contentType if mime lookup failed', done => {
+      const file = new File('file-without-ext');
+      const writable = file.createWriteStream();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(typeof options.metadata.contentType, 'undefined');
         done();
       };
 
@@ -3782,6 +3793,21 @@ describe('File', () => {
       file.save(DATA, assert.ifError);
     });
 
+    it('should register the progress listener if onUploadProgress is passed', done => {
+      const onUploadProgress = util.noop;
+      file.createWriteStream = () => {
+        const writeStream = new stream.PassThrough();
+        setImmediate(() => {
+          const [listener] = writeStream.listeners('progress');
+          assert.strictEqual(listener, onUploadProgress);
+          done();
+        });
+        return writeStream;
+      };
+
+      file.save(DATA, {onUploadProgress}, assert.ifError);
+    });
+
     it('should write the data', done => {
       file.createWriteStream = () => {
         const writeStream = new stream.PassThrough();
@@ -4074,6 +4100,28 @@ describe('File', () => {
 
         resumableUploadOverride = {
           upload() {
+            return uploadStream;
+          },
+        };
+
+        file.startResumableUpload_(dup);
+      });
+
+      it('should emit progress event', done => {
+        const progress = {};
+        const dup = duplexify();
+        dup.on('progress', evt => {
+          assert.strictEqual(evt, progress);
+          done();
+        });
+
+        resumableUploadOverride = {
+          upload() {
+            const uploadStream = new stream.Transform();
+            setImmediate(() => {
+              uploadStream.emit('progress', progress);
+            });
+
             return uploadStream;
           },
         };
