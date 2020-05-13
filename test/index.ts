@@ -226,10 +226,7 @@ describe('Storage', () => {
 
         const calledWith = storage.calledWith_[0];
         assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
-        assert.strictEqual(
-          calledWith.apiEndpoint,
-          'https://some.api.com'
-        );
+        assert.strictEqual(calledWith.apiEndpoint, 'https://some.api.com');
       });
 
       it('should prepend default protocol and strip trailing slash', () => {
@@ -1065,7 +1062,9 @@ describe('Storage', () => {
     const USER_DEFINED_FULL_API_ENDPOINT = `${USER_DEFINED_PROTOCOL}://myapi.com:8080`;
 
     it('should default protocol to https', () => {
-      const endpoint = Storage.sanitizeEndpoint(USER_DEFINED_SHORT_API_ENDPOINT);
+      const endpoint = Storage.sanitizeEndpoint(
+        USER_DEFINED_SHORT_API_ENDPOINT
+      );
       assert.strictEqual(endpoint.match(PROTOCOL_REGEX)![1], 'https');
     });
 
