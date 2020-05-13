@@ -37,7 +37,7 @@ import * as os from 'os';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pumpify = require('pumpify');
 import * as resumableUpload from 'gcs-resumable-upload';
-import {Duplex, Writable, Readable} from 'stream';
+import {Duplex, Writable, Readable, Transform} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as through from 'through2';
 import * as xdgBasedir from 'xdg-basedir';
@@ -342,7 +342,10 @@ export interface CreateReadStreamOptions {
   decompress?: boolean;
 }
 
-export type SaveOptions = CreateWriteStreamOptions;
+export interface SaveOptions extends CreateWriteStreamOptions {
+  // tslint:disable-next-line:no-any
+  onUploadProgress?: (progressEvent: any) => void;
+}
 
 export interface SaveCallback {
   (err?: Error | null): void;
@@ -1729,6 +1732,10 @@ class File extends ServiceObject<File> {
     });
 
     const fileWriteStream = duplexify();
+
+    fileWriteStream.on('progress', evt => {
+      stream.emit('progress', evt);
+    });
 
     const stream = streamEvents(
       pumpify([
@@ -3377,10 +3384,14 @@ class File extends ServiceObject<File> {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
 
-    this.createWriteStream(options)
+    const writable = this.createWriteStream(options)
       .on('error', callback!)
-      .on('finish', callback!)
-      .end(data);
+      .on('finish', callback!);
+    if (options.onUploadProgress) {
+      writable.on('progress', options.onUploadProgress);
+    }
+
+    writable.end(data);
   }
   setStorageClass(
     storageClass: string,
@@ -3539,7 +3550,8 @@ class File extends ServiceObject<File> {
       })
       .on('finish', () => {
         dup.emit('complete');
-      });
+      })
+      .on('progress', evt => dup.emit('progress', evt));
 
     dup.setWritable(uploadStream);
   }
