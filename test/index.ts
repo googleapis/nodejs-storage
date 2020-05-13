@@ -29,7 +29,7 @@ import {Bucket} from '../src';
 import {GetFilesOptions} from '../src/bucket';
 import sinon = require('sinon');
 import {HmacKey} from '../src/hmacKey';
-import {HmacKeyResourceResponse} from '../src/storage';
+import {HmacKeyResourceResponse, PROTOCOL_REGEX} from '../src/storage';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hmacKeyModule = require('../src/hmacKey');
@@ -1056,6 +1056,36 @@ describe('Storage', () => {
           }
         );
       });
+    });
+  });
+
+  describe('#sanitizeEndpoint', () => {
+    const USER_DEFINED_SHORT_API_ENDPOINT = 'myapi.com:8080';
+    const USER_DEFINED_PROTOCOL = 'myproto';
+    const USER_DEFINED_FULL_API_ENDPOINT = `${USER_DEFINED_PROTOCOL}://myapi.com:8080`;
+
+    it('should default protocol to https', () => {
+      const endpoint = Storage.sanitizeEndpoint(USER_DEFINED_SHORT_API_ENDPOINT);
+      assert.strictEqual(endpoint.match(PROTOCOL_REGEX)![1], 'https');
+    });
+
+    it('should not override protocol', () => {
+      const endpoint = Storage.sanitizeEndpoint(USER_DEFINED_FULL_API_ENDPOINT);
+      assert.strictEqual(
+        endpoint.match(PROTOCOL_REGEX)![1],
+        USER_DEFINED_PROTOCOL
+      );
+    });
+
+    it('should remove trailing slashes from URL', () => {
+      const endpointsWithTrailingSlashes = [
+        `${USER_DEFINED_FULL_API_ENDPOINT}/`,
+        `${USER_DEFINED_FULL_API_ENDPOINT}//`,
+      ];
+      for (const endpointWithTrailingSlashes of endpointsWithTrailingSlashes) {
+        const endpoint = Storage.sanitizeEndpoint(endpointWithTrailingSlashes);
+        assert.strictEqual(endpoint.endsWith('/'), false);
+      }
     });
   });
 });
