@@ -297,7 +297,6 @@ export interface FileOptions {
 
 export interface CopyOptions {
   destinationKmsKeyName?: string;
-  keepAcl?: string;
   predefinedAcl?: string;
   token?: string;
   userProject?: string;
@@ -836,8 +835,6 @@ class File extends ServiceObject<File> {
    *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
    *     that will be used to encrypt the object. Overwrites the object
    * metadata's `kms_key_name` value, if any.
-   * @property {string} [keepAcl] This parameter is not supported and will be
-   *     removed in the next major.
    * @property {string} [predefinedAcl] Set the ACL for the new file.
    * @property {string} [token] A previously-returned `rewriteToken` from an
    *     unfinished rewrite request.
@@ -962,12 +959,6 @@ class File extends ServiceObject<File> {
       callback = optionsOrCallback;
     } else if (optionsOrCallback) {
       options = optionsOrCallback;
-    }
-
-    // eslint-disable-next-line no-prototype-builtins
-    if (options.hasOwnProperty('keepAcl')) {
-      // TODO: remove keepAcl from interface in next major.
-      emitWarning();
     }
 
     options = extend(true, {}, options);
@@ -1697,9 +1688,15 @@ class File extends ServiceObject<File> {
 
     if (options.contentType) {
       options.metadata.contentType = options.contentType;
+    }
 
-      if (options.metadata.contentType === 'auto') {
-        options.metadata.contentType = mime.getType(this.name);
+    if (
+      !options.metadata.contentType ||
+      options.metadata.contentType === 'auto'
+    ) {
+      const detectedContentType = mime.getType(this.name);
+      if (detectedContentType) {
+        options.metadata.contentType = detectedContentType;
       }
     }
 
@@ -3636,17 +3633,6 @@ class File extends ServiceObject<File> {
 promisifyAll(File, {
   exclude: ['request', 'setEncryptionKey'],
 });
-
-let warned = false;
-export function emitWarning() {
-  if (!warned) {
-    warned = true;
-    process.emitWarning(
-      'keepAcl parameter is not supported and will be removed in the next major',
-      'DeprecationWarning'
-    );
-  }
-}
 
 /**
  * Reference to the {@link File} class.
