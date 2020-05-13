@@ -22,7 +22,7 @@ import {
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import arrify = require('arrify');
 import * as assert from 'assert';
-import {describe, it, before, beforeEach, afterEach} from 'mocha';
+import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
 import * as proxyquire from 'proxyquire';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import {Bucket} from '../src';
