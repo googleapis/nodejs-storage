@@ -1727,6 +1727,53 @@ describe('File', () => {
       writable.write('data');
     });
 
+    it('should emit progress via resumable upload', done => {
+      const progress = {};
+
+      resumableUploadOverride = {
+        upload() {
+          const uploadStream = new stream.PassThrough();
+          setImmediate(() => {
+            uploadStream.emit('progress', progress);
+          });
+
+          return uploadStream;
+        },
+      };
+
+      const writable = file.createWriteStream();
+
+      writable.on('progress', (evt: {}) => {
+        assert.strictEqual(evt, progress);
+        done();
+      });
+
+      writable.write('data');
+    });
+
+    it('should emit progress via simple upload', done => {
+      const progress = {};
+
+      makeWritableStreamOverride = (dup: duplexify.Duplexify) => {
+        const uploadStream = new stream.PassThrough();
+        uploadStream.on('progress', evt => dup.emit('progress', evt));
+
+        dup.setWritable(uploadStream);
+        setImmediate(() => {
+          uploadStream.emit('progress', progress);
+        });
+      };
+
+      const writable = file.createWriteStream({resumable: false});
+
+      writable.on('progress', (evt: {}) => {
+        assert.strictEqual(evt, progress);
+        done();
+      });
+
+      writable.write('data');
+    });
+
     it('should start a simple upload if specified', done => {
       const options = {
         metadata: METADATA,
@@ -2824,13 +2871,15 @@ describe('File', () => {
       fakeTimer.restore();
     });
 
+    const fieldsToConditions = (fields: object) =>
+      Object.entries(fields).map(([k, v]) => ({[k]: v}));
+
     it('should create a signed policy', done => {
       CONFIG.fields = {
         'x-goog-meta-foo': 'bar',
       };
 
-      const fields = {
-        ...CONFIG.fields,
+      const requiredFields = {
         key: file.name,
         'x-goog-date': '20200101T000000Z',
         'x-goog-credential': `${CLIENT_EMAIL}/20200101/auto/storage/goog4_request`,
@@ -2838,9 +2887,11 @@ describe('File', () => {
       };
 
       const policy = {
-        conditions: Object.entries(fields).map(([key, value]) => ({
-          [key]: value,
-        })),
+        conditions: [
+          ...fieldsToConditions(CONFIG.fields),
+          {bucket: BUCKET.name},
+          ...fieldsToConditions(requiredFields),
+        ],
         expiration: dateFormat.format(
           new Date(CONFIG.expires),
           'YYYY-MM-DD[T]HH:mm:ss[Z]',
@@ -2853,6 +2904,12 @@ describe('File', () => {
       const EXPECTED_SIGNATURE = Buffer.from(SIGNATURE, 'base64').toString(
         'hex'
       );
+      const EXPECTED_FIELDS = {
+        ...CONFIG.fields,
+        ...requiredFields,
+        'x-goog-signature': EXPECTED_SIGNATURE,
+        policy: EXPECTED_POLICY,
+      };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       file.generateSignedPostPolicyV4(
@@ -2861,11 +2918,7 @@ describe('File', () => {
           assert.ifError(err);
           assert(res.url, `${STORAGE_POST_POLICY_BASE_URL}/${BUCKET.name}`);
 
-          assert.deepStrictEqual(res.fields, {
-            ...fields,
-            'x-goog-signature': EXPECTED_SIGNATURE,
-            policy: EXPECTED_POLICY,
-          });
+          assert.deepStrictEqual(res.fields, EXPECTED_FIELDS);
 
           const signStub = BUCKET.storage.authClient.sign;
           assert.deepStrictEqual(
@@ -2938,6 +2991,30 @@ describe('File', () => {
             'base64'
           ).toString('utf-8');
           assert(decodedPolicy.includes(expectedConditionString));
+          done();
+        }
+      );
+    });
+
+    it('should encode special characters in policy', done => {
+      CONFIG = {
+        fields: {
+          'x-goog-meta-foo': 'bår',
+        },
+        ...CONFIG,
+      };
+
+      file.generateSignedPostPolicyV4(
+        CONFIG,
+        (err: Error, res: SignedPostPolicyV4Output) => {
+          assert.ifError(err);
+
+          assert.strictEqual(res.fields['x-goog-meta-foo'], 'bår');
+          const decodedPolicy = Buffer.from(
+            res.fields.policy,
+            'base64'
+          ).toString('utf-8');
+          assert(decodedPolicy.includes('"x-goog-meta-foo":"b\\u00e5r"'));
           done();
         }
       );
@@ -3754,6 +3831,21 @@ describe('File', () => {
       file.save(DATA, assert.ifError);
     });
 
+    it('should register the progress listener if onUploadProgress is passed', done => {
+      const onUploadProgress = util.noop;
+      file.createWriteStream = () => {
+        const writeStream = new stream.PassThrough();
+        setImmediate(() => {
+          const [listener] = writeStream.listeners('progress');
+          assert.strictEqual(listener, onUploadProgress);
+          done();
+        });
+        return writeStream;
+      };
+
+      file.save(DATA, {onUploadProgress}, assert.ifError);
+    });
+
     it('should write the data', done => {
       file.createWriteStream = () => {
         const writeStream = new stream.PassThrough();
@@ -4046,6 +4138,28 @@ describe('File', () => {
 
         resumableUploadOverride = {
           upload() {
+            return uploadStream;
+          },
+        };
+
+        file.startResumableUpload_(dup);
+      });
+
+      it('should emit progress event', done => {
+        const progress = {};
+        const dup = duplexify();
+        dup.on('progress', evt => {
+          assert.strictEqual(evt, progress);
+          done();
+        });
+
+        resumableUploadOverride = {
+          upload() {
+            const uploadStream = new stream.Transform();
+            setImmediate(() => {
+              uploadStream.emit('progress', progress);
+            });
+
             return uploadStream;
           },
         };
