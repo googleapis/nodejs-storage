@@ -16,7 +16,7 @@
 
 const {Storage} = require('@google-cloud/storage');
 const {assert} = require('chai');
-const {before, describe, it} = require('mocha');
+const {before, beforeEach, after, describe, it} = require('mocha');
 const cp = require('child_process');
 const uuid = require('uuid');
 
@@ -28,11 +28,11 @@ const bucket = storage.bucket(bucketName);
 
 describe('Bucket lifecycle management', () => {
   before(async () => {
-    await bucket.create(); 
+    await bucket.create();
   });
 
   beforeEach(async () => {
-    await bucket.setMetadata({ lifecycle: null });
+    await bucket.setMetadata({lifecycle: null});
   });
 
   after(async () => {
@@ -40,12 +40,19 @@ describe('Bucket lifecycle management', () => {
   });
 
   it('should add a lifecycle delete rule', async () => {
-    const output = execSync(`node enableBucketLifecycleManagement.js ${bucketName}`);
-    assert.match(output, new RegExp(`Lifecycle management is enable for bucket ${bucketName} and the rules are:`));
+    const output = execSync(
+      `node enableBucketLifecycleManagement.js ${bucketName}`
+    );
+    assert.match(
+      output,
+      new RegExp(
+        `Lifecycle management is enable for bucket ${bucketName} and the rules are:`
+      )
+    );
     const [metadata] = await bucket.getMetadata();
     assert.deepStrictEqual(metadata.lifecycle.rule[0], {
       action: {type: 'Delete'},
-      condition: { age: 2 },
+      condition: {age: 2},
     });
   });
 });

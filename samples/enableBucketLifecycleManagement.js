@@ -20,9 +20,7 @@
  * at https://cloud.google.com/storage/docs/lifecycle.
  */
 
-function main(
-  bucketName = 'my-bucket',
-) {
+function main(bucketName = 'my-bucket') {
   // [START storage_enable_bucket_lifecycle_management]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
@@ -36,12 +34,10 @@ function main(
   const storage = new Storage();
 
   async function enableBucketLifecycleManagement() {
-    const [metadata] = await storage.bucket(bucketName).addLifecycleRule(
-      {
-        action: 'delete',
-        condition: { age: 2 },
-      }
-    );
+    const [metadata] = await storage.bucket(bucketName).addLifecycleRule({
+      action: 'delete',
+      condition: {age: 2},
+    });
 
     console.log(
       `Lifecycle management is enable for bucket ${bucketName} and the rules are:`
