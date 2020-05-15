@@ -43,11 +43,9 @@ describe('Bucket lifecycle management', () => {
     const output = execSync(
       `node enableBucketLifecycleManagement.js ${bucketName}`
     );
-    assert.match(
+    assert.include(
       output,
-      new RegExp(
-        `Lifecycle management is enable for bucket ${bucketName} and the rules are:`
-      )
+      `Lifecycle management is enable for bucket ${bucketName} and the rules are:`
     );
     const [metadata] = await bucket.getMetadata();
     assert.deepStrictEqual(metadata.lifecycle.rule[0], {
