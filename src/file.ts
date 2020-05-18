@@ -37,7 +37,7 @@ import * as os from 'os';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pumpify = require('pumpify');
 import * as resumableUpload from 'gcs-resumable-upload';
-import {Duplex, Writable, Readable, Transform} from 'stream';
+import {Duplex, Writable, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as through from 'through2';
 import * as xdgBasedir from 'xdg-basedir';
@@ -280,13 +280,6 @@ class ResumableUploadError extends Error {
  * @const {string}
  * @private
  */
-const STORAGE_UPLOAD_BASE_URL =
-  'https://storage.googleapis.com/upload/storage/v1/b';
-
-/**
- * @const {string}
- * @private
- */
 export const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
 
 /**
@@ -349,7 +342,7 @@ export interface CreateReadStreamOptions {
 }
 
 export interface SaveOptions extends CreateWriteStreamOptions {
-  // tslint:disable-next-line:no-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUploadProgress?: (progressEvent: any) => void;
 }
 
@@ -1514,6 +1507,7 @@ class File extends ServiceObject<File> {
     resumableUpload.createURI(
       {
         authClient: this.storage.authClient,
+        apiEndpoint: this.storage.apiEndpoint,
         bucket: this.bucket.name,
         configPath: options.configPath,
         file: this.name,
@@ -3529,6 +3523,7 @@ class File extends ServiceObject<File> {
 
     const uploadStream = resumableUpload.upload({
       authClient: this.storage.authClient,
+      apiEndpoint: this.storage.apiEndpoint,
       bucket: this.bucket.name,
       configPath: options.configPath,
       file: this.name,
@@ -3580,11 +3575,15 @@ class File extends ServiceObject<File> {
       options
     );
 
+    const apiEndpoint = this.storage.apiEndpoint;
+    const bucketName = this.bucket.name;
+    const uri = `${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
+
     const reqOpts: DecorateRequestOptions = {
       qs: {
         name: this.name,
       },
-      uri: `${STORAGE_UPLOAD_BASE_URL}/${this.bucket.name}/o`,
+      uri: uri,
     };
 
     if (this.generation !== undefined) {
