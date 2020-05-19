@@ -2069,7 +2069,7 @@ describe('Bucket', () => {
       };
 
       FakeServiceObject.prototype.request = ((
-        reqOpts: DecorateRequestOptions,
+        reqOpts: DecorateRequestOptions
       ) => {
         assert.strictEqual(reqOpts.qs.userProject, USER_PROJECT);
         assert.strictEqual(reqOpts.qs, options.qs);
