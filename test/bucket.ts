@@ -281,7 +281,9 @@ describe('Bucket', () => {
       });
 
       const bucket = new Bucket(storageInstance, BUCKET_NAME);
-      assert(bucket instanceof ServiceObject);
+      // Using assert.strictEqual instead of assert to prevent
+      // coercing of types.
+      assert.strictEqual(bucket instanceof ServiceObject, true);
 
       const calledWith = bucket.calledWith_[0];
 
@@ -2067,10 +2069,10 @@ describe('Bucket', () => {
       };
 
       FakeServiceObject.prototype.request = ((
-        reqOpts: DecorateRequestOptions
+        reqOpts: DecorateRequestOptions,
       ) => {
-        assert.strictEqual(reqOpts.qs, options.qs);
         assert.strictEqual(reqOpts.qs.userProject, USER_PROJECT);
+        assert.strictEqual(reqOpts.qs, options.qs);
         done();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any;
