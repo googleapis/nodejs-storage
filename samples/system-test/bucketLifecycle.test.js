@@ -50,7 +50,7 @@ describe('Bucket lifecycle management', () => {
     const [metadata] = await bucket.getMetadata();
     assert.deepStrictEqual(metadata.lifecycle.rule[0], {
       action: {type: 'Delete'},
-      condition: {age: 2},
+      condition: {age: 100},
     });
   });
 });
