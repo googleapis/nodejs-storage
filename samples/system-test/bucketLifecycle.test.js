@@ -45,7 +45,7 @@ describe('Bucket lifecycle management', () => {
     );
     assert.include(
       output,
-      `Lifecycle management is enable for bucket ${bucketName} and the rules are:`
+      `Lifecycle management is enabled for bucket ${bucketName} and the rules are:`
     );
     const [metadata] = await bucket.getMetadata();
     assert.deepStrictEqual(metadata.lifecycle.rule[0], {
