@@ -16,8 +16,7 @@
  * This application demonstrates how to enable Object Lifecycle Management for
  * a bucket.
  *
- * For more information, see the README.md under /storage and the documentation
- * at https://cloud.google.com/storage/docs/lifecycle.
+ * For more information, see the documentation at https://cloud.google.com/storage/docs/lifecycle.
  */
 
 function main(bucketName = 'my-bucket') {
