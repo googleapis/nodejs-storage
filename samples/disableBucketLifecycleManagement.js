@@ -33,13 +33,9 @@ function main(bucketName = 'my-bucket') {
   const storage = new Storage();
 
   async function disableBucketLifecycleManagement() {
-    const [metadata] = await storage.bucket(bucketName).setMetadata({
-        lifecycle: null,
-    });
+    await storage.bucket(bucketName).setMetadata({lifecycle: null});
 
-    console.log(
-      `Lifecycle management is disabled for bucket ${bucketName}.`
-    );
+    console.log(`Lifecycle management is disabled for bucket ${bucketName}.`);
   }
 
   disableBucketLifecycleManagement().catch(console.error);
