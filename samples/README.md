@@ -36,6 +36,7 @@ objects to users via direct download.
   * [Download Encrypted File](#download-encrypted-file)
   * [Download File](#download-file)
   * [Download File Using Requester Pays](#download-file-using-requester-pays)
+  * [Enable Bucket Lifecycle Management](#enable-bucket-lifecycle-management)
   * [Enable Default Event Based Hold](#enable-default-event-based-hold)
   * [Enable Default KMS Key](#enable-default-kms-key)
   * [Enable Requester Pays](#enable-requester-pays)
@@ -405,6 +406,23 @@ __Usage:__
 
 
 `node samples/downloadFileUsingRequesterPays.js`
+
+
+-----
+
+
+
+
+### Enable Bucket Lifecycle Management
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/enableBucketLifecycleManagement.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/enableBucketLifecycleManagement.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/enableBucketLifecycleManagement.js`
 
 
 -----
