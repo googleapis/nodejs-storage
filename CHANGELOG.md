@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [5.0.2](https://www.github.com/googleapis/nodejs-storage/compare/v5.0.1...v5.0.2) (2020-05-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @google-cloud/pubsub to v2 ([#1201](https://www.github.com/googleapis/nodejs-storage/issues/1201)) ([c684b2a](https://www.github.com/googleapis/nodejs-storage/commit/c684b2abe99169a8801d76fda38a4cbfba91f417))
+
 ### [5.0.1](https://www.github.com/googleapis/nodejs-storage/compare/v5.0.0...v5.0.1) (2020-05-20)
 
 
