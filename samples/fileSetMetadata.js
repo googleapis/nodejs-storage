@@ -45,9 +45,11 @@ function main(bucketName = 'my-bucket', filename = 'file.txt') {
 
         // Note or actionable items for user e.g. uniqueId,
         // object description or other useful information.
+        // cacheControl is set here (default value for public buckets is 'public, max-age=3600')
         metadata: {
           description: 'file description...',
           modified: '1900-01-01',
+          cacheControl: 'no-cache, max-age=0'
         },
       });
 
