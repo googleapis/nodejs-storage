@@ -30,6 +30,7 @@ objects to users via direct download.
   * [Delete Bucket](#delete-bucket)
   * [Delete File](#delete-file)
   * [Delete Notification](#delete-notification)
+  * [Disable Bucket Lifecycle Management](#disable-bucket-lifecycle-management)
   * [Disable Default Event Based Hold](#disable-default-event-based-hold)
   * [Disable Requester Pays](#disable-requester-pays)
   * [Disable Uniform Bucket Level Access](#disable-uniform-bucket-level-access)
@@ -304,6 +305,23 @@ __Usage:__
 
 
 `node samples/deleteNotification.js`
+
+
+-----
+
+
+
+
+### Disable Bucket Lifecycle Management
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/disableBucketLifecycleManagement.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/disableBucketLifecycleManagement.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/disableBucketLifecycleManagement.js`
 
 
 -----
