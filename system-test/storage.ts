@@ -91,6 +91,7 @@ interface ErrorCallbackFunction {
   (err: Error | null): void;
 }
 import {PubSub} from '@google-cloud/pubsub';
+import {LifecycleRule} from '../src/bucket';
 
 // When set to true, skips all tests that is not compatible for
 // running inside VPCSC.
@@ -1213,9 +1214,9 @@ describe('storage', () => {
       });
 
       assert(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         bucket.metadata.lifecycle.rule.some(
-          (rule: any) =>
+          (rule: LifecycleRule) =>
+            typeof rule.action === 'object' &&
             rule.action.type === 'Delete' &&
             rule.condition.noncurrentTimeBefore === NONCURRENT_TIME_BEFORE &&
             rule.condition.daysSinceNoncurrentTime === 100
