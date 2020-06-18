@@ -109,7 +109,7 @@ export function unicodeJSONStringify(obj: object) {
  * @param {Date} date Date object.
  * @param {boolean} dateOnly Only return the date part, e.g. 2020-01-01.
  */
-export function toISOString(date: Date, dateOnly: boolean = false) {
+export function toISOString(date: Date, dateOnly = false) {
   const str = date.toISOString();
   return dateOnly ? str.replace(/T.+$/, '') : str;
 }

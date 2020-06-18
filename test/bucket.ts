@@ -433,7 +433,10 @@ describe('Bucket', () => {
         const expectedDateString = date.toISOString();
 
         const rule = metadata.lifecycle.rule[0];
-        assert.strictEqual(rule.condition.noncurrentTimeBefore, expectedDateString);
+        assert.strictEqual(
+          rule.condition.noncurrentTimeBefore,
+          expectedDateString
+        );
 
         done();
       };
