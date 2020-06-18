@@ -420,7 +420,7 @@ describe('Bucket', () => {
       bucket.addLifecycleRule(rule, assert.ifError);
     });
 
-    it.only('should convert Date object to ISO string for full date+time condition', done => {
+    it('should convert Date object to ISO string for full date+time condition', done => {
       const date = new Date();
 
       const rule = {
