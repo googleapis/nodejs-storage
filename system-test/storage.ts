@@ -1149,7 +1149,32 @@ describe('storage', () => {
       );
     });
 
-    it('should work with dates', done => {
+    it('should append a new rule', async () => {
+      const numExistingRules =
+        (bucket.metadata.lifecycle && bucket.metadata.lifecycle.rule.length) ||
+        0;
+
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          age: 30,
+          isLive: true,
+        },
+      });
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          age: 60,
+          isLive: true,
+        },
+      });
+      assert.strictEqual(
+        bucket.metadata.lifecycle.rule.length,
+        numExistingRules + 2
+      );
+    });
+
+    it('should convert a rule with createdBefore to a date in string', done => {
       bucket.addLifecycleRule(
         {
           action: 'delete',
@@ -1176,29 +1201,26 @@ describe('storage', () => {
       );
     });
 
-    it('should append a new rule', async () => {
-      const numExistingRules =
-        (bucket.metadata.lifecycle && bucket.metadata.lifecycle.rule.length) ||
-        0;
+    it('should add a noncurrent time rule', async () => {
+      const NONCURRENT_TIME_BEFORE = "2020-01-01T00:00:00.000Z";
 
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
-          age: 30,
-          isLive: true,
+          noncurrentTimeBefore: new Date(NONCURRENT_TIME_BEFORE),
+          daysSinceNoncurrentTime: 100,
         },
       });
-      await bucket.addLifecycleRule({
-        action: 'delete',
-        condition: {
-          age: 60,
-          isLive: true,
-        },
-      });
-      assert.strictEqual(
-        bucket.metadata.lifecycle.rule.length,
-        numExistingRules + 2
-      );
+
+      assert(
+        bucket.metadata.lifecycle.rule.includes({
+          action: 'Delete',
+          condition: {
+            noncurrentTimeBefore: NONCURRENT_TIME_BEFORE,
+            daysSinceNoncurrentTime: 100,
+          }
+        })
+      )
     });
 
     it('should remove all existing rules', done => {

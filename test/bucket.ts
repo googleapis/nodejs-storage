@@ -399,12 +399,12 @@ describe('Bucket', () => {
       bucket.addLifecycleRule(rule, assert.ifError);
     });
 
-    it('should properly set Dates within conditions', done => {
+    it('should convert Date object to date string for date-only condition', done => {
       const date = new Date();
 
       const rule = {
         condition: {
-          aDateProperty: date,
+          createdBefore: date,
         },
       };
 
@@ -412,7 +412,28 @@ describe('Bucket', () => {
         const expectedDateString = date.toISOString().replace(/T.+$/, '');
 
         const rule = metadata.lifecycle.rule[0];
-        assert.strictEqual(rule.condition.aDateProperty, expectedDateString);
+        assert.strictEqual(rule.condition.createdBefore, expectedDateString);
+
+        done();
+      };
+
+      bucket.addLifecycleRule(rule, assert.ifError);
+    });
+
+    it.only('should convert Date object to ISO string for full date+time condition', done => {
+      const date = new Date();
+
+      const rule = {
+        condition: {
+          noncurrentTimeBefore: date,
+        },
+      };
+
+      bucket.setMetadata = (metadata: Metadata) => {
+        const expectedDateString = date.toISOString();
+
+        const rule = metadata.lifecycle.rule[0];
+        assert.strictEqual(rule.condition.noncurrentTimeBefore, expectedDateString);
 
         done();
       };
