@@ -107,7 +107,7 @@ describe('storage', () => {
   const TESTS_PREFIX = `storage-tests-${shortUUID()}-`;
   const RETENTION_DURATION_SECONDS = 10;
 
-  const storage = new Storage({});
+  const storage = new Storage();
   const bucket = storage.bucket(generateName());
 
   const pubsub = new PubSub({
@@ -1213,13 +1213,13 @@ describe('storage', () => {
       });
 
       assert(
-        bucket.metadata.lifecycle.rule.includes({
-          action: 'Delete',
-          condition: {
-            noncurrentTimeBefore: NONCURRENT_TIME_BEFORE,
-            daysSinceNoncurrentTime: 100,
-          },
-        })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        bucket.metadata.lifecycle.rule.some(
+          (rule: any) =>
+            rule.action.type === 'Delete' &&
+            rule.condition.noncurrentTimeBefore === NONCURRENT_TIME_BEFORE &&
+            rule.condition.daysSinceNoncurrentTime === 100
+        )
       );
     });
 
