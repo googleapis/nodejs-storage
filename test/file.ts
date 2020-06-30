@@ -32,7 +32,6 @@ import * as proxyquire from 'proxyquire';
 import * as sinon from 'sinon';
 import * as stream from 'stream';
 import {Readable} from 'stream';
-import * as through from 'through2';
 import * as tmp from 'tmp';
 import * as zlib from 'zlib';
 import * as gaxios from 'gaxios';
@@ -832,7 +831,7 @@ describe('File', () => {
         body: {},
         callback: Function
       ) => {
-        const rawResponseStream = through();
+        const rawResponseStream = new stream.PassThrough();
         Object.assign(rawResponseStream, {
           toJSON() {
             return {headers: {}};
@@ -930,13 +929,13 @@ describe('File', () => {
 
         beforeEach(() => {
           file.requestStream = () => {
-            const stream = through();
+            const requestStream = new stream.PassThrough();
 
             setImmediate(() => {
-              stream.emit('error', ERROR);
+              requestStream.emit('error', ERROR);
             });
 
-            return stream;
+            return requestStream;
           };
         });
 
@@ -959,7 +958,7 @@ describe('File', () => {
             done();
           });
 
-          return through();
+          return new stream.PassThrough();
         };
 
         file.createReadStream().resume();
@@ -987,11 +986,11 @@ describe('File', () => {
         };
 
         file.requestStream = () => {
-          const stream = through();
+          const rowRequestStream = new stream.PassThrough();
           setImmediate(() => {
-            stream.emit('response', response);
+            rowRequestStream.emit('response', response);
           });
-          return stream;
+          return rowRequestStream;
         };
 
         file.createReadStream().resume();
@@ -1016,8 +1015,8 @@ describe('File', () => {
 
         it('should parse a response stream for a better error', done => {
           const rawResponsePayload = 'error message from body';
-          const rawResponseStream = through();
-          const requestStream = through();
+          const rawResponseStream = new stream.PassThrough();
+          const requestStream = new stream.PassThrough();
 
           handleRespOverride = (
             err: Error,
@@ -1050,12 +1049,12 @@ describe('File', () => {
 
         it('should emit errors from the request stream', done => {
           const error = new Error('Error.');
-          const rawResponseStream = through();
+          const rawResponseStream = new stream.PassThrough();
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (rawResponseStream as any).toJSON = () => {
             return {headers: {}};
           };
-          const requestStream = through();
+          const requestStream = new stream.PassThrough();
 
           handleRespOverride = (
             err: Error,
@@ -1087,12 +1086,12 @@ describe('File', () => {
 
         it('should not handle both error and end events', done => {
           const error = new Error('Error.');
-          const rawResponseStream = through();
+          const rawResponseStream = new stream.PassThrough();
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (rawResponseStream as any).toJSON = () => {
             return {headers: {}};
           };
-          const requestStream = through();
+          const requestStream = new stream.PassThrough();
 
           handleRespOverride = (
             err: Error,
@@ -1143,7 +1142,7 @@ describe('File', () => {
           body: {},
           callback: Function
         ) => {
-          const rawResponseStream = through();
+          const rawResponseStream = new stream.PassThrough();
           Object.assign(rawResponseStream, {
             toJSON() {
               return {
@@ -1185,7 +1184,7 @@ describe('File', () => {
 
       it('should emit errors from the gunzip stream', done => {
         const error = new Error('Error.');
-        const createGunzipStream = through();
+        const createGunzipStream = new stream.PassThrough();
         createGunzipOverride = () => {
           process.nextTick(() => {
             createGunzipStream.emit('error', error);
@@ -1203,7 +1202,7 @@ describe('File', () => {
 
       it('should not handle both error and end events', done => {
         const error = new Error('Error.');
-        const createGunzipStream = through();
+        const createGunzipStream = new stream.PassThrough();
         createGunzipOverride = () => {
           process.nextTick(() => {
             createGunzipStream.emit('error', error);
@@ -1242,7 +1241,9 @@ describe('File', () => {
           callback();
         };
 
-        fakeValidationStream = Object.assign(through(), {test: () => true});
+        fakeValidationStream = Object.assign(new stream.PassThrough(), {
+          test: () => true,
+        });
         hashStreamValidationOverride = () => {
           return fakeValidationStream;
         };
@@ -1256,7 +1257,7 @@ describe('File', () => {
             body: {},
             callback: Function
           ) => {
-            const rawResponseStream = through();
+            const rawResponseStream = new stream.PassThrough();
             Object.assign(rawResponseStream, {
               toJSON() {
                 return {
@@ -4027,7 +4028,7 @@ describe('File', () => {
             assert.strictEqual(opts.userProject, options.userProject);
 
             setImmediate(done);
-            return through();
+            return new stream.PassThrough();
           },
         };
 
@@ -4036,7 +4037,7 @@ describe('File', () => {
 
       it('should emit the response', done => {
         const resp = {};
-        const uploadStream = through();
+        const uploadStream = new stream.PassThrough();
 
         resumableUploadOverride = {
           upload() {
@@ -4057,7 +4058,7 @@ describe('File', () => {
 
       it('should set the metadata from the metadata event', done => {
         const metadata = {};
-        const uploadStream = through();
+        const uploadStream = new stream.PassThrough();
 
         resumableUploadOverride = {
           upload() {
@@ -4096,7 +4097,7 @@ describe('File', () => {
 
       it('should set the writable stream', done => {
         const dup = duplexify();
-        const uploadStream = through();
+        const uploadStream = new stream.PassThrough();
 
         dup.setWritable = (stream: stream.Duplex) => {
           assert.strictEqual(stream, uploadStream);
