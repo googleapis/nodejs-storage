@@ -1093,6 +1093,26 @@ class Bucket extends ServiceObject {
    *     noncurrentTimeBefore: new Date('2020-01-01T00:00:00Z')
    *   }
    * }, function(err, apiResponse) {});
+   *
+   * //-
+   * // Delete object that has a customTime that is at least 100 days.
+   * //-
+   * bucket.addLifecycleRule({
+   *   action: 'delete',
+   *   condition: {
+   *     daysSinceCustomTime: 100
+   *   }
+   * }, function(err, apiResponse) ());
+   *
+   * //-
+   * // Delete object that has a customTime before midnight 2020-01-01.
+   * //-
+   * bucket.addLifecycleRule({
+   *   action: 'delete',
+   *   condition: {
+   *     customTimeBefore: new Date('2020-01-01T00:00:00Z')
+   *   }
+   * }, function(err, apiResponse) {});
    */
   addLifecycleRule(
     rule: LifecycleRule,
