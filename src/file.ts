@@ -2150,7 +2150,7 @@ class File extends ServiceObject<File> {
    * Engine, you usually don't provide a `keyFilename` or `credentials` during
    * instantiation. In those environments, we call the
    * [signBlob
-   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * API](https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/signBlob)
    * to create a signed policy. That API requires either the
    * `https://www.googleapis.com/auth/iam` or
    * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
@@ -2267,7 +2267,7 @@ class File extends ServiceObject<File> {
    * Engine, you usually don't provide a `keyFilename` or `credentials` during
    * instantiation. In those environments, we call the
    * [signBlob
-   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * API](https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/signBlob)
    * to create a signed policy. That API requires either the
    * `https://www.googleapis.com/auth/iam` or
    * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
@@ -2480,7 +2480,7 @@ class File extends ServiceObject<File> {
    * Engine, you usually don't provide a `keyFilename` or `credentials` during
    * instantiation. In those environments, we call the
    * [signBlob
-   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * API](https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/signBlob)
    * to create a signed policy. That API requires either the
    * `https://www.googleapis.com/auth/iam` or
    * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
@@ -2664,7 +2664,7 @@ class File extends ServiceObject<File> {
    * Engine, you usually don't provide a `keyFilename` or `credentials` during
    * instantiation. In those environments, we call the
    * [signBlob
-   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * API](https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/signBlob)
    * to create a signed URL. That API requires either the
    * `https://www.googleapis.com/auth/iam` or
    * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
