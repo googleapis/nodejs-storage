@@ -2133,7 +2133,7 @@ describe('storage', () => {
         });
     });
 
-    it('should thow orignal error message on non JSON response on large metadata', async () => {
+    it('should throw original error message on non JSON response on large metadata', async () => {
       const largeCustomMeta = (size: number) => {
         let str = '';
         for (let i = 0; i < size; i++) {
@@ -2144,19 +2144,18 @@ describe('storage', () => {
 
       const file = bucket.file('large-metadata-error-test');
       // Save file with metadata size more then 2MB.
-      await assert.rejects(
-        async () => {
-          await file.save('test', {
-            resumable: false,
-            metadata: {
-              metadata: {
-                custom: largeCustomMeta(2.1e6),
-              },
-            },
-          });
-        },
+      await file.save(
+        'test',
         {
-          message: 'Cannot parse response as JSON: Metadata part is too large.',
+          resumable: false,
+          metadata: {
+            metadata: {
+              custom: largeCustomMeta(2.1e6),
+            },
+          },
+        },
+        err => {
+          assert(err!.message.includes('Metadata part is too large.'));
         }
       );
     });
