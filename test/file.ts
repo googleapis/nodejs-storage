@@ -30,8 +30,7 @@ import * as fs from 'fs';
 import * as resumableUpload from 'gcs-resumable-upload';
 import * as proxyquire from 'proxyquire';
 import * as sinon from 'sinon';
-import * as stream from 'stream';
-import {Readable, PassThrough} from 'stream';
+import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
 import * as tmp from 'tmp';
 import * as zlib from 'zlib';
 import * as gaxios from 'gaxios';
@@ -753,7 +752,7 @@ describe('File', () => {
     function getFakeRequest(data?: {}) {
       let requestOptions: DecorateRequestOptions | undefined;
 
-      class FakeRequest extends stream.Readable {
+      class FakeRequest extends Readable {
         constructor(_requestOptions?: DecorateRequestOptions) {
           super();
           requestOptions = _requestOptions;
@@ -1228,7 +1227,7 @@ describe('File', () => {
 
     describe('validation', () => {
       const data = 'test';
-      let fakeValidationStream: stream.Stream & {test: Function};
+      let fakeValidationStream: Stream & {test: Function};
 
       beforeEach(() => {
         file.metadata.mediaLink = 'http://uri';
@@ -1649,7 +1648,7 @@ describe('File', () => {
     });
 
     it('should return a stream', () => {
-      assert(file.createWriteStream() instanceof stream);
+      assert(file.createWriteStream() instanceof Stream);
     });
 
     it('should emit errors', done => {
@@ -1952,7 +1951,7 @@ describe('File', () => {
       const writable = file.createWriteStream();
       const resp = {};
 
-      file.startResumableUpload_ = (stream: stream.Duplex) => {
+      file.startResumableUpload_ = (stream: Duplex) => {
         stream.emit('response', resp);
       };
 
@@ -1967,7 +1966,7 @@ describe('File', () => {
     it('should cork data on prefinish', done => {
       const writable = file.createWriteStream({resumable: false});
 
-      file.startSimpleUpload_ = (stream: stream.Duplex) => {
+      file.startSimpleUpload_ = (stream: Duplex) => {
         assert.strictEqual(writable._corked, 0);
         stream.emit('prefinish');
         assert.strictEqual(writable._corked, 1);
@@ -1988,7 +1987,7 @@ describe('File', () => {
       it('should uncork after successful write', done => {
         const writable = file.createWriteStream({validation: 'crc32c'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             assert.strictEqual(writable._corked, 1);
 
@@ -2008,7 +2007,7 @@ describe('File', () => {
       it('should validate with crc32c', done => {
         const writable = file.createWriteStream({validation: 'crc32c'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.crc32c;
             stream.emit('complete');
@@ -2023,7 +2022,7 @@ describe('File', () => {
       it('should emit an error if crc32c validation fails', done => {
         const writable = file.createWriteStream({validation: 'crc32c'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.crc32c;
             stream.emit('complete');
@@ -2046,7 +2045,7 @@ describe('File', () => {
       it('should validate with md5', done => {
         const writable = file.createWriteStream({validation: 'md5'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.md5;
             stream.emit('complete');
@@ -2062,7 +2061,7 @@ describe('File', () => {
       it('should emit an error if md5 validation fails', done => {
         const writable = file.createWriteStream({validation: 'md5'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.md5;
             stream.emit('complete');
@@ -2085,7 +2084,7 @@ describe('File', () => {
       it('should default to md5 validation', done => {
         const writable = file.createWriteStream();
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
@@ -2108,7 +2107,7 @@ describe('File', () => {
       it('should ignore a data mismatch if validation: false', done => {
         const writable = file.createWriteStream({validation: false});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
@@ -2125,7 +2124,7 @@ describe('File', () => {
       it('should delete the file if validation fails', done => {
         const writable = file.createWriteStream();
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
@@ -2143,7 +2142,7 @@ describe('File', () => {
       it('should emit an error if MD5 is requested but absent', done => {
         const writable = file.createWriteStream({validation: 'md5'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = {crc32c: 'not-md5'};
             stream.emit('complete');
@@ -2166,7 +2165,7 @@ describe('File', () => {
       it('should emit a different error if delete fails', done => {
         const writable = file.createWriteStream();
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
@@ -2217,7 +2216,7 @@ describe('File', () => {
     let fileReadStream: Readable;
 
     beforeEach(() => {
-      fileReadStream = new stream.Readable();
+      fileReadStream = new Readable();
       fileReadStream._read = util.noop;
 
       fileReadStream.on('end', () => {
@@ -4084,7 +4083,7 @@ describe('File', () => {
 
         resumableUploadOverride = {
           upload() {
-            const uploadStream = new stream.Transform();
+            const uploadStream = new Transform();
             setImmediate(() => {
               uploadStream.end();
             });
@@ -4099,7 +4098,7 @@ describe('File', () => {
         const dup = duplexify();
         const uploadStream = new PassThrough();
 
-        dup.setWritable = (stream: stream.Duplex) => {
+        dup.setWritable = (stream: Duplex) => {
           assert.strictEqual(stream, uploadStream);
           done();
         };
@@ -4123,7 +4122,7 @@ describe('File', () => {
 
         resumableUploadOverride = {
           upload() {
-            const uploadStream = new stream.Transform();
+            const uploadStream = new Transform();
             setImmediate(() => {
               uploadStream.emit('progress', progress);
             });
