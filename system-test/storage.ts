@@ -85,7 +85,7 @@ import {
   DeleteNotificationCallback,
 } from '../src';
 import * as nock from 'nock';
-import * as stream from 'stream';
+import {Transform} from 'stream';
 
 interface ErrorCallbackFunction {
   (err: Error | null): void;
@@ -2362,7 +2362,7 @@ describe('storage', () => {
             const ws = file.createWriteStream();
             let sizeStreamed = 0;
 
-            const streamTransform = new stream.Transform({
+            const streamTransform = new Transform({
               transform(chunk, enc, next) {
                 sizeStreamed += chunk.length;
 
