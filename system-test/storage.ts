@@ -2143,21 +2143,19 @@ describe('storage', () => {
       };
 
       const file = bucket.file('large-metadata-error-test');
-      // Save file with metadata size more then 2MB.
-      await file.save(
-        'test',
-        {
+      try {
+        // Save file with metadata size more then 2MB.
+        await file.save('test', {
           resumable: false,
           metadata: {
             metadata: {
               custom: largeCustomMeta(2.1e6),
             },
           },
-        },
-        err => {
-          assert(err!.message.includes('Metadata part is too large.'));
-        }
-      );
+        });
+      } catch (err) {
+        assert(err!.message.includes('Metadata part is too large.'));
+      }
     });
 
     it('should read a byte range from a file', done => {
