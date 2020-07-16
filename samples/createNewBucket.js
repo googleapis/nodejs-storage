@@ -36,7 +36,7 @@ function main(bucketName = 'my-bucket') {
 
     const [bucket] = await storage.createBucket(bucketName, {
       location: 'ASIA',
-      storageClass: 'COLDLINE',
+      coldline: true,
     });
 
     console.log(`Bucket ${bucket.name} created.`);
