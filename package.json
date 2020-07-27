@@ -1,7 +1,7 @@
 {
   "name": "@google-cloud/storage",
   "description": "Cloud Storage Client Library for Node.js",
-  "version": "5.1.1",
+  "version": "5.1.2",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
@@ -47,10 +47,12 @@
     "predocs-test": "npm run docs",
     "benchwrapper": "node bin/benchwrapper.js",
     "prelint": "cd samples; npm link ../; npm install",
-    "precompile": "gts clean"
+    "precompile": "gts clean",
+    "api-extractor": "api-extractor run --local",
+    "api-documenter": "api-documenter yaml --input-folder=temp"
   },
   "dependencies": {
-    "@google-cloud/common": "^3.0.0",
+    "@google-cloud/common": "^3.3.0",
     "@google-cloud/paginator": "^3.0.0",
     "@google-cloud/promisify": "^2.0.0",
     "arrify": "^2.0.0",
@@ -60,17 +62,15 @@
     "duplexify": "^3.5.0",
     "extend": "^3.0.2",
     "gaxios": "^3.0.0",
-    "gcs-resumable-upload": "^3.0.0",
+    "gcs-resumable-upload": "^3.1.0",
     "hash-stream-validation": "^0.2.2",
     "mime": "^2.2.0",
     "mime-types": "^2.0.8",
     "onetime": "^5.1.0",
     "p-limit": "^3.0.1",
     "pumpify": "^2.0.0",
-    "readable-stream": "^3.4.0",
     "snakeize": "^0.1.0",
     "stream-events": "^1.0.1",
-    "through2": "^4.0.0",
     "xdg-basedir": "^4.0.0"
   },
   "devDependencies": {
@@ -80,18 +80,17 @@
     "@types/compressible": "^2.0.0",
     "@types/concat-stream": "^1.6.0",
     "@types/configstore": "^4.0.0",
-    "@types/date-and-time": "^0.6.0",
+    "@types/date-and-time": "^0.13.0",
     "@types/extend": "^3.0.0",
     "@types/mime": "^2.0.0",
     "@types/mime-types": "^2.1.0",
-    "@types/mocha": "^7.0.0",
+    "@types/mocha": "^8.0.0",
     "@types/nock": "^10.0.0",
     "@types/node": "^11.13.4",
     "@types/node-fetch": "^2.1.3",
     "@types/proxyquire": "^1.3.28",
     "@types/pumpify": "^1.4.1",
     "@types/sinon": "^9.0.0",
-    "@types/through2": "^2.0.33",
     "@types/tmp": "0.2.0",
     "@types/uuid": "^8.0.0",
     "@types/xdg-basedir": "^2.0.0",
@@ -112,6 +111,8 @@
     "tmp": "^0.2.0",
     "typescript": "^3.8.3",
     "uuid": "^8.0.0",
-    "yargs": "^15.0.0"
+    "yargs": "^15.0.0",
+    "@microsoft/api-documenter": "^7.8.10",
+    "@microsoft/api-extractor": "^7.8.10"
   }
 }

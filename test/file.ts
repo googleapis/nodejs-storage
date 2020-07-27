@@ -30,9 +30,7 @@ import * as fs from 'fs';
 import * as resumableUpload from 'gcs-resumable-upload';
 import * as proxyquire from 'proxyquire';
 import * as sinon from 'sinon';
-import * as stream from 'stream';
-import {Readable} from 'stream';
-import * as through from 'through2';
+import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
 import * as tmp from 'tmp';
 import * as zlib from 'zlib';
 import * as gaxios from 'gaxios';
@@ -215,6 +213,8 @@ describe('File', () => {
     };
 
     BUCKET = new Bucket(STORAGE, 'bucket-name');
+    BUCKET.getRequestInterceptors = () => [];
+
     file = new File(BUCKET, FILE_NAME);
 
     directoryFile = new File(BUCKET, 'directory/file.jpg');
@@ -754,7 +754,7 @@ describe('File', () => {
     function getFakeRequest(data?: {}) {
       let requestOptions: DecorateRequestOptions | undefined;
 
-      class FakeRequest extends stream.Readable {
+      class FakeRequest extends Readable {
         constructor(_requestOptions?: DecorateRequestOptions) {
           super();
           requestOptions = _requestOptions;
@@ -832,7 +832,7 @@ describe('File', () => {
         body: {},
         callback: Function
       ) => {
-        const rawResponseStream = through();
+        const rawResponseStream = new PassThrough();
         Object.assign(rawResponseStream, {
           toJSON() {
             return {headers: {}};
@@ -930,13 +930,13 @@ describe('File', () => {
 
         beforeEach(() => {
           file.requestStream = () => {
-            const stream = through();
+            const requestStream = new PassThrough();
 
             setImmediate(() => {
-              stream.emit('error', ERROR);
+              requestStream.emit('error', ERROR);
             });
 
-            return stream;
+            return requestStream;
           };
         });
 
@@ -959,7 +959,7 @@ describe('File', () => {
             done();
           });
 
-          return through();
+          return new PassThrough();
         };
 
         file.createReadStream().resume();
@@ -987,11 +987,11 @@ describe('File', () => {
         };
 
         file.requestStream = () => {
-          const stream = through();
+          const rowRequestStream = new PassThrough();
           setImmediate(() => {
-            stream.emit('response', response);
+            rowRequestStream.emit('response', response);
           });
-          return stream;
+          return rowRequestStream;
         };
 
         file.createReadStream().resume();
@@ -1016,8 +1016,8 @@ describe('File', () => {
 
         it('should parse a response stream for a better error', done => {
           const rawResponsePayload = 'error message from body';
-          const rawResponseStream = through();
-          const requestStream = through();
+          const rawResponseStream = new PassThrough();
+          const requestStream = new PassThrough();
 
           handleRespOverride = (
             err: Error,
@@ -1050,12 +1050,12 @@ describe('File', () => {
 
         it('should emit errors from the request stream', done => {
           const error = new Error('Error.');
-          const rawResponseStream = through();
+          const rawResponseStream = new PassThrough();
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (rawResponseStream as any).toJSON = () => {
             return {headers: {}};
           };
-          const requestStream = through();
+          const requestStream = new PassThrough();
 
           handleRespOverride = (
             err: Error,
@@ -1087,12 +1087,12 @@ describe('File', () => {
 
         it('should not handle both error and end events', done => {
           const error = new Error('Error.');
-          const rawResponseStream = through();
+          const rawResponseStream = new PassThrough();
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (rawResponseStream as any).toJSON = () => {
             return {headers: {}};
           };
-          const requestStream = through();
+          const requestStream = new PassThrough();
 
           handleRespOverride = (
             err: Error,
@@ -1143,7 +1143,7 @@ describe('File', () => {
           body: {},
           callback: Function
         ) => {
-          const rawResponseStream = through();
+          const rawResponseStream = new PassThrough();
           Object.assign(rawResponseStream, {
             toJSON() {
               return {
@@ -1185,7 +1185,7 @@ describe('File', () => {
 
       it('should emit errors from the gunzip stream', done => {
         const error = new Error('Error.');
-        const createGunzipStream = through();
+        const createGunzipStream = new PassThrough();
         createGunzipOverride = () => {
           process.nextTick(() => {
             createGunzipStream.emit('error', error);
@@ -1203,7 +1203,7 @@ describe('File', () => {
 
       it('should not handle both error and end events', done => {
         const error = new Error('Error.');
-        const createGunzipStream = through();
+        const createGunzipStream = new PassThrough();
         createGunzipOverride = () => {
           process.nextTick(() => {
             createGunzipStream.emit('error', error);
@@ -1229,7 +1229,7 @@ describe('File', () => {
 
     describe('validation', () => {
       const data = 'test';
-      let fakeValidationStream: stream.Stream & {test: Function};
+      let fakeValidationStream: Stream & {test: Function};
 
       beforeEach(() => {
         file.metadata.mediaLink = 'http://uri';
@@ -1242,7 +1242,9 @@ describe('File', () => {
           callback();
         };
 
-        fakeValidationStream = Object.assign(through(), {test: () => true});
+        fakeValidationStream = Object.assign(new PassThrough(), {
+          test: () => true,
+        });
         hashStreamValidationOverride = () => {
           return fakeValidationStream;
         };
@@ -1256,7 +1258,7 @@ describe('File', () => {
             body: {},
             callback: Function
           ) => {
-            const rawResponseStream = through();
+            const rawResponseStream = new PassThrough();
             Object.assign(rawResponseStream, {
               toJSON() {
                 return {
@@ -1648,12 +1650,12 @@ describe('File', () => {
     });
 
     it('should return a stream', () => {
-      assert(file.createWriteStream() instanceof stream);
+      assert(file.createWriteStream() instanceof Stream);
     });
 
     it('should emit errors', done => {
       const error = new Error('Error.');
-      const uploadStream = new stream.PassThrough();
+      const uploadStream = new PassThrough();
 
       file.startResumableUpload_ = (dup: duplexify.Duplexify) => {
         dup.setWritable(uploadStream);
@@ -1675,7 +1677,7 @@ describe('File', () => {
 
       resumableUploadOverride = {
         upload() {
-          const uploadStream = new stream.PassThrough();
+          const uploadStream = new PassThrough();
           setImmediate(() => {
             uploadStream.emit('progress', progress);
           });
@@ -1698,7 +1700,7 @@ describe('File', () => {
       const progress = {};
 
       makeWritableStreamOverride = (dup: duplexify.Duplexify) => {
-        const uploadStream = new stream.PassThrough();
+        const uploadStream = new PassThrough();
         uploadStream.on('progress', evt => dup.emit('progress', evt));
 
         dup.setWritable(uploadStream);
@@ -1951,7 +1953,7 @@ describe('File', () => {
       const writable = file.createWriteStream();
       const resp = {};
 
-      file.startResumableUpload_ = (stream: stream.Duplex) => {
+      file.startResumableUpload_ = (stream: Duplex) => {
         stream.emit('response', resp);
       };
 
@@ -1966,7 +1968,7 @@ describe('File', () => {
     it('should cork data on prefinish', done => {
       const writable = file.createWriteStream({resumable: false});
 
-      file.startSimpleUpload_ = (stream: stream.Duplex) => {
+      file.startSimpleUpload_ = (stream: Duplex) => {
         assert.strictEqual(writable._corked, 0);
         stream.emit('prefinish');
         assert.strictEqual(writable._corked, 1);
@@ -1987,7 +1989,7 @@ describe('File', () => {
       it('should uncork after successful write', done => {
         const writable = file.createWriteStream({validation: 'crc32c'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             assert.strictEqual(writable._corked, 1);
 
@@ -2007,7 +2009,7 @@ describe('File', () => {
       it('should validate with crc32c', done => {
         const writable = file.createWriteStream({validation: 'crc32c'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.crc32c;
             stream.emit('complete');
@@ -2022,7 +2024,7 @@ describe('File', () => {
       it('should emit an error if crc32c validation fails', done => {
         const writable = file.createWriteStream({validation: 'crc32c'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.crc32c;
             stream.emit('complete');
@@ -2045,7 +2047,7 @@ describe('File', () => {
       it('should validate with md5', done => {
         const writable = file.createWriteStream({validation: 'md5'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.md5;
             stream.emit('complete');
@@ -2061,7 +2063,7 @@ describe('File', () => {
       it('should emit an error if md5 validation fails', done => {
         const writable = file.createWriteStream({validation: 'md5'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.md5;
             stream.emit('complete');
@@ -2084,7 +2086,7 @@ describe('File', () => {
       it('should default to md5 validation', done => {
         const writable = file.createWriteStream();
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
@@ -2107,7 +2109,7 @@ describe('File', () => {
       it('should ignore a data mismatch if validation: false', done => {
         const writable = file.createWriteStream({validation: false});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
@@ -2124,7 +2126,7 @@ describe('File', () => {
       it('should delete the file if validation fails', done => {
         const writable = file.createWriteStream();
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
@@ -2142,7 +2144,7 @@ describe('File', () => {
       it('should emit an error if MD5 is requested but absent', done => {
         const writable = file.createWriteStream({validation: 'md5'});
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = {crc32c: 'not-md5'};
             stream.emit('complete');
@@ -2165,7 +2167,7 @@ describe('File', () => {
       it('should emit a different error if delete fails', done => {
         const writable = file.createWriteStream();
 
-        file.startResumableUpload_ = (stream: stream.Duplex) => {
+        file.startResumableUpload_ = (stream: Duplex) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
             stream.emit('complete');
@@ -2216,7 +2218,7 @@ describe('File', () => {
     let fileReadStream: Readable;
 
     beforeEach(() => {
-      fileReadStream = new stream.Readable();
+      fileReadStream = new Readable();
       fileReadStream._read = util.noop;
 
       fileReadStream.on('end', () => {
@@ -3758,7 +3760,7 @@ describe('File', () => {
       file.createWriteStream = (options_: {}) => {
         assert.strictEqual(options_, options);
         setImmediate(done);
-        return new stream.PassThrough();
+        return new PassThrough();
       };
 
       file.save(DATA, options, assert.ifError);
@@ -3768,7 +3770,7 @@ describe('File', () => {
       file.createWriteStream = (options_: {}) => {
         assert.deepStrictEqual(options_, {});
         setImmediate(done);
-        return new stream.PassThrough();
+        return new PassThrough();
       };
 
       file.save(DATA, assert.ifError);
@@ -3776,7 +3778,7 @@ describe('File', () => {
 
     it('should register the error listener', done => {
       file.createWriteStream = () => {
-        const writeStream = new stream.PassThrough();
+        const writeStream = new PassThrough();
         writeStream.on('error', done);
         setImmediate(() => {
           writeStream.emit('error');
@@ -3789,7 +3791,7 @@ describe('File', () => {
 
     it('should register the finish listener', done => {
       file.createWriteStream = () => {
-        const writeStream = new stream.PassThrough();
+        const writeStream = new PassThrough();
         writeStream.once('finish', done);
         return writeStream;
       };
@@ -3800,7 +3802,7 @@ describe('File', () => {
     it('should register the progress listener if onUploadProgress is passed', done => {
       const onUploadProgress = util.noop;
       file.createWriteStream = () => {
-        const writeStream = new stream.PassThrough();
+        const writeStream = new PassThrough();
         setImmediate(() => {
           const [listener] = writeStream.listeners('progress');
           assert.strictEqual(listener, onUploadProgress);
@@ -3814,7 +3816,7 @@ describe('File', () => {
 
     it('should write the data', done => {
       file.createWriteStream = () => {
-        const writeStream = new stream.PassThrough();
+        const writeStream = new PassThrough();
         writeStream.on('data', data => {
           assert.strictEqual(data.toString(), DATA);
           done();
@@ -3987,6 +3989,10 @@ describe('File', () => {
   });
 
   describe('startResumableUpload_', () => {
+    beforeEach(() => {
+      file.getRequestInterceptors = () => [];
+    });
+
     describe('starting', () => {
       it('should start a resumable upload', done => {
         const options = {
@@ -4004,6 +4010,24 @@ describe('File', () => {
         file.encryptionKey = 'key';
         file.kmsKeyName = 'kms-key-name';
 
+        const customRequestInterceptors = [
+          (reqOpts: gaxios.GaxiosOptions) => {
+            reqOpts.headers = Object.assign({}, reqOpts.headers, {
+              a: 'b',
+            });
+            return reqOpts;
+          },
+          (reqOpts: gaxios.GaxiosOptions) => {
+            reqOpts.headers = Object.assign({}, reqOpts.headers, {
+              c: 'd',
+            });
+            return reqOpts;
+          },
+        ];
+        file.getRequestInterceptors = () => {
+          return customRequestInterceptors;
+        };
+
         resumableUploadOverride = {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           upload(opts: any) {
@@ -4015,6 +4039,12 @@ describe('File', () => {
             assert.strictEqual(opts.apiEndpoint, storage.apiEndpoint);
             assert.strictEqual(opts.bucket, bucket.name);
             assert.strictEqual(opts.configPath, options.configPath);
+            assert.deepStrictEqual(opts.customRequestOptions, {
+              headers: {
+                a: 'b',
+                c: 'd',
+              },
+            });
             assert.strictEqual(opts.file, file.name);
             assert.strictEqual(opts.generation, file.generation);
             assert.strictEqual(opts.key, file.encryptionKey);
@@ -4027,7 +4057,7 @@ describe('File', () => {
             assert.strictEqual(opts.userProject, options.userProject);
 
             setImmediate(done);
-            return through();
+            return new PassThrough();
           },
         };
 
@@ -4036,7 +4066,7 @@ describe('File', () => {
 
       it('should emit the response', done => {
         const resp = {};
-        const uploadStream = through();
+        const uploadStream = new PassThrough();
 
         resumableUploadOverride = {
           upload() {
@@ -4057,7 +4087,7 @@ describe('File', () => {
 
       it('should set the metadata from the metadata event', done => {
         const metadata = {};
-        const uploadStream = through();
+        const uploadStream = new PassThrough();
 
         resumableUploadOverride = {
           upload() {
@@ -4083,7 +4113,7 @@ describe('File', () => {
 
         resumableUploadOverride = {
           upload() {
-            const uploadStream = new stream.Transform();
+            const uploadStream = new Transform();
             setImmediate(() => {
               uploadStream.end();
             });
@@ -4096,9 +4126,9 @@ describe('File', () => {
 
       it('should set the writable stream', done => {
         const dup = duplexify();
-        const uploadStream = through();
+        const uploadStream = new PassThrough();
 
-        dup.setWritable = (stream: stream.Duplex) => {
+        dup.setWritable = (stream: Duplex) => {
           assert.strictEqual(stream, uploadStream);
           done();
         };
@@ -4122,7 +4152,7 @@ describe('File', () => {
 
         resumableUploadOverride = {
           upload() {
-            const uploadStream = new stream.Transform();
+            const uploadStream = new Transform();
             setImmediate(() => {
               uploadStream.emit('progress', progress);
             });
