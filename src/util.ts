@@ -103,13 +103,3 @@ export function unicodeJSONStringify(obj: object) {
       '\\u' + ('0000' + char.charCodeAt(0).toString(16)).slice(-4)
   );
 }
-
-/**
- * Converts a Date object into ISO date string.
- * @param {Date} date Date object.
- * @param {boolean} dateOnly Only return the date part, e.g. 2020-01-01.
- */
-export function toISOString(date: Date, dateOnly = false) {
-  const str = date.toISOString();
-  return dateOnly ? str.replace(/T.+$/, '') : str;
-}

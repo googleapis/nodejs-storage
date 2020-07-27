@@ -34,7 +34,6 @@ import * as mime from 'mime-types';
 import * as path from 'path';
 import pLimit = require('p-limit');
 import {promisify} from 'util';
-import {toISOString} from './util';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const snakeize = require('snakeize');
@@ -374,12 +373,6 @@ type MakeAllFilesPublicPrivateResponse = [File[]];
  * @private
  */
 const RESUMABLE_THRESHOLD = 5000000;
-
-/**
- * A list of lifecycle conditions that should be sent as an ISO date
- * string with the date only.
- */
-const DATE_ONLY_LIFECYCLE_CONDITIONS = ['createdBefore'];
 
 /**
  * Create a Bucket object to interact with a Cloud Storage bucket.
@@ -1084,13 +1077,12 @@ class Bucket extends ServiceObject {
    * }, function(err, apiResponse) {});
    *
    * //-
-   * // Delete object that has a noncurrent timestamp before midnight
-   * // 2020-01-01.
+   * // Delete object that has a noncurrent timestamp before 2020-01-01.
    * //-
    * bucket.addLifecycleRule({
    *   action: 'delete',
    *   condition: {
-   *     noncurrentTimeBefore: new Date('2020-01-01T00:00:00Z')
+   *     noncurrentTimeBefore: new Date('2020-01-01')
    *   }
    * }, function(err, apiResponse) {});
    *
@@ -1105,12 +1097,12 @@ class Bucket extends ServiceObject {
    * }, function(err, apiResponse) ());
    *
    * //-
-   * // Delete object that has a customTime before midnight 2020-01-01.
+   * // Delete object that has a customTime before 2020-01-01.
    * //-
    * bucket.addLifecycleRule({
    *   action: 'delete',
    *   condition: {
-   *     customTimeBefore: new Date('2020-01-01T00:00:00Z')
+   *     customTimeBefore: new Date('2020-01-01')
    *   }
    * }, function(err, apiResponse) {});
    */
@@ -1154,12 +1146,12 @@ class Bucket extends ServiceObject {
       }
 
       for (const condition in rule.condition) {
-        const value = rule.condition[condition];
-        if (value instanceof Date) {
-          const dateOnly = DATE_ONLY_LIFECYCLE_CONDITIONS.includes(condition);
-          apiFormattedRule.condition[condition] = toISOString(value, dateOnly);
-        } else {
-          apiFormattedRule.condition[condition] = rule.condition[condition];
+        if (rule.condition[condition] instanceof Date) {
+          apiFormattedRule.condition[condition] = (rule.condition[
+            condition
+          ] as Date)
+            .toISOString()
+            .replace(/T.+$/, '');
         }
       }
 

@@ -1224,6 +1224,28 @@ describe('storage', () => {
       );
     });
 
+    it('should add a custom time rule', async () => {
+      const CUSTOM_TIME_BEFORE = '2020-01-01T00:00:00Z';
+
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          noncurrentTimeBefore: new Date(CUSTOM_TIME_BEFORE),
+          customTimeBefore: 100,
+        },
+      });
+
+      assert(
+        bucket.metadata.lifecycle.rule.some(
+          (rule: LifecycleRule) =>
+            typeof rule.action === 'object' &&
+            rule.action.type === 'Delete' &&
+            rule.condition.noncurrentTimeBefore === CUSTOM_TIME_BEFORE &&
+            rule.condition.customTimeBefore === 100
+        )
+      );
+    });
+
     it('should remove all existing rules', done => {
       bucket.setMetadata(
         {
