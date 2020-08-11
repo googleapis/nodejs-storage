@@ -1,7 +1,7 @@
 {
   "name": "@google-cloud/storage",
   "description": "Cloud Storage Client Library for Node.js",
-  "version": "5.1.2",
+  "version": "5.2.0",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
@@ -58,7 +58,7 @@
     "arrify": "^2.0.0",
     "compressible": "^2.0.12",
     "concat-stream": "^2.0.0",
-    "date-and-time": "^0.13.0",
+    "date-and-time": "^0.14.0",
     "duplexify": "^3.5.0",
     "extend": "^3.0.2",
     "gaxios": "^3.0.0",
