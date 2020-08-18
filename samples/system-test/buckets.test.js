@@ -112,6 +112,20 @@ it("should disable a bucket's uniform bucket-level access", async () => {
   );
 });
 
+it('should add label to bucket', async () => {
+  const output = execSync(`node addBucketLabel.js ${bucketName}`);
+  assert.match(output, new RegExp(`Added label to bucket ${bucketName}.`));
+  const [labels] = await storage.bucket(bucketName).getLabels();
+  assert.isTrue('labelone' in labels);
+});
+
+it('should remove label to bucket', async () => {
+  const output = execSync(`node removeBucketLabel.js ${bucketName} labelone`);
+  assert.match(output, new RegExp(`Removed label from bucket ${bucketName}.`));
+  const [labels] = await storage.bucket(bucketName).getLabels();
+  assert.isFalse('labelone' in labels);
+});
+
 it('should delete a bucket', async () => {
   const output = execSync(`node deleteBucket.js ${bucketName}`);
   assert.match(output, new RegExp(`Bucket ${bucketName} deleted.`));
