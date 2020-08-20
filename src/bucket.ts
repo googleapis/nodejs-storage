@@ -115,6 +115,7 @@ export interface GetFilesOptions {
   delimiter?: string;
   directory?: string;
   endOffset?: string;
+  includeTrailingDelimiter?: boolean;
   prefix?: string;
   maxApiCalls?: number;
   maxResults?: number;
@@ -2055,6 +2056,9 @@ class Bucket extends ServiceObject {
    * @property {string} [endOffset] Filter results to objects whose names are
    * lexicographically before endOffset. If startOffset is also set, the objects
    * listed have names between startOffset (inclusive) and endOffset (exclusive).
+   * @property {string} [includeTrailingDelimiter] If true, objects that end in
+   * exactly one instance of delimiter have their metadata included in items[]
+   * in addition to the relevant part of the object name appearing in prefixes[].
    * @property {string} [prefix] Filter results to objects whose names begin
    *     with this prefix.
    * @property {number} [maxApiCalls] Maximum number of API calls to make.
