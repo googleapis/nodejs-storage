@@ -1230,8 +1230,8 @@ describe('storage', () => {
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
-          noncurrentTimeBefore: new Date(CUSTOM_TIME_BEFORE),
-          customTimeBefore: 100,
+          customTimeBefore: new Date(CUSTOM_TIME_BEFORE),
+          daysSinceCustomTime: 100,
         },
       });
 
@@ -1240,8 +1240,8 @@ describe('storage', () => {
           (rule: LifecycleRule) =>
             typeof rule.action === 'object' &&
             rule.action.type === 'Delete' &&
-            rule.condition.noncurrentTimeBefore === CUSTOM_TIME_BEFORE &&
-            rule.condition.customTimeBefore === 100
+            rule.condition.customTimeBefore === CUSTOM_TIME_BEFORE &&
+            rule.condition.daysSinceCustomTime === 100
         )
       );
     });
