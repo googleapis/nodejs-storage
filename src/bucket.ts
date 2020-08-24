@@ -1152,6 +1152,8 @@ class Bucket extends ServiceObject {
           ] as Date)
             .toISOString()
             .replace(/T.+$/, '');
+        } else {
+          apiFormattedRule.condition[condition] = rule.condition[condition];
         }
       }
 
