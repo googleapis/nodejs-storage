@@ -1203,7 +1203,7 @@ describe('storage', () => {
     });
 
     it('should add a noncurrent time rule', async () => {
-      const NONCURRENT_TIME_BEFORE = '2020-01-01T00:00:00Z';
+      const NONCURRENT_TIME_BEFORE = '2020-01-01';
 
       await bucket.addLifecycleRule({
         action: 'delete',
@@ -1225,7 +1225,7 @@ describe('storage', () => {
     });
 
     it('should add a custom time rule', async () => {
-      const CUSTOM_TIME_BEFORE = '2020-01-01T00:00:00Z';
+      const CUSTOM_TIME_BEFORE = '2020-01-01';
 
       await bucket.addLifecycleRule({
         action: 'delete',
