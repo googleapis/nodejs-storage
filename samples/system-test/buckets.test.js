@@ -113,8 +113,9 @@ it("should disable a bucket's uniform bucket-level access", async () => {
 });
 
 it('should configure a bucket cors', async () => {
-  execSync(`node configureBucketCors.js ${bucketName} 3600 
-  POST http://example.appspot.com content-type`);
+  execSync(
+    `node configureBucketCors.js ${bucketName} 3600 POST http://example.appspot.com content-type`
+  );
   await bucket.getMetadata();
   assert.deepStrictEqual(bucket.metadata.cors[0], {
     origin: ['http://example.appspot.com'],
