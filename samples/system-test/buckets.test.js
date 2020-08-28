@@ -113,7 +113,9 @@ it("should disable a bucket's uniform bucket-level access", async () => {
 });
 
 it('should add label to bucket', async () => {
-  const output = execSync(`node addBucketLabel.js ${bucketName}`);
+  const output = execSync(
+    `node addBucketLabel.js ${bucketName} labelone labelonevalue`
+  );
   assert.match(output, new RegExp(`Added label to bucket ${bucketName}.`));
   const [labels] = await storage.bucket(bucketName).getLabels();
   assert.isTrue('labelone' in labels);

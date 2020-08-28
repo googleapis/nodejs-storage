@@ -17,14 +17,20 @@
 // sample-metadata:
 //   title: Storage Add Bucket Label.
 //   description: Adds bucket label.
-//   usage: node addBucketLabel.js <BUCKET_NAME>
+//   usage: node addBucketLabel.js <BUCKET_NAME> <LABEL_KEY> <LABEL_VALUE>
 
-function main(bucketName = 'my-bucket') {
+function main(
+  bucketName = 'my-bucket',
+  labelKey = 'labelone',
+  labelValue = 'labelonevalue'
+) {
   // [START storage_add_bucket_label]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
+  // const labelKey = 'The key of the label to add, e.g. labelone';
+  // const labelValue = 'The value of the label to add, e.g. labelonevalue';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -32,11 +38,11 @@ function main(bucketName = 'my-bucket') {
   // Creates a client
   const storage = new Storage();
 
-  const labels = {
-    labelone: 'labelonevalue',
+  const label = {
+    [labelKey]: labelValue,
   };
   async function addBucketLabel() {
-    await storage.bucket(bucketName).setLabels(labels);
+    await storage.bucket(bucketName).setLabels(label);
     console.log(`Added label to bucket ${bucketName}.`);
   }
 
