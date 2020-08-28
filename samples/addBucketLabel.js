@@ -38,11 +38,11 @@ function main(
   // Creates a client
   const storage = new Storage();
 
-  const label = {
+  const labels = {
     [labelKey]: labelValue,
   };
   async function addBucketLabel() {
-    await storage.bucket(bucketName).setLabels(label);
+    await storage.bucket(bucketName).setLabels(labels);
     console.log(`Added label to bucket ${bucketName}.`);
   }
 
