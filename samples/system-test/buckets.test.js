@@ -116,9 +116,12 @@ it('should configure a bucket cors', async () => {
   execSync(`node configureBucketCors.js ${bucketName} 3600 
   POST http://example.appspot.com content-type`);
   await bucket.getMetadata();
-  assert.deepStrictEqual(bucket.metadata.cors[0].origin, [
-    'http://example.appspot.com',
-  ]);
+  assert.deepStrictEqual(bucket.metadata.cors[0], {
+    origin: ['http://example.appspot.com'],
+    method: ['POST'],
+    responseHeader: ['content-type'],
+    maxAgeSeconds: 3600,
+  });
 });
 
 it('should remove a bucket cors configuration', async () => {
