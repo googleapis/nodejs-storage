@@ -3582,6 +3582,7 @@ class File extends ServiceObject<File> {
     const uri = `${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
 
     const reqOpts: DecorateRequestOptions = {
+      maxRetries: 3,
       qs: {
         name: this.name,
       },
