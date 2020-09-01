@@ -112,6 +112,18 @@ it("should disable a bucket's uniform bucket-level access", async () => {
   );
 });
 
+it("should change a bucket's default storage class", async () => {
+  const output = execSync(
+    `node changeDefaultStorageClass.js ${bucketName} COLDLINE`
+  );
+  assert.match(
+    output,
+    new RegExp(`Storage class have been set for ${bucketName}.`)
+  );
+  const [metadata] = await bucket.getMetadata();
+  assert.strictEqual(metadata.storageClass, 'COLDLINE');
+});
+
 it('should delete a bucket', async () => {
   const output = execSync(`node deleteBucket.js ${bucketName}`);
   assert.match(output, new RegExp(`Bucket ${bucketName} deleted.`));
