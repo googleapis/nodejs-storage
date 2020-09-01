@@ -37,7 +37,7 @@ function main(bucketName = 'my-bucket', storageClass = 'STANDARD') {
     await storage.bucket(bucketName).setMetadata({
       storageClass,
     });
-    console.log(`Storage class have been set for ${bucketName}.`);
+    console.log(`Storage class have been set to ${bucketName}.`);
   }
 
   changeDefaultStorageClass().catch(console.error);

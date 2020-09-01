@@ -287,6 +287,21 @@ it('should set metadata for a file', () => {
   assert.match(output, new RegExp(`modified: '${userMetadata.modified}'`));
 });
 
+it('should set storage class for a file', async () => {
+  const output = execSync(
+    `node fileChangeStorageClass.js ${bucketName} ${fileName} STANDARD`
+  );
+  assert.match(
+    output,
+    new RegExp(`Storage class have been set to ${fileName}.`)
+  );
+  const [metadata] = await storage
+    .bucket(bucketName)
+    .file(fileName)
+    .getMetadata();
+  assert.strictEqual(metadata.storageClass, 'STANDARD');
+});
+
 it('should delete a file', async () => {
   const output = execSync(`node deleteFile.js ${bucketName} ${copiedFileName}`);
   assert.match(
