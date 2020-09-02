@@ -4188,6 +4188,7 @@ describe('File', () => {
       makeWritableStreamOverride = (stream: {}, options_: any) => {
         assert.strictEqual(options_.metadata, options.metadata);
         assert.deepStrictEqual(options_.request, {
+          maxRetries: 3,
           qs: {
             name: file.name,
             predefinedAcl: options.predefinedAcl,
