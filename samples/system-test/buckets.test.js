@@ -24,11 +24,16 @@ const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
 const storage = new Storage();
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
+const bucketNameWithClassAndLocation = `nodejs-storage-samples-${uuid.v4()}`;
 const defaultKmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA;
 const bucket = storage.bucket(bucketName);
+const bucketWithClassAndLocation = storage.bucket(
+  bucketNameWithClassAndLocation
+);
 
 after(async () => {
-  return bucket.delete().catch(console.error);
+  await bucket.delete().catch(console.error);
+  await bucketWithClassAndLocation.delete().catch(console.error);
 });
 
 it('should create a bucket', async () => {
@@ -122,6 +127,21 @@ it("should change a bucket's default storage class", async () => {
   );
   const [metadata] = await bucket.getMetadata();
   assert.strictEqual(metadata.storageClass, 'COLDLINE');
+});
+
+it('should create bucket with storage class and location', async () => {
+  const output = execSync(
+    `node createBucketWithStorageClassAndLocation.js ${bucketNameWithClassAndLocation} COLDLINE ASIA`
+  );
+  assert.match(
+    output,
+    new RegExp(
+      `Bucket ${bucketNameWithClassAndLocation} created with class COLDLINE in ASIA region.`
+    )
+  );
+  const [metadata] = await bucketWithClassAndLocation.getMetadata();
+  assert.strictEqual(metadata.storageClass, 'COLDLINE');
+  assert.strictEqual(metadata.location, 'ASIA');
 });
 
 it('should delete a bucket', async () => {
