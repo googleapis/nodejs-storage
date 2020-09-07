@@ -38,6 +38,7 @@ const kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US;
 const filePath = path.join(cwd, 'resources', fileName);
 const folderPath = path.join(cwd, 'resources');
 const downloadFilePath = path.join(cwd, 'downloaded.txt');
+const downloadPublicFilePath = path.join(cwd, 'public-downloaded.txt');
 
 const fileContent = fs.readFileSync(filePath, 'utf-8');
 
@@ -46,7 +47,10 @@ before(async () => {
 });
 
 after(async () => {
-  await promisify(fs.unlink)(downloadFilePath).catch(console.error);
+  await Promise.all([
+    promisify(fs.unlink)(downloadFilePath).catch(console.error),
+    promisify(fs.unlink)(downloadPublicFilePath).catch(console.error),
+  ]);
   // Try deleting all files twice, just to make sure
   await bucket.deleteFiles({force: true}).catch(console.error);
   await bucket.deleteFiles({force: true}).catch(console.error);
@@ -181,6 +185,19 @@ it('should make a file public', () => {
     output,
     new RegExp(`gs://${bucketName}/${copiedFileName} is now public.`)
   );
+});
+
+it('should download public file', () => {
+  const output = execSync(
+    `node downloadPublicFile.js ${bucketName} ${copiedFileName} ${downloadPublicFilePath}`
+  );
+  assert.match(
+    output,
+    new RegExp(
+      `Downloaded public file ${copiedFileName} from bucket ${bucketName} to ${downloadPublicFilePath}.`
+    )
+  );
+  fs.statSync(downloadPublicFilePath);
 });
 
 it('should generate a v2 signed URL for a file', async () => {
