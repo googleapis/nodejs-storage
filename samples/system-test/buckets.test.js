@@ -112,6 +112,20 @@ it("should disable a bucket's uniform bucket-level access", async () => {
   );
 });
 
+it('should make bucket publicly readable', async () => {
+  const output = execSync(`node makeBucketPublic.js ${bucketName}`);
+  assert.match(
+    output,
+    new RegExp(`Bucket ${bucketName} is now publicly readable.`)
+  );
+  const [policy] = await bucket.iam.getPolicy();
+  const objectViewerBinding = policy.bindings.filter(binding => {
+    return binding.role === 'roles/storage.objectViewer';
+  })[0];
+
+  assert(objectViewerBinding.members.includes('allUsers'));
+});
+
 it('should delete a bucket', async () => {
   const output = execSync(`node deleteBucket.js ${bucketName}`);
   assert.match(output, new RegExp(`Bucket ${bucketName} deleted.`));
