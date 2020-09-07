@@ -309,14 +309,23 @@ describe('file', () => {
 
   describe('file archived generations', () => {
     const bucketNameWithVersioning = generateName();
+    const fileName = 'file-one.txt';
     const bucketWithVersioning = storage.bucket(bucketNameWithVersioning);
+
     before(async () => {
+      const versionedFile = bucketWithVersioning.file(fileName);
+      const filesToCreate = [
+        {file: versionedFile, contents: '123'},
+        {file: versionedFile, contents: '456'},
+      ];
       await storage.createBucket(bucketNameWithVersioning, {
         versioning: {
           enabled: true,
         },
       });
+      await Promise.all(filesToCreate.map(file => createFileAsync(file)));
     });
+
     after(async () => {
       await bucketWithVersioning.deleteFiles({
         versions: true,
@@ -326,20 +335,48 @@ describe('file', () => {
     });
 
     it('should list file with old versions', async () => {
-      const versionedFile = bucketWithVersioning.file('file-one.txt');
-      const filesToCreate = [
-        {file: versionedFile, contents: '123'},
-        {file: versionedFile, contents: '456'},
-      ];
-
-      await Promise.all(filesToCreate.map(file => createFileAsync(file)));
       const output = execSync(
         `node listFilesWithOldVersions.js ${bucketNameWithVersioning}`
       );
-      assert.notEqual(
-        output.indexOf('file-one.txt'),
-        output.lastIndexOf('file-one.txt')
+      assert.notEqual(output.indexOf(fileName), output.lastIndexOf(fileName));
+    });
+
+    it('should copy file with old versions', async () => {
+      console.log('bucket: ', bucketNameWithVersioning);
+      const destFileName = 'file-two.txt';
+      const [files] = await bucketWithVersioning.getFiles({versions: true});
+      const generation = files[0].metadata.generation;
+      const output = execSync(
+        `node copyOldVersionOfFile.js ${bucketNameWithVersioning} ${fileName} ${bucketNameWithVersioning} ${destFileName} ${generation}`
       );
+      assert.match(
+        output,
+        new RegExp(
+          `Generation ${generation} of file ${fileName} in bucket ${bucketNameWithVersioning} was copied to ${destFileName} in bucket ${bucketNameWithVersioning}.`
+        )
+      );
+      const [exists] = await bucketWithVersioning.file(destFileName).exists();
+      assert.strictEqual(exists, true);
+    });
+
+    it('should delete file with versions', async () => {
+      const [files] = await bucketWithVersioning.getFiles({versions: true});
+      const generation = files[0].metadata.generation;
+      const output = execSync(
+        `node deleteOldVersionOfFile.js ${bucketNameWithVersioning} ${fileName} ${generation}`
+      );
+      assert.match(
+        output,
+        new RegExp(
+          `Generation ${generation} of file ${fileName} was deleted from ${bucketNameWithVersioning}.`
+        )
+      );
+      const [exists] = await bucketWithVersioning
+        .file(fileName, {
+          generation,
+        })
+        .exists();
+      assert.strictEqual(exists, false);
     });
   });
 });
