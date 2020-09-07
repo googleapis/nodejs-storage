@@ -287,6 +287,34 @@ it('should set metadata for a file', () => {
   assert.match(output, new RegExp(`modified: '${userMetadata.modified}'`));
 });
 
+it('should combine multiple files into one new file', async () => {
+  const firstFileName = 'file-one.txt';
+  const secondFileName = 'file-two.txt';
+  const destinationFileName = 'file-one-two.txt';
+
+  const files = [
+    {file: bucket.file(firstFileName), contents: '123'},
+    {file: bucket.file(secondFileName), contents: '456'},
+  ];
+
+  await Promise.all(files.map(file => createFileAsync(file)));
+  const destinationFile = bucket.file(destinationFileName);
+
+  const output = execSync(
+    `node composeFile.js ${bucketName} ${firstFileName} ${secondFileName} ${destinationFileName}`
+  );
+  assert.match(
+    output,
+    new RegExp(
+      `New composite file ${destinationFileName} was created by combining ${firstFileName} and ${secondFileName}.`
+    )
+  );
+
+  const [contents] = await destinationFile.download();
+  assert.strictEqual(contents.toString(), files.map(x => x.contents).join(''));
+  await destinationFile.delete();
+});
+
 it('should delete a file', async () => {
   const output = execSync(`node deleteFile.js ${bucketName} ${copiedFileName}`);
   assert.match(
@@ -296,3 +324,7 @@ it('should delete a file', async () => {
   const [exists] = await bucket.file(copiedFileName).exists();
   assert.strictEqual(exists, false);
 });
+
+function createFileAsync(fileObject) {
+  return fileObject.file.save(fileObject.contents);
+}
