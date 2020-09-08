@@ -64,6 +64,13 @@ it('should set a buckets default KMS key', async () => {
   );
 });
 
+it('should remove a buckets default KMS key', async () => {
+  const output = execSync(`node removeDefaultKMSKey.js ${bucketName}`);
+  assert.include(output, `Default KMS key was removed from ${bucketName}.`);
+  const [metadata] = await bucket.getMetadata();
+  assert.ok(!metadata.encryption.defaultKmsKeyName);
+});
+
 it("should enable a bucket's uniform bucket-level access", async () => {
   const output = execSync(
     `node enableUniformBucketLevelAccess.js ${bucketName}`
