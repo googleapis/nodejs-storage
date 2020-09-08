@@ -41,8 +41,7 @@ function main(
   const storage = new Storage();
 
   async function changeFileCSEKToCMEK() {
-
-      await storage
+    await storage
       .bucket(bucketName)
       .file(fileName, {
         encryptionKey: Buffer.from(encryptionKey, 'base64'),
@@ -54,6 +53,7 @@ function main(
     console.log(
       `file ${fileName} in bucket ${bucketName} is now managed by KMS key ${kmsKeyName} instead of customer-supplied encryption key.`
     );
+  }
 
   changeFileCSEKToCMEK().catch(console.error);
   // [END storage_object_csek_to_cmek]
