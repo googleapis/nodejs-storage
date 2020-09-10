@@ -289,15 +289,15 @@ it('should set metadata for a file', () => {
 
 it('should set storage class for a file', async () => {
   const output = execSync(
-    `node fileChangeStorageClass.js ${bucketName} ${fileName} STANDARD`
+    `node fileChangeStorageClass.js ${bucketName} ${movedFileName} STANDARD`
   );
   assert.match(
     output,
-    new RegExp(`Storage class have been set to ${fileName}.`)
+    new RegExp(`Storage class STANDARD have been set to ${movedFileName}.`)
   );
   const [metadata] = await storage
     .bucket(bucketName)
-    .file(fileName)
+    .file(movedFileName)
     .getMetadata();
   assert.strictEqual(metadata.storageClass, 'STANDARD');
 });

@@ -23,7 +23,7 @@
 
 function main(
   bucketName = 'my-bucket',
-  storageClass = 'COLDLINE',
+  storageClass = 'coldline',
   location = 'ASIA'
 ) {
   // [START storage_create_bucket_class_location]
@@ -31,7 +31,7 @@ function main(
    * TODO(developer): Uncomment the following line before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const storageClass = 'Name of a storage class, e.g. COLDLINE';
+  // const storageClass = 'Name of a storage class, e.g. coldline';
   // const location = 'Name of a location, e.g. ASIA';
 
   // Imports the Google Cloud client library
@@ -46,7 +46,7 @@ function main(
 
     const [bucket] = await storage.createBucket(bucketName, {
       location,
-      storageClass,
+      [storageClass]: true,
     });
 
     console.log(

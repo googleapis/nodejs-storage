@@ -21,7 +21,7 @@
 
 function main(
   bucketName = 'my-bucket',
-  filename = 'file.txt',
+  fileName = 'file.txt',
   storageClass = 'STANDARD'
 ) {
   // [START storage_change_file_storage_class]
@@ -35,14 +35,15 @@ function main(
    * TODO(developer): Uncomment the following lines before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'File to access, e.g. file.txt';
+  // const fileName = 'File to access, e.g. file.txt';
   // const storageClass = 'Name of a storage class, e.g. STANDARD';
   async function fileChangeStorageClass() {
-    await storage.bucket(bucketName).file(filename).setMetadata({
-      storageClass,
-    });
+    await storage
+      .bucket(bucketName)
+      .file(fileName)
+      .setStorageClass(storageClass);
 
-    console.log(`Storage class have been set to ${filename}.`);
+    console.log(`Storage class ${storageClass} have been set to ${fileName}.`);
   }
 
   fileChangeStorageClass().catch(console.error);

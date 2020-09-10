@@ -34,10 +34,11 @@ function main(bucketName = 'my-bucket', storageClass = 'STANDARD') {
   const storage = new Storage();
 
   async function changeDefaultStorageClass() {
-    await storage.bucket(bucketName).setMetadata({
-      storageClass,
-    });
-    console.log(`Storage class have been set to ${bucketName}.`);
+    await storage.bucket(bucketName).setStorageClass(storageClass);
+
+    console.log(
+      `Storage class ${storageClass} have been set to ${bucketName}.`
+    );
   }
 
   changeDefaultStorageClass().catch(console.error);
