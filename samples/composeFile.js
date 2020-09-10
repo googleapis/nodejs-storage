@@ -42,11 +42,9 @@ function main(
 
   async function composeFile() {
     const bucket = storage.bucket(bucketName);
-    const sources = [bucket.file(firstFileName), bucket.file(secondFileName)];
+    const sources = [firstFileName, secondFileName];
 
-    const destination = bucket.file(destinationFileName);
-
-    await bucket.combine(sources, destination);
+    await bucket.combine(sources, destinationFileName);
 
     console.log(
       `New composite file ${destinationFileName} was created by combining ${firstFileName} and ${secondFileName}.`

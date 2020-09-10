@@ -33,15 +33,8 @@ function main(bucketName = 'my-bucket') {
   const storage = new Storage();
 
   async function makeBucketPublic() {
-    const bucket = storage.bucket(bucketName);
-
-    const [policy] = await bucket.iam.getPolicy();
-    policy.bindings.push({
-      role: 'roles/storage.objectViewer',
-      members: ['allUsers'],
-    });
-
-    await bucket.iam.setPolicy(policy);
+    // Makes the bucket public
+    await storage.bucket(bucketName).makePublic();
 
     console.log(`Bucket ${bucketName} is now publicly readable.`);
   }
