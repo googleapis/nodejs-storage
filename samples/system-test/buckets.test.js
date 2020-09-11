@@ -136,11 +136,11 @@ it('should create bucket with storage class and location', async () => {
   assert.match(
     output,
     new RegExp(
-      `Bucket ${bucketNameWithClassAndLocation} created with class COLDLINE in ASIA region.`
+      `Bucket ${bucketNameWithClassAndLocation} created with class coldline in ASIA region.`
     )
   );
   const [metadata] = await bucketWithClassAndLocation.getMetadata();
-  assert.strictEqual(metadata.storageClass, 'coldline');
+  assert.strictEqual(metadata.storageClass, 'COLDLINE');
   assert.strictEqual(metadata.location, 'ASIA');
 });
 
