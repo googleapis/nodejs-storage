@@ -28,7 +28,7 @@ const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 const storage = new Storage();
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
 const bucket = storage.bucket(bucketName);
-const kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA;
+const kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US;
 
 const fileName = 'test.txt';
 const filePath = path.join(__dirname, '../resources', fileName);
@@ -86,16 +86,21 @@ it('should rotate keys', () => {
   output = execSync(
     `node rotateEncryptionKey.js ${bucketName} ${fileName} ${key} ${newKey}`
   );
-  key = newKey;
   assert.include(output, 'Encryption key rotated successfully.');
 });
 
 it('should convert CSEK to KMS key', async () => {
+  const encryptedFileName = 'encrypted-file';
+  await bucket
+    .file(encryptedFileName, {
+      encryptionKey: key,
+    })
+    .save();
   const output = execSync(
-    `node changeFileCSEKToCMEK.js ${bucketName} ${fileName} ${key} ${kmsKeyName}`
+    `node changeFileCSEKToCMEK.js ${bucketName} ${encryptedFileName} ${key} ${kmsKeyName}`
   );
   assert.include(
     output,
-    `file ${fileName} in bucket ${bucketName} is now managed by KMS key ${kmsKeyName} instead of customer-supplied encryption key.`
+    `file ${encryptedFileName} in bucket ${bucketName} is now managed by KMS key ${kmsKeyName} instead of customer-supplied encryption key.`
   );
 });

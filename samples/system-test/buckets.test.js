@@ -68,7 +68,7 @@ it('should remove a buckets default KMS key', async () => {
   const output = execSync(`node removeDefaultKMSKey.js ${bucketName}`);
   assert.include(output, `Default KMS key was removed from ${bucketName}.`);
   const [metadata] = await bucket.getMetadata();
-  assert.ok(!metadata.encryption.defaultKmsKeyName);
+  assert.ok(!metadata.encryption);
 });
 
 it("should enable a bucket's uniform bucket-level access", async () => {
@@ -144,7 +144,7 @@ it('should make bucket publicly readable', async () => {
   );
   const [policy] = await bucket.iam.getPolicy();
   const objectViewerBinding = policy.bindings.filter(binding => {
-    return binding.role === 'roles/storage.objectViewer';
+    return binding.role === 'roles/storage.legacyBucketReader';
   })[0];
 
   assert(objectViewerBinding.members.includes('allUsers'));
