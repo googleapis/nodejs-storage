@@ -22,8 +22,8 @@
 function main(
   bucketName = 'my-bucket',
   fileName = 'test.txt',
-  encryptionKey = 'TIbv/fjexq+VmtXzAlc63J4z5kFmWJ6NdAPQulQBT7g=',
-  kmsKeyName = 'projects/your-project-id/locations/global/keyRings/your-key-ring/cryptoKeys/your-key'
+  encryptionKey = 'my-encription-key',
+  kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US
 ) {
   // [START storage_object_csek_to_cmek]
   /**
@@ -31,8 +31,8 @@ function main(
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
   // const fileName = 'Nome of a file in the bucket, e.g. my-file';
-  // const encryptionKey = 'The Base64 encoded decryption key, e.g. TIbv/fjexq+VmtXzAlc63J4z5kFmWJ6NdAPQulQBT7g=';
-  // const kmsKeyName = 'The name of the KMS key to manage this object with, e.g. projects/your-project-id/locations/global/keyRings/your-key-ring/cryptoKeys/your-key';
+  // const encryptionKey = 'The Base64 encoded decryption key, e.g. my-encription-key';
+  // const kmsKeyName = 'The name of the KMS key to manage this object with, e.g. my-key';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');

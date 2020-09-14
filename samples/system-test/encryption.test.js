@@ -91,7 +91,9 @@ it('should rotate keys', () => {
 
 it('should convert CSEK to KMS key', async () => {
   const encryptedFileName = 'encrypted-file';
-  const file = bucket.file(encryptedFileName, {encryptionKey: key});
+  const file = bucket.file(encryptedFileName, {
+    encryptionKey: Buffer.from(key, 'base64'),
+  });
   await file.save('secret data', {resumable: false});
   const output = execSync(
     `node changeFileCSEKToCMEK.js ${bucketName} ${encryptedFileName} ${key} ${kmsKeyName}`
