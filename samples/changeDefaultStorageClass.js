@@ -19,13 +19,13 @@
 //   description: Change Bucket's Default Storage Class.
 //   usage: node changeDefaultStorageClass.js <BUCKET_NAME> <CLASS_NAME>
 
-function main(bucketName = 'my-bucket', storageClass = 'STANDARD') {
+function main(bucketName = 'my-bucket', storageClass = 'standard') {
   // [START storage_change_default_storage_class]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const storageClass = 'Name of a storage class, e.g. STANDARD';
+  // const storageClass = 'Name of a storage class, e.g. standard';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');

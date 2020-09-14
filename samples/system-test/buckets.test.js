@@ -119,11 +119,11 @@ it("should disable a bucket's uniform bucket-level access", async () => {
 
 it("should change a bucket's default storage class", async () => {
   const output = execSync(
-    `node changeDefaultStorageClass.js ${bucketName} COLDLINE`
+    `node changeDefaultStorageClass.js ${bucketName} coldline`
   );
   assert.match(
     output,
-    new RegExp(`Storage class COLDLINE have been set to ${bucketName}.`)
+    new RegExp(`Storage class coldline have been set to ${bucketName}.`)
   );
   const [metadata] = await bucket.getMetadata();
   assert.strictEqual(metadata.storageClass, 'COLDLINE');

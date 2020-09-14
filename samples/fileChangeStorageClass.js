@@ -22,7 +22,7 @@
 function main(
   bucketName = 'my-bucket',
   fileName = 'file.txt',
-  storageClass = 'STANDARD'
+  storageClass = 'standard'
 ) {
   // [START storage_change_file_storage_class]
   // Imports the Google Cloud client library
@@ -36,7 +36,7 @@ function main(
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
   // const fileName = 'File to access, e.g. file.txt';
-  // const storageClass = 'Name of a storage class, e.g. STANDARD';
+  // const storageClass = 'Name of a storage class, e.g. standard';
   async function fileChangeStorageClass() {
     await storage
       .bucket(bucketName)
