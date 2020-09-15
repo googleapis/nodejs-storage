@@ -38,7 +38,11 @@ function main(bucketName = 'my-bucket', label = 'label') {
     console.log(`Removed label from bucket ${bucketName}.`);
   }
 
-  removeBucketLabel().catch(console.error);
+  removeBucketLabel();
   // [END storage_remove_bucket_label]
 }
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

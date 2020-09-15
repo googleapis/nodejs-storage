@@ -46,7 +46,11 @@ function main(
     console.log(`Added label to bucket ${bucketName}.`);
   }
 
-  addBucketLabel().catch(console.error);
+  addBucketLabel();
   // [END storage_add_bucket_label]
 }
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));
