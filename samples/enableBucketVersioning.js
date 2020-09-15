@@ -42,8 +42,12 @@ function main(bucketName = 'my-bucket') {
     console.log(`Versioning is enabled for bucket ${bucketName}.`);
   }
 
-  enableBucketVersioning().catch(console.error);
+  enableBucketVersioning();
   // [END storage_enable_versioning]
 }
 
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

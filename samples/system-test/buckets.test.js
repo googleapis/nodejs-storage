@@ -114,20 +114,14 @@ it("should disable a bucket's uniform bucket-level access", async () => {
 
 it("should enable a bucket's versioning", async () => {
   const output = execSync(`node enableBucketVersioning.js ${bucketName}`);
-  assert.match(
-    output,
-    new RegExp(`Versioning is enabled for bucket ${bucketName}.`)
-  );
+  assert.include(output, `Versioning is enabled for bucket ${bucketName}.`);
   await bucket.getMetadata();
   assert.strictEqual(bucket.metadata.versioning.enabled, true);
 });
 
 it("should disable a bucket's versioning", async () => {
   const output = execSync(`node disableBucketVersioning.js ${bucketName}`);
-  assert.match(
-    output,
-    new RegExp(`Versioning is disabled for bucket ${bucketName}.`)
-  );
+  assert.include(output, `Versioning is disabled for bucket ${bucketName}.`);
   await bucket.getMetadata();
   assert.strictEqual(bucket.metadata.versioning.enabled, false);
 });
