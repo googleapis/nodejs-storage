@@ -2952,14 +2952,6 @@ describe('storage', () => {
 
     let accessId: string;
 
-    before(async () => {
-      await deleteHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
-    });
-
-    after(async () => {
-      await deleteHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
-    });
-
     it('should create an HMAC key for a service account', async () => {
       const [hmacKey, secret] = await storage.createHmacKey(SERVICE_ACCOUNT, {
         projectId: HMAC_PROJECT,
