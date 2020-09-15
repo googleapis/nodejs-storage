@@ -49,7 +49,11 @@ function main(
     console.log(`Website configuration has been added to ${bucketName}.`);
   }
 
-  addBucketWebsiteConfiguration().catch(console.error);
+  addBucketWebsiteConfiguration();
   // [END storage_define_bucket_website_configuration]
 }
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

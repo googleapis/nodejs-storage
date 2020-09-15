@@ -41,7 +41,11 @@ function main(projectId = 'serviceAccountProjectId') {
     );
   }
 
-  getServiceAccount().catch(console.error);
+  getServiceAccount();
   // [END storage_get_service_account]
 }
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

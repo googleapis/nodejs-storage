@@ -196,11 +196,9 @@ describe('file', () => {
     const output = execSync(
       `node downloadPublicFile.js ${bucketName} ${copiedFileName} ${downloadPublicFilePath}`
     );
-    assert.match(
+    assert.include(
       output,
-      new RegExp(
-        `Downloaded public file ${copiedFileName} from bucket ${bucketName} to ${downloadPublicFilePath}.`
-      )
+      `Downloaded public file ${copiedFileName} from bucket ${bucketName} to ${downloadPublicFilePath}.`
     );
     fs.statSync(downloadPublicFilePath);
   });
@@ -328,11 +326,9 @@ describe('file', () => {
     const output = execSync(
       `node composeFile.js ${bucketName} ${firstFileName} ${secondFileName} ${destinationFileName}`
     );
-    assert.match(
+    assert.include(
       output,
-      new RegExp(
-        `New composite file ${destinationFileName} was created by combining ${firstFileName} and ${secondFileName}.`
-      )
+      `New composite file ${destinationFileName} was created by combining ${firstFileName} and ${secondFileName}.`
     );
 
     const [contents] = await destinationFile.download();

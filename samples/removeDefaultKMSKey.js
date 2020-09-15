@@ -42,8 +42,12 @@ function main(bucketName = 'my-bucket') {
     console.log(`Default KMS key was removed from ${bucketName}.`);
   }
 
-  removeDefaultKMSKey().catch(console.error);
+  removeDefaultKMSKey();
   // [END storage_bucket_delete_default_kms_key]
 }
 
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

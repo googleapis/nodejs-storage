@@ -55,7 +55,11 @@ function main(
     );
   }
 
-  changeFileCSEKToCMEK().catch(console.error);
+  changeFileCSEKToCMEK();
   // [END storage_object_csek_to_cmek]
 }
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

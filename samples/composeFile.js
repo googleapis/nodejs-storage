@@ -51,7 +51,11 @@ function main(
     );
   }
 
-  composeFile().catch(console.error);
+  composeFile();
   // [END storage_compose_file]
 }
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

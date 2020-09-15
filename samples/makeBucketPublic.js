@@ -39,7 +39,11 @@ function main(bucketName = 'my-bucket') {
     console.log(`Bucket ${bucketName} is now publicly readable.`);
   }
 
-  makeBucketPublic().catch(console.error);
+  makeBucketPublic();
   // [END storage_set_bucket_public_iam]
 }
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

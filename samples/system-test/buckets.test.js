@@ -124,9 +124,9 @@ it("should add a bucket's website configuration", async () => {
     `node addBucketWebsiteConfiguration.js ${bucketName} http://example.com http://example.com/404.html`
   );
 
-  assert.match(
+  assert.include(
     output,
-    new RegExp(`Website configuration has been added to ${bucketName}.`)
+    `Website configuration has been added to ${bucketName}.`
   );
 
   const [metadata] = await bucket.getMetadata();
