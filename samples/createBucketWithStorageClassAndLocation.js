@@ -54,8 +54,12 @@ function main(
     );
   }
 
-  createBucketWithStorageClassAndLocation().catch(console.error);
+  createBucketWithStorageClassAndLocation();
   // [END storage_create_bucket_class_location]
 }
 
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

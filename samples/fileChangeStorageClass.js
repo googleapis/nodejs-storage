@@ -46,8 +46,12 @@ function main(
     console.log(`Storage class ${storageClass} have been set to ${fileName}.`);
   }
 
-  fileChangeStorageClass().catch(console.error);
+  fileChangeStorageClass();
   // [END storage_change_file_storage_class]
 }
 
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

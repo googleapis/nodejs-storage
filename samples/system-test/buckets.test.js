@@ -121,9 +121,9 @@ it("should change a bucket's default storage class", async () => {
   const output = execSync(
     `node changeDefaultStorageClass.js ${bucketName} coldline`
   );
-  assert.match(
+  assert.include(
     output,
-    new RegExp(`Storage class coldline have been set to ${bucketName}.`)
+    `Storage class coldline have been set to ${bucketName}.`
   );
   const [metadata] = await bucket.getMetadata();
   assert.strictEqual(metadata.storageClass, 'COLDLINE');
@@ -133,11 +133,9 @@ it('should create bucket with storage class and location', async () => {
   const output = execSync(
     `node createBucketWithStorageClassAndLocation.js ${bucketNameWithClassAndLocation} coldline ASIA`
   );
-  assert.match(
+  assert.include(
     output,
-    new RegExp(
-      `Bucket ${bucketNameWithClassAndLocation} created with class coldline in ASIA region.`
-    )
+    `Bucket ${bucketNameWithClassAndLocation} created with class coldline in ASIA region.`
   );
   const [metadata] = await bucketWithClassAndLocation.getMetadata();
   assert.strictEqual(metadata.storageClass, 'COLDLINE');

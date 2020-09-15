@@ -299,9 +299,9 @@ describe('file', () => {
     const output = execSync(
       `node fileChangeStorageClass.js ${bucketName} ${movedFileName} standard`
     );
-    assert.match(
+    assert.include(
       output,
-      new RegExp(`Storage class standard have been set to ${movedFileName}.`)
+      `Storage class standard have been set to ${movedFileName}.`
     );
     const [metadata] = await storage
       .bucket(bucketName)
