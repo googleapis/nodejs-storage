@@ -127,9 +127,9 @@ it('should configure a bucket cors', async () => {
 
 it('should remove a bucket cors configuration', async () => {
   const output = execSync(`node removeBucketCors.js ${bucketName}`);
-  assert.match(
+  assert.include(
     output,
-    new RegExp(`Removed CORS configuration from bucket ${bucketName}`)
+    `Removed CORS configuration from bucket ${bucketName}`
   );
   await bucket.getMetadata();
   assert.ok(!bucket.metadata.cors);
