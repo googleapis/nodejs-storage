@@ -12,21 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * This application demonstrates how to use Bucket Lock operations on buckets
- * and objects using the Google Cloud Storage API.
- *
- * For more information read the documentation
- * at https://cloud.google.com/storage/docs/bucket-lock
- */
+'use strict';
 
-function main(bucketName = 'my-bucket', fileName = 'test.txt') {
-  // [START storage_set_temporary_hold]
+// sample-metadata:
+//   title: List Files with Old Versions.
+//   description: List Files with Old Versions.
+//   usage: node listFilesWithOldVersions.js <BUCKET_NAME>
+
+function main(bucketName = 'my-bucket') {
+  // [START storage_list_file_archived_generations]
   /**
-   * TODO(developer): Uncomment the following lines before running the sample.
+   * TODO(developer): Uncomment the following line before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'File to access, e.g. file.txt';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -34,14 +32,18 @@ function main(bucketName = 'my-bucket', fileName = 'test.txt') {
   // Creates a client
   const storage = new Storage();
 
-  async function setTemporarydHold() {
-    await storage.bucket(bucketName).file(fileName).setMetadata({
-      temporaryHold: true,
+  async function listFilesWithOldVersions() {
+    const [files] = await storage.bucket(bucketName).getFiles({
+      versions: true,
     });
-    console.log(`Temporary hold was set for ${fileName}.`);
+
+    console.log('Files:');
+    files.forEach(file => {
+      console.log(file.name, file.generation);
+    });
   }
 
-  setTemporarydHold().catch(console.error);
-  // [END storage_set_temporary_hold]
+  listFilesWithOldVersions().catch(console.error);
+  // [END storage_list_file_archived_generations]
 }
 main(...process.argv.slice(2));

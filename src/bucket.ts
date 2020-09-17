@@ -114,10 +114,13 @@ export interface GetFilesOptions {
   autoPaginate?: boolean;
   delimiter?: string;
   directory?: string;
+  endOffset?: string;
+  includeTrailingDelimiter?: boolean;
   prefix?: string;
   maxApiCalls?: number;
   maxResults?: number;
   pageToken?: string;
+  startOffset?: string;
   userProject?: string;
   versions?: boolean;
 }
@@ -1063,6 +1066,46 @@ class Bucket extends ServiceObject {
    *       'COLDLINE'
    *     ],
    *     createdBefore: new Date('2016')
+   *   }
+   * }, function(err, apiResponse) {});
+   *
+   * //-
+   * // Delete object that has a noncurrent timestamp that is at least 100 days.
+   * //-
+   * bucket.addLifecycleRule({
+   *   action: 'delete',
+   *   condition: {
+   *     daysSinceNoncurrentTime: 100
+   *   }
+   * }, function(err, apiResponse) {});
+   *
+   * //-
+   * // Delete object that has a noncurrent timestamp before 2020-01-01.
+   * //-
+   * bucket.addLifecycleRule({
+   *   action: 'delete',
+   *   condition: {
+   *     noncurrentTimeBefore: new Date('2020-01-01')
+   *   }
+   * }, function(err, apiResponse) {});
+   *
+   * //-
+   * // Delete object that has a customTime that is at least 100 days.
+   * //-
+   * bucket.addLifecycleRule({
+   *   action: 'delete',
+   *   condition: {
+   *     daysSinceCustomTime: 100
+   *   }
+   * }, function(err, apiResponse) ());
+   *
+   * //-
+   * // Delete object that has a customTime before 2020-01-01.
+   * //-
+   * bucket.addLifecycleRule({
+   *   action: 'delete',
+   *   condition: {
+   *     customTimeBefore: new Date('2020-01-01')
    *   }
    * }, function(err, apiResponse) {});
    */
@@ -2050,6 +2093,12 @@ class Bucket extends ServiceObject {
    *     Duplicate prefixes are omitted.
    * @property {string} [directory] Filter results based on a directory name, or
    *     more technically, a "prefix".
+   * @property {string} [endOffset] Filter results to objects whose names are
+   * lexicographically before endOffset. If startOffset is also set, the objects
+   * listed have names between startOffset (inclusive) and endOffset (exclusive).
+   * @property {boolean} [includeTrailingDelimiter] If true, objects that end in
+   * exactly one instance of delimiter have their metadata included in items[]
+   * in addition to the relevant part of the object name appearing in prefixes[].
    * @property {string} [prefix] Filter results to objects whose names begin
    *     with this prefix.
    * @property {number} [maxApiCalls] Maximum number of API calls to make.
@@ -2057,6 +2106,9 @@ class Bucket extends ServiceObject {
    *     return.
    * @property {string} [pageToken] A previously-returned page token
    *     representing part of the larger set of results to view.
+   * @property {string} [startOffset] Filter results to objects whose names are
+   * lexicographically equal to or after startOffset. If endOffset is also set,
+   * the objects listed have names between startOffset (inclusive) and endOffset (exclusive).
    * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
    * @property {boolean} [versions] If true, returns File objects scoped to
@@ -2435,7 +2487,7 @@ class Bucket extends ServiceObject {
    * Engine, you usually don't provide a `keyFilename` or `credentials` during
    * instantiation. In those environments, we call the
    * [signBlob
-   * API](https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob#authorization-scopes)
+   * API](https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/signBlob)
    * to create a signed URL. That API requires either the
    * `https://www.googleapis.com/auth/iam` or
    * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are

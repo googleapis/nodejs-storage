@@ -24,12 +24,15 @@ objects to users via direct download.
   * [Add Bucket Owner Acl](#add-bucket-owner-acl)
   * [Add File Owner Acl](#add-file-owner-acl)
   * [Storage Get Bucket Metadata.](#storage-get-bucket-metadata.)
+  * [Storage Configure Bucket Cors.](#storage-configure-bucket-cors.)
   * [Copy File](#copy-file)
+  * [Copy Old Version Of File.](#copy-old-version-of-file.)
   * [Create New Bucket](#create-new-bucket)
   * [Create Notification](#create-notification)
   * [Delete Bucket](#delete-bucket)
   * [Delete File](#delete-file)
   * [Delete Notification](#delete-notification)
+  * [Delete Old Version Of File.](#delete-old-version-of-file.)
   * [Disable Bucket Lifecycle Management](#disable-bucket-lifecycle-management)
   * [Disable Default Event Based Hold](#disable-default-event-based-hold)
   * [Disable Requester Pays](#disable-requester-pays)
@@ -63,6 +66,7 @@ objects to users via direct download.
   * [List Buckets](#list-buckets)
   * [List Files](#list-files)
   * [List Files By Prefix](#list-files-by-prefix)
+  * [List Files with Old Versions.](#list-files-with-old-versions.)
   * [List Notifications](#list-notifications)
   * [Lock Retention Policy](#lock-retention-policy)
   * [Make Public](#make-public)
@@ -76,6 +80,7 @@ objects to users via direct download.
   * [Release Event Based Hold](#release-event-based-hold)
   * [Release Temporary Hold](#release-temporary-hold)
   * [Remove Bucket Conditional Binding](#remove-bucket-conditional-binding)
+  * [Storage Remove Bucket Cors Configuration.](#storage-remove-bucket-cors-configuration.)
   * [Remove Bucket Default Owner](#remove-bucket-default-owner)
   * [Remove Bucket Iam Member](#remove-bucket-iam-member)
   * [Remove Bucket Owner Acl](#remove-bucket-owner-acl)
@@ -84,7 +89,7 @@ objects to users via direct download.
   * [Rotate Encryption Key](#rotate-encryption-key)
   * [Set Event Based Hold](#set-event-based-hold)
   * [Set Retention Policy](#set-retention-policy)
-  * [Set Temporaryd Hold](#set-temporaryd-hold)
+  * [Set Temporary Hold](#set-temporary-hold)
   * [Upload a directory to a bucket.](#upload-a-directory-to-a-bucket.)
   * [Upload Encrypted File](#upload-encrypted-file)
   * [Upload File](#upload-file)
@@ -210,6 +215,25 @@ __Usage:__
 
 
 
+### Storage Configure Bucket Cors.
+
+Configures bucket cors.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/configureBucketCors.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/configureBucketCors.js,samples/README.md)
+
+__Usage:__
+
+
+`node configureBucketCors.js <BUCKET_NAME> <MAX_AGE_SECONDS> <METHOD> <ORIGIN> <RESPONSE_HEADER>`
+
+
+-----
+
+
+
+
 ### Copy File
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/copyFile.js).
@@ -220,6 +244,25 @@ __Usage:__
 
 
 `node samples/copyFile.js`
+
+
+-----
+
+
+
+
+### Copy Old Version Of File.
+
+Copy Old Version Of File.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/copyOldVersionOfFile.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/copyOldVersionOfFile.js,samples/README.md)
+
+__Usage:__
+
+
+`node copyOldVersionOfFile.js <SRC_BUCKET_NAME> <SRC_FILE_NAME> <DEST_BUCKET_NAME> <DEST_FILE_NAME> <GENERATION>`
 
 
 -----
@@ -305,6 +348,25 @@ __Usage:__
 
 
 `node samples/deleteNotification.js`
+
+
+-----
+
+
+
+
+### Delete Old Version Of File.
+
+Delete Old Version Of File.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/deleteOldVersionOfFile.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/deleteOldVersionOfFile.js,samples/README.md)
+
+__Usage:__
+
+
+`node deleteOldVersionOfFile.js <BUCKET_NAME> <FILE_NAME> <GENERATION>`
 
 
 -----
@@ -887,6 +949,25 @@ __Usage:__
 
 
 
+### List Files with Old Versions.
+
+List Files with Old Versions.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/listFilesWithOldVersions.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/listFilesWithOldVersions.js,samples/README.md)
+
+__Usage:__
+
+
+`node listFilesWithOldVersions.js <BUCKET_NAME>`
+
+
+-----
+
+
+
+
 ### List Notifications
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/listNotifications.js).
@@ -1108,6 +1189,25 @@ __Usage:__
 
 
 
+### Storage Remove Bucket Cors Configuration.
+
+Removes bucket cors configuration.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/removeBucketCors.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/removeBucketCors.js,samples/README.md)
+
+__Usage:__
+
+
+`node removeBucketCors.js <BUCKET_NAME>`
+
+
+-----
+
+
+
+
 ### Remove Bucket Default Owner
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/removeBucketDefaultOwner.js).
@@ -1244,16 +1344,16 @@ __Usage:__
 
 
 
-### Set Temporaryd Hold
+### Set Temporary Hold
 
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/setTemporarydHold.js).
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/setTemporaryHold.js).
 
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setTemporarydHold.js,samples/README.md)
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setTemporaryHold.js,samples/README.md)
 
 __Usage:__
 
 
-`node samples/setTemporarydHold.js`
+`node samples/setTemporaryHold.js`
 
 
 -----
