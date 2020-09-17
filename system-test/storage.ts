@@ -3014,17 +3014,25 @@ describe('storage', () => {
     });
 
     describe('second service account', () => {
-      before(async function () {
+      let accessId: string;
+
+      before(function () {
         if (!SECOND_SERVICE_ACCOUNT) {
           this.skip();
         }
-        await deleteHmacKeys(SECOND_SERVICE_ACCOUNT!, HMAC_PROJECT!);
+      });
+
+      after(async () => {
+        const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
+        await hmacKey.setMetadata({state: 'INACTIVE'});
+        await hmacKey.delete();
       });
 
       it('should create key for a second service account', async () => {
-        await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {
+        const [hmacKey] = await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {
           projectId: HMAC_PROJECT,
         });
+        accessId = hmacKey.id!;
       });
 
       it('get HMAC keys for both service accounts', async () => {
@@ -3780,27 +3788,6 @@ describe('storage', () => {
         throw error;
       }
     }
-  }
-
-  async function deleteHmacKeys(
-    serviceAccountEmail: string,
-    projectId: string
-  ) {
-    const [hmacKeys] = await storage.getHmacKeys({
-      serviceAccountEmail,
-      projectId,
-    });
-    const limit = pLimit(10);
-    await Promise.all(
-      hmacKeys.map(hmacKey =>
-        limit(async () => {
-          if (hmacKey.metadata!.state === 'ACTIVE') {
-            await hmacKey.setMetadata({state: 'INACTIVE'});
-          }
-          await hmacKey.delete();
-        })
-      )
-    );
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
