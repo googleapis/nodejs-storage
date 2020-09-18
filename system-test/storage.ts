@@ -2950,7 +2950,12 @@ describe('storage', () => {
     const SECOND_SERVICE_ACCOUNT =
       process.env.HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT;
 
+    const acessIdsToCleanup: string[] = [];
     let accessId: string;
+
+    after(async () => {
+      await deleteHmacKeys(acessIdsToCleanup);
+    });
 
     it('should create an HMAC key for a service account', async () => {
       const [hmacKey, secret] = await storage.createHmacKey(SERVICE_ACCOUNT, {
@@ -2959,6 +2964,8 @@ describe('storage', () => {
       // We should always get a 40 character secret, which is valid base64.
       assert.strictEqual(secret.length, 40);
       accessId = hmacKey.id!;
+      // key should be deleted incase delete test fails.
+      acessIdsToCleanup.push(accessId);
       const metadata = hmacKey.metadata!;
       assert.strictEqual(metadata.accessId, accessId);
       assert.strictEqual(metadata.state, 'ACTIVE');
@@ -3014,25 +3021,17 @@ describe('storage', () => {
     });
 
     describe('second service account', () => {
-      let accessId: string;
-
       before(function () {
         if (!SECOND_SERVICE_ACCOUNT) {
           this.skip();
         }
       });
 
-      after(async () => {
-        const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
-        await hmacKey.setMetadata({state: 'INACTIVE'});
-        await hmacKey.delete();
-      });
-
       it('should create key for a second service account', async () => {
         const [hmacKey] = await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {
           projectId: HMAC_PROJECT,
         });
-        accessId = hmacKey.id!;
+        acessIdsToCleanup.push(hmacKey.id!);
       });
 
       it('get HMAC keys for both service accounts', async () => {
@@ -3788,6 +3787,22 @@ describe('storage', () => {
         throw error;
       }
     }
+  }
+
+  async function deleteHmacKeys(accessIds: string[]) {
+    const limit = pLimit(10);
+    await Promise.all(
+      accessIds.map(accessId =>
+        limit(async () => {
+          const hmacKey = storage.hmacKey(accessId);
+          const [metadata] = await hmacKey.getMetadata();
+          if (metadata!.state !== 'DELETED') {
+            await hmacKey.setMetadata({state: 'INACTIVE'});
+            await hmacKey.delete();
+          }
+        })
+      )
+    );
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
