@@ -2950,11 +2950,10 @@ describe('storage', () => {
     const SECOND_SERVICE_ACCOUNT =
       process.env.HMAC_KEY_TEST_SECOND_SERVICE_ACCOUNT;
 
-    const acessIdsToCleanup: string[] = [];
     let accessId: string;
 
-    after(async () => {
-      await deleteHmacKeys(acessIdsToCleanup);
+    before(async () => {
+      await deleteStaleHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
     });
 
     it('should create an HMAC key for a service account', async () => {
@@ -2964,8 +2963,6 @@ describe('storage', () => {
       // We should always get a 40 character secret, which is valid base64.
       assert.strictEqual(secret.length, 40);
       accessId = hmacKey.id!;
-      // key should be deleted incase delete test fails.
-      acessIdsToCleanup.push(accessId);
       const metadata = hmacKey.metadata!;
       assert.strictEqual(metadata.accessId, accessId);
       assert.strictEqual(metadata.state, 'ACTIVE');
@@ -3028,10 +3025,9 @@ describe('storage', () => {
       });
 
       it('should create key for a second service account', async () => {
-        const [hmacKey] = await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {
+        await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {
           projectId: HMAC_PROJECT,
         });
-        acessIdsToCleanup.push(hmacKey.id!);
       });
 
       it('get HMAC keys for both service accounts', async () => {
@@ -3789,19 +3785,30 @@ describe('storage', () => {
     }
   }
 
-  async function deleteHmacKeys(accessIds: string[]) {
+  async function deleteStaleHmacKeys(
+    serviceAccountEmail: string,
+    projectId: string
+  ) {
+    const old = new Date();
+    old.setHours(old.getHours() - 1);
+    const [hmacKeys] = await storage.getHmacKeys({
+      serviceAccountEmail,
+      projectId,
+    });
+
     const limit = pLimit(10);
     await Promise.all(
-      accessIds.map(accessId =>
-        limit(async () => {
-          const hmacKey = storage.hmacKey(accessId);
-          const [metadata] = await hmacKey.getMetadata();
-          if (metadata!.state !== 'DELETED') {
+      hmacKeys
+        .filter(hmacKey => {
+          const hmacKeyCreated = new Date(hmacKey.metadata!.timeCreated!);
+          return hmacKey.metadata!.state !== 'DELETED' && hmacKeyCreated < old;
+        })
+        .map(hmacKey =>
+          limit(async () => {
             await hmacKey.setMetadata({state: 'INACTIVE'});
             await hmacKey.delete();
-          }
-        })
-      )
+          })
+        )
     );
   }
 
