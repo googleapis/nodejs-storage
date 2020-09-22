@@ -522,6 +522,8 @@ export class Storage extends Service {
    *     Force the use of the User Project metadata field to assign operational
    *     costs when an operation is made on a Bucket and its objects.
    * @property {boolean} [standard=true] Specify the storage class as Standard.
+   * @property {string} [storageClass] The new storage class. (`standard`,
+   *     `nearline`, `coldline`, or `archive`).
    * @property {Versioning} [versioning=undefined] Specify the versioning status.
    * @property {string} [userProject] The ID of the project which will be billed
    *     for the request.
