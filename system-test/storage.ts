@@ -2954,6 +2954,9 @@ describe('storage', () => {
 
     before(async () => {
       await deleteStaleHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
+      if (SECOND_SERVICE_ACCOUNT) {
+        await deleteStaleHmacKeys(SECOND_SERVICE_ACCOUNT, HMAC_PROJECT!);
+      }
     });
 
     it('should create an HMAC key for a service account', async () => {
