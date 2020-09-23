@@ -3021,16 +3021,25 @@ describe('storage', () => {
     });
 
     describe('second service account', () => {
+      let accessId: string;
+
       before(function () {
         if (!SECOND_SERVICE_ACCOUNT) {
           this.skip();
         }
       });
 
+      after(async () => {
+        const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
+        await hmacKey.setMetadata({state: 'INACTIVE'});
+        await hmacKey.delete();
+      });
+
       it('should create key for a second service account', async () => {
-        await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {
+        const [hmacKey] = await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {
           projectId: HMAC_PROJECT,
         });
+        accessId = hmacKey.id!;
       });
 
       it('get HMAC keys for both service accounts', async () => {
