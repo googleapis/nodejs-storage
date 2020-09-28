@@ -1992,10 +1992,8 @@ class File extends ServiceObject<File> {
     } else {
       getStream
         .buffer(fileStream)
-        .then(
-          callback.bind(null, null) as (contents: Buffer) => void,
-          callback as (error: RequestError) => void
-        );
+        .then(contents => callback?.(null, contents))
+        .catch(callback as (error: RequestError) => void);
     }
   }
 
