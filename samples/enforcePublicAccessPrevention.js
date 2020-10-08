@@ -37,7 +37,7 @@ function main(bucketName = 'my-bucket') {
   async function enforcePublicAccessPrevention() {
     await storage.bucket(bucketName).setMetadata({
       iamConfiguration: {
-        publicAccessPrevention: "enforced"
+        publicAccessPrevention: 'enforced',
       },
     });
 

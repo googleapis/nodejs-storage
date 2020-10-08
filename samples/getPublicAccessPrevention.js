@@ -21,36 +21,35 @@
  */
 
 function main(bucketName = 'my-bucket') {
-    // [START storage_get_public_access_prevention]
-    /**
-     * TODO(developer): Uncomment the following lines before running the sample.
-     */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  
-    // Imports the Google Cloud client library
-    const {Storage} = require('@google-cloud/storage');
-  
-    // Creates a client
-    const storage = new Storage();
-  
-    async function getPublicAccessPrevention() {
-      // Gets Bucket Metadata and checks if public access prevention is enforced.
-      const [metadata] = await storage.bucket(bucketName).getMetadata();
-  
-      if (metadata.iamConfiguration && metadata.iamConfiguration.publicAccessPrevention === 'enforced') {
-            console.log(`Public access prevention is enforced for ${bucketName}.`);
-      } else {
-        console.log(
-          `Public access prevention is unspecified for ${bucketName}.`
-        );
-      }
+  // [START storage_get_public_access_prevention]
+  /**
+   * TODO(developer): Uncomment the following lines before running the sample.
+   */
+  // const bucketName = 'Name of a bucket, e.g. my-bucket';
+
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function getPublicAccessPrevention() {
+    // Gets Bucket Metadata and checks if public access prevention is enforced.
+    const [metadata] = await storage.bucket(bucketName).getMetadata();
+
+    if (
+      metadata.iamConfiguration &&
+      metadata.iamConfiguration.publicAccessPrevention === 'enforced'
+    ) {
+      console.log(`Public access prevention is enforced for ${bucketName}.`);
+    } else {
+      console.log(`Public access prevention is unspecified for ${bucketName}.`);
     }
-  
-    getPublicAccessPrevention().catch(console.error);
-  
-    // [END storage_get_public_access_prevention]
   }
-  
-  main(...process.argv.slice(2));
-  
-  
+
+  getPublicAccessPrevention().catch(console.error);
+
+  // [END storage_get_public_access_prevention]
+}
+
+main(...process.argv.slice(2));

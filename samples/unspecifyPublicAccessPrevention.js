@@ -35,7 +35,7 @@ function main(bucketName = 'my-bucket') {
     // Sets public access prevention to 'unspecified' for the bucket
     await storage.bucket(bucketName).setMetadata({
       iamConfiguration: {
-        publicAccessPrevention: "unspecified"
+        publicAccessPrevention: 'unspecified',
       },
     });
 
@@ -46,4 +46,3 @@ function main(bucketName = 'my-bucket') {
   // [END storage_unspecifiy_public_access_prevention]
 }
 main(...process.argv.slice(2));
-

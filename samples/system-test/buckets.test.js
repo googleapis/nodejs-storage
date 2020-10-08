@@ -142,7 +142,7 @@ it('should delete a bucket', async () => {
   assert.strictEqual(exists, false);
 });
 
-it("should enforce public access prevention on a bucket", async () => {
+it('should enforce public access prevention on a bucket', async () => {
   const output = execSync(
     `node enforcePublicAccessPrevention.js ${bucketName}`
   );
@@ -154,7 +154,7 @@ it("should enforce public access prevention on a bucket", async () => {
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
     metadata[0].iamConfiguration.publicAccessPrevention,
-    "enforced"
+    'enforced'
   );
 });
 
@@ -182,6 +182,6 @@ it("should unspecify a bucket's public access prevention", async () => {
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
     metadata[0].iamConfiguration.publicAccessPrevention,
-    "unspecified"
+    'unspecified'
   );
 });
