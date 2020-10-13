@@ -815,22 +815,35 @@ describe('storage', () => {
     before(createBucket);
 
     it('inserts a bucket with enforced public access prevention', async () => {
-      await setPublicAccessPrevention(bucket, PUBLIC_ACCESS_PREVENTION_ENFORCED);
+      await setPublicAccessPrevention(
+        bucket,
+        PUBLIC_ACCESS_PREVENTION_ENFORCED
+      );
       const [bucketMetadata] = await bucket.getMetadata();
-      const publicAccessPreventionStatus = bucketMetadata.iamConfiguration
-        .publicAccessPrevention;
+      const publicAccessPreventionStatus =
+        bucketMetadata.iamConfiguration.publicAccessPrevention;
       await assert.rejects(
         () => bucket.makePublic(),
         validateConfiguringPublicAccessWhenPAPEnforcedError
       );
-      return assert.strictEqual(publicAccessPreventionStatus, PUBLIC_ACCESS_PREVENTION_ENFORCED);
+      return assert.strictEqual(
+        publicAccessPreventionStatus,
+        PUBLIC_ACCESS_PREVENTION_ENFORCED
+      );
     });
 
     it('inserts a bucket with unspecified public access prevention', async () => {
-      await setPublicAccessPrevention(bucket, PUBLIC_ACCESS_PREVENTION_UNSPECIFIED);
+      await setPublicAccessPrevention(
+        bucket,
+        PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
+      );
       const [bucketMetadata] = await bucket.getMetadata();
-      const publicAccessPreventionStatus = bucketMetadata.iamConfiguration.publicAccessPrevention;
-      return assert.strictEqual(publicAccessPreventionStatus, PUBLIC_ACCESS_PREVENTION_UNSPECIFIED);
+      const publicAccessPreventionStatus =
+        bucketMetadata.iamConfiguration.publicAccessPrevention;
+      return assert.strictEqual(
+        publicAccessPreventionStatus,
+        PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
+      );
     });
 
     it('should fail to insert a bucket with unexpected public access prevention value', async () => {
@@ -842,8 +855,8 @@ describe('storage', () => {
 
     it('UBLA modification on PAP bucket does not affect pap setting', async () => {
       const [bucketMetadata] = await bucket.getMetadata();
-      const publicAccessPreventionStatus = bucketMetadata.iamConfiguration
-        .publicAccessPrevention;
+      const publicAccessPreventionStatus =
+        bucketMetadata.iamConfiguration.publicAccessPrevention;
       await bucket.setMetadata({
         iamConfiguration: {
           uniformBucketLevelAccess: {
@@ -867,9 +880,12 @@ describe('storage', () => {
         },
       });
       const [bucketMetadata] = await bucket.getMetadata();
-      const ublaSetting = bucketMetadata.iamConfiguration
-        .uniformBucketLevelAccess.enabled;
-      await setPublicAccessPrevention(bucket, PUBLIC_ACCESS_PREVENTION_UNSPECIFIED);
+      const ublaSetting =
+        bucketMetadata.iamConfiguration.uniformBucketLevelAccess.enabled;
+      await setPublicAccessPrevention(
+        bucket,
+        PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
+      );
       const [updatedBucketMetadata] = await bucket.getMetadata();
       return assert.strictEqual(
         updatedBucketMetadata.iamConfiguration.uniformBucketLevelAccess.enabled,
