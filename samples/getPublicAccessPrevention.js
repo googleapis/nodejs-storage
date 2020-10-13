@@ -42,7 +42,10 @@ function main(bucketName = 'my-bucket') {
       metadata.iamConfiguration.publicAccessPrevention === 'enforced'
     ) {
       console.log(`Public access prevention is enforced for ${bucketName}.`);
-    } else {
+    } else if (
+      metadata.iamConfiguration &&
+      metadata.iamConfiguration.publicAccessPrevention === 'unspecified'
+    ) {
       console.log(`Public access prevention is unspecified for ${bucketName}.`);
     }
   }

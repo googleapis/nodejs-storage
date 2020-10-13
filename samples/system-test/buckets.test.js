@@ -27,6 +27,9 @@ const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
 const defaultKmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA;
 const bucket = storage.bucket(bucketName);
 
+const PUBLIC_ACCESS_PREVENTION_UNSPECIFIED = 'unspecified';
+const PUBLIC_ACCESS_PREVENTION_ENFORCED = 'enforced';
+
 after(async () => {
   return bucket.delete().catch(console.error);
 });
@@ -154,11 +157,17 @@ it('should enforce public access prevention on a bucket', async () => {
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
     metadata[0].iamConfiguration.publicAccessPrevention,
-    'enforced'
+    PUBLIC_ACCESS_PREVENTION_ENFORCED
   );
 });
 
 it("should get a bucket's public access prevention metadata", async () => {
+  await storage.bucket(bucketName).setMetadata({
+    iamConfiguration: {
+      publicAccessPrevention: PUBLIC_ACCESS_PREVENTION_ENFORCED,
+    },
+  });
+
   const output = execSync(`node getPublicAccessPrevention.js ${bucketName}`);
 
   assert.match(
@@ -182,6 +191,6 @@ it("should unspecify a bucket's public access prevention", async () => {
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
     metadata[0].iamConfiguration.publicAccessPrevention,
-    'unspecified'
+    PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
   );
 });
