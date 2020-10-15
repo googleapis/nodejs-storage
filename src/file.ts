@@ -3266,7 +3266,18 @@ class File extends ServiceObject<File> {
    *     billed for the request.
    */
   /**
-   * Rename this file
+   * Rename this file.
+   *
+   * **Warning**:
+   * There is currently no atomic `rename` method in the Cloud Storage API,
+   * so this method is an alias of {@link File#move}, which in turn is a
+   * composition of {@link File#copy} (to the new location) and
+   * {@link File#delete} (from the old location). While
+   * unlikely, it is possible that an error returned to your callback could be
+   * triggered from either one of these API calls failing, which could leave a
+   * duplicate file lingering. The error message will indicate what operation
+   * has failed.
+   *
    * @param {string|File} destinationFile Destination file.
    * @param {RenameCallback} [callback] Callback function.
    * @returns {Promise<RenameResponse>}
