@@ -890,10 +890,8 @@ describe('storage', () => {
       const name = 'Caf\u00e9';
       const expectedContents = 'Normalization Form C';
 
-      //Data setup
-      await bucket.file(name).save(expectedContents);
-
       const file = bucket.file(name);
+      await file.save(expectedContents);
 
       return file
         .get()
@@ -913,10 +911,8 @@ describe('storage', () => {
       const name = 'Cafe\u0301';
       const expectedContents = 'Normalization Form D';
 
-      //Data setup
-      await bucket.file(name).save(expectedContents);
-
       const file = bucket.file(name);
+      await file.save(expectedContents);
 
       return file
         .get()
