@@ -880,17 +880,20 @@ describe('storage', () => {
 
     let bucket: Bucket;
 
-    before(() => {
-      bucket = storage.bucket('storage-library-test-bucket');
+    before(async () => {
+      [bucket] = await storage.createBucket(generateName());
     });
 
     // Normalization form C: a single character for e-acute;
     // URL should end with Cafe%CC%81
-    it('should not perform normalization form C', () => {
+    it('should not perform normalization form C', async () => {
       const name = 'Caf\u00e9';
-      const file = bucket.file(name);
-
       const expectedContents = 'Normalization Form C';
+
+      //Data setup
+      await bucket.file(name).save(expectedContents);
+
+      const file = bucket.file(name);
 
       return file
         .get()
@@ -906,11 +909,14 @@ describe('storage', () => {
 
     // Normalization form D: an ASCII character followed by U+0301 combining
     // character; URL should end with Caf%C3%A9
-    it('should not perform normalization form D', () => {
+    it('should not perform normalization form D', async () => {
       const name = 'Cafe\u0301';
-      const file = bucket.file(name);
-
       const expectedContents = 'Normalization Form D';
+
+      //Data setup
+      await bucket.file(name).save(expectedContents);
+
+      const file = bucket.file(name);
 
       return file
         .get()
