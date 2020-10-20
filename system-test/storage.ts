@@ -880,17 +880,18 @@ describe('storage', () => {
 
     let bucket: Bucket;
 
-    before(() => {
-      bucket = storage.bucket('storage-library-test-bucket');
+    before(async () => {
+      [bucket] = await storage.createBucket(generateName());
     });
 
     // Normalization form C: a single character for e-acute;
     // URL should end with Cafe%CC%81
-    it('should not perform normalization form C', () => {
+    it('should not perform normalization form C', async () => {
       const name = 'Caf\u00e9';
-      const file = bucket.file(name);
-
       const expectedContents = 'Normalization Form C';
+
+      const file = bucket.file(name);
+      await file.save(expectedContents);
 
       return file
         .get()
@@ -906,11 +907,12 @@ describe('storage', () => {
 
     // Normalization form D: an ASCII character followed by U+0301 combining
     // character; URL should end with Caf%C3%A9
-    it('should not perform normalization form D', () => {
+    it('should not perform normalization form D', async () => {
       const name = 'Cafe\u0301';
-      const file = bucket.file(name);
-
       const expectedContents = 'Normalization Form D';
+
+      const file = bucket.file(name);
+      await file.save(expectedContents);
 
       return file
         .get()
@@ -1568,14 +1570,14 @@ describe('storage', () => {
     // These tests will verify that the requesterPays functionality works from
     // the perspective of another project.
     (HAS_2ND_PROJECT ? describe : describe.skip)('existing bucket', () => {
-      const storageNonWhitelist = new Storage({
+      const storageNonAllowList = new Storage({
         projectId: process.env.GCN_STORAGE_2ND_PROJECT_ID,
         keyFilename: process.env.GCN_STORAGE_2ND_PROJECT_KEY,
       });
       // the source bucket, which will have requesterPays enabled.
       let bucket: Bucket;
       // the bucket object from the requesting user.
-      let bucketNonWhitelist: Bucket;
+      let bucketNonAllowList: Bucket;
 
       function isRequesterPaysEnabled(
         callback: (err: Error | null, isEnabled?: boolean) => void
@@ -1593,7 +1595,7 @@ describe('storage', () => {
 
       before(done => {
         bucket = storage.bucket(generateName());
-        bucketNonWhitelist = storageNonWhitelist.bucket(bucket.name);
+        bucketNonAllowList = storageNonAllowList.bucket(bucket.name);
         bucket.create(done);
       });
 
@@ -1649,7 +1651,7 @@ describe('storage', () => {
         // - file.save()
         //   -> file.createWriteStream()
         before(() => {
-          file = bucketNonWhitelist.file(generateName());
+          file = bucketNonAllowList.file(generateName());
 
           return bucket
             .enableRequesterPays()
@@ -1689,12 +1691,12 @@ describe('storage', () => {
         //       -> bucket.getFiles({ userProject: ... })
         //          -> file.delete({ userProject: ... })
         after(done => {
-          deleteBucket(bucketNonWhitelist, USER_PROJECT_OPTIONS, done);
+          deleteBucket(bucketNonAllowList, USER_PROJECT_OPTIONS, done);
         });
 
         beforeEach(() => {
-          bucketNonWhitelist = storageNonWhitelist.bucket(bucket.name);
-          file = bucketNonWhitelist.file(file.name);
+          bucketNonAllowList = storageNonAllowList.bucket(bucket.name);
+          file = bucketNonAllowList.file(file.name);
         });
 
         function doubleTest(testFunction: Function) {
@@ -1711,15 +1713,15 @@ describe('storage', () => {
 
         it('bucket#combine', async () => {
           const files = [
-            {file: bucketNonWhitelist.file('file-one.txt'), contents: '123'},
-            {file: bucketNonWhitelist.file('file-two.txt'), contents: '456'},
+            {file: bucketNonAllowList.file('file-one.txt'), contents: '123'},
+            {file: bucketNonAllowList.file('file-two.txt'), contents: '456'},
           ];
 
           await Promise.all(files.map(file => createFileAsync(file)));
 
           const sourceFiles = files.map(x => x.file);
-          const destinationFile = bucketNonWhitelist.file('file-one-n-two.txt');
-          await bucketNonWhitelist.combine(
+          const destinationFile = bucketNonAllowList.file('file-one-n-two.txt');
+          await bucketNonAllowList.combine(
             sourceFiles,
             destinationFile,
             USER_PROJECT_OPTIONS
@@ -1741,7 +1743,7 @@ describe('storage', () => {
               options: CreateNotificationOptions,
               done: ErrorCallbackFunction
             ) => {
-              bucketNonWhitelist.createNotification(
+              bucketNonAllowList.createNotification(
                 topicName,
                 options,
                 (err, _notification) => {
@@ -1757,7 +1759,7 @@ describe('storage', () => {
           'bucket#exists',
           doubleTest(
             (options: BucketExistsOptions, done: BucketExistsCallback) => {
-              bucketNonWhitelist.exists(options, done);
+              bucketNonAllowList.exists(options, done);
             }
           )
         );
@@ -1766,7 +1768,7 @@ describe('storage', () => {
           'bucket#get',
           doubleTest((options: GetBucketOptions, done: GetBucketCallback) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            bucketNonWhitelist.get(options, done as any);
+            bucketNonAllowList.get(options, done as any);
           })
         );
 
@@ -1774,7 +1776,7 @@ describe('storage', () => {
           'bucket#getMetadata',
           doubleTest((options: GetBucketOptions, done: GetBucketCallback) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            bucketNonWhitelist.get(options, done as any);
+            bucketNonAllowList.get(options, done as any);
           })
         );
 
@@ -1785,7 +1787,7 @@ describe('storage', () => {
               options: GetNotificationOptions,
               done: GetNotificationsCallback
             ) => {
-              bucketNonWhitelist.getNotifications(options, done);
+              bucketNonAllowList.getNotifications(options, done);
             }
           )
         );
@@ -1797,7 +1799,7 @@ describe('storage', () => {
               options: MakeBucketPrivateOptions,
               done: MakeBucketPrivateCallback
             ) => {
-              bucketNonWhitelist.makePrivate(options, done);
+              bucketNonAllowList.makePrivate(options, done);
             }
           )
         );
@@ -1809,7 +1811,7 @@ describe('storage', () => {
               options: SetBucketMetadataOptions,
               done: SetBucketMetadataCallback
             ) => {
-              bucketNonWhitelist.setMetadata(
+              bucketNonAllowList.setMetadata(
                 {newMetadata: true},
                 options,
                 done
@@ -1825,7 +1827,7 @@ describe('storage', () => {
               options: SetStorageClassOptions,
               done: SetStorageClassCallback
             ) => {
-              bucketNonWhitelist.setStorageClass(
+              bucketNonAllowList.setStorageClass(
                 'multi-regional',
                 options,
                 done
@@ -1837,7 +1839,7 @@ describe('storage', () => {
         it(
           'bucket#upload',
           doubleTest((options: UploadOptions, done: UploadCallback) => {
-            bucketNonWhitelist.upload(FILES.big.path, options, done);
+            bucketNonAllowList.upload(FILES.big.path, options, done);
           })
         );
 
@@ -1934,7 +1936,7 @@ describe('storage', () => {
         it(
           'file#move',
           doubleTest((options: GetFileOptions, done: SaveCallback) => {
-            const newFile = bucketNonWhitelist.file(generateName());
+            const newFile = bucketNonAllowList.file(generateName());
 
             file.move(newFile, options, err => {
               if (err) {
@@ -1983,7 +1985,7 @@ describe('storage', () => {
               options
             );
 
-            bucketNonWhitelist.acl.add(options, done);
+            bucketNonAllowList.acl.add(options, done);
           })
         );
 
@@ -1998,7 +2000,7 @@ describe('storage', () => {
               options
             );
 
-            bucketNonWhitelist.acl.update(options, done);
+            bucketNonAllowList.acl.update(options, done);
           })
         );
 
@@ -2012,7 +2014,7 @@ describe('storage', () => {
               options
             );
 
-            bucketNonWhitelist.acl.get(options, done);
+            bucketNonAllowList.acl.get(options, done);
           })
         );
 
@@ -2026,14 +2028,14 @@ describe('storage', () => {
               options
             );
 
-            bucketNonWhitelist.acl.delete(options, done);
+            bucketNonAllowList.acl.delete(options, done);
           })
         );
 
         it(
           'iam#getPolicy',
           doubleTest((options: GetPolicyOptions, done: GetPolicyCallback) => {
-            bucketNonWhitelist.iam.getPolicy(options, done);
+            bucketNonAllowList.iam.getPolicy(options, done);
           })
         );
 
@@ -2051,7 +2053,7 @@ describe('storage', () => {
                 members: ['allUsers'],
               });
 
-              bucketNonWhitelist.iam.setPolicy(policy!, options, done);
+              bucketNonAllowList.iam.setPolicy(policy!, options, done);
             });
           })
         );
@@ -2064,7 +2066,7 @@ describe('storage', () => {
               done: TestIamPermissionsCallback
             ) => {
               const tests = ['storage.buckets.delete'];
-              bucketNonWhitelist.iam.testPermissions(tests, options, done);
+              bucketNonAllowList.iam.testPermissions(tests, options, done);
             }
           )
         );
@@ -2953,11 +2955,10 @@ describe('storage', () => {
     let accessId: string;
 
     before(async () => {
-      await deleteHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
-    });
-
-    after(async () => {
-      await deleteHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
+      await deleteStaleHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
+      if (SECOND_SERVICE_ACCOUNT) {
+        await deleteStaleHmacKeys(SECOND_SERVICE_ACCOUNT, HMAC_PROJECT!);
+      }
     });
 
     it('should create an HMAC key for a service account', async () => {
@@ -3022,17 +3023,25 @@ describe('storage', () => {
     });
 
     describe('second service account', () => {
-      before(async function () {
+      let accessId: string;
+
+      before(function () {
         if (!SECOND_SERVICE_ACCOUNT) {
           this.skip();
         }
-        await deleteHmacKeys(SECOND_SERVICE_ACCOUNT!, HMAC_PROJECT!);
+      });
+
+      after(async () => {
+        const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
+        await hmacKey.setMetadata({state: 'INACTIVE'});
+        await hmacKey.delete();
       });
 
       it('should create key for a second service account', async () => {
-        await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {
+        const [hmacKey] = await storage.createHmacKey(SECOND_SERVICE_ACCOUNT!, {
           projectId: HMAC_PROJECT,
         });
+        accessId = hmacKey.id!;
       });
 
       it('get HMAC keys for both service accounts', async () => {
@@ -3790,24 +3799,30 @@ describe('storage', () => {
     }
   }
 
-  async function deleteHmacKeys(
+  async function deleteStaleHmacKeys(
     serviceAccountEmail: string,
     projectId: string
   ) {
+    const old = new Date();
+    old.setHours(old.getHours() - 1);
     const [hmacKeys] = await storage.getHmacKeys({
       serviceAccountEmail,
       projectId,
     });
+
     const limit = pLimit(10);
     await Promise.all(
-      hmacKeys.map(hmacKey =>
-        limit(async () => {
-          if (hmacKey.metadata!.state === 'ACTIVE') {
-            await hmacKey.setMetadata({state: 'INACTIVE'});
-          }
-          await hmacKey.delete();
+      hmacKeys
+        .filter(hmacKey => {
+          const hmacKeyCreated = new Date(hmacKey.metadata!.timeCreated!);
+          return hmacKey.metadata!.state !== 'DELETED' && hmacKeyCreated < old;
         })
-      )
+        .map(hmacKey =>
+          limit(async () => {
+            await hmacKey.setMetadata({state: 'INACTIVE'});
+            await hmacKey.delete();
+          })
+        )
     );
   }
 
