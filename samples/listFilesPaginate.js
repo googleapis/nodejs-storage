@@ -26,26 +26,23 @@ function main(bucketName = 'my-bucket') {
   const storage = new Storage();
 
   async function listFilesPaginated() {
-    // Lists files in the bucket
-    let getFilesOptions = {
-      maxResults: 1,
-    };
-    let allFiles = [];
-    do {
-      const [files, nextQuery] = await storage
-        .bucket(bucketName)
-        .getFiles(getFilesOptions);
-      allFiles = [...allFiles, ...files];
-
-      // nextQuery will have all the custom properties originally set in
-      // getFilesOptions together with nextPageToken already set.
-      getFilesOptions = nextQuery;
-    } while (getFilesOptions);
-
+    const bucket = storage.bucket(bucketName);
+    const [files, queryForPage2] = await bucket.getFiles({autoPaginate: false});
     console.log('Files:');
-    allFiles.forEach(file => {
+    files.forEach(file => {
       console.log(file.name);
     });
+    // Get the next set of results
+    if (queryForPage2 !== null) {
+      const [files, queryForPage3] = await bucket.getFiles(queryForPage2);
+      files.forEach(file => {
+        console.log(file.name);
+      });
+
+      if (queryForPage3 !== null) {
+        // Request the nest set of results...
+      }
+    }
   }
 
   listFilesPaginated().catch(console.error);
