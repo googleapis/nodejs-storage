@@ -32,16 +32,15 @@ function main(bucketName = 'my-bucket') {
     files.forEach(file => {
       console.log(file.name);
     });
-    // Get the next set of results
+
+    // Page through the next set of results using "queryForPage2"
     if (queryForPage2 !== null) {
       const [files, queryForPage3] = await bucket.getFiles(queryForPage2);
       files.forEach(file => {
         console.log(file.name);
       });
 
-      if (queryForPage3 !== null) {
-        // Request the nest set of results...
-      }
+      // If necessary, continue cursoring using "queryForPage3"
     }
   }
 
