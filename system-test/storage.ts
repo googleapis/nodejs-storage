@@ -835,9 +835,10 @@ describe('storage', () => {
       before(async () => {
         bucket = storage.bucket(generateName());
         await bucket.create();
-        
+
         const name = 'enforcedPAPBucketFile';
-        const contents = 'Enforced public access prevention bucket file contents';
+        const contents =
+          'Enforced public access prevention bucket file contents';
         file = bucket.file(name);
         await file.save(contents);
 
@@ -860,7 +861,7 @@ describe('storage', () => {
           validateConfiguringPublicAccessWhenPAPEnforcedError
         );
       });
-    })
+    });
 
     it('inserts a bucket with unspecified public access prevention', async () => {
       await setPublicAccessPrevention(
@@ -875,15 +876,13 @@ describe('storage', () => {
         PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
       );
     });
-    
+
     it('makes public a bucket with unspecified public access prevention', async () => {
       await setPublicAccessPrevention(
         bucket,
         PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
       );
-      return assert.ok(
-        () => bucket.makePublic()
-      );
+      return assert.ok(() => bucket.makePublic());
     });
 
     it('should fail to insert a bucket with unexpected public access prevention value', async () => {
