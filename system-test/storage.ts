@@ -812,7 +812,7 @@ describe('storage', () => {
       return true;
     };
 
-    before(createBucket);
+    beforeEach(createBucket);
 
     it('inserts a bucket with enforced public access prevention', async () => {
       await setPublicAccessPrevention(
@@ -822,15 +822,45 @@ describe('storage', () => {
       const [bucketMetadata] = await bucket.getMetadata();
       const publicAccessPreventionStatus =
         bucketMetadata.iamConfiguration.publicAccessPrevention;
-      await assert.rejects(
-        () => bucket.makePublic(),
-        validateConfiguringPublicAccessWhenPAPEnforcedError
-      );
       return assert.strictEqual(
         publicAccessPreventionStatus,
         PUBLIC_ACCESS_PREVENTION_ENFORCED
       );
     });
+
+    describe('enforced public access prevention behavior', () => {
+      let bucket: Bucket;
+      let file: File;
+
+      before(async () => {
+        bucket = storage.bucket(generateName());
+        await bucket.create();
+        
+        const name = 'enforcedPAPBucketFile';
+        const contents = 'Enforced public access prevention bucket file contents';
+        file = bucket.file(name);
+        await file.save(contents);
+
+        await setPublicAccessPrevention(
+          bucket,
+          PUBLIC_ACCESS_PREVENTION_ENFORCED
+        );
+      });
+
+      it('bucket cannot be made public', async () => {
+        return assert.rejects(
+          () => bucket.makePublic(),
+          validateConfiguringPublicAccessWhenPAPEnforcedError
+        );
+      });
+
+      it('object cannot be made public via ACL', async () => {
+        return assert.rejects(
+          () => file.makePublic(),
+          validateConfiguringPublicAccessWhenPAPEnforcedError
+        );
+      });
+    })
 
     it('inserts a bucket with unspecified public access prevention', async () => {
       await setPublicAccessPrevention(
@@ -843,6 +873,16 @@ describe('storage', () => {
       return assert.strictEqual(
         publicAccessPreventionStatus,
         PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
+      );
+    });
+    
+    it('makes public a bucket with unspecified public access prevention', async () => {
+      await setPublicAccessPrevention(
+        bucket,
+        PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
+      );
+      return assert.ok(
+        () => bucket.makePublic()
       );
     });
 
