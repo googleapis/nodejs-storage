@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+/* eslint-disable no-unused-vars */
 
 function main(bucketName = 'my-bucket') {
   // [START storage_list_files]
@@ -29,6 +30,7 @@ function main(bucketName = 'my-bucket') {
     const bucket = storage.bucket(bucketName);
     const [files, queryForPage2] = await bucket.getFiles({autoPaginate: false});
     console.log('Files:');
+
     files.forEach(file => {
       console.log(file.name);
     });
