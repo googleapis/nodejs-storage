@@ -29,8 +29,8 @@ function main(bucketName = 'my-bucket') {
   async function listFilesPaginated() {
     const bucket = storage.bucket(bucketName);
     const [files, queryForPage2] = await bucket.getFiles({autoPaginate: false});
-    console.log('Files:');
 
+    console.log('Files:');
     files.forEach(file => {
       console.log(file.name);
     });
