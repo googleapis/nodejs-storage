@@ -38,6 +38,8 @@ function main(bucketName = 'my-bucket') {
     // Page through the next set of results using "queryForPage2"
     if (queryForPage2 !== null) {
       const [files, queryForPage3] = await bucket.getFiles(queryForPage2);
+
+      console.log('Files:');
       files.forEach(file => {
         console.log(file.name);
       });
