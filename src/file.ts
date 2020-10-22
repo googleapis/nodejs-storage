@@ -3077,7 +3077,7 @@ class File extends ServiceObject<File> {
    *  // Will return "https://storage.googleapis.com/albums/my-file"
    */
   publicUrl(): string {
-    return `${STORAGE_POST_POLICY_BASE_URL}/${this.bucket.name}/${this.name}`;
+    return `${this.storage.apiEndpoint}/${this.bucket.name}/${this.name}`;
   }
 
   move(
