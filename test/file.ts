@@ -3488,7 +3488,6 @@ describe('File', () => {
 
     it('with non ascii in the name', done => {
       const NAME = '\u2603';
-      console.log(NAME);
       const file = new File(BUCKET, NAME);
       assert.strictEqual(
         file.publicUrl(),
