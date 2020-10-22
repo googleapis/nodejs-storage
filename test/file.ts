@@ -74,7 +74,11 @@ const fakePromisify = {
     }
 
     promisified = true;
-    assert.deepStrictEqual(options.exclude, ['request', 'setEncryptionKey']);
+    assert.deepStrictEqual(options.exclude, [
+      'ensureDownloadToken',
+      'request',
+      'setEncryptionKey',
+    ]);
   },
 };
 
@@ -3186,6 +3190,80 @@ describe('File', () => {
           },
           {message: 'Max allowed expiration is seven days (604800 seconds).'}
         );
+      });
+    });
+  });
+
+  describe('getFirebaseDownloadUrl', () => {
+    let sandbox: sinon.SinonSandbox;
+    let metadataStub: sinon.SinonStub;
+
+    beforeEach(() => {
+      sandbox = sinon.createSandbox();
+    });
+
+    afterEach(() => sandbox.restore());
+
+    it('should construct a Firebase download URL from the existing token', done => {
+      const getMetadataStub = sandbox.stub(file, 'getMetadata').resolves([
+        {
+          metadata: {
+            firebaseStorageDownloadTokens: 'test-token',
+          },
+        },
+      ]);
+      const expectedUrl = `https://firebasestorage.googleapis.com/v0/b/${file.bucket.name}/o/${file.name}?alt=media&token=test-token`;
+
+      file.getFirebaseDownloadUrl((err: Error | null, url: string) => {
+        assert.ifError(err);
+        assert.strictEqual(url, expectedUrl);
+        assert.deepStrictEqual(getMetadataStub.callCount, 1);
+        done();
+      });
+    });
+
+    it('should construct a Firebase download URL with a newly generated token', done => {
+      const getMetadataStub = sandbox.stub(file, 'getMetadata').resolves([{}]);
+      const setMetadataStub = sandbox.stub(file, 'setMetadata').resolves();
+      const prefix = `https://firebasestorage.googleapis.com/v0/b/${file.bucket.name}/o/${file.name}?alt=media&token=`;
+
+      file.getFirebaseDownloadUrl((err: Error | null, url: string) => {
+        assert.ifError(err);
+        assert.ok(url.startsWith(prefix));
+        assert.deepStrictEqual(getMetadataStub.callCount, 1);
+        assert.deepStrictEqual(setMetadataStub.callCount, 1);
+
+        const token = url.substring(url.length - 32);
+        assert.ok(token.match(/^[A-Za-z0-9]{32}$/));
+        const setMetadataArgs = setMetadataStub.getCall(0).args;
+        assert.deepStrictEqual(setMetadataArgs[0], {
+          metadata: {
+            firebaseStorageDownloadTokens: token,
+          },
+        });
+        done();
+      });
+    });
+
+    it('should construct a Firebase download URL with encoded file name', done => {
+      const getMetadataStub = sandbox
+        .stub(directoryFile, 'getMetadata')
+        .resolves([
+          {
+            metadata: {
+              firebaseStorageDownloadTokens: 'test-token',
+            },
+          },
+        ]);
+      const expectedUrl = `https://firebasestorage.googleapis.com/v0/b/${
+        directoryFile.bucket.name
+      }/o/${encodeURIComponent(directoryFile.name)}?alt=media&token=test-token`;
+
+      directoryFile.getFirebaseDownloadUrl((err: Error | null, url: string) => {
+        assert.ifError(err);
+        assert.strictEqual(url, expectedUrl);
+        assert.deepStrictEqual(getMetadataStub.callCount, 1);
+        done();
       });
     });
   });

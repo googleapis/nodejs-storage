@@ -271,6 +271,15 @@ export enum ActionToHTTPMethod {
   resumable = 'POST',
 }
 
+export type GetFirebaseDownloadUrlResponse = GetSignedUrlResponse;
+export type GetFirebaseDownloadUrlCallback = GetSignedUrlCallback;
+
+interface FirebaseStorageMetadata {
+  metadata?: {
+    firebaseStorageDownloadTokens?: string;
+  };
+}
+
 /**
  * Custom error type for errors related to creating a resumable upload.
  *
@@ -2853,6 +2862,90 @@ class File extends ServiceObject<File> {
       .then(signedUrl => callback!(null, signedUrl), callback!);
   }
 
+  getFirebaseDownloadUrl(): Promise<GetFirebaseDownloadUrlResponse>;
+  getFirebaseDownloadUrl(callback: GetFirebaseDownloadUrlCallback): void;
+  /**
+   * @typedef {array} GetFirebaseDownloadUrlResponse
+   * @property {object} 0 The Firebase Storage download URL.
+   */
+  /**
+   * @callback GetFirebaseDownloadUrlCallback
+   * @param {?Error} err Request error, if any.
+   * @param {object} url The Firebase Storage download URL.
+   */
+  /**
+   * Get a Firebase download URL.
+   *
+   * Firebase download URLs use the `firebasestorage.googleapis.com` hostname, and have a static
+   * token attached to them. Unlike signed URLs, Firebase download URLs do not expire after a
+   * specific time period. Instead they remain valid until the underlying token is explicitly
+   * revoked. Developers can revoke these tokens from the Firebase Console or by directly modifying
+   * the object metadata.
+   *
+   * @param {GetFirebaseDownloadUrlCallback} [callback] Callback function.
+   * @returns {Promise<GetFirebaseDownloadUrlResponse>}
+   *
+   * @example
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const myBucket = storage.bucket('my-bucket');
+   *
+   * const file = myBucket.file('my-file');
+   *
+   * //-
+   * // Generate a URL that allows temporary access to download your file.
+   * //-
+   * const request = require('request');
+   *
+   * file.getFirebaseDownloadUrl(function(err, url) {
+   *   if (err) {
+   *     console.error(err);
+   *     return;
+   *   }
+   *
+   *   // The file is now available to read from this URL.
+   *   request(url, function(err, resp) {
+   *     // resp.statusCode = 200
+   *   });
+   * });
+   *
+   * //-
+   * // If the callback is omitted, we'll return a Promise.
+   * //-
+   * file.getFirebaseDownloadUrl().then(function(data) {
+   *   const url = data[0];
+   * });
+   */
+  getFirebaseDownloadUrl(
+    callback?: GetFirebaseDownloadUrlCallback
+  ): void | Promise<GetFirebaseDownloadUrlResponse> {
+    this.ensureDownloadToken()
+      .then(token => {
+        return `https://firebasestorage.googleapis.com/v0/b/${
+          this.bucket.name
+        }/o/${encodeURIComponent(this.name)}?alt=media&token=${token}`;
+      })
+      .then(url => callback!(null, url), callback!);
+  }
+
+  private ensureDownloadToken(): Promise<string> {
+    return this.getMetadata().then(response => {
+      const metadata = response[0] as FirebaseStorageMetadata;
+      if (metadata?.metadata?.firebaseStorageDownloadTokens) {
+        return metadata.metadata.firebaseStorageDownloadTokens;
+      }
+
+      const token = generateDownloadToken();
+      return this.setMetadata({
+        metadata: {
+          firebaseStorageDownloadTokens: token,
+        },
+      }).then(() => {
+        return token;
+      });
+    });
+  }
+
   isPublic(): Promise<IsPublicResponse>;
   isPublic(callback: IsPublicCallback): void;
   /**
@@ -3744,13 +3837,28 @@ class File extends ServiceObject<File> {
   }
 }
 
+function generateDownloadToken(length = 32): string {
+  const alphabet =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let text = '';
+  for (let i = 0; i < length; i++) {
+    text += alphabet.charAt(random(alphabet.length));
+  }
+
+  return text;
+}
+
+function random(max: number): number {
+  return Math.floor(Math.random() * max);
+}
+
 /*! Developer Documentation
  *
  * All async methods (except for streams) will return a Promise in the event
  * that a callback is omitted.
  */
 promisifyAll(File, {
-  exclude: ['request', 'setEncryptionKey'],
+  exclude: ['ensureDownloadToken', 'request', 'setEncryptionKey'],
 });
 
 /**
