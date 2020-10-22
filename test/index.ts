@@ -588,6 +588,19 @@ describe('Storage', () => {
       );
     });
 
+    it('should throw when both `storageClass` and storageClass name are provided', () => {
+      assert.throws(() => {
+        storage.createBucket(
+          BUCKET_NAME,
+          {
+            storageClass: 'nearline',
+            coldline: true,
+          },
+          assert.ifError
+        );
+      }, /Both `COLDLINE` and `storageClass` were provided./);
+    });
+
     describe('storage classes', () => {
       it('should expand metadata.archive', done => {
         storage.request = (reqOpts: DecorateRequestOptions) => {

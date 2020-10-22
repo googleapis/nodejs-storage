@@ -638,6 +638,11 @@ export class Storage extends Service {
         delete body[storageClass];
       }
     });
+    if (body.storageClass && metadata.storageClass) {
+      throw new Error(
+        `Both \`${body.storageClass}\` and \`storageClass\` were provided.`
+      );
+    }
 
     if (body.requesterPays) {
       body.billing = {
