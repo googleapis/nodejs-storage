@@ -3073,7 +3073,7 @@ class File extends ServiceObject<File> {
    * const bucket = storage.bucket('albums');
    * const file = bucket.file('my-file');
    *
-   * //publicUrl will be "https://storage.googleapis.com/albums/my-file"
+   * // publicUrl will be "https://storage.googleapis.com/albums/my-file"
    * const publicUrl = file.publicUrl();
    */
   publicUrl(): string {
