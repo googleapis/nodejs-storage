@@ -133,6 +133,7 @@ export interface GetSignedUrlConfig {
   contentMd5?: string;
   contentType?: string;
   expires: string | number | Date;
+  usableFrom?: string | number | Date;
   extensionHeaders?: http.OutgoingHttpHeaders;
   promptSaveAs?: string;
   responseDisposition?: string;
@@ -2723,6 +2724,10 @@ class File extends ServiceObject<File> {
    * @param {string} [config.responseDisposition] The
    *     [response-content-disposition parameter](http://goo.gl/yMWxQV) of the
    *     signed url.
+   * @param {*} [config.usableFrom=Date.now()] A timestamp when this link became usable. Any value
+   *     given is passed to `new Date()`.
+   *     Note: Use for 'v4' only.
+   *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
    * @param {string} [config.responseType] The response-content-type parameter
    *     of the signed url.
    * @param {GetSignedUrlCallback} [callback] Callback function.
