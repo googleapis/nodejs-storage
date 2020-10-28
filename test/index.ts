@@ -588,6 +588,18 @@ describe('Storage', () => {
       );
     });
 
+    it('should allow a user-specified storageClass', done => {
+      const storageClass = 'nearline';
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        assert.strictEqual(reqOpts.json.storageClass, storageClass);
+        callback(); // done
+      };
+      storage.createBucket(BUCKET_NAME, {storageClass}, done);
+    });
+
     it('should throw when both `storageClass` and storageClass name are provided', () => {
       assert.throws(() => {
         storage.createBucket(
@@ -598,7 +610,7 @@ describe('Storage', () => {
           },
           assert.ifError
         );
-      }, /Both `COLDLINE` and `storageClass` were provided./);
+      }, /Both `coldline` and `storageClass` were provided./);
     });
 
     describe('storage classes', () => {
