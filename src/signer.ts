@@ -129,7 +129,7 @@ export class URLSigner {
     const expiresInSeconds = this.parseExpires(cfg.expires);
     const method = cfg.method;
     const usableFromInSeconds = this.parseUsableFrom(cfg.usableFrom);
- 
+
     if (expiresInSeconds < usableFromInSeconds) {
       throw new Error('An expiration date cannot be before usable date.');
     }
@@ -227,7 +227,6 @@ export class URLSigner {
   private getSignedUrlV4(
     config: GetSignedUrlConfigInternal
   ): Promise<SignedUrlQuery> {
-    const now = new Date();
     if (config.usableFrom === undefined) {
       config.usableFrom = new Date();
     }
