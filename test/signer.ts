@@ -244,8 +244,8 @@ describe('signer', () => {
       });
 
       it('should throw if an expiration date from the before usableFrom date is given', () => {
-        const expires = Date.now() + 3;
-        const usableFrom = expires + 50000000;
+        const expires = Date.now() + 5;
+        const usableFrom = expires + 5000;
   
         assert.throws(() => {
           signer.getSignedUrl(
