@@ -3172,22 +3172,6 @@ describe('File', () => {
         }, /An expiration date cannot be in the past\./);
       });
 
-      it('should throw if a date from the before usableFrom date is given', () => {
-        const usableFrom = Date.now() - 60 * 60 * 1000;
-        const expires = usableFrom - 5;
-
-        assert.throws(() => {
-          file.getSignedUrl(
-            {
-              action: 'read',
-              usableFrom,
-              expires,
-            },
-            () => {}
-          );
-        }, /An expiration date cannot be before usable date\./);
-      });
-
       it('should throw if a date beyond 7 days is given', () => {
         const expires = Date.now() + 7.1 * 24 * 60 * 60 * 1000;
 
@@ -3258,85 +3242,6 @@ describe('File', () => {
     });
   });
 
-  describe('usableFrom', () => {
-    it('should accept Date objects', done => {
-      const usableFrom = new Date(1581984000678);
-      const expectedUsableFrom = '20200218T000000Z';
-
-      file.getSignedUrl(
-        {
-          version: 'v4',
-          action: 'read',
-          usableFrom,
-          expires: usableFrom.valueOf() + 5000,
-        },
-        (err: Error, signedUrl: string) => {
-          assert.ifError(err);
-          const usableFrom_ = JSON.parse(signedUrl).query['X-Goog-Date'];
-          assert.strictEqual(usableFrom_, expectedUsableFrom);
-          done();
-        }
-      );
-    });
-
-    it('should accept numbers', done => {
-      const usableFrom = 1581984000000;
-      const expectedUsableFrom = '20200218T000000Z';
-
-      file.getSignedUrl(
-        {
-          version: 'v4',
-          action: 'read',
-          usableFrom,
-          expires: usableFrom + 5000,
-        },
-        (err: Error, signedUrl: string) => {
-          assert.ifError(err);
-          const usableFrom_ = JSON.parse(signedUrl).query['X-Goog-Date'];
-          assert.strictEqual(usableFrom_, expectedUsableFrom);
-          done();
-        }
-      );
-    });
-
-    it('should accept strings', done => {
-      const usableFrom = '12-12-2099';
-      const usableFromDate = new Date(usableFrom);
-      const expectedUsableFrom = '20991212T000000Z';
-
-      file.getSignedUrl(
-        {
-          version: 'v4',
-          action: 'read',
-          usableFrom,
-          expires: usableFromDate.valueOf() + 5000,
-        },
-        (err: Error, signedUrl: string) => {
-          assert.ifError(err);
-          const usableFrom_ = JSON.parse(signedUrl).query['X-Goog-Date'];
-          assert.strictEqual(usableFrom_, expectedUsableFrom);
-          done();
-        }
-      );
-    });
-
-    it('should throw if a date is invalid', () => {
-      const usableFrom = new Date('31-12-2019');
-
-      assert.throws(() => {
-        file.getSignedUrl(
-          {
-            version: 'v4',
-            action: 'read',
-            usableFrom,
-            expires: Date.now() + 5000,
-          },
-          () => {}
-        );
-      }, /The usable from date provided was invalid\./);
-    });
-  });
-  
   describe('getSignedUrl', () => {
     const EXPECTED_SIGNED_URL = 'signed-url';
     const CNAME = 'https://www.example.com';

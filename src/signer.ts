@@ -129,13 +129,9 @@ export class URLSigner {
     const expiresInSeconds = this.parseExpires(cfg.expires);
     const method = cfg.method;
     const usableFromInSeconds = this.parseUsableFrom(cfg.usableFrom);
-
+ 
     if (expiresInSeconds < usableFromInSeconds) {
-      if (cfg.usableFrom) {
-        throw new Error('An expiration date cannot be before usable date.');
-      } else {
-        throw new Error('An expiration date cannot be in the past.');
-      }
+      throw new Error('An expiration date cannot be before usable date.');
     }
 
     let customHost: string | undefined;
@@ -437,7 +433,7 @@ export class URLSigner {
       throw new Error('The usable from date provided was invalid.');
     }
 
-    return Math.round(usableFromInMSeconds / 1000); // The API expects seconds.
+    return Math.floor(usableFromInMSeconds / 1000); // The API expects seconds.
   }
 }
 
