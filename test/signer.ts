@@ -169,6 +169,26 @@ describe('signer', () => {
       });
 
       describe('usableFrom', () => {
+        it('should set correct settings if usableFrom provided', async () => {
+          const authClientSign: sinon.SinonStub<
+            [string],
+            Promise<string>
+          > = sandbox.stub(authClient, 'sign').resolves('signature');
+          const usableFrom = new Date(1581984000000);
+          await signer.getSignedUrl({
+            version: 'v4',
+            method: 'GET',
+            usableFrom,
+            expires: usableFrom.valueOf() + 5000,
+          });
+          const blobToSign = authClientSign.getCall(0).args[0];
+          assert(
+            blobToSign.includes(
+              dateFormat.format(usableFrom, 'YYYYMMDD[T]HHmmss[Z]', true)
+            )
+          );
+        });
+
         it('should accept Date objects', async () => {
           const usableFrom = new Date(1581984000678);
           const expectedUsableFrom = '20200218T000000Z';
@@ -179,7 +199,6 @@ describe('signer', () => {
             usableFrom,
             expires: usableFrom.valueOf() + 5000,
           });
-          console.log(signedUrl);
           const query = {
             'X-Goog-Date': expectedUsableFrom,
           };

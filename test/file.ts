@@ -3187,58 +3187,6 @@ describe('File', () => {
           {message: 'Max allowed expiration is seven days (604800 seconds).'}
         );
       });
-
-      it('should set correct settings if usableFrom provided', done => {
-        const SCOPE = '20200218/auto/storage/goog4_request';
-        const CREDENTIAL = `${CLIENT_EMAIL}/${SCOPE}`;
-        const EXPECTED_QUERY_PARAM = [
-          'X-Goog-Algorithm=GOOG4-RSA-SHA256',
-          `X-Goog-Credential=${encodeURIComponent(CREDENTIAL)}`,
-          'X-Goog-Date=20200218T000000Z',
-          'X-Goog-Expires=2',
-          'X-Goog-SignedHeaders=host',
-        ].join('&');
-
-        const EXPECTED_CANONICAL_HEADERS = 'host:storage.googleapis.com\n';
-        const EXPECTED_SIGNED_HEADERS = 'host';
-
-        const CANONICAL_REQUEST = [
-          'GET',
-          `/${BUCKET.name}/${encodeURIComponent(file.name)}`,
-          EXPECTED_QUERY_PARAM,
-          EXPECTED_CANONICAL_HEADERS,
-          EXPECTED_SIGNED_HEADERS,
-          'UNSIGNED-PAYLOAD',
-        ].join('\n');
-
-        BUCKET.storage.authClient.sign = (blobToSign: string) => {
-          assert.deepStrictEqual(
-            blobToSign,
-            [
-              'GOOG4-RSA-SHA256',
-              '20200218T000000Z',
-              SCOPE,
-              crypto
-                .createHash('sha256')
-                .update(CANONICAL_REQUEST)
-                .digest('hex'),
-            ].join('\n')
-          );
-          return Promise.resolve('signature');
-        };
-
-        const usableFrom = new Date(1581984000000);
-        const config = Object.assign({}, CONFIG, {
-          usableFrom,
-          expires: usableFrom.valueOf() + 2000, // useableFrom + 2 seconds
-        });
-
-        file.getSignedUrl(config, (err: Error, signedUrl: string) => {
-          assert.ifError(err);
-          assert.strictEqual(typeof signedUrl, 'string');
-          done();
-        });
-      });
     });
   });
 
