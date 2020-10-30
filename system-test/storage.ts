@@ -3467,14 +3467,8 @@ describe('storage', () => {
         expires: expiresDate.setMinutes(expiresMinutes + 90),
       });
       const res = await fetch(signedReadUrl);
-      console.log('res beginning');
-      console.log(res);
-      console.log('res over');
-
-      // assert.strictEqual(body, localFile.toString());
-      assert.rejects(async () => await fetch(signedReadUrl), {
-        message: 'Request is not yet valid',
-      });
+      const body = await res.text();
+      assert.ok(body.indexOf('Request is not yet valid') > -1);
     });
 
     it('should work with special characters in extension headers', async () => {
