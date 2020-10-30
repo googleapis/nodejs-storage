@@ -3442,7 +3442,7 @@ describe('storage', () => {
       assert.strictEqual(body, localFile.toString());
     });
 
-    it('should create a signed read url with usableFrom', async () => {
+    it('should create a signed read url with usableFrom in the past', async () => {
       const [signedReadUrl] = await file.getSignedUrl({
         version: 'v4',
         action: 'read',
@@ -3453,6 +3453,28 @@ describe('storage', () => {
       const res = await fetch(signedReadUrl);
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
+    });
+
+    it('should create a signed read url with usableFrom in the future', async () => {
+      const usableFromDate = new Date();
+      const usableFromMinutes = usableFromDate.getMinutes();
+      const expiresDate = new Date();
+      const expiresMinutes = expiresDate.getMinutes();
+      const [signedReadUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        usableFrom: usableFromDate.setMinutes(usableFromMinutes + 60),
+        expires: expiresDate.setMinutes(expiresMinutes + 90)
+      });
+      const res = await fetch(signedReadUrl);
+      console.log("res beginning");
+      console.log(res);
+      console.log("res over")
+      
+      // assert.strictEqual(body, localFile.toString());
+      assert.rejects(async () => await fetch(signedReadUrl), {
+        message: 'Request is not yet valid'
+      });
     });
 
     it('should work with special characters in extension headers', async () => {

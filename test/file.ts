@@ -3225,9 +3225,11 @@ describe('File', () => {
     afterEach(() => sandbox.restore());
 
     it('should construct a URLSigner and call getSignedUrl', done => {
+      const usableFromDate = new Date();
       const config = {
         contentMd5: 'md5-hash',
         contentType: 'application/json',
+        usableFrom: usableFromDate,
         virtualHostedStyle: true,
         ...SIGNED_URL_CONFIG,
       };
@@ -3248,6 +3250,7 @@ describe('File', () => {
           method: 'GET',
           version: 'v4',
           expires: config.expires,
+          usableFrom: usableFromDate,
           extensionHeaders: {},
           queryParams: {},
           contentMd5: config.contentMd5,

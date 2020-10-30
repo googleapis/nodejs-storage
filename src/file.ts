@@ -2831,6 +2831,7 @@ class File extends ServiceObject<File> {
     const signConfig = {
       method,
       expires: cfg.expires,
+      usableFrom: cfg.usableFrom,
       extensionHeaders,
       queryParams,
       contentMd5: cfg.contentMd5,

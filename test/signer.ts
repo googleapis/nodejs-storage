@@ -191,8 +191,6 @@ describe('signer', () => {
 
         it('should accept Date objects', async () => {
           const usableFrom = new Date(1581984000678);
-          const expectedUsableFrom = '20200218T000000Z';
-
           const signedUrl = await signer.getSignedUrl({
             version: 'v4',
             method: 'GET',
@@ -200,7 +198,7 @@ describe('signer', () => {
             expires: usableFrom.valueOf() + 5000,
           });
           const query = {
-            'X-Goog-Date': expectedUsableFrom,
+            'X-Goog-Date': dateFormat.format(usableFrom, 'YYYYMMDD[T]HHmmss[Z]', true),
           };
           assert(signedUrl.includes(qsStringify(query)));
         });
@@ -252,20 +250,20 @@ describe('signer', () => {
             });
           }, /The usable from date provided was invalid\./);
         });
-      });
 
-      it('should throw if an expiration date from the before usableFrom date is given', () => {
-        const expires = Date.now() + 5;
-        const usableFrom = expires + 5000;
-
-        assert.throws(() => {
-          signer.getSignedUrl({
-            version: 'v4',
-            method: 'GET',
-            usableFrom,
-            expires,
-          });
-        }, /An expiration date cannot be before usable date\./);
+        it('should throw if an expiration date from the before usableFrom date is given', () => {
+          const expires = Date.now() + 5;
+          const usableFrom = expires + 5000;
+  
+          assert.throws(() => {
+            signer.getSignedUrl({
+              version: 'v4',
+              method: 'GET',
+              usableFrom,
+              expires,
+            });
+          }, /An expiration date cannot be before usable date\./);
+        });
       });
 
       describe('expires', () => {
