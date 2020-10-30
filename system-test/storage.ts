@@ -3464,16 +3464,16 @@ describe('storage', () => {
         version: 'v4',
         action: 'read',
         usableFrom: usableFromDate.setMinutes(usableFromMinutes + 60),
-        expires: expiresDate.setMinutes(expiresMinutes + 90)
+        expires: expiresDate.setMinutes(expiresMinutes + 90),
       });
       const res = await fetch(signedReadUrl);
-      console.log("res beginning");
+      console.log('res beginning');
       console.log(res);
-      console.log("res over")
-      
+      console.log('res over');
+
       // assert.strictEqual(body, localFile.toString());
       assert.rejects(async () => await fetch(signedReadUrl), {
-        message: 'Request is not yet valid'
+        message: 'Request is not yet valid',
       });
     });
 

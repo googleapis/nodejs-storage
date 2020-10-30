@@ -227,9 +227,7 @@ export class URLSigner {
   private getSignedUrlV4(
     config: GetSignedUrlConfigInternal
   ): Promise<SignedUrlQuery> {
-    if (config.usableFrom === undefined) {
-      config.usableFrom = new Date();
-    }
+    config.usableFrom = config.usableFrom ? config.usableFrom : new Date();
     const expiresPeriodInSeconds =
       config.expiration - config.usableFrom.valueOf() / 1000;
 
@@ -277,11 +275,8 @@ export class URLSigner {
     const sign = async () => {
       const credentials = await this.authClient.getCredentials();
       const credential = `${credentials.client_email}/${credentialScope}`;
-      if (config.usableFrom === undefined) {
-        config.usableFrom = new Date();
-      }
       const dateISO = dateFormat.format(
-        config.usableFrom,
+        config.usableFrom ? config.usableFrom : new Date(),
         'YYYYMMDD[T]HHmmss[Z]',
         true
       );

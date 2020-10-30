@@ -198,7 +198,11 @@ describe('signer', () => {
             expires: usableFrom.valueOf() + 5000,
           });
           const query = {
-            'X-Goog-Date': dateFormat.format(usableFrom, 'YYYYMMDD[T]HHmmss[Z]', true),
+            'X-Goog-Date': dateFormat.format(
+              usableFrom,
+              'YYYYMMDD[T]HHmmss[Z]',
+              true
+            ),
           };
           assert(signedUrl.includes(qsStringify(query)));
         });
@@ -254,7 +258,7 @@ describe('signer', () => {
         it('should throw if an expiration date from the before usableFrom date is given', () => {
           const expires = Date.now() + 5;
           const usableFrom = expires + 5000;
-  
+
           assert.throws(() => {
             signer.getSignedUrl({
               version: 'v4',
