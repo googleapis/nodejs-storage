@@ -3442,11 +3442,11 @@ describe('storage', () => {
       assert.strictEqual(body, localFile.toString());
     });
 
-    it('should create a signed read url with usableFrom in the past', async () => {
+    it('should create a signed read url with accessibleAt in the past', async () => {
       const [signedReadUrl] = await file.getSignedUrl({
         version: 'v4',
         action: 'read',
-        usableFrom: Date.now() - 5000,
+        accessibleAt: Date.now() - 5000,
         expires: Date.now() + 5000,
       });
 
@@ -3455,15 +3455,15 @@ describe('storage', () => {
       assert.strictEqual(body, localFile.toString());
     });
 
-    it('should create a signed read url with usableFrom in the future', async () => {
-      const usableFromDate = new Date();
-      const usableFromMinutes = usableFromDate.getMinutes();
+    it('should create a signed read url with accessibleAt in the future', async () => {
+      const accessibleAtDate = new Date();
+      const accessibleAtMinutes = accessibleAtDate.getMinutes();
       const expiresDate = new Date();
       const expiresMinutes = expiresDate.getMinutes();
       const [signedReadUrl] = await file.getSignedUrl({
         version: 'v4',
         action: 'read',
-        usableFrom: usableFromDate.setMinutes(usableFromMinutes + 60),
+        accessibleAt: accessibleAtDate.setMinutes(accessibleAtMinutes + 60),
         expires: expiresDate.setMinutes(expiresMinutes + 90),
       });
       const res = await fetch(signedReadUrl);
