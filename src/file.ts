@@ -2747,7 +2747,6 @@ class File extends ServiceObject<File> {
    * const config = {
    *   action: 'read',
    *   expires: '03-17-2025',
-   *   accessibleAt: ''03-13-2025'
    * };
    *
    * file.getSignedUrl(config, function(err, url) {
@@ -2757,6 +2756,30 @@ class File extends ServiceObject<File> {
    *   }
    *
    *   // The file is now available to read from this URL.
+   *   request(url, function(err, resp) {
+   *     // resp.statusCode = 200
+   *   });
+   * });
+   *
+   * //-
+   * // Generate a URL that allows temporary access to download your file.
+   * // Access will begin at accessibleAt and end at expires.
+   * //-
+   * const request = require('request');
+   *
+   * const config = {
+   *   action: 'read',
+   *   expires: '03-17-2025',
+   *   accessibleAt: '03-13-2025'
+   * };
+   *
+   * file.getSignedUrl(config, function(err, url) {
+   *   if (err) {
+   *     console.error(err);
+   *     return;
+   *   }
+   *
+   *   // The file will be available to read from this URL from 03-13-2025 to 03-17-2025.
    *   request(url, function(err, resp) {
    *     // resp.statusCode = 200
    *   });

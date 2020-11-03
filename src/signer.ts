@@ -231,7 +231,7 @@ export class URLSigner {
     config.accessibleAt = config.accessibleAt
       ? config.accessibleAt
       : new Date();
-    const millisecondsToSeconds = 1.0/1000.0;
+    const millisecondsToSeconds = 1.0 / 1000.0;
     const expiresPeriodInSeconds =
       config.expiration - config.accessibleAt.valueOf() * millisecondsToSeconds;
 
