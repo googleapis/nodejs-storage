@@ -791,13 +791,16 @@ describe('storage', () => {
       return bucket.create();
     };
 
-    const setPublicAccessPrevention = (bucket: Bucket, configuration: string) => {
+    const setPublicAccessPrevention = (
+      bucket: Bucket,
+      configuration: string
+    ) => {
       return bucket.setMetadata({
         iamConfiguration: {
           publicAccessPrevention: configuration,
         },
       });
-    }
+    };
 
     const validateUnexpectedPublicAccessPreventionValueError = (
       err: ApiError
