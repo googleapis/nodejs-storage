@@ -3222,6 +3222,24 @@ describe('File', () => {
       });
     });
 
+    it('should construct a Firebase download URL from the existing token list', done => {
+      const getMetadataStub = sandbox.stub(file, 'getMetadata').resolves([
+        {
+          metadata: {
+            firebaseStorageDownloadTokens: ['1st-token', '2nd-token'],
+          },
+        },
+      ]);
+      const expectedUrl = `https://firebasestorage.googleapis.com/v0/b/${file.bucket.name}/o/${file.name}?alt=media&token=1st-token`;
+
+      file.getFirebaseDownloadUrl((err: Error | null, url: string) => {
+        assert.ifError(err);
+        assert.strictEqual(url, expectedUrl);
+        assert.deepStrictEqual(getMetadataStub.callCount, 1);
+        done();
+      });
+    });
+
     it('should construct a Firebase download URL with a newly generated token', done => {
       const getMetadataStub = sandbox.stub(file, 'getMetadata').resolves([{}]);
       const setMetadataStub = sandbox.stub(file, 'setMetadata').resolves();

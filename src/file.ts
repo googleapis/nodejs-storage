@@ -276,7 +276,7 @@ export type GetFirebaseDownloadUrlCallback = GetSignedUrlCallback;
 
 interface FirebaseStorageMetadata {
   metadata?: {
-    firebaseStorageDownloadTokens?: string;
+    firebaseStorageDownloadTokens?: string | string[];
   };
 }
 
@@ -2932,7 +2932,12 @@ class File extends ServiceObject<File> {
     return this.getMetadata().then(response => {
       const metadata = response[0] as FirebaseStorageMetadata;
       if (metadata?.metadata?.firebaseStorageDownloadTokens) {
-        return metadata.metadata.firebaseStorageDownloadTokens;
+        const existingTokens = metadata.metadata.firebaseStorageDownloadTokens;
+        if (typeof existingTokens === 'string') {
+          return existingTokens;
+        } else if (existingTokens.length > 0) {
+          return existingTokens[0];
+        }
       }
 
       const token = generateDownloadToken();
