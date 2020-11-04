@@ -138,20 +138,13 @@ it('should remove a bucket cors configuration', async () => {
   assert.ok(!bucket.metadata.cors);
 });
 
-it('should delete a bucket', async () => {
-  const output = execSync(`node deleteBucket.js ${bucketName}`);
-  assert.match(output, new RegExp(`Bucket ${bucketName} deleted.`));
-  const [exists] = await bucket.exists();
-  assert.strictEqual(exists, false);
-});
-
 it('should enforce public access prevention on a bucket', async () => {
   const output = execSync(
     `node enforcePublicAccessPrevention.js ${bucketName}`
   );
   assert.match(
     output,
-    new RegExp(`Public access prevention was enforced for ${bucketName}.`)
+    new RegExp(`Public access prevention is set to enforced for ${bucketName}.`)
   );
 
   const metadata = await bucket.getMetadata();
@@ -193,4 +186,11 @@ it("should unspecify a bucket's public access prevention", async () => {
     metadata[0].iamConfiguration.publicAccessPrevention,
     PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
   );
+});
+
+it('should delete a bucket', async () => {
+  const output = execSync(`node deleteBucket.js ${bucketName}`);
+  assert.match(output, new RegExp(`Bucket ${bucketName} deleted.`));
+  const [exists] = await bucket.exists();
+  assert.strictEqual(exists, false);
 });
