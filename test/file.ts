@@ -51,6 +51,7 @@ import {
   SignedPostPolicyV4Output,
   GenerateSignedPostPolicyV4Options,
   STORAGE_POST_POLICY_BASE_URL,
+  MoveOptions,
 } from '../src/file';
 
 let promisified = false;
@@ -3224,9 +3225,11 @@ describe('File', () => {
     afterEach(() => sandbox.restore());
 
     it('should construct a URLSigner and call getSignedUrl', done => {
+      const accessibleAtDate = new Date();
       const config = {
         contentMd5: 'md5-hash',
         contentType: 'application/json',
+        accessibleAt: accessibleAtDate,
         virtualHostedStyle: true,
         ...SIGNED_URL_CONFIG,
       };
@@ -3247,6 +3250,7 @@ describe('File', () => {
           method: 'GET',
           version: 'v4',
           expires: config.expires,
+          accessibleAt: accessibleAtDate,
           extensionHeaders: {},
           queryParams: {},
           contentMd5: config.contentMd5,
@@ -3451,6 +3455,48 @@ describe('File', () => {
       };
 
       file.makePublic(util.noop);
+    });
+  });
+
+  describe('publicUrl', () => {
+    it('should return the public URL', done => {
+      const NAME = 'file-name';
+      const file = new File(BUCKET, NAME);
+      assert.strictEqual(
+        file.publicUrl(),
+        `https://storage.googleapis.com/bucket-name/${NAME}`
+      );
+      done();
+    });
+
+    it('with slash in the name', done => {
+      const NAME = 'parent/child';
+      const file = new File(BUCKET, NAME);
+      assert.strictEqual(
+        file.publicUrl(),
+        `https://storage.googleapis.com/bucket-name/${NAME}`
+      );
+      done();
+    });
+
+    it('with tilde in the name', done => {
+      const NAME = 'foo~bar';
+      const file = new File(BUCKET, NAME);
+      assert.strictEqual(
+        file.publicUrl(),
+        `https://storage.googleapis.com/bucket-name/${NAME}`
+      );
+      done();
+    });
+
+    it('with non ascii in the name', done => {
+      const NAME = '\u2603';
+      const file = new File(BUCKET, NAME);
+      assert.strictEqual(
+        file.publicUrl(),
+        `https://storage.googleapis.com/bucket-name/${NAME}`
+      );
+      done();
     });
   });
 
@@ -3676,6 +3722,40 @@ describe('File', () => {
           done();
         });
       });
+    });
+  });
+
+  describe('rename', () => {
+    it('should correctly call File#move', done => {
+      const newFileName = 'renamed-file.txt';
+      const options = {};
+      file.move = (dest: string, opts: MoveOptions, cb: Function) => {
+        assert.strictEqual(dest, newFileName);
+        assert.strictEqual(opts, options);
+        assert.strictEqual(cb, done);
+        cb();
+      };
+      file.rename(newFileName, options, done);
+    });
+
+    it('should accept File object', done => {
+      const newFileObject = new File(BUCKET, 'renamed-file.txt');
+      const options = {};
+      file.move = (dest: string, opts: MoveOptions, cb: Function) => {
+        assert.strictEqual(dest, newFileObject);
+        assert.strictEqual(opts, options);
+        assert.strictEqual(cb, done);
+        cb();
+      };
+      file.rename(newFileObject, options, done);
+    });
+
+    it('should not require options', done => {
+      file.move = (dest: string, opts: MoveOptions, cb: Function) => {
+        assert.deepStrictEqual(opts, {});
+        cb();
+      };
+      file.rename('new-name', done);
     });
   });
 
