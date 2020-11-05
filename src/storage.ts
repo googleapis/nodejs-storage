@@ -49,6 +49,7 @@ export interface StorageOptions extends GoogleAuthOptions {
   autoRetry?: boolean;
   maxRetries?: number;
   promise?: typeof Promise;
+  userAgent?: string;
   /**
    * The API endpoint of the service used to make requests.
    * Defaults to `storage.googleapis.com`.
@@ -370,6 +371,8 @@ export class Storage extends Service {
    *     attempted before returning the error.
    * @property {Constructor} [promise] Custom promise module to use instead of
    *     native Promises.
+   * @property {string} [userAgent] The value to be prepended to the User-Agent
+   *     header in API requests.
    */
   /**
    * Constructs the Storage client.
@@ -389,14 +392,17 @@ export class Storage extends Service {
    */
   constructor(options: StorageOptions = {}) {
     let apiEndpoint = 'https://storage.googleapis.com';
+    let customEndpoint = false;
 
     const EMULATOR_HOST = process.env.STORAGE_EMULATOR_HOST;
     if (typeof EMULATOR_HOST === 'string') {
       apiEndpoint = Storage.sanitizeEndpoint(EMULATOR_HOST);
+      customEndpoint = true;
     }
 
     if (options.apiEndpoint) {
       apiEndpoint = Storage.sanitizeEndpoint(options.apiEndpoint);
+      customEndpoint = true;
     }
 
     options = Object.assign({}, options, {apiEndpoint});
@@ -406,6 +412,7 @@ export class Storage extends Service {
     const config = {
       apiEndpoint: options.apiEndpoint!,
       baseUrl,
+      customEndpoint,
       projectIdRequired: false,
       scopes: [
         'https://www.googleapis.com/auth/iam',
