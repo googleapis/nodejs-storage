@@ -880,17 +880,18 @@ describe('storage', () => {
 
     let bucket: Bucket;
 
-    before(() => {
-      bucket = storage.bucket('storage-library-test-bucket');
+    before(async () => {
+      [bucket] = await storage.createBucket(generateName());
     });
 
     // Normalization form C: a single character for e-acute;
     // URL should end with Cafe%CC%81
-    it('should not perform normalization form C', () => {
+    it('should not perform normalization form C', async () => {
       const name = 'Caf\u00e9';
-      const file = bucket.file(name);
-
       const expectedContents = 'Normalization Form C';
+
+      const file = bucket.file(name);
+      await file.save(expectedContents);
 
       return file
         .get()
@@ -906,11 +907,12 @@ describe('storage', () => {
 
     // Normalization form D: an ASCII character followed by U+0301 combining
     // character; URL should end with Caf%C3%A9
-    it('should not perform normalization form D', () => {
+    it('should not perform normalization form D', async () => {
       const name = 'Cafe\u0301';
-      const file = bucket.file(name);
-
       const expectedContents = 'Normalization Form D';
+
+      const file = bucket.file(name);
+      await file.save(expectedContents);
 
       return file
         .get()
@@ -1937,6 +1939,23 @@ describe('storage', () => {
             const newFile = bucketNonAllowList.file(generateName());
 
             file.move(newFile, options, err => {
+              if (err) {
+                done(err);
+                return;
+              }
+
+              // Re-create the file. The tests need it.
+              file.save('newcontent', options, done);
+            });
+          })
+        );
+
+        it(
+          'file#rename',
+          doubleTest((options: GetFileOptions, done: SaveCallback) => {
+            const newFile = bucketNonAllowList.file(generateName());
+
+            file.rename(newFile, options, err => {
               if (err) {
                 done(err);
                 return;
@@ -3421,6 +3440,34 @@ describe('storage', () => {
       const res = await fetch(signedReadUrl);
       const body = await res.text();
       assert.strictEqual(body, localFile.toString());
+    });
+
+    it('should create a signed read url with accessibleAt in the past', async () => {
+      const [signedReadUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        accessibleAt: Date.now() - 5000,
+        expires: Date.now() + 5000,
+      });
+
+      const res = await fetch(signedReadUrl);
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
+    });
+
+    it('should create a signed read url with accessibleAt in the future', async () => {
+      const accessibleAtDate = new Date();
+      const accessibleAtMinutes = accessibleAtDate.getMinutes();
+      const expiresDate = new Date();
+      const expiresMinutes = expiresDate.getMinutes();
+      const [signedReadUrl] = await file.getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        accessibleAt: accessibleAtDate.setMinutes(accessibleAtMinutes + 60),
+        expires: expiresDate.setMinutes(expiresMinutes + 90),
+      });
+      const res = await fetch(signedReadUrl);
+      assert.strictEqual(res.status, 403);
     });
 
     it('should work with special characters in extension headers', async () => {
