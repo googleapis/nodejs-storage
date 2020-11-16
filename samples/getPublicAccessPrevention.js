@@ -34,20 +34,11 @@ function main(bucketName = 'my-bucket') {
   const storage = new Storage();
 
   async function getPublicAccessPrevention() {
-    // Gets Bucket Metadata and checks if public access prevention is enforced.
+    // Gets Bucket Metadata and prints publicAccessPrevention value (either 'unspecified' or 'enforced').
     const [metadata] = await storage.bucket(bucketName).getMetadata();
-
-    if (
-      metadata.iamConfiguration &&
-      metadata.iamConfiguration.publicAccessPrevention === 'enforced'
-    ) {
-      console.log(`Public access prevention is enforced for ${bucketName}.`);
-    } else if (
-      metadata.iamConfiguration &&
-      metadata.iamConfiguration.publicAccessPrevention === 'unspecified'
-    ) {
-      console.log(`Public access prevention is unspecified for ${bucketName}.`);
-    }
+    console.log(
+      `Public access prevention is ${metadata.iamConfiguration.publicAccessPrevention} for ${bucketName}.`
+    );
   }
 
   getPublicAccessPrevention().catch(console.error);
