@@ -74,7 +74,7 @@ const fakePromisify = {
     }
 
     promisified = true;
-    assert.deepStrictEqual(options.exclude, ['request', 'setEncryptionKey']);
+    assert.deepStrictEqual(options.exclude, ['publicUrl', 'request', 'setEncryptionKey']);
   },
 };
 
