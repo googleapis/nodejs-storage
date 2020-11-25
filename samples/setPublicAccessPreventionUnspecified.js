@@ -21,33 +21,28 @@
  */
 
 function main(bucketName = 'my-bucket') {
-  // [START storage_enforce_public_access_prevention]
+  // [START storage_set_public_access_prevention_unspecified]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
-
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
-
-  // Enforces public access prevention for the bucket
-  async function enforcePublicAccessPrevention() {
+  async function setPublicAccessPreventionUnspecified() {
+    // Sets public access prevention to 'unspecified' for the bucket
     await storage.bucket(bucketName).setMetadata({
       iamConfiguration: {
-        publicAccessPrevention: 'enforced',
+        publicAccessPrevention: 'unspecified',
       },
     });
 
-    console.log(
-      `Public access prevention is set to enforced for ${bucketName}.`
-    );
+    console.log(`Public access prevention is 'unspecified' for ${bucketName}.`);
   }
 
-  enforcePublicAccessPrevention().catch(console.error);
-  // [END storage_enforce_public_access_prevention]
+  setPublicAccessPreventionUnspecified().catch(console.error);
+  // [END storage_set_public_access_prevention_unspecified]
 }
-
 main(...process.argv.slice(2));

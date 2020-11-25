@@ -138,9 +138,9 @@ it('should remove a bucket cors configuration', async () => {
   assert.ok(!bucket.metadata.cors);
 });
 
-it('should enforce public access prevention on a bucket', async () => {
+it('should set public access prevention to enforced', async () => {
   const output = execSync(
-    `node enforcePublicAccessPrevention.js ${bucketName}`
+    `node setPublicAccessPreventionEnforced.js ${bucketName}`
   );
   assert.match(
     output,
@@ -172,9 +172,9 @@ it("should get a bucket's public access prevention metadata", async () => {
   assert.ok(metadata.iamConfiguration.publicAccessPrevention);
 });
 
-it("should unspecify a bucket's public access prevention", async () => {
+it('should set public access prevention to unspecified', async () => {
   const output = execSync(
-    `node unspecifyPublicAccessPrevention.js ${bucketName}`
+    `node setPublicAccessPreventionUnspecified.js ${bucketName}`
   );
   assert.match(
     output,
