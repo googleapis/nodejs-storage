@@ -322,15 +322,15 @@ describe('file', () => {
 
   it('should set storage class for a file', async () => {
     const output = execSync(
-      `node fileChangeStorageClass.js ${bucketName} ${movedFileName} standard`
+      `node fileChangeStorageClass.js ${bucketName} ${copiedFileName} standard`
     );
     assert.include(
       output,
-      `Storage class standard have been set to ${movedFileName}.`
+      `Storage class standard have been set to ${copiedFileName}.`
     );
     const [metadata] = await storage
       .bucket(bucketName)
-      .file(movedFileName)
+      .file(copiedFileName)
       .getMetadata();
     assert.strictEqual(metadata.storageClass, 'STANDARD');
   });
