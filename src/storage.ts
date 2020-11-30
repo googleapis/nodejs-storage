@@ -641,6 +641,11 @@ export class Storage extends Service {
 
     Object.keys(storageClasses).forEach(storageClass => {
       if (body[storageClass]) {
+        if (metadata.storageClass) {
+          throw new Error(
+            `Both \`${storageClass}\` and \`storageClass\` were provided.`
+          );
+        }
         body.storageClass = storageClasses[storageClass];
         delete body[storageClass];
       }
@@ -820,7 +825,11 @@ export class Storage extends Service {
    *     automatically.
    * @property {number} [maxApiCalls] Maximum number of API calls to make.
    * @property {number} [maxResults] Maximum number of items plus prefixes to
-   *     return.
+   *     return per call.
+   *     Note: By default will handle pagination automatically
+   *     if more than 1 page worth of results are requested per call.
+   *     When `autoPaginate` is set to `false` the smaller of `maxResults`
+   *     or 1 page of results will be returned per call.
    * @property {string} [pageToken] A previously-returned page token
    *     representing part of the larger set of results to view.
    * @property {string} [userProject] The ID of the project which will be billed
@@ -829,11 +838,15 @@ export class Storage extends Service {
   /**
    * @typedef {array} GetBucketsResponse
    * @property {Bucket[]} 0 Array of {@link Bucket} instances.
+   * @property {objcet} 1 nextQuery A query object to receive more results.
+   * @property {object} 2 The full API response.
    */
   /**
    * @callback GetBucketsCallback
    * @param {?Error} err Request error, if any.
    * @param {Bucket[]} buckets Array of {@link Bucket} instances.
+   * @param {object} nextQuery A query object to receive more results.
+   * @param {object} apiResponse The full API response.
    */
   /**
    * Get Bucket objects for all of the buckets in your project.
@@ -938,7 +951,11 @@ export class Storage extends Service {
    *     automatically.
    * @property {number} [maxApiCalls] Maximum number of API calls to make.
    * @property {number} [maxResults] Maximum number of items plus prefixes to
-   *     return.
+   *     return per call.
+   *     Note: By default will handle pagination automatically
+   *     if more than 1 page worth of results are requested per call.
+   *     When `autoPaginate` is set to `false` the smaller of `maxResults`
+   *     or 1 page of results will be returned per call.
    * @property {string} [pageToken] A previously-returned page token
    *     representing part of the larger set of results to view.
    * @property {string} [userProject] This parameter is currently ignored.
@@ -946,11 +963,15 @@ export class Storage extends Service {
   /**
    * @typedef {array} GetHmacKeysResponse
    * @property {HmacKey[]} 0 Array of {@link HmacKey} instances.
+   * @param {object} nextQuery 1 A query object to receive more results.
+   * @param {object} apiResponse 2 The full API response.
    */
   /**
    * @callback GetHmacKeysCallback
    * @param {?Error} err Request error, if any.
    * @param {HmacKey[]} hmacKeys Array of {@link HmacKey} instances.
+   * @param {object} nextQuery A query object to receive more results.
+   * @param {object} apiResponse The full API response.
    */
   /**
    * Retrieves a list of HMAC keys matching the criteria.
