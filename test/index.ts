@@ -641,7 +641,7 @@ describe('Storage', () => {
       });
     });
 
-    it('should throw when `storageClass` is set do different value than provided storageClass name', () => {
+    it('should throw when `storageClass` is set to different value than provided storageClass name', () => {
       assert.throws(() => {
         storage.createBucket(
           BUCKET_NAME,
