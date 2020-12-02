@@ -172,6 +172,7 @@ export interface FileExistsCallback {
 }
 
 export interface DeleteFileOptions {
+  ignoreNotFound?: boolean;
   userProject?: string;
 }
 

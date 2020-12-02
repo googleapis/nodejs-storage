@@ -169,6 +169,7 @@ export interface CreateNotificationCallback {
 export type CreateNotificationResponse = [Notification, Metadata];
 
 export interface DeleteBucketOptions {
+  ignoreNotFound?: boolean;
   userProject?: string;
 }
 
