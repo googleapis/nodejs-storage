@@ -352,7 +352,7 @@ describe('Bucket', () => {
       bucket.addLifecycleRule(rule, assert.ifError);
     });
 
-    it('should properly convert Delete rules', done => {
+    it('should properly capitalize rule action', done => {
       const rule = {
         action: 'delete',
         condition: {},
@@ -362,7 +362,7 @@ describe('Bucket', () => {
         assert.deepStrictEqual(metadata.lifecycle.rule, [
           {
             action: {
-              type: 'Delete',
+              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
             },
             condition: rule.condition,
           },
@@ -385,7 +385,7 @@ describe('Bucket', () => {
         assert.deepStrictEqual(metadata.lifecycle.rule, [
           {
             action: {
-              type: rule.action,
+              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
               storageClass: rule.storageClass,
             },
             condition: rule.condition,
@@ -402,6 +402,7 @@ describe('Bucket', () => {
       const date = new Date();
 
       const rule = {
+        action: 'delete',
         condition: {
           createdBefore: date,
         },
