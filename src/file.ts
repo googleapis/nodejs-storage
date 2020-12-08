@@ -172,6 +172,7 @@ export interface FileExistsCallback {
 }
 
 export interface DeleteFileOptions {
+  ignoreNotFound?: boolean;
   userProject?: string;
 }
 
@@ -216,6 +217,7 @@ export interface CreateWriteStreamOptions extends CreateResumableUploadOptions {
 }
 
 export interface MakeFilePrivateOptions {
+  metadata?: Metadata;
   strict?: boolean;
   userProject?: string;
 }
@@ -393,6 +395,24 @@ const SEVEN_DAYS = 7 * 24 * 60 * 60;
  * @class
  */
 class File extends ServiceObject<File> {
+  acl: Acl;
+
+  bucket: Bucket;
+  storage: Storage;
+  kmsKeyName?: string;
+  userProject?: string;
+  signer?: URLSigner;
+  metadata: Metadata;
+  name: string;
+
+  generation?: number;
+  parent!: Bucket;
+
+  private encryptionKey?: string | Buffer;
+  private encryptionKeyBase64?: string;
+  private encryptionKeyHash?: string;
+  private encryptionKeyInterceptor?: Interceptor;
+
   /**
    * Cloud Storage uses access control lists (ACLs) to manage object and
    * bucket access. ACLs are the mechanism you use to share objects with other
@@ -436,22 +456,20 @@ class File extends ServiceObject<File> {
    *   const apiResponse = data[1];
    * });
    */
-  acl: Acl;
-
-  bucket: Bucket;
-  storage: Storage;
-  kmsKeyName?: string;
-  userProject?: string;
-  signer?: URLSigner;
-  name: string;
-  generation?: number;
-  parent!: Bucket;
-
-  private encryptionKey?: string | Buffer;
-  private encryptionKeyBase64?: string;
-  private encryptionKeyHash?: string;
-  private encryptionKeyInterceptor?: Interceptor;
-
+  /**
+   * The API-formatted resource description of the file.
+   *
+   * Note: This is not guaranteed to be up-to-date when accessed. To get the
+   * latest record, call the `getMetadata()` method.
+   *
+   * @name File#metadata
+   * @type {object}
+   */
+  /**
+   * The file's name.
+   * @name File#name
+   * @type {string}
+   */
   /**
    * @typedef {object} FileOptions Options passed to the File constructor.
    * @property {string} [encryptionKey] A custom encryption key.
@@ -513,6 +531,8 @@ class File extends ServiceObject<File> {
        *
        * @method File#delete
        * @param {object} [options] Configuration options.
+       * @param {boolean} [options.ignoreNotFound = false] Ignore an error if
+       *     the file does not exist.
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {DeleteFileCallback} [callback] Callback function.
@@ -2958,6 +2978,8 @@ class File extends ServiceObject<File> {
   ): void;
   /**
    * @typedef {object} MakeFilePrivateOptions Configuration options for File#makePrivate().
+   * @property {Metadata} [metadata] Define custom metadata properties to define
+   *     along with the operation.
    * @property {boolean} [strict] If true, set the file to be private to
    *     only the owner user. Otherwise, it will be private to the project.
    * @property {string} [userProject] The ID of the project which will be
@@ -3024,16 +3046,12 @@ class File extends ServiceObject<File> {
       query.userProject = options.userProject;
     }
 
-    this.setMetadata(
-      {
-        // You aren't allowed to set both predefinedAcl & acl properties on a
-        // file, so acl must explicitly be nullified, destroying all previous
-        // acls on the file.
-        acl: null,
-      },
-      query,
-      callback!
-    );
+    // You aren't allowed to set both predefinedAcl & acl properties on a file,
+    // so acl must explicitly be nullified, destroying all previous acls on the
+    // file.
+    const metadata = extend({}, options.metadata, {acl: null});
+
+    this.setMetadata(metadata, query, callback!);
   }
 
   makePublic(): Promise<MakeFilePublicResponse>;
@@ -3798,7 +3816,7 @@ class File extends ServiceObject<File> {
  * that a callback is omitted.
  */
 promisifyAll(File, {
-  exclude: ['request', 'setEncryptionKey'],
+  exclude: ['publicUrl', 'request', 'setEncryptionKey'],
 });
 
 /**

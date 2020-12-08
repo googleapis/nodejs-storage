@@ -168,6 +168,118 @@ export const PROTOCOL_REGEX = /^(\w*):\/\//;
  * they can be instantiated without use of the `new` keyword.
  */
 /**
+ * Cloud Storage uses access control lists (ACLs) to manage object and
+ * bucket access. ACLs are the mechanism you use to share objects with other
+ * users and allow other users to access your buckets and objects.
+ *
+ * This object provides constants to refer to the three permission levels that
+ * can be granted to an entity:
+ *
+ *   - `gcs.acl.OWNER_ROLE` - ("OWNER")
+ *   - `gcs.acl.READER_ROLE` - ("READER")
+ *   - `gcs.acl.WRITER_ROLE` - ("WRITER")
+ *
+ * @see [About Access Control Lists]{@link https://cloud.google.com/storage/docs/access-control/lists}
+ *
+ * @name Storage#acl
+ * @type {object}
+ * @property {string} OWNER_ROLE
+ * @property {string} READER_ROLE
+ * @property {string} WRITER_ROLE
+ *
+ * @example
+ * const {Storage} = require('@google-cloud/storage');
+ * const storage = new Storage();
+ * const albums = storage.bucket('albums');
+ *
+ * //-
+ * // Make all of the files currently in a bucket publicly readable.
+ * //-
+ * const options = {
+ *   entity: 'allUsers',
+ *   role: storage.acl.READER_ROLE
+ * };
+ *
+ * albums.acl.add(options, function(err, aclObject) {});
+ *
+ * //-
+ * // Make any new objects added to a bucket publicly readable.
+ * //-
+ * albums.acl.default.add(options, function(err, aclObject) {});
+ *
+ * //-
+ * // Grant a user ownership permissions to a bucket.
+ * //-
+ * albums.acl.add({
+ *   entity: 'user-useremail@example.com',
+ *   role: storage.acl.OWNER_ROLE
+ * }, function(err, aclObject) {});
+ *
+ * //-
+ * // If the callback is omitted, we'll return a Promise.
+ * //-
+ * albums.acl.add(options).then(function(data) {
+ *   const aclObject = data[0];
+ *   const apiResponse = data[1];
+ * });
+ */
+/**
+ * Get {@link Bucket} objects for all of the buckets in your project as
+ * a readable object stream.
+ *
+ * @method Storage#getBucketsStream
+ * @param {GetBucketsRequest} [query] Query object for listing buckets.
+ * @returns {ReadableStream} A readable stream that emits {@link Bucket}
+ *     instances.
+ *
+ * @example
+ * storage.getBucketsStream()
+ *   .on('error', console.error)
+ *   .on('data', function(bucket) {
+ *     // bucket is a Bucket object.
+ *   })
+ *   .on('end', function() {
+ *     // All buckets retrieved.
+ *   });
+ *
+ * //-
+ * // If you anticipate many results, you can end a stream early to prevent
+ * // unnecessary processing and API requests.
+ * //-
+ * storage.getBucketsStream()
+ *   .on('data', function(bucket) {
+ *     this.end();
+ *   });
+ */
+/**
+ * Get {@link HmacKey} objects for all of the HMAC keys in the project in a
+ * readable object stream.
+ *
+ * @method Storage#getHmacKeysStream
+ * @param {GetHmacKeysOptions} [options] Configuration options.
+ * @returns {ReadableStream} A readable stream that emits {@link HmacKey}
+ *     instances.
+ *
+ * @example
+ * storage.getHmacKeysStream()
+ *   .on('error', console.error)
+ *   .on('data', function(hmacKey) {
+ *     // hmacKey is an HmacKey object.
+ *   })
+ *   .on('end', function() {
+ *     // All HmacKey retrieved.
+ *   });
+ *
+ * //-
+ * // If you anticipate many results, you can end a stream early to prevent
+ * // unnecessary processing and API requests.
+ * //-
+ * storage.getHmacKeysStream()
+ *   .on('data', function(bucket) {
+ *     this.end();
+ *   });
+ */
+/**
  * <h4>ACLs</h4>
  * Cloud Storage uses access control lists (ACLs) to manage object and
  * bucket access. ACLs are the mechanism you use to share files with other users
@@ -218,62 +330,6 @@ export class Storage extends Service {
    */
   static HmacKey: typeof HmacKey = HmacKey;
 
-  /**
-   * Cloud Storage uses access control lists (ACLs) to manage object and
-   * bucket access. ACLs are the mechanism you use to share objects with other
-   * users and allow other users to access your buckets and objects.
-   *
-   * This object provides constants to refer to the three permission levels that
-   * can be granted to an entity:
-   *
-   *   - `gcs.acl.OWNER_ROLE` - ("OWNER")
-   *   - `gcs.acl.READER_ROLE` - ("READER")
-   *   - `gcs.acl.WRITER_ROLE` - ("WRITER")
-   *
-   * @see [About Access Control Lists]{@link https://cloud.google.com/storage/docs/access-control/lists}
-   *
-   * @name Storage.acl
-   * @type {object}
-   * @property {string} OWNER_ROLE
-   * @property {string} READER_ROLE
-   * @property {string} WRITER_ROLE
-   *
-   * @example
-   * const {Storage} = require('@google-cloud/storage');
-   * const storage = new Storage();
-   * const albums = storage.bucket('albums');
-   *
-   * //-
-   * // Make all of the files currently in a bucket publicly readable.
-   * //-
-   * const options = {
-   *   entity: 'allUsers',
-   *   role: storage.acl.READER_ROLE
-   * };
-   *
-   * albums.acl.add(options, function(err, aclObject) {});
-   *
-   * //-
-   * // Make any new objects added to a bucket publicly readable.
-   * //-
-   * albums.acl.default.add(options, function(err, aclObject) {});
-   *
-   * //-
-   * // Grant a user ownership permissions to a bucket.
-   * //-
-   * albums.acl.add({
-   *   entity: 'user-useremail@example.com',
-   *   role: storage.acl.OWNER_ROLE
-   * }, function(err, aclObject) {});
-   *
-   * //-
-   * // If the callback is omitted, we'll return a Promise.
-   * //-
-   * albums.acl.add(options).then(function(data) {
-   *   const aclObject = data[0];
-   *   const apiResponse = data[1];
-   * });
-   */
   static acl = {
     OWNER_ROLE: 'OWNER',
     READER_ROLE: 'READER',
@@ -288,62 +344,7 @@ export class Storage extends Service {
    */
   acl: typeof Storage.acl;
 
-  /**
-   * Get {@link Bucket} objects for all of the buckets in your project as
-   * a readable object stream.
-   *
-   * @method Storage#getBucketsStream
-   * @param {GetBucketsRequest} [query] Query object for listing buckets.
-   * @returns {ReadableStream} A readable stream that emits {@link Bucket} instances.
-   *
-   * @example
-   * storage.getBucketsStream()
-   *   .on('error', console.error)
-   *   .on('data', function(bucket) {
-   *     // bucket is a Bucket object.
-   *   })
-   *   .on('end', function() {
-   *     // All buckets retrieved.
-   *   });
-   *
-   * //-
-   * // If you anticipate many results, you can end a stream early to prevent
-   * // unnecessary processing and API requests.
-   * //-
-   * storage.getBucketsStream()
-   *   .on('data', function(bucket) {
-   *     this.end();
-   *   });
-   */
   getBucketsStream: () => Readable;
-
-  /**
-   * Get {@link HmacKey} objects for all of the HMAC keys in the project in
-   * a readable object stream.
-   *
-   * @method Storage#getHmacKeysStream
-   * @param {GetHmacKeysOptions} [options] Configuration options.
-   * @returns {ReadableStream} A readable stream that emits {@link HmacKey} instances.
-   *
-   * @example
-   * storage.getHmacKeysStream()
-   *   .on('error', console.error)
-   *   .on('data', function(hmacKey) {
-   *     // hmacKey is an HmacKey object.
-   *   })
-   *   .on('end', function() {
-   *     // All HmacKey retrieved.
-   *   });
-   *
-   * //-
-   * // If you anticipate many results, you can end a stream early to prevent
-   * // unnecessary processing and API requests.
-   * //-
-   * storage.getHmacKeysStream()
-   *   .on('data', function(bucket) {
-   *     this.end();
-   *   });
-   */
   getHmacKeysStream: () => Readable;
 
   /**
@@ -529,6 +530,11 @@ export class Storage extends Service {
    *     Force the use of the User Project metadata field to assign operational
    *     costs when an operation is made on a Bucket and its objects.
    * @property {boolean} [standard=true] Specify the storage class as Standard.
+   * @property {string} [storageClass] The new storage class. (`standard`,
+   *     `nearline`, `coldline`, or `archive`).
+   *     **Note:** The storage classes `multi_regional`, `regional`, and
+   *     `durable_reduced_availability` are now legacy and will be deprecated in
+   *     the future.
    * @property {Versioning} [versioning=undefined] Specify the versioning status.
    * @property {string} [userProject] The ID of the project which will be billed
    *     for the request.
@@ -641,6 +647,11 @@ export class Storage extends Service {
 
     Object.keys(storageClasses).forEach(storageClass => {
       if (body[storageClass]) {
+        if (metadata.storageClass && metadata.storageClass !== storageClass) {
+          throw new Error(
+            `Both \`${storageClass}\` and \`storageClass\` were provided.`
+          );
+        }
         body.storageClass = storageClasses[storageClass];
         delete body[storageClass];
       }
@@ -820,7 +831,11 @@ export class Storage extends Service {
    *     automatically.
    * @property {number} [maxApiCalls] Maximum number of API calls to make.
    * @property {number} [maxResults] Maximum number of items plus prefixes to
-   *     return.
+   *     return per call.
+   *     Note: By default will handle pagination automatically
+   *     if more than 1 page worth of results are requested per call.
+   *     When `autoPaginate` is set to `false` the smaller of `maxResults`
+   *     or 1 page of results will be returned per call.
    * @property {string} [pageToken] A previously-returned page token
    *     representing part of the larger set of results to view.
    * @property {string} [userProject] The ID of the project which will be billed
@@ -829,11 +844,15 @@ export class Storage extends Service {
   /**
    * @typedef {array} GetBucketsResponse
    * @property {Bucket[]} 0 Array of {@link Bucket} instances.
+   * @property {objcet} 1 nextQuery A query object to receive more results.
+   * @property {object} 2 The full API response.
    */
   /**
    * @callback GetBucketsCallback
    * @param {?Error} err Request error, if any.
    * @param {Bucket[]} buckets Array of {@link Bucket} instances.
+   * @param {object} nextQuery A query object to receive more results.
+   * @param {object} apiResponse The full API response.
    */
   /**
    * Get Bucket objects for all of the buckets in your project.
@@ -938,7 +957,11 @@ export class Storage extends Service {
    *     automatically.
    * @property {number} [maxApiCalls] Maximum number of API calls to make.
    * @property {number} [maxResults] Maximum number of items plus prefixes to
-   *     return.
+   *     return per call.
+   *     Note: By default will handle pagination automatically
+   *     if more than 1 page worth of results are requested per call.
+   *     When `autoPaginate` is set to `false` the smaller of `maxResults`
+   *     or 1 page of results will be returned per call.
    * @property {string} [pageToken] A previously-returned page token
    *     representing part of the larger set of results to view.
    * @property {string} [userProject] This parameter is currently ignored.
@@ -946,11 +969,15 @@ export class Storage extends Service {
   /**
    * @typedef {array} GetHmacKeysResponse
    * @property {HmacKey[]} 0 Array of {@link HmacKey} instances.
+   * @param {object} nextQuery 1 A query object to receive more results.
+   * @param {object} apiResponse 2 The full API response.
    */
   /**
    * @callback GetHmacKeysCallback
    * @param {?Error} err Request error, if any.
    * @param {HmacKey[]} hmacKeys Array of {@link HmacKey} instances.
+   * @param {object} nextQuery A query object to receive more results.
+   * @param {object} apiResponse The full API response.
    */
   /**
    * Retrieves a list of HMAC keys matching the criteria.
