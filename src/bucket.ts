@@ -1136,7 +1136,6 @@ class Bucket extends ServiceObject {
     }
 
     options = options || {};
-    callback = callback || util.noop;
 
     const newLifecycleRules = arrify(rule).map(rule => {
       if (typeof rule.action === 'object') {

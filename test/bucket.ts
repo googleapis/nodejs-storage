@@ -398,6 +398,29 @@ describe('Bucket', () => {
       bucket.addLifecycleRule(rule, assert.ifError);
     });
 
+    it('should properly set condition', done => {
+      const rule = {
+        action: 'delete',
+        condition: {
+          age: 30,
+        },
+      };
+
+      bucket.setMetadata = (metadata: Metadata) => {
+        assert.deepStrictEqual(metadata.lifecycle.rule, [
+          {
+            action: {
+              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
+            },
+            condition: rule.condition,
+          },
+        ]);
+        done();
+      };
+
+      bucket.addLifecycleRule(rule, assert.ifError);
+    });
+
     it('should convert Date object to date string for condition', done => {
       const date = new Date();
 
@@ -492,6 +515,27 @@ describe('Bucket', () => {
       };
 
       bucket.addLifecycleRule(rule, done);
+    });
+
+    it('should pass error from getMetadata to callback', done => {
+      const error = new Error('from getMetadata');
+      const rule = {
+        action: 'delete',
+        condition: {},
+      };
+
+      bucket.getMetadata = (callback: Function) => {
+        callback(error);
+      };
+
+      bucket.setMetadata = () => {
+        done(new Error('Metadata should not be set.'));
+      };
+
+      bucket.addLifecycleRule(rule, (err: Error) => {
+        assert.strictEqual(err, error);
+        done();
+      });
     });
   });
 
