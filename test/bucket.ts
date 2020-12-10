@@ -352,7 +352,7 @@ describe('Bucket', () => {
       bucket.addLifecycleRule(rule, assert.ifError);
     });
 
-    it('should properly convert Delete rules', done => {
+    it('should properly capitalize rule action', done => {
       const rule = {
         action: 'delete',
         condition: {},
@@ -362,7 +362,7 @@ describe('Bucket', () => {
         assert.deepStrictEqual(metadata.lifecycle.rule, [
           {
             action: {
-              type: 'Delete',
+              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
             },
             condition: rule.condition,
           },
@@ -385,7 +385,7 @@ describe('Bucket', () => {
         assert.deepStrictEqual(metadata.lifecycle.rule, [
           {
             action: {
-              type: rule.action,
+              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
               storageClass: rule.storageClass,
             },
             condition: rule.condition,
@@ -398,10 +398,34 @@ describe('Bucket', () => {
       bucket.addLifecycleRule(rule, assert.ifError);
     });
 
+    it('should properly set condition', done => {
+      const rule = {
+        action: 'delete',
+        condition: {
+          age: 30,
+        },
+      };
+
+      bucket.setMetadata = (metadata: Metadata) => {
+        assert.deepStrictEqual(metadata.lifecycle.rule, [
+          {
+            action: {
+              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
+            },
+            condition: rule.condition,
+          },
+        ]);
+        done();
+      };
+
+      bucket.addLifecycleRule(rule, assert.ifError);
+    });
+
     it('should convert Date object to date string for condition', done => {
       const date = new Date();
 
       const rule = {
+        action: 'delete',
         condition: {
           createdBefore: date,
         },
@@ -491,6 +515,27 @@ describe('Bucket', () => {
       };
 
       bucket.addLifecycleRule(rule, done);
+    });
+
+    it('should pass error from getMetadata to callback', done => {
+      const error = new Error('from getMetadata');
+      const rule = {
+        action: 'delete',
+        condition: {},
+      };
+
+      bucket.getMetadata = (callback: Function) => {
+        callback(error);
+      };
+
+      bucket.setMetadata = () => {
+        done(new Error('Metadata should not be set.'));
+      };
+
+      bucket.addLifecycleRule(rule, (err: Error) => {
+        assert.strictEqual(err, error);
+        done();
+      });
     });
   });
 
@@ -1892,6 +1937,22 @@ describe('Bucket', () => {
         assert(didMakeFilesPrivate);
         done();
       });
+    });
+
+    it('should accept metadata', done => {
+      const options = {
+        metadata: {a: 'b', c: 'd'},
+      };
+      bucket.setMetadata = (metadata: {}) => {
+        assert.deepStrictEqual(metadata, {
+          acl: null,
+          ...options.metadata,
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        assert.strictEqual(typeof (options.metadata as any).acl, 'undefined');
+        done();
+      };
+      bucket.makePrivate(options, assert.ifError);
     });
 
     it('should accept userProject', done => {

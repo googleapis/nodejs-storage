@@ -169,6 +169,7 @@ export interface CreateNotificationCallback {
 export type CreateNotificationResponse = [Notification, Metadata];
 
 export interface DeleteBucketOptions {
+  ignoreNotFound?: boolean;
   userProject?: string;
 }
 
@@ -275,6 +276,7 @@ export type GetNotificationsResponse = [Notification[], Metadata];
 export interface MakeBucketPrivateOptions {
   includeFiles?: boolean;
   force?: boolean;
+  metadata?: Metadata;
   userProject?: string;
 }
 
@@ -378,6 +380,197 @@ type MakeAllFilesPublicPrivateResponse = [File[]];
 const RESUMABLE_THRESHOLD = 5000000;
 
 /**
+ * Get and set IAM policies for your bucket.
+ *
+ * @name Bucket#iam
+ * @mixes Iam
+ *
+ * @see [Cloud Storage IAM Management](https://cloud.google.com/storage/docs/access-control/iam#short_title_iam_management)
+ * @see [Granting, Changing, and Revoking Access](https://cloud.google.com/iam/docs/granting-changing-revoking-access)
+ * @see [IAM Roles](https://cloud.google.com/iam/docs/understanding-roles)
+ *
+ * @example
+ * const {Storage} = require('@google-cloud/storage');
+ * const storage = new Storage();
+ * const bucket = storage.bucket('albums');
+ *
+ * //-
+ * // Get the IAM policy for your bucket.
+ * //-
+ * bucket.iam.getPolicy(function(err, policy) {
+ *   console.log(policy);
+ * });
+ *
+ * //-
+ * // If the callback is omitted, we'll return a Promise.
+ * //-
+ * bucket.iam.getPolicy().then(function(data) {
+ *   const policy = data[0];
+ *   const apiResponse = data[1];
+ * });
+ *
+ * @example <caption>include:samples/iam.js</caption>
+ * region_tag:storage_view_bucket_iam_members
+ * Example of retrieving a bucket's IAM policy:
+ *
+ * @example <caption>include:samples/iam.js</caption>
+ * region_tag:storage_add_bucket_iam_member
+ * Example of adding to a bucket's IAM policy:
+ *
+ * @example <caption>include:samples/iam.js</caption>
+ * region_tag:storage_remove_bucket_iam_member
+ * Example of removing from a bucket's IAM policy:
+ */
+/**
+ * Cloud Storage uses access control lists (ACLs) to manage object and
+ * bucket access. ACLs are the mechanism you use to share objects with other
+ * users and allow other users to access your buckets and objects.
+ *
+ * An ACL consists of one or more entries, where each entry grants permissions
+ * to an entity. Permissions define the actions that can be performed against
+ * an object or bucket (for example, `READ` or `WRITE`); the entity defines
+ * who the permission applies to (for example, a specific user or group of
+ * users).
+ *
+ * The `acl` object on a Bucket instance provides methods to get you a list of
+ * the ACLs defined on your bucket, as well as set, update, and delete them.
+ *
+ * Buckets also have
+ * [default
+ * ACLs](https://cloud.google.com/storage/docs/access-control/lists#default)
+ * for all created files. Default ACLs specify permissions that all new
+ * objects added to the bucket will inherit by default. You can add, delete,
+ * get, and update entities and permissions for these as well with
+ * {@link Bucket#acl.default}.
+ *
+ * @see [About Access Control Lists]{@link http://goo.gl/6qBBPO}
+ * @see [Default ACLs]{@link https://cloud.google.com/storage/docs/access-control/lists#default}
+ *
+ * @name Bucket#acl
+ * @mixes Acl
+ * @property {Acl} default Cloud Storage Buckets have
+ * [default
+ * ACLs](https://cloud.google.com/storage/docs/access-control/lists#default)
+ * for all created files. You can add, delete, get, and update entities and
+ * permissions for these as well. The method signatures and examples are all
+ * the same, after only prefixing the method call with `default`.
+ *
+ * @example
+ * const {Storage} = require('@google-cloud/storage');
+ * const storage = new Storage();
+ *
+ * //-
+ * // Make a bucket's contents publicly readable.
+ * //-
+ * const myBucket = storage.bucket('my-bucket');
+ *
+ * const options = {
+ *   entity: 'allUsers',
+ *   role: storage.acl.READER_ROLE
+ * };
+ *
+ * myBucket.acl.add(options, function(err, aclObject) {});
+ *
+ * //-
+ * // If the callback is omitted, we'll return a Promise.
+ * //-
+ * myBucket.acl.add(options).then(function(data) {
+ *   const aclObject = data[0];
+ *   const apiResponse = data[1];
+ * });
+ *
+ * @example <caption>include:samples/acl.js</caption>
+ * region_tag:storage_print_bucket_acl
+ * Example of printing a bucket's ACL:
+ *
+ * @example <caption>include:samples/acl.js</caption>
+ * region_tag:storage_print_bucket_acl_for_user
+ * Example of printing a bucket's ACL for a specific user:
+ *
+ * @example <caption>include:samples/acl.js</caption>
+ * region_tag:storage_add_bucket_owner
+ * Example of adding an owner to a bucket:
+ *
+ * @example <caption>include:samples/acl.js</caption>
+ * region_tag:storage_remove_bucket_owner
+ * Example of removing an owner from a bucket:
+ *
+ * @example <caption>include:samples/acl.js</caption>
+ * region_tag:storage_add_bucket_default_owner
+ * Example of adding a default owner to a bucket:
+ *
+ * @example <caption>include:samples/acl.js</caption>
+ * region_tag:storage_remove_bucket_default_owner
+ * Example of removing a default owner from a bucket:
+ */
+/**
+ * The API-formatted resource description of the bucket.
+ *
+ * Note: This is not guaranteed to be up-to-date when accessed. To get the
+ * latest record, call the `getMetadata()` method.
+ *
+ * @name Bucket#metadata
+ * @type {object}
+ */
+/**
+ * The bucket's name.
+ * @name Bucket#name
+ * @type {string}
+ */
+/**
+ * Get {@link File} objects for the files currently in the bucket as a
+ * readable object stream.
+ *
+ * @method Bucket#getFilesStream
+ * @param {GetFilesOptions} [query] Query object for listing files.
+ * @returns {ReadableStream} A readable stream that emits {@link File} instances.
+ *
+ * @example
+ * const {Storage} = require('@google-cloud/storage');
+ * const storage = new Storage();
+ * const bucket = storage.bucket('albums');
+ *
+ * bucket.getFilesStream()
+ *   .on('error', console.error)
+ *   .on('data', function(file) {
+ *     // file is a File object.
+ *   })
+ *   .on('end', function() {
+ *     // All files retrieved.
+ *   });
+ *
+ * //-
+ * // If you anticipate many results, you can end a stream early to prevent
+ * // unnecessary processing and API requests.
+ * //-
+ * bucket.getFilesStream()
+ *   .on('data', function(file) {
+ *     this.end();
+ *   });
+ *
+ * //-
+ * // If you're filtering files with a delimiter, you should use
+ * // {@link Bucket#getFiles} and set `autoPaginate: false` in order to
+ * // preserve the `apiResponse` argument.
+ * //-
+ * const prefixes = [];
+ *
+ * function callback(err, files, nextQuery, apiResponse) {
+ *   prefixes = prefixes.concat(apiResponse.prefixes);
+ *
+ *   if (nextQuery) {
+ *     bucket.getFiles(nextQuery, callback);
+ *   } else {
+ *     // prefixes = The finished array of prefixes.
+ *   }
+ * }
+ *
+ * bucket.getFiles({
+ *   autoPaginate: false,
+ *   delimiter: '/'
+ * }, callback);
+ */
+/**
  * Create a Bucket object to interact with a Cloud Storage bucket.
  *
  * @class
@@ -394,11 +587,7 @@ const RESUMABLE_THRESHOLD = 5000000;
  * const bucket = storage.bucket('albums');
  */
 class Bucket extends ServiceObject {
-  /**
-   * The bucket's name.
-   * @name Bucket#name
-   * @type {string}
-   */
+  metadata: Metadata;
   name: string;
 
   /**
@@ -416,187 +605,9 @@ class Bucket extends ServiceObject {
    */
   userProject?: string;
 
-  /**
-   * Cloud Storage uses access control lists (ACLs) to manage object and
-   * bucket access. ACLs are the mechanism you use to share objects with other
-   * users and allow other users to access your buckets and objects.
-   *
-   * An ACL consists of one or more entries, where each entry grants permissions
-   * to an entity. Permissions define the actions that can be performed against
-   * an object or bucket (for example, `READ` or `WRITE`); the entity defines
-   * who the permission applies to (for example, a specific user or group of
-   * users).
-   *
-   * The `acl` object on a Bucket instance provides methods to get you a list of
-   * the ACLs defined on your bucket, as well as set, update, and delete them.
-   *
-   * Buckets also have
-   * [default
-   * ACLs](https://cloud.google.com/storage/docs/access-control/lists#default)
-   * for all created files. Default ACLs specify permissions that all new
-   * objects added to the bucket will inherit by default. You can add, delete,
-   * get, and update entities and permissions for these as well with
-   * {@link Bucket#acl.default}.
-   *
-   * @see [About Access Control Lists]{@link http://goo.gl/6qBBPO}
-   * @see [Default ACLs]{@link https://cloud.google.com/storage/docs/access-control/lists#default}
-   *
-   * @name Bucket#acl
-   * @mixes Acl
-   * @property {Acl} default Cloud Storage Buckets have
-   * [default
-   * ACLs](https://cloud.google.com/storage/docs/access-control/lists#default)
-   * for all created files. You can add, delete, get, and update entities and
-   * permissions for these as well. The method signatures and examples are all
-   * the same, after only prefixing the method call with `default`.
-   *
-   * @example
-   * const {Storage} = require('@google-cloud/storage');
-   * const storage = new Storage();
-   *
-   * //-
-   * // Make a bucket's contents publicly readable.
-   * //-
-   * const myBucket = storage.bucket('my-bucket');
-   *
-   * const options = {
-   *   entity: 'allUsers',
-   *   role: storage.acl.READER_ROLE
-   * };
-   *
-   * myBucket.acl.add(options, function(err, aclObject) {});
-   *
-   * //-
-   * // If the callback is omitted, we'll return a Promise.
-   * //-
-   * myBucket.acl.add(options).then(function(data) {
-   *   const aclObject = data[0];
-   *   const apiResponse = data[1];
-   * });
-   *
-   * @example <caption>include:samples/acl.js</caption>
-   * region_tag:storage_print_bucket_acl
-   * Example of printing a bucket's ACL:
-   *
-   * @example <caption>include:samples/acl.js</caption>
-   * region_tag:storage_print_bucket_acl_for_user
-   * Example of printing a bucket's ACL for a specific user:
-   *
-   * @example <caption>include:samples/acl.js</caption>
-   * region_tag:storage_add_bucket_owner
-   * Example of adding an owner to a bucket:
-   *
-   * @example <caption>include:samples/acl.js</caption>
-   * region_tag:storage_remove_bucket_owner
-   * Example of removing an owner from a bucket:
-   *
-   * @example <caption>include:samples/acl.js</caption>
-   * region_tag:storage_add_bucket_default_owner
-   * Example of adding a default owner to a bucket:
-   *
-   * @example <caption>include:samples/acl.js</caption>
-   * region_tag:storage_remove_bucket_default_owner
-   * Example of removing a default owner from a bucket:
-   */
   acl: Acl;
-
-  /**
-   * Get and set IAM policies for your bucket.
-   *
-   * @name Bucket#iam
-   * @mixes Iam
-   *
-   * @see [Cloud Storage IAM Management](https://cloud.google.com/storage/docs/access-control/iam#short_title_iam_management)
-   * @see [Granting, Changing, and Revoking Access](https://cloud.google.com/iam/docs/granting-changing-revoking-access)
-   * @see [IAM Roles](https://cloud.google.com/iam/docs/understanding-roles)
-   *
-   * @example
-   * const {Storage} = require('@google-cloud/storage');
-   * const storage = new Storage();
-   * const bucket = storage.bucket('albums');
-   *
-   * //-
-   * // Get the IAM policy for your bucket.
-   * //-
-   * bucket.iam.getPolicy(function(err, policy) {
-   *   console.log(policy);
-   * });
-   *
-   * //-
-   * // If the callback is omitted, we'll return a Promise.
-   * //-
-   * bucket.iam.getPolicy().then(function(data) {
-   *   const policy = data[0];
-   *   const apiResponse = data[1];
-   * });
-   *
-   * @example <caption>include:samples/iam.js</caption>
-   * region_tag:storage_view_bucket_iam_members
-   * Example of retrieving a bucket's IAM policy:
-   *
-   * @example <caption>include:samples/iam.js</caption>
-   * region_tag:storage_add_bucket_iam_member
-   * Example of adding to a bucket's IAM policy:
-   *
-   * @example <caption>include:samples/iam.js</caption>
-   * region_tag:storage_remove_bucket_iam_member
-   * Example of removing from a bucket's IAM policy:
-   */
   iam: Iam;
 
-  /**
-   * Get {@link File} objects for the files currently in the bucket as a
-   * readable object stream.
-   *
-   * @method Bucket#getFilesStream
-   * @param {GetFilesOptions} [query] Query object for listing files.
-   * @returns {ReadableStream} A readable stream that emits {@link File} instances.
-   *
-   * @example
-   * const {Storage} = require('@google-cloud/storage');
-   * const storage = new Storage();
-   * const bucket = storage.bucket('albums');
-   *
-   * bucket.getFilesStream()
-   *   .on('error', console.error)
-   *   .on('data', function(file) {
-   *     // file is a File object.
-   *   })
-   *   .on('end', function() {
-   *     // All files retrieved.
-   *   });
-   *
-   * //-
-   * // If you anticipate many results, you can end a stream early to prevent
-   * // unnecessary processing and API requests.
-   * //-
-   * bucket.getFilesStream()
-   *   .on('data', function(file) {
-   *     this.end();
-   *   });
-   *
-   * //-
-   * // If you're filtering files with a delimiter, you should use
-   * // {@link Bucket#getFiles} and set `autoPaginate: false` in order to
-   * // preserve the `apiResponse` argument.
-   * //-
-   * const prefixes = [];
-   *
-   * function callback(err, files, nextQuery, apiResponse) {
-   *   prefixes = prefixes.concat(apiResponse.prefixes);
-   *
-   *   if (nextQuery) {
-   *     bucket.getFiles(nextQuery, callback);
-   *   } else {
-   *     // prefixes = The finished array of prefixes.
-   *   }
-   * }
-   *
-   * bucket.getFiles({
-   *   autoPaginate: false,
-   *   delimiter: '/'
-   * }, callback);
-   */
   getFilesStream: Function;
   signer?: URLSigner;
 
@@ -647,7 +658,9 @@ class Bucket extends ServiceObject {
       },
       /**
        * @typedef {object} DeleteBucketOptions Configuration options.
-       * @param {string} [userProject] The ID of the project which will be
+       * @property {boolean} [ignoreNotFound = false] Ignore an error if
+       *     the bucket does not exist.
+       * @property {string} [userProject] The ID of the project which will be
        *     billed for the request.
        */
       /**
@@ -666,6 +679,10 @@ class Bucket extends ServiceObject {
        *
        * @method Bucket#delete
        * @param {DeleteBucketOptions} [options] Configuration options.
+       * @param {boolean} [options.ignoreNotFound = false] Ignore an error if
+       *     the bucket does not exist.
+       * @param {string} [options.userProject] The ID of the project which will be
+       *     billed for the request.
        * @param {DeleteBucketCallback} [callback] Callback function.
        * @returns {Promise<DeleteBucketResponse>}
        *
@@ -693,7 +710,7 @@ class Bucket extends ServiceObject {
       },
       /**
        * @typedef {object} BucketExistsOptions Configuration options for Bucket#exists().
-       * @param {string} [userProject] The ID of the project which will be
+       * @property {string} [userProject] The ID of the project which will be
        *     billed for the request.
        */
       /**
@@ -710,6 +727,8 @@ class Bucket extends ServiceObject {
        *
        * @method Bucket#exists
        * @param {BucketExistsOptions} [options] Configuration options.
+       * @param {string} [options.userProject] The ID of the project which will be
+       *     billed for the request.
        * @param {BucketExistsCallback} [callback] Callback function.
        * @returns {Promise<BucketExistsResponse>}
        *
@@ -760,6 +779,10 @@ class Bucket extends ServiceObject {
        *
        * @method Bucket#get
        * @param {GetBucketOptions} [options] Configuration options.
+       * @param {boolean} [options.autoCreate] Automatically create the object if
+       *     it does not exist. Default: `false`
+       * @param {string} [options.userProject] The ID of the project which will be
+       *     billed for the request.
        * @param {GetBucketCallback} [callback] Callback function.
        * @returns {Promise<GetBucketResponse>}
        *
@@ -810,6 +833,8 @@ class Bucket extends ServiceObject {
        *
        * @method Bucket#getMetadata
        * @param {GetBucketMetadataOptions} [options] Configuration options.
+       * @param {string} [options.userProject] The ID of the project which will be
+       *     billed for the request.
        * @param {GetBucketMetadataCallback} [callback] Callback function.
        * @returns {Promise<GetBucketMetadataResponse>}
        *
@@ -859,6 +884,8 @@ class Bucket extends ServiceObject {
        * @method Bucket#setMetadata
        * @param {object<string, *>} metadata The metadata you wish to set.
        * @param {SetBucketMetadataOptions} [options] Configuration options.
+       * @param {string} [options.userProject] The ID of the project which will be
+       *     billed for the request.
        * @param {SetBucketMetadataCallback} [callback] Callback function.
        * @returns {Promise<SetBucketMetadataResponse>}
        *
@@ -970,8 +997,23 @@ class Bucket extends ServiceObject {
   ): void;
   /**
    * @typedef {object} AddLifecycleRuleOptions Configuration options for Bucket#addLifecycleRule().
-   * @property {string} [append=true] The new rules will be appended to any
+   * @property {boolean} [append=true] The new rules will be appended to any
    *     pre-existing rules.
+   */
+  /**
+   *
+   * @typedef {object} LifecycleRule The new lifecycle rule to be added to objects
+   *     in this bucket.
+   * @property {string|object} action The action to be taken upon matching of
+   *     all the conditions 'delete' or 'setStorageClass'.
+   *     **Note**: For configuring a raw-formatted rule object to be passed as `action`
+   *               please refer to the [examples]{@link https://cloud.google.com/storage/docs/managing-lifecycles#configexamples}.
+   * @property {object} condition Condition a bucket must meet before the
+   *     action occurson the bucket. Refer to followitn supported [conditions]{@link https://cloud.google.com/storage/docs/lifecycle#conditions}.
+   * @property {string} [storageClass] When using the `setStorageClass`
+   *     action, provide this option to dictate which storage class the object
+   *     should update to. Please see
+   *     [SetStorageClass option documentation]{@link https://cloud.google.com/storage/docs/lifecycle#setstorageclass} for supported transitions.
    */
   /**
    * Add an object lifecycle management rule to the bucket.
@@ -985,6 +1027,12 @@ class Bucket extends ServiceObject {
    *
    * @param {LifecycleRule} rule The new lifecycle rule to be added to objects
    *     in this bucket.
+   * @param {string|object} rule.action The action to be taken upon matching of
+   *     all the conditions 'delete' or 'setStorageClass'.
+   *     **Note**: For configuring a raw-formatted rule object to be passed as `action`
+   *               please refer to the [examples]{@link https://cloud.google.com/storage/docs/managing-lifecycles#configexamples}.
+   * @param {object} rule.condition Condition a bucket must meet before the
+   *     action occurson the bucket. Refer to followitn supported [conditions]{@link https://cloud.google.com/storage/docs/lifecycle#conditions}.
    * @param {string} [rule.storageClass] When using the `setStorageClass`
    *     action, provide this option to dictate which storage class the object
    *     should update to.
@@ -1123,7 +1171,6 @@ class Bucket extends ServiceObject {
     }
 
     options = options || {};
-    callback = callback || util.noop;
 
     const newLifecycleRules = arrify(rule).map(rule => {
       if (typeof rule.action === 'object') {
@@ -1136,13 +1183,8 @@ class Bucket extends ServiceObject {
 
       apiFormattedRule.condition = {};
       apiFormattedRule.action = {
-        type: rule.action,
+        type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
       };
-
-      // @TODO: Remove if the API becomes less picky.
-      if (rule.action === 'delete') {
-        apiFormattedRule.action.type = 'Delete';
-      }
 
       if (rule.storageClass) {
         apiFormattedRule.action.storageClass = rule.storageClass;
@@ -1242,6 +1284,14 @@ class Bucket extends ServiceObject {
    * @param {string|File} destination The file you would like the
    *     source files combined into.
    * @param {CombineOptions} [options] Configuration options.
+   * @param {string} [options.kmsKeyName] Resource name of the Cloud KMS key, of
+   *     the form
+   *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
+   *     that will be used to encrypt the object. Overwrites the object
+   * metadata's `kms_key_name` value, if any.
+   * @param {string} [options.userProject] The ID of the project which will be
+   *     billed for the request.
+
    * @param {CombineCallback} [callback] Callback function.
    * @returns {Promise<CombineResponse>}
    *
@@ -1366,7 +1416,18 @@ class Bucket extends ServiceObject {
    * @typedef {object} CreateChannelConfig
    * @property {string} address The address where notifications are
    *     delivered for this channel.
-   * @extends WatchAllOptions
+   * @property {string} [delimiter] Returns results in a directory-like mode.
+   * @property {number} [maxResults] Maximum number of `items` plus `prefixes`
+   *     to return in a single page of responses.
+   * @property {string} [pageToken] A previously-returned page token
+   *     representing part of the larger set of results to view.
+   * @property {string} [prefix] Filter results to objects whose names begin
+   *     with this prefix.
+   * @property {string} [projection=noAcl] Set of properties to return.
+   * @property {string} [userProject] The ID of the project which will be
+   *     billed for the request.
+   * @property {boolean} [versions=false] If `true`, lists all versions of an object
+   *     as distinct results.
    */
   /**
    * @typedef {object} CreateChannelOptions
@@ -1394,7 +1455,23 @@ class Bucket extends ServiceObject {
    *
    * @param {string} id The ID of the channel to create.
    * @param {CreateChannelConfig} config Configuration for creating channel.
+   * @param {string} config.address The address where notifications are
+   *     delivered for this channel.
+   * @param {string} [config.delimiter] Returns results in a directory-like mode.
+   * @param {number} [config.maxResults] Maximum number of `items` plus `prefixes`
+   *     to return in a single page of responses.
+   * @param {string} [config.pageToken] A previously-returned page token
+   *     representing part of the larger set of results to view.
+   * @param {string} [config.prefix] Filter results to objects whose names begin
+   *     with this prefix.
+   * @param {string} [config.projection=noAcl] Set of properties to return.
+   * @param {string} [config.userProject] The ID of the project which will be
+   *     billed for the request.
+   * @param {boolean} [config.versions=false] If `true`, lists all versions of an object
+   *     as distinct results.
    * @param {CreateChannelOptions} [options] Configuration options.
+   * @param {string} [options.userProject] The ID of the project which will be
+   *     billed for the request.
    * @param {CreateChannelCallback} [callback] Callback function.
    * @returns {Promise<CreateChannelResponse>}
    *
@@ -1529,6 +1606,22 @@ class Bucket extends ServiceObject {
    *     - `my-topic`
    * @param {CreateNotificationOptions} [options] Metadata to set for the
    *     notification.
+   * @param {object} [options.customAttributes] An optional list of additional
+   *     attributes to attach to each Cloud PubSub message published for this
+   *     notification subscription.
+   * @param {string[]} [options.eventTypes] If present, only send notifications about
+   *     listed event types. If empty, sent notifications for all event types.
+   * @param {string} [options.objectNamePrefix] If present, only apply this
+   *     notification configuration to object names that begin with this prefix.
+   * @param {string} [options.payloadFormat] The desired content of the Payload.
+   *     Defaults to `JSON_API_V1`.
+   *
+   *     Acceptable values are:
+   *     - `JSON_API_V1`
+   *
+   *     - `NONE`
+   * @param {string} [options.userProject] The ID of the project which will be
+   *     billed for the request.
    * @param {CreateNotificationCallback} [callback] Callback function.
    * @returns {Promise<CreateNotificationResponse>}
    * @throws {Error} If a valid topic is not provided.
@@ -1664,6 +1757,8 @@ class Bucket extends ServiceObject {
    * @see [Objects: delete API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/delete}
    *
    * @param {DeleteFilesOptions} [query] Query object. See {@link Bucket#getFiles}
+   * @param {boolean} [query.force] Suppress errors until all files have been
+   *     processed.
    * @param {DeleteFilesCallback} [callback] Callback function.
    * @returns {Promise}
    *
@@ -1756,7 +1851,7 @@ class Bucket extends ServiceObject {
   /**
    * Delete one or more labels from this bucket.
    *
-   * @param {string|string[]} labels The labels to delete. If no labels are
+   * @param {string|string[]} [labels] The labels to delete. If no labels are
    *     provided, all of the labels are removed.
    * @param {DeleteLabelsCallback} [callback] Callback function.
    * @returns {Promise<DeleteLabelsResponse>}
@@ -1904,6 +1999,9 @@ class Bucket extends ServiceObject {
    * to set the appropriate configuration on the Bucket's metadata.
    *
    * @param {EnableLoggingOptions} config Configuration options.
+   * @param {string|Bucket} [config.bucket] The bucket for the log entries. By
+   *     default, the current bucket is used.
+   * @param {string} config.prefix A unique prefix for log object names.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
    * @returns {Promise<SetBucketMetadataResponse>}
    *
@@ -2042,7 +2140,7 @@ class Bucket extends ServiceObject {
    * the different use cases you may have.
    *
    * @param {string} name The name of the file in this bucket.
-   * @param {object} [options] Configuration options.
+   * @param {FileOptions} [options] Configuration options.
    * @param {string|number} [options.generation] Only use a specific revision of
    *     this file.
    * @param {string} [options.encryptionKey] A custom encryption key. See
@@ -2052,6 +2150,8 @@ class Bucket extends ServiceObject {
    *     be used to encrypt the object. Must be in the format:
    *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`.
    *     KMS key ring must use the same location as the bucket.
+   * @param {string} [options.userProject] The ID of the project which will be
+   *     billed for all requests made from File object.
    * @returns {File}
    *
    * @example
@@ -2128,6 +2228,39 @@ class Bucket extends ServiceObject {
    * @see [Objects: list API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/list}
    *
    * @param {GetFilesOptions} [query] Query object for listing files.
+   * @param {boolean} [query.autoPaginate=true] Have pagination handled
+   *     automatically.
+   * @param {string} [query.delimiter] Results will contain only objects whose
+   *     names, aside from the prefix, do not contain delimiter. Objects whose
+   *     names, aside from the prefix, contain delimiter will have their name
+   *     truncated after the delimiter, returned in `apiResponse.prefixes`.
+   *     Duplicate prefixes are omitted.
+   * @param {string} [query.directory] Filter results based on a directory name, or
+   *     more technically, a "prefix".
+   * @param {string} [query.endOffset] Filter results to objects whose names are
+   * lexicographically before endOffset. If startOffset is also set, the objects
+   * listed have names between startOffset (inclusive) and endOffset (exclusive).
+   * @param {boolean} [query.includeTrailingDelimiter] If true, objects that end in
+   * exactly one instance of delimiter have their metadata included in items[]
+   * in addition to the relevant part of the object name appearing in prefixes[].
+   * @param {string} [query.prefix] Filter results to objects whose names begin
+   *     with this prefix.
+   * @param {number} [query.maxApiCalls] Maximum number of API calls to make.
+   * @param {number} [query.maxResults] Maximum number of items plus prefixes to
+   *     return per call.
+   *     Note: By default will handle pagination automatically
+   *     if more than 1 page worth of results are requested per call.
+   *     When `autoPaginate` is set to `false` the smaller of `maxResults`
+   *     or 1 page of results will be returned per call.
+   * @param {string} [query.pageToken] A previously-returned page token
+   *     representing part of the larger set of results to view.
+   * @param {string} [query.startOffset] Filter results to objects whose names are
+   * lexicographically equal to or after startOffset. If endOffset is also set,
+   * the objects listed have names between startOffset (inclusive) and endOffset (exclusive).
+   * @param {string} [query.userProject] The ID of the project which will be
+   *     billed for the request.
+   * @param {boolean} [query.versions] If true, returns File objects scoped to
+   *     their versions.
    * @param {GetFilesCallback} [callback] Callback function.
    * @returns {Promise<GetFilesResponse>}
    *
@@ -2359,7 +2492,7 @@ class Bucket extends ServiceObject {
     callback: GetNotificationsCallback
   ): void;
   /**
-   * @typedef {object} GetNotificationOptions Configuration options for Bucket#getNotification().
+   * @typedef {object} GetNotificationsOptions Configuration options for Bucket#getNotification().
    * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
    */
@@ -2381,6 +2514,8 @@ class Bucket extends ServiceObject {
    * @see [Notifications: list]{@link https://cloud.google.com/storage/docs/json_api/v1/notifications/list}
    *
    * @param {GetNotificationsOptions} [options] Configuration options.
+   * @param {string} [options.userProject] The ID of the project which will be
+   *     billed for the request.
    * @param {GetNotificationsCallback} [callback] Callback function.
    * @returns {Promise<GetNotificationsResponse>}
    *
@@ -2464,7 +2599,7 @@ class Bucket extends ServiceObject {
    *     Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
    * @property {string} [version='v2'] The signing version to use, either
    *     'v2' or 'v4'.
-   * @param {boolean} [virtualHostedStyle=false] Use virtual hosted-style
+   * @property {boolean} [virtualHostedStyle=false] Use virtual hosted-style
    *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
    *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
    *     should generally be preferred instaed of path-style URL.
@@ -2485,7 +2620,7 @@ class Bucket extends ServiceObject {
    *           no space. Requests made using the signed URL will need to
    *           delimit multi-valued headers using a single `,` as well, or
    *           else the server will report a mismatched signature.
-   * @param {object} [config.queryParams] Additional query parameters to include
+   * @property {object} [queryParams] Additional query parameters to include
    *     in the signed URL.
    */
   /**
@@ -2506,6 +2641,35 @@ class Bucket extends ServiceObject {
    * @throws {Error} if an expiration timestamp from the past is given.
    *
    * @param {GetBucketSignedUrlConfig} config Configuration object.
+   * @param {string} config.action Currently only supports "list" (HTTP: GET).
+   * @param {*} config.expires A timestamp when this link will expire. Any value
+   *     given is passed to `new Date()`.
+   *     Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
+   * @param {string} [config.version='v2'] The signing version to use, either
+   *     'v2' or 'v4'.
+   * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
+   *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
+   *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
+   *     should generally be preferred instaed of path-style URL.
+   *     Currently defaults to `false` for path-style, although this may change in a
+   *     future major-version release.
+   * @param {string} [config.cname] The cname for this bucket, i.e.,
+   *     "https://cdn.example.com".
+   *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
+   * @param {object} [config.extensionHeaders] If these headers are used, the
+   *     server will check to make sure that the client provides matching
+   * values. See [Canonical extension
+   * headers](https://cloud.google.com/storage/docs/access-control/signed-urls#about-canonical-extension-headers)
+   *     for the requirements of this feature, most notably:
+   *       - The header name must be prefixed with `x-goog-`
+   *       - The header name must be all lowercase
+   *     Note: Multi-valued header passed as an array in the extensionHeaders
+   *           object is converted into a string, delimited by `,` with
+   *           no space. Requests made using the signed URL will need to
+   *           delimit multi-valued headers using a single `,` as well, or
+   *           else the server will report a mismatched signature.
+   * @property {object} [config.queryParams] Additional query parameters to include
+   *     in the signed URL.
    * @param {GetSignedUrlCallback} [callback] Callback function.
    * @returns {Promise<GetSignedUrlResponse>}
    *
@@ -2583,7 +2747,7 @@ class Bucket extends ServiceObject {
    *
    * @throws {Error} if a metageneration is not provided.
    *
-   * @param {Number|String} metageneration The bucket's metageneration. This is
+   * @param {number|string} metageneration The bucket's metageneration. This is
    *     accesssible from calling {@link File#getMetadata}.
    * @param {BucketLockCallback} [callback] Callback function.
    * @returns {Promise<BucketLockResponse>}
@@ -2643,11 +2807,13 @@ class Bucket extends ServiceObject {
    */
   /**
    * @typedef {object} MakeBucketPrivateOptions
-   * @param {boolean} [includeFiles=false] Make each file in the bucket
+   * @property {boolean} [includeFiles=false] Make each file in the bucket
    *     private.
-   * @param {boolean} [force] Queue errors occurred while making files
+   * @property {Metadata} [metadata] Define custom metadata properties to define
+   *     along with the operation.
+   * @property {boolean} [force] Queue errors occurred while making files
    *     private until all files have been processed.
-   * @param {string} [userProject] The ID of the project which will be
+   * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
    */
   /**
@@ -2669,6 +2835,14 @@ class Bucket extends ServiceObject {
    * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
    *
    * @param {MakeBucketPrivateOptions} [options] Configuration options.
+   * @param {boolean} [options.includeFiles=false] Make each file in the bucket
+   *     private.
+   * @param {Metadata} [options.metadata] Define custom metadata properties to define
+   *     along with the operation.
+   * @param {boolean} [options.force] Queue errors occurred while making files
+   *     private until all files have been processed.
+   * @param {string} [options.userProject] The ID of the project which will be
+   *     billed for the request.
    * @param {MakeBucketPrivateCallback} [callback] Callback function.
    * @returns {Promise<MakeBucketPrivateResponse>}
    *
@@ -2740,14 +2914,11 @@ class Bucket extends ServiceObject {
       query.userProject = options.userProject;
     }
 
-    this.setMetadata(
-      {
-        // You aren't allowed to set both predefinedAcl & acl properties on
-        // a bucket so acl must explicitly be nullified.
-        acl: null,
-      },
-      query
-    )
+    // You aren't allowed to set both predefinedAcl & acl properties on a bucket
+    // so acl must explicitly be nullified.
+    const metadata = extend({}, options.metadata, {acl: null});
+
+    this.setMetadata(metadata, query)
       .then(() => {
         if (options.includeFiles) {
           return promisify(this.makeAllFilesPublicPrivate_).call(this, options);
@@ -2767,9 +2938,9 @@ class Bucket extends ServiceObject {
   ): void;
   /**
    * @typedef {object} MakeBucketPublicOptions
-   * @param {boolean} [includeFiles=false] Make each file in the bucket
+   * @property {boolean} [includeFiles=false] Make each file in the bucket
    *     private.
-   * @param {boolean} [force] Queue errors occurred while making files
+   * @property {boolean} [force] Queue errors occurred while making files
    *     private until all files have been processed.
    */
   /**
@@ -2800,6 +2971,10 @@ class Bucket extends ServiceObject {
    * @see [Buckets: patch API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch}
    *
    * @param {MakeBucketPublicOptions} [options] Configuration options.
+   * @param {boolean} [options.includeFiles=false] Make each file in the bucket
+   *     private.
+   * @param {boolean} [options.force] Queue errors occurred while making files
+   *     private until all files have been processed.
    * @param {MakeBucketPublicCallback} [callback] Callback function.
    * @returns {Promise<MakeBucketPublicResponse>}
    *
@@ -2992,7 +3167,9 @@ class Bucket extends ServiceObject {
    * unmentioned labels will not be touched.
    *
    * @param {object<string, string>} labels Labels to set on the bucket.
-   * @param {object} [options] Configuration options.
+   * @param {SetLabelsOptions} [options] Configuration options.
+   * @param {string} [options.userProject] The ID of the project which will be
+   *     billed for the request.
    * @param {SetLabelsCallback} [callback] Callback function.
    * @returns {Promise<SetLabelsResponse>}
    *
@@ -3087,6 +3264,7 @@ class Bucket extends ServiceObject {
       callback!
     );
   }
+
   setCorsConfiguration(
     corsConfiguration: Cors[]
   ): Promise<SetBucketMetadataResponse>;
@@ -3095,11 +3273,31 @@ class Bucket extends ServiceObject {
     callback: SetBucketMetadataCallback
   ): void;
   /**
+   *
+   * @typedef {object} Cors
+   * @property {number} [maxAgeSeconds] The number of seconds the browser is
+   *     allowed to make requests before it must repeat the preflight request.
+   * @property {string[]} [method] HTTP method allowed for cross origin resource
+   *     sharing with this bucket.
+   * @property {string[]} [origin] an origin allowed for cross origin resource
+   *     sharing with this bucket.
+   * @property {string[]} [responseHeader] A header allowed for cross origin
+   *     resource sharing with this bucket.
+   */
+  /**
    * This can be used to set the CORS configuration on the bucket.
    *
    * The configuration will be overwritten with the value passed into this.
    *
    * @param {Cors[]} corsConfiguration The new CORS configuration to set
+   * @param {number} [corsConfiguration.maxAgeSeconds] The number of seconds the browser is
+   *     allowed to make requests before it must repeat the preflight request.
+   * @param {string[]} [corsConfiguration.method] HTTP method allowed for cross origin resource
+   *     sharing with this bucket.
+   * @param {string[]} [corsConfiguration.origin] an origin allowed for cross origin resource
+   *     sharing with this bucket.
+   * @param {string[]} [corsConfiguration.responseHeader] A header allowed for cross origin
+   *     resource sharing with this bucket.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
    * @returns {Promise<SetBucketMetadataResponse>}
    *
@@ -3144,7 +3342,7 @@ class Bucket extends ServiceObject {
   ): void;
   /**
    * @typedef {object} SetBucketStorageClassOptions
-   * @param {string} [userProject] - The ID of the project which will be
+   * @property {string} [userProject] - The ID of the project which will be
    *     billed for the request.
    */
   /**
@@ -3255,6 +3453,94 @@ class Bucket extends ServiceObject {
   upload(pathString: string, callback: UploadCallback): void;
   /**
    * @typedef {object} UploadOptions Configuration options for Bucket#upload().
+   * @property {string|File} [destination] The place to save
+   *     your file. If given a string, the file will be uploaded to the bucket
+   *     using the string as a filename. When given a File object, your local
+   * file will be uploaded to the File object's bucket and under the File
+   * object's name. Lastly, when this argument is omitted, the file is uploaded
+   * to your bucket using the name of the local file.
+   * @property {string} [encryptionKey] A custom encryption key. See
+   *     [Customer-supplied Encryption
+   * Keys](https://cloud.google.com/storage/docs/encryption#customer-supplied).
+   * @property {boolean} [gzip] Automatically gzip the file. This will set
+   *     `options.metadata.contentEncoding` to `gzip`.
+   * @property {string} [kmsKeyName] The name of the Cloud KMS key that will
+   *     be used to encrypt the object. Must be in the format:
+   *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`.
+   * @property {object} [metadata] See an
+   *     [Objects: insert request
+   * body](https://cloud.google.com/storage/docs/json_api/v1/objects/insert#request_properties_JSON).
+   * @property {string} [offset] The starting byte of the upload stream, for
+   *     resuming an interrupted upload. Defaults to 0.
+   * @property {string} [predefinedAcl] Apply a predefined set of access
+   *     controls to this object.
+   *
+   *     Acceptable values are:
+   *     - **`authenticatedRead`** - Object owner gets `OWNER` access, and
+   *       `allAuthenticatedUsers` get `READER` access.
+   *
+   *     - **`bucketOwnerFullControl`** - Object owner gets `OWNER` access, and
+   *       project team owners get `OWNER` access.
+   *
+   *     - **`bucketOwnerRead`** - Object owner gets `OWNER` access, and project
+   *       team owners get `READER` access.
+   *
+   *     - **`private`** - Object owner gets `OWNER` access.
+   *
+   *     - **`projectPrivate`** - Object owner gets `OWNER` access, and project
+   *       team members get access according to their roles.
+   *
+   *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
+   * get `READER` access.
+   * @property {boolean} [private] Make the uploaded file private. (Alias for
+   *     `options.predefinedAcl = 'private'`)
+   * @property {boolean} [public] Make the uploaded file public. (Alias for
+   *     `options.predefinedAcl = 'publicRead'`)
+   * @property {boolean} [resumable] Force a resumable upload. (default:
+   *     true for files larger than 5 MB).
+   * @property {number} [timeout=60000] Set the HTTP request timeout in
+   *     milliseconds. This option is not available for resumable uploads.
+   *     Default: `60000`
+   * @property {string} [uri] The URI for an already-created resumable
+   *     upload. See {@link File#createResumableUpload}.
+   * @property {string} [userProject] The ID of the project which will be
+   *     billed for the request.
+   * @property {string|boolean} [validation] Possible values: `"md5"`,
+   *     `"crc32c"`, or `false`. By default, data integrity is validated with an
+   *     MD5 checksum for maximum reliability. CRC32c will provide better
+   *     performance with less reliability. You may also choose to skip
+   * validation completely, however this is **not recommended**.
+   */
+  /**
+   * @typedef {array} UploadResponse
+   * @property {object} 0 The uploaded {@link File}.
+   * @property {object} 1 The full API response.
+   */
+  /**
+   * @callback UploadCallback
+   * @param {?Error} err Request error, if any.
+   * @param {object} file The uploaded {@link File}.
+   * @param {object} apiResponse The full API response.
+   */
+  /**
+   * Upload a file to the bucket. This is a convenience method that wraps
+   * {@link File#createWriteStream}.
+   *
+   * You can specify whether or not an upload is resumable by setting
+   * `options.resumable`. *Resumable uploads are enabled by default if your
+   * input file is larger than 5 MB.*
+   *
+   * For faster crc32c computation, you must manually install
+   * [`fast-crc32c`](https://www.npmjs.com/package/fast-crc32c):
+   *
+   *     $ npm install --save fast-crc32c
+   *
+   * @see [Upload Options (Simple or Resumable)]{@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload#uploads}
+   * @see [Objects: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert}
+   *
+   * @param {string} pathString The fully qualified path to the file you
+   *     wish to upload to your bucket.
+   * @param {UploadOptions} [options] Configuration options.
    * @param {string|File} [options.destination] The place to save
    *     your file. If given a string, the file will be uploaded to the bucket
    *     using the string as a filename. When given a File object, your local
@@ -3312,37 +3598,6 @@ class Bucket extends ServiceObject {
    *     MD5 checksum for maximum reliability. CRC32c will provide better
    *     performance with less reliability. You may also choose to skip
    * validation completely, however this is **not recommended**.
-   */
-  /**
-   * @typedef {array} UploadResponse
-   * @property {object} 0 The uploaded {@link File}.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback UploadCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} file The uploaded {@link File}.
-   * @param {object} apiResponse The full API response.
-   */
-  /**
-   * Upload a file to the bucket. This is a convenience method that wraps
-   * {@link File#createWriteStream}.
-   *
-   * You can specify whether or not an upload is resumable by setting
-   * `options.resumable`. *Resumable uploads are enabled by default if your
-   * input file is larger than 5 MB.*
-   *
-   * For faster crc32c computation, you must manually install
-   * [`fast-crc32c`](https://www.npmjs.com/package/fast-crc32c):
-   *
-   *     $ npm install --save fast-crc32c
-   *
-   * @see [Upload Options (Simple or Resumable)]{@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload#uploads}
-   * @see [Objects: insert API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert}
-   *
-   * @param {string} pathString The fully qualified path to the file you
-   *     wish to upload to your bucket.
-   * @param {UploadOptions} [options] Configuration options.
    * @param {UploadCallback} [callback] Callback function.
    * @returns {Promise<UploadResponse>}
    *
@@ -3579,6 +3834,13 @@ class Bucket extends ServiceObject {
    * @private
    *
    * @param {MakeAllFilesPublicPrivateOptions} [options] Configuration options.
+   * @param {boolean} [options.force] Suppress errors until all files have been
+   *     processed.
+   * @param {boolean} [options.private] Make files private.
+   * @param {boolean} [options.public] Make files public.
+   * @param {string} [options.userProject] The ID of the project which will be
+   *     billed for the request.
+
    * @param {MakeAllFilesPublicPrivateCallback} callback Callback function.
    *
    * @return {Promise<MakeAllFilesPublicPrivateResponse>}
