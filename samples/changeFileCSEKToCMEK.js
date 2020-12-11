@@ -23,7 +23,7 @@ function main(
   bucketName = 'my-bucket',
   fileName = 'test.txt',
   encryptionKey = 'my-encription-key',
-  kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US
+  kmsKeyName = 'my-kms-key'
 ) {
   // [START storage_object_csek_to_cmek]
   /**

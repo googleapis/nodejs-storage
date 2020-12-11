@@ -35,24 +35,40 @@ function main(
   // const srcFileName = 'Remote file to download, e.g. file.txt';
   // const destFileName = 'Local destination for file, e.g. ./local/path/to/file.txt';
 
-  const http = require('http');
-  const fs = require('fs');
+  // CI authentication is done with ADC. Cache it here, restore it after file downloaded.
+  const GOOGLE_APPLICATION_CREDENTIALS =
+    process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT;
 
-  function downloadPublicFile() {
-    const file = fs.createWriteStream(destFileName);
+  // Remove the authentication.
+  delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  delete process.env.GOOGLE_CLOUD_PROJECT;
 
-    http.get(
-      `http://storage.googleapis.com/${bucketName}/${srcFileName}`,
-      response => {
-        response.pipe(file);
-        console.log(
-          `Downloaded public file ${srcFileName} from bucket ${bucketName} to ${destFileName}.`
-        );
-      }
+  // Imports the Google Cloud client library
+  const {Storage} = require('@google-cloud/storage');
+
+  // Creates a client
+  const storage = new Storage();
+
+  async function downloadPublicFile() {
+    const options = {
+      // The path to which the file should be downloaded, e.g. "./file.txt"
+      destination: destFileName,
+    };
+
+    // Download public file.
+    await storage.bucket(bucketName).file(srcFileName).download(options);
+
+    console.log(
+      `Downloaded public file gs://${bucketName}/${srcFileName} downloaded to ${destFileName}.`
     );
+
+    // Restore Authentication
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = GOOGLE_APPLICATION_CREDENTIALS;
+    process.env.GOOGLE_CLOUD_PROJECT = GOOGLE_CLOUD_PROJECT;
   }
 
-  downloadPublicFile();
+  downloadPublicFile().catch(console.error);
   // [END storage_download_public_file]
 }
 process.on('unhandledRejection', err => {
