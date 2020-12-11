@@ -324,10 +324,7 @@ describe('file', () => {
     const output = execSync(
       `node fileChangeStorageClass.js ${bucketName} ${copiedFileName} standard`
     );
-    assert.include(
-      output,
-      `Storage class standard have been set to ${copiedFileName}.`
-    );
+    assert.include(output, `${copiedFileName} has been set to standard.`);
     const [metadata] = await storage
       .bucket(bucketName)
       .file(copiedFileName)

@@ -158,10 +158,7 @@ it("should change a bucket's default storage class", async () => {
   const output = execSync(
     `node changeDefaultStorageClass.js ${bucketName} coldline`
   );
-  assert.include(
-    output,
-    `Storage class coldline have been set to ${bucketName}.`
-  );
+  assert.include(output, `${bucketName} has been set to coldline.`);
   const [metadata] = await bucket.getMetadata();
   assert.strictEqual(metadata.storageClass, 'COLDLINE');
 });
@@ -172,7 +169,7 @@ it('should create bucket with storage class and location', async () => {
   );
   assert.include(
     output,
-    `Bucket ${bucketNameWithClassAndLocation} created with class coldline in ASIA region.`
+    `${bucketNameWithClassAndLocation} created with coldline class in ASIA.`
   );
   const [metadata] = await bucketWithClassAndLocation.getMetadata();
   assert.strictEqual(metadata.storageClass, 'COLDLINE');
