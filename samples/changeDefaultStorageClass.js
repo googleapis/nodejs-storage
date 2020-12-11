@@ -36,9 +36,7 @@ function main(bucketName = 'my-bucket', storageClass = 'standard') {
   async function changeDefaultStorageClass() {
     await storage.bucket(bucketName).setStorageClass(storageClass);
 
-    console.log(
-      `Storage class ${storageClass} have been set to ${bucketName}.`
-    );
+    console.log(`${bucketName} has been set to ${storageClass}.`);
   }
 
   changeDefaultStorageClass();

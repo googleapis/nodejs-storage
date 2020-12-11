@@ -43,7 +43,7 @@ function main(
       .file(fileName)
       .setStorageClass(storageClass);
 
-    console.log(`Storage class ${storageClass} have been set to ${fileName}.`);
+    console.log(`${fileName} has been set to ${storageClass}.`);
   }
 
   fileChangeStorageClass();

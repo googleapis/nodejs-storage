@@ -50,7 +50,7 @@ function main(
     });
 
     console.log(
-      `Bucket ${bucket.name} created with class ${storageClass} in ${location} region.`
+      `${bucket.name} created with ${storageClass} class in ${location}.`
     );
   }
 
