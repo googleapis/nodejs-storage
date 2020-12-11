@@ -17,15 +17,15 @@
 // sample-metadata:
 //   title: Storage Remove Bucket Label.
 //   description: Removes bucket label.
-//   usage: node removeBucketLabel.js <BUCKET_NAME>
+//   usage: node removeBucketLabel.js <BUCKET_NAME> JSON.stringify(['labelone','labelone'])
 
-function main(bucketName = 'my-bucket', label = 'label') {
+function main(bucketName = 'my-bucket', label_keys = ['label1', 'label2']) {
   // [START storage_remove_bucket_label]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const label= = 'Name of a label, e.g. label';
+  // const label_keys = 'List of label keys, e.g. ['label1','label2']';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -34,8 +34,8 @@ function main(bucketName = 'my-bucket', label = 'label') {
   const storage = new Storage();
 
   async function removeBucketLabel() {
-    await storage.bucket(bucketName).deleteLabels(label);
-    console.log(`Removed label from bucket ${bucketName}.`);
+    await storage.bucket(bucketName).deleteLabels(label_keys);
+    console.log(`Removed labels from bucket ${bucketName}.`);
   }
 
   removeBucketLabel();

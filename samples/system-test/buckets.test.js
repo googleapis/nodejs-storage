@@ -146,7 +146,7 @@ it('should add label to bucket', async () => {
 
 it('should remove label to bucket', async () => {
   const output = execSync(`node removeBucketLabel.js ${bucketName} labelone`);
-  assert.include(output, `Removed label from bucket ${bucketName}.`);
+  assert.include(output, `Removed labels from bucket ${bucketName}.`);
   const [labels] = await storage.bucket(bucketName).getLabels();
   assert.isFalse('labelone' in labels);
 });
