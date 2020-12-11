@@ -4,6 +4,36 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+## [5.7.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.6.0...v5.7.0) (2020-12-10)
+
+
+### Features
+
+* support metadata updates from makePrivate() methods ([#1355](https://www.github.com/googleapis/nodejs-storage/issues/1355)) ([3db1e83](https://www.github.com/googleapis/nodejs-storage/commit/3db1e832af1cd3a394305b0a1120953d85f86249))
+
+
+### Bug Fixes
+
+* capitalize action in Bucket#addLifecycleRule ([#1358](https://www.github.com/googleapis/nodejs-storage/issues/1358)) ([205f39f](https://www.github.com/googleapis/nodejs-storage/commit/205f39f970639c06258fb1e0cd18a4d963729262))
+* jsdoc for bucket ([#1359](https://www.github.com/googleapis/nodejs-storage/issues/1359)) ([5fa530a](https://www.github.com/googleapis/nodejs-storage/commit/5fa530ab909e837558deecd7e1aa50a7cc4f5830))
+
+## [5.6.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.5.1...v5.6.0) (2020-12-02)
+
+
+### Features
+
+* allow ignoring 404 errors during delete() operations ([#1347](https://www.github.com/googleapis/nodejs-storage/issues/1347)) ([dab0e7d](https://www.github.com/googleapis/nodejs-storage/commit/dab0e7d9345499411cec57186ef7404026f041eb))
+
+### [5.5.1](https://www.github.com/googleapis/nodejs-storage/compare/v5.5.0...v5.5.1) (2020-12-01)
+
+
+### Bug Fixes
+
+* add publicUrl to exclude promisifyAll ([#1339](https://www.github.com/googleapis/nodejs-storage/issues/1339)) ([ea2c2c9](https://www.github.com/googleapis/nodejs-storage/commit/ea2c2c9d670b8a8eefffa3e67dd2599135c0d933))
+* error if both `storageClass` and specific storage class name are provided ([#1323](https://www.github.com/googleapis/nodejs-storage/issues/1323)) ([91a65f8](https://www.github.com/googleapis/nodejs-storage/commit/91a65f86fe5f9608437b91d6e67192c78b0e8d7b))
+* only throw if `storageClass` and specific storage class name provide different values ([#1346](https://www.github.com/googleapis/nodejs-storage/issues/1346)) ([1765608](https://www.github.com/googleapis/nodejs-storage/commit/1765608430d98c555e4a7431c28cd5878e65c7df))
+* **docs:** explain manual pagination and add usage sample ([#1317](https://www.github.com/googleapis/nodejs-storage/issues/1317)) ([16b779d](https://www.github.com/googleapis/nodejs-storage/commit/16b779de912f6ac082ec5ee3d904b125a5526485))
+
 ## [5.5.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.4.0...v5.5.0) (2020-11-03)
 
 
