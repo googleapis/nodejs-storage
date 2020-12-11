@@ -140,6 +140,20 @@ it('should remove a bucket cors configuration', async () => {
   assert.ok(!bucket.metadata.cors);
 });
 
+it("should enable a bucket's versioning", async () => {
+  const output = execSync(`node enableBucketVersioning.js ${bucketName}`);
+  assert.include(output, `Versioning is enabled for bucket ${bucketName}.`);
+  await bucket.getMetadata();
+  assert.strictEqual(bucket.metadata.versioning.enabled, true);
+});
+
+it("should disable a bucket's versioning", async () => {
+  const output = execSync(`node disableBucketVersioning.js ${bucketName}`);
+  assert.include(output, `Versioning is disabled for bucket ${bucketName}.`);
+  await bucket.getMetadata();
+  assert.strictEqual(bucket.metadata.versioning.enabled, false);
+});
+
 it("should change a bucket's default storage class", async () => {
   const output = execSync(
     `node changeDefaultStorageClass.js ${bucketName} coldline`
