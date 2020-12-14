@@ -354,6 +354,18 @@ describe('file', () => {
     assert.match(output, new RegExp(`modified: '${userMetadata.modified}'`));
   });
 
+  it('should set storage class for a file', async () => {
+    const output = execSync(
+      `node fileChangeStorageClass.js ${bucketName} ${copiedFileName} standard`
+    );
+    assert.include(output, `${copiedFileName} has been set to standard.`);
+    const [metadata] = await storage
+      .bucket(bucketName)
+      .file(copiedFileName)
+      .getMetadata();
+    assert.strictEqual(metadata.storageClass, 'STANDARD');
+  });
+
   it('should combine multiple files into one new file', async () => {
     const firstFileName = 'file-one.txt';
     const secondFileName = 'file-two.txt';
@@ -380,7 +392,6 @@ describe('file', () => {
       contents.toString(),
       files.map(x => x.contents).join('')
     );
-    await destinationFile.delete();
   });
 
   it('should delete a file', async () => {
