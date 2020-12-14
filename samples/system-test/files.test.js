@@ -241,7 +241,7 @@ describe('file', () => {
       );
       assert.include(
         output,
-        `Downloaded public file gs://${bucketName}/${publicFileName} downloaded to ${downloadPublicFilePath}.`
+        `Downloaded public file ${publicFileName} from bucket name ${bucketName} to ${downloadPublicFilePath}.`
       );
       fs.statSync(downloadPublicFilePath);
     });

@@ -60,7 +60,7 @@ function main(
     await storage.bucket(bucketName).file(srcFileName).download(options);
 
     console.log(
-      `Downloaded public file gs://${bucketName}/${srcFileName} downloaded to ${destFileName}.`
+      `Downloaded public file ${srcFileName} from bucket name ${bucketName} to ${destFileName}.`
     );
 
     // Restore Authentication

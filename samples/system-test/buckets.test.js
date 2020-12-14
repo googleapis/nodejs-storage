@@ -149,7 +149,7 @@ it("should add a bucket's website configuration", async () => {
 
   assert.include(
     output,
-    `Website configuration has been added to ${bucketName}.`
+    `Static website bucket ${bucketName} is set up to use http://example.com as the index page and http://example.com/404.html as the 404 page.`
   );
 
   const [metadata] = await bucket.getMetadata();

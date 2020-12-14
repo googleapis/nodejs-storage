@@ -46,7 +46,9 @@ function main(
       },
     });
 
-    console.log(`Website configuration has been added to ${bucketName}.`);
+    console.log(
+      `Static website bucket ${bucketName} is set up to use ${mainPageSuffix} as the index page and ${notFoundPage} as the 404 page.`
+    );
   }
 
   addBucketWebsiteConfiguration();
