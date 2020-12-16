@@ -2364,8 +2364,14 @@ class Bucket extends ServiceObject {
     }
     query = Object.assign({}, query);
 
+    let delimiter = '/';
+    if (query.delimiter && query.delimiter !== '/') {
+      delimiter = query.delimiter;
+    }
+
     if (query.directory) {
-      query.prefix = `${query.directory}/`.replace(/\/*$/, '/');
+      const regex = new RegExp(`[${delimiter}]*$`);
+      query.prefix = `${query.directory}`.replace(regex, delimiter);
       delete query.directory;
     }
 

@@ -3157,6 +3157,47 @@ describe('storage', () => {
       });
     });
 
+    it('should get files from a directory with a non-/ delimeter', done => {
+      bucket.getFiles(
+        {directory: DIRECTORY_NAME, delimiter: '.'},
+        (err, files) => {
+          assert.ifError(err);
+          assert.strictEqual(files!.length, 0);
+          done();
+        }
+      );
+    });
+
+    it('should get files from a directory with a slash delimeter', done => {
+      bucket.getFiles(
+        {directory: DIRECTORY_NAME, delimiter: '/'},
+        (err, files) => {
+          assert.ifError(err);
+          assert.strictEqual(files!.length, 3);
+          done();
+        }
+      );
+    });
+
+    it('should get files from a directory followed by slash with a slash delimeter', done => {
+      bucket.getFiles(
+        {directory: DIRECTORY_NAME + '/', delimiter: '/'},
+        (err, files) => {
+          assert.ifError(err);
+          assert.strictEqual(files!.length, 3);
+          done();
+        }
+      );
+    });
+
+    it('should get files with delimeter', done => {
+      bucket.getFiles({delimiter: '/'}, (err, files) => {
+        assert.ifError(err);
+        assert.strictEqual(files!.length, 3);
+        done();
+      });
+    });
+
     it('should get files from a directory as a stream', done => {
       let numFilesEmitted = 0;
 
