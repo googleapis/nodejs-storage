@@ -24,11 +24,16 @@ const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
 const storage = new Storage();
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
+const bucketNameWithClassAndLocation = `nodejs-storage-samples-${uuid.v4()}`;
 const defaultKmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA;
 const bucket = storage.bucket(bucketName);
+const bucketWithClassAndLocation = storage.bucket(
+  bucketNameWithClassAndLocation
+);
 
 after(async () => {
-  return bucket.delete().catch(console.error);
+  await bucket.delete().catch(console.error);
+  await bucketWithClassAndLocation.delete().catch(console.error);
 });
 
 it('should create a bucket', async () => {
@@ -149,6 +154,7 @@ it("should disable a bucket's versioning", async () => {
   assert.strictEqual(bucket.metadata.versioning.enabled, false);
 });
 
+
 it('should add label to bucket', async () => {
   const output = execSync(
     `node addBucketLabel.js ${bucketName} labelone labelonevalue`
@@ -163,6 +169,27 @@ it('should remove label to bucket', async () => {
   assert.include(output, `Removed labels from bucket ${bucketName}.`);
   const [labels] = await storage.bucket(bucketName).getLabels();
   assert.isFalse('labelone' in labels);
+
+it("should change a bucket's default storage class", async () => {
+  const output = execSync(
+    `node changeDefaultStorageClass.js ${bucketName} coldline`
+  );
+  assert.include(output, `${bucketName} has been set to coldline.`);
+  const [metadata] = await bucket.getMetadata();
+  assert.strictEqual(metadata.storageClass, 'COLDLINE');
+});
+
+it('should create bucket with storage class and location', async () => {
+  const output = execSync(
+    `node createBucketWithStorageClassAndLocation.js ${bucketNameWithClassAndLocation} coldline ASIA`
+  );
+  assert.include(
+    output,
+    `${bucketNameWithClassAndLocation} created with coldline class in ASIA.`
+  );
+  const [metadata] = await bucketWithClassAndLocation.getMetadata();
+  assert.strictEqual(metadata.storageClass, 'COLDLINE');
+  assert.strictEqual(metadata.location, 'ASIA');
 });
 
 it('should delete a bucket', async () => {

@@ -24,9 +24,11 @@ objects to users via direct download.
   * [Add Bucket Owner Acl](#add-bucket-owner-acl)
   * [Add File Owner Acl](#add-file-owner-acl)
   * [Storage Get Bucket Metadata.](#storage-get-bucket-metadata.)
+  * [Change Bucket's Default Storage Class.](#change-bucket's-default-storage-class.)
   * [Storage Configure Bucket Cors.](#storage-configure-bucket-cors.)
   * [Copy File](#copy-file)
   * [Copy Old Version Of File.](#copy-old-version-of-file.)
+  * [Create Bucket With Storage Class and Location.](#create-bucket-with-storage-class-and-location.)
   * [Create New Bucket](#create-new-bucket)
   * [Create Notification](#create-notification)
   * [Delete Bucket](#delete-bucket)
@@ -34,6 +36,7 @@ objects to users via direct download.
   * [Delete Notification](#delete-notification)
   * [Delete Old Version Of File.](#delete-old-version-of-file.)
   * [Disable Bucket Lifecycle Management](#disable-bucket-lifecycle-management)
+  * [Storage Disable Bucket Versioning.](#storage-disable-bucket-versioning.)
   * [Disable Default Event Based Hold](#disable-default-event-based-hold)
   * [Disable Requester Pays](#disable-requester-pays)
   * [Disable Uniform Bucket Level Access](#disable-uniform-bucket-level-access)
@@ -41,10 +44,12 @@ objects to users via direct download.
   * [Download File](#download-file)
   * [Download File Using Requester Pays](#download-file-using-requester-pays)
   * [Enable Bucket Lifecycle Management](#enable-bucket-lifecycle-management)
+  * [Storage Enable Bucket Versioning.](#storage-enable-bucket-versioning.)
   * [Enable Default Event Based Hold](#enable-default-event-based-hold)
   * [Enable Default KMS Key](#enable-default-kms-key)
   * [Enable Requester Pays](#enable-requester-pays)
   * [Enable Uniform Bucket Level Access](#enable-uniform-bucket-level-access)
+  * [Change File's Storage Class.](#change-file's-storage-class.)
   * [Storage Set File Metadata.](#storage-set-file-metadata.)
   * [Generate Encryption Key](#generate-encryption-key)
   * [Generate Signed Url](#generate-signed-url)
@@ -217,6 +222,25 @@ __Usage:__
 
 
 
+### Change Bucket's Default Storage Class.
+
+Change Bucket's Default Storage Class.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/changeDefaultStorageClass.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/changeDefaultStorageClass.js,samples/README.md)
+
+__Usage:__
+
+
+`node changeDefaultStorageClass.js <BUCKET_NAME> <CLASS_NAME>`
+
+
+-----
+
+
+
+
 ### Storage Configure Bucket Cors.
 
 Configures bucket cors.
@@ -265,6 +289,25 @@ __Usage:__
 
 
 `node copyOldVersionOfFile.js <SRC_BUCKET_NAME> <SRC_FILE_NAME> <DEST_BUCKET_NAME> <DEST_FILE_NAME> <GENERATION>`
+
+
+-----
+
+
+
+
+### Create Bucket With Storage Class and Location.
+
+Create Bucket With Storage Class and Location.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/createBucketWithStorageClassAndLocation.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithStorageClassAndLocation.js,samples/README.md)
+
+__Usage:__
+
+
+`node createBucketWithStorageClassAndLocation.js <BUCKET_NAME> <CLASS_NAME> <LOCATION>`
 
 
 -----
@@ -393,6 +436,25 @@ __Usage:__
 
 
 
+### Storage Disable Bucket Versioning.
+
+Disables bucket versioning.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/disableBucketVersioning.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/disableBucketVersioning.js,samples/README.md)
+
+__Usage:__
+
+
+`node disableBucketVersioning.js <BUCKET_NAME>`
+
+
+-----
+
+
+
+
 ### Disable Default Event Based Hold
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/disableDefaultEventBasedHold.js).
@@ -512,6 +574,25 @@ __Usage:__
 
 
 
+### Storage Enable Bucket Versioning.
+
+Enables bucket versioning.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/enableBucketVersioning.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/enableBucketVersioning.js,samples/README.md)
+
+__Usage:__
+
+
+`node enableBucketVersioning.js <BUCKET_NAME>`
+
+
+-----
+
+
+
+
 ### Enable Default Event Based Hold
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/enableDefaultEventBasedHold.js).
@@ -573,6 +654,25 @@ __Usage:__
 
 
 `node samples/enableUniformBucketLevelAccess.js`
+
+
+-----
+
+
+
+
+### Change File's Storage Class.
+
+Change File's Storage Class.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/fileChangeStorageClass.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/fileChangeStorageClass.js,samples/README.md)
+
+__Usage:__
+
+
+`node fileChangeStorageClass.js <BUCKET_NAME> <FILE_NAME> <CLASS_NAME>`
 
 
 -----
