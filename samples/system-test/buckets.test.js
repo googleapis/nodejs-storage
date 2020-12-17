@@ -154,7 +154,6 @@ it("should disable a bucket's versioning", async () => {
   assert.strictEqual(bucket.metadata.versioning.enabled, false);
 });
 
-
 it('should add label to bucket', async () => {
   const output = execSync(
     `node addBucketLabel.js ${bucketName} labelone labelonevalue`
