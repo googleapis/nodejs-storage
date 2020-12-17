@@ -168,6 +168,7 @@ it('should remove label to bucket', async () => {
   assert.include(output, `Removed labels from bucket ${bucketName}.`);
   const [labels] = await storage.bucket(bucketName).getLabels();
   assert.isFalse('labelone' in labels);
+});
 
 it("should change a bucket's default storage class", async () => {
   const output = execSync(
