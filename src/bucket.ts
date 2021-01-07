@@ -113,7 +113,8 @@ export interface EnableLoggingOptions {
 export interface GetFilesOptions {
   autoPaginate?: boolean;
   delimiter?: string;
-  directory?: string; //deprecated
+  /** @deprecated */
+  directory?: string;
   endOffset?: string;
   includeTrailingDelimiter?: boolean;
   prefix?: string;
@@ -2196,7 +2197,7 @@ class Bucket extends ServiceObject {
    *     truncated after the delimiter, returned in `apiResponse.prefixes`.
    *     Duplicate prefixes are omitted.
    * @deprecated @property {string} [directory] Filter results based on a directory name, or
-   *     more technically, a "prefix". Deprecated. Use prefix instead.
+   *     more technically, a "prefix". Assumes delimeter to be '/'. Deprecated. Use prefix instead.
    * @property {string} [endOffset] Filter results to objects whose names are
    * lexicographically before endOffset. If startOffset is also set, the objects
    * listed have names between startOffset (inclusive) and endOffset (exclusive).
@@ -2236,7 +2237,7 @@ class Bucket extends ServiceObject {
    *     truncated after the delimiter, returned in `apiResponse.prefixes`.
    *     Duplicate prefixes are omitted.
    * @deprecated @param {string} [query.directory] Filter results based on a directory name, or
-   *     more technically, a "prefix". Deprecated. Use query.prefix instead.
+   *     more technically, a "prefix". Assumes delimeter to be '/'. Deprecated. Use query.prefix instead.
    * @param {string} [query.endOffset] Filter results to objects whose names are
    * lexicographically before endOffset. If startOffset is also set, the objects
    * listed have names between startOffset (inclusive) and endOffset (exclusive).
