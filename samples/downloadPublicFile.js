@@ -32,17 +32,8 @@ function main(
    * TODO(developer): Uncomment the following lines before running the sample.
    */
   // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const srcFileName = 'Remote file to download, e.g. file.txt';
+  // const srcFileName = 'Remote public file to download, e.g. file.txt';
   // const destFileName = 'Local destination for file, e.g. ./local/path/to/file.txt';
-
-  // CI authentication is done with ADC. Cache it here, restore it after file downloaded.
-  const GOOGLE_APPLICATION_CREDENTIALS =
-    process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  const GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT;
-
-  // Remove the authentication.
-  delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  delete process.env.GOOGLE_CLOUD_PROJECT;
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -63,16 +54,9 @@ function main(
       `Downloaded public file ${srcFileName} from bucket name ${bucketName} to ${destFileName}.`
     );
 
-    // Restore Authentication
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = GOOGLE_APPLICATION_CREDENTIALS;
-    process.env.GOOGLE_CLOUD_PROJECT = GOOGLE_CLOUD_PROJECT;
   }
 
   downloadPublicFile().catch(console.error);
   // [END storage_download_public_file]
 }
-process.on('unhandledRejection', err => {
-  console.error(err.message);
-  process.exitCode = 1;
-});
 main(...process.argv.slice(2));
