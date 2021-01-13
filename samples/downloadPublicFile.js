@@ -53,7 +53,6 @@ function main(
     console.log(
       `Downloaded public file ${srcFileName} from bucket name ${bucketName} to ${destFileName}.`
     );
-
   }
 
   downloadPublicFile().catch(console.error);
