@@ -64,6 +64,8 @@ import {
 const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectKeyToLowercase, unicodeJSONStringify} from './util';
 import {GaxiosError, Headers, request as gaxiosRequest} from 'gaxios';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const retry = require('async-retry');
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -3560,15 +3562,36 @@ class File extends ServiceObject<File> {
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
-
-    const writable = this.createWriteStream(options)
-      .on('error', callback!)
-      .on('finish', callback!);
-    if (options.onUploadProgress) {
-      writable.on('progress', options.onUploadProgress);
+    const isMultipart = options.resumable === false;
+    const returnValue = retry(
+      async (bail: (err: Error) => void) => {
+        await new Promise<void>((resolve, reject) => {
+          const writable = this.createWriteStream(options)
+            .on('error', err => {
+              if (isMultipart && util.shouldRetryRequest(err)) {
+                return reject(err);
+              } else {
+                return bail(err);
+              }
+            })
+            .on('finish', () => {
+              return resolve();
+            });
+          if (options.onUploadProgress) {
+            writable.on('progress', options.onUploadProgress);
+          }
+          writable.end(data);
+        });
+      },
+      {
+        retries: 5,
+      }
+    );
+    if (!callback) {
+      return returnValue;
+    } else {
+      return returnValue.then(callback);
     }
-
-    writable.end(data);
   }
   setStorageClass(
     storageClass: string,
@@ -3816,7 +3839,7 @@ class File extends ServiceObject<File> {
  * that a callback is omitted.
  */
 promisifyAll(File, {
-  exclude: ['publicUrl', 'request', 'setEncryptionKey'],
+  exclude: ['publicUrl', 'request', 'save', 'setEncryptionKey'],
 });
 
 /**
