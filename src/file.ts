@@ -3563,30 +3563,25 @@ class File extends ServiceObject<File> {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     const isMultipart = options.resumable === false;
-    const returnValue = retry(
-      async (bail: (err: Error) => void) => {
-        await new Promise<void>((resolve, reject) => {
-          const writable = this.createWriteStream(options)
-            .on('error', err => {
-              if (isMultipart && util.shouldRetryRequest(err)) {
-                return reject(err);
-              } else {
-                return bail(err);
-              }
-            })
-            .on('finish', () => {
-              return resolve();
-            });
-          if (options.onUploadProgress) {
-            writable.on('progress', options.onUploadProgress);
-          }
-          writable.end(data);
-        });
-      },
-      {
-        retries: 5,
-      }
-    );
+    const returnValue = retry(async (bail: (err: Error) => void) => {
+      await new Promise<void>((resolve, reject) => {
+        const writable = this.createWriteStream(options)
+          .on('error', err => {
+            if (isMultipart && util.shouldRetryRequest(err)) {
+              return reject(err);
+            } else {
+              return bail(err);
+            }
+          })
+          .on('finish', () => {
+            return resolve();
+          });
+        if (options.onUploadProgress) {
+          writable.on('progress', options.onUploadProgress);
+        }
+        writable.end(data);
+      });
+    });
     if (!callback) {
       return returnValue;
     } else {
