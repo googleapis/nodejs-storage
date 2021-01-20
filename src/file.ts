@@ -3519,6 +3519,8 @@ class File extends ServiceObject<File> {
    * Resumable uploads are automatically enabled and must be shut off explicitly
    * by setting `options.resumable` to `false`.
    *
+   * Multipart uploads with retryable error codes will be retried 10 times with exponential backoff.
+   *
    * <p class="notice">
    *   There is some overhead when using a resumable upload that can cause
    *   noticeable performance degradation while uploading a series of small
