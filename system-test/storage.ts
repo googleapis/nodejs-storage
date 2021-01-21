@@ -3307,6 +3307,7 @@ describe('storage', () => {
     });
 
     it('should get files from a directory', done => {
+      //Note: Directory is deprecated.
       bucket.getFiles({directory: DIRECTORY_NAME}, (err, files) => {
         assert.ifError(err);
         assert.strictEqual(files!.length, 3);
@@ -3315,6 +3316,7 @@ describe('storage', () => {
     });
 
     it('should get files from a directory as a stream', done => {
+      //Note: Directory is deprecated.
       let numFilesEmitted = 0;
 
       bucket
