@@ -3964,7 +3964,7 @@ describe('File', () => {
         const options = {resumable: true};
         let retryCount = 0;
         file.createWriteStream = (options_: {}) => {
-          retryCount++
+          retryCount++;
           return new DelayedStream500Error(retryCount);
         };
         try {
@@ -3980,16 +3980,13 @@ describe('File', () => {
       const options = {resumable: true};
       let retryCount = 0;
       file.createWriteStream = (options_: {}) => {
+        retryCount++;
         return new DelayedStream500Error(retryCount);
       };
 
-      file.save(
-        DATA,
-        options,
-        (err: HTTPError) => {
-          assert.strictEqual(err.code, 500);
-        }
-      );
+      file.save(DATA, options, (err: HTTPError) => {
+        assert.strictEqual(err.code, 500);
+      });
     });
 
     it('should accept an options object', done => {
