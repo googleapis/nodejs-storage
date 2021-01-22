@@ -3497,7 +3497,11 @@ class File extends ServiceObject<File> {
 
   save(data: string | Buffer, options?: SaveOptions): Promise<void>;
   save(data: string | Buffer, callback: SaveCallback): void;
-  save(data: string | Buffer, options: SaveOptions, callback: SaveCallback): void;
+  save(
+    data: string | Buffer,
+    options: SaveOptions,
+    callback: SaveCallback
+  ): void;
   /**
    * @typedef {object} SaveOptions
    * @extends CreateWriteStreamOptions
