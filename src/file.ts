@@ -3591,11 +3591,13 @@ class File extends ServiceObject<File> {
     if (!callback) {
       return returnValue;
     } else {
-      return returnValue.then(() => {
-        if (callback) {
-          return callback();
-        }
-      }).catch(callback);
+      return returnValue
+        .then(() => {
+          if (callback) {
+            return callback();
+          }
+        })
+        .catch(callback);
     }
   }
   setStorageClass(
