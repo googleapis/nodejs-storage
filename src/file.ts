@@ -3510,9 +3510,10 @@ class File extends ServiceObject<File> {
    * @param {?Error} err Request error, if any.
    */
   /**
-   * Write arbitrary data to a file.
+   * Write strings or buffers to a file.
    *
    * *This is a convenience method which wraps {@link File#createWriteStream}.*
+   * To upload arbitrary data to a file, please use {@link File#createWriteStream} directly.
    *
    * Resumable uploads are automatically enabled and must be shut off explicitly
    * by setting `options.resumable` to `false`.
@@ -3524,7 +3525,7 @@ class File extends ServiceObject<File> {
    * resumable feature is disabled.
    * </p>
    *
-   * @param {*} data The data to write to a file.
+   * @param {String | Buffer} data The data to write to a file.
    * @param {SaveOptions} [options] See {@link File#createWriteStream}'s `options`
    *     parameter.
    * @param {SaveCallback} [callback] Callback function.
@@ -3551,7 +3552,7 @@ class File extends ServiceObject<File> {
    */
   save(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: any,
+    data: string | Buffer,
     optionsOrCallback?: SaveOptions | SaveCallback,
     callback?: SaveCallback
   ): Promise<void> | void {
