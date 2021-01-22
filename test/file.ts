@@ -3868,7 +3868,7 @@ describe('File', () => {
     const BUFFER_DATA = Buffer.from(DATA, 'utf8');
 
     class DelayedStreamNoError extends Transform {
-      _transform(chunk: any, _encoding: string, done: Function) {
+      _transform(chunk: string | Buffer, _encoding: string, done: Function) {
         this.push(chunk);
         setTimeout(() => {
           done();
@@ -3882,7 +3882,7 @@ describe('File', () => {
         super();
         this.retryCount = retryCount;
       }
-      _transform(chunk: any, _encoding: string, done: Function) {
+      _transform(chunk: string | Buffer, _encoding: string, done: Function) {
         this.push(chunk);
         setTimeout(() => {
           if (this.retryCount === 1) {
@@ -3897,7 +3897,7 @@ describe('File', () => {
     describe('retry mulipart upload', () => {
       it('should save a string with no errors', async () => {
         const options = {resumable: false};
-        file.createWriteStream = (options_: {}) => {
+        file.createWriteStream = () => {
           return new DelayedStreamNoError();
         };
         await file.save(DATA, options, assert.ifError);
@@ -3906,7 +3906,7 @@ describe('File', () => {
       it('string upload should retry on first failure', async () => {
         const options = {resumable: false};
         let retryCount = 0;
-        file.createWriteStream = (options_: {}) => {
+        file.createWriteStream = () => {
           retryCount++;
           return new DelayedStream500Error(retryCount);
         };
@@ -3917,9 +3917,13 @@ describe('File', () => {
       it('string upload should not retry if nonretryable error code', async () => {
         const options = {resumable: false};
         let retryCount = 0;
-        file.createWriteStream = (options_: {}) => {
+        file.createWriteStream = () => {
           class DelayedStream403Error extends Transform {
-            _transform(chunk: any, _encoding: string, done: Function) {
+            _transform(
+              chunk: string | Buffer,
+              _encoding: string,
+              done: Function
+            ) {
               this.push(chunk);
               setTimeout(() => {
                 retryCount++;
@@ -3943,7 +3947,7 @@ describe('File', () => {
 
       it('should save a buffer with no errors', async () => {
         const options = {resumable: false};
-        file.createWriteStream = (options_: {}) => {
+        file.createWriteStream = () => {
           return new DelayedStreamNoError();
         };
         await file.save(DATA, options, assert.ifError);
@@ -3952,7 +3956,7 @@ describe('File', () => {
       it('buffer upload should retry on first failure', async () => {
         const options = {resumable: false};
         let retryCount = 0;
-        file.createWriteStream = (options_: {}) => {
+        file.createWriteStream = () => {
           retryCount++;
           return new DelayedStream500Error(retryCount);
         };
@@ -3963,7 +3967,7 @@ describe('File', () => {
       it('non-multipart upload should not retry', async () => {
         const options = {resumable: true};
         let retryCount = 0;
-        file.createWriteStream = (options_: {}) => {
+        file.createWriteStream = () => {
           retryCount++;
           return new DelayedStream500Error(retryCount);
         };
@@ -3979,7 +3983,7 @@ describe('File', () => {
     it('should execute callback', async () => {
       const options = {resumable: true};
       let retryCount = 0;
-      file.createWriteStream = (options_: {}) => {
+      file.createWriteStream = () => {
         retryCount++;
         return new DelayedStream500Error(retryCount);
       };

@@ -64,8 +64,7 @@ import {
 const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectKeyToLowercase, unicodeJSONStringify} from './util';
 import {GaxiosError, Headers, request as gaxiosRequest} from 'gaxios';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const retry = require('async-retry');
+import retry = require('async-retry');
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -3592,7 +3591,11 @@ class File extends ServiceObject<File> {
     if (!callback) {
       return returnValue;
     } else {
-      return returnValue.then(callback).catch(callback);
+      return returnValue.then(() => {
+        if (callback) {
+          return callback();
+        }
+      }).catch(callback);
     }
   }
   setStorageClass(
