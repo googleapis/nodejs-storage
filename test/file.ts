@@ -3866,11 +3866,30 @@ describe('File', () => {
   describe('save', () => {
     const DATA = 'Data!';
     const BUFFER_DATA = Buffer.from(DATA, 'utf8');
+
     class DelayedStreamNoError extends Transform {
       _transform(chunk: any, _encoding: string, done: Function) {
         this.push(chunk);
         setTimeout(() => {
           done();
+        }, 5);
+      }
+    }
+
+    class DelayedStream500Error extends Transform {
+      retryCount: number;
+      constructor(retryCount: number) {
+        super();
+        this.retryCount = retryCount;
+      }
+      _transform(chunk: any, _encoding: string, done: Function) {
+        this.push(chunk);
+        setTimeout(() => {
+          if (this.retryCount === 1) {
+            done(new HTTPError('first error', 500));
+          } else {
+            done();
+          }
         }, 5);
       }
     }
@@ -3888,20 +3907,8 @@ describe('File', () => {
         const options = {resumable: false};
         let retryCount = 0;
         file.createWriteStream = (options_: {}) => {
-          class DelayedStream500Error extends Transform {
-            _transform(chunk: any, _encoding: string, done: Function) {
-              this.push(chunk);
-              setTimeout(() => {
-                retryCount++;
-                if (retryCount === 1) {
-                  done(new HTTPError('first error', 500));
-                } else {
-                  done();
-                }
-              }, 5);
-            }
-          }
-          return new DelayedStream500Error();
+          retryCount++;
+          return new DelayedStream500Error(retryCount);
         };
         await file.save(DATA, options);
         assert.ok(retryCount === 2);
@@ -3946,20 +3953,8 @@ describe('File', () => {
         const options = {resumable: false};
         let retryCount = 0;
         file.createWriteStream = (options_: {}) => {
-          class DelayedStream500Error extends Transform {
-            _transform(chunk: any, _encoding: string, done: Function) {
-              this.push(chunk);
-              setTimeout(() => {
-                retryCount++;
-                if (retryCount === 1) {
-                  done(new HTTPError('first error', 500));
-                } else {
-                  done();
-                }
-              }, 5);
-            }
-          }
-          return new DelayedStream500Error();
+          retryCount++;
+          return new DelayedStream500Error(retryCount);
         };
         await file.save(BUFFER_DATA, options);
         assert.ok(retryCount === 2);
@@ -3969,20 +3964,8 @@ describe('File', () => {
         const options = {resumable: true};
         let retryCount = 0;
         file.createWriteStream = (options_: {}) => {
-          class DelayedStream500Error extends Transform {
-            _transform(chunk: any, _encoding: string, done: Function) {
-              this.push(chunk);
-              setTimeout(() => {
-                retryCount++;
-                if (retryCount === 1) {
-                  done(new HTTPError('first error', 500));
-                } else {
-                  done();
-                }
-              }, 5);
-            }
-          }
-          return new DelayedStream500Error();
+          retryCount++
+          return new DelayedStream500Error(retryCount);
         };
         try {
           await file.save(DATA, options);
@@ -3993,36 +3976,20 @@ describe('File', () => {
       });
     });
 
-    it('should execute callback', done => {
+    it('should execute callback', async () => {
+      const options = {resumable: true};
       let retryCount = 0;
       file.createWriteStream = (options_: {}) => {
-        class DelayedStream500Error extends Transform {
-          _transform(chunk: any, _encoding: string, done: Function) {
-            this.push(chunk);
-            setTimeout(() => {
-              retryCount++;
-              if (retryCount === 1) {
-                done(new HTTPError('first error', 500));
-              } else {
-                done();
-              }
-            }, 5);
-          }
-        }
-        return new DelayedStream500Error();
+        return new DelayedStream500Error(retryCount);
       };
-
-      const options = {resumable: true};
 
       file.save(
         DATA,
         options,
-        assert.throws(() => {
-          const error = new HTTPError('first error', 500);
-          throw error;
-        })
+        (err: HTTPError) => {
+          assert.strictEqual(err.code, 500);
+        }
       );
-      done();
     });
 
     it('should accept an options object', done => {
