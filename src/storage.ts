@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {GoogleAuthOptions, Metadata, Service} from '@google-cloud/common';
+import {Metadata, Service, ServiceOptions} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 
@@ -45,7 +45,7 @@ export interface CreateBucketQuery {
   userProject: string;
 }
 
-export interface StorageOptions extends GoogleAuthOptions {
+export interface StorageOptions extends ServiceOptions {
   autoRetry?: boolean;
   maxRetries?: number;
   promise?: typeof Promise;
