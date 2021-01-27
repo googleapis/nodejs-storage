@@ -347,7 +347,6 @@ export class Storage extends Service {
 
   /**
    * @typedef {object} StorageOptions
-
    * @property {string} [projectId] The project ID from the Google Developer's
    *     Console, e.g. 'grape-spaceship-123'. We will also check the environment
    *     variable `GCLOUD_PROJECT` for your project ID. If your app is running
