@@ -48,8 +48,6 @@ export interface CreateBucketQuery {
 export interface StorageOptions extends ServiceOptions {
   autoRetry?: boolean;
   maxRetries?: number;
-  promise?: typeof Promise;
-  userAgent?: string;
   /**
    * The API endpoint of the service used to make requests.
    * Defaults to `storage.googleapis.com`.
@@ -349,6 +347,7 @@ export class Storage extends Service {
 
   /**
    * @typedef {object} StorageOptions
+
    * @property {string} [projectId] The project ID from the Google Developer's
    *     Console, e.g. 'grape-spaceship-123'. We will also check the environment
    *     variable `GCLOUD_PROJECT` for your project ID. If your app is running
@@ -370,8 +369,6 @@ export class Storage extends Service {
    * errors. We will exponentially backoff subsequent requests by default.
    * @property {number} [maxRetries=3] Maximum number of automatic retries
    *     attempted before returning the error.
-   * @property {Constructor} [promise] Custom promise module to use instead of
-   *     native Promises.
    * @property {string} [userAgent] The value to be prepended to the User-Agent
    *     header in API requests.
    */
@@ -412,6 +409,8 @@ export class Storage extends Service {
 
     const config = {
       apiEndpoint: options.apiEndpoint!,
+      autoRetry: options.autoRetry,
+      maxRetries: options.maxRetries,
       baseUrl,
       customEndpoint,
       projectIdRequired: false,
