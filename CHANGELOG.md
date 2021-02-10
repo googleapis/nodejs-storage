@@ -4,6 +4,20 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [5.7.4](https://www.github.com/googleapis/nodejs-storage/compare/v5.7.3...v5.7.4) (2021-02-01)
+
+
+### Bug Fixes
+
+* specified acceptable types for File.save data parameter ([#1388](https://www.github.com/googleapis/nodejs-storage/issues/1388)) ([607f6c1](https://www.github.com/googleapis/nodejs-storage/commit/607f6c1c8b9ae5414513957f54a5de2490c454b1))
+
+### [5.7.3](https://www.github.com/googleapis/nodejs-storage/compare/v5.7.2...v5.7.3) (2021-01-22)
+
+
+### Bug Fixes
+
+* retry multipart uploads on File.save() ([#1385](https://www.github.com/googleapis/nodejs-storage/issues/1385)) ([4dec8c1](https://www.github.com/googleapis/nodejs-storage/commit/4dec8c1a362e3f80cbbf49f8bf7e7eaa2e2ce3bc))
+
 ### [5.7.2](https://www.github.com/googleapis/nodejs-storage/compare/v5.7.1...v5.7.2) (2021-01-11)
 
 
