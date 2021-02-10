@@ -27,6 +27,9 @@ function main(bucketName = 'my-bucket') {
   // Creates a client
   const storage = new Storage();
 
+  // Creates a client using a specific project ID.
+  // const storage = new Storage({"my-gcp-project"});
+
   async function createBucket() {
     // Creates a new bucket in the Asia region with the coldline default storage
     // class. Leave the second argument blank for default settings.
