@@ -2823,7 +2823,10 @@ describe('storage', () => {
       const copyOpts = {metadata: {newProperty: 'true'}};
       const [copiedFile] = await file.copy('CloudLogoCopy', copyOpts);
       const [metadata] = await copiedFile.getMetadata();
-      assert.strictEqual(typeof metadata.metadata.originalProperty, 'undefined');
+      assert.strictEqual(
+        typeof metadata.metadata.originalProperty,
+        'undefined'
+      );
       assert.strictEqual(metadata.metadata.newProperty, 'true');
       await Promise.all([file.delete, copiedFile.delete()]);
     });
