@@ -343,7 +343,7 @@ interface FileQuery {
 
 export interface CreateReadStreamOptions {
   userProject?: string;
-  generation?: string;
+  generation?: number;
   validation?: 'md5' | 'crc32c' | false | true;
   start?: number;
   end?: number;
@@ -1240,9 +1240,12 @@ class File extends ServiceObject<File> {
         alt: 'media',
       } as FileQuery;
 
-
       if (options.generation) {
-        query.generation = options.generation;
+        if (typeof options.generation === 'string') {
+          query.generation = Number(options.generation);
+        } else {
+          query.generation = options.generation!;
+        }
       } else if (this.generation) {
         query.generation = this.generation;
       }
@@ -1250,8 +1253,6 @@ class File extends ServiceObject<File> {
       if (options.userProject) {
         query.userProject = options.userProject;
       }
-      
-
 
       const headers = {
         'Accept-Encoding': 'gzip',
