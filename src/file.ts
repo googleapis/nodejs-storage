@@ -305,6 +305,7 @@ export interface FileOptions {
 
 export interface CopyOptions {
   destinationKmsKeyName?: string;
+  metadata?: Metadata;
   predefinedAcl?: string;
   token?: string;
   userProject?: string;
@@ -861,6 +862,7 @@ class File extends ServiceObject<File> {
    *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
    *     that will be used to encrypt the object. Overwrites the object
    * metadata's `kms_key_name` value, if any.
+   * @property {Metadata} [metadata] Metadata to specify on the copied file.
    * @property {string} [predefinedAcl] Set the ACL for the new file.
    * @property {string} [token] A previously-returned `rewriteToken` from an
    *     unfinished rewrite request.
@@ -3496,12 +3498,13 @@ class File extends ServiceObject<File> {
     this.copy(newFile, callback!);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  save(data: any, options?: SaveOptions): Promise<void>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  save(data: any, callback: SaveCallback): void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  save(data: any, options: SaveOptions, callback: SaveCallback): void;
+  save(data: string | Buffer, options?: SaveOptions): Promise<void>;
+  save(data: string | Buffer, callback: SaveCallback): void;
+  save(
+    data: string | Buffer,
+    options: SaveOptions,
+    callback: SaveCallback
+  ): void;
   /**
    * @typedef {object} SaveOptions
    * @extends CreateWriteStreamOptions
@@ -3511,9 +3514,10 @@ class File extends ServiceObject<File> {
    * @param {?Error} err Request error, if any.
    */
   /**
-   * Write arbitrary data to a file.
+   * Write strings or buffers to a file.
    *
    * *This is a convenience method which wraps {@link File#createWriteStream}.*
+   * To upload arbitrary data to a file, please use {@link File#createWriteStream} directly.
    *
    * Resumable uploads are automatically enabled and must be shut off explicitly
    * by setting `options.resumable` to `false`.
@@ -3527,7 +3531,7 @@ class File extends ServiceObject<File> {
    * resumable feature is disabled.
    * </p>
    *
-   * @param {*} data The data to write to a file.
+   * @param {string | Buffer} data The data to write to a file.
    * @param {SaveOptions} [options] See {@link File#createWriteStream}'s `options`
    *     parameter.
    * @param {SaveCallback} [callback] Callback function.
@@ -3553,8 +3557,7 @@ class File extends ServiceObject<File> {
    * file.save(contents).then(function() {});
    */
   save(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: any,
+    data: string | Buffer,
     optionsOrCallback?: SaveOptions | SaveCallback,
     callback?: SaveCallback
   ): Promise<void> | void {

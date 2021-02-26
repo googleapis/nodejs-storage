@@ -2967,6 +2967,27 @@ describe('storage', () => {
       await Promise.all([file.delete, copiedFile.delete()]);
     });
 
+    it('should copy an existing file and overwrite metadata', async () => {
+      const opts = {
+        destination: 'CloudLogo',
+        metadata: {
+          metadata: {
+            originalProperty: 'true',
+          },
+        },
+      };
+      const [file] = await bucket.upload(FILES.logo.path, opts);
+      const copyOpts = {metadata: {newProperty: 'true'}};
+      const [copiedFile] = await file.copy('CloudLogoCopy', copyOpts);
+      const [metadata] = await copiedFile.getMetadata();
+      assert.strictEqual(
+        typeof metadata.metadata.originalProperty,
+        'undefined'
+      );
+      assert.strictEqual(metadata.metadata.newProperty, 'true');
+      await Promise.all([file.delete, copiedFile.delete()]);
+    });
+
     it('should respect predefined Acl at file#copy', async () => {
       const opts = {destination: 'CloudLogo'};
       const [file] = await bucket.upload(FILES.logo.path, opts);
@@ -3072,7 +3093,7 @@ describe('storage', () => {
 
       bucket.createChannel('new-channel', config, (err: Error | null) => {
         // Actually creating a channel is pretty complicated. This will at least
-        // let us know we hit the right endpoint and it received "yahoo.com".
+        // let us know we reached the right endpoint and it received "yahoo.com".
         assert(err!.message.includes(config.address));
         done();
       });
