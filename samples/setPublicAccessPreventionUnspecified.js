@@ -43,7 +43,7 @@ function main(bucketName = 'my-bucket') {
     console.log(`Public access prevention is 'unspecified' for ${bucketName}.`);
   }
 
-  setPublicAccessPreventionUnspecified().catch(console.error);
+  setPublicAccessPreventionUnspecified();
   // [END storage_set_public_access_prevention_unspecified]
 }
 main(...process.argv.slice(2));

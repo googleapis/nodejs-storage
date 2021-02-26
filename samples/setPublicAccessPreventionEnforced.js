@@ -47,7 +47,7 @@ function main(bucketName = 'my-bucket') {
     );
   }
 
-  setPublicAccessPreventionEnforced().catch(console.error);
+  setPublicAccessPreventionEnforced();
   // [END storage_set_public_access_prevention_enforced]
 }
 

@@ -42,7 +42,7 @@ function main(bucketName = 'my-bucket') {
     );
   }
 
-  getPublicAccessPrevention().catch(console.error);
+  getPublicAccessPrevention();
 
   // [END storage_get_public_access_prevention]
 }
