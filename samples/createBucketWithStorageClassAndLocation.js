@@ -38,6 +38,7 @@ function main(
   const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
+  // The bucket in the sample below will be created in the project asscociated with this client.
   const storage = new Storage();
 
   async function createBucketWithStorageClassAndLocation() {
