@@ -36,10 +36,10 @@ function main(bucketName = 'my-bucket') {
     // Makes the bucket public
     await storage.bucket(bucketName).makePublic();
 
-    console.log(`Bucket ${bucketName} is now publicly readable.`);
+    console.log(`Bucket ${bucketName} is now publicly readable`);
   }
 
-  makeBucketPublic();
+  makeBucketPublic().catch(console.error);
   // [END storage_set_bucket_public_iam]
 }
 process.on('unhandledRejection', err => {

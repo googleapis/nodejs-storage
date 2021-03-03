@@ -35,10 +35,10 @@ function main(bucketName = 'my-bucket', label_keys = ['label1', 'label2']) {
 
   async function removeBucketLabel() {
     await storage.bucket(bucketName).deleteLabels(label_keys);
-    console.log(`Removed labels from bucket ${bucketName}.`);
+    console.log(`Removed labels from bucket ${bucketName}`);
   }
 
-  removeBucketLabel();
+  removeBucketLabel().catch(console.error);
   // [END storage_remove_bucket_label]
 }
 process.on('unhandledRejection', err => {

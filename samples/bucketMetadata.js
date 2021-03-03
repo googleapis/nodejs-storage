@@ -28,7 +28,6 @@ function main(bucketName = 'my-bucket') {
   const storage = new Storage();
 
   async function getBucketMetadata() {
-    // Get bucket metadata.
     /**
      * TODO(developer): Uncomment the following line before running the sample.
      */

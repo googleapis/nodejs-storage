@@ -49,7 +49,7 @@ function main(
       .copy(storage.bucket(destBucketName).file(destFilename));
 
     console.log(
-      `gs://${srcBucketName}/${srcFilename} copied to gs://${destBucketName}/${destFilename}.`
+      `gs://${srcBucketName}/${srcFilename} copied to gs://${destBucketName}/${destFilename}`
     );
   }
 

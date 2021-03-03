@@ -47,11 +47,11 @@ function main(
     });
 
     console.log(
-      `Static website bucket ${bucketName} is set up to use ${mainPageSuffix} as the index page and ${notFoundPage} as the 404 page.`
+      `Static website bucket ${bucketName} is set up to use ${mainPageSuffix} as the index page and ${notFoundPage} as the 404 page`
     );
   }
 
-  addBucketWebsiteConfiguration();
+  addBucketWebsiteConfiguration().catch(console.error);
   // [END storage_define_bucket_website_configuration]
 }
 process.on('unhandledRejection', err => {

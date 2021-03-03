@@ -41,12 +41,13 @@ function main(
   const labels = {
     [labelKey]: labelValue,
   };
+
   async function addBucketLabel() {
     await storage.bucket(bucketName).setLabels(labels);
-    console.log(`Added label to bucket ${bucketName}.`);
+    console.log(`Added label to bucket ${bucketName}`);
   }
 
-  addBucketLabel();
+  addBucketLabel().catch(console.error);
   // [END storage_add_bucket_label]
 }
 process.on('unhandledRejection', err => {

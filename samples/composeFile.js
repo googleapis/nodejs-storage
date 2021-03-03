@@ -47,11 +47,11 @@ function main(
     await bucket.combine(sources, destinationFileName);
 
     console.log(
-      `New composite file ${destinationFileName} was created by combining ${firstFileName} and ${secondFileName}.`
+      `New composite file ${destinationFileName} was created by combining ${firstFileName} and ${secondFileName}`
     );
   }
 
-  composeFile();
+  composeFile().catch(console.error);
   // [END storage_compose_file]
 }
 process.on('unhandledRejection', err => {

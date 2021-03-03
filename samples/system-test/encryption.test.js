@@ -61,7 +61,7 @@ it('should upload a file', async () => {
   );
   assert.match(
     output,
-    new RegExp(`File ${filePath} uploaded to gs://${bucketName}/${fileName}.`)
+    new RegExp(`File ${filePath} uploaded to gs://${bucketName}/${fileName}`)
   );
   const [exists] = await bucket.file(fileName).exists();
   assert.strictEqual(exists, true);
@@ -73,7 +73,7 @@ it('should download a file', () => {
   );
   assert.match(
     output,
-    new RegExp(`File ${fileName} downloaded to ${downloadFilePath}.`)
+    new RegExp(`File ${fileName} downloaded to ${downloadFilePath}`)
   );
   fs.statSync(downloadFilePath);
 });
@@ -86,7 +86,7 @@ it('should rotate keys', () => {
   output = execSync(
     `node rotateEncryptionKey.js ${bucketName} ${fileName} ${key} ${newKey}`
   );
-  assert.include(output, 'Encryption key rotated successfully.');
+  assert.include(output, 'Encryption key rotated successfully');
 });
 
 it('should convert CSEK to KMS key', async () => {
@@ -100,6 +100,6 @@ it('should convert CSEK to KMS key', async () => {
   );
   assert.include(
     output,
-    `file ${encryptedFileName} in bucket ${bucketName} is now managed by KMS key ${kmsKeyName} instead of customer-supplied encryption key.`
+    `file ${encryptedFileName} in bucket ${bucketName} is now managed by KMS key ${kmsKeyName} instead of customer-supplied encryption key`
   );
 });

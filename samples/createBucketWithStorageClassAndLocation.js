@@ -38,25 +38,24 @@ function main(
   const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
-  // The bucket in the sample below will be created in the project asscociated with this client.
+  // The bucket in the sample below will be created in the project associated with this client.
   // For more information, please see https://cloud.google.com/docs/authentication/production or https://googleapis.dev/nodejs/storage/latest/Storage.html
   const storage = new Storage();
 
   async function createBucketWithStorageClassAndLocation() {
     // For default values see: https://cloud.google.com/storage/docs/locations and
     // https://cloud.google.com/storage/docs/storage-classes
-
     const [bucket] = await storage.createBucket(bucketName, {
       location,
       [storageClass]: true,
     });
 
     console.log(
-      `${bucket.name} created with ${storageClass} class in ${location}.`
+      `${bucket.name} created with ${storageClass} class in ${location}`
     );
   }
 
-  createBucketWithStorageClassAndLocation();
+  createBucketWithStorageClassAndLocation().catch(console.error);
   // [END storage_create_bucket_class_location]
 }
 

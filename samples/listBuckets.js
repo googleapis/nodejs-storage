@@ -24,9 +24,8 @@ function main() {
   const storage = new Storage();
 
   async function listBuckets() {
-    // Lists all buckets in the current project
-
     const [buckets] = await storage.getBuckets();
+
     console.log('Buckets:');
     buckets.forEach(bucket => {
       console.log(bucket.name);

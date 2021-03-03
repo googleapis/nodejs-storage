@@ -39,10 +39,10 @@ function main(bucketName = 'my-bucket') {
       },
     });
 
-    console.log(`Default KMS key was removed from ${bucketName}.`);
+    console.log(`Default KMS key was removed from ${bucketName}`);
   }
 
-  removeDefaultKMSKey();
+  removeDefaultKMSKey().catch(console.error);
   // [END storage_bucket_delete_default_kms_key]
 }
 

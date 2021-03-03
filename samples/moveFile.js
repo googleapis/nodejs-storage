@@ -44,7 +44,7 @@ function main(
     await storage.bucket(bucketName).file(srcFilename).move(destFilename);
 
     console.log(
-      `gs://${bucketName}/${srcFilename} moved to gs://${bucketName}/${destFilename}.`
+      `gs://${bucketName}/${srcFilename} moved to gs://${bucketName}/${destFilename}`
     );
   }
 

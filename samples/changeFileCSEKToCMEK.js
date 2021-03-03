@@ -51,11 +51,11 @@ function main(
       });
 
     console.log(
-      `file ${fileName} in bucket ${bucketName} is now managed by KMS key ${kmsKeyName} instead of customer-supplied encryption key.`
+      `file ${fileName} in bucket ${bucketName} is now managed by KMS key ${kmsKeyName} instead of customer-supplied encryption key`
     );
   }
 
-  changeFileCSEKToCMEK();
+  changeFileCSEKToCMEK().catch(console.error);
   // [END storage_object_csek_to_cmek]
 }
 process.on('unhandledRejection', err => {

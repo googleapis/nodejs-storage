@@ -34,9 +34,8 @@ function main(bucketName = 'my-bucket') {
   const storage = new Storage();
 
   async function deleteBucket() {
-    // Deletes the bucket
     await storage.bucket(bucketName).delete();
-    console.log(`Bucket ${bucketName} deleted.`);
+    console.log(`Bucket ${bucketName} deleted`);
   }
 
   deleteBucket().catch(console.error);

@@ -47,7 +47,7 @@ function main(
     await storage.bucket(bucketName).upload(srcFilename, options);
 
     console.log(
-      `File ${srcFilename} uploaded to gs://${bucketName}/${destFilename}.`
+      `File ${srcFilename} uploaded to gs://${bucketName}/${destFilename}`
     );
   }
 

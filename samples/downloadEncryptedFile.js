@@ -56,7 +56,7 @@ function main(
       .setEncryptionKey(Buffer.from(key, 'base64'))
       .download(options);
 
-    console.log(`File ${srcFilename} downloaded to ${destFilename}.`);
+    console.log(`File ${srcFilename} downloaded to ${destFilename}`);
   }
 
   downloadEncryptedFile().catch(console.error);

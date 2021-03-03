@@ -58,7 +58,7 @@ function main(
         ${responseHeader} responses across origins`);
   }
 
-  configureBucketCors();
+  configureBucketCors().catch(console.error);
   // [END storage_cors_configuration]
 }
 

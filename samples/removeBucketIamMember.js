@@ -39,7 +39,8 @@ function main(
     // Get a reference to a Google Cloud Storage bucket
     const bucket = storage.bucket(bucketName);
 
-    // Gets and updates the bucket's IAM policy
+    // For more information please read:
+    // https://cloud.google.com/storage/docs/access-control/iam
     const [policy] = await bucket.iam.getPolicy({requestedPolicyVersion: 3});
 
     // Finds and updates the appropriate role-member group, without a condition.

@@ -58,7 +58,7 @@ function main(
     await storage.bucket(bucketName).file(srcFilename).download(options);
 
     console.log(
-      `gs://${bucketName}/${srcFilename} downloaded to ${destFilename} using requester-pays requests.`
+      `gs://${bucketName}/${srcFilename} downloaded to ${destFilename} using requester-pays requests`
     );
   }
 

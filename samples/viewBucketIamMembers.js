@@ -26,15 +26,14 @@ function main(bucketName = 'my-bucket') {
   const storage = new Storage();
 
   async function viewBucketIamMembers() {
-    // Gets and displays the bucket's IAM policy
-    // Gets and displays the bucket's IAM policy
+    // For more information please read:
+    // https://cloud.google.com/storage/docs/access-control/iam
     const results = await storage
       .bucket(bucketName)
       .iam.getPolicy({requestedPolicyVersion: 3});
 
     const bindings = results[0].bindings;
 
-    // Displays the roles in the bucket's IAM policy
     console.log(`Bindings for bucket ${bucketName}:`);
     for (const binding of bindings) {
       console.log(`  Role: ${binding.role}`);

@@ -39,7 +39,7 @@ function main(bucketName = 'my-bucket') {
     await storage.bucket(bucketName).disableRequesterPays();
 
     console.log(
-      `Requester-pays requests have been disabled for bucket ${bucketName}.`
+      `Requester-pays requests have been disabled for bucket ${bucketName}`
     );
   }
 

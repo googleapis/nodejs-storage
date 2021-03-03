@@ -39,10 +39,10 @@ function main(bucketName = 'my-bucket') {
       },
     });
 
-    console.log(`Versioning is disabled for bucket ${bucketName}.`);
+    console.log(`Versioning is disabled for bucket ${bucketName}`);
   }
 
-  disableBucketVersioning();
+  disableBucketVersioning().catch(console.error);
   // [END storage_disable_versioning]
 }
 

@@ -40,7 +40,10 @@ function main(
   const storage = new Storage();
 
   async function rotateEncryptionKey() {
-    // See the "Generating your own encryption key" section above.
+    // The Base64 encoded AES-256 encryption key originally used to encrypt the
+    // object. See the documentation on Customer-Supplied Encryption keys for
+    // more info:
+    // https://cloud.google.com/storage/docs/encryption/using-customer-supplied-keys
     // const oldKey = 'The current base64 encoded customer-supplied encryption key';
     // const newKey = 'A new base64 encoded customer-supplied encryption key';
     await storage
@@ -52,7 +55,7 @@ function main(
         encryptionKey: Buffer.from(newKey, 'base64'),
       });
 
-    console.log('Encryption key rotated successfully.');
+    console.log('Encryption key rotated successfully');
   }
 
   rotateEncryptionKey().catch(console.error);

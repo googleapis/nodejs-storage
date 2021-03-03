@@ -38,7 +38,7 @@ function main(bucketName = 'my-bucket') {
     console.log(`Removed CORS configuration from bucket ${bucketName}`);
   }
 
-  removeBucketCors();
+  removeBucketCors().catch(console.error);
   // [END storage_remove_cors_configuration]
 }
 

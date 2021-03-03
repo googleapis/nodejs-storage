@@ -37,15 +37,9 @@ function main(
       // By setting the option `destination`, you can change the name of the
       // object you are uploading to a bucket.
       destination: destination,
-      metadata: {
-        // Enable long-lived HTTP caching headers
-        // Use only if the contents of the file will never change
-        // (If the contents will change, use cacheControl: 'no-cache')
-        cacheControl: 'public, max-age=31536000',
-      },
     });
 
-    console.log(`${filename} uploaded to ${bucketName}.`);
+    console.log(`${filename} uploaded to ${bucketName}`);
   }
 
   uploadFile().catch(console.error);

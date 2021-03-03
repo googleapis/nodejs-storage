@@ -44,7 +44,7 @@ function main(bucketName = 'my-bucket', filename = 'test.txt', generation = 1) {
       .delete();
 
     console.log(
-      `Generation ${generation} of file ${filename} was deleted from ${bucketName}.`
+      `Generation ${generation} of file ${filename} was deleted from ${bucketName}`
     );
   }
 

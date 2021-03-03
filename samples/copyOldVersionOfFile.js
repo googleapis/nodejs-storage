@@ -52,7 +52,7 @@ function main(
       .copy(storage.bucket(destBucketName).file(destFilename));
 
     console.log(
-      `Generation ${generation} of file ${srcFilename} in bucket ${srcBucketName} was copied to ${destFilename} in bucket ${destBucketName}.`
+      `Generation ${generation} of file ${srcFilename} in bucket ${srcBucketName} was copied to ${destFilename} in bucket ${destBucketName}`
     );
   }
 

@@ -39,10 +39,10 @@ function main(bucketName = 'my-bucket') {
       },
     });
 
-    console.log(`Versioning is enabled for bucket ${bucketName}.`);
+    console.log(`Versioning is enabled for bucket ${bucketName}`);
   }
 
-  enableBucketVersioning();
+  enableBucketVersioning().catch(console.error);
   // [END storage_enable_versioning]
 }
 

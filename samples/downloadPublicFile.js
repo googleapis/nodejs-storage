@@ -43,7 +43,6 @@ function main(
 
   async function downloadPublicFile() {
     const options = {
-      // The path to which the file should be downloaded, e.g. "./file.txt"
       destination: destFileName,
     };
 
@@ -51,7 +50,7 @@ function main(
     await storage.bucket(bucketName).file(srcFileName).download(options);
 
     console.log(
-      `Downloaded public file ${srcFileName} from bucket name ${bucketName} to ${destFileName}.`
+      `Downloaded public file ${srcFileName} from bucket name ${bucketName} to ${destFileName}`
     );
   }
 
