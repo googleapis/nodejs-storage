@@ -14,8 +14,7 @@
 /* eslint-disable no-unused-vars */
 
 function main(bucketName = 'my-bucket') {
-  // @TODO There are two samples with ID: "storage_list_files"
-  // [START storage_list_files]
+  // [START storage_list_files_paginated]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -51,6 +50,6 @@ function main(bucketName = 'my-bucket') {
   }
 
   listFilesPaginated().catch(console.error);
-  // [END storage_list_files]
+  // [END storage_list_files_paginated]
 }
 main(...process.argv.slice(2));
