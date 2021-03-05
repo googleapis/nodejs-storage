@@ -2993,7 +2993,7 @@ describe('storage', () => {
 
     let accessId: string;
 
-    const delay = async (test: any, accessId: string) => {
+    const delay = async (test: Mocha.Context, accessId: string) => {
       const retries = test.currentRetry();
       if (retries === 0) return; // no retry on the first failure.
       // see: https://cloud.google.com/storage/docs/exponential-backoff:
