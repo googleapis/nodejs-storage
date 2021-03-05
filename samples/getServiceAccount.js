@@ -24,7 +24,8 @@ function main(projectId = 'serviceAccountProjectId') {
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
-  // const projectId = 'The project Id this service account belongs to, e.g. serviceAccountProjectId';
+  // The ID of your GCP project
+  // const projectId = 'your-project-id';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');

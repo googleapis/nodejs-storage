@@ -30,8 +30,12 @@ function main(bucketName = 'my-bucket', fileName = 'file.txt') {
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const fileName = 'File to access, e.g. file.txt';
+  // The ID of your GCS bucket
+  // const bucketName = 'your-unique-bucket-name';
+
+  // The ID of your GCS file
+  // const fileName = 'your-file-name';
+
   async function setFileMetadata() {
     // Set file metadata.
     const [metadata] = await storage

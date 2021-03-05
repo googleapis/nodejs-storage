@@ -28,9 +28,14 @@ function main(
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const mainPageSuffix = 'Name of main page, e.g. http://example.com';
-  // const notFoundPage = 'Name of a 404 page, e.g. http://example.com/404.html';
+  // The ID of your GCS bucket
+  // const bucketName = 'your-unique-bucket-name';
+
+  // The name of the main page
+  // const mainPageSuffix = 'http://example.com';
+
+  // The Name of a 404 page
+  // const notFoundPage = 'http://example.com/404.html';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');

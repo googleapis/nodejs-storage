@@ -29,10 +29,18 @@ function main(
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const fileName = 'Nome of a file in the bucket, e.g. my-file';
-  // const encryptionKey = 'The Base64 encoded decryption key, e.g. my-encription-key';
-  // const kmsKeyName = 'The name of the KMS key to manage this object with, e.g. my-key';
+  // The ID of your GCS bucket
+  // const bucketName = 'your-unique-bucket-name';
+
+  // The ID of your GCS file
+  // const fileName = 'your-file-name';
+
+  // The Base64 encoded decryption key, which should be the same key originally
+  // used to encrypt the file
+  // const encryptionKey = 'TIbv/fjexq+VmtXzAlc63J4z5kFmWJ6NdAPQulQBT7g=';
+
+  // The name of the KMS key to manage this file with
+  // const kmsKeyName = 'projects/your-project-id/locations/global/keyRings/your-key-ring/cryptoKeys/your-key';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');

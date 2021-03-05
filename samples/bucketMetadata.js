@@ -29,9 +29,10 @@ function main(bucketName = 'my-bucket') {
 
   async function getBucketMetadata() {
     /**
-     * TODO(developer): Uncomment the following line before running the sample.
+     * TODO(developer): Uncomment the following lines before running the sample.
      */
-    // const bucketName = 'Name of a bucket, e.g. my-bucket';
+    // The ID of your GCS bucket
+    // const bucketName = 'your-unique-bucket-name';
 
     // Get Bucket Metadata
     const [metadata] = await storage.bucket(bucketName).getMetadata();

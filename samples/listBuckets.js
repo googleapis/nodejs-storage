@@ -16,7 +16,6 @@
 
 function main() {
   // [START storage_list_buckets]
-
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 

@@ -20,13 +20,16 @@
  * at https://cloud.google.com/storage/docs.
  */
 
-function main(bucketName = 'my-bucket', filename = 'test.txt') {
+function main(bucketName = 'my-bucket', fileName = 'test.txt') {
   // [START storage_get_metadata]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
-  // const bucketName = 'Name of a bucket, e.g. my-bucket';
-  // const filename = 'File to access, e.g. file.txt';
+  // The ID of your GCS bucket
+  // const bucketName = 'your-unique-bucket-name';
+
+  // The ID of your GCS file
+  // const fileName = 'your-file-name';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -38,7 +41,7 @@ function main(bucketName = 'my-bucket', filename = 'test.txt') {
     // Gets the metadata for the file
     const [metadata] = await storage
       .bucket(bucketName)
-      .file(filename)
+      .file(fileName)
       .getMetadata();
 
     console.log(`Bucket: ${metadata.bucket}`);
