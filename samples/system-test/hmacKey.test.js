@@ -90,10 +90,7 @@ describe('HMAC SA Key samples', () => {
 /*
  * Delete HMAC Keys older than 1 hour
  */
-async function deleteStaleHmacKeys(
-  serviceAccountEmail,
-  projectId
-) {
+async function deleteStaleHmacKeys(serviceAccountEmail, projectId) {
   const old = new Date();
   old.setHours(old.getHours() - 1);
   // list all HMAC keys for the given service account.
