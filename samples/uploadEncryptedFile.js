@@ -44,7 +44,7 @@ function main(
   async function uploadEncryptedFile() {
     const options = {
       destination: destFileName,
-      encryptionKey: key,
+      encryptionKey: Buffer.from(key, 'base64'),
     };
 
     await storage.bucket(bucketName).upload(filePath, options);

@@ -61,7 +61,7 @@ function main(
     await storage
       .bucket(bucketName)
       .file(srcFileName)
-      .setEncryptionKey(encryptionKey)
+      .setEncryptionKey(Buffer.from(encryptionKey, 'base64'))
       .download(options);
 
     console.log(`File ${srcFileName} downloaded to ${destFileName}`);

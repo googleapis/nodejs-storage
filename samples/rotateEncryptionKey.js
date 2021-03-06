@@ -56,10 +56,10 @@ function main(
     await storage
       .bucket(bucketName)
       .file(fileName, {
-        encryptionKey: oldKey,
+        encryptionKey: Buffer.from(oldKey, 'base64'),
       })
       .rotateEncryptionKey({
-        encryptionKey: newKey,
+        encryptionKey: Buffer.from(newKey, 'base64'),
       });
 
     console.log('Encryption key rotated successfully');
