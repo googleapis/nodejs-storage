@@ -546,7 +546,7 @@ describe('storage', () => {
       });
 
       it('should set custom encryption during the upload', done => {
-        const key = '12345678901234567890123456789012';
+        const key = crypto.randomBytes(32);
         bucket.upload(
           FILES.big.path,
           {
