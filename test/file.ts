@@ -4175,9 +4175,8 @@ describe('File', () => {
   });
 
   describe('setEncryptionKey', () => {
-    const KEY = crypto.randomBytes(32);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const KEY_BASE64 = Buffer.from(KEY as any).toString('base64');
+    const KEY_BUFFER = crypto.randomBytes(32);
+    const KEY_BASE64 = KEY_BUFFER.toString('base64');
     const KEY_HASH = crypto
       .createHash('sha256')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -4186,11 +4185,15 @@ describe('File', () => {
     let _file: {};
 
     beforeEach(() => {
-      _file = file.setEncryptionKey(KEY);
+      _file = file.setEncryptionKey(KEY_BUFFER);
     });
 
-    it('should localize the key', () => {
-      assert.strictEqual(file.encryptionKey, KEY);
+    it('should localize the key as a Buffer', () => {
+      file.setEncryptionKey(KEY_BUFFER);
+      assert.deepStrictEqual(file.encryptionKey, KEY_BUFFER);
+
+      file.setEncryptionKey(KEY_BASE64);
+      assert.deepStrictEqual(file.encryptionKey, KEY_BUFFER);
     });
 
     it('should localize the base64 key', () => {

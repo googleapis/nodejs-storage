@@ -2069,10 +2069,12 @@ class File extends ServiceObject<File> {
    * Example of downloading an encrypted file:
    */
   setEncryptionKey(encryptionKey: string | Buffer) {
-    this.encryptionKey = encryptionKey;
-    this.encryptionKeyBase64 = Buffer.from(encryptionKey as string).toString(
-      'base64'
-    );
+    if (Buffer.isBuffer(encryptionKey)) {
+      this.encryptionKey = encryptionKey;
+    } else {
+      this.encryptionKey = Buffer.from(encryptionKey, 'base64');
+    }
+    this.encryptionKeyBase64 = this.encryptionKey.toString('base64');
     this.encryptionKeyHash = crypto
       .createHash('sha256')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
