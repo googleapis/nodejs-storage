@@ -17,7 +17,7 @@ function main(
   bucketName = 'my-bucket',
   filePath = path.join(__dirname, '../resources', 'test.txt'),
   destFileName = 'test.txt',
-  key = Buffer.from(process.env.GOOGLE_CLOUD_KMS_KEY_US, 'base64')
+  key = process.env.GOOGLE_CLOUD_KMS_KEY_US,
 ) {
   // [START storage_upload_encrypted_file]
   /**

@@ -23,8 +23,8 @@
 function main(
   bucketName = 'my-bucket',
   fileName = 'test.txt',
-  oldKey = Buffer.from(process.env.GOOGLE_CLOUD_KMS_KEY_US, 'base64'),
-  newKey = Buffer.from(process.env.GOOGLE_CLOUD_KMS_KEY_ASIA, 'base64')
+  oldKey = process.env.GOOGLE_CLOUD_KMS_KEY_US,
+  newKey = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA
 ) {
   // [START storage_rotate_encryption_key]
   /**
