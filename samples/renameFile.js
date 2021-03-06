@@ -49,7 +49,7 @@ function main(
     await storage.bucket(srcBucketName).file(srcFileName).rename(destFileName);
 
     console.log(
-      `gs://${bucketName}/${srcFileName} renamed to gs://${bucketName}/${destFileName}.`
+      `gs://${srcBucketName}/${srcFileName} renamed to gs://${srcBucketName}/${destFileName}.`
     );
   }
 

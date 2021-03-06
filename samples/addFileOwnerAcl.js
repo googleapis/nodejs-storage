@@ -34,7 +34,7 @@ function main(
 
   // The name of the file to access
   // const fileName = 'file.txt';
-  
+
   // The email address of the user to add
   // const userEmail = 'user-email-to-add';
 

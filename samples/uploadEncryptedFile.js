@@ -46,7 +46,7 @@ function main(
       destination: destFileName,
       encryptionKey: key,
     };
-.
+
     await storage.bucket(bucketName).upload(filePath, options);
 
     console.log(

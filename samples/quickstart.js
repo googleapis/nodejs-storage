@@ -14,9 +14,7 @@
 
 'use strict';
 
-function main(
-  bucketName = 'my-new-bucket'
-) {
+function main(bucketName = 'my-new-bucket') {
   // [START storage_quickstart]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');

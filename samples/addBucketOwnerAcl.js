@@ -27,7 +27,7 @@ function main(bucketName = 'my-bucket', userEmail = 'jdobry@google.com') {
    */
   // The ID of your GCS bucket
   // const bucketName = 'your-unique-bucket-name';
-  
+
   // The email address of the user to add
   // const userEmail = 'user-email-to-add';
 

@@ -39,7 +39,7 @@ function main(
 
   // The ID of your GCS file
   // const fileName = 'your-file-name';
-  
+
   // The name of a storage class
   // See the StorageClass documentation for other valid storage classes:
   // https://googleapis.dev/java/google-cloud-clients/latest/com/google/cloud/storage/StorageClass.html
