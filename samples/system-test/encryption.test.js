@@ -14,6 +14,7 @@
 
 'use strict';
 
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const {Storage} = require('@google-cloud/storage');
@@ -34,7 +35,7 @@ const fileName = 'test.txt';
 const filePath = path.join(__dirname, '../resources', fileName);
 const downloadFilePath = path.join(__dirname, '../resources/downloaded.txt');
 
-let key;
+const key = crypto.randomBytes(32).toString('base64');
 
 before(async () => {
   await bucket.create(bucketName);
@@ -51,8 +52,6 @@ after(async () => {
 it('should generate a key', () => {
   const output = execSync('node generateEncryptionKey.js');
   assert.match(output, /Base 64 encoded encryption key:/);
-  const test = /^Base 64 encoded encryption key: ([^\s]+)/;
-  key = output.match(test)[1];
 });
 
 it('should upload a file', async () => {
@@ -79,11 +78,8 @@ it('should download a file', () => {
 });
 
 it('should rotate keys', () => {
-  let output = execSync('node generateEncryptionKey.js');
-  assert.match(output, /Base 64 encoded encryption key:/);
-  const test = /^Base 64 encoded encryption key: ([^\s]+)/;
-  const newKey = output.match(test)[1];
-  output = execSync(
+  const newKey = crypto.randomBytes(32).toString('base64');
+  const output = execSync(
     `node rotateEncryptionKey.js ${bucketName} ${fileName} ${key} ${newKey}`
   );
   assert.include(output, 'Encryption key rotated successfully');
