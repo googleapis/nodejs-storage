@@ -277,8 +277,14 @@ export class URLSigner {
     const credentialScope = `${datestamp}/auto/storage/goog4_request`;
 
     const sign = async () => {
-      const credentials = await this.authClient.getCredentials();
-      const credential = `${credentials.client_email}/${credentialScope}`;
+      let client_email;
+      if ((this.authClient as any).jsonContent?.client_email == null) { // eslint-disable-line
+        const credentials = await this.authClient.getCredentials();
+        client_email = credentials.client_email;
+      } else {
+        client_email = (this.authClient as any).jsonContent.client_email; // eslint-disable-line
+      }
+      const credential = `${client_email}/${credentialScope}`;
       const dateISO = dateFormat.format(
         config.accessibleAt ? config.accessibleAt : new Date(),
         'YYYYMMDD[T]HHmmss[Z]',
