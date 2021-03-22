@@ -1381,8 +1381,9 @@ describe('File', () => {
       it('should validate with crc32c', done => {
         file.requestStream = getFakeSuccessfulRequest(data);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (fakeValidationStream as any).test = (algo: string) => {
+        (fakeValidationStream as any).test = (algo: string, value: string) => {
           assert.strictEqual(algo, 'crc32c');
+          assert.strictEqual(value, CRC32C_HASH.substr(4));
           return true;
         };
         file
@@ -1408,7 +1409,11 @@ describe('File', () => {
       it('should validate with md5', done => {
         file.requestStream = getFakeSuccessfulRequest(data);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (fakeValidationStream as any).test = () => true;
+        (fakeValidationStream as any).test = (algo: string, value: string) => {
+          assert.strictEqual(algo, 'md5');
+          assert.strictEqual(value, MD5_HASH);
+          return true;
+        };
         file
           .createReadStream({validation: 'md5'})
           .on('error', done)
@@ -1457,6 +1462,40 @@ describe('File', () => {
           .resume()
           .on('error', done)
           .on('end', done);
+      });
+
+      it('should handle x-goog-hash with only crc32c', done => {
+        handleRespOverride = (
+          err: Error,
+          res: {},
+          body: {},
+          callback: Function
+        ) => {
+          const rawResponseStream = new PassThrough();
+          Object.assign(rawResponseStream, {
+            toJSON() {
+              return {
+                headers: {
+                  'x-goog-hash': `crc32c=${CRC32C_HASH}`,
+                },
+              };
+            },
+          });
+          callback(null, null, rawResponseStream);
+          setImmediate(() => {
+            rawResponseStream.end(data);
+          });
+        };
+
+        file.requestStream = getFakeSuccessfulRequest(data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (fakeValidationStream as any).test = (algo: string, value: string) => {
+          assert.strictEqual(algo, 'crc32c');
+          assert.strictEqual(value, CRC32C_HASH.substr(4));
+          return true;
+        };
+
+        file.createReadStream().on('error', done).on('end', done).resume();
       });
 
       describe('destroying the through stream', () => {
