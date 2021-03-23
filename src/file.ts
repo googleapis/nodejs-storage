@@ -1797,7 +1797,9 @@ class File extends ServiceObject<File> {
 
       fs.access(configDir, fs.constants.W_OK, err => {
         if (err) {
-          if (options.resumable) {
+          // If the directory doesn't exist, it will be created downstream.
+          // The error only needs to be thrown if the directory exists and is not writable.
+          if (options.resumable && fs.existsSync(configDir)) {
             const error = new ResumableUploadError(
               [
                 'A resumable upload could not be performed. The directory,',

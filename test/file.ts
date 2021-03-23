@@ -34,6 +34,7 @@ import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
 import * as tmp from 'tmp';
 import * as zlib from 'zlib';
 import * as gaxios from 'gaxios';
+import * as rimraf from 'rimraf';
 
 import {
   Bucket,
@@ -1888,6 +1889,20 @@ describe('File', () => {
 
         done();
       });
+
+      writable.write('data');
+    });
+
+    it('should succeed if resumable requested but config dir doesnt exist', done => {
+      const writable = file.createWriteStream({resumable: true});
+      const configDir = xdgBasedirCached.config;
+      rimraf.sync(configDir);
+      assert.strictEqual(fs.existsSync(configDir), false);
+
+      file.startResumableUpload_ = (stream: {}, options_: {}) => {
+        // If no error is thrown here, we know the request completed successfully.
+        done();
+      };
 
       writable.write('data');
     });
