@@ -1899,7 +1899,7 @@ describe('File', () => {
       rimraf.sync(configDir);
       assert.strictEqual(fs.existsSync(configDir), false);
 
-      file.startResumableUpload_ = (stream: {}, options_: {}) => {
+      file.startResumableUpload_ = () => {
         // If no error is thrown here, we know the request completed successfully.
         done();
       };
