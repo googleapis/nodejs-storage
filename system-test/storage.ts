@@ -2837,7 +2837,7 @@ describe('storage', () => {
       };
       const CACHE_CONTROL = 'private';
       const CONTENT_ENCODING = 'gzip';
-      const CONTENT_TYPE = 'application/octet-stream';
+      const CONTENT_TYPE = 'text/plain';
       const [file] = await bucket.upload(FILES.logo.path, opts);
       const copyOpts = {
         cacheControl: CACHE_CONTROL,
