@@ -1802,10 +1802,10 @@ class File extends ServiceObject<File> {
       const configDir = xdgBasedir.config || os.tmpdir();
 
       fs.access(configDir, fs.constants.W_OK, err => {
-        if (err) {
-          // If the directory doesn't exist, it will be created downstream.
+        if (err && fs.existsSync(configDir)) {
           // The error only needs to be thrown if the directory exists and is not writable.
-          if (options.resumable && fs.existsSync(configDir)) {
+          // If the directory doesn't exist, it will be created downstream.
+          if (options.resumable) {
             const error = new ResumableUploadError(
               [
                 'A resumable upload could not be performed. The directory,',
