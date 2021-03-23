@@ -21,7 +21,7 @@ import {
 } from '@google-cloud/common';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import * as assert from 'assert';
-import {describe, it, before, beforeEach, afterEach} from 'mocha';
+import {describe, it, before, after, beforeEach, afterEach} from 'mocha';
 import * as crypto from 'crypto';
 import * as dateFormat from 'date-and-time';
 import * as duplexify from 'duplexify';
@@ -1893,18 +1893,26 @@ describe('File', () => {
       writable.write('data');
     });
 
-    it('should succeed if resumable requested but config dir doesnt exist', done => {
-      const writable = file.createWriteStream({resumable: true});
+    describe('should succeed if resumable requested but config dir doesnt exist', () => {
       const configDir = xdgBasedirCached.config;
-      rimraf.sync(configDir);
-      assert.strictEqual(fs.existsSync(configDir), false);
 
-      file.startResumableUpload_ = () => {
-        // If no error is thrown here, we know the request completed successfully.
-        done();
-      };
+      before(() => {
+        rimraf.sync(configDir);
+      });
 
-      writable.write('data');
+      it('should succeed if resumable requested but config dir doesnt exist', done => {
+        assert.strictEqual(fs.existsSync(configDir), false);
+        const writable = file.createWriteStream({resumable: true});
+        file.startResumableUpload_ = () => {
+          // If no error is thrown here, we know the request completed successfully.
+          done();
+        };
+        writable.write('data');
+      });
+
+      after(() => {
+        fs.mkdirSync(configDir);
+      });
     });
 
     it('should fall back to simple if not writable', done => {
