@@ -29,6 +29,8 @@ import * as crypto from 'crypto';
 import * as dateFormat from 'date-and-time';
 import * as extend from 'extend';
 import * as fs from 'fs';
+import {promisify} from 'util';
+const mkDirAsync = promisify(fs.mkdir);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
@@ -1802,27 +1804,33 @@ class File extends ServiceObject<File> {
       const configDir = xdgBasedir.config || os.tmpdir();
 
       fs.access(configDir, fs.constants.W_OK, err => {
-        if (err && fs.existsSync(configDir)) {
-          // The error only needs to be thrown if the directory exists and is not writable.
-          // If the directory doesn't exist, it will be created downstream.
-          if (options.resumable) {
-            const error = new ResumableUploadError(
-              [
-                'A resumable upload could not be performed. The directory,',
-                `${configDir}, is not writable. You may try another upload,`,
-                'this time setting `options.resumable` to `false`.',
-              ].join(' ')
-            );
-            stream.destroy(error);
-            return;
+        const maybeCreateFolder = async () => {
+          if (err) {
+            try {
+              await mkDirAsync(configDir, {mode: 0o0700});
+            } catch (mkDirErr) {
+              if (options.resumable) {
+                const error = new ResumableUploadError(
+                  [
+                    'A resumable upload could not be performed. The directory,',
+                    `${configDir}, is not writable. You may try another upload,`,
+                    'this time setting `options.resumable` to `false`.',
+                  ].join(' ')
+                );
+                stream.destroy(error);
+                return;
+              }
+              // User didn't care, resumable or not. Fall back to simple upload.
+              this.startSimpleUpload_(fileWriteStream, options);
+              return;
+            }
           }
 
-          // User didn't care, resumable or not. Fall back to simple upload.
-          this.startSimpleUpload_(fileWriteStream, options);
-          return;
-        }
-
-        this.startResumableUpload_(fileWriteStream, options);
+          this.startResumableUpload_(fileWriteStream, options);
+        };
+        maybeCreateFolder().catch(e => {
+          throw new Error(e);
+        });
       });
     });
 
