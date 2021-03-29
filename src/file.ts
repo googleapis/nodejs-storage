@@ -1804,6 +1804,7 @@ class File extends ServiceObject<File> {
       const configDir = xdgBasedir.config || os.tmpdir();
 
       fs.access(configDir, fs.constants.W_OK, err => {
+        console.info("options outside of maybeCF: ", options.resumable)
         const maybeCreateFolder = async () => {
           if (err) {
             console.info("there was an error with access");
@@ -1811,7 +1812,7 @@ class File extends ServiceObject<File> {
               await mkDirAsync(configDir, {mode: 0o0700});
             } catch (mkDirErr) {
               console.info("error message: ", mkDirErr.message);
-              console.log("options: ", options.resumable);
+              console.info("options: ", options.resumable);
               if (options.resumable) {
                 const error = new ResumableUploadError(
                   [
