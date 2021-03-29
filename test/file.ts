@@ -1861,6 +1861,16 @@ describe('File', () => {
     });
 
     it('should fail if resumable requested but not writable', done => {
+      const configDir = xdgBasedirCached.config;
+      try {
+        fs.mkdirSync(configDir);
+      }
+      catch (e) {
+        if (!e.message.includes("EEXIST: file already exists")){
+          throw e;
+        }
+      }
+
       const error = new Error('Error.');
 
       Object.assign(fakeFs, {
