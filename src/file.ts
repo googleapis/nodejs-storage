@@ -1806,9 +1806,11 @@ class File extends ServiceObject<File> {
       fs.access(configDir, fs.constants.W_OK, err => {
         const maybeCreateFolder = async () => {
           if (err) {
+            console.info("there was an error with access");
             try {
               await mkDirAsync(configDir, {mode: 0o0700});
             } catch (mkDirErr) {
+              console.info("error message: ", mkDirErr.message);
               if (options.resumable) {
                 const error = new ResumableUploadError(
                   [
@@ -1820,12 +1822,13 @@ class File extends ServiceObject<File> {
                 stream.destroy(error);
                 return;
               }
+              console.info("doing simple upload");
               // User didn't care, resumable or not. Fall back to simple upload.
               this.startSimpleUpload_(fileWriteStream, options);
               return;
             }
           }
-
+          console.info("doing resumable upload");
           this.startResumableUpload_(fileWriteStream, options);
         };
         maybeCreateFolder().catch(e => {
