@@ -1864,9 +1864,8 @@ describe('File', () => {
       const configDir = xdgBasedirCached.config;
       try {
         fs.mkdirSync(configDir);
-      }
-      catch (e) {
-        if (!e.message.includes("EEXIST: file already exists")){
+      } catch (e) {
+        if (!e.message.includes('EEXIST: file already exists')) {
           throw e;
         }
       }
