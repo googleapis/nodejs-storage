@@ -1804,17 +1804,11 @@ class File extends ServiceObject<File> {
       const configDir = xdgBasedir.config || os.tmpdir();
 
       fs.access(configDir, fs.constants.W_OK, err => {
-        console.info("options outside of maybeCF: ", options.resumable)
-        console.info("configDir", configDir);
-        console.info(fs.existsSync(configDir));
         const maybeCreateFolder = async () => {
           if (err) {
-            console.info("there was an error with access");
             try {
               await mkDirAsync(configDir, {mode: 0o0700});
             } catch (mkDirErr) {
-              console.info("error message: ", mkDirErr.message);
-              console.info("options: ", options.resumable);
               if (options.resumable) {
                 const error = new ResumableUploadError(
                   [
@@ -1826,13 +1820,11 @@ class File extends ServiceObject<File> {
                 stream.destroy(error);
                 return;
               }
-              console.info("doing simple upload");
               // User didn't care, resumable or not. Fall back to simple upload.
               this.startSimpleUpload_(fileWriteStream, options);
               return;
             }
           }
-          console.info("doing resumable upload");
           this.startResumableUpload_(fileWriteStream, options);
         };
         maybeCreateFolder().catch(e => {
