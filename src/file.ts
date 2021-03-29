@@ -1805,6 +1805,8 @@ class File extends ServiceObject<File> {
 
       fs.access(configDir, fs.constants.W_OK, err => {
         console.info("options outside of maybeCF: ", options.resumable)
+        console.info("configDir", configDir);
+        console.info(fs.existsSync(configDir));
         const maybeCreateFolder = async () => {
           if (err) {
             console.info("there was an error with access");
