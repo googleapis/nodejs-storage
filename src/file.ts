@@ -1811,6 +1811,7 @@ class File extends ServiceObject<File> {
               await mkDirAsync(configDir, {mode: 0o0700});
             } catch (mkDirErr) {
               console.info("error message: ", mkDirErr.message);
+              console.log("options: ", options.resumable);
               if (options.resumable) {
                 const error = new ResumableUploadError(
                   [
