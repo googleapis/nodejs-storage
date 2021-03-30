@@ -29,8 +29,6 @@ import * as crypto from 'crypto';
 import * as dateFormat from 'date-and-time';
 import * as extend from 'extend';
 import * as fs from 'fs';
-import {promisify} from 'util';
-const mkDirAsync = promisify(fs.mkdir);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
@@ -1803,12 +1801,10 @@ class File extends ServiceObject<File> {
       // https://github.com/yeoman/configstore/blob/f09f067e50e6a636cfc648a6fc36a522062bd49d/index.js#L11
       const configDir = xdgBasedir.config || os.tmpdir();
 
-      fs.access(configDir, fs.constants.W_OK, err => {
-        const maybeCreateFolder = async () => {
-          if (err) {
-            try {
-              await mkDirAsync(configDir, {mode: 0o0700});
-            } catch (mkDirErr) {
+      fs.access(configDir, fs.constants.W_OK, accessErr => {
+        if (accessErr) {
+          fs.mkdir(configDir, {mode: 0o0700}, err => {
+            if (err) {
               if (options.resumable) {
                 const error = new ResumableUploadError(
                   [
@@ -1824,12 +1820,11 @@ class File extends ServiceObject<File> {
               this.startSimpleUpload_(fileWriteStream, options);
               return;
             }
-          }
+            this.startResumableUpload_(fileWriteStream, options);
+          });
+        } else {
           this.startResumableUpload_(fileWriteStream, options);
-        };
-        maybeCreateFolder().catch(e => {
-          throw new Error(e);
-        });
+        }
       });
     });
 
