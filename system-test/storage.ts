@@ -2967,7 +2967,7 @@ describe('storage', () => {
       await Promise.all([file.delete, copiedFile.delete()]);
     });
 
-    it('should copy an existing file and overwrite metadata', async () => {
+    it('should copy an existing file and overwrite custom metadata', async () => {
       const opts = {
         destination: 'CloudLogo',
         metadata: {
@@ -2985,6 +2985,27 @@ describe('storage', () => {
         'undefined'
       );
       assert.strictEqual(metadata.metadata.newProperty, 'true');
+      await Promise.all([file.delete, copiedFile.delete()]);
+    });
+
+    it('should copy an existing file and overwrite metadata', async () => {
+      const opts = {
+        destination: 'CloudLogo',
+      };
+      const CACHE_CONTROL = 'private';
+      const CONTENT_ENCODING = 'gzip';
+      const CONTENT_TYPE = 'text/plain';
+      const [file] = await bucket.upload(FILES.logo.path, opts);
+      const copyOpts = {
+        cacheControl: CACHE_CONTROL,
+        contentEncoding: CONTENT_ENCODING,
+        contentType: CONTENT_TYPE,
+      };
+      const [copiedFile] = await file.copy('CloudLogoCopy', copyOpts);
+      const [metadata] = await copiedFile.getMetadata();
+      assert.strictEqual(metadata.contentEncoding, CONTENT_ENCODING);
+      assert.strictEqual(metadata.cacheControl, CACHE_CONTROL);
+      assert.strictEqual(metadata.contentType, CONTENT_TYPE);
       await Promise.all([file.delete, copiedFile.delete()]);
     });
 
@@ -3150,6 +3171,19 @@ describe('storage', () => {
 
     let accessId: string;
 
+    const delay = async (test: Mocha.Context, accessId: string) => {
+      const retries = test.currentRetry();
+      if (retries === 0) return; // no retry on the first failure.
+      // see: https://cloud.google.com/storage/docs/exponential-backoff:
+      const ms = Math.pow(2, retries) * 500 + Math.random() * 1000;
+      return new Promise(done => {
+        console.info(
+          `retrying "${test.title}" with accessId ${accessId} in ${ms}ms`
+        );
+        setTimeout(done, ms);
+      });
+    };
+
     before(async () => {
       await deleteStaleHmacKeys(SERVICE_ACCOUNT, HMAC_PROJECT!);
       if (SECOND_SERVICE_ACCOUNT) {
@@ -3174,7 +3208,9 @@ describe('storage', () => {
       assert(typeof metadata.updated === 'string');
     });
 
-    it('should get metadata for an HMAC key', async () => {
+    it('should get metadata for an HMAC key', async function () {
+      this.retries(3);
+      delay(this, accessId);
       const hmacKey = storage.hmacKey(accessId, {projectId: HMAC_PROJECT});
       const [metadata] = await hmacKey.getMetadata();
       assert.strictEqual(metadata.accessId, accessId);
@@ -4045,6 +4081,12 @@ describe('storage', () => {
         })
         .map(hmacKey =>
           limit(async () => {
+            console.info(
+              `Will delete HMAC key with access id ${hmacKey.metadata?.accessId} and service account email ${hmacKey.metadata?.serviceAccountEmail}.`
+            );
+            console.info(
+              `This key was created on ${hmacKey.metadata?.timeCreated} which is earlier than ${old}.`
+            );
             await hmacKey.setMetadata({state: 'INACTIVE'});
             await hmacKey.delete();
           })

@@ -19,21 +19,23 @@ import {
   ServiceObjectConfig,
   util,
 } from '@google-cloud/common';
-import {PromisifyAllOptions} from '@google-cloud/promisify';
-import * as assert from 'assert';
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
+import {PromisifyAllOptions} from '@google-cloud/promisify';
+import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
+import * as assert from 'assert';
 import * as crypto from 'crypto';
 import * as dateFormat from 'date-and-time';
 import * as duplexify from 'duplexify';
 import * as extend from 'extend';
 import * as fs from 'fs';
-import * as resumableUpload from 'gcs-resumable-upload';
+import * as gaxios from 'gaxios';
+import * as os from 'os';
+import * as path from 'path';
 import * as proxyquire from 'proxyquire';
+import * as resumableUpload from 'gcs-resumable-upload';
 import * as sinon from 'sinon';
-import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
 import * as tmp from 'tmp';
 import * as zlib from 'zlib';
-import * as gaxios from 'gaxios';
 
 import {
   Bucket,
@@ -768,6 +770,9 @@ describe('File', () => {
   });
 
   describe('createReadStream', () => {
+    const CRC32C_HASH = 'crc32c-hash';
+    const MD5_HASH = 'md5-hash';
+
     function getFakeRequest(data?: {}) {
       let requestOptions: DecorateRequestOptions | undefined;
 
@@ -1130,10 +1135,6 @@ describe('File', () => {
             return requestStream;
           };
 
-          file.getMetadata = (options: object, callback: Function) => {
-            callback();
-          };
-
           file
             .createReadStream({validation: false})
             .on('error', (err: Error) => {
@@ -1154,6 +1155,10 @@ describe('File', () => {
       const GZIPPED_DATA = zlib.gzipSync(DATA);
 
       beforeEach(() => {
+        hashStreamValidationOverride = () =>
+          Object.assign(new PassThrough(), {
+            test: () => true,
+          });
         handleRespOverride = (
           err: Error,
           res: {},
@@ -1166,6 +1171,7 @@ describe('File', () => {
               return {
                 headers: {
                   'content-encoding': 'gzip',
+                  'x-goog-hash': `crc32c=${CRC32C_HASH},md5=${MD5_HASH}`,
                 },
               };
             },
@@ -1227,9 +1233,6 @@ describe('File', () => {
           });
           return createGunzipStream;
         };
-        file.getMetadata = (options: object, callback: Function) => {
-          callback();
-        };
         file
           .createReadStream({validation: false})
           .on('error', (err: Error) => {
@@ -1249,60 +1252,43 @@ describe('File', () => {
       let fakeValidationStream: Stream & {test: Function};
 
       beforeEach(() => {
-        file.metadata.mediaLink = 'http://uri';
-
-        file.getMetadata = (options: {}, callback: Function) => {
-          file.metadata = {
-            crc32c: '####wA==',
-            md5Hash: 'CY9rzUYh03PK3k6DJie09g==',
-          };
-          callback();
-        };
-
+        file.getMetadata = () => Promise.resolve({});
         fakeValidationStream = Object.assign(new PassThrough(), {
           test: () => true,
         });
         hashStreamValidationOverride = () => {
           return fakeValidationStream;
         };
+        handleRespOverride = (
+          err: Error,
+          res: {},
+          body: {},
+          callback: Function
+        ) => {
+          const rawResponseStream = new PassThrough();
+          Object.assign(rawResponseStream, {
+            toJSON() {
+              return {
+                headers: {
+                  'x-goog-hash': `crc32c=${CRC32C_HASH},md5=${MD5_HASH}`,
+                },
+              };
+            },
+          });
+          callback(null, null, rawResponseStream);
+          setImmediate(() => {
+            rawResponseStream.end(data);
+          });
+        };
+        file.requestStream = getFakeSuccessfulRequest(data);
       });
 
       describe('server decompression', () => {
-        beforeEach(() => {
-          handleRespOverride = (
-            err: Error,
-            res: {},
-            body: {},
-            callback: Function
-          ) => {
-            const rawResponseStream = new PassThrough();
-            Object.assign(rawResponseStream, {
-              toJSON() {
-                return {
-                  headers: {},
-                };
-              },
-            });
-            callback(null, null, rawResponseStream);
-            setImmediate(() => {
-              rawResponseStream.end(data);
-            });
-          };
-          file.requestStream = getFakeSuccessfulRequest(data);
-        });
-
         it('should skip validation if file was stored compressed', done => {
+          file.metadata.contentEncoding = 'gzip';
+
           const validateStub = sinon.stub().returns(true);
           fakeValidationStream.test = validateStub;
-
-          file.getMetadata = (options: {}, callback: Function) => {
-            file.metadata = {
-              crc32c: '####wA==',
-              md5Hash: 'CY9rzUYh03PK3k6DJie09g==',
-              contentEncoding: 'gzip',
-            };
-            callback();
-          };
 
           file
             .createReadStream({validation: 'crc32c'})
@@ -1368,18 +1354,19 @@ describe('File', () => {
 
         file.getMetadata = (options: GetFileMetadataOptions) => {
           assert.strictEqual(options.userProject, fakeOptions.userProject);
-          done();
+          setImmediate(done);
+          return Promise.resolve({});
         };
 
-        file.requestStream = getFakeSuccessfulRequest(data);
+        file.requestStream = getFakeSuccessfulRequest('data');
 
         file.createReadStream(fakeOptions).on('error', done).resume();
       });
 
       it('should destroy stream from failed metadata fetch', done => {
         const error = new Error('Error.');
-        file.getMetadata = (options: {}, callback: Function) => {
-          callback(error);
+        file.getMetadata = () => {
+          return Promise.reject(error);
         };
 
         file.requestStream = getFakeSuccessfulRequest('data');
@@ -1395,7 +1382,12 @@ describe('File', () => {
 
       it('should validate with crc32c', done => {
         file.requestStream = getFakeSuccessfulRequest(data);
-
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (fakeValidationStream as any).test = (algo: string, value: string) => {
+          assert.strictEqual(algo, 'crc32c');
+          assert.strictEqual(value, CRC32C_HASH.substr(4));
+          return true;
+        };
         file
           .createReadStream({validation: 'crc32c'})
           .on('error', done)
@@ -1419,7 +1411,11 @@ describe('File', () => {
       it('should validate with md5', done => {
         file.requestStream = getFakeSuccessfulRequest(data);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (fakeValidationStream as any).test = () => true;
+        (fakeValidationStream as any).test = (algo: string, value: string) => {
+          assert.strictEqual(algo, 'md5');
+          assert.strictEqual(value, MD5_HASH);
+          return true;
+        };
         file
           .createReadStream({validation: 'md5'})
           .on('error', done)
@@ -1430,7 +1426,10 @@ describe('File', () => {
       it('should emit an error if md5 validation fails', done => {
         file.requestStream = getFakeSuccessfulRequest('bad-data');
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (fakeValidationStream as any).test = () => false;
+        (fakeValidationStream as any).test = (algo: string) => {
+          assert.strictEqual(algo, 'md5');
+          return false;
+        };
         file
           .createReadStream({validation: 'md5'})
           .on('error', (err: ApiError) => {
@@ -1441,13 +1440,12 @@ describe('File', () => {
       });
 
       it('should default to crc32c validation', done => {
-        file.getMetadata = (options: {}, callback: Function) => {
-          file.metadata = {
-            crc32c: file.metadata.crc32c,
-          };
-          callback();
+        file.requestStream = getFakeSuccessfulRequest('bad-data');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (fakeValidationStream as any).test = (algo: string) => {
+          assert.strictEqual(algo, 'crc32c');
+          return false;
         };
-        file.requestStream = getFakeSuccessfulRequest(data);
         file
           .createReadStream()
           .on('error', (err: ApiError) => {
@@ -1468,6 +1466,40 @@ describe('File', () => {
           .on('end', done);
       });
 
+      it('should handle x-goog-hash with only crc32c', done => {
+        handleRespOverride = (
+          err: Error,
+          res: {},
+          body: {},
+          callback: Function
+        ) => {
+          const rawResponseStream = new PassThrough();
+          Object.assign(rawResponseStream, {
+            toJSON() {
+              return {
+                headers: {
+                  'x-goog-hash': `crc32c=${CRC32C_HASH}`,
+                },
+              };
+            },
+          });
+          callback(null, null, rawResponseStream);
+          setImmediate(() => {
+            rawResponseStream.end(data);
+          });
+        };
+
+        file.requestStream = getFakeSuccessfulRequest(data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (fakeValidationStream as any).test = (algo: string, value: string) => {
+          assert.strictEqual(algo, 'crc32c');
+          assert.strictEqual(value, CRC32C_HASH.substr(4));
+          return true;
+        };
+
+        file.createReadStream().on('error', done).on('end', done).resume();
+      });
+
       describe('destroying the through stream', () => {
         beforeEach(() => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1486,13 +1518,25 @@ describe('File', () => {
         });
 
         it('should destroy if MD5 is requested but absent', done => {
-          file.getMetadata = (options: {}, callback: Function) => {
-            file.metadata = {
-              crc32c: file.metadata.crc32c,
-            };
-            callback();
+          handleRespOverride = (
+            err: Error,
+            res: {},
+            body: {},
+            callback: Function
+          ) => {
+            const rawResponseStream = new PassThrough();
+            Object.assign(rawResponseStream, {
+              toJSON() {
+                return {
+                  headers: {},
+                };
+              },
+            });
+            callback(null, null, rawResponseStream);
+            setImmediate(() => {
+              rawResponseStream.end();
+            });
           };
-
           file.requestStream = getFakeSuccessfulRequest('bad-data');
 
           const readStream = file.createReadStream({validation: 'md5'});
@@ -1817,57 +1861,87 @@ describe('File', () => {
       file.createWriteStream({resumable: true}).write('data');
     });
 
-    it('should fail if resumable requested but not writable', done => {
-      const error = new Error('Error.');
+    describe('config directory does not exist', () => {
+      const CONFIG_DIR = path.join(os.tmpdir(), `/fake-xdg-dir/${Date.now()}`);
 
-      Object.assign(fakeFs, {
-        access(dir: {}, check: {}, callback: Function) {
-          callback(error);
-        },
+      beforeEach(() => {
+        xdgConfigOverride = CONFIG_DIR;
+        fakeFs.access = fsCached.access;
       });
 
-      const writable = file.createWriteStream({resumable: true});
+      it('should attempt to create the config directory', done => {
+        Object.assign(fakeFs, {
+          mkdir(dir: string, options: {}) {
+            assert.strictEqual(dir, CONFIG_DIR);
+            assert.deepStrictEqual(options, {mode: 0o0700});
+            done();
+          },
+        });
 
-      writable.on('error', (err: Error) => {
-        assert.notStrictEqual(err, error);
-
-        assert.strictEqual(err.name, 'ResumableUploadError');
-
-        const configDir = xdgBasedirCached.config;
-
-        assert.strictEqual(
-          err.message,
-          [
-            'A resumable upload could not be performed. The directory,',
-            `${configDir}, is not writable. You may try another upload,`,
-            'this time setting `options.resumable` to `false`.',
-          ].join(' ')
-        );
-
-        done();
+        const writable = file.createWriteStream({resumable: true});
+        writable.write('data');
       });
 
-      writable.write('data');
-    });
+      it('should start a resumable upload if config directory created successfully', done => {
+        Object.assign(fakeFs, {
+          mkdir(dir: string, options: {}, callback: Function) {
+            callback();
+          },
+        });
 
-    it('should fall back to simple if not writable', done => {
-      const options = {
-        metadata: METADATA,
-        customValue: true,
-      };
+        file.startResumableUpload_ = () => {
+          // If no error is thrown here, we know the request completed successfully.
+          done();
+        };
 
-      file.startSimpleUpload_ = (stream: {}, options_: {}) => {
-        assert.deepStrictEqual(options_, options);
-        done();
-      };
-
-      Object.assign(fakeFs, {
-        access(dir: {}, check: {}, callback: Function) {
-          callback(new Error('Error.'));
-        },
+        file.createWriteStream().write('data');
       });
 
-      file.createWriteStream(options).write('data');
+      it('should return error if resumable was requested, but a config directory could not be created', done => {
+        Object.assign(fakeFs, {
+          mkdir(dir: string, options: {}, callback: Function) {
+            callback(new Error());
+          },
+        });
+
+        const writable = file.createWriteStream({resumable: true});
+
+        writable.on('error', (err: Error) => {
+          assert.strictEqual(err.name, 'ResumableUploadError');
+          assert.strictEqual(
+            err.message,
+            [
+              'A resumable upload could not be performed. The directory,',
+              `${CONFIG_DIR}, is not writable. You may try another upload,`,
+              'this time setting `options.resumable` to `false`.',
+            ].join(' ')
+          );
+
+          done();
+        });
+
+        writable.write('data');
+      });
+
+      it('should fallback to a simple upload if the config directory could not be created', done => {
+        const options = {
+          metadata: METADATA,
+          customValue: true,
+        };
+
+        Object.assign(fakeFs, {
+          mkdir(dir: string, options: {}, callback: Function) {
+            callback(new Error());
+          },
+        });
+
+        file.startSimpleUpload_ = (stream: Stream, _options: {}) => {
+          assert.deepStrictEqual(_options, options);
+          done();
+        };
+
+        file.createWriteStream(options).write('data');
+      });
     });
 
     it('should default to a resumable upload', done => {

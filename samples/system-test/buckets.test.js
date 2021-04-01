@@ -41,7 +41,7 @@ after(async () => {
 
 it('should create a bucket', async () => {
   const output = execSync(`node createNewBucket.js ${bucketName}`);
-  assert.match(output, new RegExp(`Bucket ${bucketName} created.`));
+  assert.match(output, new RegExp(`Bucket ${bucketName} created`));
   const [exists] = await bucket.exists();
   assert.strictEqual(exists, true);
 });
@@ -63,7 +63,7 @@ it('should set a buckets default KMS key', async () => {
   );
   assert.include(
     output,
-    `Default KMS key for ${bucketName} was set to ${defaultKmsKeyName}.`
+    `Default KMS key for ${bucketName} was set to ${defaultKmsKeyName}`
   );
   const metadata = await bucket.getMetadata();
   assert.strictEqual(
@@ -74,7 +74,7 @@ it('should set a buckets default KMS key', async () => {
 
 it('should remove a buckets default KMS key', async () => {
   const output = execSync(`node removeDefaultKMSKey.js ${bucketName}`);
-  assert.include(output, `Default KMS key was removed from ${bucketName}.`);
+  assert.include(output, `Default KMS key was removed from ${bucketName}`);
   const [metadata] = await bucket.getMetadata();
   assert.ok(!metadata.encryption);
 });
@@ -85,7 +85,7 @@ it("should enable a bucket's uniform bucket-level access", async () => {
   );
   assert.match(
     output,
-    new RegExp(`Uniform bucket-level access was enabled for ${bucketName}.`)
+    new RegExp(`Uniform bucket-level access was enabled for ${bucketName}`)
   );
 
   const metadata = await bucket.getMetadata();
@@ -100,7 +100,7 @@ it("should get a bucket's uniform bucket-level access metadata", async () => {
 
   assert.match(
     output,
-    new RegExp(`Uniform bucket-level access is enabled for ${bucketName}.`)
+    new RegExp(`Uniform bucket-level access is enabled for ${bucketName}`)
   );
 
   const [metadata] = await bucket.getMetadata();
@@ -117,7 +117,7 @@ it("should disable a bucket's uniform bucket-level access", async () => {
   );
   assert.match(
     output,
-    new RegExp(`Uniform bucket-level access was disabled for ${bucketName}.`)
+    new RegExp(`Uniform bucket-level access was disabled for ${bucketName}`)
   );
 
   const metadata = await bucket.getMetadata();
@@ -207,7 +207,7 @@ it("should add a bucket's website configuration", async () => {
 
   assert.include(
     output,
-    `Static website bucket ${bucketName} is set up to use http://example.com as the index page and http://example.com/404.html as the 404 page.`
+    `Static website bucket ${bucketName} is set up to use http://example.com as the index page and http://example.com/404.html as the 404 page`
   );
 
   const [metadata] = await bucket.getMetadata();
@@ -221,7 +221,7 @@ it('should make bucket publicly readable', async () => {
   const output = execSync(`node makeBucketPublic.js ${bucketName}`);
   assert.match(
     output,
-    new RegExp(`Bucket ${bucketName} is now publicly readable.`)
+    new RegExp(`Bucket ${bucketName} is now publicly readable`)
   );
   const [policy] = await bucket.iam.getPolicy();
   const objectViewerBinding = policy.bindings.filter(binding => {
@@ -233,14 +233,14 @@ it('should make bucket publicly readable', async () => {
 
 it("should enable a bucket's versioning", async () => {
   const output = execSync(`node enableBucketVersioning.js ${bucketName}`);
-  assert.include(output, `Versioning is enabled for bucket ${bucketName}.`);
+  assert.include(output, `Versioning is enabled for bucket ${bucketName}`);
   await bucket.getMetadata();
   assert.strictEqual(bucket.metadata.versioning.enabled, true);
 });
 
 it("should disable a bucket's versioning", async () => {
   const output = execSync(`node disableBucketVersioning.js ${bucketName}`);
-  assert.include(output, `Versioning is disabled for bucket ${bucketName}.`);
+  assert.include(output, `Versioning is disabled for bucket ${bucketName}`);
   await bucket.getMetadata();
   assert.strictEqual(bucket.metadata.versioning.enabled, false);
 });
@@ -249,14 +249,14 @@ it('should add label to bucket', async () => {
   const output = execSync(
     `node addBucketLabel.js ${bucketName} labelone labelonevalue`
   );
-  assert.include(output, `Added label to bucket ${bucketName}.`);
+  assert.include(output, `Added label to bucket ${bucketName}`);
   const [labels] = await storage.bucket(bucketName).getLabels();
   assert.isTrue('labelone' in labels);
 });
 
 it('should remove label to bucket', async () => {
   const output = execSync(`node removeBucketLabel.js ${bucketName} labelone`);
-  assert.include(output, `Removed labels from bucket ${bucketName}.`);
+  assert.include(output, `Removed labels from bucket ${bucketName}`);
   const [labels] = await storage.bucket(bucketName).getLabels();
   assert.isFalse('labelone' in labels);
 });
@@ -265,7 +265,7 @@ it("should change a bucket's default storage class", async () => {
   const output = execSync(
     `node changeDefaultStorageClass.js ${bucketName} coldline`
   );
-  assert.include(output, `${bucketName} has been set to coldline.`);
+  assert.include(output, `${bucketName} has been set to coldline`);
   const [metadata] = await bucket.getMetadata();
   assert.strictEqual(metadata.storageClass, 'COLDLINE');
 });
@@ -276,7 +276,7 @@ it('should create bucket with storage class and location', async () => {
   );
   assert.include(
     output,
-    `${bucketNameWithClassAndLocation} created with coldline class in ASIA.`
+    `${bucketNameWithClassAndLocation} created with coldline class in ASIA`
   );
   const [metadata] = await bucketWithClassAndLocation.getMetadata();
   assert.strictEqual(metadata.storageClass, 'COLDLINE');
@@ -285,7 +285,7 @@ it('should create bucket with storage class and location', async () => {
 
 it('should delete a bucket', async () => {
   const output = execSync(`node deleteBucket.js ${bucketName}`);
-  assert.match(output, new RegExp(`Bucket ${bucketName} deleted.`));
+  assert.match(output, new RegExp(`Bucket ${bucketName} deleted`));
   const [exists] = await bucket.exists();
   assert.strictEqual(exists, false);
 });

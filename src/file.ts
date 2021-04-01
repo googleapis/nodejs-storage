@@ -304,6 +304,9 @@ export interface FileOptions {
 }
 
 export interface CopyOptions {
+  cacheControl?: string;
+  contentEncoding?: string;
+  contentType?: string;
   destinationKmsKeyName?: string;
   metadata?: Metadata;
   predefinedAcl?: string;
@@ -857,6 +860,9 @@ class File extends ServiceObject<File> {
    * @typedef {object} CopyOptions Configuration options for File#copy(). See an
    *     [Object
    * resource](https://cloud.google.com/storage/docs/json_api/v1/objects#resource).
+   * @property {string} [cacheControl] The cacheControl setting for the new file.
+   * @property {string} [contentEncoding] The contentEncoding setting for the new file.
+   * @property {string} [contentType] The contentType setting for the new file.
    * @property {string} [destinationKmsKeyName] Resource name of the Cloud
    *     KMS key, of the form
    *     `projects/my-project/locations/location/keyRings/my-kr/cryptoKeys/my-key`,
@@ -1211,8 +1217,6 @@ class File extends ServiceObject<File> {
     let crc32c = true;
     let md5 = false;
 
-    let refreshedMetadata = false;
-
     if (typeof options.validation === 'string') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (options as any).validation = (options.validation as string).toLowerCase();
@@ -1221,6 +1225,8 @@ class File extends ServiceObject<File> {
     } else if (options.validation === false) {
       crc32c = false;
     }
+
+    const shouldRunValidation = !rangeRequest && (crc32c || md5);
 
     if (rangeRequest) {
       if (
@@ -1268,6 +1274,8 @@ class File extends ServiceObject<File> {
         qs: query,
       };
 
+      const hashes: {crc32c?: string; md5?: string} = {};
+
       this.requestStream(reqOpts)
         .on('error', err => {
           throughStream.destroy(err);
@@ -1307,10 +1315,22 @@ class File extends ServiceObject<File> {
 
         const headers = rawResponseStream.toJSON().headers;
         isServedCompressed = headers['content-encoding'] === 'gzip';
-        const shouldRunValidation = !rangeRequest && (crc32c || md5);
         const throughStreams: Writable[] = [];
 
         if (shouldRunValidation) {
+          // The x-goog-hash header should be set with a crc32c and md5 hash.
+          // ex: headers['x-goog-hash'] = 'crc32c=xxxx,md5=xxxx'
+          if (typeof headers['x-goog-hash'] === 'string') {
+            headers['x-goog-hash']
+              .split(',')
+              .forEach((hashKeyValPair: string) => {
+                const delimiterIndex = hashKeyValPair.indexOf('=');
+                const hashType = hashKeyValPair.substr(0, delimiterIndex);
+                const hashValue = hashKeyValPair.substr(delimiterIndex + 1);
+                hashes[hashType as 'crc32c' | 'md5'] = hashValue;
+              });
+          }
+
           validateStream = hashStreamValidation({crc32c, md5});
           throughStreams.push(validateStream);
         }
@@ -1338,45 +1358,41 @@ class File extends ServiceObject<File> {
       // our chance to validate the data and let the user know if anything went
       // wrong.
       let onCompleteCalled = false;
-      const onComplete = (err: Error | null) => {
-        if (err) {
-          onCompleteCalled = true;
-          throughStream.destroy(err);
-          return;
-        }
-
-        if (rangeRequest) {
-          onCompleteCalled = true;
-          throughStream.end();
-          return;
-        }
-
-        if (!refreshedMetadata) {
-          refreshedMetadata = true;
-          this.getMetadata({userProject: options.userProject}, onComplete);
-          return;
-        }
-
+      const onComplete = async (err: Error | null) => {
         if (onCompleteCalled) {
           return;
         }
 
         onCompleteCalled = true;
 
-        // TODO(https://github.com/googleapis/nodejs-storage/issues/709):
-        // Remove once the backend issue is fixed.
-        // If object is stored compressed (having metadata.contentEncoding === 'gzip')
-        // and was served decompressed, then skip checksum validation because the
-        // remote checksum is computed against the compressed version of the object.
-        if (this.metadata.contentEncoding === 'gzip' && !isServedCompressed) {
+        if (err) {
+          throughStream.destroy(err);
+          return;
+        }
+
+        if (rangeRequest || !shouldRunValidation) {
           throughStream.end();
           return;
         }
 
-        const hashes = {
-          crc32c: this.metadata.crc32c,
-          md5: this.metadata.md5Hash,
-        };
+        // TODO(https://github.com/googleapis/nodejs-storage/issues/709):
+        // Remove once the backend issue is fixed.
+        // If object is stored compressed (having
+        // metadata.contentEncoding === 'gzip') and was served decompressed,
+        // then skip checksum validation because the remote checksum is computed
+        // against the compressed version of the object.
+        if (!isServedCompressed) {
+          try {
+            await this.getMetadata({userProject: options.userProject});
+          } catch (e) {
+            throughStream.destroy(e);
+            return;
+          }
+          if (this.metadata.contentEncoding === 'gzip') {
+            throughStream.end();
+            return;
+          }
+        }
 
         // If we're doing validation, assume the worst-- a data integrity
         // mismatch. If not, these tests won't be performed, and we can assume
@@ -1781,13 +1797,41 @@ class File extends ServiceObject<File> {
         return;
       }
 
-      // Same as configstore:
+      // The logic below attempts to mimic the resumable upload library,
+      // gcs-resumable-upload. That library requires a writable configuration
+      // directory in order to work. If we wait for that library to discover any
+      // issues, we've already started a resumable upload which is difficult to back
+      // out of. We want to catch any errors first, so we can choose a simple, non-
+      // resumable upload instead.
+
+      // Same as configstore (used by gcs-resumable-upload):
       // https://github.com/yeoman/configstore/blob/f09f067e50e6a636cfc648a6fc36a522062bd49d/index.js#L11
       const configDir = xdgBasedir.config || os.tmpdir();
 
-      fs.access(configDir, fs.constants.W_OK, err => {
-        if (err) {
+      fs.access(configDir, fs.constants.W_OK, accessErr => {
+        if (!accessErr) {
+          // A configuration directory exists, and it's writable. gcs-resumable-upload
+          // should have everything it needs to work.
+          this.startResumableUpload_(fileWriteStream, options);
+          return;
+        }
+
+        // The configuration directory is either not writable, or it doesn't exist.
+        // gcs-resumable-upload will attempt to create it for the user, but we'll try
+        // it now to confirm that it won't have any issues. That way, if we catch the
+        // issue before we start the resumable upload, we can instead start a simple
+        // upload.
+        fs.mkdir(configDir, {mode: 0o0700}, err => {
+          if (!err) {
+            // We successfully created a configuration directory that
+            // gcs-resumable-upload will use.
+            this.startResumableUpload_(fileWriteStream, options);
+            return;
+          }
+
           if (options.resumable) {
+            // The user wanted a resumable upload, but we couldn't create a
+            // configuration directory, which means gcs-resumable-upload will fail.
             const error = new ResumableUploadError(
               [
                 'A resumable upload could not be performed. The directory,',
@@ -1796,15 +1840,11 @@ class File extends ServiceObject<File> {
               ].join(' ')
             );
             stream.destroy(error);
-            return;
+          } else {
+            // The user didn't care, resumable or not. Fall back to simple upload.
+            this.startSimpleUpload_(fileWriteStream, options);
           }
-
-          // User didn't care, resumable or not. Fall back to simple upload.
-          this.startSimpleUpload_(fileWriteStream, options);
-          return;
-        }
-
-        this.startResumableUpload_(fileWriteStream, options);
+        });
       });
     });
 

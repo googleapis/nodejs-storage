@@ -4,6 +4,28 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [5.8.3](https://www.github.com/googleapis/nodejs-storage/compare/v5.8.2...v5.8.3) (2021-03-29)
+
+
+### Bug Fixes
+
+* update CopyOptions type to include cacheControl, contentType and contentEncoding ([#1426](https://www.github.com/googleapis/nodejs-storage/issues/1426)) ([efa5bb8](https://www.github.com/googleapis/nodejs-storage/commit/efa5bb8a22ab68c0c3e8549850e5db4d57ff29bb))
+
+### [5.8.2](https://www.github.com/googleapis/nodejs-storage/compare/v5.8.1...v5.8.2) (2021-03-23)
+
+
+### Bug Fixes
+
+* **perf:** pull hashes without refreshing metadata ([#1419](https://www.github.com/googleapis/nodejs-storage/issues/1419)) ([f3ec627](https://www.github.com/googleapis/nodejs-storage/commit/f3ec6278df3c3df4d4cddf5293be4dda95f0cbf7))
+
+### [5.8.1](https://www.github.com/googleapis/nodejs-storage/compare/v5.8.0...v5.8.1) (2021-03-02)
+
+
+### Bug Fixes
+
+* deprecate `options.promise` and sync options with Service ([#1391](https://www.github.com/googleapis/nodejs-storage/issues/1391)) ([59cfe27](https://www.github.com/googleapis/nodejs-storage/commit/59cfe272de16c41e9c768953a25677294f520cc7))
+* **types:** support metadata override in file.copy() ([#1406](https://www.github.com/googleapis/nodejs-storage/issues/1406)) ([dda6d30](https://www.github.com/googleapis/nodejs-storage/commit/dda6d305638a07cbca188e459544393d8624f4f0))
+
 ## [5.8.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.7.4...v5.8.0) (2021-02-18)
 
 
