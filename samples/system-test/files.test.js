@@ -20,7 +20,7 @@ const {Storage} = require('@google-cloud/storage');
 const {assert} = require('chai');
 const {before, after, it, describe} = require('mocha');
 const cp = require('child_process');
-const fetch = require('node-fetch');
+const {request} = require('gaxios');
 const uuid = require('uuid');
 const {promisify} = require('util');
 
@@ -264,9 +264,11 @@ describe('file', () => {
     assert.match(output, expected);
 
     const match = output.match(expected);
-    const res = await fetch(match[1]);
-    const text = await res.text();
-    assert.strictEqual(text, fileContent);
+    const res = await request({
+      url: match[1],
+      responseType: 'text',
+    });
+    assert.strictEqual(res.data, fileContent);
   });
 
   it('should generate a v4 signed URL and upload a file', async () => {
@@ -278,12 +280,12 @@ describe('file', () => {
     assert.match(output, expected);
 
     const match = output.match(expected);
-    const req = {
+    await request({
+      url: match[1],
       method: 'PUT',
       headers: {'Content-Type': 'application/octet-stream'},
-      body: fileContent,
-    };
-    await fetch(match[1], req);
+      data: fileContent,
+    });
 
     await new Promise((resolve, reject) => {
       let remoteContent = '';
