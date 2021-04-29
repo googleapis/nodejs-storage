@@ -3492,7 +3492,7 @@ class Bucket extends ServiceObject {
    *       team members get access according to their roles.
    *
    *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
-   * get `READER` access.
+   *       get `READER` access.
    * @property {boolean} [private] Make the uploaded file private. (Alias for
    *     `options.predefinedAcl = 'private'`)
    * @property {boolean} [public] Make the uploaded file public. (Alias for
@@ -3580,7 +3580,7 @@ class Bucket extends ServiceObject {
    *       team members get access according to their roles.
    *
    *     - **`publicRead`** - Object owner gets `OWNER` access, and `allUsers`
-   * get `READER` access.
+   *       get `READER` access.
    * @param {boolean} [options.private] Make the uploaded file private. (Alias for
    *     `options.predefinedAcl = 'private'`)
    * @param {boolean} [options.public] Make the uploaded file public. (Alias for
