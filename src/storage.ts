@@ -380,11 +380,11 @@ export class Storage extends Service {
    * Constructs the Storage client.
    *
    * @example <caption>Create a client that uses Application Default Credentials
-   * (ADC)</caption> const {Storage} = require('@google-cloud/storage'); const
-   * storage = new Storage();
+   * (ADC)</caption>
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
    *
    * @example <caption>Create a client with explicit credentials</caption>
-   * storage');/storage');
    * const storage = new Storage({
    *   projectId: 'your-project-id',
    *   keyFilename: '/path/to/keyfile.json'
@@ -636,7 +636,7 @@ export class Storage extends Service {
       metadata = metadataOrCallback as CreateBucketRequest;
     }
 
-    const body = (Object.assign({}, metadata, {name}) as {}) as {
+    const body = Object.assign({}, metadata, {name}) as {} as {
       [index: string]: string | {};
     };
 
