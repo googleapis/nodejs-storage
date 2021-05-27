@@ -24,7 +24,7 @@ import {Channel} from './channel';
 import {File} from './file';
 import {normalize} from './util';
 import {HmacKey, HmacKeyMetadata, HmacKeyOptions} from './hmacKey';
-import { ApiError } from '../../nodejs-common/build/src';
+import {ApiError} from '../../nodejs-common/build/src';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -415,33 +415,35 @@ export class Storage extends Service {
     const baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
 
     /**
-    * Returns true if the API request should be retried, given the error that was
-    * given the first time the request was attempted.
-    *
-    * @param {error} err - The API error to check if it is appropriate to retry.
-    * @return {boolean} True if the API request should be retried, false otherwise.
-    */
+     * Returns true if the API request should be retried, given the error that was
+     * given the first time the request was attempted.
+     *
+     * @param {error} err - The API error to check if it is appropriate to retry.
+     * @return {boolean} True if the API request should be retried, false otherwise.
+     */
     const retryFunction = function (err?: ApiError) {
-     if (err) {
-       if ([408, 429, 500, 502, 503, 504].indexOf(err.code!) !== -1) {
-         return true;
-       }
- 
-       if (err.errors) {
-         for (const e of err.errors) {
-           const reason = e.reason;
-           if (reason === 'rateLimitExceeded' || 
-            reason === 'userRateLimitExceeded' || 
-            (reason && reason.includes('EAI_AGAIN')) ||
-            reason === 'Connection Reset By Peer' ||
-            reason === 'Unexpected Connection Closure') {
-             return true;
-           }
-         }
-       }
+      if (err) {
+        if ([408, 429, 500, 502, 503, 504].indexOf(err.code!) !== -1) {
+          return true;
+        }
+
+        if (err.errors) {
+          for (const e of err.errors) {
+            const reason = e.reason;
+            if (
+              reason === 'rateLimitExceeded' ||
+              reason === 'userRateLimitExceeded' ||
+              (reason && reason.includes('EAI_AGAIN')) ||
+              reason === 'Connection Reset By Peer' ||
+              reason === 'Unexpected Connection Closure'
+            ) {
+              return true;
+            }
+          }
+        }
       }
-     return false;
-   }
+      return false;
+    };
 
     const config = {
       apiEndpoint: options.apiEndpoint!,
