@@ -189,6 +189,14 @@ describe('Storage', () => {
       assert.strictEqual(calledWith.maxRetries, maxRetries);
     });
 
+    it('should propagate retryFunction', () => {
+      const storage = new Storage({
+        projectId: PROJECT_ID,
+      });
+      const calledWith = storage.calledWith_[0];
+      assert(calledWith.retryFunction);
+    });
+
     it('should set customEndpoint to true when using apiEndpoint', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
