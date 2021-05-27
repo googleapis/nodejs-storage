@@ -46,6 +46,9 @@ export interface CreateBucketQuery {
 }
 
 export interface StorageOptions extends ServiceOptions {
+  backoffMultiplier?: number;
+  retryDeadline?: number;
+  maxRetryTimeout?: number;
   autoRetry?: boolean;
   maxRetries?: number;
   /**
@@ -371,6 +374,13 @@ export class Storage extends Service {
    * @property {boolean} [autoRetry=true] Automatically retry requests if the
    *     response is related to rate limits or certain intermittent server
    * errors. We will exponentially backoff subsequent requests by default.
+   * @property {number} [backoffMultiplier = 2] Dictates the rate of exponential backoff.
+   * @property {number} [retryDeadline = 600] The length of time to keep retrying in seconds.
+   *     The last sleep period will be shortened as necessary, so that the last retry runs
+   *     at deadline (and not considerably beyond it).
+   * @property {number} [maxRetryTimeout = 64] The maximum time to delay in seconds.
+   *     If backoffMultiplier results in a delay greater than maxRetryTimeout, retries
+   *     should delay by maxRetryTimeout seconds instead.
    * @property {number} [maxRetries=3] Maximum number of automatic retries
    *     attempted before returning the error.
    * @property {string} [userAgent] The value to be prepended to the User-Agent
@@ -393,6 +403,13 @@ export class Storage extends Service {
    * @param {StorageOptions} [options] Configuration options.
    */
   constructor(options: StorageOptions = {}) {
+
+    const AUTO_RETRY_DEFAULT = true;
+    const MAX_RETRY_DEFAULT = 3;
+    const BACKOFF_MULTIPLIER_DEFAULT = 2;
+    const RETRY_DEADLINE_DEFAULT = 600;
+    const MAX_RETRY_TIMEOUT_DEFAULT = 64;
+
     let apiEndpoint = 'https://storage.googleapis.com';
     let customEndpoint = false;
 
@@ -415,8 +432,11 @@ export class Storage extends Service {
 
     const config = {
       apiEndpoint: options.apiEndpoint!,
-      autoRetry: options.autoRetry,
-      maxRetries: options.maxRetries,
+      autoRetry: options.autoRetry != undefined ? options.autoRetry : AUTO_RETRY_DEFAULT,
+      maxRetries: options.maxRetries ? options.maxRetries : MAX_RETRY_DEFAULT,
+      backoffMultiplier: options.backoffMultiplier ? options.backoffMultiplier : BACKOFF_MULTIPLIER_DEFAULT,
+      retryDeadline: options.retryDeadline ? options.retryDeadline : RETRY_DEADLINE_DEFAULT,
+      maxRetryTimeout: options.maxRetryTimeout ? options.maxRetryTimeout : MAX_RETRY_TIMEOUT_DEFAULT,
       baseUrl,
       customEndpoint,
       projectIdRequired: false,

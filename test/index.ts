@@ -179,6 +179,53 @@ describe('Storage', () => {
       assert.strictEqual(calledWith.autoRetry, autoRetry);
     });
 
+    it('should propagate backoffMultiplyer', () => {
+      const backoffMultiplier = 4;
+      const storage = new Storage({
+        projectId: PROJECT_ID,
+        backoffMultiplier,
+      });
+      const calledWith = storage.calledWith_[0];
+      assert.strictEqual(calledWith.backoffMultiplier, backoffMultiplier);
+    });
+
+    it('should propagate retryDeadline', () => {
+      const retryDeadline = 60;
+      const storage = new Storage({
+        projectId: PROJECT_ID,
+        retryDeadline,
+      });
+      const calledWith = storage.calledWith_[0];
+      assert.strictEqual(calledWith.retryDeadline, retryDeadline);
+    });
+
+    it('should propagate maxRetryTimeout', () => {
+      const maxRetryTimeout = 640;
+      const storage = new Storage({
+        projectId: PROJECT_ID,
+        maxRetryTimeout,
+      });
+      const calledWith = storage.calledWith_[0];
+      assert.strictEqual(calledWith.maxRetryTimeout, maxRetryTimeout);
+    });
+
+    it('should set correct defaults for retry configs', () => {
+      const autoRetryDefault = true;
+      const maxRetryDefault = 3;
+      const backoffMultiplierDefault = 2;
+      const retryDeadlineDefault = 600;
+      const maxRetryTimeoutDefault = 64;
+      const storage = new Storage({
+        projectId: PROJECT_ID,
+      });
+      const calledWith = storage.calledWith_[0];
+      assert.strictEqual(calledWith.autoRetry, autoRetryDefault);
+      assert.strictEqual(calledWith.maxRetries, maxRetryDefault);
+      assert.strictEqual(calledWith.backoffMultiplier, backoffMultiplierDefault);
+      assert.strictEqual(calledWith.retryDeadline, retryDeadlineDefault);
+      assert.strictEqual(calledWith.maxRetryTimeout, maxRetryTimeoutDefault);
+    });
+
     it('should propagate maxRetries', () => {
       const maxRetries = 10;
       const storage = new Storage({
