@@ -137,14 +137,12 @@ describe('v4 conformance test', () => {
         if (testCase.object) {
           const file = bucket.file(testCase.object);
 
-          const action = (
-            {
-              GET: 'read',
-              POST: 'resumable',
-              PUT: 'write',
-              DELETE: 'delete',
-            } as FileAction
-          )[testCase.method];
+          const action = ({
+            GET: 'read',
+            POST: 'resumable',
+            PUT: 'write',
+            DELETE: 'delete',
+          } as FileAction)[testCase.method];
 
           [signedUrl] = await file.getSignedUrl({
             action,
@@ -152,11 +150,9 @@ describe('v4 conformance test', () => {
           } as GetSignedUrlConfig);
         } else {
           // bucket operation
-          const action = (
-            {
-              GET: 'list',
-            } as BucketAction
-          )[testCase.method];
+          const action = ({
+            GET: 'list',
+          } as BucketAction)[testCase.method];
 
           [signedUrl] = await bucket.getSignedUrl({
             action,
