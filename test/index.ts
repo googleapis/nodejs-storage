@@ -221,7 +221,10 @@ describe('Storage', () => {
       const calledWith = storage.calledWith_[0];
       assert.strictEqual(calledWith.autoRetry, autoRetryDefault);
       assert.strictEqual(calledWith.maxRetries, maxRetryDefault);
-      assert.strictEqual(calledWith.backoffMultiplier, backoffMultiplierDefault);
+      assert.strictEqual(
+        calledWith.backoffMultiplier,
+        backoffMultiplierDefault
+      );
       assert.strictEqual(calledWith.retryDeadline, retryDeadlineDefault);
       assert.strictEqual(calledWith.maxRetryTimeout, maxRetryTimeoutDefault);
     });
