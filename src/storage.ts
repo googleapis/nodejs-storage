@@ -431,7 +431,10 @@ export class Storage extends Service {
 
     const config = {
       apiEndpoint: options.apiEndpoint!,
-      autoRetry: options.autoRetry !== undefined ? options.autoRetry : AUTO_RETRY_DEFAULT,
+      autoRetry:
+        options.autoRetry !== undefined
+          ? options.autoRetry
+          : AUTO_RETRY_DEFAULT,
       maxRetries: options.maxRetries ? options.maxRetries : MAX_RETRY_DEFAULT,
       backoffMultiplier: options.backoffMultiplier
         ? options.backoffMultiplier
