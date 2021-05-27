@@ -12,7 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Metadata, Service, ServiceOptions, ApiError} from '@google-cloud/common';
+import {
+  Metadata,
+  Service,
+  ServiceOptions,
+  ApiError,
+} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 
