@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Metadata, Service, ServiceOptions} from '@google-cloud/common';
+import {Metadata, Service, ServiceOptions, ApiError} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 
@@ -24,7 +24,6 @@ import {Channel} from './channel';
 import {File} from './file';
 import {normalize} from './util';
 import {HmacKey, HmacKeyMetadata, HmacKeyOptions} from './hmacKey';
-import { ApiError } from '../../nodejs-common/build/src';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
