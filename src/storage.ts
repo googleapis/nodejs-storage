@@ -46,9 +46,9 @@ export interface CreateBucketQuery {
 }
 
 export interface StorageOptions extends ServiceOptions {
-  backoffMultiplier?: number;
-  retryDeadline?: number;
-  maxRetryTimeout?: number;
+  retryDelayMultiplier?: number;
+  totalTimeout?: number;
+  maxRetryDelay?: number;
   autoRetry?: boolean;
   maxRetries?: number;
   /**
@@ -374,13 +374,15 @@ export class Storage extends Service {
    * @property {boolean} [autoRetry=true] Automatically retry requests if the
    *     response is related to rate limits or certain intermittent server
    * errors. We will exponentially backoff subsequent requests by default.
-   * @property {number} [backoffMultiplier = 2] Dictates the rate of exponential backoff.
-   * @property {number} [retryDeadline = 600] The length of time to keep retrying in seconds.
-   *     The last sleep period will be shortened as necessary, so that the last retry runs
-   *     at deadline (and not considerably beyond it).
-   * @property {number} [maxRetryTimeout = 64] The maximum time to delay in seconds.
-   *     If backoffMultiplier results in a delay greater than maxRetryTimeout, retries
-   *     should delay by maxRetryTimeout seconds instead.
+   * @property {number} [retryDelayMultiplier = 2] the multiplier by which to
+   *   increase the delay time between the completion of failed requests, and the
+   *   initiation of the subsequent retrying request.
+   * @property {number} [totalTimeout = 600] The total time, starting from
+   *  when the initial request is sent, after which an error will
+  *   be returned, regardless of the retrying attempts made meanwhile.
+   * @property {number} [maxRetryDelay = 64] The maximum delay time between requests. 
+   *   When this value is reached, ``retryDelayMultiplier`` will no longer be used to 
+   *   increase delay time.
    * @property {number} [maxRetries=3] Maximum number of automatic retries
    *     attempted before returning the error.
    * @property {string} [userAgent] The value to be prepended to the User-Agent
@@ -436,14 +438,14 @@ export class Storage extends Service {
           ? options.autoRetry
           : AUTO_RETRY_DEFAULT,
       maxRetries: options.maxRetries ? options.maxRetries : MAX_RETRY_DEFAULT,
-      backoffMultiplier: options.backoffMultiplier
-        ? options.backoffMultiplier
+      retryDelayMultiplier: options.retryDelayMultiplier
+        ? options.retryDelayMultiplier
         : BACKOFF_MULTIPLIER_DEFAULT,
-      retryDeadline: options.retryDeadline
-        ? options.retryDeadline
+      totalTimeout: options.totalTimeout
+        ? options.totalTimeout
         : RETRY_DEADLINE_DEFAULT,
-      maxRetryTimeout: options.maxRetryTimeout
-        ? options.maxRetryTimeout
+      maxRetryDelay: options.maxRetryDelay
+        ? options.maxRetryDelay
         : MAX_RETRY_TIMEOUT_DEFAULT,
       baseUrl,
       customEndpoint,
