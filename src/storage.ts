@@ -379,9 +379,9 @@ export class Storage extends Service {
    *   initiation of the subsequent retrying request.
    * @property {number} [totalTimeout = 600] The total time, starting from
    *  when the initial request is sent, after which an error will
-  *   be returned, regardless of the retrying attempts made meanwhile.
-   * @property {number} [maxRetryDelay = 64] The maximum delay time between requests. 
-   *   When this value is reached, ``retryDelayMultiplier`` will no longer be used to 
+   *   be returned, regardless of the retrying attempts made meanwhile.
+   * @property {number} [maxRetryDelay = 64] The maximum delay time between requests.
+   *   When this value is reached, ``retryDelayMultiplier`` will no longer be used to
    *   increase delay time.
    * @property {number} [maxRetries=3] Maximum number of automatic retries
    *     attempted before returning the error.
