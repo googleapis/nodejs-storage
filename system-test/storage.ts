@@ -3385,7 +3385,11 @@ describe('storage', () => {
         },
         {
           code: 412,
-          reason: 'conditionNotMet',
+          errors: [
+            {
+              reason: 'conditionNotMet',
+            }
+          ]
         }
       );
       await bucketWithVersioning
