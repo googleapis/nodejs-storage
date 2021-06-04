@@ -3378,14 +3378,13 @@ describe('storage', () => {
         .file(fileName)
         .save('hello1', {resumable: false});
       await assert.rejects(
-        bucketWithVersioning
-            .file(fileName, {generation: 0})
-            .save('hello2'),
-            (err: ApiError) => {
-              assert.strictEqual(err.code, 412);
-              assert.strictEqual(err.errors![0].reason, 'conditionNotMet');
-              return true;
-            });
+        bucketWithVersioning.file(fileName, {generation: 0}).save('hello2'),
+        (err: ApiError) => {
+          assert.strictEqual(err.code, 412);
+          assert.strictEqual(err.errors![0].reason, 'conditionNotMet');
+          return true;
+        }
+      );
       await bucketWithVersioning
         .file(fileName)
         .save('hello3', {resumable: false});
