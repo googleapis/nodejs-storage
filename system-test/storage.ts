@@ -3385,7 +3385,7 @@ describe('storage', () => {
         },
         {
           code: 412,
-          message: 'Precondition Failed',
+          reason: 'conditionNotMet',
         }
       );
       await bucketWithVersioning
