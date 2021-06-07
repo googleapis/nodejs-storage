@@ -401,7 +401,7 @@ describe('storage', () => {
             assert.ifError(err);
             bucket.acl.get({entity: 'allUsers'}, (err, aclObject) => {
               assert.strictEqual((err as ApiError).code, 404);
-              assert.strictEqual(err!.message, 'Not Found');
+              assert.strictEqual((err as ApiError).errors![0].reason, 'notFound');
               assert.strictEqual(aclObject, null);
               done();
             });
@@ -535,7 +535,7 @@ describe('storage', () => {
               {entity: 'allUsers'},
               (err: ApiError | null, aclObject) => {
                 assert.strictEqual(err!.code, 404);
-                assert.strictEqual(err!.message, 'Not Found');
+                assert.strictEqual(err!.errors![0].reason, 'notFound');
                 assert.strictEqual(aclObject, null);
                 done();
               }
@@ -647,7 +647,7 @@ describe('storage', () => {
 
             file!.acl.get({entity: 'allUsers'}, (err, aclObject) => {
               assert.strictEqual((err as ApiError)!.code, 404);
-              assert.strictEqual(err!.message, 'Not Found');
+              assert.strictEqual((err as ApiError).errors![0].reason, 'notFound');
               assert.strictEqual(aclObject, null);
               done();
             });
