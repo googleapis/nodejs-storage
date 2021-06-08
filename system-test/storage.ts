@@ -401,7 +401,10 @@ describe('storage', () => {
             assert.ifError(err);
             bucket.acl.get({entity: 'allUsers'}, (err, aclObject) => {
               assert.strictEqual((err as ApiError).code, 404);
-              assert.strictEqual(err!.message, 'Not Found');
+              assert.strictEqual(
+                (err as ApiError).errors![0].reason,
+                'notFound'
+              );
               assert.strictEqual(aclObject, null);
               done();
             });
@@ -535,7 +538,7 @@ describe('storage', () => {
               {entity: 'allUsers'},
               (err: ApiError | null, aclObject) => {
                 assert.strictEqual(err!.code, 404);
-                assert.strictEqual(err!.message, 'Not Found');
+                assert.strictEqual(err!.errors![0].reason, 'notFound');
                 assert.strictEqual(aclObject, null);
                 done();
               }
@@ -647,7 +650,10 @@ describe('storage', () => {
 
             file!.acl.get({entity: 'allUsers'}, (err, aclObject) => {
               assert.strictEqual((err as ApiError)!.code, 404);
-              assert.strictEqual(err!.message, 'Not Found');
+              assert.strictEqual(
+                (err as ApiError).errors![0].reason,
+                'notFound'
+              );
               assert.strictEqual(aclObject, null);
               done();
             });
@@ -3535,14 +3541,11 @@ describe('storage', () => {
         .file(fileName)
         .save('hello1', {resumable: false});
       await assert.rejects(
-        async () => {
-          await bucketWithVersioning
-            .file(fileName, {generation: 0})
-            .save('hello2');
-        },
-        {
-          code: 412,
-          message: 'Precondition Failed',
+        bucketWithVersioning.file(fileName, {generation: 0}).save('hello2'),
+        (err: ApiError) => {
+          assert.strictEqual(err.code, 412);
+          assert.strictEqual(err.errors![0].reason, 'conditionNotMet');
+          return true;
         }
       );
       await bucketWithVersioning
