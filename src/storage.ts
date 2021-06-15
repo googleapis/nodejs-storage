@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Metadata, Service, ServiceOptions} from '@google-cloud/common';
+import {ApiError, Metadata, Service, ServiceOptions} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 
@@ -45,12 +45,18 @@ export interface CreateBucketQuery {
   userProject: string;
 }
 
-export interface StorageOptions extends ServiceOptions {
+export interface RetryOptions {
   retryDelayMultiplier?: number;
   totalTimeout?: number;
   maxRetryDelay?: number;
   autoRetry?: boolean;
   maxRetries?: number;
+}
+
+export interface StorageOptions extends ServiceOptions {
+  retryOptions?: RetryOptions;
+  autoRetry?: boolean; //Deprecated. Use retryOptions instead.
+  maxRetries?: number; //Deprecated. Use retryOptions instead.
   /**
    * **This option is deprecated.**
    * @todo Remove in next major release.
@@ -371,19 +377,19 @@ export class Storage extends Service {
    * @property {object} [credentials] Credentials object.
    * @property {string} [credentials.client_email]
    * @property {string} [credentials.private_key]
-   * @property {boolean} [autoRetry=true] Automatically retry requests if the
+   * @property {boolean} [retryOptions.autoRetry=true] Automatically retry requests if the
    *     response is related to rate limits or certain intermittent server
    * errors. We will exponentially backoff subsequent requests by default.
-   * @property {number} [retryDelayMultiplier = 2] the multiplier by which to
+   * @property {number} [retryOptions.retryDelayMultiplier = 2] the multiplier by which to
    *   increase the delay time between the completion of failed requests, and the
    *   initiation of the subsequent retrying request.
-   * @property {number} [totalTimeout = 600] The total time, starting from
+   * @property {number} [retryOptions.totalTimeout = 600] The total time, starting from
    *  when the initial request is sent, after which an error will
    *   be returned, regardless of the retrying attempts made meanwhile.
-   * @property {number} [maxRetryDelay = 64] The maximum delay time between requests.
+   * @property {number} [retryOptions.maxRetryDelay = 64] The maximum delay time between requests.
    *   When this value is reached, ``retryDelayMultiplier`` will no longer be used to
    *   increase delay time.
-   * @property {number} [maxRetries=3] Maximum number of automatic retries
+   * @property {number} [retryOptions.maxRetries=3] Maximum number of automatic retries
    *     attempted before returning the error.
    * @property {string} [userAgent] The value to be prepended to the User-Agent
    *     header in API requests.
@@ -407,9 +413,9 @@ export class Storage extends Service {
   constructor(options: StorageOptions = {}) {
     const AUTO_RETRY_DEFAULT = true;
     const MAX_RETRY_DEFAULT = 3;
-    const BACKOFF_MULTIPLIER_DEFAULT = 2;
-    const RETRY_DEADLINE_DEFAULT = 600;
-    const MAX_RETRY_TIMEOUT_DEFAULT = 64;
+    const RETRY_DELAY_MULTIPLIER_DEFAULT = 2;
+    const TOTAL_TIMEOUT_DEFAULT = 600;
+    const MAX_RETRY_DELAY_DEFAULT = 64;
 
     let apiEndpoint = 'https://storage.googleapis.com';
     let customEndpoint = false;
@@ -431,22 +437,43 @@ export class Storage extends Service {
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
     const baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
 
+    var autoRetryValue = AUTO_RETRY_DEFAULT;
+    if (options.autoRetry !== undefined && options.retryOptions?.autoRetry !== undefined) {
+      throw new ApiError("autoRetry is deprecated. Use retryOptions.autoRetry instead.")
+    }
+    else if (options.autoRetry !== undefined) {
+      autoRetryValue = options.autoRetry;
+    }
+    else if (options.retryOptions?.autoRetry !== undefined) {
+      autoRetryValue = options.retryOptions.autoRetry;
+    }
+
+    var maxRetryValue = MAX_RETRY_DEFAULT;
+    if (options.maxRetries && options.retryOptions?.maxRetries) {
+      throw new ApiError("maxRetries is deprecated. Use retryOptions.maxRetries instead.")
+    }
+    else if (options.maxRetries) {
+      maxRetryValue = options.maxRetries;
+    }
+    else if (options.retryOptions?.maxRetries) {
+      maxRetryValue = options.retryOptions.maxRetries;
+    }
+
     const config = {
       apiEndpoint: options.apiEndpoint!,
-      autoRetry:
-        options.autoRetry !== undefined
-          ? options.autoRetry
-          : AUTO_RETRY_DEFAULT,
-      maxRetries: options.maxRetries ? options.maxRetries : MAX_RETRY_DEFAULT,
-      retryDelayMultiplier: options.retryDelayMultiplier
-        ? options.retryDelayMultiplier
-        : BACKOFF_MULTIPLIER_DEFAULT,
-      totalTimeout: options.totalTimeout
-        ? options.totalTimeout
-        : RETRY_DEADLINE_DEFAULT,
-      maxRetryDelay: options.maxRetryDelay
-        ? options.maxRetryDelay
-        : MAX_RETRY_TIMEOUT_DEFAULT,
+      retryOptions: {
+        autoRetry: autoRetryValue,
+        maxRetries: maxRetryValue,
+        retryDelayMultiplier: options.retryOptions?.retryDelayMultiplier
+          ? options.retryOptions?.retryDelayMultiplier
+          : RETRY_DELAY_MULTIPLIER_DEFAULT,
+        totalTimeout: options.retryOptions?.totalTimeout
+          ? options.retryOptions?.totalTimeout
+          : TOTAL_TIMEOUT_DEFAULT,
+        maxRetryDelay: options.retryOptions?.maxRetryDelay
+          ? options.retryOptions?.maxRetryDelay
+          : MAX_RETRY_DELAY_DEFAULT
+      },
       baseUrl,
       customEndpoint,
       projectIdRequired: false,
