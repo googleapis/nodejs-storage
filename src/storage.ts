@@ -12,7 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ApiError, Metadata, Service, ServiceOptions} from '@google-cloud/common';
+import {
+  ApiError,
+  Metadata,
+  Service,
+  ServiceOptions,
+} from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 
@@ -437,25 +442,26 @@ export class Storage extends Service {
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
     const baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
 
-    var autoRetryValue = AUTO_RETRY_DEFAULT;
-    if (options.autoRetry !== undefined && options.retryOptions?.autoRetry !== undefined) {
-      throw new ApiError("autoRetry is deprecated. Use retryOptions.autoRetry instead.")
-    }
-    else if (options.autoRetry !== undefined) {
+    let autoRetryValue = AUTO_RETRY_DEFAULT;
+    if (
+      options.autoRetry !== undefined &&
+      options.retryOptions?.autoRetry !== undefined
+    ) {
+      throw new ApiError('autoRetry is deprecated. Use retryOptions.autoRetry instead.')
+      );
+    } else if (options.autoRetry !== undefined) {
       autoRetryValue = options.autoRetry;
-    }
-    else if (options.retryOptions?.autoRetry !== undefined) {
+    } else if (options.retryOptions?.autoRetry !== undefined) {
       autoRetryValue = options.retryOptions.autoRetry;
     }
 
-    var maxRetryValue = MAX_RETRY_DEFAULT;
+    let maxRetryValue = MAX_RETRY_DEFAULT;
     if (options.maxRetries && options.retryOptions?.maxRetries) {
-      throw new ApiError("maxRetries is deprecated. Use retryOptions.maxRetries instead.")
-    }
-    else if (options.maxRetries) {
+      throw new ApiError('maxRetries is deprecated. Use retryOptions.maxRetries instead.')
+      );
+    } else if (options.maxRetries) {
       maxRetryValue = options.maxRetries;
-    }
-    else if (options.retryOptions?.maxRetries) {
+    } else if (options.retryOptions?.maxRetries) {
       maxRetryValue = options.retryOptions.maxRetries;
     }
 
@@ -472,7 +478,7 @@ export class Storage extends Service {
           : TOTAL_TIMEOUT_DEFAULT,
         maxRetryDelay: options.retryOptions?.maxRetryDelay
           ? options.retryOptions?.maxRetryDelay
-          : MAX_RETRY_DELAY_DEFAULT
+          : MAX_RETRY_DELAY_DEFAULT,
       },
       baseUrl,
       customEndpoint,

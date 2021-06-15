@@ -191,13 +191,13 @@ describe('Storage', () => {
 
     it('should throw if autoRetry is defined twice', () => {
       const autoRetry = 10;
-        assert.throws(() => {
-          const storage = new Storage({
-            projectId: PROJECT_ID,
-            retryOptions: {autoRetry},
-            autoRetry
-          });
-        }, /autoRetry is deprecated. Use retryOptions.autoRetry instead\./);
+      assert.throws(() => {
+        const storage = new Storage({
+          projectId: PROJECT_ID,
+          retryOptions: {autoRetry},
+          autoRetry,
+        });
+      }, /autoRetry is deprecated. Use retryOptions.autoRetry instead\./);
     });
 
     it('should propagate retryDelayMultiplier', () => {
@@ -207,7 +207,10 @@ describe('Storage', () => {
         retryOptions: {retryDelayMultiplier},
       });
       const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.retryDelayMultiplier, retryDelayMultiplier);
+      assert.strictEqual(
+        calledWith.retryOptions.retryDelayMultiplier,
+        retryDelayMultiplier
+      );
     });
 
     it('should propagate totalTimeout', () => {
@@ -246,8 +249,14 @@ describe('Storage', () => {
         calledWith.retryOptions.retryDelayMultiplier,
         retryDelayMultiplierDefault
       );
-      assert.strictEqual(calledWith.retryOptions.totalTimeout, totalTimeoutDefault);
-      assert.strictEqual(calledWith.retryOptions.maxRetryDelay, maxRetryDelayDefault);
+      assert.strictEqual(
+        calledWith.retryOptions.totalTimeout,
+        totalTimeoutDefault
+      );
+      assert.strictEqual(
+        calledWith.retryOptions.maxRetryDelay,
+        maxRetryDelayDefault
+      );
     });
 
     it('should propagate maxRetries', () => {
@@ -272,13 +281,13 @@ describe('Storage', () => {
 
     it('should throw if maxRetries is defined twice', () => {
       const maxRetries = 10;
-        assert.throws(() => {
-          const storage = new Storage({
-            projectId: PROJECT_ID,
-            retryOptions: {maxRetries},
-            maxRetries
-          });
-        }, /maxRetries is deprecated. Use retryOptions.maxRetries instead\./);
+      assert.throws(() => {
+        const storage = new Storage({
+          projectId: PROJECT_ID,
+          retryOptions: {maxRetries},
+          maxRetries,
+        });
+      }, /maxRetries is deprecated. Use retryOptions.maxRetries instead\./);
     });
 
     it('should set customEndpoint to true when using apiEndpoint', () => {
