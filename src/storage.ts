@@ -447,7 +447,9 @@ export class Storage extends Service {
       options.autoRetry !== undefined &&
       options.retryOptions?.autoRetry !== undefined
     ) {
-      throw new ApiError('autoRetry is deprecated. Use retryOptions.autoRetry instead.');
+      throw new ApiError(
+        'autoRetry is deprecated. Use retryOptions.autoRetry instead.'
+      );
     } else if (options.autoRetry !== undefined) {
       autoRetryValue = options.autoRetry;
     } else if (options.retryOptions?.autoRetry !== undefined) {
@@ -456,7 +458,9 @@ export class Storage extends Service {
 
     let maxRetryValue = MAX_RETRY_DEFAULT;
     if (options.maxRetries && options.retryOptions?.maxRetries) {
-      throw new ApiError('maxRetries is deprecated. Use retryOptions.maxRetries instead.');
+      throw new ApiError(
+        'maxRetries is deprecated. Use retryOptions.maxRetries instead.'
+      );
     } else if (options.maxRetries) {
       maxRetryValue = options.maxRetries;
     } else if (options.retryOptions?.maxRetries) {
