@@ -382,6 +382,10 @@ export class Storage extends Service {
    * @property {object} [credentials] Credentials object.
    * @property {string} [credentials.client_email]
    * @property {string} [credentials.private_key]
+   * @property {object} [retryOptions] Options for customizing retries. Retriable server errors 
+   *     will be retried with exponential delay between them dictated by the formula 
+   *     max(maxRetryDelay, retryDelayMultiplier*retryNumber) until maxRetries or totalTimeout 
+   *     has been reached. Retries will only happen if autoRetry is set to true.
    * @property {boolean} [retryOptions.autoRetry=true] Automatically retry requests if the
    *     response is related to rate limits or certain intermittent server
    * errors. We will exponentially backoff subsequent requests by default.
