@@ -192,7 +192,7 @@ describe('Storage', () => {
     it('should throw if autoRetry is defined twice', () => {
       const autoRetry = 10;
       assert.throws(() => {
-        const storage = new Storage({
+        new Storage({
           projectId: PROJECT_ID,
           retryOptions: {autoRetry},
           autoRetry,
@@ -282,7 +282,7 @@ describe('Storage', () => {
     it('should throw if maxRetries is defined twice', () => {
       const maxRetries = 10;
       assert.throws(() => {
-        const storage = new Storage({
+        new Storage({
           projectId: PROJECT_ID,
           retryOptions: {maxRetries},
           maxRetries,
