@@ -183,7 +183,7 @@ export const PROTOCOL_REGEX = /^(\w*):\/\//;
  * @const {boolean}
  * @private
  */
- const AUTO_RETRY_DEFAULT = true;
+const AUTO_RETRY_DEFAULT = true;
 
 /**
  * Default behavior: Only attempt to retry retriable errors 3 times.
@@ -191,32 +191,32 @@ export const PROTOCOL_REGEX = /^(\w*):\/\//;
  * @const {number}
  * @private
  */
- const MAX_RETRY_DEFAULT = 3;
+const MAX_RETRY_DEFAULT = 3;
 
- /**
+/**
  * Default behavior: Wait twice as long as previous retry before retrying.
  *
  * @const {number}
  * @private
  */
- const RETRY_DELAY_MULTIPLIER_DEFAULT = 2;
+const RETRY_DELAY_MULTIPLIER_DEFAULT = 2;
 
- /**
+/**
  * Default behavior: If the operation doesn't succeed after 600 seconds,
  *  stop retrying.
  *
  * @const {number}
  * @private
  */
- const TOTAL_TIMEOUT_DEFAULT = 600;
+const TOTAL_TIMEOUT_DEFAULT = 600;
 
- /**
+/**
  * Default behavior: Wait no more than 64 seconds between retries.
  *
  * @const {number}
  * @private
  */
- const MAX_RETRY_DELAY_DEFAULT = 64;
+const MAX_RETRY_DELAY_DEFAULT = 64;
 
 /*! Developer Documentation
  *
@@ -461,7 +461,6 @@ export class Storage extends Service {
    * @param {StorageOptions} [options] Configuration options.
    */
   constructor(options: StorageOptions = {}) {
-
     let apiEndpoint = 'https://storage.googleapis.com';
     let customEndpoint = false;
 
