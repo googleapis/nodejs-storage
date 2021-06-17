@@ -13,17 +13,10 @@
 // limitations under the License.
 
 import {
-<<<<<<< HEAD
-  Metadata,
-  Service,
-  ServiceOptions,
-  ApiError,
-=======
   ApiError,
   Metadata,
   Service,
   ServiceOptions,
->>>>>>> cb0d9acf7517d899fa9399cd3fe81a5883897ac1
 } from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
