@@ -17,10 +17,11 @@ import {
   Metadata,
   Service,
   ServiceOptions,
+  util
 } from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
-
+import * as r from 'teeny-request';
 import arrify = require('arrify');
 import {Readable} from 'stream';
 
@@ -499,7 +500,6 @@ export class Storage extends Service {
             const reason = e.reason;
             if (
               reason === 'rateLimitExceeded' ||
-              reason === 'userRateLimitExceeded' ||
               (reason && reason.includes('EAI_AGAIN')) ||
               reason === 'Connection Reset By Peer' ||
               reason === 'Unexpected Connection Closure'
@@ -552,7 +552,10 @@ export class Storage extends Service {
           ? options.retryOptions?.maxRetryDelay
           : MAX_RETRY_DELAY_DEFAULT,
       },
-      retryFunction,
+      shouldRetryFn(httpRespMessage: r.Response) {
+        const err = util.parseHttpRespMessage(httpRespMessage).err;
+        return err && retryFunction(err);
+      },
       baseUrl,
       customEndpoint,
       projectIdRequired: false,
