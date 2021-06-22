@@ -21,7 +21,6 @@ import {
 } from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
-import * as r from 'teeny-request';
 import arrify = require('arrify');
 import {Readable} from 'stream';
 
@@ -552,10 +551,7 @@ export class Storage extends Service {
           ? options.retryOptions?.maxRetryDelay
           : MAX_RETRY_DELAY_DEFAULT,
       },
-      shouldRetryFn(httpRespMessage: r.Response) {
-        const err = util.parseHttpRespMessage(httpRespMessage).err;
-        return err && retryFunction(err);
-      },
+      retryableErrFn: retryFunction,
       baseUrl,
       customEndpoint,
       projectIdRequired: false,
