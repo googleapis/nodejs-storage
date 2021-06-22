@@ -536,20 +536,20 @@ export class Storage extends Service {
 
     const config = {
       apiEndpoint: options.apiEndpoint!,
-      // retryOptions: {
-      //   autoRetry: autoRetryValue,
-      //   maxRetries: maxRetryValue,
-      //   retryDelayMultiplier: options.retryOptions?.retryDelayMultiplier
-      //     ? options.retryOptions?.retryDelayMultiplier
-      //     : RETRY_DELAY_MULTIPLIER_DEFAULT,
-      //   totalTimeout: options.retryOptions?.totalTimeout
-      //     ? options.retryOptions?.totalTimeout
-      //     : TOTAL_TIMEOUT_DEFAULT,
-      //   maxRetryDelay: options.retryOptions?.maxRetryDelay
-      //     ? options.retryOptions?.maxRetryDelay
-      //     : MAX_RETRY_DELAY_DEFAULT,
-      // },
-      // retryableErrorFn: retryFunction,
+      retryOptions: {
+        autoRetry: autoRetryValue,
+        maxRetries: maxRetryValue,
+        retryDelayMultiplier: options.retryOptions?.retryDelayMultiplier
+          ? options.retryOptions?.retryDelayMultiplier
+          : RETRY_DELAY_MULTIPLIER_DEFAULT,
+        totalTimeout: options.retryOptions?.totalTimeout
+          ? options.retryOptions?.totalTimeout
+          : TOTAL_TIMEOUT_DEFAULT,
+        maxRetryDelay: options.retryOptions?.maxRetryDelay
+          ? options.retryOptions?.maxRetryDelay
+          : MAX_RETRY_DELAY_DEFAULT,
+      },
+      retryableErrorFn: retryFunction,
       baseUrl,
       customEndpoint,
       projectIdRequired: false,
