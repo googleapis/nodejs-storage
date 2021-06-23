@@ -191,7 +191,8 @@ describe('storage', () => {
     });
 
     after(() => {
-      process.env.GOOGLE_APPLICATION_CREDENTIALS = GOOGLE_APPLICATION_CREDENTIALS;
+      process.env.GOOGLE_APPLICATION_CREDENTIALS =
+        GOOGLE_APPLICATION_CREDENTIALS;
       process.env.GOOGLE_CLOUD_PROJECT = GOOGLE_APPLICATION_CREDENTIALS;
     });
 
@@ -400,7 +401,10 @@ describe('storage', () => {
             assert.ifError(err);
             bucket.acl.get({entity: 'allUsers'}, (err, aclObject) => {
               assert.strictEqual((err as ApiError).code, 404);
-              assert.strictEqual(err!.message, 'Not Found');
+              assert.strictEqual(
+                (err as ApiError).errors![0].reason,
+                'notFound'
+              );
               assert.strictEqual(aclObject, null);
               done();
             });
@@ -534,7 +538,7 @@ describe('storage', () => {
               {entity: 'allUsers'},
               (err: ApiError | null, aclObject) => {
                 assert.strictEqual(err!.code, 404);
-                assert.strictEqual(err!.message, 'Not Found');
+                assert.strictEqual(err!.errors![0].reason, 'notFound');
                 assert.strictEqual(aclObject, null);
                 done();
               }
@@ -646,7 +650,10 @@ describe('storage', () => {
 
             file!.acl.get({entity: 'allUsers'}, (err, aclObject) => {
               assert.strictEqual((err as ApiError)!.code, 404);
-              assert.strictEqual(err!.message, 'Not Found');
+              assert.strictEqual(
+                (err as ApiError).errors![0].reason,
+                'notFound'
+              );
               assert.strictEqual(aclObject, null);
               done();
             });
@@ -2743,10 +2750,11 @@ describe('storage', () => {
             // Strip the project ID, as it could be the placeholder locally, but
             // the real value upstream.
             const projectIdRegExp = /^.+\/locations/;
-            const actualKmsKeyName = metadata.encryption.defaultKmsKeyName.replace(
-              projectIdRegExp,
-              ''
-            );
+            const actualKmsKeyName =
+              metadata.encryption.defaultKmsKeyName.replace(
+                projectIdRegExp,
+                ''
+              );
             const expectedKmsKeyName = kmsKeyName.replace(projectIdRegExp, '');
 
             assert.strictEqual(actualKmsKeyName, expectedKmsKeyName);
@@ -3376,14 +3384,11 @@ describe('storage', () => {
         .file(fileName)
         .save('hello1', {resumable: false});
       await assert.rejects(
-        async () => {
-          await bucketWithVersioning
-            .file(fileName, {generation: 0})
-            .save('hello2');
-        },
-        {
-          code: 412,
-          message: 'Precondition Failed',
+        bucketWithVersioning.file(fileName, {generation: 0}).save('hello2'),
+        (err: ApiError) => {
+          assert.strictEqual(err.code, 412);
+          assert.strictEqual(err.errors![0].reason, 'conditionNotMet');
+          return true;
         }
       );
       await bucketWithVersioning
@@ -3953,12 +3958,6 @@ describe('storage', () => {
         })
         .map(hmacKey =>
           limit(async () => {
-            console.info(
-              `Will delete HMAC key with access id ${hmacKey.metadata?.accessId} and service account email ${hmacKey.metadata?.serviceAccountEmail}.`
-            );
-            console.info(
-              `This key was created on ${hmacKey.metadata?.timeCreated} which is earlier than ${old}.`
-            );
             await hmacKey.setMetadata({state: 'INACTIVE'});
             await hmacKey.delete();
           })
