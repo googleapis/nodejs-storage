@@ -290,12 +290,12 @@ describe('Storage', () => {
       }, /maxRetries is deprecated. Use retryOptions.maxRetries instead\./);
     });
 
-    it('should propagate retryFunction', () => {
+    it('should set retryFunction', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
       });
       const calledWith = storage.calledWith_[0];
-      assert(calledWith.retryFunction);
+      assert(calledWith.retryOptions.retryableErrorFn);
     });
 
     it('should set customEndpoint to true when using apiEndpoint', () => {

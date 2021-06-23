@@ -548,8 +548,8 @@ export class Storage extends Service {
         maxRetryDelay: options.retryOptions?.maxRetryDelay
           ? options.retryOptions?.maxRetryDelay
           : MAX_RETRY_DELAY_DEFAULT,
+        retryableErrorFn: retryFunction,
       },
-      retryableErrorFn: retryFunction,
       baseUrl,
       customEndpoint,
       projectIdRequired: false,
