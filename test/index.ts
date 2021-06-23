@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import {
+  ApiError,
   DecorateRequestOptions,
   Metadata,
   Service,
@@ -297,6 +298,71 @@ describe('Storage', () => {
       const calledWith = storage.calledWith_[0];
       assert(calledWith.retryOptions.retryableErrorFn);
     });
+
+    it('should retry a 502 error', () => {
+      const storage = new Storage({
+        projectId: PROJECT_ID,
+      });
+      const calledWith = storage.calledWith_[0];
+      const error = new ApiError("502 Error");
+      error.code = 502;
+      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
+    });
+
+    it('should not retry blank error', () => {
+      const storage = new Storage({
+        projectId: PROJECT_ID,
+      });
+      const calledWith = storage.calledWith_[0];
+      const error = undefined;
+      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), false);
+    });
+
+
+    it('should retry a reset connection error', () => {
+      const storage = new Storage({
+        projectId: PROJECT_ID,
+      });
+      const calledWith = storage.calledWith_[0];
+      const error = new ApiError("Connection Reset By Peer error");
+      error.errors= [ {
+        reason: "Connection Reset By Peer"
+      } ];
+      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
+    });
+
+    it('should not retry a 999 error', () => {
+      const storage = new Storage({
+        projectId: PROJECT_ID,
+      });
+      const calledWith = storage.calledWith_[0];
+      const error = new ApiError("999 Error");
+      error.code = 0;
+      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), false);
+    });
+
+
+    it('should retry a 999 error if dictated by custom function', () => {
+      const customRetryFunc = function (err?: ApiError) {
+        if (err) {
+          if ([999].indexOf(err.code!) !== -1) {
+            return true;
+          }
+        }
+        return false;
+      };
+      const storage = new Storage({
+        projectId: PROJECT_ID,
+        retryOptions: {retryableErrorFn: customRetryFunc}
+      });
+      const calledWith = storage.calledWith_[0];
+      const error = new ApiError("999 Error");
+      error.code = 999;
+      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
+    });
+
+
+
 
     it('should set customEndpoint to true when using apiEndpoint', () => {
       const storage = new Storage({

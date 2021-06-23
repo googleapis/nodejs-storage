@@ -238,7 +238,7 @@ const MAX_RETRY_DELAY_DEFAULT = 64;
           const reason = e.reason;
           if (
             (reason && reason.includes('EAI_AGAIN')) ||
-            reason === 'Connection Reset By Peer' ||
+            reason === 'Connection Reset By Peer' || //TODO: verify this reason is correct
             reason === 'Unexpected Connection Closure'
           ) {
             return true;
