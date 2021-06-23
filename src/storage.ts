@@ -20,7 +20,6 @@ import {
 } from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
-
 import arrify = require('arrify');
 import {Readable} from 'stream';
 
@@ -56,6 +55,7 @@ export interface RetryOptions {
   maxRetryDelay?: number;
   autoRetry?: boolean;
   maxRetries?: number;
+  retryableErrorFn?: (err: ApiError) => boolean;
 }
 
 export interface StorageOptions extends ServiceOptions {
@@ -217,6 +217,36 @@ const TOTAL_TIMEOUT_DEFAULT = 600;
  * @private
  */
 const MAX_RETRY_DELAY_DEFAULT = 64;
+
+/**
+ * Returns true if the API request should be retried, given the error that was
+ * given the first time the request was attempted.
+ * @const
+ * @private
+ * @param {error} err - The API error to check if it is appropriate to retry.
+ * @return {boolean} True if the API request should be retried, false otherwise.
+ */
+const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
+  if (err) {
+    if ([408, 429, 500, 502, 503, 504].indexOf(err.code!) !== -1) {
+      return true;
+    }
+
+    if (err.errors) {
+      for (const e of err.errors) {
+        const reason = e.reason?.toLowerCase();
+        if (
+          (reason && reason.includes('eai_again')) ||
+          reason === 'connection reset by peer' ||
+          reason === 'unexpected connection closure'
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+};
 
 /*! Developer Documentation
  *
@@ -441,6 +471,8 @@ export class Storage extends Service {
    *   increase delay time.
    * @property {number} [retryOptions.maxRetries=3] Maximum number of automatic retries
    *     attempted before returning the error.
+   * @property {function} [retryOptions.retryableErrorFn] Function that returns true if a given
+   *     error should be retried and false otherwise.
    * @property {string} [userAgent] The value to be prepended to the User-Agent
    *     header in API requests.
    */
@@ -520,6 +552,9 @@ export class Storage extends Service {
         maxRetryDelay: options.retryOptions?.maxRetryDelay
           ? options.retryOptions?.maxRetryDelay
           : MAX_RETRY_DELAY_DEFAULT,
+        retryableErrorFn: options.retryOptions?.retryableErrorFn
+          ? options.retryOptions?.retryableErrorFn
+          : RETRYABLE_ERR_FN_DEFAULT,
       },
       baseUrl,
       customEndpoint,
