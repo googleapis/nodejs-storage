@@ -218,33 +218,33 @@ const TOTAL_TIMEOUT_DEFAULT = 600;
  */
 const MAX_RETRY_DELAY_DEFAULT = 64;
 
-  /**
-   * Returns true if the API request should be retried, given the error that was
-   * given the first time the request was attempted.
-   * @const
-   * @private
-   * @param {error} err - The API error to check if it is appropriate to retry.
-   * @return {boolean} True if the API request should be retried, false otherwise.
-   */
-    const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
-    if (err) {
-      if ([408, 429, 500, 502, 503, 504].indexOf(err.code!) !== -1) {
-        return true;
-      }
+/**
+ * Returns true if the API request should be retried, given the error that was
+ * given the first time the request was attempted.
+ * @const
+ * @private
+ * @param {error} err - The API error to check if it is appropriate to retry.
+ * @return {boolean} True if the API request should be retried, false otherwise.
+ */
+const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
+  if (err) {
+    if ([408, 429, 500, 502, 503, 504].indexOf(err.code!) !== -1) {
+      return true;
+    }
 
-      if (err.errors) {
-        for (const e of err.errors) {
-          const reason = e.reason?.toLowerCase();
-          if (
-            (reason && reason.includes('eai_again')) ||
-            reason === 'connection reset by peer' ||
-            reason === 'unexpected connection closure'
-          ) {
-            return true;
-          }
+    if (err.errors) {
+      for (const e of err.errors) {
+        const reason = e.reason?.toLowerCase();
+        if (
+          (reason && reason.includes('eai_again')) ||
+          reason === 'connection reset by peer' ||
+          reason === 'unexpected connection closure'
+        ) {
+          return true;
         }
       }
     }
+  }
   return false;
 };
 
