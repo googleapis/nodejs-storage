@@ -63,7 +63,6 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectKeyToLowercase, unicodeJSONStringify} from './util';
-import {GaxiosError, Headers, request as gaxiosRequest} from 'gaxios';
 import retry = require('async-retry');
 
 export type GetExpirationDateResponse = [Date];
@@ -1260,7 +1259,7 @@ class File extends ServiceObject<File> {
       const headers = {
         'Accept-Encoding': 'gzip',
         'Cache-Control': 'no-store',
-      } as Headers;
+      } as any;
 
       if (rangeRequest) {
         const start = typeof options.start === 'number' ? options.start : '0';
@@ -2996,22 +2995,31 @@ class File extends ServiceObject<File> {
    */
 
   isPublic(callback?: IsPublicCallback): Promise<IsPublicResponse> | void {
-    gaxiosRequest({
-      method: 'HEAD',
-      url: `http://${
-        this.bucket.name
-      }.storage.googleapis.com/${encodeURIComponent(this.name)}`,
-    }).then(
-      () => callback!(null, true),
-      (err: GaxiosError) => {
-        if (err.code === '403') {
-          callback!(null, false);
-        } else {
-          callback!(err);
+      const callbackFunction =  function (err: Error | ApiError | null) {
+        if (err) {
+          const apiError = err as ApiError;
+          if (apiError.code === 403) {
+            callback!(null, false);
+          } else {
+            callback!(err);
+          }
+        }
+        else {
+          callback!(null, true)
         }
       }
-    );
-  }
+      util.makeRequest({
+        method: 'HEAD',
+        uri: `http://${
+          this.bucket.name
+        }.storage.googleapis.com/${encodeURIComponent(this.name)}`,
+      },
+      {
+        retryOptions: this.storage.retryOptions
+      },
+      callbackFunction
+      );
+    }
 
   makePrivate(
     options?: MakeFilePrivateOptions
