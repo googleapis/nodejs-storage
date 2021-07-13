@@ -2995,31 +2995,31 @@ class File extends ServiceObject<File> {
    */
 
   isPublic(callback?: IsPublicCallback): Promise<IsPublicResponse> | void {
-      const callbackFunction =  function (err: Error | ApiError | null) {
-        if (err) {
-          const apiError = err as ApiError;
-          if (apiError.code === 403) {
-            callback!(null, false);
-          } else {
-            callback!(err);
-          }
+    const callbackFunction = function (err: Error | ApiError | null) {
+      if (err) {
+        const apiError = err as ApiError;
+        if (apiError.code === 403) {
+          callback!(null, false);
+        } else {
+          callback!(err);
         }
-        else {
-          callback!(null, true)
-        }
+      } else {
+        callback!(null, true);
       }
-      util.makeRequest({
+    };
+    util.makeRequest(
+      {
         method: 'HEAD',
         uri: `http://${
           this.bucket.name
         }.storage.googleapis.com/${encodeURIComponent(this.name)}`,
       },
       {
-        retryOptions: this.storage.retryOptions
+        retryOptions: this.storage.retryOptions,
       },
       callbackFunction
-      );
-    }
+    );
+  }
 
   makePrivate(
     options?: MakeFilePrivateOptions

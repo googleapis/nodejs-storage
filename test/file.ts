@@ -77,10 +77,12 @@ const fakeUtil = Object.assign({}, util, {
   shouldRetryRequest(err: HTTPError) {
     return err.code === 500;
   },
-  makeRequest(reqOpts: DecorateRequestOptions,
+  makeRequest(
+    reqOpts: DecorateRequestOptions,
     config: object,
-    callback: BodyResponseCallback) {
-      callback(null);
+    callback: BodyResponseCallback
+  ) {
+    callback(null);
   },
 });
 
@@ -3625,13 +3627,15 @@ describe('File', () => {
     });
 
     it('should execute callback with `false` in response', done => {
-      fakeUtil.makeRequest = function (reqOpts: DecorateRequestOptions,
-      config: object,
-      callback: BodyResponseCallback) {
-        const error = new ApiError("Permission Denied.");
+      fakeUtil.makeRequest = function (
+        reqOpts: DecorateRequestOptions,
+        config: object,
+        callback: BodyResponseCallback
+      ) {
+        const error = new ApiError('Permission Denied.');
         error.code = 403;
-            callback(error);
-      }
+        callback(error);
+      };
       file.isPublic((err: ApiError, resp: boolean) => {
         assert.ifError(err);
         assert.strictEqual(resp, false);
@@ -3640,26 +3644,30 @@ describe('File', () => {
     });
 
     it('should propagate non-403 errors to user', done => {
-      const error = new ApiError("400 Error.");
+      const error = new ApiError('400 Error.');
       error.code = 400;
-      fakeUtil.makeRequest = function (reqOpts: DecorateRequestOptions,
+      fakeUtil.makeRequest = function (
+        reqOpts: DecorateRequestOptions,
         config: object,
-        callback: BodyResponseCallback) {
-          callback(error);
-        }
-      file.isPublic((err:ApiError) => {
+        callback: BodyResponseCallback
+      ) {
+        callback(error);
+      };
+      file.isPublic((err: ApiError) => {
         assert.strictEqual(err, error);
         done();
       });
     });
 
     it('should correctly send a HEAD request', done => {
-      fakeUtil.makeRequest = function (reqOpts: DecorateRequestOptions,
+      fakeUtil.makeRequest = function (
+        reqOpts: DecorateRequestOptions,
         config: object,
-        callback: BodyResponseCallback) {
-          assert.strictEqual(reqOpts.method, 'HEAD');
-          callback(null);
-        }
+        callback: BodyResponseCallback
+      ) {
+        assert.strictEqual(reqOpts.method, 'HEAD');
+        callback(null);
+      };
       file.isPublic((err: ApiError) => {
         assert.ifError(err);
         done();
@@ -3672,12 +3680,14 @@ describe('File', () => {
         BUCKET.name
       }.storage.googleapis.com/${encodeURIComponent(file.name)}`;
 
-      fakeUtil.makeRequest = function (reqOpts: DecorateRequestOptions,
+      fakeUtil.makeRequest = function (
+        reqOpts: DecorateRequestOptions,
         config: object,
-        callback: BodyResponseCallback) {
-          assert.strictEqual(reqOpts.uri, expectedURL);
-          callback(null);
-        }
+        callback: BodyResponseCallback
+      ) {
+        assert.strictEqual(reqOpts.uri, expectedURL);
+        callback(null);
+      };
       file.isPublic((err: ApiError) => {
         assert.ifError(err);
         done();
