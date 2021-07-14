@@ -2995,18 +2995,6 @@ class File extends ServiceObject<File> {
    */
 
   isPublic(callback?: IsPublicCallback): Promise<IsPublicResponse> | void {
-    const callbackFunction = function (err: Error | ApiError | null) {
-      if (err) {
-        const apiError = err as ApiError;
-        if (apiError.code === 403) {
-          callback!(null, false);
-        } else {
-          callback!(err);
-        }
-      } else {
-        callback!(null, true);
-      }
-    };
     util.makeRequest(
       {
         method: 'HEAD',
@@ -3017,8 +3005,18 @@ class File extends ServiceObject<File> {
       {
         retryOptions: this.storage.retryOptions,
       },
-      callbackFunction
-    );
+      (err: Error | ApiError | null) => {
+        if (err) {
+          const apiError = err as ApiError;
+          if (apiError.code === 403) {
+            callback!(null, false);
+          } else {
+            callback!(err);
+          }
+        } else {
+          callback!(null, true);
+        }
+      });
   }
 
   makePrivate(
