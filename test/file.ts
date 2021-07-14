@@ -242,8 +242,8 @@ describe('File', () => {
         maxRetryDelay: 60,
         retryableErrorFn: (err: HTTPError) => {
           return err.code === 500;
-        }
-      }
+        },
+      },
     };
 
     BUCKET = new Bucket(STORAGE, 'bucket-name');
