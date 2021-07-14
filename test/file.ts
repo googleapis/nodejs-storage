@@ -48,7 +48,6 @@ import {
   GetSignedUrlConfig,
   GenerateSignedPostPolicyV2Options,
   GenerateSignedPostPolicyV2Callback,
-  Storage,
 } from '../src';
 import {
   SignedPostPolicyV4Output,
