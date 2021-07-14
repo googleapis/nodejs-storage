@@ -3016,7 +3016,8 @@ class File extends ServiceObject<File> {
         } else {
           callback!(null, true);
         }
-      });
+      }
+    );
   }
 
   makePrivate(
