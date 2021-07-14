@@ -1257,7 +1257,7 @@ class File extends ServiceObject<File> {
       }
 
       interface Headers {
-        [index: string]: any;
+        [index: string]: string;
       }
 
       const headers = {
