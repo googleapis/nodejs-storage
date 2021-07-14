@@ -3643,8 +3643,8 @@ class File extends ServiceObject<File> {
       {
         retries: this.storage.retryOptions.maxRetries,
         factor: this.storage.retryOptions.retryDelayMultiplier,
-        maxTimeout: this.storage.retryOptions.maxRetryDelay,
-        maxRetryTime: this.storage.retryOptions.totalTimeout
+        maxTimeout: this.storage.retryOptions.maxRetryDelay!*1000, //convert to milliseconds
+        maxRetryTime: this.storage.retryOptions.totalTimeout!*1000 //convert to milliseconds
       }
     );
     if (!callback) {
