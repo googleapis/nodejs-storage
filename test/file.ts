@@ -4358,13 +4358,13 @@ describe('File', () => {
         file.kmsKeyName = 'kms-key-name';
 
         const customRequestInterceptors = [
-          (reqOpts: any) => {
+          (reqOpts: DecorateRequestOptions) => {
             reqOpts.headers = Object.assign({}, reqOpts.headers, {
               a: 'b',
             });
             return reqOpts;
           },
-          (reqOpts: any) => {
+          (reqOpts: DecorateRequestOptions) => {
             reqOpts.headers = Object.assign({}, reqOpts.headers, {
               c: 'd',
             });

@@ -1256,10 +1256,14 @@ class File extends ServiceObject<File> {
         query.userProject = options.userProject;
       }
 
+      interface Headers {
+        [index: string]: any;
+      }
+
       const headers = {
         'Accept-Encoding': 'gzip',
         'Cache-Control': 'no-store',
-      } as any;
+      } as Headers;
 
       if (rangeRequest) {
         const start = typeof options.start === 'number' ? options.start : '0';
