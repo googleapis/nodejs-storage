@@ -435,6 +435,8 @@ export class Storage extends Service {
   getBucketsStream: () => Readable;
   getHmacKeysStream: () => Readable;
 
+  retryOptions: RetryOptions;
+
   /**
    * @typedef {object} StorageOptions
    * @property {string} [projectId] The project ID from the Google Developer's
@@ -576,6 +578,8 @@ export class Storage extends Service {
      * @see Storage.acl
      */
     this.acl = Storage.acl;
+
+    this.retryOptions = config.retryOptions;
 
     this.getBucketsStream = paginator.streamify('getBuckets');
     this.getHmacKeysStream = paginator.streamify('getHmacKeys');
