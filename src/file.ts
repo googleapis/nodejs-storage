@@ -3625,7 +3625,11 @@ class File extends ServiceObject<File> {
         await new Promise<void>((resolve, reject) => {
           const writable = this.createWriteStream(options)
             .on('error', err => {
-              if (isMultipart && this.storage.retryOptions.autoRetry && this.storage.retryOptions.retryableErrorFn!(err)) {
+              if (
+                isMultipart &&
+                this.storage.retryOptions.autoRetry &&
+                this.storage.retryOptions.retryableErrorFn!(err)
+              ) {
                 return reject(err);
               } else {
                 return bail(err);
@@ -3644,7 +3648,7 @@ class File extends ServiceObject<File> {
         retries: this.storage.retryOptions.maxRetries,
         factor: this.storage.retryOptions.retryDelayMultiplier,
         maxTimeout: this.storage.retryOptions.maxRetryDelay,
-        maxRetryTime: this.storage.retryOptions.totalTimeout
+        maxRetryTime: this.storage.retryOptions.totalTimeout,
       }
     );
     if (!callback) {
