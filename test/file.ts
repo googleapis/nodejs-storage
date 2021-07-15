@@ -74,9 +74,6 @@ const fakeUtil = Object.assign({}, util, {
   makeWritableStream(...args: Array<{}>) {
     (makeWritableStreamOverride || util.makeWritableStream)(...args);
   },
-  shouldRetryRequest(err: HTTPError) {
-    return err.code === 500;
-  },
   makeRequest(
     reqOpts: DecorateRequestOptions,
     config: object,
@@ -235,6 +232,16 @@ describe('File', () => {
       },
       bucket(name: string) {
         return new Bucket(this, name);
+      },
+      retryOptions: {
+        autoRetry: true,
+        maxRetries: 3,
+        retryDelayMultipier: 2,
+        totalTimeout: 600,
+        maxRetryDelay: 60,
+        retryableErrorFn: (err: HTTPError) => {
+          return err.code === 500;
+        },
       },
     };
 
