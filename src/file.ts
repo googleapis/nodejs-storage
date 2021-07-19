@@ -1566,6 +1566,7 @@ class File extends ServiceObject<File> {
         private: options.private,
         public: options.public,
         userProject: options.userProject || this.userProject,
+        retryOptions: this.storage.retryOptions
       },
       callback!
     );
@@ -1968,6 +1969,7 @@ class File extends ServiceObject<File> {
       bucket: this.bucket.name,
       file: this.name,
       generation: this.generation,
+      retryOptions: this.storage.retryOptions
     });
     uploadStream.deleteConfig();
   }
@@ -3814,6 +3816,7 @@ class File extends ServiceObject<File> {
       public: options.public,
       uri: options.uri,
       userProject: options.userProject || this.userProject,
+      retryOptions: this.storage.retryOptions
     });
 
     uploadStream
