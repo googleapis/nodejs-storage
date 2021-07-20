@@ -2334,6 +2334,7 @@ describe('File', () => {
           assert.strictEqual(opts.bucket, file.bucket.name);
           assert.strictEqual(opts.file, file.name);
           assert.strictEqual(opts.generation, file.generation);
+          assert.strictEqual(opts.retryOptions, file.storage.retryOptions);
 
           return {
             deleteConfig: () => {
@@ -4436,6 +4437,7 @@ describe('File', () => {
             assert.strictEqual(opts.public, options.public);
             assert.strictEqual(opts.uri, options.uri);
             assert.strictEqual(opts.userProject, options.userProject);
+            assert.strictEqual(opts.retryOptions, storage.retryOptions);
 
             setImmediate(done);
             return new PassThrough();
