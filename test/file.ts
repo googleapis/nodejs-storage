@@ -1677,6 +1677,13 @@ describe('File', () => {
         private: 'private',
         public: 'public',
         userProject: 'user-project-id',
+        retryOptions: {
+          autoRetry: true,
+          maxRetries: 3,
+          maxRetryDelay: 60,
+          retryDelayMultipier: 2,
+          totalTimeout: 600,
+        },
       };
 
       file.generation = 3;
@@ -1703,6 +1710,26 @@ describe('File', () => {
           assert.strictEqual(opts.private, options.private);
           assert.strictEqual(opts.public, options.public);
           assert.strictEqual(opts.userProject, options.userProject);
+          assert.strictEqual(
+            opts.retryOptions.autoRetry,
+            options.retryOptions.autoRetry
+          );
+          assert.strictEqual(
+            opts.retryOptions.maxRetries,
+            options.retryOptions.maxRetries
+          );
+          assert.strictEqual(
+            opts.retryOptions.maxRetryDelay,
+            options.retryOptions.maxRetryDelay
+          );
+          assert.strictEqual(
+            opts.retryOptions.retryDelayMultipier,
+            options.retryOptions.retryDelayMultipier
+          );
+          assert.strictEqual(
+            opts.retryOptions.totalTimeout,
+            options.retryOptions.totalTimeout
+          );
 
           callback();
         },
