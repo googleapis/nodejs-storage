@@ -51,7 +51,7 @@ import {
 import {AddAclOptions} from '../src/acl';
 import {Policy} from '../src/iam';
 import sinon = require('sinon');
-import { Transform } from 'stream';
+import {Transform} from 'stream';
 
 class FakeFile {
   calledWith_: IArguments;
@@ -193,7 +193,7 @@ describe('Bucket', () => {
       retryableErrorFn: (err: HTTPError) => {
         return err.code === 500;
       },
-    }
+    },
   };
   const BUCKET_NAME = 'test-bucket';
 
@@ -2497,7 +2497,6 @@ describe('Bucket', () => {
     });
 
     describe('multipart uploads', () => {
-  
       class DelayedStream500Error extends Transform {
         retryCount: number;
         constructor(retryCount: number) {
@@ -2515,7 +2514,7 @@ describe('Bucket', () => {
           }, 5);
         }
       }
-      
+
       beforeEach(() => {
         fsStatOverride = (path: string, callback: Function) => {
           callback(null, {size: 1}); // Small size to guarantee simple upload
@@ -2527,7 +2526,11 @@ describe('Bucket', () => {
         const options = {destination: fakeFile, resumable: false};
         fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
           class DelayedStreamNoError extends Transform {
-            _transform(chunk: string | Buffer, _encoding: string, done: Function) {
+            _transform(
+              chunk: string | Buffer,
+              _encoding: string,
+              done: Function
+            ) {
               this.push(chunk);
               setTimeout(() => {
                 done();

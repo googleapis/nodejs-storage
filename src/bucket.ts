@@ -3770,7 +3770,7 @@ class Bucket extends ServiceObject {
           })
           .catch(callback);
       }
-    }
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((global as any)['GCLOUD_SANDBOX_ENV']) {
@@ -3828,7 +3828,6 @@ class Bucket extends ServiceObject {
         upload();
       });
     }
-
   }
 
   makeAllFilesPublicPrivate_(
