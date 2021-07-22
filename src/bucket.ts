@@ -3726,7 +3726,6 @@ class Bucket extends ServiceObject {
   ): Promise<UploadResponse> | void {
     const upload = () => {
       const isMultipart = options.resumable === false;
-      console.log(isMultipart);
       const returnValue = retry(
         async (bail: (err: Error) => void) => {
           await new Promise<void>((resolve, reject) => {
