@@ -240,7 +240,7 @@ describe('File', () => {
         totalTimeout: 600,
         maxRetryDelay: 60,
         retryableErrorFn: (err: HTTPError) => {
-          return err.code === 500;
+          return err?.code === 500;
         },
       },
     };
@@ -4114,12 +4114,9 @@ describe('File', () => {
           retryCount++;
           return new DelayedStream500Error(retryCount);
         };
-        try {
-          await file.save(DATA, options);
-          throw Error('unreachable');
-        } catch (e) {
-          assert.strictEqual(e.message, 'unreachable');
-        }
+
+        await file.save(BUFFER_DATA, options);
+        assert.ok(retryCount === 2);
       });
     });
 
