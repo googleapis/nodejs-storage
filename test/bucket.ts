@@ -2522,7 +2522,7 @@ describe('Bucket', () => {
         };
       });
 
-      it('should save with no errors', async () => {
+      it('should save with no errors', done => {
         const fakeFile = new FakeFile(bucket, 'file-name');
         const options = {destination: fakeFile, resumable: false};
         fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
@@ -2534,9 +2534,13 @@ describe('Bucket', () => {
               }, 5);
             }
           }
+          assert.strictEqual(options_.resumable, false);
           return new DelayedStreamNoError();
         };
-        await bucket.upload(filepath, options, assert.ifError);
+        bucket.upload(filepath, options, (err: Error) => {
+          assert.ifError(err);
+          done();
+        });      
       });
 
       it('should retry on first failure', done => {
@@ -2590,7 +2594,7 @@ describe('Bucket', () => {
           return new DelayedStream403Error();
         };
 
-        bucket.upload(filepath, options, (err: Error, file: FakeFile) => {
+        bucket.upload(filepath, options, (err: Error) => {
           assert.strictEqual(err.message, 'first error');
           assert.ok(retryCount === 2);
           done();
@@ -2609,7 +2613,7 @@ describe('Bucket', () => {
           });
           return new DelayedStream500Error(retryCount);
         };
-        bucket.upload(filepath, options, (err: Error, file: FakeFile) => {
+        bucket.upload(filepath, options, (err: Error) => {
           assert.strictEqual(err.message, 'first error');
           assert.ok(retryCount === 1);
           done();
