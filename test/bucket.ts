@@ -2543,7 +2543,7 @@ describe('Bucket', () => {
         bucket.upload(filepath, options, (err: Error) => {
           assert.ifError(err);
           done();
-        });      
+        });
       });
 
       it('should retry on first failure', done => {
