@@ -17,6 +17,7 @@ import {
   Metadata,
   Service,
   ServiceOptions,
+  util
 } from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
@@ -436,6 +437,7 @@ export class Storage extends Service {
   getHmacKeysStream: () => Readable;
 
   retryOptions: RetryOptions;
+  baseUrl: string;
 
   /**
    * @typedef {object} StorageOptions
@@ -580,6 +582,8 @@ export class Storage extends Service {
     this.acl = Storage.acl;
 
     this.retryOptions = config.retryOptions;
+
+    this.baseUrl = config.baseUrl;
 
     this.getBucketsStream = paginator.streamify('getBuckets');
     this.getHmacKeysStream = paginator.streamify('getHmacKeys');
@@ -944,15 +948,20 @@ export class Storage extends Service {
     const query = Object.assign({}, options, {serviceAccountEmail});
     const projectId = query.projectId || this.projectId;
     delete query.projectId;
+    this.retryOptions.autoRetry = false;
 
-    this.request(
+    util.makeRequest(
       {
         method: 'POST',
-        uri: `/projects/${projectId}/hmacKeys`,
+        uri: `${this.baseUrl}/projects/${projectId}/hmacKeys`,
         qs: query,
+      },
+      {
+        retryOptions: this.retryOptions,
       },
       (err, resp: HmacKeyResourceResponse) => {
         if (err) {
+          console.log("sameena logging " + err.message)
           callback!(err, null, null, resp);
           return;
         }

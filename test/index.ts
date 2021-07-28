@@ -31,6 +31,7 @@ import {GetFilesOptions} from '../src/bucket';
 import sinon = require('sinon');
 import {HmacKey} from '../src/hmacKey';
 import {HmacKeyResourceResponse, PROTOCOL_REGEX} from '../src/storage';
+import { RetryOptions } from '@google-cloud/common/build/src/util';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hmacKeyModule = require('../src/hmacKey');
@@ -554,6 +555,10 @@ describe('Storage', () => {
       some: 'value',
     };
 
+    interface MakeRequestConfig {
+      retryOptions: RetryOptions
+    }
+
     let hmacKeyCtor: sinon.SinonSpy;
     beforeEach(() => {
       hmacKeyCtor = sinon.spy(hmacKeyModule, 'HmacKey');
@@ -564,14 +569,18 @@ describe('Storage', () => {
     });
 
     it('should make correct API request', done => {
-      storage.request = (
-        reqOpts: DecorateRequestOptions,
+      util.makeRequest = (
+        reqOpts: DecorateRequestOptions, 
+        config: MakeRequestConfig, 
         callback: Function
       ) => {
+        const baseUrl = 'https://storage.googleapis.com/storage/v1';
+
+        assert.strictEqual(config.retryOptions.autoRetry, false)
         assert.strictEqual(reqOpts.method, 'POST');
         assert.strictEqual(
           reqOpts.uri,
-          `/projects/${storage.projectId}/hmacKeys`
+          `${baseUrl}/projects/${storage.projectId}/hmacKeys`
         );
         assert.strictEqual(
           reqOpts.qs.serviceAccountEmail,
@@ -601,21 +610,8 @@ describe('Storage', () => {
       );
     });
 
-    it('should make request with method options as query parameter', async () => {
-      storage.request = sinon
-        .stub()
-        .returns((_reqOpts: {}, callback: Function) => callback());
-
-      await storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, OPTIONS);
-      const reqArg = storage.request.firstCall.args[0];
-      assert.deepStrictEqual(reqArg.qs, {
-        serviceAccountEmail: SERVICE_ACCOUNT_EMAIL,
-        ...OPTIONS,
-      });
-    });
-
     it('should not modify the options object', done => {
-      storage.request = (_reqOpts: {}, callback: Function) => {
+      util.makeRequest = (_reqOpts: {}, _config: MakeRequestConfig, callback: Function) => {
         callback(null, response);
       };
       const originalOptions = Object.assign({}, OPTIONS);
@@ -628,7 +624,7 @@ describe('Storage', () => {
     });
 
     it('should invoke callback with a secret and an HmacKey instance', done => {
-      storage.request = (_reqOpts: {}, callback: Function) => {
+      util.makeRequest = (_reqOpts: {}, _config: MakeRequestConfig, callback: Function) => {
         callback(null, response);
       };
 
@@ -649,7 +645,7 @@ describe('Storage', () => {
     });
 
     it('should invoke callback with raw apiResponse', done => {
-      storage.request = (_reqOpts: {}, callback: Function) => {
+      util.makeRequest = (_reqOpts: {}, _config: MakeRequestConfig, callback: Function) => {
         callback(null, response);
       };
 
@@ -671,7 +667,7 @@ describe('Storage', () => {
     it('should execute callback with request error', done => {
       const error = new Error('Request error');
       const response = {success: false};
-      storage.request = (_reqOpts: {}, callback: Function) => {
+      util.makeRequest = (_reqOpts: {}, _config: MakeRequestConfig, callback: Function) => {
         callback(error, response);
       };
 
