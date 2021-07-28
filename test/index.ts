@@ -30,7 +30,11 @@ import {Bucket} from '../src';
 import {GetFilesOptions} from '../src/bucket';
 import sinon = require('sinon');
 import {HmacKey} from '../src/hmacKey';
-import {HmacKeyResourceResponse, PROTOCOL_REGEX, RetryOptions} from '../src/storage';
+import {
+  HmacKeyResourceResponse,
+  PROTOCOL_REGEX,
+  RetryOptions,
+} from '../src/storage';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hmacKeyModule = require('../src/hmacKey');
