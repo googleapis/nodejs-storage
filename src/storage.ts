@@ -961,7 +961,6 @@ export class Storage extends Service {
       },
       (err, resp: HmacKeyResourceResponse) => {
         if (err) {
-          console.log("sameena logging " + err.message)
           callback!(err, null, null, resp);
           return;
         }
