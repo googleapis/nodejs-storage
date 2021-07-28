@@ -17,7 +17,7 @@ import {
   Metadata,
   Service,
   ServiceOptions,
-  util
+  util,
 } from '@google-cloud/common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
