@@ -485,7 +485,7 @@ export class Storage extends Service {
    * @property {string} [userAgent] The value to be prepended to the User-Agent
    *     header in API requests.
    * @property {object} [authClient] GoogleAuth client to reuse instead of creating a new one.
-   * @property {number} [timeout] The amount of time in milliseconds to wait for a http request before timing out.
+   * @property {number} [timeout] The amount of time in milliseconds to wait per http request before timing out.
    * @property {object[]} [interceptors_] Array of custom request interceptors to be returned in the order they were assigned.
    * @property {string} [apiEndpoint = storage.google.com] The API endpoint of the service used to make requests.
    */
