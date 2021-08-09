@@ -200,6 +200,23 @@ it('should set public access prevention to unspecified', async () => {
   );
 });
 
+it('should create a notification', async () => {
+  const notificationTopic = 'my-topic';
+  const output = execSync(
+    `node createBucketNotification.js ${bucketName} ${notificationTopic}`
+  );
+  assert.include(
+    output,
+    `Successfully created notification`
+  );
+
+  const [notifications] = await bucket.getNotifications();
+  assert.strictEqual(
+    notifications.length,
+    1
+  );
+});
+
 it("should add a bucket's website configuration", async () => {
   const output = execSync(
     `node addBucketWebsiteConfiguration.js ${bucketName} http://example.com http://example.com/404.html`
