@@ -205,16 +205,10 @@ it('should create a notification', async () => {
   const output = execSync(
     `node createBucketNotification.js ${bucketName} ${notificationTopic}`
   );
-  assert.include(
-    output,
-    `Successfully created notification`
-  );
+  assert.include(output, 'Successfully created notification');
 
   const [notifications] = await bucket.getNotifications();
-  assert.strictEqual(
-    notifications.length,
-    1
-  );
+  assert.strictEqual(notifications.length, 1);
 });
 
 it("should add a bucket's website configuration", async () => {

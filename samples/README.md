@@ -32,6 +32,7 @@ objects to users via direct download.
   * [Storage Configure Bucket Cors.](#storage-configure-bucket-cors.)
   * [Copy File](#copy-file)
   * [Copy Old Version Of File.](#copy-old-version-of-file.)
+  * [Create Bucket Notification](#create-bucket-notification)
   * [Create Bucket With Storage Class and Location.](#create-bucket-with-storage-class-and-location.)
   * [Create New Bucket](#create-new-bucket)
   * [Create Notification](#create-notification)
@@ -376,6 +377,23 @@ __Usage:__
 
 
 `node copyOldVersionOfFile.js <SRC_BUCKET_NAME> <SRC_FILE_NAME> <DEST_BUCKET_NAME> <DEST_FILE_NAME> <GENERATION>`
+
+
+-----
+
+
+
+
+### Create Bucket Notification
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/createBucketNotification.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketNotification.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/createBucketNotification.js`
 
 
 -----

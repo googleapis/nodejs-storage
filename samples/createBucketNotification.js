@@ -37,7 +37,9 @@ function main(bucketName = 'my-bucket', topic = 'my-topic') {
 
   async function createBucketNotification() {
     // Creates a notification subscription for the bucket.
-    const [notification] = await storage.bucket(bucketName).createNotification(topic);
+    const [notification] = await storage
+      .bucket(bucketName)
+      .createNotification(topic);
     console.log(
       `Successfully created notification with id ${notification.metadata.id} and topic ${notification.metadata.topic} for ${bucketName}.`
     );
