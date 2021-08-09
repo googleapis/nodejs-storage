@@ -201,7 +201,7 @@ it('should set public access prevention to unspecified', async () => {
 });
 
 it('should create a notification', async () => {
-  const notificationTopic = 'my-topic';
+  const notificationTopic = 'nodejs-storage-samples-topic';
   const output = execSync(
     `node createBucketNotification.js ${bucketName} ${notificationTopic}`
   );
