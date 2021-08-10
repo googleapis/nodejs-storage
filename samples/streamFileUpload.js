@@ -20,20 +20,13 @@
  * at https://cloud.google.com/storage/docs.
  */
 
-function main(
-  bucketName = 'my-bucket',
-  filePath = './local/path/to/file.txt',
-  destFileName = 'file.txt'
-) {
+function main(bucketName = 'my-bucket', destFileName = 'file.txt') {
   // [START storage_stream_file_upload]
   /**
    * TODO(developer): Uncomment the following lines before running the sample
    */
   // The ID of your GCS bucket
   // const bucketName = 'your-unique-bucket-name';
-
-  // The path to your file to upload
-  // const filePath = 'path/to/your/file';
 
   // The new ID for your GCS file
   // const destFileName = 'your-new-file-name';
@@ -63,7 +56,7 @@ function main(
       // The file upload is complete
     });
 
-    console.log(`${filePath} uploaded to ${bucketName}`);
+    console.log(`${destFileName} uploaded to ${bucketName}`);
   }
 
   streamFileUpload().catch(console.error);
