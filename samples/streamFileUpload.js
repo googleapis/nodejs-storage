@@ -56,9 +56,6 @@ function main(
   async function streamFileUpload() {
     fs.createReadStream(filePath)
       .pipe(file.createWriteStream())
-      .on('error', () => {
-        // There was an error uploading the file
-      })
       .on('finish', () => {
         // The file upload is complete
       });

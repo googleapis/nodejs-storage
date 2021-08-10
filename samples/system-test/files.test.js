@@ -66,7 +66,7 @@ describe('file', () => {
 
   it('should upload a file using a stream', async () => {
     const output = execSync(
-      `node streamFileUpload.js $${bucketName} ${filePath} ${fileName}`
+      `node streamFileUpload.js ${bucketName} ${filePath} ${fileName}`
     );
     assert.match(output, new RegExp(`${filePath} uploaded to ${bucketName}`));
     const [exists] = await bucket.file(fileName).exists();
