@@ -51,7 +51,7 @@ function main(
     // The example below demonstrates how we can reference a remote file, then
     // pipe its contents to a local file.
     // Once the stream is created, the data can be piped anywhere (process, sdout, etc)
-    const readStream = await storage
+    await storage
       .bucket(bucketName)
       .file(fileName)
       .createReadStream() //stream is created
