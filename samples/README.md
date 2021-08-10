@@ -1714,7 +1714,6 @@ __Usage:__
 
 
 
-
 ### Stream File Upload
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/master/samples/streamFileUpload.js).
@@ -1728,7 +1727,6 @@ __Usage:__
 
 
 -----
-
 
 
 
