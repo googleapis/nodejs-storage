@@ -48,11 +48,14 @@ function main(
   const storage = new Storage();
 
   async function streamFileDownload() {
-
     // The example below demonstrates how we can reference a remote file, then
     // pipe its contents to a local file. This is effectively creating a local
     // backup of your remote data.
-    await storage.bucket(bucketName).file(fileName).createReadStream().pipe(fs.createWriteStream(destFileName));
+    await storage
+      .bucket(bucketName)
+      .file(fileName)
+      .createReadStream()
+      .pipe(fs.createWriteStream(destFileName));
 
     console.log(
       `gs://${bucketName}/${fileName} downloaded to ${destFileName}.`
