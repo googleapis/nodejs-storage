@@ -41,8 +41,8 @@ function main(
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
-  // Import Node.js filesystem
-  const fs = require('fs');
+  // Import Node.js stream
+  const stream = require('stream');
 
   // Creates a client
   const storage = new Storage();
@@ -53,12 +53,15 @@ function main(
   // Create a reference to a file object
   const file = myBucket.file(destFileName);
 
+  // Create a pass through stream from a string
+  const passthroughStream = new stream.PassThrough();
+  passthroughStream.write('input text');
+  passthroughStream.end();
+
   async function streamFileUpload() {
-    fs.createReadStream(filePath)
-      .pipe(file.createWriteStream())
-      .on('finish', () => {
-        // The file upload is complete
-      });
+    passthroughStream.pipe(file.createWriteStream()).on('finish', () => {
+      // The file upload is complete
+    });
 
     console.log(`${filePath} uploaded to ${bucketName}`);
   }
