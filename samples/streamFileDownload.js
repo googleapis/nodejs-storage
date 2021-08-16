@@ -38,7 +38,7 @@ function main(
   // The ID of your GCS file
   // const fileName = 'your-file-name';
 
-  // The path to which the file should be downloaded
+  // The filename and file path where you want to download the file
   // const destFileName = '/local/path/to/file.txt';
 
   // Imports the Google Cloud client library
