@@ -30,3 +30,5 @@ s.replace(
     "command: npm run system-test",
     "command: mkdir $HOME/.config && npm run system-test")
 node.fix_hermetic()
+
+node.owlbot_main(templates_excludes=[".github/release-please.yml"])
