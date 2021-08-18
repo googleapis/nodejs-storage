@@ -43,7 +43,7 @@ import * as xdgBasedir from 'xdg-basedir';
 import * as zlib from 'zlib';
 import * as http from 'http';
 
-import {Storage} from './storage';
+import {PreconditionOptions, Storage} from './storage';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 import {
@@ -200,6 +200,7 @@ export interface CreateResumableUploadOptions {
   public?: boolean;
   uri?: string;
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 export type CreateResumableUploadResponse = [string];
@@ -250,6 +251,7 @@ export interface MoveCallback {
 
 export interface MoveOptions {
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 export type RenameOptions = MoveOptions;
@@ -300,6 +302,7 @@ export interface FileOptions {
   generation?: number | string;
   kmsKeyName?: string;
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 export interface CopyOptions {
@@ -312,6 +315,7 @@ export interface CopyOptions {
   predefinedAcl?: string;
   token?: string;
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 export type CopyResponse = [File, Metadata];
@@ -337,6 +341,10 @@ interface CopyQuery {
   userProject?: string;
   destinationKmsKeyName?: string;
   destinationPredefinedAcl?: string;
+  ifGenerationMatch?: number;
+  ifGenerationNotMatch?: number;
+  ifMetagenerationMatch?: number;
+  ifMetagenerationNotMatch?: number;
 }
 
 interface FileQuery {
@@ -376,6 +384,7 @@ export type SetStorageClassResponse = [Metadata];
 
 export interface SetStorageClassOptions {
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 interface SetStorageClassRequest extends SetStorageClassOptions {
@@ -500,7 +509,14 @@ class File extends ServiceObject<File> {
    * const file = myBucket.file('my-file');
    */
   constructor(bucket: Bucket, name: string, options: FileOptions = {}) {
-    const requestQueryObject: {generation?: number; userProject?: string} = {};
+    const requestQueryObject: {
+      generation?: number;
+      userProject?: string;
+      ifGenerationMatch?: number;
+      ifGenerationNotMatch?: number;
+      ifMetagenerationMatch?: number;
+      ifMetagenerationNotMatch?: number;
+    } = {};
 
     let generation: number;
     if (options.generation !== null) {
@@ -512,6 +528,23 @@ class File extends ServiceObject<File> {
       if (!isNaN(generation)) {
         requestQueryObject.generation = generation;
       }
+    }
+
+    if (options?.preconditionOpts?.ifGenerationMatch) {
+      requestQueryObject.ifGenerationMatch =
+        options.preconditionOpts.ifGenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifGenerationNotMatch) {
+      requestQueryObject.ifGenerationNotMatch =
+        options.preconditionOpts.ifGenerationNotMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationMatch) {
+      requestQueryObject.ifMetagenerationMatch =
+        options.preconditionOpts.ifMetagenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
+      requestQueryObject.ifMetagenerationNotMatch =
+        options.preconditionOpts.ifMetagenerationNotMatch;
     }
 
     const userProject = options.userProject || bucket.userProject;
@@ -1033,6 +1066,26 @@ class File extends ServiceObject<File> {
     if (options.predefinedAcl !== undefined) {
       query.destinationPredefinedAcl = options.predefinedAcl;
       delete options.predefinedAcl;
+    }
+
+    if (options?.preconditionOpts?.ifGenerationMatch) {
+      query.ifGenerationMatch = options.preconditionOpts.ifGenerationMatch;
+      delete options.preconditionOpts.ifGenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifGenerationNotMatch) {
+      query.ifGenerationNotMatch =
+        options.preconditionOpts.ifGenerationNotMatch;
+      delete options.preconditionOpts.ifGenerationNotMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationMatch) {
+      query.ifMetagenerationMatch =
+        options.preconditionOpts.ifMetagenerationMatch;
+      delete options.preconditionOpts.ifMetagenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
+      query.ifMetagenerationNotMatch =
+        options.preconditionOpts.ifMetagenerationNotMatch;
+      delete options.preconditionOpts.ifMetagenerationNotMatch;
     }
 
     newFile = newFile! || destBucket.file(destName);
@@ -1564,6 +1617,7 @@ class File extends ServiceObject<File> {
         public: options.public,
         userProject: options.userProject || this.userProject,
         retryOptions: this.storage.retryOptions,
+        params: options.preconditionOpts,
       },
       callback!
     );
@@ -3812,6 +3866,7 @@ class File extends ServiceObject<File> {
       uri: options.uri,
       userProject: options.userProject || this.userProject,
       retryOptions: this.storage.retryOptions,
+      params: options.preconditionOpts,
     });
 
     uploadStream
@@ -3880,6 +3935,22 @@ class File extends ServiceObject<File> {
       reqOpts.qs.predefinedAcl = 'private';
     } else if (options.public) {
       reqOpts.qs.predefinedAcl = 'publicRead';
+    }
+
+    if (options?.preconditionOpts?.ifGenerationMatch) {
+      reqOpts.qs.ifGenerationMatch = options.preconditionOpts.ifGenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifGenerationNotMatch) {
+      reqOpts.qs.ifGenerationNotMatch =
+        options.preconditionOpts.ifGenerationNotMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationMatch) {
+      reqOpts.qs.ifMetagenerationMatch =
+        options.preconditionOpts.ifMetagenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
+      reqOpts.qs.ifMetagenerationNotMatch =
+        options.preconditionOpts.ifMetagenerationNotMatch;
     }
 
     util.makeWritableStream(dup, {

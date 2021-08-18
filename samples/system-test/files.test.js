@@ -64,6 +64,15 @@ describe('file', () => {
     assert.strictEqual(exists, true);
   });
 
+  it('should upload a file using a stream', async () => {
+    const output = execSync(
+      `node streamFileUpload.js ${bucketName} ${fileName}`
+    );
+    assert.match(output, new RegExp(`${fileName} uploaded to ${bucketName}`));
+    const [exists] = await bucket.file(fileName).exists();
+    assert.strictEqual(exists, true);
+  });
+
   it('should upload a file with a kms key', async () => {
     const output = execSync(
       `node uploadFileWithKmsKey.js ${bucketName} ${filePath} ${kmsKeyName}`
@@ -124,6 +133,19 @@ describe('file', () => {
   it('should download a file', () => {
     const output = execSync(
       `node downloadFile.js ${bucketName} ${fileName} ${downloadFilePath}`
+    );
+    assert.match(
+      output,
+      new RegExp(
+        `gs://${bucketName}/${fileName} downloaded to ${downloadFilePath}.`
+      )
+    );
+    fs.statSync(downloadFilePath);
+  });
+
+  it('should download a file using a stream', () => {
+    const output = execSync(
+      `node streamFileDownload.js ${bucketName} ${fileName} ${downloadFilePath}`
     );
     assert.match(
       output,

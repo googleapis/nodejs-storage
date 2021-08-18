@@ -345,6 +345,66 @@ describe('File', () => {
       });
     });
 
+    it('should set the correct query string with ifGenerationMatch', () => {
+      const options = {preconditionOpts: {ifGenerationMatch: 100}};
+      const file = new File(BUCKET, 'name', options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
+      });
+    });
+
+    it('should set the correct query string with ifGenerationNotMatch', () => {
+      const options = {preconditionOpts: {ifGenerationNotMatch: 100}};
+      const file = new File(BUCKET, 'name', options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
+      });
+    });
+
+    it('should set the correct query string with ifMetagenerationMatch', () => {
+      const options = {preconditionOpts: {ifMetagenerationMatch: 100}};
+      const file = new File(BUCKET, 'name', options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
+      });
+    });
+
+    it('should set the correct query string with ifMetagenerationNotMatch', () => {
+      const options = {preconditionOpts: {ifMetagenerationNotMatch: 100}};
+      const file = new File(BUCKET, 'name', options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
+      });
+    });
+
     it('should not strip leading slash name in ServiceObject', () => {
       const file = new File(BUCKET, '/name');
       const calledWith = file.calledWith_[0];
@@ -580,6 +640,39 @@ describe('File', () => {
       };
 
       file.copy(newFile, {destinationKmsKeyName}, assert.ifError);
+    });
+
+    it('should accept precondition options', done => {
+      const options = {
+        preconditionOpts: {
+          ifGenerationMatch: 100,
+          ifGenerationNotMatch: 101,
+          ifMetagenerationMatch: 102,
+          ifMetagenerationNotMatch: 103,
+        },
+      };
+      const newFile = new File(BUCKET, 'new-file');
+      file.request = (reqOpts: DecorateRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.qs.ifGenerationMatch,
+          options.preconditionOpts.ifGenerationMatch
+        );
+        assert.strictEqual(
+          reqOpts.qs.ifGenerationNotMatch,
+          options.preconditionOpts.ifGenerationNotMatch
+        );
+        assert.strictEqual(
+          reqOpts.qs.ifMetagenerationMatch,
+          options.preconditionOpts.ifMetagenerationMatch
+        );
+        assert.strictEqual(
+          reqOpts.qs.ifMetagenerationNotMatch,
+          options.preconditionOpts.ifMetagenerationNotMatch
+        );
+        done();
+      };
+
+      file.copy(newFile, options, assert.ifError);
     });
 
     describe('destination types', () => {
@@ -1684,6 +1777,9 @@ describe('File', () => {
           retryDelayMultipier: 2,
           totalTimeout: 600,
         },
+        preconditionOpts: {
+          ifGenerationMatch: 100,
+        },
       };
 
       file.generation = 3;
@@ -1730,6 +1826,7 @@ describe('File', () => {
             opts.retryOptions.totalTimeout,
             options.retryOptions.totalTimeout
           );
+          assert.strictEqual(opts.params, options.preconditionOpts);
 
           callback();
         },
@@ -2056,6 +2153,61 @@ describe('File', () => {
       writable.write('data');
     });
 
+    it('should set ifGenerationMatch with 100', done => {
+      const writable = file.createWriteStream({
+        preconditionOpts: {ifGenerationMatch: 100},
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(options.preconditionOpts.ifGenerationMatch, 100);
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should set ifGenerationNotMatch with 100', done => {
+      const writable = file.createWriteStream({
+        preconditionOpts: {ifGenerationNotMatch: 100},
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(options.preconditionOpts.ifGenerationNotMatch, 100);
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should set ifMetagenerationMatch with 100', done => {
+      const writable = file.createWriteStream({
+        preconditionOpts: {ifMetagenerationMatch: 100},
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(options.preconditionOpts.ifMetagenerationMatch, 100);
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should set ifMetagenerationNotMatch with 100', done => {
+      const writable = file.createWriteStream({
+        preconditionOpts: {ifMetagenerationNotMatch: 100},
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(
+          options.preconditionOpts.ifMetagenerationNotMatch,
+          100
+        );
+        done();
+      };
+
+      writable.write('data');
+    });
+
     it('should set encoding with gzip:auto & compressible', done => {
       const writable = file.createWriteStream({
         gzip: 'auto',
@@ -2335,6 +2487,7 @@ describe('File', () => {
           assert.strictEqual(opts.file, file.name);
           assert.strictEqual(opts.generation, file.generation);
           assert.strictEqual(opts.retryOptions, file.storage.retryOptions);
+          assert.strictEqual(opts.params, file.preconditionOpts);
 
           return {
             deleteConfig: () => {
@@ -4435,6 +4588,7 @@ describe('File', () => {
             assert.strictEqual(opts.uri, options.uri);
             assert.strictEqual(opts.userProject, options.userProject);
             assert.strictEqual(opts.retryOptions, storage.retryOptions);
+            assert.strictEqual(opts.params, storage.preconditionOpts);
 
             setImmediate(done);
             return new PassThrough();

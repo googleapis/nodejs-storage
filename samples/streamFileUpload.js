@@ -1,4 +1,4 @@
-// Copyright 2020 Google LLC
+// Copyright 2021 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,31 +20,47 @@
  * at https://cloud.google.com/storage/docs.
  */
 
-function main(bucketName = 'my-bucket', notificationId = '1') {
-  // [START storage_delete_bucket_notification]
+function main(bucketName = 'my-bucket', destFileName = 'file.txt') {
+  // [START storage_stream_file_upload]
   /**
-   * TODO(developer): Uncomment the following lines before running the sample.
+   * TODO(developer): Uncomment the following lines before running the sample
    */
   // The ID of your GCS bucket
   // const bucketName = 'your-unique-bucket-name';
 
-  // The ID of the notification
-  // const notificationId = '1';
+  // The new ID for your GCS file
+  // const destFileName = 'your-new-file-name';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
+  // Import Node.js stream
+  const stream = require('stream');
+
   // Creates a client
   const storage = new Storage();
 
-  async function deleteNotification() {
-    // Deletes the notification from the bucket
-    await storage.bucket(bucketName).notification(notificationId).delete();
+  // Get a reference to the bucket
+  const myBucket = storage.bucket(bucketName);
 
-    console.log(`Notification ${notificationId} deleted.`);
+  // Create a reference to a file object
+  const file = myBucket.file(destFileName);
+
+  // Create a pass through stream from a string
+  const passthroughStream = new stream.PassThrough();
+  passthroughStream.write('input text');
+  passthroughStream.end();
+
+  async function streamFileUpload() {
+    passthroughStream.pipe(file.createWriteStream()).on('finish', () => {
+      // The file upload is complete
+    });
+
+    console.log(`${destFileName} uploaded to ${bucketName}`);
   }
 
-  deleteNotification().catch(console.error);
-  // [END storage_delete_bucket_notification]
+  streamFileUpload().catch(console.error);
+  // [END storage_stream_file_upload]
 }
+
 main(...process.argv.slice(2));
