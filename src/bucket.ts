@@ -57,6 +57,7 @@ import {
   URLSigner,
   Query,
 } from './signer';
+import {type} from 'os';
 
 interface SourceObject {
   name: string;
@@ -262,6 +263,11 @@ export interface GetBucketSignedUrlConfig {
 
 export enum BucketActionToHTTPMethod {
   list = 'GET',
+}
+
+export enum Methods {
+  setMetadata,
+  delete,
 }
 
 export interface GetNotificationsOptions {
@@ -615,6 +621,8 @@ class Bucket extends ServiceObject {
 
   getFilesStream: Function;
   signer?: URLSigner;
+
+  originalRetryValue?: boolean;
 
   constructor(storage: Storage, name: string, options?: BucketOptions) {
     options = options || {};
@@ -1008,6 +1016,8 @@ class Bucket extends ServiceObject {
     this.iam = new Iam(this);
 
     this.getFilesStream = paginator.streamify('getFiles');
+
+    this.originalRetryValue = storage.retryOptions.autoRetry;
   }
 
   addLifecycleRule(
@@ -1233,8 +1243,18 @@ class Bucket extends ServiceObject {
       return apiFormattedRule;
     });
 
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      Methods.setMetadata
+    );
+
     if (options.append === false) {
-      this.setMetadata({lifecycle: {rule: newLifecycleRules}}, callback);
+      this.setMetadata(
+        {lifecycle: {rule: newLifecycleRules}},
+        callback
+      ).finally(() => {
+        this.storage.retryOptions.autoRetry = this.originalRetryValue;
+      });
       return;
     }
 
@@ -1257,7 +1277,9 @@ class Bucket extends ServiceObject {
           },
         },
         callback!
-      );
+      ).finally(() => {
+        this.storage.retryOptions.autoRetry = this.originalRetryValue;
+      });
     });
   }
 
@@ -1386,11 +1408,17 @@ class Bucket extends ServiceObject {
       }
     }
 
+    let maxRetries = this.storage.retryOptions.maxRetries;
+    if (options?.ifGenerationMatch) {
+      maxRetries = 0;
+    }
+
     // Make the request from the destination File object.
     destinationFile.request(
       {
         method: 'POST',
         uri: '/compose',
+        maxRetries,
         json: {
           destination: {
             contentType: destinationFile.metadata.contentType,
@@ -1846,12 +1874,21 @@ class Bucket extends ServiceObject {
     const errors = [] as Error[];
 
     const deleteFile = (file: File) => {
-      return file.delete(query).catch(err => {
-        if (!query.force) {
-          throw err;
-        }
-        errors.push(err);
-      });
+      this.disableAutoRetryConditionallyIdempotent_(
+        this.methods.delete,
+        Methods.delete
+      );
+      return file
+        .delete(query)
+        .catch(err => {
+          if (!query.force) {
+            throw err;
+          }
+          errors.push(err);
+        })
+        .finally(() => {
+          this.storage.retryOptions.autoRetry = this.originalRetryValue;
+        });
     };
 
     this.getFiles(query)
@@ -1997,6 +2034,10 @@ class Bucket extends ServiceObject {
   disableRequesterPays(
     callback?: DisableRequesterPaysCallback
   ): Promise<DisableRequesterPaysResponse> | void {
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      Methods.setMetadata
+    );
     this.setMetadata(
       {
         billing: {
@@ -2004,7 +2045,9 @@ class Bucket extends ServiceObject {
         },
       },
       callback || util.noop
-    );
+    ).finally(() => {
+      this.storage.retryOptions.autoRetry = this.originalRetryValue;
+    });
   }
 
   enableLogging(
@@ -2080,6 +2123,7 @@ class Bucket extends ServiceObject {
 
     (async () => {
       let setMetadataResponse;
+      const originalAutoRetryValue = this.storage.retryOptions.autoRetry;
 
       try {
         const [policy] = await this.iam.getPolicy();
@@ -2088,6 +2132,13 @@ class Bucket extends ServiceObject {
           role: 'roles/storage.objectCreator',
         });
         await this.iam.setPolicy(policy);
+        if (
+          typeof this.methods.setMetadata === 'object' &&
+          this.methods.setMetadata.reqOpts?.qs?.ifMetagenerationMatch ===
+            undefined
+        ) {
+          this.storage.retryOptions.autoRetry = false;
+        }
         [setMetadataResponse] = await this.setMetadata({
           logging: {
             logBucket,
@@ -2097,6 +2148,8 @@ class Bucket extends ServiceObject {
       } catch (e) {
         callback!(e);
         return;
+      } finally {
+        this.storage.retryOptions.autoRetry = originalAutoRetryValue;
       }
 
       callback!(null, setMetadataResponse);
@@ -2154,6 +2207,10 @@ class Bucket extends ServiceObject {
   enableRequesterPays(
     callback?: EnableRequesterPaysCallback
   ): Promise<EnableRequesterPaysResponse> | void {
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      Methods.setMetadata
+    );
     this.setMetadata(
       {
         billing: {
@@ -2161,7 +2218,9 @@ class Bucket extends ServiceObject {
         },
       },
       callback || util.noop
-    );
+    ).finally(() => {
+      this.storage.retryOptions.autoRetry = this.originalRetryValue;
+    });
   }
 
   /**
@@ -2945,6 +3004,11 @@ class Bucket extends ServiceObject {
       query.userProject = options.userProject;
     }
 
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      Methods.setMetadata
+    );
+
     // You aren't allowed to set both predefinedAcl & acl properties on a bucket
     // so acl must explicitly be nullified.
     const metadata = extend({}, options.metadata, {acl: null});
@@ -2956,7 +3020,10 @@ class Bucket extends ServiceObject {
         }
         return [];
       })
-      .then(files => callback!(null, files), callback!);
+      .then(files => callback!(null, files), callback!)
+      .finally(() => {
+        this.storage.retryOptions.autoRetry = this.originalRetryValue;
+      });
   }
 
   makePublic(
@@ -3135,12 +3202,18 @@ class Bucket extends ServiceObject {
   removeRetentionPeriod(
     callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      Methods.setMetadata
+    );
     this.setMetadata(
       {
         retentionPolicy: null,
       },
       callback!
-    );
+    ).finally(() => {
+      this.storage.retryOptions.autoRetry = this.originalRetryValue;
+    });
   }
 
   request(reqOpts: DecorateRequestOptions): Promise<[ResponseBody, Metadata]>;
@@ -3239,7 +3312,12 @@ class Bucket extends ServiceObject {
 
     callback = callback || util.noop;
 
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      Methods.setMetadata
+    );
     this.setMetadata({labels}, options, callback);
+    this.storage.retryOptions.autoRetry = this.originalRetryValue;
   }
 
   setRetentionPeriod(duration: number): Promise<SetBucketMetadataResponse>;
@@ -3286,6 +3364,10 @@ class Bucket extends ServiceObject {
     duration: number,
     callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      Methods.setMetadata
+    );
     this.setMetadata(
       {
         retentionPolicy: {
@@ -3293,7 +3375,9 @@ class Bucket extends ServiceObject {
         },
       },
       callback!
-    );
+    ).finally(() => {
+      this.storage.retryOptions.autoRetry = this.originalRetryValue;
+    });
   }
 
   setCorsConfiguration(
@@ -3350,12 +3434,18 @@ class Bucket extends ServiceObject {
     corsConfiguration: Cors[],
     callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      Methods.setMetadata
+    );
     this.setMetadata(
       {
         cors: corsConfiguration,
       },
       callback!
-    );
+    ).finally(() => {
+      this.storage.retryOptions.autoRetry = this.originalRetryValue;
+    });
   }
 
   setStorageClass(
@@ -3426,6 +3516,10 @@ class Bucket extends ServiceObject {
     callback =
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      Methods.setMetadata
+    );
     // In case we get input like `storageClass`, convert to `storage_class`.
     storageClass = storageClass
       .replace(/-/g, '_')
@@ -3435,6 +3529,7 @@ class Bucket extends ServiceObject {
       .toUpperCase();
 
     this.setMetadata({storageClass}, options, callback!);
+    this.storage.retryOptions.autoRetry = this.originalRetryValue;
   }
 
   /**
@@ -3751,7 +3846,7 @@ class Bucket extends ServiceObject {
     optionsOrCallback?: UploadOptions | UploadCallback,
     callback?: UploadCallback
   ): Promise<UploadResponse> | void {
-    const upload = () => {
+    const upload = (numberOfRetries: number | undefined) => {
       const returnValue = retry(
         async (bail: (err: Error) => void) => {
           await new Promise<void>((resolve, reject) => {
@@ -3777,7 +3872,7 @@ class Bucket extends ServiceObject {
           });
         },
         {
-          retries: this.storage.retryOptions.maxRetries,
+          retries: numberOfRetries,
           factor: this.storage.retryOptions.retryDelayMultiplier,
           maxTimeout: this.storage.retryOptions.maxRetryDelay! * 1000, //convert to milliseconds
           maxRetryTime: this.storage.retryOptions.totalTimeout! * 1000, //convert to milliseconds
@@ -3814,6 +3909,12 @@ class Bucket extends ServiceObject {
       options
     );
 
+    // Do not retry if precondition option ifMetagenerationMatch is not set
+    let numberOfRetries = this.storage.retryOptions.maxRetries;
+    if (options?.preconditionOpts?.ifMetagenerationMatch === undefined) {
+      numberOfRetries = 0;
+    }
+
     let newFile: File;
     if (options.destination instanceof File) {
       newFile = options.destination;
@@ -3836,7 +3937,7 @@ class Bucket extends ServiceObject {
     }
 
     if (options.resumable !== null && typeof options.resumable === 'boolean') {
-      upload();
+      upload(numberOfRetries);
     } else {
       // Determine if the upload should be resumable if it's over the threshold.
       fs.stat(pathString, (err, fd) => {
@@ -3850,7 +3951,7 @@ class Bucket extends ServiceObject {
           options.resumable = false;
         }
 
-        upload();
+        upload(numberOfRetries);
       });
     }
   }
@@ -3950,6 +4051,25 @@ class Bucket extends ServiceObject {
 
   getId(): string {
     return this.id!;
+  }
+
+  disableAutoRetryConditionallyIdempotent_(
+    coreOpts: any,
+    methodType: Methods
+  ): void {
+    if (
+      typeof coreOpts === 'object' &&
+      coreOpts?.reqOpts?.qs?.ifMetagenerationMatch === undefined &&
+      methodType === Methods.setMetadata
+    ) {
+      this.storage.retryOptions.autoRetry = false;
+    } else if (
+      typeof coreOpts === 'object' &&
+      coreOpts?.reqOpts?.qs?.ifGenerationMatch === undefined &&
+      methodType === Methods.delete
+    ) {
+      this.storage.retryOptions.autoRetry = false;
+    }
   }
 }
 
