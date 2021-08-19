@@ -57,7 +57,6 @@ import {
   URLSigner,
   Query,
 } from './signer';
-import {type} from 'os';
 
 interface SourceObject {
   name: string;
