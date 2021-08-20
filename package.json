@@ -36,7 +36,7 @@
     "conformance-test": "mocha build/conformance-test",
     "preconformance-test": "npm run compile",
     "presystem-test": "npm run compile",
-    "test": "c8 mocha build/test",
+    "test": "mocha build/test",
     "pretest": "npm run compile",
     "lint": "eslint samples/ && gts check",
     "samples-test": "npm link && cd samples/ && npm link ../ && npm test && cd ../",
