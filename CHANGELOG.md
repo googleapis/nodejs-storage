@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [4.7.2](https://www.github.com/googleapis/nodejs-storage/compare/v4.7.1...v4.7.2) (2021-08-20)
+
+
+### Bug Fixes
+
+* **build:** publish branch ([#1547](https://www.github.com/googleapis/nodejs-storage/issues/1547)) ([5ff66de](https://www.github.com/googleapis/nodejs-storage/commit/5ff66de494c1fd608d1b57f64aa9a490c02900a2))
+
 ### [4.7.1](https://www.github.com/googleapis/nodejs-storage/compare/v4.7.0...v4.7.1) (2021-08-20)
 
 
