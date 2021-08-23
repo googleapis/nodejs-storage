@@ -4,9 +4,3 @@ branchProtectionRules:
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
     requiresStrictStatusChecks: false
-  - team: yoshi-admins
-    permission: admin
-  - team: yoshi-nodejs-admins
-    permission: admin
-  - team: storage-dpe
-    permission: push
