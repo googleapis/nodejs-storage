@@ -1587,7 +1587,7 @@ describe('Bucket', () => {
         assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
       };
 
-      bucket.enableLogging({prefix: PREFIX}, (err: Error | null) => {
+      bucket.enableLogging({prefix: PREFIX}, () => {
         done();
       });
     });
@@ -2201,7 +2201,7 @@ describe('Bucket', () => {
     });
 
     it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
-      bucket.setMetadata = (metadata: {}, options_: SetFileMetadataOptions) => {
+      bucket.setMetadata = () => {
         assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
         return Promise.resolve();
       };
@@ -2687,7 +2687,7 @@ describe('Bucket', () => {
         return true;
       };
       const options = {destination: fakeFile, metadata};
-      bucket.upload(filepath, options, (err: Error, file: FakeFile) => {
+      bucket.upload(filepath, options, () => {
         assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
         done();
       });

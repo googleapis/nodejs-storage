@@ -4043,6 +4043,7 @@ class Bucket extends ServiceObject {
   }
 
   disableAutoRetryConditionallyIdempotent_(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     coreOpts: any,
     methodType: AvailableServiceObjectMethods
   ): void {
