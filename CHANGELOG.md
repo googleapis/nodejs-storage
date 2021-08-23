@@ -4,6 +4,55 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [5.13.1](https://www.github.com/googleapis/nodejs-storage/compare/v5.13.0...v5.13.1) (2021-08-18)
+
+
+### Bug Fixes
+
+* **deps:** update dependency date-and-time to v2 ([#1537](https://www.github.com/googleapis/nodejs-storage/issues/1537)) ([9d0d69e](https://www.github.com/googleapis/nodejs-storage/commit/9d0d69eaf908817dec274abe915bd96bb22c663a))
+
+## [5.13.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.12.0...v5.13.0) (2021-08-09)
+
+
+### Features
+
+* Precondition checks ([#1523](https://www.github.com/googleapis/nodejs-storage/issues/1523)) ([7c24417](https://www.github.com/googleapis/nodejs-storage/commit/7c244178649f120cfefe58994b515da7ca6b7ffb))
+
+## [5.12.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.11.1...v5.12.0) (2021-08-03)
+
+
+### Features
+
+* pass precondition parameters to gcs-resumable-upload ([#1516](https://www.github.com/googleapis/nodejs-storage/issues/1516)) ([65211dd](https://www.github.com/googleapis/nodejs-storage/commit/65211ddb8ae19229154b4aca3d5ff97f2aaa9f56))
+
+### [5.11.1](https://www.github.com/googleapis/nodejs-storage/compare/v5.11.0...v5.11.1) (2021-08-02)
+
+
+### Bug Fixes
+
+* don't retry non-idempotent functions ([#1517](https://www.github.com/googleapis/nodejs-storage/issues/1517)) ([c938795](https://www.github.com/googleapis/nodejs-storage/commit/c938795e8a5f14ba7724f2d0e334310dd8e8f207))
+
+## [5.11.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.10.0...v5.11.0) (2021-07-23)
+
+
+### Features
+
+* retries for resumable bucket.upload and file.save ([#1511](https://www.github.com/googleapis/nodejs-storage/issues/1511)) ([9bf163c](https://www.github.com/googleapis/nodejs-storage/commit/9bf163c3e3569bad1440940ff1a6bfd42404bb32))
+
+## [5.10.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.9.0...v5.10.0) (2021-07-22)
+
+
+### Features
+
+* retry multipart Bucket.upload ([#1509](https://www.github.com/googleapis/nodejs-storage/issues/1509)) ([730d0a0](https://www.github.com/googleapis/nodejs-storage/commit/730d0a0d4a6aa5192d998c54292d3423d3ddeaaa))
+
+## [5.9.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.8.5...v5.9.0) (2021-07-21)
+
+
+### Features
+
+* customize retry behavior implementation ([#1474](https://www.github.com/googleapis/nodejs-storage/issues/1474)) ([#1493](https://www.github.com/googleapis/nodejs-storage/issues/1493)) ([49008e3](https://www.github.com/googleapis/nodejs-storage/commit/49008e313b89ce6035543bf2cf1e60e253404520))
+
 ### [5.8.5](https://www.github.com/googleapis/nodejs-storage/compare/v5.8.4...v5.8.5) (2021-05-04)
 
 

@@ -14,6 +14,7 @@
 
 import {
   ApiError,
+  BodyResponseCallback,
   DecorateRequestOptions,
   ServiceObject,
   ServiceObjectConfig,
@@ -28,7 +29,6 @@ import * as dateFormat from 'date-and-time';
 import * as duplexify from 'duplexify';
 import * as extend from 'extend';
 import * as fs from 'fs';
-import * as gaxios from 'gaxios';
 import * as os from 'os';
 import * as path from 'path';
 import * as proxyquire from 'proxyquire';
@@ -74,8 +74,12 @@ const fakeUtil = Object.assign({}, util, {
   makeWritableStream(...args: Array<{}>) {
     (makeWritableStreamOverride || util.makeWritableStream)(...args);
   },
-  shouldRetryRequest(err: HTTPError) {
-    return err.code === 500;
+  makeRequest(
+    reqOpts: DecorateRequestOptions,
+    config: object,
+    callback: BodyResponseCallback
+  ) {
+    callback(null);
   },
 });
 
@@ -229,6 +233,16 @@ describe('File', () => {
       bucket(name: string) {
         return new Bucket(this, name);
       },
+      retryOptions: {
+        autoRetry: true,
+        maxRetries: 3,
+        retryDelayMultipier: 2,
+        totalTimeout: 600,
+        maxRetryDelay: 60,
+        retryableErrorFn: (err: HTTPError) => {
+          return err?.code === 500;
+        },
+      },
     };
 
     BUCKET = new Bucket(STORAGE, 'bucket-name');
@@ -328,6 +342,66 @@ describe('File', () => {
         get: {reqOpts: {qs: options}},
         getMetadata: {reqOpts: {qs: options}},
         setMetadata: {reqOpts: {qs: options}},
+      });
+    });
+
+    it('should set the correct query string with ifGenerationMatch', () => {
+      const options = {preconditionOpts: {ifGenerationMatch: 100}};
+      const file = new File(BUCKET, 'name', options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
+      });
+    });
+
+    it('should set the correct query string with ifGenerationNotMatch', () => {
+      const options = {preconditionOpts: {ifGenerationNotMatch: 100}};
+      const file = new File(BUCKET, 'name', options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
+      });
+    });
+
+    it('should set the correct query string with ifMetagenerationMatch', () => {
+      const options = {preconditionOpts: {ifMetagenerationMatch: 100}};
+      const file = new File(BUCKET, 'name', options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
+      });
+    });
+
+    it('should set the correct query string with ifMetagenerationNotMatch', () => {
+      const options = {preconditionOpts: {ifMetagenerationNotMatch: 100}};
+      const file = new File(BUCKET, 'name', options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
       });
     });
 
@@ -566,6 +640,39 @@ describe('File', () => {
       };
 
       file.copy(newFile, {destinationKmsKeyName}, assert.ifError);
+    });
+
+    it('should accept precondition options', done => {
+      const options = {
+        preconditionOpts: {
+          ifGenerationMatch: 100,
+          ifGenerationNotMatch: 101,
+          ifMetagenerationMatch: 102,
+          ifMetagenerationNotMatch: 103,
+        },
+      };
+      const newFile = new File(BUCKET, 'new-file');
+      file.request = (reqOpts: DecorateRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.qs.ifGenerationMatch,
+          options.preconditionOpts.ifGenerationMatch
+        );
+        assert.strictEqual(
+          reqOpts.qs.ifGenerationNotMatch,
+          options.preconditionOpts.ifGenerationNotMatch
+        );
+        assert.strictEqual(
+          reqOpts.qs.ifMetagenerationMatch,
+          options.preconditionOpts.ifMetagenerationMatch
+        );
+        assert.strictEqual(
+          reqOpts.qs.ifMetagenerationNotMatch,
+          options.preconditionOpts.ifMetagenerationNotMatch
+        );
+        done();
+      };
+
+      file.copy(newFile, options, assert.ifError);
     });
 
     describe('destination types', () => {
@@ -1663,6 +1770,16 @@ describe('File', () => {
         private: 'private',
         public: 'public',
         userProject: 'user-project-id',
+        retryOptions: {
+          autoRetry: true,
+          maxRetries: 3,
+          maxRetryDelay: 60,
+          retryDelayMultipier: 2,
+          totalTimeout: 600,
+        },
+        preconditionOpts: {
+          ifGenerationMatch: 100,
+        },
       };
 
       file.generation = 3;
@@ -1689,6 +1806,27 @@ describe('File', () => {
           assert.strictEqual(opts.private, options.private);
           assert.strictEqual(opts.public, options.public);
           assert.strictEqual(opts.userProject, options.userProject);
+          assert.strictEqual(
+            opts.retryOptions.autoRetry,
+            options.retryOptions.autoRetry
+          );
+          assert.strictEqual(
+            opts.retryOptions.maxRetries,
+            options.retryOptions.maxRetries
+          );
+          assert.strictEqual(
+            opts.retryOptions.maxRetryDelay,
+            options.retryOptions.maxRetryDelay
+          );
+          assert.strictEqual(
+            opts.retryOptions.retryDelayMultipier,
+            options.retryOptions.retryDelayMultipier
+          );
+          assert.strictEqual(
+            opts.retryOptions.totalTimeout,
+            options.retryOptions.totalTimeout
+          );
+          assert.strictEqual(opts.params, options.preconditionOpts);
 
           callback();
         },
@@ -2015,6 +2153,61 @@ describe('File', () => {
       writable.write('data');
     });
 
+    it('should set ifGenerationMatch with 100', done => {
+      const writable = file.createWriteStream({
+        preconditionOpts: {ifGenerationMatch: 100},
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(options.preconditionOpts.ifGenerationMatch, 100);
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should set ifGenerationNotMatch with 100', done => {
+      const writable = file.createWriteStream({
+        preconditionOpts: {ifGenerationNotMatch: 100},
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(options.preconditionOpts.ifGenerationNotMatch, 100);
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should set ifMetagenerationMatch with 100', done => {
+      const writable = file.createWriteStream({
+        preconditionOpts: {ifMetagenerationMatch: 100},
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(options.preconditionOpts.ifMetagenerationMatch, 100);
+        done();
+      };
+
+      writable.write('data');
+    });
+
+    it('should set ifMetagenerationNotMatch with 100', done => {
+      const writable = file.createWriteStream({
+        preconditionOpts: {ifMetagenerationNotMatch: 100},
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(
+          options.preconditionOpts.ifMetagenerationNotMatch,
+          100
+        );
+        done();
+      };
+
+      writable.write('data');
+    });
+
     it('should set encoding with gzip:auto & compressible', done => {
       const writable = file.createWriteStream({
         gzip: 'auto',
@@ -2293,6 +2486,8 @@ describe('File', () => {
           assert.strictEqual(opts.bucket, file.bucket.name);
           assert.strictEqual(opts.file, file.name);
           assert.strictEqual(opts.generation, file.generation);
+          assert.strictEqual(opts.retryOptions, file.storage.retryOptions);
+          assert.strictEqual(opts.params, file.preconditionOpts);
 
           return {
             deleteConfig: () => {
@@ -3612,8 +3807,7 @@ describe('File', () => {
     afterEach(() => sandbox.restore());
 
     it('should execute callback with `true` in response', done => {
-      sandbox.stub(gaxios, 'request').resolves();
-      file.isPublic((err: gaxios.GaxiosError, resp: boolean) => {
+      file.isPublic((err: ApiError, resp: boolean) => {
         assert.ifError(err);
         assert.strictEqual(resp, true);
         done();
@@ -3621,8 +3815,16 @@ describe('File', () => {
     });
 
     it('should execute callback with `false` in response', done => {
-      sandbox.stub(gaxios, 'request').rejects({code: '403'});
-      file.isPublic((err: gaxios.GaxiosError, resp: boolean) => {
+      fakeUtil.makeRequest = function (
+        reqOpts: DecorateRequestOptions,
+        config: object,
+        callback: BodyResponseCallback
+      ) {
+        const error = new ApiError('Permission Denied.');
+        error.code = 403;
+        callback(error);
+      };
+      file.isPublic((err: ApiError, resp: boolean) => {
         assert.ifError(err);
         assert.strictEqual(resp, false);
         done();
@@ -3630,32 +3832,52 @@ describe('File', () => {
     });
 
     it('should propagate non-403 errors to user', done => {
-      const error = {code: '400'};
-      sandbox.stub(gaxios, 'request').rejects(error as gaxios.GaxiosError);
-      file.isPublic((err: gaxios.GaxiosError) => {
+      const error = new ApiError('400 Error.');
+      error.code = 400;
+      fakeUtil.makeRequest = function (
+        reqOpts: DecorateRequestOptions,
+        config: object,
+        callback: BodyResponseCallback
+      ) {
+        callback(error);
+      };
+      file.isPublic((err: ApiError) => {
         assert.strictEqual(err, error);
         done();
       });
     });
 
     it('should correctly send a HEAD request', done => {
-      const spy = sandbox.spy(gaxios, 'request');
-      file.isPublic((err: gaxios.GaxiosError) => {
+      fakeUtil.makeRequest = function (
+        reqOpts: DecorateRequestOptions,
+        config: object,
+        callback: BodyResponseCallback
+      ) {
+        assert.strictEqual(reqOpts.method, 'HEAD');
+        callback(null);
+      };
+      file.isPublic((err: ApiError) => {
         assert.ifError(err);
-        assert.strictEqual(spy.calledWithMatch({method: 'HEAD'}), true);
         done();
       });
     });
 
     it('should correctly format URL in the request', done => {
       file = new File(BUCKET, 'my#file$.png');
-      const expecterURL = `http://${
+      const expectedURL = `http://${
         BUCKET.name
       }.storage.googleapis.com/${encodeURIComponent(file.name)}`;
-      const spy = sandbox.spy(gaxios, 'request');
-      file.isPublic((err: gaxios.GaxiosError) => {
+
+      fakeUtil.makeRequest = function (
+        reqOpts: DecorateRequestOptions,
+        config: object,
+        callback: BodyResponseCallback
+      ) {
+        assert.strictEqual(reqOpts.uri, expectedURL);
+        callback(null);
+      };
+      file.isPublic((err: ApiError) => {
         assert.ifError(err);
-        assert.strictEqual(spy.calledWithMatch({url: expecterURL}), true);
         done();
       });
     });
@@ -4038,19 +4260,16 @@ describe('File', () => {
         assert.ok(retryCount === 2);
       });
 
-      it('non-multipart upload should not retry', async () => {
+      it('resumable upload should retry', async () => {
         const options = {resumable: true};
         let retryCount = 0;
         file.createWriteStream = () => {
           retryCount++;
           return new DelayedStream500Error(retryCount);
         };
-        try {
-          await file.save(DATA, options);
-          throw Error('unreachable');
-        } catch (e) {
-          assert.strictEqual(e.message, 'first error');
-        }
+
+        await file.save(BUFFER_DATA, options);
+        assert.ok(retryCount === 2);
       });
     });
 
@@ -4324,13 +4543,13 @@ describe('File', () => {
         file.kmsKeyName = 'kms-key-name';
 
         const customRequestInterceptors = [
-          (reqOpts: gaxios.GaxiosOptions) => {
+          (reqOpts: DecorateRequestOptions) => {
             reqOpts.headers = Object.assign({}, reqOpts.headers, {
               a: 'b',
             });
             return reqOpts;
           },
-          (reqOpts: gaxios.GaxiosOptions) => {
+          (reqOpts: DecorateRequestOptions) => {
             reqOpts.headers = Object.assign({}, reqOpts.headers, {
               c: 'd',
             });
@@ -4368,6 +4587,8 @@ describe('File', () => {
             assert.strictEqual(opts.public, options.public);
             assert.strictEqual(opts.uri, options.uri);
             assert.strictEqual(opts.userProject, options.userProject);
+            assert.strictEqual(opts.retryOptions, storage.retryOptions);
+            assert.strictEqual(opts.params, storage.preconditionOpts);
 
             setImmediate(done);
             return new PassThrough();

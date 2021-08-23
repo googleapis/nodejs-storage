@@ -51,6 +51,7 @@ import {
 import {AddAclOptions} from '../src/acl';
 import {Policy} from '../src/iam';
 import sinon = require('sinon');
+import {Transform} from 'stream';
 
 class FakeFile {
   calledWith_: IArguments;
@@ -167,6 +168,14 @@ const fakeSigner = {
   URLSigner: () => {},
 };
 
+class HTTPError extends Error {
+  code: number;
+  constructor(message: string, code: number) {
+    super(message);
+    this.code = code;
+  }
+}
+
 describe('Bucket', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let Bucket: any;
@@ -175,6 +184,16 @@ describe('Bucket', () => {
 
   const STORAGE = {
     createBucket: util.noop,
+    retryOptions: {
+      autoRetry: true,
+      maxRetries: 3,
+      retryDelayMultipier: 2,
+      totalTimeout: 600,
+      maxRetryDelay: 60,
+      retryableErrorFn: (err: HTTPError) => {
+        return err.code === 500;
+      },
+    },
   };
   const BUCKET_NAME = 'test-bucket';
 
@@ -311,6 +330,70 @@ describe('Bucket', () => {
         get: {reqOpts: {qs: options}},
         getMetadata: {reqOpts: {qs: options}},
         setMetadata: {reqOpts: {qs: options}},
+      });
+    });
+
+    it('should set the correct query string with ifGenerationMatch', () => {
+      const options = {preconditionOpts: {ifGenerationMatch: 100}};
+      const file = new Bucket(STORAGE, BUCKET_NAME, options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        create: {reqOpts: {qs: options.preconditionOpts}},
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
+      });
+    });
+
+    it('should set the correct query string with ifGenerationNotMatch', () => {
+      const options = {preconditionOpts: {ifGenerationNotMatch: 100}};
+      const file = new Bucket(STORAGE, BUCKET_NAME, options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        create: {reqOpts: {qs: options.preconditionOpts}},
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
+      });
+    });
+
+    it('should set the correct query string with ifMetagenerationMatch', () => {
+      const options = {preconditionOpts: {ifMetagenerationMatch: 100}};
+      const file = new Bucket(STORAGE, BUCKET_NAME, options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        create: {reqOpts: {qs: options.preconditionOpts}},
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
+      });
+    });
+
+    it('should set the correct query string with ifMetagenerationNotMatch', () => {
+      const options = {preconditionOpts: {ifMetagenerationNotMatch: 100}};
+      const file = new Bucket(STORAGE, BUCKET_NAME, options);
+
+      const calledWith = file.calledWith_[0];
+
+      assert.deepStrictEqual(calledWith.methods, {
+        create: {reqOpts: {qs: options.preconditionOpts}},
+        delete: {reqOpts: {qs: options.preconditionOpts}},
+        exists: {reqOpts: {qs: options.preconditionOpts}},
+        get: {reqOpts: {qs: options.preconditionOpts}},
+        getMetadata: {reqOpts: {qs: options.preconditionOpts}},
+        setMetadata: {reqOpts: {qs: options.preconditionOpts}},
       });
     });
 
@@ -696,6 +779,40 @@ describe('Bucket', () => {
       bucket.combine(sources, destination, options, assert.ifError);
     });
 
+    it('should accept precondition options', done => {
+      const options = {
+        ifGenerationMatch: 100,
+        ifGenerationNotMatch: 101,
+        ifMetagenerationMatch: 102,
+        ifMetagenerationNotMatch: 103,
+      };
+
+      const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
+      const destination = bucket.file('destination.txt');
+
+      destination.request = (reqOpts: DecorateRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.qs.ifGenerationMatch,
+          options.ifGenerationMatch
+        );
+        assert.strictEqual(
+          reqOpts.qs.ifGenerationNotMatch,
+          options.ifGenerationNotMatch
+        );
+        assert.strictEqual(
+          reqOpts.qs.ifMetagenerationMatch,
+          options.ifMetagenerationMatch
+        );
+        assert.strictEqual(
+          reqOpts.qs.ifMetagenerationNotMatch,
+          options.ifMetagenerationNotMatch
+        );
+        done();
+      };
+
+      bucket.combine(sources, destination, options, assert.ifError);
+    });
+
     it('should execute the callback', done => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');
@@ -1039,6 +1156,22 @@ describe('Bucket', () => {
       };
 
       bucket.deleteFiles(done);
+    });
+
+    it('should accept precondition options', done => {
+      const options = {
+        ifGenerationMatch: 100,
+        ifGenerationNotMatch: 101,
+        ifMetagenerationMatch: 102,
+        ifMetagenerationNotMatch: 103,
+      };
+
+      bucket.getFiles = (query: {}) => {
+        assert.deepStrictEqual(query, options);
+        return Promise.all([[]]);
+      };
+
+      bucket.deleteFiles(options, done);
     });
 
     it('should get files from the bucket', done => {
@@ -2421,6 +2554,24 @@ describe('Bucket', () => {
     });
 
     describe('resumable uploads', () => {
+      class DelayedStream500Error extends Transform {
+        retryCount: number;
+        constructor(retryCount: number) {
+          super();
+          this.retryCount = retryCount;
+        }
+        _transform(chunk: string | Buffer, _encoding: string, done: Function) {
+          this.push(chunk);
+          setTimeout(() => {
+            if (this.retryCount === 1) {
+              done(new HTTPError('first error', 500));
+            } else {
+              done();
+            }
+          }, 5);
+        }
+      }
+
       beforeEach(() => {
         fsStatOverride = (path: string, callback: Function) => {
           callback(null, {size: 1}); // Small size to guarantee simple upload
@@ -2474,6 +2625,190 @@ describe('Bucket', () => {
           return ws;
         };
         bucket.upload(filepath, options, assert.ifError);
+      });
+
+      it('should not retry a nonretryable error code', done => {
+        const fakeFile = new FakeFile(bucket, 'file-name');
+        const options = {destination: fakeFile, resumable: true};
+        let retryCount = 0;
+        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
+          class DelayedStream403Error extends Transform {
+            _transform(
+              chunk: string | Buffer,
+              _encoding: string,
+              done: Function
+            ) {
+              this.push(chunk);
+              setTimeout(() => {
+                retryCount++;
+                if (retryCount === 1) {
+                  done(new HTTPError('first error', 403));
+                } else {
+                  done();
+                }
+              }, 5);
+            }
+          }
+          setImmediate(() => {
+            assert.strictEqual(options_.resumable, true);
+            retryCount++;
+            done();
+          });
+          return new DelayedStream403Error();
+        };
+
+        bucket.upload(filepath, options, (err: Error) => {
+          assert.strictEqual(err.message, 'first error');
+          assert.ok(retryCount === 2);
+          done();
+        });
+      });
+
+      it('resumable upload should retry', done => {
+        const fakeFile = new FakeFile(bucket, 'file-name');
+        const options = {destination: fakeFile, resumable: true};
+        let retryCount = 0;
+        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
+          setImmediate(() => {
+            assert.strictEqual(options_.resumable, true);
+            retryCount++;
+            done();
+          });
+          return new DelayedStream500Error(retryCount);
+        };
+        bucket.upload(filepath, options, (err: Error) => {
+          assert.strictEqual(err.message, 'first error');
+          assert.ok(retryCount === 1);
+          done();
+        });
+      });
+    });
+
+    describe('multipart uploads', () => {
+      class DelayedStream500Error extends Transform {
+        retryCount: number;
+        constructor(retryCount: number) {
+          super();
+          this.retryCount = retryCount;
+        }
+        _transform(chunk: string | Buffer, _encoding: string, done: Function) {
+          this.push(chunk);
+          setTimeout(() => {
+            if (this.retryCount === 1) {
+              done(new HTTPError('first error', 500));
+            } else {
+              done();
+            }
+          }, 5);
+        }
+      }
+
+      beforeEach(() => {
+        fsStatOverride = (path: string, callback: Function) => {
+          callback(null, {size: 1}); // Small size to guarantee simple upload
+        };
+      });
+
+      it('should save with no errors', done => {
+        const fakeFile = new FakeFile(bucket, 'file-name');
+        const options = {destination: fakeFile, resumable: false};
+        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
+          class DelayedStreamNoError extends Transform {
+            _transform(
+              chunk: string | Buffer,
+              _encoding: string,
+              done: Function
+            ) {
+              this.push(chunk);
+              setTimeout(() => {
+                done();
+              }, 5);
+            }
+          }
+          assert.strictEqual(options_.resumable, false);
+          return new DelayedStreamNoError();
+        };
+        bucket.upload(filepath, options, (err: Error) => {
+          assert.ifError(err);
+          done();
+        });
+      });
+
+      it('should retry on first failure', done => {
+        const fakeFile = new FakeFile(bucket, 'file-name');
+        const options = {destination: fakeFile, resumable: false};
+        let retryCount = 0;
+        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
+          setImmediate(() => {
+            assert.strictEqual(options_.resumable, false);
+            retryCount++;
+            done();
+          });
+          return new DelayedStream500Error(retryCount);
+        };
+        bucket.upload(filepath, options, (err: Error, file: FakeFile) => {
+          assert.ifError(err);
+          assert(file.isSameFile());
+          assert.deepStrictEqual(file.metadata, metadata);
+          assert.ok(retryCount === 2);
+          done();
+        });
+      });
+
+      it('should not retry if nonretryable error code', done => {
+        const fakeFile = new FakeFile(bucket, 'file-name');
+        const options = {destination: fakeFile, resumable: false};
+        let retryCount = 0;
+        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
+          class DelayedStream403Error extends Transform {
+            _transform(
+              chunk: string | Buffer,
+              _encoding: string,
+              done: Function
+            ) {
+              this.push(chunk);
+              setTimeout(() => {
+                retryCount++;
+                if (retryCount === 1) {
+                  done(new HTTPError('first error', 403));
+                } else {
+                  done();
+                }
+              }, 5);
+            }
+          }
+          setImmediate(() => {
+            assert.strictEqual(options_.resumable, false);
+            retryCount++;
+            done();
+          });
+          return new DelayedStream403Error();
+        };
+
+        bucket.upload(filepath, options, (err: Error) => {
+          assert.strictEqual(err.message, 'first error');
+          assert.ok(retryCount === 2);
+          done();
+        });
+      });
+
+      it('non-multipart upload should not retry', done => {
+        const fakeFile = new FakeFile(bucket, 'file-name');
+        const options = {destination: fakeFile, resumable: true};
+        let retryCount = 0;
+        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
+          setImmediate(() => {
+            assert.strictEqual(options_.resumable, true);
+            retryCount++;
+            done();
+          });
+          return new DelayedStream500Error(retryCount);
+        };
+        bucket.upload(filepath, options, (err: Error) => {
+          assert.strictEqual(err.message, 'first error');
+          assert.ok(retryCount === 1);
+          done();
+        });
       });
     });
 

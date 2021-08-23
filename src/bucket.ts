@@ -34,6 +34,7 @@ import * as mime from 'mime-types';
 import * as path from 'path';
 import pLimit = require('p-limit');
 import {promisify} from 'util';
+import retry = require('async-retry');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const snakeize = require('snakeize');
@@ -48,7 +49,7 @@ import {
 } from './file';
 import {Iam} from './iam';
 import {Notification} from './notification';
-import {Storage, Cors} from './storage';
+import {Storage, Cors, PreconditionOptions} from './storage';
 import {
   GetSignedUrlResponse,
   GetSignedUrlCallback,
@@ -73,6 +74,7 @@ interface MetadataOptions {
 
 interface BucketOptions {
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 export type GetFilesResponse = [File[], {}, Metadata];
@@ -126,7 +128,7 @@ export interface GetFilesOptions {
   versions?: boolean;
 }
 
-export interface CombineOptions {
+export interface CombineOptions extends PreconditionOptions {
   kmsKeyName?: string;
   userProject?: string;
 }
@@ -180,7 +182,9 @@ export interface DeleteBucketCallback extends DeleteCallback {
   (err: Error | null, apiResponse: Metadata): void;
 }
 
-export interface DeleteFilesOptions extends GetFilesOptions {
+export interface DeleteFilesOptions
+  extends GetFilesOptions,
+    PreconditionOptions {
   force?: boolean;
 }
 
@@ -618,7 +622,30 @@ class Bucket extends ServiceObject {
     // Allow for "gs://"-style input, and strip any trailing slashes.
     name = name.replace(/^gs:\/\//, '').replace(/\/+$/, '');
 
-    const requestQueryObject: {userProject?: string} = {};
+    const requestQueryObject: {
+      userProject?: string;
+      ifGenerationMatch?: number;
+      ifGenerationNotMatch?: number;
+      ifMetagenerationMatch?: number;
+      ifMetagenerationNotMatch?: number;
+    } = {};
+
+    if (options?.preconditionOpts?.ifGenerationMatch) {
+      requestQueryObject.ifGenerationMatch =
+        options.preconditionOpts.ifGenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifGenerationNotMatch) {
+      requestQueryObject.ifGenerationNotMatch =
+        options.preconditionOpts.ifGenerationNotMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationMatch) {
+      requestQueryObject.ifMetagenerationMatch =
+        options.preconditionOpts.ifMetagenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
+      requestQueryObject.ifMetagenerationNotMatch =
+        options.preconditionOpts.ifMetagenerationNotMatch;
+    }
 
     const userProject = options.userProject;
     if (typeof userProject === 'string') {
@@ -1709,6 +1736,7 @@ class Bucket extends ServiceObject {
         uri: '/notificationConfigs',
         json: snakeize(body),
         qs: query,
+        maxRetries: 0, //explicitly set this value since this is a non-idempotent function
       },
       (err, apiResponse) => {
         if (err) {
@@ -3723,6 +3751,52 @@ class Bucket extends ServiceObject {
     optionsOrCallback?: UploadOptions | UploadCallback,
     callback?: UploadCallback
   ): Promise<UploadResponse> | void {
+    const upload = () => {
+      const returnValue = retry(
+        async (bail: (err: Error) => void) => {
+          await new Promise<void>((resolve, reject) => {
+            const writable = newFile.createWriteStream(options);
+            if (options.onUploadProgress) {
+              writable.on('progress', options.onUploadProgress);
+            }
+            fs.createReadStream(pathString)
+              .pipe(writable)
+              .on('error', err => {
+                if (
+                  this.storage.retryOptions.autoRetry &&
+                  this.storage.retryOptions.retryableErrorFn!(err)
+                ) {
+                  return reject(err);
+                } else {
+                  return bail(err);
+                }
+              })
+              .on('finish', () => {
+                return resolve();
+              });
+          });
+        },
+        {
+          retries: this.storage.retryOptions.maxRetries,
+          factor: this.storage.retryOptions.retryDelayMultiplier,
+          maxTimeout: this.storage.retryOptions.maxRetryDelay! * 1000, //convert to milliseconds
+          maxRetryTime: this.storage.retryOptions.totalTimeout! * 1000, //convert to milliseconds
+        }
+      );
+
+      if (!callback) {
+        return returnValue;
+      } else {
+        return returnValue
+          .then(() => {
+            if (callback) {
+              return callback!(null, newFile, newFile.metadata);
+            }
+          })
+          .catch(callback);
+      }
+    };
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((global as any)['GCLOUD_SANDBOX_ENV']) {
       return;
@@ -3778,20 +3852,6 @@ class Bucket extends ServiceObject {
 
         upload();
       });
-    }
-
-    function upload() {
-      const writable = newFile.createWriteStream(options);
-      if (options.onUploadProgress) {
-        writable.on('progress', options.onUploadProgress);
-      }
-      fs.createReadStream(pathString)
-        .on('error', callback!)
-        .pipe(writable)
-        .on('error', callback!)
-        .on('finish', () => {
-          callback!(null, newFile, newFile.metadata);
-        });
     }
   }
 

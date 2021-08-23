@@ -42,7 +42,7 @@ import * as xdgBasedir from 'xdg-basedir';
 import * as zlib from 'zlib';
 import * as http from 'http';
 
-import {Storage} from './storage';
+import {PreconditionOptions, Storage} from './storage';
 import {Bucket} from './bucket';
 import {Acl} from './acl';
 import {
@@ -62,7 +62,6 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectKeyToLowercase, unicodeJSONStringify} from './util';
-import {GaxiosError, Headers, request as gaxiosRequest} from 'gaxios';
 import retry = require('async-retry');
 
 export type GetExpirationDateResponse = [Date];
@@ -200,6 +199,7 @@ export interface CreateResumableUploadOptions {
   public?: boolean;
   uri?: string;
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 export type CreateResumableUploadResponse = [string];
@@ -250,6 +250,7 @@ export interface MoveCallback {
 
 export interface MoveOptions {
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 export type RenameOptions = MoveOptions;
@@ -300,6 +301,7 @@ export interface FileOptions {
   generation?: number | string;
   kmsKeyName?: string;
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 export interface CopyOptions {
@@ -312,6 +314,7 @@ export interface CopyOptions {
   predefinedAcl?: string;
   token?: string;
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 export type CopyResponse = [File, Metadata];
@@ -337,6 +340,10 @@ interface CopyQuery {
   userProject?: string;
   destinationKmsKeyName?: string;
   destinationPredefinedAcl?: string;
+  ifGenerationMatch?: number;
+  ifGenerationNotMatch?: number;
+  ifMetagenerationMatch?: number;
+  ifMetagenerationNotMatch?: number;
 }
 
 interface FileQuery {
@@ -376,6 +383,7 @@ export type SetStorageClassResponse = [Metadata];
 
 export interface SetStorageClassOptions {
   userProject?: string;
+  preconditionOpts?: PreconditionOptions;
 }
 
 interface SetStorageClassRequest extends SetStorageClassOptions {
@@ -500,7 +508,14 @@ class File extends ServiceObject<File> {
    * const file = myBucket.file('my-file');
    */
   constructor(bucket: Bucket, name: string, options: FileOptions = {}) {
-    const requestQueryObject: {generation?: number; userProject?: string} = {};
+    const requestQueryObject: {
+      generation?: number;
+      userProject?: string;
+      ifGenerationMatch?: number;
+      ifGenerationNotMatch?: number;
+      ifMetagenerationMatch?: number;
+      ifMetagenerationNotMatch?: number;
+    } = {};
 
     let generation: number;
     if (options.generation !== null) {
@@ -512,6 +527,23 @@ class File extends ServiceObject<File> {
       if (!isNaN(generation)) {
         requestQueryObject.generation = generation;
       }
+    }
+
+    if (options?.preconditionOpts?.ifGenerationMatch) {
+      requestQueryObject.ifGenerationMatch =
+        options.preconditionOpts.ifGenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifGenerationNotMatch) {
+      requestQueryObject.ifGenerationNotMatch =
+        options.preconditionOpts.ifGenerationNotMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationMatch) {
+      requestQueryObject.ifMetagenerationMatch =
+        options.preconditionOpts.ifMetagenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
+      requestQueryObject.ifMetagenerationNotMatch =
+        options.preconditionOpts.ifMetagenerationNotMatch;
     }
 
     const userProject = options.userProject || bucket.userProject;
@@ -723,9 +755,6 @@ class File extends ServiceObject<File> {
        * object, however the other properties outside of this object must adhere
        * to the [official API documentation](https://goo.gl/BOnnCK).
        *
-       * NOTE: multiple calls to setMetadata in parallel might result in
-       * unpredictable results. See [issue]{@link
-       * https://github.com/googleapis/nodejs-storage/issues/274}.
        *
        * See the examples below for more information.
        *
@@ -1038,6 +1067,26 @@ class File extends ServiceObject<File> {
       delete options.predefinedAcl;
     }
 
+    if (options?.preconditionOpts?.ifGenerationMatch) {
+      query.ifGenerationMatch = options.preconditionOpts.ifGenerationMatch;
+      delete options.preconditionOpts.ifGenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifGenerationNotMatch) {
+      query.ifGenerationNotMatch =
+        options.preconditionOpts.ifGenerationNotMatch;
+      delete options.preconditionOpts.ifGenerationNotMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationMatch) {
+      query.ifMetagenerationMatch =
+        options.preconditionOpts.ifMetagenerationMatch;
+      delete options.preconditionOpts.ifMetagenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
+      query.ifMetagenerationNotMatch =
+        options.preconditionOpts.ifMetagenerationNotMatch;
+      delete options.preconditionOpts.ifMetagenerationNotMatch;
+    }
+
     newFile = newFile! || destBucket.file(destName);
 
     const headers: {[index: string]: string | undefined} = {};
@@ -1254,6 +1303,10 @@ class File extends ServiceObject<File> {
 
       if (options.userProject) {
         query.userProject = options.userProject;
+      }
+
+      interface Headers {
+        [index: string]: string;
       }
 
       const headers = {
@@ -1562,6 +1615,8 @@ class File extends ServiceObject<File> {
         private: options.private,
         public: options.public,
         userProject: options.userProject || this.userProject,
+        retryOptions: this.storage.retryOptions,
+        params: options.preconditionOpts,
       },
       callback!
     );
@@ -1964,6 +2019,7 @@ class File extends ServiceObject<File> {
       bucket: this.bucket.name,
       file: this.name,
       generation: this.generation,
+      retryOptions: this.storage.retryOptions,
     });
     uploadStream.deleteConfig();
   }
@@ -2999,18 +3055,26 @@ class File extends ServiceObject<File> {
    */
 
   isPublic(callback?: IsPublicCallback): Promise<IsPublicResponse> | void {
-    gaxiosRequest({
-      method: 'HEAD',
-      url: `http://${
-        this.bucket.name
-      }.storage.googleapis.com/${encodeURIComponent(this.name)}`,
-    }).then(
-      () => callback!(null, true),
-      (err: GaxiosError) => {
-        if (err.code === '403') {
-          callback!(null, false);
+    util.makeRequest(
+      {
+        method: 'HEAD',
+        uri: `http://${
+          this.bucket.name
+        }.storage.googleapis.com/${encodeURIComponent(this.name)}`,
+      },
+      {
+        retryOptions: this.storage.retryOptions,
+      },
+      (err: Error | ApiError | null) => {
+        if (err) {
+          const apiError = err as ApiError;
+          if (apiError.code === 403) {
+            callback!(null, false);
+          } else {
+            callback!(err);
+          }
         } else {
-          callback!(err);
+          callback!(null, true);
         }
       }
     );
@@ -3611,13 +3675,15 @@ class File extends ServiceObject<File> {
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
-    const isMultipart = options.resumable === false;
     const returnValue = retry(
       async (bail: (err: Error) => void) => {
         await new Promise<void>((resolve, reject) => {
           const writable = this.createWriteStream(options)
             .on('error', err => {
-              if (isMultipart && util.shouldRetryRequest(err)) {
+              if (
+                this.storage.retryOptions.autoRetry &&
+                this.storage.retryOptions.retryableErrorFn!(err)
+              ) {
                 return reject(err);
               } else {
                 return bail(err);
@@ -3633,7 +3699,10 @@ class File extends ServiceObject<File> {
         });
       },
       {
-        retries: 3,
+        retries: this.storage.retryOptions.maxRetries,
+        factor: this.storage.retryOptions.retryDelayMultiplier,
+        maxTimeout: this.storage.retryOptions.maxRetryDelay! * 1000, //convert to milliseconds
+        maxRetryTime: this.storage.retryOptions.totalTimeout! * 1000, //convert to milliseconds
       }
     );
     if (!callback) {
@@ -3799,6 +3868,8 @@ class File extends ServiceObject<File> {
       public: options.public,
       uri: options.uri,
       userProject: options.userProject || this.userProject,
+      retryOptions: this.storage.retryOptions,
+      params: options.preconditionOpts,
     });
 
     uploadStream
@@ -3867,6 +3938,22 @@ class File extends ServiceObject<File> {
       reqOpts.qs.predefinedAcl = 'private';
     } else if (options.public) {
       reqOpts.qs.predefinedAcl = 'publicRead';
+    }
+
+    if (options?.preconditionOpts?.ifGenerationMatch) {
+      reqOpts.qs.ifGenerationMatch = options.preconditionOpts.ifGenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifGenerationNotMatch) {
+      reqOpts.qs.ifGenerationNotMatch =
+        options.preconditionOpts.ifGenerationNotMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationMatch) {
+      reqOpts.qs.ifMetagenerationMatch =
+        options.preconditionOpts.ifMetagenerationMatch;
+    }
+    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
+      reqOpts.qs.ifMetagenerationNotMatch =
+        options.preconditionOpts.ifMetagenerationNotMatch;
     }
 
     util.makeWritableStream(dup, {
