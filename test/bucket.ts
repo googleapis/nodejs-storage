@@ -620,6 +620,23 @@ describe('Bucket', () => {
         done();
       });
     });
+
+    it('should disable auto-retries when ifMetagenerationMatch is not set', done => {
+      const rule = {
+        action: {
+          type: 'type',
+        },
+        condition: {},
+      };
+
+      bucket.setMetadata = () => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+      };
+
+      bucket.addLifecycleRule(rule, assert.ifError);
+      assert.strictEqual(bucket.storage.retryOptions.autoRetry, true);
+      done();
+    });
   });
 
   describe('combine', () => {
@@ -866,6 +883,21 @@ describe('Bucket', () => {
           done();
         }
       );
+    });
+
+    it('should set maxRetries to 0 when ifGenerationMatch is undefined', done => {
+      const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
+      const destination = bucket.file('destination.txt');
+
+      destination.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        assert.strictEqual(reqOpts.maxRetries, 0);
+        callback();
+      };
+
+      bucket.combine(sources, destination, done);
     });
   });
 
@@ -1270,6 +1302,15 @@ describe('Bucket', () => {
         done();
       });
     });
+
+    it('should disable autoRetry when ifGenerationMatch is undefined', done => {
+      bucket.getFiles = () => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+        return Promise.resolve([[]]);
+      };
+
+      bucket.deleteFiles({}, done);
+    });
   });
 
   describe('deleteLabels', () => {
@@ -1369,6 +1410,14 @@ describe('Bucket', () => {
         done();
       };
 
+      bucket.disableRequesterPays();
+    });
+
+    it('should set autoRetry to false when ifMetagenerationMatch is undefined', done => {
+      bucket.setMetadata = () => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+        done();
+      };
       bucket.disableRequesterPays();
     });
   });
@@ -1532,6 +1581,16 @@ describe('Bucket', () => {
         done();
       });
     });
+
+    it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
+      bucket.setMetadata = () => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+      };
+
+      bucket.enableLogging({prefix: PREFIX}, () => {
+        done();
+      });
+    });
   });
 
   describe('enableRequesterPays', () => {
@@ -1551,6 +1610,15 @@ describe('Bucket', () => {
     it('should not require a callback', done => {
       bucket.setMetadata = (metadata: {}, callback: Function) => {
         assert.doesNotThrow(() => callback());
+        done();
+      };
+
+      bucket.enableRequesterPays();
+    });
+
+    it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
+      bucket.setMetadata = () => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
         done();
       };
 
@@ -2131,6 +2199,14 @@ describe('Bucket', () => {
         done();
       });
     });
+
+    it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
+      bucket.setMetadata = () => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+        return Promise.resolve();
+      };
+      bucket.makePrivate({}, done);
+    });
   });
 
   describe('makePublic', () => {
@@ -2235,6 +2311,15 @@ describe('Bucket', () => {
 
       bucket.removeRetentionPeriod(done);
     });
+
+    it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
+      bucket.setMetadata = (metadata: {}, callback: Function) => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+        callback();
+      };
+
+      bucket.removeRetentionPeriod(done);
+    });
   });
 
   describe('request', () => {
@@ -2332,6 +2417,14 @@ describe('Bucket', () => {
       };
       bucket.setLabels(labels, options, done);
     });
+
+    it('should disable autoRetry when isMetagenerationMatch is undefined', done => {
+      bucket.setMetadata = (metadata: {}, options: {}, callback: Function) => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+        callback();
+      };
+      bucket.setLabels({}, done);
+    });
   });
 
   describe('setRetentionPeriod', () => {
@@ -2350,6 +2443,17 @@ describe('Bucket', () => {
 
       bucket.setRetentionPeriod(duration, done);
     });
+
+    it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
+      const duration = 90000;
+
+      bucket.setMetadata = (metadata: {}, callback: Function) => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+        callback();
+      };
+
+      bucket.setRetentionPeriod(duration, done);
+    });
   });
 
   describe('setCorsConfiguration', () => {
@@ -2362,6 +2466,17 @@ describe('Bucket', () => {
         });
 
         callback(); // done()
+      };
+
+      bucket.setCorsConfiguration(corsConfiguration, done);
+    });
+
+    it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
+      const corsConfiguration = [{maxAgeSeconds: 3600}];
+
+      bucket.setMetadata = (metadata: {}, callback: Function) => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+        callback();
       };
 
       bucket.setCorsConfiguration(corsConfiguration, done);
@@ -2404,6 +2519,19 @@ describe('Bucket', () => {
       };
 
       bucket.setStorageClass(STORAGE_CLASS, OPTIONS, CALLBACK);
+    });
+
+    it('should disable autoRetry when ifMetagenerationMathc is undefined', done => {
+      bucket.setMetadata = (
+        metadata: Metadata,
+        options: {},
+        callback: Function
+      ) => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+        callback();
+      };
+
+      bucket.setStorageClass(STORAGE_CLASS, OPTIONS, done);
     });
   });
 
@@ -2549,6 +2677,18 @@ describe('Bucket', () => {
         assert.ifError(err);
         assert(file.isSameFile());
         assert.deepStrictEqual(file.metadata, metadata);
+        done();
+      });
+    });
+
+    it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
+      const fakeFile = new FakeFile(bucket, 'file-name');
+      fakeFile.isSameFile = () => {
+        return true;
+      };
+      const options = {destination: fakeFile, metadata};
+      bucket.upload(filepath, options, () => {
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
         done();
       });
     });
