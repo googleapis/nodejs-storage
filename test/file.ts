@@ -280,6 +280,13 @@ describe('File', () => {
       assert.strictEqual(file.storage, BUCKET.storage);
     });
 
+    it('should set instanceRetryValue to the storage insance retryOptions.autoRetry value', () => {
+      assert.strictEqual(
+        file.instanceRetryValue,
+        STORAGE.retryOptions.autoRetry
+      );
+    });
+
     it('should not strip leading slashes', () => {
       const file = new File(BUCKET, '/name');
       assert.strictEqual(file.name, '/name');
@@ -673,6 +680,21 @@ describe('File', () => {
       };
 
       file.copy(newFile, options, assert.ifError);
+    });
+
+    it('should disable autoRetry when ifGenerationMatch is undefined', done => {
+      const newFile = new File(BUCKET, 'name');
+      const options = {
+        option: true,
+      };
+
+      file.request = () => {
+        assert.strictEqual(file.storage.retryOptions.autoRetry, false);
+        done();
+      };
+
+      file.copy(newFile, options, assert.ifError);
+      assert.strictEqual(file.storage.retryOptions.autoRetry, true);
     });
 
     describe('destination types', () => {
@@ -1759,6 +1781,17 @@ describe('File', () => {
       file.createResumableUpload(done);
     });
 
+    it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
+      resumableUploadOverride = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        createURI(opts: any, callback: Function) {
+          assert.strictEqual(opts.retryOptions.autoRetry, false);
+          callback();
+        },
+      };
+      file.createResumableUpload(done);
+    });
+
     it('should create a resumable upload URI', done => {
       const options = {
         configPath: '/Users/user/.config/here',
@@ -1779,6 +1812,7 @@ describe('File', () => {
         },
         preconditionOpts: {
           ifGenerationMatch: 100,
+          ifMetagenerationMatch: 101,
         },
       };
 
@@ -3738,6 +3772,16 @@ describe('File', () => {
 
       file.makePrivate(options, assert.ifError);
     });
+
+    it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
+      file.setMetadata = () => {
+        assert.strictEqual(file.storage.retryOptions.autoRetry, false);
+        done();
+      };
+
+      file.makePrivate({}, assert.ifError);
+      assert.strictEqual(file.storage.retryOptions.autoRetry, true);
+    });
   });
 
   describe('makePublic', () => {
@@ -4200,7 +4244,10 @@ describe('File', () => {
       });
 
       it('string upload should retry on first failure', async () => {
-        const options = {resumable: false};
+        const options = {
+          resumable: false,
+          preconditionOpts: {ifMetagenerationMatch: 100},
+        };
         let retryCount = 0;
         file.createWriteStream = () => {
           retryCount++;
@@ -4250,7 +4297,10 @@ describe('File', () => {
       });
 
       it('buffer upload should retry on first failure', async () => {
-        const options = {resumable: false};
+        const options = {
+          resumable: false,
+          preconditionOpts: {ifMetagenerationMatch: 100},
+        };
         let retryCount = 0;
         file.createWriteStream = () => {
           retryCount++;
@@ -4261,7 +4311,10 @@ describe('File', () => {
       });
 
       it('resumable upload should retry', async () => {
-        const options = {resumable: true};
+        const options = {
+          resumable: true,
+          preconditionOpts: {ifMetagenerationMatch: 100},
+        };
         let retryCount = 0;
         file.createWriteStream = () => {
           retryCount++;
@@ -4270,6 +4323,23 @@ describe('File', () => {
 
         await file.save(BUFFER_DATA, options);
         assert.ok(retryCount === 2);
+      });
+
+      it('should not retry if ifMetagenerationMatch is undefined', async () => {
+        const options = {
+          resumable: true,
+          preconditionOpts: {ifGenerationMatch: 100},
+        };
+        let retryCount = 0;
+        file.createWriteStream = () => {
+          retryCount++;
+          return new DelayedStream500Error(retryCount);
+        };
+        try {
+          await file.save(BUFFER_DATA, options);
+        } catch {
+          assert.strictEqual(retryCount, 1);
+        }
       });
     });
 
@@ -4696,6 +4766,25 @@ describe('File', () => {
         };
 
         file.startResumableUpload_(dup);
+      });
+
+      it('should set autoRetry to false when ifMetagenerationMatch is undefined', done => {
+        const dup = duplexify();
+        const uploadStream = new PassThrough();
+
+        dup.setWritable = (stream: Duplex) => {
+          assert.strictEqual(stream, uploadStream);
+          done();
+        };
+
+        resumableUploadOverride = {
+          upload(options_: resumableUpload.UploadConfig) {
+            assert.strictEqual(options_?.retryOptions?.autoRetry, false);
+            return uploadStream;
+          },
+        };
+
+        file.startResumableUpload_(dup, {retryOptions: {autoRetry: true}});
       });
     });
   });

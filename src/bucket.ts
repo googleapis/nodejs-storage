@@ -621,7 +621,7 @@ class Bucket extends ServiceObject {
   getFilesStream: Function;
   signer?: URLSigner;
 
-  instanceRetryValue?: boolean;
+  private instanceRetryValue?: boolean;
 
   constructor(storage: Storage, name: string, options?: BucketOptions) {
     options = options || {};
