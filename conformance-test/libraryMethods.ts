@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { O_APPEND } from "constants";
-import { file } from "tmp";
-import { Bucket, File, HmacKey, Iam, Notification, Storage } from "../src";
+import {O_APPEND} from 'constants';
+import {file} from 'tmp';
+import {Bucket, File, HmacKey, Iam, Notification, Storage} from '../src';
 const fs = require('fs');
-
 
 /////////////////////////////////////////////////
 //////////////////// BUCKET /////////////////////
@@ -26,17 +25,15 @@ async function addLifecycleRule(bucket: Bucket) {
   await bucket.addLifecycleRule({
     action: 'delete',
     condition: {
-      age: 365 * 3 // Specified in days.
-    }});
+      age: 365 * 3, // Specified in days.
+    },
+  });
 }
 
 async function combine(bucket: Bucket) {
-  const sources = [
-    bucket.file('file1.txt'),
-    bucket.file('file2.txt')
-  ];
+  const sources = [bucket.file('file1.txt'), bucket.file('file2.txt')];
   const allFiles = bucket.file('all-files.txt');
-  
+
   await bucket.combine(sources, allFiles);
 }
 
@@ -66,7 +63,7 @@ async function disableRequesterPays(bucket: Bucket) {
 
 async function enableLogging(bucket: Bucket) {
   const config = {
-    prefix: 'log'
+    prefix: 'log',
   };
   await bucket.enableLogging(config);
 }
@@ -124,8 +121,8 @@ async function setCorsConfiguration(bucket: Bucket) {
 async function setLabels(bucket: Bucket) {
   const labels = {
     labelone: 'labelonevalue',
-    labeltwo: 'labeltwovalue'
-  };      
+    labeltwo: 'labeltwovalue',
+  };
   await bucket.setLabels(labels);
 }
 
@@ -133,9 +130,9 @@ async function bucketSetMetadata(bucket: Bucket) {
   const metadata = {
     website: {
       mainPageSuffix: 'http://example.com',
-      notFoundPage: 'http://example.com/404.html'
-    }
-  };   
+      notFoundPage: 'http://example.com/404.html',
+    },
+  };
   await bucket.setMetadata(metadata);
 }
 
@@ -156,11 +153,9 @@ async function bucketUpload(bucket: Bucket, resumableSetting: boolean) {
   await bucket.upload('testFile.txt', {resumable: resumableSetting});
 }
 
-
 /////////////////////////////////////////////////
 //////////////////// FILE /////////////////////
 /////////////////////////////////////////////////
-
 
 async function copy(file: File) {
   await file.copy('a-different-file.png');
@@ -176,7 +171,9 @@ async function createResumableUpload(file: File) {
 }
 
 async function createWriteStream(file: File, resumableSetting: boolean) {
-  await fs.createReadStream('testFile.txt').pipe(file.createWriteStream({resumable: resumableSetting}));
+  await fs
+    .createReadStream('testFile.txt')
+    .pipe(file.createWriteStream({resumable: resumableSetting}));
 }
 
 async function fileDelete(file: File) {
@@ -202,10 +199,10 @@ async function generateSignedPostPolicyV2(file: File) {
     expires: '10-25-2022',
     contentLengthRange: {
       min: 0,
-      max: 1024
-    }
+      max: 1024,
+    },
   };
-  await file.generateSignedPostPolicyV2(options);  
+  await file.generateSignedPostPolicyV2(options);
 }
 
 async function generateSignedPostPolicyV4(file: File) {
@@ -218,11 +215,11 @@ async function generateSignedPostPolicyV4(file: File) {
     fields: {
       acl: 'public-read',
       'x-goog-meta-foo': 'bar',
-      'x-ignore-mykey': 'data'
-    }
+      'x-ignore-mykey': 'data',
+    },
   };
-  
-  await file.generateSignedPostPolicyV4(options);  
+
+  await file.generateSignedPostPolicyV4(options);
 }
 
 async function get(file: File) {
@@ -250,7 +247,7 @@ async function fileMakePublic(file: File) {
 }
 
 async function move(file: File) {
-  await file.move("new-file");
+  await file.move('new-file');
 }
 
 async function rename(file: File) {
@@ -271,7 +268,7 @@ async function save(file: File, resumableSetting: boolean) {
 }
 
 //TODO: shaffeeullah@ Documented in go/nodejs-gcs-client-retry-state as not making a request. Maybe we dont need this
-async function setEncryptionKey(file: File) { 
+async function setEncryptionKey(file: File) {
   const crypto = require('crypto');
   const buffer = crypto.randomBytes(32);
   console.log(await file.setEncryptionKey(buffer));
@@ -282,8 +279,8 @@ async function setMetadata(file: File) {
     contentType: 'application/x-font-ttf',
     metadata: {
       my: 'custom',
-      properties: 'go here'
-    }
+      properties: 'go here',
+    },
   };
   await file.setMetadata(metadata);
 }
@@ -297,11 +294,9 @@ function fileSetUserProject(file: File) {
   file.setUserProject('test-setting-user-project');
 }
 
-
 /////////////////////////////////////////////////
 /////////////////// HMAC KEY ////////////////////
 /////////////////////////////////////////////////
-
 
 async function deleteHMAC(hmacKey: HmacKey) {
   await hmacKey.delete();
@@ -322,11 +317,9 @@ async function setMetadataHMAC(hmacKey: HmacKey) {
   await hmacKey.setMetadata(metadata);
 }
 
-
 /////////////////////////////////////////////////
 ////////////////////// IAM //////////////////////
 /////////////////////////////////////////////////
-
 
 async function iamGetPolicy(iam: Iam) {
   await iam.getPolicy({requestedPolicyVersion: 1});
@@ -337,9 +330,9 @@ async function iamSetPolicy(iam: Iam) {
     bindings: [
       {
         role: 'roles/storage.admin',
-        members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com']
-      }
-    ]
+        members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com'],
+      },
+    ],
   };
   await iam.setPolicy(testPolicy);
 }
@@ -349,11 +342,9 @@ async function iamTestPermissions(iam: Iam) {
   await iam.testPermissions(permissionToTest);
 }
 
-
 /////////////////////////////////////////////////
 ///////////////// NOTIFICATION //////////////////
 /////////////////////////////////////////////////
-
 
 async function notificationDelete(notification: Notification) {
   await notification.delete();
@@ -375,11 +366,9 @@ async function notificationGetMetadata(notification: Notification) {
   await notification.getMetadata();
 }
 
-
 /////////////////////////////////////////////////
 /////////////////// STORAGE /////////////////////
 /////////////////////////////////////////////////
-
 
 async function createBucket(storage: Storage) {
   await storage.createBucket('test-creating-bucket');
