@@ -85,7 +85,7 @@ async function getFilesStream(bucket: Bucket) {
 }
 
 async function getLabels(bucket: Bucket) {
-  // await bucket.getLabels(); //TODO shaffeeulah@: figure out why it has a parameter here
+  await bucket.getLabels();
 }
 
 async function bucketGetMetadata(bucket: Bucket) {
