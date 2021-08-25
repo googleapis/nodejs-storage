@@ -15,7 +15,7 @@
 import {O_APPEND} from 'constants';
 import {file} from 'tmp';
 import {Bucket, File, HmacKey, Iam, Notification, Storage} from '../src';
-const fs = require('fs');
+import * as fs from 'fs';
 
 /////////////////////////////////////////////////
 //////////////////// BUCKET /////////////////////
@@ -145,10 +145,6 @@ async function bucketSetStorageClass(bucket: Bucket) {
   await bucket.setStorageClass('nearline');
 }
 
-function bucketSetUserProject(bucket: Bucket) {
-  bucket.setUserProject('test-setting-user-project');
-}
-
 async function bucketUpload(bucket: Bucket, resumableSetting: boolean) {
   await bucket.upload('testFile.txt', {resumable: resumableSetting});
 }
@@ -267,13 +263,6 @@ async function save(file: File, resumableSetting: boolean) {
   await file.save('testdata', {resumable: resumableSetting});
 }
 
-//TODO: shaffeeullah@ Documented in go/nodejs-gcs-client-retry-state as not making a request. Maybe we dont need this
-async function setEncryptionKey(file: File) {
-  const crypto = require('crypto');
-  const buffer = crypto.randomBytes(32);
-  console.log(await file.setEncryptionKey(buffer));
-}
-
 async function setMetadata(file: File) {
   const metadata = {
     contentType: 'application/x-font-ttf',
@@ -287,11 +276,6 @@ async function setMetadata(file: File) {
 
 async function setStorageClass(file: File) {
   await file.setStorageClass('nearline');
-}
-
-//TODO: shaffeeullah@ Documented in go/nodejs-gcs-client-retry-state as not making a request. Maybe we dont need this
-function fileSetUserProject(file: File) {
-  file.setUserProject('test-setting-user-project');
 }
 
 /////////////////////////////////////////////////
