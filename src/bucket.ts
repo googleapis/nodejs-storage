@@ -49,7 +49,12 @@ import {
 } from './file';
 import {Iam} from './iam';
 import {Notification} from './notification';
-import {Storage, Cors, PreconditionOptions} from './storage';
+import {
+  Storage,
+  Cors,
+  PreconditionOptions,
+  IdempotencyStrategy,
+} from './storage';
 import {
   GetSignedUrlResponse,
   GetSignedUrlCallback,
@@ -1403,7 +1408,13 @@ class Bucket extends ServiceObject {
     }
 
     let maxRetries = this.storage.retryOptions.maxRetries;
-    if (options?.ifGenerationMatch === undefined) {
+    if (
+      (options?.ifGenerationMatch === undefined &&
+        this.storage.retryOptions.idempotencyStrategy ===
+          IdempotencyStrategy.RetryConditional) ||
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryNever
+    ) {
       maxRetries = 0;
     }
 
@@ -2116,7 +2127,6 @@ class Bucket extends ServiceObject {
 
     (async () => {
       let setMetadataResponse;
-      const originalAutoRetryValue = this.storage.retryOptions.autoRetry;
 
       try {
         const [policy] = await this.iam.getPolicy();
@@ -2125,13 +2135,10 @@ class Bucket extends ServiceObject {
           role: 'roles/storage.objectCreator',
         });
         await this.iam.setPolicy(policy);
-        if (
-          typeof this.methods.setMetadata === 'object' &&
-          this.methods.setMetadata.reqOpts?.qs?.ifMetagenerationMatch ===
-            undefined
-        ) {
-          this.storage.retryOptions.autoRetry = false;
-        }
+        this.disableAutoRetryConditionallyIdempotent_(
+          this.methods.setMetadata,
+          AvailableServiceObjectMethods.setMetadata
+        );
         [setMetadataResponse] = await this.setMetadata({
           logging: {
             logBucket,
@@ -2142,7 +2149,7 @@ class Bucket extends ServiceObject {
         callback!(e);
         return;
       } finally {
-        this.storage.retryOptions.autoRetry = originalAutoRetryValue;
+        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
       }
 
       callback!(null, setMetadataResponse);
@@ -3900,7 +3907,13 @@ class Bucket extends ServiceObject {
 
     // Do not retry if precondition option ifMetagenerationMatch is not set
     let maxRetries = this.storage.retryOptions.maxRetries;
-    if (options?.preconditionOpts?.ifMetagenerationMatch === undefined) {
+    if (
+      (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.storage.retryOptions.idempotencyStrategy ===
+          IdempotencyStrategy.RetryConditional) ||
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryNever
+    ) {
       maxRetries = 0;
     }
 
@@ -4050,13 +4063,22 @@ class Bucket extends ServiceObject {
     if (
       typeof coreOpts === 'object' &&
       coreOpts?.reqOpts?.qs?.ifMetagenerationMatch === undefined &&
-      methodType === AvailableServiceObjectMethods.setMetadata
+      methodType === AvailableServiceObjectMethods.setMetadata &&
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryConditional
     ) {
       this.storage.retryOptions.autoRetry = false;
     } else if (
       typeof coreOpts === 'object' &&
       coreOpts?.reqOpts?.qs?.ifGenerationMatch === undefined &&
-      methodType === AvailableServiceObjectMethods.delete
+      methodType === AvailableServiceObjectMethods.delete &&
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryConditional
+    ) {
+      this.storage.retryOptions.autoRetry = false;
+    } else if (
+      this.storage.retryOptions.idempotencyStrategy ===
+      IdempotencyStrategy.RetryNever
     ) {
       this.storage.retryOptions.autoRetry = false;
     }

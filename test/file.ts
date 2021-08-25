@@ -55,6 +55,7 @@ import {
   STORAGE_POST_POLICY_BASE_URL,
   MoveOptions,
 } from '../src/file';
+import {IdempotencyStrategy} from '../src/storage';
 
 class HTTPError extends Error {
   code: number;
@@ -242,6 +243,7 @@ describe('File', () => {
         retryableErrorFn: (err: HTTPError) => {
           return err?.code === 500;
         },
+        idempotencyStrategy: IdempotencyStrategy.RetryConditional,
       },
     };
 

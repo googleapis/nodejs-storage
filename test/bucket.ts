@@ -52,6 +52,7 @@ import {AddAclOptions} from '../src/acl';
 import {Policy} from '../src/iam';
 import sinon = require('sinon');
 import {Transform} from 'stream';
+import {IdempotencyStrategy} from '../src/storage';
 
 class FakeFile {
   calledWith_: IArguments;
@@ -193,6 +194,7 @@ describe('Bucket', () => {
       retryableErrorFn: (err: HTTPError) => {
         return err.code === 500;
       },
+      idempotencyStrategy: IdempotencyStrategy.RetryConditional,
     },
   };
   const BUCKET_NAME = 'test-bucket';

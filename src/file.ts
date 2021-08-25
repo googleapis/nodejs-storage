@@ -43,7 +43,7 @@ import * as xdgBasedir from 'xdg-basedir';
 import * as zlib from 'zlib';
 import * as http from 'http';
 
-import {PreconditionOptions, Storage} from './storage';
+import {IdempotencyStrategy, PreconditionOptions, Storage} from './storage';
 import {AvailableServiceObjectMethods, Bucket} from './bucket';
 import {Acl} from './acl';
 import {
@@ -1122,7 +1122,13 @@ class File extends ServiceObject<File> {
       }
     }
 
-    if (options?.preconditionOpts?.ifGenerationMatch === undefined) {
+    if (
+      (options?.preconditionOpts?.ifGenerationMatch === undefined &&
+        this.storage.retryOptions.idempotencyStrategy ===
+          IdempotencyStrategy.RetryConditional) ||
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryNever
+    ) {
       this.storage.retryOptions.autoRetry = false;
     }
     this.request(
@@ -1607,7 +1613,13 @@ class File extends ServiceObject<File> {
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
     const retryOptions = this.storage.retryOptions;
-    if (options?.preconditionOpts?.ifMetagenerationMatch === undefined) {
+    if (
+      (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.storage.retryOptions.idempotencyStrategy ===
+          IdempotencyStrategy.RetryConditional) ||
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryNever
+    ) {
       retryOptions.autoRetry = false;
     }
 
@@ -3693,7 +3705,13 @@ class File extends ServiceObject<File> {
 
     // Do not retry if precondition option ifMetagenerationMatch is not set
     let maxRetries = this.storage.retryOptions.maxRetries;
-    if (options?.preconditionOpts?.ifMetagenerationMatch === undefined) {
+    if (
+      (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.storage.retryOptions.idempotencyStrategy ===
+          IdempotencyStrategy.RetryConditional) ||
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryNever
+    ) {
       maxRetries = 0;
     }
     const returnValue = retry(
@@ -3871,7 +3889,13 @@ class File extends ServiceObject<File> {
 
     // Do not retry if precondition option ifMetagenerationMatch is not set
     const retryOptions = this.storage.retryOptions;
-    if (options?.preconditionOpts?.ifMetagenerationMatch === undefined) {
+    if (
+      (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.storage.retryOptions.idempotencyStrategy ===
+          IdempotencyStrategy.RetryConditional) ||
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryNever
+    ) {
       retryOptions.autoRetry = false;
     }
 
@@ -4007,9 +4031,13 @@ class File extends ServiceObject<File> {
     methodType: AvailableServiceObjectMethods
   ): void {
     if (
-      typeof coreOpts === 'object' &&
-      coreOpts?.reqOpts?.qs?.ifMetagenerationMatch === undefined &&
-      methodType === AvailableServiceObjectMethods.setMetadata
+      (typeof coreOpts === 'object' &&
+        coreOpts?.reqOpts?.qs?.ifMetagenerationMatch === undefined &&
+        methodType === AvailableServiceObjectMethods.setMetadata &&
+        this.storage.retryOptions.idempotencyStrategy ===
+          IdempotencyStrategy.RetryConditional) ||
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryNever
     ) {
       this.storage.retryOptions.autoRetry = false;
     }
