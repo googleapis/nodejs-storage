@@ -189,35 +189,6 @@ async function exists(file: File) {
   await file.exists();
 }
 
-async function generateSignedPostPolicyV2(file: File) {
-  const options = {
-    equals: ['$Content-Type', 'image/jpeg'],
-    expires: '10-25-2022',
-    contentLengthRange: {
-      min: 0,
-      max: 1024,
-    },
-  };
-  await file.generateSignedPostPolicyV2(options);
-}
-
-async function generateSignedPostPolicyV4(file: File) {
-  const options = {
-    expires: '04-30-2021',
-    conditions: [
-      ['eq', '$Content-Type', 'image/jpeg'],
-      ['content-length-range', 0, 1024],
-    ],
-    fields: {
-      acl: 'public-read',
-      'x-goog-meta-foo': 'bar',
-      'x-ignore-mykey': 'data',
-    },
-  };
-
-  await file.generateSignedPostPolicyV4(options);
-}
-
 async function get(file: File) {
   await file.get();
 }
