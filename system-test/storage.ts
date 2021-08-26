@@ -90,7 +90,7 @@ interface ErrorCallbackFunction {
 }
 import {PubSub} from '@google-cloud/pubsub';
 import {LifecycleRule} from '../src/bucket';
-import { IdempotencyStrategy } from '../src/storage';
+import {IdempotencyStrategy} from '../src/storage';
 
 // When set to true, skips all tests that is not compatible for
 // running inside VPCSC.
@@ -107,7 +107,9 @@ describe('storage', () => {
   const TESTS_PREFIX = `storage-tests-${shortUUID()}-`;
   const RETENTION_DURATION_SECONDS = 10;
 
-  const storage = new Storage({retryOptions: {idempotencyStrategy: IdempotencyStrategy.RetryAlways}});
+  const storage = new Storage({
+    retryOptions: {idempotencyStrategy: IdempotencyStrategy.RetryAlways},
+  });
   const bucket = storage.bucket(generateName());
 
   const pubsub = new PubSub({
@@ -189,7 +191,9 @@ describe('storage', () => {
 
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const {Storage} = require('../src');
-      storageWithoutAuth = new Storage({retryOptions: {idempotencyStrategy: IdempotencyStrategy.RetryAlways}});
+      storageWithoutAuth = new Storage({
+        retryOptions: {idempotencyStrategy: IdempotencyStrategy.RetryAlways},
+      });
     });
 
     after(() => {
@@ -1739,8 +1743,8 @@ describe('storage', () => {
         projectId: process.env.GCN_STORAGE_2ND_PROJECT_ID,
         keyFilename: process.env.GCN_STORAGE_2ND_PROJECT_KEY,
         retryOptions: {
-          idempotencyStrategy: IdempotencyStrategy.RetryAlways
-        }
+          idempotencyStrategy: IdempotencyStrategy.RetryAlways,
+        },
       });
       // the source bucket, which will have requesterPays enabled.
       let bucket: Bucket;
