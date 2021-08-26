@@ -17,13 +17,12 @@ import {describe, it} from 'mocha';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {
-  Storage,
-} from '../src/';
+import {Storage} from '../src/';
 
-interface RetryTestCasesScenarioOne { //probably should give it a more descriptive name. maybe instead of scenario we want it to be bucket, file, etc?
+interface RetryTestCasesScenarioOne {
+  //probably should give it a more descriptive name. maybe instead of scenario we want it to be bucket, file, etc?
   description: string;
-  bucket: string; 
+  bucket: string;
   method: Function;
 }
 
@@ -34,17 +33,19 @@ const testFile = fs.readFileSync(
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const testCases = JSON.parse(testFile);
-const retryTestCasesScenarioOne: RetryTestCasesScenarioOne[] = testCases.retryTestCases;
+const retryTestCasesScenarioOne: RetryTestCasesScenarioOne[] =
+  testCases.retryTestCases;
 
 const SERVICE_ACCOUNT = path.join(
   __dirname,
-  '../../conformance-test/fixtures/signing-service-account.json' //TODO change to new service account 
+  '../../conformance-test/fixtures/signing-service-account.json' //TODO change to new service account
 );
 
 const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
 
 describe('retry conformance testing', () => {
-  describe('scenario one', () => { //not sure this is how we want to do it
+  describe('scenario one', () => {
+    //not sure this is how we want to do it
     retryTestCasesScenarioOne.forEach(testCase => {
       it(testCase.description, async () => {
         const bucket = storage.bucket(testCase.bucket);
