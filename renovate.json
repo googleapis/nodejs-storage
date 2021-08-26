@@ -1,8 +1,7 @@
 {
   "extends": [
     "config:base",
-    "docker:disable",
-    ":disableDependencyDashboard"
+    "docker:disable"
   ],
   "pinVersions": false,
   "rebaseStalePrs": true,
