@@ -18,6 +18,6 @@ branchProtectionRules:
       - ci / lint (pull_request)
       - ci / docs (pull_request)
       - OwlBot Post Processor
-      - ci/kokoro: Samples test
-      - ci/kokoro: System test 
+      - 'ci/kokoro: Samples test'
+      - 'ci/kokoro: System test'
       - cla/google
