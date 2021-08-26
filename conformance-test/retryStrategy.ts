@@ -24,7 +24,6 @@ import {
 interface RetryTestCasesScenarioOne { //probably should give it a more descriptive name. maybe instead of scenario we want it to be bucket, file, etc?
   description: string;
   bucket: string; 
-  queryParameters?: {[key: string]: string};
   method: Function;
 }
 
