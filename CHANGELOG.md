@@ -4,6 +4,25 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+## [5.14.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.13.2...v5.14.0) (2021-08-26)
+
+
+### Features
+
+* retries for conditionally idempotent operations ([#1561](https://www.github.com/googleapis/nodejs-storage/issues/1561)) ([653f4b4](https://www.github.com/googleapis/nodejs-storage/commit/653f4b488e8603e4008e51b45920fb7de7138eab))
+
+
+### Bug Fixes
+
+* allow retries of metadatata operations in system tests ([#1568](https://www.github.com/googleapis/nodejs-storage/issues/1568)) ([9398566](https://www.github.com/googleapis/nodejs-storage/commit/939856680d279dcd9587328d0cc58f789b022f5a))
+
+### [5.13.2](https://www.github.com/googleapis/nodejs-storage/compare/v5.13.1...v5.13.2) (2021-08-26)
+
+
+### Bug Fixes
+
+* update getLabels definition to actually allow no arguments when used in typescript ([#1559](https://www.github.com/googleapis/nodejs-storage/issues/1559)) ([176dbb5](https://www.github.com/googleapis/nodejs-storage/commit/176dbb5223f4442d10fd098ffa2cda5cf12144f2))
+
 ### [5.13.1](https://www.github.com/googleapis/nodejs-storage/compare/v5.13.0...v5.13.1) (2021-08-18)
 
 
