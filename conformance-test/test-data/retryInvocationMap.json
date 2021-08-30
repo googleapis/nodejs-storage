@@ -53,7 +53,8 @@
         "bucketUpload",
         "createResumableUpload",
         "createWriteStream",
-        "save"
+        "save",
+        "deleteResumableCache"
     ],
     "storage.objects.delete": [
         "deleteFiles",
