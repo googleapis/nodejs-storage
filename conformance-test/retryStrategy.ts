@@ -19,7 +19,7 @@ import * as path from 'path';
 import * as uuid from 'uuid';
 import pLimit = require('p-limit');
 
-require("conformance-test/libraryMethods.ts");
+require('conformance-test/libraryMethods.ts');
 import {Bucket, File, Iam, Notification, Storage} from '../src/';
 
 interface RetryCase {
@@ -27,8 +27,8 @@ interface RetryCase {
 }
 
 interface Method {
-  name: String
-  resources: String[]
+  name: String;
+  resources: String[];
 }
 
 interface RetryTestCase {
@@ -42,19 +42,27 @@ interface RetryTestCase {
 
 interface MethodMap {
   jsonApi: string;
-  nodejsStorageMethods: string[]
+  nodejsStorageMethods: string[];
 }
 
-const testFile = fs.readFileSync( //TODO change to require
-  path.join(__dirname, '../../conformance-test/test-data/retryStrategyTestData.json'),
+const testFile = fs.readFileSync(
+  //TODO change to require
+  path.join(
+    __dirname,
+    '../../conformance-test/test-data/retryStrategyTestData.json'
+  ),
   'utf-8'
 );
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const testFileParsed = JSON.parse(testFile);
 const retryTestCases: RetryTestCase[] = testFileParsed.retryStrategyTests;
 
-const jsonToNodeApiMapping = fs.readFileSync( //TODO change to require
-  path.join(__dirname, '../../conformance-test/test-data/retryInvocationMap.json'),
+const jsonToNodeApiMapping = fs.readFileSync(
+  //TODO change to require
+  path.join(
+    __dirname,
+    '../../conformance-test/test-data/retryInvocationMap.json'
+  ),
   'utf-8'
 );
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,18 +73,21 @@ const storage = new Storage(); //TODO: add apiEndpoint
 describe('retry conformance testing', () => {
   const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
   const RETENTION_DURATION_SECONDS = 10;
-  for (let testCaseIndex = 0; testCaseIndex < retryTestCases.length; testCaseIndex++){
+  for (
+    let testCaseIndex = 0;
+    testCaseIndex < retryTestCases.length;
+    testCaseIndex++
+  ) {
     const testCase = retryTestCases[testCaseIndex];
     describe(`Scenario ${testCase.id}`, () => {
-      retryTestCases.retryCases.forEach(function(instructionSet:RetryCase) {
-        const instructions = instructionSet.instructions
+      retryTestCases.retryCases.forEach((instructionSet: RetryCase) => {
+        const instructions = instructionSet.instructions;
         //TODO set emulator based on instructions
-        testCase.methods.forEach(function (jsonMethod) {
+        testCase.methods.forEach(jsonMethod => {
           const jsonMethodName = jsonMethod.name;
-          const jsonMethodResources = jsonMethod.resources
+          const jsonMethodResources = jsonMethod.resources;
           const functionList = methodMap.get(jsonMethodName);
-          functionList?.forEach(function (storageMethod) {
-
+          functionList?.forEach(storageMethod => {
             function generateName(bucketOrFile: string) {
               return TESTS_PREFIX + storageMethod + bucketOrFile + shortUUID();
             }
@@ -84,25 +95,24 @@ describe('retry conformance testing', () => {
             let bucket: Bucket;
             let file: File;
             let iam: Iam;
-            let notification: Notification
-            let storage: Storage
+            let notification: Notification;
+            let storage: Storage;
             beforeEach(() => {
-              bucket = storage.bucket(generateName("bucket"));
-              file = bucket.file(generateName("file"));
-              notification = bucket.notification("notification");
+              bucket = storage.bucket(generateName('bucket'));
+              file = bucket.file(generateName('file'));
+              notification = bucket.notification('notification');
               // set preconditions if test says so
-
             });
 
-            it(`${storageMethod}`, async () => { //if there are multiple cases, we're going to run into duplicate names here
+            it(`${storageMethod}`, async () => {
+              //if there are multiple cases, we're going to run into duplicate names here
               const result = storageMethod(bucket);
               // based on expectSuccess, make sure the right thing happens
             });
-          
+
             after(() => {
               return Promise.all([deleteAllBucketsAsync()]);
             });
-
           });
         });
       });
@@ -124,11 +134,11 @@ describe('retry conformance testing', () => {
       // delay to ensure that the bucket recognizes that the files don't exist
       // anymore.
       const CONSISTENCY_DELAY_MS = 250;
-  
+
       options = Object.assign({}, options, {
         versions: true,
       });
-  
+
       await bucket.deleteFiles(options);
       await new Promise(resolve => setTimeout(resolve, CONSISTENCY_DELAY_MS));
       await bucket.delete();
@@ -139,4 +149,3 @@ describe('retry conformance testing', () => {
 function shortUUID() {
   return uuid.v1().split('-').shift();
 }
-
