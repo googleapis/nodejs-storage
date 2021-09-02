@@ -1,6 +1,2 @@
 handleGHRelease: true
 releaseType: node
-branches:
-  - handleGHRelease: true
-    releaseType: node
-    branch: 4.x
