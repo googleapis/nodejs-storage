@@ -18,6 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as uuid from 'uuid';
 import pLimit = require('p-limit');
+import * as assert from 'assert';
 
 require('conformance-test/libraryMethods.ts');
 import {Bucket, File, Iam, Notification, Storage} from '../src/';
@@ -78,40 +79,71 @@ describe('retry conformance testing', () => {
     testCaseIndex < retryTestCases.length;
     testCaseIndex++
   ) {
-    const testCase = retryTestCases[testCaseIndex];
+    const testCase: RetryTestCase = retryTestCases[testCaseIndex];
     describe(`Scenario ${testCase.id}`, () => {
-      retryTestCases.retryCases.forEach((instructionSet: RetryCase) => {
+      testCase.retryCases.forEach((instructionSet: RetryCase) => {
         const instructions = instructionSet.instructions;
         //TODO set emulator based on instructions
         testCase.methods.forEach(jsonMethod => {
           const jsonMethodName = jsonMethod.name;
-          const jsonMethodResources = jsonMethod.resources;
           const functionList = methodMap.get(jsonMethodName);
-          functionList?.forEach(storageMethod => {
+          const jsonMethodResources = jsonMethod.resources;
+          functionList?.forEach(storageMethodString => {
             function generateName(bucketOrFile: string) {
-              return TESTS_PREFIX + storageMethod + bucketOrFile + shortUUID();
+              return `${TESTS_PREFIX} ${storageMethodString} ${bucketOrFile} ${shortUUID()}`;
             }
-
             let bucket: Bucket;
             let file: File;
             let iam: Iam;
             let notification: Notification;
             let storage: Storage;
             beforeEach(() => {
-              bucket = storage.bucket(generateName('bucket'));
-              file = bucket.file(generateName('file'));
+              if (testCase.preconditionProvided){
+                const options = {preconditionOpts: {ifGenerationMatch: 100, ifMetagenerationMatch: 100}};
+                bucket = storage.bucket(generateName('bucket'), options); //doesn't work for some reason?
+                file = bucket.file(generateName('file'), options);
+              }
+              else {
+                bucket = storage.bucket(generateName('bucket'));
+                file = bucket.file(generateName('file'));
+              }
               notification = bucket.notification('notification');
-              // set preconditions if test says so
             });
 
-            it(`${storageMethod}`, async () => {
-              //if there are multiple cases, we're going to run into duplicate names here
-              const result = storageMethod(bucket);
-              // based on expectSuccess, make sure the right thing happens
+            jsonMethodResources.forEach(jsonMethodResource => { //@denis i think we messed this up. this won't work. will discuss with you in our next meeting
+              it(`${storageMethodString} ${jsonMethodResource}`, async () => {
+                var result;
+                if (jsonMethodResource === 'BUCKET') {
+                  if (testCase.expectSuccess) {
+                    assert.ifError(storageMethodString(bucket));
+                  }
+                  else {
+                    assert.throws(storageMethodString(bucket));
+                  }
+                }
+                else if (jsonMethodResource === 'OBJECT'){
+                  if (testCase.expectSuccess) {
+                    assert.ifError(storageMethodString(file));
+                  }
+                  else {
+                    assert.throws(storageMethodString(file));
+                  }
+                }
+                else if (jsonMethodResource === 'NOTIFICATION'){
+                  if (testCase.expectSuccess) {
+                    assert.ifError(storageMethodString(notification));
+                  }
+                  else {
+                    assert.throws(storageMethodString(notification));
+                  }
+                }
+                else {
+                  throw Error("No matching resources found.")
+                }
+              });
             });
-
             after(() => {
-              return Promise.all([deleteAllBucketsAsync()]);
+              return deleteAllBucketsAsync();
             });
           });
         });
