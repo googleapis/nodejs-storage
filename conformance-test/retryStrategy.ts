@@ -98,47 +98,46 @@ describe('retry conformance testing', () => {
             let notification: Notification;
             let storage: Storage;
             beforeEach(() => {
-              if (testCase.preconditionProvided){
-                const options = {preconditionOpts: {ifGenerationMatch: 100, ifMetagenerationMatch: 100}};
+              if (testCase.preconditionProvided) {
+                const options = {
+                  preconditionOpts: {
+                    ifGenerationMatch: 100,
+                    ifMetagenerationMatch: 100,
+                  },
+                };
                 bucket = storage.bucket(generateName('bucket'), options); //doesn't work for some reason?
                 file = bucket.file(generateName('file'), options);
-              }
-              else {
+              } else {
                 bucket = storage.bucket(generateName('bucket'));
                 file = bucket.file(generateName('file'));
               }
               notification = bucket.notification('notification');
             });
 
-            jsonMethodResources.forEach(jsonMethodResource => { //@denis i think we messed this up. this won't work. will discuss with you in our next meeting
+            jsonMethodResources.forEach(jsonMethodResource => {
+              //@denis i think we messed this up. this won't work. will discuss with you in our next meeting
               it(`${storageMethodString} ${jsonMethodResource}`, async () => {
-                var result;
+                let result;
                 if (jsonMethodResource === 'BUCKET') {
                   if (testCase.expectSuccess) {
                     assert.ifError(storageMethodString(bucket));
-                  }
-                  else {
+                  } else {
                     assert.throws(storageMethodString(bucket));
                   }
-                }
-                else if (jsonMethodResource === 'OBJECT'){
+                } else if (jsonMethodResource === 'OBJECT') {
                   if (testCase.expectSuccess) {
                     assert.ifError(storageMethodString(file));
-                  }
-                  else {
+                  } else {
                     assert.throws(storageMethodString(file));
                   }
-                }
-                else if (jsonMethodResource === 'NOTIFICATION'){
+                } else if (jsonMethodResource === 'NOTIFICATION') {
                   if (testCase.expectSuccess) {
                     assert.ifError(storageMethodString(notification));
-                  }
-                  else {
+                  } else {
                     assert.throws(storageMethodString(notification));
                   }
-                }
-                else {
-                  throw Error("No matching resources found.")
+                } else {
+                  throw Error('No matching resources found.');
                 }
               });
             });
