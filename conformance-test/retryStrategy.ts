@@ -24,7 +24,7 @@ require('conformance-test/libraryMethods.ts');
 import {Bucket, File, Iam, Notification, Storage} from '../src/';
 
 interface RetryCase {
-  instructions: string[];
+  instructions: String[];
 }
 
 interface Method {
@@ -34,7 +34,7 @@ interface Method {
 
 interface RetryTestCase {
   id: number;
-  description: string;
+  description: String;
   retryCases: RetryCase[];
   methods: Method[];
   preconditionProvided: boolean;
@@ -42,8 +42,8 @@ interface RetryTestCase {
 }
 
 interface MethodMap {
-  jsonApi: string;
-  nodejsStorageMethods: string[];
+  jsonApi: String;
+  nodejsStorageMethods: String[];
 }
 
 const testFile = fs.readFileSync(
@@ -74,67 +74,60 @@ const storage = new Storage(); //TODO: add apiEndpoint
 describe('retry conformance testing', () => {
   const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
   const RETENTION_DURATION_SECONDS = 10;
+  const OPTIONS = {
+    preconditionOpts: {
+      ifGenerationMatch: 100,
+      ifMetagenerationMatch: 100,
+    },
+  };
   for (
     let testCaseIndex = 0;
     testCaseIndex < retryTestCases.length;
     testCaseIndex++
   ) {
     const testCase: RetryTestCase = retryTestCases[testCaseIndex];
+    
     describe(`Scenario ${testCase.id}`, () => {
+      excecuteScenario(testCase);
+    });
+
+    function excecuteScenario(testCase: RetryTestCase) {
       testCase.retryCases.forEach((instructionSet: RetryCase) => {
-        const instructions = instructionSet.instructions;
-        //TODO set emulator based on instructions
+        configureTestBench(instructionSet.instructions);
         testCase.methods.forEach(jsonMethod => {
-          const jsonMethodName = jsonMethod.name;
-          const functionList = methodMap.get(jsonMethodName);
-          const jsonMethodResources = jsonMethod.resources;
+          const functionList = methodMap.get(jsonMethod.name);
           functionList?.forEach(storageMethodString => {
-            function generateName(bucketOrFile: string) {
-              return `${TESTS_PREFIX} ${storageMethodString} ${bucketOrFile} ${shortUUID()}`;
-            }
+            const storageMethodObject = (global as any).storageMethodString;
             let bucket: Bucket;
             let file: File;
-            let iam: Iam;
             let notification: Notification;
             let storage: Storage;
             beforeEach(() => {
-              if (testCase.preconditionProvided) {
-                const options = {
-                  preconditionOpts: {
-                    ifGenerationMatch: 100,
-                    ifMetagenerationMatch: 100,
-                  },
-                };
-                bucket = storage.bucket(generateName('bucket'), options); //doesn't work for some reason?
-                file = bucket.file(generateName('file'), options);
-              } else {
-                bucket = storage.bucket(generateName('bucket'));
-                file = bucket.file(generateName('file'));
-              }
+              bucket = createBucketForTest(testCase.preconditionProvided, storageMethodString);
+              file = createFileForTest(testCase.preconditionProvided, storageMethodString, bucket);
               notification = bucket.notification('notification');
             });
 
-            jsonMethodResources.forEach(jsonMethodResource => {
-              //@denis i think we messed this up. this won't work. will discuss with you in our next meeting
+            jsonMethod.resources.forEach(jsonMethodResource => { //figure out how to handle the case where there are no resources
               it(`${storageMethodString} ${jsonMethodResource}`, async () => {
                 let result;
                 if (jsonMethodResource === 'BUCKET') {
                   if (testCase.expectSuccess) {
-                    assert.ifError(storageMethodString(bucket));
+                    assert.ifError(storageMethodObject(bucket));
                   } else {
-                    assert.throws(storageMethodString(bucket));
+                    assert.throws(storageMethodObject(bucket));
                   }
                 } else if (jsonMethodResource === 'OBJECT') {
                   if (testCase.expectSuccess) {
-                    assert.ifError(storageMethodString(file));
+                    assert.ifError(storageMethodObject(file));
                   } else {
-                    assert.throws(storageMethodString(file));
+                    assert.throws(storageMethodObject(file));
                   }
                 } else if (jsonMethodResource === 'NOTIFICATION') {
                   if (testCase.expectSuccess) {
-                    assert.ifError(storageMethodString(notification));
+                    assert.ifError(storageMethodObject(notification));
                   } else {
-                    assert.throws(storageMethodString(notification));
+                    assert.throws(storageMethodObject(notification));
                   }
                 } else {
                   throw Error('No matching resources found.');
@@ -147,7 +140,23 @@ describe('retry conformance testing', () => {
           });
         });
       });
-    });
+    }
+
+    function createBucketForTest(preconditionProvided : boolean, storageMethodString: String){
+      return preconditionProvided ? storage.bucket(generateName(storageMethodString, 'bucket'), OPTIONS) : storage.bucket(generateName(storageMethodString, 'bucket'));
+    }
+
+    function createFileForTest(preconditionProvided : boolean, storageMethodString: String, bucket: Bucket){
+      return preconditionProvided ? bucket.file(generateName(storageMethodString, 'file'), OPTIONS) : bucket.file(generateName(storageMethodString, 'file'));
+    }
+
+    function generateName(storageMethodString: String, bucketOrFile: string) {
+      return `${TESTS_PREFIX} ${storageMethodString} ${bucketOrFile} ${shortUUID()}`;
+    }
+
+    function configureTestBench(instructions: String[]) {
+      throw Error("configure test bench not implemented");
+    }
 
     async function deleteAllBucketsAsync() {
       const [buckets] = await storage.getBuckets({prefix: TESTS_PREFIX});
