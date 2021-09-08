@@ -86,7 +86,7 @@ describe('retry conformance testing', () => {
     testCaseIndex++
   ) {
     const testCase: RetryTestCase = retryTestCases[testCaseIndex];
-    
+
     describe(`Scenario ${testCase.id}`, () => {
       excecuteScenario(testCase);
     });
@@ -103,12 +103,20 @@ describe('retry conformance testing', () => {
             let notification: Notification;
             let storage: Storage;
             beforeEach(() => {
-              bucket = createBucketForTest(testCase.preconditionProvided, storageMethodString);
-              file = createFileForTest(testCase.preconditionProvided, storageMethodString, bucket);
+              bucket = createBucketForTest(
+                testCase.preconditionProvided,
+                storageMethodString
+              );
+              file = createFileForTest(
+                testCase.preconditionProvided,
+                storageMethodString,
+                bucket
+              );
               notification = bucket.notification('notification');
             });
 
-            jsonMethod.resources.forEach(jsonMethodResource => { //figure out how to handle the case where there are no resources
+            jsonMethod.resources.forEach(jsonMethodResource => {
+              //figure out how to handle the case where there are no resources
               it(`${storageMethodString} ${jsonMethodResource}`, async () => {
                 let result;
                 if (jsonMethodResource === 'BUCKET') {
@@ -142,12 +150,23 @@ describe('retry conformance testing', () => {
       });
     }
 
-    function createBucketForTest(preconditionProvided : boolean, storageMethodString: String){
-      return preconditionProvided ? storage.bucket(generateName(storageMethodString, 'bucket'), OPTIONS) : storage.bucket(generateName(storageMethodString, 'bucket'));
+    function createBucketForTest(
+      preconditionProvided: boolean,
+      storageMethodString: String
+    ) {
+      return preconditionProvided
+        ? storage.bucket(generateName(storageMethodString, 'bucket'), OPTIONS)
+        : storage.bucket(generateName(storageMethodString, 'bucket'));
     }
 
-    function createFileForTest(preconditionProvided : boolean, storageMethodString: String, bucket: Bucket){
-      return preconditionProvided ? bucket.file(generateName(storageMethodString, 'file'), OPTIONS) : bucket.file(generateName(storageMethodString, 'file'));
+    function createFileForTest(
+      preconditionProvided: boolean,
+      storageMethodString: String,
+      bucket: Bucket
+    ) {
+      return preconditionProvided
+        ? bucket.file(generateName(storageMethodString, 'file'), OPTIONS)
+        : bucket.file(generateName(storageMethodString, 'file'));
     }
 
     function generateName(storageMethodString: String, bucketOrFile: string) {
@@ -155,7 +174,7 @@ describe('retry conformance testing', () => {
     }
 
     function configureTestBench(instructions: String[]) {
-      throw Error("configure test bench not implemented");
+      throw Error('configure test bench not implemented');
     }
 
     async function deleteAllBucketsAsync() {
