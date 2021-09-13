@@ -30,69 +30,129 @@ async function addLifecycleRule(bucket: Bucket) {
   });
 }
 
-async function combine(bucket: Bucket, _file: File, _notification: Notification) {
+async function combine(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const sources = [bucket.file('file1.txt'), bucket.file('file2.txt')];
   const allFiles = bucket.file('all-files.txt');
 
   await bucket.combine(sources, allFiles);
 }
 
-async function create(bucket: Bucket, _file: File, _notification: Notification) {
+async function create(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.create();
 }
 
-async function createNotification(bucket: Bucket, _file: File, _notification: Notification) {
+async function createNotification(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.createNotification('my-topic');
 }
 
-async function deleteBucket(bucket: Bucket, _file: File, _notification: Notification) {
+async function deleteBucket(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.delete();
 }
 
-async function deleteFiles(bucket: Bucket, _file: File, _notification: Notification) {
+async function deleteFiles(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.deleteFiles();
 }
 
-async function deleteLabels(bucket: Bucket, _file: File, _notification: Notification) {
+async function deleteLabels(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.deleteLabels();
 }
 
-async function disableRequesterPays(bucket: Bucket, _file: File, _notification: Notification) {
+async function disableRequesterPays(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.disableRequesterPays();
 }
 
-async function enableLogging(bucket: Bucket, _file: File, _notification: Notification) {
+async function enableLogging(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const config = {
     prefix: 'log',
   };
   await bucket.enableLogging(config);
 }
 
-async function enableRequesterPays(bucket: Bucket, _file: File, _notification: Notification) {
+async function enableRequesterPays(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.enableRequesterPays();
 }
 
-async function bucketExists(bucket: Bucket, _file: File, _notification: Notification) {
+async function bucketExists(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.exists();
 }
 
-async function bucketGet(bucket: Bucket, _file: File, _notification: Notification) {
+async function bucketGet(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.get();
 }
 
-async function getFilesStream(bucket: Bucket, _file: File, _notification: Notification) {
+async function getFilesStream(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.getFilesStream();
 }
 
-async function getLabels(bucket: Bucket, _file: File, _notification: Notification) {
+async function getLabels(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.getLabels();
 }
 
-async function bucketGetMetadata(bucket: Bucket, _file: File, _notification: Notification) {
+async function bucketGetMetadata(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.getMetadata();
 }
 
-async function getNotifications(bucket: Bucket, _file: File, _notification: Notification) {
+async function getNotifications(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.getNotifications();
 }
 
@@ -101,24 +161,44 @@ async function lock(bucket: Bucket, _file: File, _notification: Notification) {
   await bucket.lock(metageneration);
 }
 
-async function bucketMakePrivate(bucket: Bucket, _file: File, _notification: Notification) {
+async function bucketMakePrivate(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.makePrivate();
 }
 
-async function bucketMakePublic(bucket: Bucket, _file: File, _notification: Notification) {
+async function bucketMakePublic(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.makePublic();
 }
 
-async function removeRetentionPeriod(bucket: Bucket, _file: File, _notification: Notification) {
+async function removeRetentionPeriod(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.removeRetentionPeriod();
 }
 
-async function setCorsConfiguration(bucket: Bucket, _file: File, _notification: Notification) {
+async function setCorsConfiguration(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
   await bucket.setCorsConfiguration(corsConfiguration);
 }
 
-async function setLabels(bucket: Bucket, _file: File, _notification: Notification) {
+async function setLabels(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const labels = {
     labelone: 'labelonevalue',
     labeltwo: 'labeltwovalue',
@@ -126,7 +206,11 @@ async function setLabels(bucket: Bucket, _file: File, _notification: Notificatio
   await bucket.setLabels(labels);
 }
 
-async function bucketSetMetadata(bucket: Bucket, _file: File, _notification: Notification) {
+async function bucketSetMetadata(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const metadata = {
     website: {
       mainPageSuffix: 'http://example.com',
@@ -136,20 +220,36 @@ async function bucketSetMetadata(bucket: Bucket, _file: File, _notification: Not
   await bucket.setMetadata(metadata);
 }
 
-async function setRetentionPeriod(bucket: Bucket, _file: File, _notification: Notification) {
+async function setRetentionPeriod(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const DURATION_SECONDS = 15780000; // 6 months.
   await bucket.setRetentionPeriod(DURATION_SECONDS);
 }
 
-async function bucketSetStorageClass(bucket: Bucket, _file: File, _notification: Notification) {
+async function bucketSetStorageClass(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.setStorageClass('nearline');
 }
 
-async function bucketUploadResumable(bucket: Bucket, _file: File, _notification: Notification) {
+async function bucketUploadResumable(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.upload('testFile.txt', {resumable: true});
 }
 
-async function bucketUploadMultipart(bucket: Bucket, _file: File, _notification: Notification) {
+async function bucketUploadMultipart(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.upload('testFile.txt', {resumable: false});
 }
 
@@ -161,28 +261,48 @@ async function copy(_bucket: Bucket, file: File, _notification: Notification) {
   await file.copy('a-different-file.png');
 }
 
-async function createReadStream(_bucket: Bucket, file: File, _notification: Notification) {
+async function createReadStream(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   const localFile = 'testFile.txt';
   await file.createReadStream().pipe(fs.createWriteStream(localFile));
 }
 
-async function createResumableUpload(_bucket: Bucket, file: File, _notification: Notification) {
+async function createResumableUpload(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.createResumableUpload();
 }
 
-async function createWriteStreamResumable(_bucket: Bucket, file: File, _notification: Notification) {
+async function createWriteStreamResumable(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await fs
     .createReadStream('testFile.txt')
     .pipe(file.createWriteStream({resumable: true}));
 }
 
-async function createWriteStreamMultipart(_bucket: Bucket, file: File, _notification: Notification) {
+async function createWriteStreamMultipart(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await fs
     .createReadStream('testFile.txt')
     .pipe(file.createWriteStream({resumable: false}));
 }
 
-async function fileDelete(_bucket: Bucket, file: File, _notification: Notification) {
+async function fileDelete(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.delete();
 }
 
@@ -191,11 +311,19 @@ async function fileDelete(_bucket: Bucket, file: File, _notification: Notificati
 //   await file.deleteResumableCache();
 // }
 
-async function download(_bucket: Bucket, file: File, _notification: Notification) {
+async function download(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.download();
 }
 
-async function exists(_bucket: Bucket, file: File, _notification: Notification) {
+async function exists(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.exists();
 }
 
@@ -203,23 +331,43 @@ async function get(_bucket: Bucket, file: File, _notification: Notification) {
   await file.get();
 }
 
-async function getExpirationDate(_bucket: Bucket, file: File, _notification: Notification) {
+async function getExpirationDate(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.getExpirationDate();
 }
 
-async function getMetadata(_bucket: Bucket, file: File, _notification: Notification) {
+async function getMetadata(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.getMetadata();
 }
 
-async function isPublic(_bucket: Bucket, file: File, _notification: Notification) {
+async function isPublic(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.isPublic();
 }
 
-async function fileMakePrivate(_bucket: Bucket, file: File, _notification: Notification) {
+async function fileMakePrivate(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.makePrivate();
 }
 
-async function fileMakePublic(_bucket: Bucket, file: File, _notification: Notification) {
+async function fileMakePublic(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.makePublic();
 }
 
@@ -227,11 +375,19 @@ async function move(_bucket: Bucket, file: File, _notification: Notification) {
   await file.move('new-file');
 }
 
-async function rename(_bucket: Bucket, file: File, _notification: Notification) {
+async function rename(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.rename('new-name');
 }
 
-async function rotateEncryptionKey(_bucket: Bucket, file: File, _notification: Notification) {
+async function rotateEncryptionKey(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   const crypto = require('crypto');
   const buffer = crypto.randomBytes(32);
   const newKey = buffer.toString('base64');
@@ -240,15 +396,27 @@ async function rotateEncryptionKey(_bucket: Bucket, file: File, _notification: N
   });
 }
 
-async function saveResumable(_bucket: Bucket, file: File, _notification: Notification) {
+async function saveResumable(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.save('testdata', {resumable: true});
 }
 
-async function saveMultipart(_bucket: Bucket, file: File, _notification: Notification) {
+async function saveMultipart(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.save('testdata', {resumable: false});
 }
 
-async function setMetadata(_bucket: Bucket, file: File, _notification: Notification) {
+async function setMetadata(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   const metadata = {
     contentType: 'application/x-font-ttf',
     metadata: {
@@ -259,7 +427,11 @@ async function setMetadata(_bucket: Bucket, file: File, _notification: Notificat
   await file.setMetadata(metadata);
 }
 
-async function setStorageClass(_bucket: Bucket, file: File, _notification: Notification) {
+async function setStorageClass(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.setStorageClass('nearline');
 }
 
