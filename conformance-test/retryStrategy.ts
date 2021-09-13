@@ -117,32 +117,12 @@ function excecuteScenario(testCase: RetryTestCase) {
           notification = bucket.notification('notification');
         });
 
-        jsonMethod.resources.forEach(jsonMethodResource => {
-          //figure out how to handle the case where there are no resources
-          it(`${storageMethodString} ${jsonMethodResource}`, async () => {
-            let result;
-            if (jsonMethodResource === 'BUCKET') {
-              if (testCase.expectSuccess) {
-                assert.ifError(storageMethodObject(bucket));
-              } else {
-                assert.throws(storageMethodObject(bucket));
-              }
-            } else if (jsonMethodResource === 'OBJECT') {
-              if (testCase.expectSuccess) {
-                assert.ifError(storageMethodObject(file));
-              } else {
-                assert.throws(storageMethodObject(file));
-              }
-            } else if (jsonMethodResource === 'NOTIFICATION') {
-              if (testCase.expectSuccess) {
-                assert.ifError(storageMethodObject(notification));
-              } else {
-                assert.throws(storageMethodObject(notification));
-              }
-            } else {
-              throw Error('No matching resources found.');
-            }
-          });
+        it(`${storageMethodString}`, async () => {
+          if (testCase.expectSuccess) {
+            assert.ifError(storageMethodObject(bucket, file, notification));
+          } else {
+            assert.throws(storageMethodObject(bucket, file, notification));
+          }
         });
         after(() => {
           return deleteAllBucketsAsync();
