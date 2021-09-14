@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {O_APPEND} from 'constants';
 import {file} from 'tmp';
 import {Bucket, File, HmacKey, Iam, Notification, Storage} from '../src';
 import * as fs from 'fs';
@@ -30,95 +29,175 @@ async function addLifecycleRule(bucket: Bucket) {
   });
 }
 
-async function combine(bucket: Bucket) {
+async function combine(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const sources = [bucket.file('file1.txt'), bucket.file('file2.txt')];
   const allFiles = bucket.file('all-files.txt');
 
   await bucket.combine(sources, allFiles);
 }
 
-async function create(bucket: Bucket) {
+async function create(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.create();
 }
 
-async function createNotification(bucket: Bucket) {
+async function createNotification(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.createNotification('my-topic');
 }
 
-async function deleteBucket(bucket: Bucket) {
+async function deleteBucket(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.delete();
 }
 
-async function deleteFiles(bucket: Bucket) {
+async function deleteFiles(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.deleteFiles();
 }
 
-async function deleteLabels(bucket: Bucket) {
+async function deleteLabels(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.deleteLabels();
 }
 
-async function disableRequesterPays(bucket: Bucket) {
+async function disableRequesterPays(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.disableRequesterPays();
 }
 
-async function enableLogging(bucket: Bucket) {
+async function enableLogging(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const config = {
     prefix: 'log',
   };
   await bucket.enableLogging(config);
 }
 
-async function enableRequesterPays(bucket: Bucket) {
+async function enableRequesterPays(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.enableRequesterPays();
 }
 
-async function bucketExists(bucket: Bucket) {
+async function bucketExists(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.exists();
 }
 
-async function bucketGet(bucket: Bucket) {
+async function bucketGet(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.get();
 }
 
-async function getFilesStream(bucket: Bucket) {
+async function getFilesStream(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.getFilesStream();
 }
 
-async function getLabels(bucket: Bucket) {
+async function getLabels(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.getLabels();
 }
 
-async function bucketGetMetadata(bucket: Bucket) {
+async function bucketGetMetadata(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.getMetadata();
 }
 
-async function getNotifications(bucket: Bucket) {
+async function getNotifications(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.getNotifications();
 }
 
-async function lock(bucket: Bucket) {
+async function lock(bucket: Bucket, _file: File, _notification: Notification) {
   const metageneration = 0;
   await bucket.lock(metageneration);
 }
 
-async function bucketMakePrivate(bucket: Bucket) {
+async function bucketMakePrivate(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.makePrivate();
 }
 
-async function bucketMakePublic(bucket: Bucket) {
+async function bucketMakePublic(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.makePublic();
 }
 
-async function removeRetentionPeriod(bucket: Bucket) {
+async function removeRetentionPeriod(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.removeRetentionPeriod();
 }
 
-async function setCorsConfiguration(bucket: Bucket) {
+async function setCorsConfiguration(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
   await bucket.setCorsConfiguration(corsConfiguration);
 }
 
-async function setLabels(bucket: Bucket) {
+async function setLabels(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const labels = {
     labelone: 'labelonevalue',
     labeltwo: 'labeltwovalue',
@@ -126,7 +205,11 @@ async function setLabels(bucket: Bucket) {
   await bucket.setLabels(labels);
 }
 
-async function bucketSetMetadata(bucket: Bucket) {
+async function bucketSetMetadata(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const metadata = {
     website: {
       mainPageSuffix: 'http://example.com',
@@ -136,92 +219,174 @@ async function bucketSetMetadata(bucket: Bucket) {
   await bucket.setMetadata(metadata);
 }
 
-async function setRetentionPeriod(bucket: Bucket) {
+async function setRetentionPeriod(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const DURATION_SECONDS = 15780000; // 6 months.
   await bucket.setRetentionPeriod(DURATION_SECONDS);
 }
 
-async function bucketSetStorageClass(bucket: Bucket) {
+async function bucketSetStorageClass(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   await bucket.setStorageClass('nearline');
 }
 
-async function bucketUpload(bucket: Bucket, resumableSetting: boolean) {
-  await bucket.upload('testFile.txt', {resumable: resumableSetting});
+async function bucketUploadResumable(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
+  await bucket.upload('testFile.txt', {resumable: true});
+}
+
+async function bucketUploadMultipart(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
+  await bucket.upload('testFile.txt', {resumable: false});
 }
 
 /////////////////////////////////////////////////
 //////////////////// FILE /////////////////////
 /////////////////////////////////////////////////
 
-async function copy(file: File) {
+async function copy(_bucket: Bucket, file: File, _notification: Notification) {
   await file.copy('a-different-file.png');
 }
 
-async function createReadStream(file: File) {
+async function createReadStream(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   const localFile = 'testFile.txt';
   await file.createReadStream().pipe(fs.createWriteStream(localFile));
 }
 
-async function createResumableUpload(file: File) {
+async function createResumableUpload(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.createResumableUpload();
 }
 
-async function createWriteStream(file: File, resumableSetting: boolean) {
+async function createWriteStreamResumable(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await fs
     .createReadStream('testFile.txt')
-    .pipe(file.createWriteStream({resumable: resumableSetting}));
+    .pipe(file.createWriteStream({resumable: true}));
 }
 
-async function fileDelete(file: File) {
+async function createWriteStreamMultipart(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
+  await fs
+    .createReadStream('testFile.txt')
+    .pipe(file.createWriteStream({resumable: false}));
+}
+
+async function fileDelete(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.delete();
 }
 
 // I don't think this makes a request. Waiting for response on go/nodejs-gcs-client-retry-state
-// async function deleteResumableCache(file: File) {
+// async function deleteResumableCache(_bucket: Bucket, file: File, _notification: Notification) {
 //   await file.deleteResumableCache();
 // }
 
-async function download(file: File) {
+async function download(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.download();
 }
 
-async function exists(file: File) {
+async function exists(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.exists();
 }
 
-async function get(file: File) {
+async function get(_bucket: Bucket, file: File, _notification: Notification) {
   await file.get();
 }
 
-async function getExpirationDate(file: File) {
+async function getExpirationDate(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.getExpirationDate();
 }
 
-async function getMetadata(file: File) {
+async function getMetadata(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.getMetadata();
 }
 
-async function isPublic(file: File) {
+async function isPublic(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.isPublic();
 }
 
-async function fileMakePrivate(file: File) {
+async function fileMakePrivate(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.makePrivate();
 }
 
-async function fileMakePublic(file: File) {
+async function fileMakePublic(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.makePublic();
 }
 
-async function move(file: File) {
+async function move(_bucket: Bucket, file: File, _notification: Notification) {
   await file.move('new-file');
 }
 
-async function rename(file: File) {
+async function rename(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.rename('new-name');
 }
 
-async function rotateEncryptionKey(file: File) {
+async function rotateEncryptionKey(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   const crypto = require('crypto');
   const buffer = crypto.randomBytes(32);
   const newKey = buffer.toString('base64');
@@ -230,11 +395,27 @@ async function rotateEncryptionKey(file: File) {
   });
 }
 
-async function save(file: File, resumableSetting: boolean) {
-  await file.save('testdata', {resumable: resumableSetting});
+async function saveResumable(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
+  await file.save('testdata', {resumable: true});
 }
 
-async function setMetadata(file: File) {
+async function saveMultipart(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
+  await file.save('testdata', {resumable: false});
+}
+
+async function setMetadata(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   const metadata = {
     contentType: 'application/x-font-ttf',
     metadata: {
@@ -245,7 +426,11 @@ async function setMetadata(file: File) {
   await file.setMetadata(metadata);
 }
 
-async function setStorageClass(file: File) {
+async function setStorageClass(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.setStorageClass('nearline');
 }
 

@@ -50,10 +50,13 @@
         "setStorageClass"
     ],
     "storage.objects.insert": [
-        "bucketUpload",
+        "bucketUploadResumable",
+        "bucketUploadMultipart",
         "createResumableUpload",
-        "createWriteStream",
-        "save",
+        "createWriteStreamResumable",
+        "createWriteStreamMultipart",
+        "saveResumable",
+        "saveMultipart",
         "deleteResumableCache"
     ],
     "storage.objects.delete": [
