@@ -25,22 +25,10 @@ const DOCKER_IMAGE = `${DEFAULT_IMAGE_NAME}:${DEFAULT_IMAGE_TAG}`;
 const PULL_CMD = `docker pull ${DOCKER_IMAGE}`;
 const RUN_CMD = `docker run --rm -d -p ${PORT} ${DOCKER_IMAGE}`;
 
-export function getTestBenchDockerImage(): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(execSync(PULL_CMD));
-    } catch (err) {
-      reject(err);
-    }
-  });
+export async function getTestBenchDockerImage(): Promise<Buffer> {
+  return execSync(PULL_CMD);
 }
 
-export function runTestBenchDockerImage(): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    try {
-      resolve(execSync(RUN_CMD));
-    } catch (err) {
-      reject(err);
-    }
-  });
+export async function runTestBenchDockerImage(): Promise<Buffer> {
+  return execSync(RUN_CMD);
 }
