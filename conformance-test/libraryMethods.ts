@@ -154,7 +154,11 @@ export async function getNotifications(
   await bucket.getNotifications();
 }
 
-export async function lock(bucket: Bucket, _file: File, _notification: Notification) {
+export async function lock(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification
+) {
   const metageneration = 0;
   await bucket.lock(metageneration);
 }
@@ -255,7 +259,11 @@ export async function bucketUploadMultipart(
 //////////////////// FILE /////////////////////
 /////////////////////////////////////////////////
 
-export async function copy(_bucket: Bucket, file: File, _notification: Notification) {
+export async function copy(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.copy('a-different-file.png');
 }
 
@@ -325,7 +333,11 @@ export async function exists(
   await file.exists();
 }
 
-export async function get(_bucket: Bucket, file: File, _notification: Notification) {
+export async function get(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.get();
 }
 
@@ -369,7 +381,11 @@ export async function fileMakePublic(
   await file.makePublic();
 }
 
-export async function move(_bucket: Bucket, file: File, _notification: Notification) {
+export async function move(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification
+) {
   await file.move('new-file');
 }
 
