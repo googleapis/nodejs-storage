@@ -66,7 +66,9 @@ const jsonToNodeApiMapping = fs.readFileSync(
   'utf-8'
 );
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const methodMap: Map<String, String[]> = new Map(Object.entries(JSON.parse(jsonToNodeApiMapping)));
+const methodMap: Map<String, String[]> = new Map(
+  Object.entries(JSON.parse(jsonToNodeApiMapping))
+);
 const storage = new Storage(); //TODO: add apiEndpoint
 
 const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
