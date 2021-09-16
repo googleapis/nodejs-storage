@@ -34,7 +34,7 @@ function main() {
       idempotencyStrategy: IdempotencyStrategy.RetryAlways,
     },
   });
-  console.log('All conditionally idempotent functions will be retried.');
+  console.log(`All conditionally idempotent functions will be retried according to the ${storage.retryOptions.idempotencyStrategy} strategy.`);
   // [END storage_retry_conditionally_idempotent]
 }
 main(...process.argv.slice(2));
