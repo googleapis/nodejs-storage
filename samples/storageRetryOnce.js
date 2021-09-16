@@ -32,10 +32,10 @@ function main() {
   const storage = new Storage({
     retryOptions: {
       maxRetries: 1,
-      totalTimeout: 100
-    }
+      totalTimeout: 100,
+    },
   });
-  console.log(`Retryable functions will retry once with deadline 100 seconds.`);
+  console.log('Retryable functions will retry once with deadline 100 seconds.');
   // [END storage_retry_once]
 }
 main(...process.argv.slice(2));

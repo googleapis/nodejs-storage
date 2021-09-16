@@ -31,10 +31,10 @@ function main() {
   // Creates a client
   const storage = new Storage({
     retryOptions: {
-      idempotencyStrategy: IdempotencyStrategy.RetryAlways
-    }
+      idempotencyStrategy: IdempotencyStrategy.RetryAlways,
+    },
   });
-  console.log(`All conditionally idempotent functions will be retried.`);
+  console.log('All conditionally idempotent functions will be retried.');
   // [END storage_retry_conditionally_idempotent]
 }
 main(...process.argv.slice(2));
