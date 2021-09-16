@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {file} from 'tmp';
 import {Bucket, File, HmacKey, Iam, Notification, Storage} from '../src';
 import * as fs from 'fs';
 
@@ -20,7 +19,7 @@ import * as fs from 'fs';
 //////////////////// BUCKET /////////////////////
 /////////////////////////////////////////////////
 
-async function addLifecycleRule(bucket: Bucket) {
+export async function addLifecycleRule(bucket: Bucket) {
   await bucket.addLifecycleRule({
     action: 'delete',
     condition: {
@@ -29,7 +28,7 @@ async function addLifecycleRule(bucket: Bucket) {
   });
 }
 
-async function combine(
+export async function combine(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -40,7 +39,7 @@ async function combine(
   await bucket.combine(sources, allFiles);
 }
 
-async function create(
+export async function create(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -48,7 +47,7 @@ async function create(
   await bucket.create();
 }
 
-async function createNotification(
+export async function createNotification(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -56,7 +55,7 @@ async function createNotification(
   await bucket.createNotification('my-topic');
 }
 
-async function deleteBucket(
+export async function deleteBucket(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -64,7 +63,7 @@ async function deleteBucket(
   await bucket.delete();
 }
 
-async function deleteFiles(
+export async function deleteFiles(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -72,7 +71,7 @@ async function deleteFiles(
   await bucket.deleteFiles();
 }
 
-async function deleteLabels(
+export async function deleteLabels(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -80,7 +79,7 @@ async function deleteLabels(
   await bucket.deleteLabels();
 }
 
-async function disableRequesterPays(
+export async function disableRequesterPays(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -88,7 +87,7 @@ async function disableRequesterPays(
   await bucket.disableRequesterPays();
 }
 
-async function enableLogging(
+export async function enableLogging(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -99,7 +98,7 @@ async function enableLogging(
   await bucket.enableLogging(config);
 }
 
-async function enableRequesterPays(
+export async function enableRequesterPays(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -107,7 +106,7 @@ async function enableRequesterPays(
   await bucket.enableRequesterPays();
 }
 
-async function bucketExists(
+export async function bucketExists(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -115,7 +114,7 @@ async function bucketExists(
   await bucket.exists();
 }
 
-async function bucketGet(
+export async function bucketGet(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -123,7 +122,7 @@ async function bucketGet(
   await bucket.get();
 }
 
-async function getFilesStream(
+export async function getFilesStream(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -131,7 +130,7 @@ async function getFilesStream(
   await bucket.getFilesStream();
 }
 
-async function getLabels(
+export async function getLabels(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -139,7 +138,7 @@ async function getLabels(
   await bucket.getLabels();
 }
 
-async function bucketGetMetadata(
+export async function bucketGetMetadata(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -147,7 +146,7 @@ async function bucketGetMetadata(
   await bucket.getMetadata();
 }
 
-async function getNotifications(
+export async function getNotifications(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -155,12 +154,12 @@ async function getNotifications(
   await bucket.getNotifications();
 }
 
-async function lock(bucket: Bucket, _file: File, _notification: Notification) {
+export async function lock(bucket: Bucket, _file: File, _notification: Notification) {
   const metageneration = 0;
   await bucket.lock(metageneration);
 }
 
-async function bucketMakePrivate(
+export async function bucketMakePrivate(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -168,7 +167,7 @@ async function bucketMakePrivate(
   await bucket.makePrivate();
 }
 
-async function bucketMakePublic(
+export async function bucketMakePublic(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -176,7 +175,7 @@ async function bucketMakePublic(
   await bucket.makePublic();
 }
 
-async function removeRetentionPeriod(
+export async function removeRetentionPeriod(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -184,7 +183,7 @@ async function removeRetentionPeriod(
   await bucket.removeRetentionPeriod();
 }
 
-async function setCorsConfiguration(
+export async function setCorsConfiguration(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -193,7 +192,7 @@ async function setCorsConfiguration(
   await bucket.setCorsConfiguration(corsConfiguration);
 }
 
-async function setLabels(
+export async function setLabels(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -205,7 +204,7 @@ async function setLabels(
   await bucket.setLabels(labels);
 }
 
-async function bucketSetMetadata(
+export async function bucketSetMetadata(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -219,7 +218,7 @@ async function bucketSetMetadata(
   await bucket.setMetadata(metadata);
 }
 
-async function setRetentionPeriod(
+export async function setRetentionPeriod(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -228,7 +227,7 @@ async function setRetentionPeriod(
   await bucket.setRetentionPeriod(DURATION_SECONDS);
 }
 
-async function bucketSetStorageClass(
+export async function bucketSetStorageClass(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -236,7 +235,7 @@ async function bucketSetStorageClass(
   await bucket.setStorageClass('nearline');
 }
 
-async function bucketUploadResumable(
+export async function bucketUploadResumable(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -244,7 +243,7 @@ async function bucketUploadResumable(
   await bucket.upload('testFile.txt', {resumable: true});
 }
 
-async function bucketUploadMultipart(
+export async function bucketUploadMultipart(
   bucket: Bucket,
   _file: File,
   _notification: Notification
@@ -256,11 +255,11 @@ async function bucketUploadMultipart(
 //////////////////// FILE /////////////////////
 /////////////////////////////////////////////////
 
-async function copy(_bucket: Bucket, file: File, _notification: Notification) {
+export async function copy(_bucket: Bucket, file: File, _notification: Notification) {
   await file.copy('a-different-file.png');
 }
 
-async function createReadStream(
+export async function createReadStream(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -269,7 +268,7 @@ async function createReadStream(
   await file.createReadStream().pipe(fs.createWriteStream(localFile));
 }
 
-async function createResumableUpload(
+export async function createResumableUpload(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -277,7 +276,7 @@ async function createResumableUpload(
   await file.createResumableUpload();
 }
 
-async function createWriteStreamResumable(
+export async function createWriteStreamResumable(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -287,7 +286,7 @@ async function createWriteStreamResumable(
     .pipe(file.createWriteStream({resumable: true}));
 }
 
-async function createWriteStreamMultipart(
+export async function createWriteStreamMultipart(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -297,7 +296,7 @@ async function createWriteStreamMultipart(
     .pipe(file.createWriteStream({resumable: false}));
 }
 
-async function fileDelete(
+export async function fileDelete(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -306,11 +305,11 @@ async function fileDelete(
 }
 
 // I don't think this makes a request. Waiting for response on go/nodejs-gcs-client-retry-state
-// async function deleteResumableCache(_bucket: Bucket, file: File, _notification: Notification) {
+// export async function deleteResumableCache(_bucket: Bucket, file: File, _notification: Notification) {
 //   await file.deleteResumableCache();
 // }
 
-async function download(
+export async function download(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -318,7 +317,7 @@ async function download(
   await file.download();
 }
 
-async function exists(
+export async function exists(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -326,11 +325,11 @@ async function exists(
   await file.exists();
 }
 
-async function get(_bucket: Bucket, file: File, _notification: Notification) {
+export async function get(_bucket: Bucket, file: File, _notification: Notification) {
   await file.get();
 }
 
-async function getExpirationDate(
+export async function getExpirationDate(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -338,7 +337,7 @@ async function getExpirationDate(
   await file.getExpirationDate();
 }
 
-async function getMetadata(
+export async function getMetadata(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -346,7 +345,7 @@ async function getMetadata(
   await file.getMetadata();
 }
 
-async function isPublic(
+export async function isPublic(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -354,7 +353,7 @@ async function isPublic(
   await file.isPublic();
 }
 
-async function fileMakePrivate(
+export async function fileMakePrivate(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -362,7 +361,7 @@ async function fileMakePrivate(
   await file.makePrivate();
 }
 
-async function fileMakePublic(
+export async function fileMakePublic(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -370,11 +369,11 @@ async function fileMakePublic(
   await file.makePublic();
 }
 
-async function move(_bucket: Bucket, file: File, _notification: Notification) {
+export async function move(_bucket: Bucket, file: File, _notification: Notification) {
   await file.move('new-file');
 }
 
-async function rename(
+export async function rename(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -382,7 +381,7 @@ async function rename(
   await file.rename('new-name');
 }
 
-async function rotateEncryptionKey(
+export async function rotateEncryptionKey(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -395,7 +394,7 @@ async function rotateEncryptionKey(
   });
 }
 
-async function saveResumable(
+export async function saveResumable(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -403,7 +402,7 @@ async function saveResumable(
   await file.save('testdata', {resumable: true});
 }
 
-async function saveMultipart(
+export async function saveMultipart(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -411,7 +410,7 @@ async function saveMultipart(
   await file.save('testdata', {resumable: false});
 }
 
-async function setMetadata(
+export async function setMetadata(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -426,7 +425,7 @@ async function setMetadata(
   await file.setMetadata(metadata);
 }
 
-async function setStorageClass(
+export async function setStorageClass(
   _bucket: Bucket,
   file: File,
   _notification: Notification
@@ -438,19 +437,19 @@ async function setStorageClass(
 /////////////////// HMAC KEY ////////////////////
 /////////////////////////////////////////////////
 
-async function deleteHMAC(hmacKey: HmacKey) {
+export async function deleteHMAC(hmacKey: HmacKey) {
   await hmacKey.delete();
 }
 
-async function getHMAC(hmacKey: HmacKey) {
+export async function getHMAC(hmacKey: HmacKey) {
   await hmacKey.get();
 }
 
-async function getMetadataHMAC(hmacKey: HmacKey) {
+export async function getMetadataHMAC(hmacKey: HmacKey) {
   await hmacKey.getMetadata();
 }
 
-async function setMetadataHMAC(hmacKey: HmacKey) {
+export async function setMetadataHMAC(hmacKey: HmacKey) {
   const metadata = {
     state: 'INACTIVE',
   };
@@ -461,11 +460,11 @@ async function setMetadataHMAC(hmacKey: HmacKey) {
 ////////////////////// IAM //////////////////////
 /////////////////////////////////////////////////
 
-async function iamGetPolicy(iam: Iam) {
+export async function iamGetPolicy(iam: Iam) {
   await iam.getPolicy({requestedPolicyVersion: 1});
 }
 
-async function iamSetPolicy(iam: Iam) {
+export async function iamSetPolicy(iam: Iam) {
   const testPolicy = {
     bindings: [
       {
@@ -477,7 +476,7 @@ async function iamSetPolicy(iam: Iam) {
   await iam.setPolicy(testPolicy);
 }
 
-async function iamTestPermissions(iam: Iam) {
+export async function iamTestPermissions(iam: Iam) {
   const permissionToTest = 'storage.buckets.delete';
   await iam.testPermissions(permissionToTest);
 }
@@ -486,23 +485,23 @@ async function iamTestPermissions(iam: Iam) {
 ///////////////// NOTIFICATION //////////////////
 /////////////////////////////////////////////////
 
-async function notificationDelete(notification: Notification) {
+export async function notificationDelete(notification: Notification) {
   await notification.delete();
 }
 
-async function notificationCreate(notification: Notification) {
+export async function notificationCreate(notification: Notification) {
   await notification.create();
 }
 
-async function notificationExists(notification: Notification) {
+export async function notificationExists(notification: Notification) {
   await notification.exists();
 }
 
-async function notificationGet(notification: Notification) {
+export async function notificationGet(notification: Notification) {
   await notification.get();
 }
 
-async function notificationGetMetadata(notification: Notification) {
+export async function notificationGetMetadata(notification: Notification) {
   await notification.getMetadata();
 }
 
@@ -510,27 +509,27 @@ async function notificationGetMetadata(notification: Notification) {
 /////////////////// STORAGE /////////////////////
 /////////////////////////////////////////////////
 
-async function createBucket(storage: Storage) {
+export async function createBucket(storage: Storage) {
   await storage.createBucket('test-creating-bucket');
 }
 
-async function createHMACKey(storage: Storage) {
+export async function createHMACKey(storage: Storage) {
   const serviceAccountEmail = 'my-service-account@appspot.gserviceaccount.com';
   await storage.createHmacKey(serviceAccountEmail);
 }
 
-async function getBuckets(storage: Storage) {
+export async function getBuckets(storage: Storage) {
   await storage.getBuckets();
 }
 
-function getBucketsStream(storage: Storage) {
+export function getBucketsStream(storage: Storage) {
   storage.getBucketsStream();
 }
 
-function getHMACKeyStream(storage: Storage) {
+export function getHMACKeyStream(storage: Storage) {
   storage.getHmacKeysStream();
 }
 
-async function getServiceAccount(storage: Storage) {
+export async function getServiceAccount(storage: Storage) {
   await storage.getServiceAccount();
 }
