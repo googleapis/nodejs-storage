@@ -35,7 +35,9 @@ function main() {
       totalTimeout: 100,
     },
   });
-  console.log(`Retryable functions will retry a maximum of ${storage.retryOptions.maxRetries} time with deadline ${storage.retryOptions.totalTimeout} seconds.`);
+  console.log(
+    `Retryable functions will retry a maximum of ${storage.retryOptions.maxRetries} time with deadline ${storage.retryOptions.totalTimeout} seconds.`
+  );
   // [END storage_retry_once]
 }
 main(...process.argv.slice(2));
