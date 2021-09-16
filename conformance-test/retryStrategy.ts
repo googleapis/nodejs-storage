@@ -20,7 +20,6 @@ import * as uuid from 'uuid';
 import pLimit = require('p-limit');
 import * as assert from 'assert';
 
-require('conformance-test/libraryMethods.ts');
 import {Bucket, File, Iam, Notification, Storage} from '../src/';
 
 interface RetryCase {
@@ -35,14 +34,14 @@ interface Method {
 interface RetryTestCase {
   id: number;
   description: String;
-  retryCases: RetryCase[];
+  cases: RetryCase[];
   methods: Method[];
   preconditionProvided: boolean;
   expectSuccess: boolean;
 }
 
 interface MethodMap {
-  jsonApi: String;
+  jsonMethod: String;
   nodejsStorageMethods: String[];
 }
 
@@ -67,7 +66,7 @@ const jsonToNodeApiMapping = fs.readFileSync(
   'utf-8'
 );
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const methodMap: Map<String, String[]> = JSON.parse(jsonToNodeApiMapping);
+const methodMap: Map<String, String[]> = new Map(Object.entries(JSON.parse(jsonToNodeApiMapping)));
 const storage = new Storage(); //TODO: add apiEndpoint
 
 const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
@@ -86,7 +85,6 @@ describe('retry conformance testing', () => {
     testCaseIndex++
   ) {
     const testCase: RetryTestCase = retryTestCases[testCaseIndex];
-
     describe(`Scenario ${testCase.id}`, () => {
       excecuteScenario(testCase);
     });
@@ -94,10 +92,10 @@ describe('retry conformance testing', () => {
 });
 
 function excecuteScenario(testCase: RetryTestCase) {
-  testCase.retryCases.forEach((instructionSet: RetryCase) => {
+  testCase.cases.forEach((instructionSet: RetryCase) => {
     configureTestBench(instructionSet.instructions);
     testCase.methods.forEach(jsonMethod => {
-      const functionList = methodMap.get(jsonMethod.name);
+      const functionList = methodMap.get(jsonMethod?.name);
       functionList?.forEach(storageMethodString => {
         const storageMethodObject = (global as any).storageMethodString;
         let bucket: Bucket;
