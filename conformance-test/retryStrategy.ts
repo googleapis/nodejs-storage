@@ -73,8 +73,8 @@ const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
 const RETENTION_DURATION_SECONDS = 10;
 const OPTIONS = {
   preconditionOpts: {
-    ifGenerationMatch: 100,
-    ifMetagenerationMatch: 100,
+    ifGenerationMatch: 0,
+    ifMetagenerationMatch: 0,
   },
 };
 
