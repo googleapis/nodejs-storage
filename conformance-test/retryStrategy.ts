@@ -102,7 +102,6 @@ function excecuteScenario(testCase: RetryTestCase) {
         let bucket: Bucket;
         let file: File;
         let notification: Notification;
-        let storage: Storage;
         beforeEach(async () => {
           bucket = await createBucketForTest(
             testCase.preconditionProvided,
