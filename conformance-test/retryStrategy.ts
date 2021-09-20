@@ -127,9 +127,6 @@ function excecuteScenario(testCase: RetryTestCase) {
             });
           }
         });
-        after(async () => {
-          return await deleteAllBucketsAsync();
-        });
       });
     });
   });
@@ -157,37 +154,11 @@ function createFileForTest(
 }
 
 function generateName(storageMethodString: String, bucketOrFile: string) {
-  return `${TESTS_PREFIX}${storageMethodString.toLowerCase()}${bucketOrFile}${shortUUID()}`;
+  return `${TESTS_PREFIX}${storageMethodString.toLowerCase()}${bucketOrFile}`;
 }
 
 function configureTestBench(instructions: String[]) {
   console.log('configure test bench not implemented');
-}
-
-async function deleteAllBucketsAsync() {
-  const [buckets] = await storage.getBuckets({prefix: TESTS_PREFIX});
-  const limit = pLimit(10);
-  await new Promise(resolve =>
-    setTimeout(resolve, RETENTION_DURATION_SECONDS * 1000)
-  );
-  return Promise.all(
-    buckets.map(bucket => limit(() => deleteBucketAsync(bucket)))
-  );
-}
-
-async function deleteBucketAsync(bucket: Bucket, options?: {}) {
-  // After files are deleted, eventual consistency may require a bit of a
-  // delay to ensure that the bucket recognizes that the files don't exist
-  // anymore.
-  const CONSISTENCY_DELAY_MS = 250;
-
-  options = Object.assign({}, options, {
-    versions: true,
-  });
-
-  await bucket.deleteFiles(options);
-  await new Promise(resolve => setTimeout(resolve, CONSISTENCY_DELAY_MS));
-  await bucket.delete();
 }
 
 function shortUUID() {
