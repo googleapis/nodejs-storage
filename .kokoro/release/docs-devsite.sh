@@ -27,10 +27,4 @@ fi
 npm install
 npm install --no-save https://github.com/googleapis/nodejs-cloud-rad#fhinkel-example-tags
 
-# Run install step manually because we're using the fork
-cd node_modules/\@microsoft/api-documenter/
-npm i # @rushstack/heft
-npm run build
-cd ../../..
-
 npx @google-cloud/cloud-rad
