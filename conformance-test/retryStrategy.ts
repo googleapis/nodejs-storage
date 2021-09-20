@@ -119,11 +119,11 @@ function excecuteScenario(testCase: RetryTestCase) {
         it(`${storageMethodString}`, async () => {
           if (testCase.expectSuccess) {
             assert.ifError(
-              await storageMethodObject(bucket, file, notification)
+              await storageMethodObject(bucket, file, notification, storage)
             );
           } else {
             assert.throws(async () => {
-              await storageMethodObject(bucket, file, notification);
+              await storageMethodObject(bucket, file, notification, storage);
             });
           }
         });
