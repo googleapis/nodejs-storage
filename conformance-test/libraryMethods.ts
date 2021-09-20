@@ -135,6 +135,8 @@ export async function getLabels(
   _file: File,
   _notification: Notification
 ) {
+  console.log("sameena")
+  console.log(bucket);
   await bucket.getLabels();
 }
 
@@ -449,103 +451,103 @@ export async function setStorageClass(
   await file.setStorageClass('nearline');
 }
 
-/////////////////////////////////////////////////
-/////////////////// HMAC KEY ////////////////////
-/////////////////////////////////////////////////
+// /////////////////////////////////////////////////
+// /////////////////// HMAC KEY ////////////////////
+// /////////////////////////////////////////////////
 
-export async function deleteHMAC(hmacKey: HmacKey) {
-  await hmacKey.delete();
-}
+// export async function deleteHMAC(hmacKey: HmacKey) {
+//   await hmacKey.delete();
+// }
 
-export async function getHMAC(hmacKey: HmacKey) {
-  await hmacKey.get();
-}
+// export async function getHMAC(hmacKey: HmacKey) {
+//   await hmacKey.get();
+// }
 
-export async function getMetadataHMAC(hmacKey: HmacKey) {
-  await hmacKey.getMetadata();
-}
+// export async function getMetadataHMAC(hmacKey: HmacKey) {
+//   await hmacKey.getMetadata();
+// }
 
-export async function setMetadataHMAC(hmacKey: HmacKey) {
-  const metadata = {
-    state: 'INACTIVE',
-  };
-  await hmacKey.setMetadata(metadata);
-}
+// export async function setMetadataHMAC(hmacKey: HmacKey) {
+//   const metadata = {
+//     state: 'INACTIVE',
+//   };
+//   await hmacKey.setMetadata(metadata);
+// }
 
-/////////////////////////////////////////////////
-////////////////////// IAM //////////////////////
-/////////////////////////////////////////////////
+// /////////////////////////////////////////////////
+// ////////////////////// IAM //////////////////////
+// /////////////////////////////////////////////////
 
-export async function iamGetPolicy(iam: Iam) {
-  await iam.getPolicy({requestedPolicyVersion: 1});
-}
+// export async function iamGetPolicy(iam: Iam) {
+//   await iam.getPolicy({requestedPolicyVersion: 1});
+// }
 
-export async function iamSetPolicy(iam: Iam) {
-  const testPolicy = {
-    bindings: [
-      {
-        role: 'roles/storage.admin',
-        members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com'],
-      },
-    ],
-  };
-  await iam.setPolicy(testPolicy);
-}
+// export async function iamSetPolicy(iam: Iam) {
+//   const testPolicy = {
+//     bindings: [
+//       {
+//         role: 'roles/storage.admin',
+//         members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com'],
+//       },
+//     ],
+//   };
+//   await iam.setPolicy(testPolicy);
+// }
 
-export async function iamTestPermissions(iam: Iam) {
-  const permissionToTest = 'storage.buckets.delete';
-  await iam.testPermissions(permissionToTest);
-}
+// export async function iamTestPermissions(iam: Iam) {
+//   const permissionToTest = 'storage.buckets.delete';
+//   await iam.testPermissions(permissionToTest);
+// }
 
-/////////////////////////////////////////////////
-///////////////// NOTIFICATION //////////////////
-/////////////////////////////////////////////////
+// /////////////////////////////////////////////////
+// ///////////////// NOTIFICATION //////////////////
+// /////////////////////////////////////////////////
 
-export async function notificationDelete(notification: Notification) {
-  await notification.delete();
-}
+// export async function notificationDelete(notification: Notification) {
+//   await notification.delete();
+// }
 
-export async function notificationCreate(notification: Notification) {
-  await notification.create();
-}
+// export async function notificationCreate(notification: Notification) {
+//   await notification.create();
+// }
 
-export async function notificationExists(notification: Notification) {
-  await notification.exists();
-}
+// export async function notificationExists(notification: Notification) {
+//   await notification.exists();
+// }
 
-export async function notificationGet(notification: Notification) {
-  await notification.get();
-}
+// export async function notificationGet(notification: Notification) {
+//   await notification.get();
+// }
 
-export async function notificationGetMetadata(notification: Notification) {
-  await notification.getMetadata();
-}
+// export async function notificationGetMetadata(notification: Notification) {
+//   await notification.getMetadata();
+// }
 
-/////////////////////////////////////////////////
-/////////////////// STORAGE /////////////////////
-/////////////////////////////////////////////////
+// /////////////////////////////////////////////////
+// /////////////////// STORAGE /////////////////////
+// /////////////////////////////////////////////////
 
-export async function createBucket(storage: Storage) {
-  await storage.createBucket('test-creating-bucket');
-}
+// export async function createBucket(storage: Storage) {
+//   await storage.createBucket('test-creating-bucket');
+// }
 
-export async function createHMACKey(storage: Storage) {
-  const serviceAccountEmail = 'my-service-account@appspot.gserviceaccount.com';
-  await storage.createHmacKey(serviceAccountEmail);
-}
+// export async function createHMACKey(storage: Storage) {
+//   const serviceAccountEmail = 'my-service-account@appspot.gserviceaccount.com';
+//   await storage.createHmacKey(serviceAccountEmail);
+// }
 
-export async function getBuckets(storage: Storage) {
-  await storage.getBuckets();
-}
+// export async function getBuckets(storage: Storage) {
+//   await storage.getBuckets();
+// }
 
-export function getBucketsStream(storage: Storage) {
-  storage.getBucketsStream();
-}
+// export function getBucketsStream(storage: Storage) {
+//   storage.getBucketsStream();
+// }
 
-export function getHMACKeyStream(storage: Storage) {
-  storage.getHmacKeysStream();
-}
+// export function getHMACKeyStream(storage: Storage) {
+//   storage.getHmacKeysStream();
+// }
 
-export async function getServiceAccount(storage: Storage) {
-  await storage.getServiceAccount();
-}
+// export async function getServiceAccount(storage: Storage) {
+//   await storage.getServiceAccount();
+// }
