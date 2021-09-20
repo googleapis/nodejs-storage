@@ -108,7 +108,7 @@ function excecuteScenario(testCase: RetryTestCase) {
             testCase.preconditionProvided,
             storageMethodString
           );
-          file = createFileForTest(
+          file = await createFileForTest(
             testCase.preconditionProvided,
             storageMethodString,
             bucket
@@ -136,21 +136,25 @@ async function createBucketForTest(
   preconditionProvided: boolean,
   storageMethodString: String
 ) {
+  const name = generateName(storageMethodString, 'bucket');
   const bucket = preconditionProvided
-    ? storage.bucket(generateName(storageMethodString, 'bucket'), OPTIONS)
-    : storage.bucket(generateName(storageMethodString, 'bucket'));
+    ? storage.bucket(name, OPTIONS)
+    : storage.bucket(name);
   await bucket.create();
   return bucket;
 }
 
-function createFileForTest(
+async function createFileForTest(
   preconditionProvided: boolean,
   storageMethodString: String,
   bucket: Bucket
 ) {
-  return preconditionProvided
-    ? bucket.file(generateName(storageMethodString, 'file'), OPTIONS)
-    : bucket.file(generateName(storageMethodString, 'file'));
+  const name = generateName(storageMethodString, 'file')
+  const file = preconditionProvided
+    ? bucket.file(name, OPTIONS)
+    : bucket.file(name);
+    await file.save(name);
+    return file;
 }
 
 function generateName(storageMethodString: String, bucketOrFile: string) {
