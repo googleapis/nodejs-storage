@@ -135,8 +135,6 @@ export async function getLabels(
   _file: File,
   _notification: Notification
 ) {
-  console.log("sameena")
-  console.log(bucket);
   await bucket.getLabels();
 }
 
