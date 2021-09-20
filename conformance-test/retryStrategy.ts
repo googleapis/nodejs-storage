@@ -136,7 +136,6 @@ async function createBucketForTest(
   const bucket = preconditionProvided
   ? storage.bucket(generateName(storageMethodString, 'bucket'), OPTIONS)
   : storage.bucket(generateName(storageMethodString, 'bucket'));
-  await bucket.create();
   return bucket;
 }
 
@@ -151,7 +150,7 @@ function createFileForTest(
 }
 
 function generateName(storageMethodString: String, bucketOrFile: string) {
-  return `${TESTS_PREFIX}${storageMethodString}${bucketOrFile}${shortUUID()}`;
+  return `${TESTS_PREFIX}${storageMethodString.toLowerCase()}${bucketOrFile}${shortUUID()}`;
 }
 
 function configureTestBench(instructions: String[]) {
