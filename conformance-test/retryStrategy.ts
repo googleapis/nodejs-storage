@@ -97,7 +97,9 @@ function excecuteScenario(testCase: RetryTestCase) {
     testCase.methods.forEach(jsonMethod => {
       const functionList = methodMap.get(jsonMethod?.name);
       functionList?.forEach(storageMethodString => {
-        const storageMethodObject = libraryMethods[storageMethodString as keyof LibraryMethodsModuleType];        let bucket: Bucket;
+        const storageMethodObject =
+          libraryMethods[storageMethodString as keyof LibraryMethodsModuleType];
+        let bucket: Bucket;
         let file: File;
         let notification: Notification;
         let storage: Storage;
@@ -116,9 +118,13 @@ function excecuteScenario(testCase: RetryTestCase) {
 
         it(`${storageMethodString}`, async () => {
           if (testCase.expectSuccess) {
-            assert.ifError(await storageMethodObject(bucket, file, notification));
+            assert.ifError(
+              await storageMethodObject(bucket, file, notification)
+            );
           } else {
-            assert.throws(async () => {await storageMethodObject(bucket, file, notification)});
+            assert.throws(async () => {
+              await storageMethodObject(bucket, file, notification);
+            });
           }
         });
         after(async () => {
@@ -134,8 +140,9 @@ async function createBucketForTest(
   storageMethodString: String
 ) {
   const bucket = preconditionProvided
-  ? storage.bucket(generateName(storageMethodString, 'bucket'), OPTIONS)
-  : storage.bucket(generateName(storageMethodString, 'bucket'));
+    ? storage.bucket(generateName(storageMethodString, 'bucket'), OPTIONS)
+    : storage.bucket(generateName(storageMethodString, 'bucket'));
+  await bucket.create();
   return bucket;
 }
 
