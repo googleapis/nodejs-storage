@@ -24,7 +24,7 @@ import {Bucket, File, Iam, Notification, Storage} from '../src/';
 import {
   getTestBenchDockerImage,
   runTestBenchDockerImage,
-} from './testBenchUtil';
+} from './test-bench-util';
 
 interface RetryCase {
   instructions: String[];
