@@ -149,12 +149,12 @@ async function createFileForTest(
   storageMethodString: String,
   bucket: Bucket
 ) {
-  const name = generateName(storageMethodString, 'file')
+  const name = generateName(storageMethodString, 'file');
   const file = preconditionProvided
     ? bucket.file(name, OPTIONS)
     : bucket.file(name);
-    await file.save(name);
-    return file;
+  await file.save(name);
+  return file;
 }
 
 function generateName(storageMethodString: String, bucketOrFile: string) {
