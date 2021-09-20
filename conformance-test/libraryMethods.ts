@@ -32,7 +32,7 @@ export async function combine(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   const sources = [bucket.file('file1.txt'), bucket.file('file2.txt')];
   const allFiles = bucket.file('all-files.txt');
@@ -44,7 +44,7 @@ export async function create(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.create();
 }
@@ -53,7 +53,7 @@ export async function createNotification(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.createNotification('my-topic');
 }
@@ -62,7 +62,7 @@ export async function deleteBucket(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.delete();
 }
@@ -71,7 +71,7 @@ export async function deleteFiles(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.deleteFiles();
 }
@@ -80,7 +80,7 @@ export async function deleteLabels(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.deleteLabels();
 }
@@ -89,7 +89,7 @@ export async function disableRequesterPays(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.disableRequesterPays();
 }
@@ -98,7 +98,7 @@ export async function enableLogging(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   const config = {
     prefix: 'log',
@@ -110,7 +110,7 @@ export async function enableRequesterPays(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.enableRequesterPays();
 }
@@ -119,7 +119,7 @@ export async function bucketExists(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.exists();
 }
@@ -128,7 +128,7 @@ export async function bucketGet(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.get();
 }
@@ -137,7 +137,7 @@ export async function getFilesStream(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.getFilesStream();
 }
@@ -146,7 +146,7 @@ export async function getLabels(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.getLabels();
 }
@@ -155,7 +155,7 @@ export async function bucketGetMetadata(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.getMetadata();
 }
@@ -164,7 +164,7 @@ export async function getNotifications(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.getNotifications();
 }
@@ -173,7 +173,7 @@ export async function lock(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   const metageneration = 0;
   await bucket.lock(metageneration);
@@ -183,7 +183,7 @@ export async function bucketMakePrivate(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.makePrivate();
 }
@@ -192,7 +192,7 @@ export async function bucketMakePublic(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.makePublic();
 }
@@ -201,7 +201,7 @@ export async function removeRetentionPeriod(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.removeRetentionPeriod();
 }
@@ -210,7 +210,7 @@ export async function setCorsConfiguration(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
   await bucket.setCorsConfiguration(corsConfiguration);
@@ -220,7 +220,7 @@ export async function setLabels(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   const labels = {
     labelone: 'labelonevalue',
@@ -233,7 +233,7 @@ export async function bucketSetMetadata(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   const metadata = {
     website: {
@@ -248,7 +248,7 @@ export async function setRetentionPeriod(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   const DURATION_SECONDS = 15780000; // 6 months.
   await bucket.setRetentionPeriod(DURATION_SECONDS);
@@ -258,7 +258,7 @@ export async function bucketSetStorageClass(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.setStorageClass('nearline');
 }
@@ -267,7 +267,7 @@ export async function bucketUploadResumable(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.upload('testFile.txt', {resumable: true});
 }
@@ -276,7 +276,7 @@ export async function bucketUploadMultipart(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await bucket.upload('testFile.txt', {resumable: false});
 }
@@ -289,7 +289,7 @@ export async function copy(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.copy('a-different-file.png');
 }
@@ -298,7 +298,7 @@ export async function createReadStream(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   const localFile = 'testFile.txt';
   await file.createReadStream().pipe(fs.createWriteStream(localFile));
@@ -308,7 +308,7 @@ export async function createResumableUpload(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.createResumableUpload();
 }
@@ -317,7 +317,7 @@ export async function createWriteStreamResumable(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await fs
     .createReadStream('testFile.txt')
@@ -328,7 +328,7 @@ export async function createWriteStreamMultipart(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await fs
     .createReadStream('testFile.txt')
@@ -339,7 +339,7 @@ export async function fileDelete(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.delete();
 }
@@ -353,7 +353,7 @@ export async function download(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.download();
 }
@@ -362,7 +362,7 @@ export async function exists(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.exists();
 }
@@ -371,7 +371,7 @@ export async function get(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.get();
 }
@@ -380,7 +380,7 @@ export async function getExpirationDate(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.getExpirationDate();
 }
@@ -389,7 +389,7 @@ export async function getMetadata(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.getMetadata();
 }
@@ -398,7 +398,7 @@ export async function isPublic(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.isPublic();
 }
@@ -407,7 +407,7 @@ export async function fileMakePrivate(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.makePrivate();
 }
@@ -416,7 +416,7 @@ export async function fileMakePublic(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.makePublic();
 }
@@ -425,7 +425,7 @@ export async function move(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.move('new-file');
 }
@@ -434,7 +434,7 @@ export async function rename(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.rename('new-name');
 }
@@ -443,7 +443,7 @@ export async function rotateEncryptionKey(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   const crypto = require('crypto');
   const buffer = crypto.randomBytes(32);
@@ -457,7 +457,7 @@ export async function saveResumable(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.save('testdata', {resumable: true});
 }
@@ -466,7 +466,7 @@ export async function saveMultipart(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.save('testdata', {resumable: false});
 }
@@ -475,7 +475,7 @@ export async function setMetadata(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   const metadata = {
     contentType: 'application/x-font-ttf',
@@ -491,7 +491,7 @@ export async function setStorageClass(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
-_storage: Storage
+  _storage: Storage
 ) {
   await file.setStorageClass('nearline');
 }
@@ -523,17 +523,21 @@ _storage: Storage
 ////////////////////// IAM //////////////////////
 /////////////////////////////////////////////////
 
-export async function iamGetPolicy(  bucket: Bucket,
+export async function iamGetPolicy(
+  bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage) {
+  _storage: Storage
+) {
   await bucket.iam.getPolicy({requestedPolicyVersion: 1});
 }
 
-export async function iamSetPolicy(  bucket: Bucket,
+export async function iamSetPolicy(
+  bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage) {
+  _storage: Storage
+) {
   const testPolicy = {
     bindings: [
       {
@@ -545,10 +549,12 @@ _storage: Storage) {
   await bucket.iam.setPolicy(testPolicy);
 }
 
-export async function iamTestPermissions(  bucket: Bucket,
+export async function iamTestPermissions(
+  bucket: Bucket,
   _file: File,
   _notification: Notification,
-_storage: Storage) {
+  _storage: Storage
+) {
   const permissionToTest = 'storage.buckets.delete';
   await bucket.iam.testPermissions(permissionToTest);
 }
@@ -557,38 +563,48 @@ _storage: Storage) {
 ///////////////// NOTIFICATION //////////////////
 /////////////////////////////////////////////////
 
-export async function notificationDelete(  _bucket: Bucket,
+export async function notificationDelete(
+  _bucket: Bucket,
   _file: File,
   notification: Notification,
-_storage: Storage) {
+  _storage: Storage
+) {
   await notification.delete();
 }
 
-export async function notificationCreate(  _bucket: Bucket,
+export async function notificationCreate(
+  _bucket: Bucket,
   _file: File,
   notification: Notification,
-_storage: Storage) {
+  _storage: Storage
+) {
   await notification.create();
 }
 
-export async function notificationExists(  _bucket: Bucket,
+export async function notificationExists(
+  _bucket: Bucket,
   _file: File,
   notification: Notification,
-_storage: Storage) {
+  _storage: Storage
+) {
   await notification.exists();
 }
 
-export async function notificationGet(  _bucket: Bucket,
+export async function notificationGet(
+  _bucket: Bucket,
   _file: File,
   notification: Notification,
-_storage: Storage) {
+  _storage: Storage
+) {
   await notification.get();
 }
 
-export async function notificationGetMetadata(  _bucket: Bucket,
+export async function notificationGetMetadata(
+  _bucket: Bucket,
   _file: File,
   notification: Notification,
-_storage: Storage) {
+  _storage: Storage
+) {
   await notification.getMetadata();
 }
 
@@ -596,45 +612,57 @@ _storage: Storage) {
 /////////////////// STORAGE /////////////////////
 /////////////////////////////////////////////////
 
-export async function createBucket(  _bucket: Bucket,
+export async function createBucket(
+  _bucket: Bucket,
   _file: File,
   _notification: Notification,
-storage: Storage) {
+  storage: Storage
+) {
   await storage.createBucket('test-creating-bucket');
 }
 
-export async function createHMACKey(  _bucket: Bucket,
+export async function createHMACKey(
+  _bucket: Bucket,
   _file: File,
   _notification: Notification,
-storage: Storage) {
+  storage: Storage
+) {
   const serviceAccountEmail = 'my-service-account@appspot.gserviceaccount.com';
   await storage.createHmacKey(serviceAccountEmail);
 }
 
-export async function getBuckets(  _bucket: Bucket,
+export async function getBuckets(
+  _bucket: Bucket,
   _file: File,
   _notification: Notification,
-storage: Storage) {
+  storage: Storage
+) {
   await storage.getBuckets();
 }
 
-export function getBucketsStream(  _bucket: Bucket,
+export function getBucketsStream(
+  _bucket: Bucket,
   _file: File,
   _notification: Notification,
-storage: Storage) {
+  storage: Storage
+) {
   storage.getBucketsStream();
 }
 
-export function getHMACKeyStream(  _bucket: Bucket,
+export function getHMACKeyStream(
+  _bucket: Bucket,
   _file: File,
   _notification: Notification,
-storage: Storage) {
+  storage: Storage
+) {
   storage.getHmacKeysStream();
 }
 
-export async function getServiceAccount(  _bucket: Bucket,
+export async function getServiceAccount(
+  _bucket: Bucket,
   _file: File,
   _notification: Notification,
-storage: Storage) {
+  storage: Storage
+) {
   await storage.getServiceAccount();
 }
