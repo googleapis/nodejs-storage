@@ -81,9 +81,9 @@ const OPTIONS = {
   },
 };
 
-const EMULATOR_HOST =
-  process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000';
-const storage = new Storage({apiEndpoint: EMULATOR_HOST});
+const TESTBENCH_HOST =
+  process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000/';
+const storage = new Storage({apiEndpoint: TESTBENCH_HOST});
 
 describe('retry conformance testing', () => {
   before(async () => {
@@ -199,7 +199,7 @@ async function createTestBenchRetryTest(
   methodName: string
 ) {
   const requestBody = {instructions: {[methodName]: instructions}};
-  const response = await fetch(`${EMULATOR_HOST}/retry_test`, {
+  const response = await fetch(`${TESTBENCH_HOST}/retry_test`, {
     method: 'POST',
     body: JSON.stringify(requestBody),
     headers: {'Content-Type': 'application/json'},
@@ -209,7 +209,7 @@ async function createTestBenchRetryTest(
 }
 
 async function getTestBenchRetryTest(testId: string) {
-  const response = await fetch(`${EMULATOR_HOST}/retry_test/${testId}`, {
+  const response = await fetch(`${TESTBENCH_HOST}/retry_test/${testId}`, {
     method: 'GET',
   });
 
