@@ -36,8 +36,8 @@ export async function combine(
 ) {
   const file1 = bucket.file('file1.txt');
   const file2 = bucket.file('file2.txt');
-  await file1.save("file1 contents");
-  await file2.save("file2 contents");
+  await file1.save('file1 contents');
+  await file2.save('file2 contents');
   const sources = [file1, file2];
   const allFiles = bucket.file('all-files.txt');
 
@@ -348,7 +348,12 @@ export async function fileDelete(
   await file.delete();
 }
 
-export async function deleteResumableCache(_bucket: Bucket, file: File, _notification: Notification, _storage: Storage) {
+export async function deleteResumableCache(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification,
+  _storage: Storage
+) {
   await file.deleteResumableCache();
 }
 
