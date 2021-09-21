@@ -19,12 +19,14 @@ import * as path from 'path';
 import * as uuid from 'uuid';
 import * as assert from 'assert';
 import * as libraryMethods from './libraryMethods';
+import fetch from 'node-fetch';
 
 import {Bucket, File, Iam, Notification, Storage} from '../src/';
 import {
   getTestBenchDockerImage,
   runTestBenchDockerImage,
 } from './test-bench-util';
+import {DecorateRequestOptions} from '@google-cloud/common';
 
 interface RetryCase {
   instructions: String[];
@@ -70,7 +72,6 @@ const jsonToNodeApiMapping = fs.readFileSync(
 const methodMap: Map<String, String[]> = new Map(
   Object.entries(JSON.parse(jsonToNodeApiMapping))
 );
-const storage = new Storage({apiEndpoint: 'http://localhost:9000/'}); //TODO: add apiEndpoint
 
 const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
 const OPTIONS = {
@@ -79,6 +80,10 @@ const OPTIONS = {
     ifMetagenerationMatch: 0,
   },
 };
+
+const TESTBENCH_HOST =
+  process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000/';
+const storage = new Storage({apiEndpoint: TESTBENCH_HOST});
 
 describe('retry conformance testing', () => {
   before(async () => {
@@ -100,8 +105,20 @@ describe('retry conformance testing', () => {
 
 function excecuteScenario(testCase: RetryTestCase) {
   testCase.cases.forEach((instructionSet: RetryCase) => {
-    configureTestBench(instructionSet.instructions);
-    testCase.methods.forEach(jsonMethod => {
+    testCase.methods.forEach(async jsonMethod => {
+      const creationResult = await createTestBenchRetryTest(
+        instructionSet.instructions,
+        jsonMethod?.name.toString()
+      );
+      storage.interceptors.push({
+        request: requestConfig => {
+          requestConfig.headers = requestConfig.headers || {};
+          Object.assign(requestConfig.headers, {
+            'x-retry-test-id': creationResult.id,
+          });
+          return requestConfig as DecorateRequestOptions;
+        },
+      });
       const functionList = methodMap.get(jsonMethod?.name);
       functionList?.forEach(storageMethodString => {
         const storageMethodObject =
@@ -133,6 +150,15 @@ function excecuteScenario(testCase: RetryTestCase) {
               await storageMethodObject(bucket, file, notification, storage);
             });
           }
+
+          const testBenchResult = await getTestBenchRetryTest(
+            creationResult.id
+          );
+          assert.strictEqual(testBenchResult.completed, true);
+        });
+
+        afterEach(() => {
+          storage?.interceptors?.pop();
         });
       });
     });
@@ -168,8 +194,26 @@ function generateName(storageMethodString: String, bucketOrFile: string) {
   return `${TESTS_PREFIX}${storageMethodString.toLowerCase()}${bucketOrFile}`;
 }
 
-function configureTestBench(instructions: String[]) {
-  console.log('configure test bench not implemented');
+async function createTestBenchRetryTest(
+  instructions: String[],
+  methodName: string
+) {
+  const requestBody = {instructions: {[methodName]: instructions}};
+  const response = await fetch(`${TESTBENCH_HOST}/retry_test`, {
+    method: 'POST',
+    body: JSON.stringify(requestBody),
+    headers: {'Content-Type': 'application/json'},
+  });
+
+  return response.json();
+}
+
+async function getTestBenchRetryTest(testId: string) {
+  const response = await fetch(`${TESTBENCH_HOST}/retry_test/${testId}`, {
+    method: 'GET',
+  });
+
+  return response.json();
 }
 
 function shortUUID() {
