@@ -30,6 +30,7 @@ objects to users via direct download.
   * [Storage File Convert CSEK to CMEK.](#storage-file-convert-csek-to-cmek.)
   * [Storage Combine files.](#storage-combine-files.)
   * [Storage Configure Bucket Cors.](#storage-configure-bucket-cors.)
+  * [Configure Retries](#configure-retries)
   * [Copy File](#copy-file)
   * [Copy Old Version Of File.](#copy-old-version-of-file.)
   * [Create Bucket With Storage Class and Location.](#create-bucket-with-storage-class-and-location.)
@@ -108,7 +109,6 @@ objects to users via direct download.
   * [Set Public Access Prevention Unspecified](#set-public-access-prevention-unspecified)
   * [Set Retention Policy](#set-retention-policy)
   * [Set Temporary Hold](#set-temporary-hold)
-  * [Storage Retry Once](#storage-retry-once)
   * [Stream File Download](#stream-file-download)
   * [Stream File Upload](#stream-file-upload)
   * [Upload a directory to a bucket.](#upload-a-directory-to-a-bucket.)
@@ -343,6 +343,23 @@ __Usage:__
 
 
 `node configureBucketCors.js <BUCKET_NAME> <MAX_AGE_SECONDS> <METHOD> <ORIGIN> <RESPONSE_HEADER>`
+
+
+-----
+
+
+
+
+### Configure Retries
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/configureRetries.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/configureRetries.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/configureRetries.js`
 
 
 -----
@@ -1709,23 +1726,6 @@ __Usage:__
 
 
 `node samples/setTemporaryHold.js`
-
-
------
-
-
-
-
-### Storage Retry Once
-
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/storageRetryOnce.js).
-
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/storageRetryOnce.js,samples/README.md)
-
-__Usage:__
-
-
-`node samples/storageRetryOnce.js`
 
 
 -----
