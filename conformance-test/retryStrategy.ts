@@ -21,6 +21,10 @@ import pLimit = require('p-limit');
 import * as assert from 'assert';
 
 import {Bucket, File, Iam, Notification, Storage} from '../src/';
+import {
+  getTestBenchDockerImage,
+  runTestBenchDockerImage,
+} from './test-bench-util';
 
 interface RetryCase {
   instructions: String[];
@@ -81,6 +85,11 @@ const OPTIONS = {
 };
 
 describe('retry conformance testing', () => {
+  before(async () => {
+    await getTestBenchDockerImage();
+    await runTestBenchDockerImage();
+  });
+
   for (
     let testCaseIndex = 0;
     testCaseIndex < retryTestCases.length;
