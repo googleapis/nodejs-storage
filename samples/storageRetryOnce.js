@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+const { IdempotencyStrategy } = require('@google-cloud/storage/build/src/storage');
+
 /**
  * This application demonstrates how to perform basic operations on buckets with
  * the Google Cloud Storage API.
@@ -21,7 +23,7 @@
  */
 
 function main() {
-  // [START storage_retry_once]
+  // [START storage_configure_retries]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -31,13 +33,21 @@ function main() {
   // Creates a client
   const storage = new Storage({
     retryOptions: {
-      maxRetries: 1,
-      totalTimeout: 100,
+      autoRetry: true, //If this is false, requests will not retry and the setting of the below parameters will not have any effect.
+      retryDelayMultiplier: 3, //The multiplier by which to increase the delay time between the completion of failed requests, and the initiation of the subsequent retrying request.
+      totalTimeout: 500, //The total time, starting from when the initial request is sent, after which an error will be returned, regardless of the retrying attempts made meanwhile.
+      maxRetryDelay: 60, //The maximum delay time between requests. When this value is reached, retryDelayMultiplier will no longer be used to increase delay time.
+      maxRetries: 2, //	Maximum number of automatic retries attempted before returning the error.
+      idempotencyStrategy: IdempotencyStrategy.RetryAlways // Will respect other retry settings and attempt to retry conditionally idempotent operations.
     },
   });
-  console.log(
-    `Retryable functions will retry a maximum of ${storage.retryOptions.maxRetries} time with deadline ${storage.retryOptions.totalTimeout} seconds.`
-  );
-  // [END storage_retry_once]
+  console.log(`Functions are customized to be retried according to the following parameters:`);
+  console.log(`Auto Retry: ${storage.retryOptions.autoRetry}`);
+  console.log(`Retry delay multiplier: ${storage.retryOptions.retryDelayMultiplier}`);
+  console.log(`Total timeout: ${storage.retryOptions.totalTimeout}`);
+  console.log(`Maximum retry delay: ${storage.retryOptions.maxRetryDelay}`);
+  console.log(`Maximum retries: ${storage.retryOptions.maxRetries}`);
+  console.log(`Idempotency strategy: ${storage.retryOptions.idempotencyStrategy}`);
+  // [END storage_configure_retries]
 }
 main(...process.argv.slice(2));
