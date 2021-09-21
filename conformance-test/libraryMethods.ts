@@ -34,7 +34,11 @@ export async function combine(
   _notification: Notification,
   _storage: Storage
 ) {
-  const sources = [bucket.file('file1.txt'), bucket.file('file2.txt')];
+  const file1 = bucket.file('file1.txt');
+  const file2 = bucket.file('file2.txt');
+  await file1.save("file1 contents");
+  await file2.save("file2 contents");
+  const sources = [file1, file2];
   const allFiles = bucket.file('all-files.txt');
 
   await bucket.combine(sources, allFiles);
@@ -344,10 +348,9 @@ export async function fileDelete(
   await file.delete();
 }
 
-// I don't think this makes a request. Waiting for response on go/nodejs-gcs-client-retry-state
-// export async function deleteResumableCache(_bucket: Bucket, file: File, _notification: Notification) {
-//   await file.deleteResumableCache();
-// }
+export async function deleteResumableCache(_bucket: Bucket, file: File, _notification: Notification, _storage: Storage) {
+  await file.deleteResumableCache();
+}
 
 export async function download(
   _bucket: Bucket,
@@ -377,11 +380,13 @@ export async function get(
 }
 
 export async function getExpirationDate(
-  _bucket: Bucket,
+  bucket: Bucket,
   file: File,
   _notification: Notification,
   _storage: Storage
 ) {
+  const DURATION_SECONDS = 15780000; // 6 months.
+  await bucket.setRetentionPeriod(DURATION_SECONDS);
   await file.getExpirationDate();
 }
 

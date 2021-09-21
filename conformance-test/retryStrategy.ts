@@ -17,7 +17,6 @@ import {describe, it} from 'mocha';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as uuid from 'uuid';
-import pLimit = require('p-limit');
 import * as assert from 'assert';
 import * as libraryMethods from './libraryMethods';
 
@@ -70,7 +69,6 @@ const methodMap: Map<String, String[]> = new Map(
 const storage = new Storage({apiEndpoint: 'http://localhost:9000/'}); //TODO: add apiEndpoint
 
 const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
-const RETENTION_DURATION_SECONDS = 10;
 const OPTIONS = {
   preconditionOpts: {
     ifGenerationMatch: 0,
@@ -112,7 +110,8 @@ function excecuteScenario(testCase: RetryTestCase) {
             storageMethodString,
             bucket
           );
-          notification = bucket.notification('notification');
+          notification = bucket.notification(`${TESTS_PREFIX}`);
+          await notification.create();
         });
 
         it(`${storageMethodString}`, async () => {
