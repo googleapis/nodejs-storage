@@ -108,7 +108,6 @@ objects to users via direct download.
   * [Set Public Access Prevention Unspecified](#set-public-access-prevention-unspecified)
   * [Set Retention Policy](#set-retention-policy)
   * [Set Temporary Hold](#set-temporary-hold)
-  * [Storage Retry Conditionally Idempotent](#storage-retry-conditionally-idempotent)
   * [Storage Retry Once](#storage-retry-once)
   * [Stream File Download](#stream-file-download)
   * [Stream File Upload](#stream-file-upload)
@@ -1710,23 +1709,6 @@ __Usage:__
 
 
 `node samples/setTemporaryHold.js`
-
-
------
-
-
-
-
-### Storage Retry Conditionally Idempotent
-
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/storageRetryConditionallyIdempotent.js).
-
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/storageRetryConditionallyIdempotent.js,samples/README.md)
-
-__Usage:__
-
-
-`node samples/storageRetryConditionallyIdempotent.js`
 
 
 -----
