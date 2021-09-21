@@ -17,8 +17,8 @@ import {describe, it} from 'mocha';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as uuid from 'uuid';
-import pLimit = require('p-limit');
 import * as assert from 'assert';
+import * as libraryMethods from './libraryMethods';
 
 import {Bucket, File, Iam, Notification, Storage} from '../src/';
 import {
@@ -44,10 +44,7 @@ interface RetryTestCase {
   expectSuccess: boolean;
 }
 
-interface MethodMap {
-  jsonMethod: String;
-  nodejsStorageMethods: String[];
-}
+type LibraryMethodsModuleType = typeof import('./libraryMethods');
 
 const testFile = fs.readFileSync(
   //TODO change to require
@@ -73,14 +70,13 @@ const jsonToNodeApiMapping = fs.readFileSync(
 const methodMap: Map<String, String[]> = new Map(
   Object.entries(JSON.parse(jsonToNodeApiMapping))
 );
-const storage = new Storage(); //TODO: add apiEndpoint
+const storage = new Storage({apiEndpoint: 'http://localhost:9000/'}); //TODO: add apiEndpoint
 
 const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
-const RETENTION_DURATION_SECONDS = 10;
 const OPTIONS = {
   preconditionOpts: {
-    ifGenerationMatch: 100,
-    ifMetagenerationMatch: 100,
+    ifGenerationMatch: 0,
+    ifMetagenerationMatch: 0,
   },
 };
 
@@ -108,90 +104,72 @@ function excecuteScenario(testCase: RetryTestCase) {
     testCase.methods.forEach(jsonMethod => {
       const functionList = methodMap.get(jsonMethod?.name);
       functionList?.forEach(storageMethodString => {
-        const storageMethodObject = (global as any).storageMethodString;
+        const storageMethodObject =
+          libraryMethods[storageMethodString as keyof LibraryMethodsModuleType];
         let bucket: Bucket;
         let file: File;
         let notification: Notification;
-        let storage: Storage;
-        beforeEach(() => {
-          bucket = createBucketForTest(
+        beforeEach(async () => {
+          bucket = await createBucketForTest(
             testCase.preconditionProvided,
             storageMethodString
           );
-          file = createFileForTest(
+          file = await createFileForTest(
             testCase.preconditionProvided,
             storageMethodString,
             bucket
           );
-          notification = bucket.notification('notification');
+          notification = bucket.notification(`${TESTS_PREFIX}`);
+          await notification.create();
         });
 
         it(`${storageMethodString}`, async () => {
           if (testCase.expectSuccess) {
-            assert.ifError(storageMethodObject(bucket, file, notification));
+            assert.ifError(
+              await storageMethodObject(bucket, file, notification, storage)
+            );
           } else {
-            assert.throws(storageMethodObject(bucket, file, notification));
+            assert.throws(async () => {
+              await storageMethodObject(bucket, file, notification, storage);
+            });
           }
-        });
-        after(() => {
-          return deleteAllBucketsAsync();
         });
       });
     });
   });
 }
 
-function createBucketForTest(
+async function createBucketForTest(
   preconditionProvided: boolean,
   storageMethodString: String
 ) {
-  return preconditionProvided
-    ? storage.bucket(generateName(storageMethodString, 'bucket'), OPTIONS)
-    : storage.bucket(generateName(storageMethodString, 'bucket'));
+  const name = generateName(storageMethodString, 'bucket');
+  const bucket = preconditionProvided
+    ? storage.bucket(name, OPTIONS)
+    : storage.bucket(name);
+  await bucket.create();
+  return bucket;
 }
 
-function createFileForTest(
+async function createFileForTest(
   preconditionProvided: boolean,
   storageMethodString: String,
   bucket: Bucket
 ) {
-  return preconditionProvided
-    ? bucket.file(generateName(storageMethodString, 'file'), OPTIONS)
-    : bucket.file(generateName(storageMethodString, 'file'));
+  const name = generateName(storageMethodString, 'file');
+  const file = preconditionProvided
+    ? bucket.file(name, OPTIONS)
+    : bucket.file(name);
+  await file.save(name);
+  return file;
 }
 
 function generateName(storageMethodString: String, bucketOrFile: string) {
-  return `${TESTS_PREFIX} ${storageMethodString} ${bucketOrFile} ${shortUUID()}`;
+  return `${TESTS_PREFIX}${storageMethodString.toLowerCase()}${bucketOrFile}`;
 }
 
 function configureTestBench(instructions: String[]) {
-  throw Error('configure test bench not implemented');
-}
-
-async function deleteAllBucketsAsync() {
-  const [buckets] = await storage.getBuckets({prefix: TESTS_PREFIX});
-  const limit = pLimit(10);
-  await new Promise(resolve =>
-    setTimeout(resolve, RETENTION_DURATION_SECONDS * 1000)
-  );
-  return Promise.all(
-    buckets.map(bucket => limit(() => deleteBucketAsync(bucket)))
-  );
-}
-
-async function deleteBucketAsync(bucket: Bucket, options?: {}) {
-  // After files are deleted, eventual consistency may require a bit of a
-  // delay to ensure that the bucket recognizes that the files don't exist
-  // anymore.
-  const CONSISTENCY_DELAY_MS = 250;
-
-  options = Object.assign({}, options, {
-    versions: true,
-  });
-
-  await bucket.deleteFiles(options);
-  await new Promise(resolve => setTimeout(resolve, CONSISTENCY_DELAY_MS));
-  await bucket.delete();
+  console.log('configure test bench not implemented');
 }
 
 function shortUUID() {
