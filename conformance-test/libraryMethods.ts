@@ -68,6 +68,7 @@ export async function deleteBucket(
   _notification: Notification,
   _storage: Storage
 ) {
+  await bucket.deleteFiles();
   await bucket.delete();
 }
 
