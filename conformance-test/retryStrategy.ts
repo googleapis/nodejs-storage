@@ -105,8 +105,7 @@ describe('retry conformance testing', () => {
 
 function excecuteScenario(testCase: RetryTestCase) {
   testCase.cases.forEach((instructionSet: RetryCase) => {
-    testCase.methods.forEach(async jsonMethod => {       
-     
+    testCase.methods.forEach(async jsonMethod => {
       const functionList = methodMap.get(jsonMethod?.name);
       functionList?.forEach(storageMethodString => {
         const storageMethodObject =
@@ -127,7 +126,7 @@ function excecuteScenario(testCase: RetryTestCase) {
           );
           notification = bucket.notification(`${TESTS_PREFIX}`);
           await notification.create();
-          
+
           creationResult = await createTestBenchRetryTest(
             instructionSet.instructions,
             jsonMethod?.name.toString()
