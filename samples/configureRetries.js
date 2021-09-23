@@ -29,18 +29,38 @@ function main() {
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
+  // The ID of your GCS bucket
+  // const bucketName = 'your-unique-bucket-name';
+
+  // The ID of your GCS file
+  // const fileName = 'your-file-name';
+
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage({
     retryOptions: {
-      autoRetry: true, //If this is false, requests will not retry and the setting of the below parameters will not have any effect.
-      retryDelayMultiplier: 3, //The multiplier by which to increase the delay time between the completion of failed requests, and the initiation of the subsequent retrying request.
-      totalTimeout: 500, //The total time, starting from when the initial request is sent, after which an error will be returned, regardless of the retrying attempts made meanwhile.
-      maxRetryDelay: 60, //The maximum delay time between requests. When this value is reached, retryDelayMultiplier will no longer be used to increase delay time.
-      maxRetries: 2, //	Maximum number of automatic retries attempted before returning the error.
-      idempotencyStrategy: IdempotencyStrategy.RetryAlways, // Will respect other retry settings and attempt to retry conditionally idempotent operations.
+      // If this is false, requests will not retry and the parameters 
+      // below will not affect retry behavior.
+      autoRetry: true, 
+      // The multiplier by which to increase the delay time between the 
+      // completion of failed requests, and the initiation of the subsequent 
+      // retrying request.
+      retryDelayMultiplier: 3,
+      // The total time between an initial request getting sent and its timeout. 
+      // After timeout, an error will be returned regardless of any retry attempts 
+      // made during this time period.
+      totalTimeout: 500,
+      // The maximum delay time between requests. When this value is reached, 
+      // retryDelayMultiplier will no longer be used to increase delay time.
+      maxRetryDelay: 60,
+      // The maximum number of automatic retries attempted before returning 
+      // the error.
+      maxRetries: 5, 
+      // Will respect other retry settings and attempt to always retry 
+      // conditionally idempotent operations, regardless of precondition
+      idempotencyStrategy: IdempotencyStrategy.RetryAlways
     },
   });
   console.log(
@@ -56,6 +76,9 @@ function main() {
   console.log(
     `Idempotency strategy: ${storage.retryOptions.idempotencyStrategy}`
   );
+
+  await storage.bucket(bucketName).file(fileName).delete();
+  console.log(`File ${file} deleted with a customized retry strategy.`)
   // [END storage_configure_retries]
 }
 main(...process.argv.slice(2));
