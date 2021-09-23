@@ -24,7 +24,7 @@ const {
  * at https://cloud.google.com/storage/docs.
  */
 
-function main() {
+function main(bucketName = 'my-bucket', fileName = 'test.txt') {
   // [START storage_configure_retries]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
