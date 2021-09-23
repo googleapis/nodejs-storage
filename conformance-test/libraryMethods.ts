@@ -144,7 +144,12 @@ export async function getFilesStream(
   _notification: Notification,
   _storage: Storage
 ) {
-  await bucket.getFilesStream();
+  return new Promise(resolve => {
+    bucket
+      .getFilesStream()
+      .on('data', () => {})
+      .on('end', () => resolve(undefined));
+  });
 }
 
 export async function getLabels(
@@ -305,8 +310,12 @@ export async function createReadStream(
   _notification: Notification,
   _storage: Storage
 ) {
-  const localFile = 'testFile.txt';
-  await file.createReadStream().pipe(fs.createWriteStream(localFile));
+  return new Promise(resolve => {
+    file
+      .createReadStream()
+      .on('data', () => {})
+      .on('end', () => resolve(undefined));
+  });
 }
 
 export async function createResumableUpload(
@@ -651,13 +660,18 @@ export async function getBuckets(
   await storage.getBuckets();
 }
 
-export function getBucketsStream(
+export async function getBucketsStream(
   _bucket: Bucket,
   _file: File,
   _notification: Notification,
   storage: Storage
 ) {
-  storage.getBucketsStream();
+  return new Promise(resolve => {
+    storage
+      .getBucketsStream()
+      .on('data', () => {})
+      .on('end', () => resolve(undefined));
+  });
 }
 
 export function getHMACKeyStream(
@@ -666,7 +680,12 @@ export function getHMACKeyStream(
   _notification: Notification,
   storage: Storage
 ) {
-  storage.getHmacKeysStream();
+  return new Promise(resolve => {
+    storage
+      .getHmacKeysStream()
+      .on('data', () => {})
+      .on('end', () => resolve(undefined));
+  });
 }
 
 export async function getServiceAccount(
