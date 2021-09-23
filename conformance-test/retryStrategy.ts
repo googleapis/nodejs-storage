@@ -83,7 +83,6 @@ const OPTIONS = {
 
 const TESTBENCH_HOST =
   process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000/';
-const storage = new Storage({apiEndpoint: TESTBENCH_HOST});
 
 describe('retry conformance testing', () => {
   before(async () => {
@@ -114,8 +113,11 @@ function excecuteScenario(testCase: RetryTestCase) {
         let file: File;
         let notification: Notification;
         let creationResult: any;
-        beforeEach(async () => {
+        let storage: Storage;
+        before(async () => {
+          storage = new Storage({apiEndpoint: TESTBENCH_HOST});
           bucket = await createBucketForTest(
+            storage,
             testCase.preconditionProvided,
             storageMethodString
           );
@@ -131,7 +133,7 @@ function excecuteScenario(testCase: RetryTestCase) {
             instructionSet.instructions,
             jsonMethod?.name.toString()
           );
-          /* storage.interceptors.push({
+          storage.interceptors.push({
             request: requestConfig => {
               requestConfig.headers = requestConfig.headers || {};
               Object.assign(requestConfig.headers, {
@@ -139,7 +141,7 @@ function excecuteScenario(testCase: RetryTestCase) {
               });
               return requestConfig as DecorateRequestOptions;
             },
-          }); */
+          });
         });
 
         it(`${storageMethodString}`, async () => {
@@ -152,14 +154,10 @@ function excecuteScenario(testCase: RetryTestCase) {
               await storageMethodObject(bucket, file, notification, storage);
             });
           }
-          /* const testBenchResult = await getTestBenchRetryTest(
+          const testBenchResult = await getTestBenchRetryTest(
             creationResult.id
           );
-          assert.strictEqual(testBenchResult.completed, true); */
-        });
-
-        afterEach(() => {
-          storage?.interceptors?.pop();
+          assert.strictEqual(testBenchResult.completed, true);
         });
       });
     });
@@ -167,6 +165,7 @@ function excecuteScenario(testCase: RetryTestCase) {
 }
 
 async function createBucketForTest(
+  storage: Storage,
   preconditionProvided: boolean,
   storageMethodString: String
 ) {
