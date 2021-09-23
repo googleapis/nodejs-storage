@@ -86,8 +86,8 @@ const TESTBENCH_HOST =
 
 describe('retry conformance testing', () => {
   before(async () => {
-    await getTestBenchDockerImage();
-    await runTestBenchDockerImage();
+    // await getTestBenchDockerImage();
+    // await runTestBenchDockerImage();
   });
 
   for (
@@ -157,6 +157,7 @@ function excecuteScenario(testCase: RetryTestCase) {
           const testBenchResult = await getTestBenchRetryTest(
             creationResult.id
           );
+          console.log(testBenchResult);
           assert.strictEqual(testBenchResult.completed, true);
         });
       });
