@@ -11,7 +11,8 @@
         "setCorsConfiguration",
         "setLabels",
         "setRetentionPeriod",
-        "bucketSetStorageClass"
+        "bucketSetStorageClass",
+        "bucketSetMetadata"
     ],
     "storage.buckets.insert": [
         "create",
@@ -34,7 +35,6 @@
     ],
     "storage.objects.patch": [
         "bucketMakePrivate",
-        "bucketSetMetadata",
         "fileMakePrivate",
         "setMetadata"
     ],
