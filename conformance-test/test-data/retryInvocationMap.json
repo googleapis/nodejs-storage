@@ -10,7 +10,8 @@
         "removeRetentionPeriod",
         "setCorsConfiguration",
         "setLabels",
-        "setRetentionPeriod"
+        "setRetentionPeriod",
+        "bucketSetStorageClass"
     ],
     "storage.buckets.insert": [
         "create",
@@ -42,7 +43,6 @@
         "fileMakePublic"
     ],
     "storage.objects.rewrite": [
-        "bucketSetStorageClass",
         "move",
         "rename",
         "rotateEncryptionKey",
