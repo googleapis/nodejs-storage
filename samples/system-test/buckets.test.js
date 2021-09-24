@@ -33,6 +33,7 @@ const bucketWithClassAndLocation = storage.bucket(
 
 const PUBLIC_ACCESS_PREVENTION_INHERITED = 'inherited';
 const PUBLIC_ACCESS_PREVENTION_ENFORCED = 'enforced';
+const PUBLIC_ACCESS_PREVENTION_UNSPECIFIED = 'unspecified';
 
 after(async () => {
   await bucket.delete().catch(console.error);
@@ -184,13 +185,29 @@ it("should get a bucket's public access prevention metadata", async () => {
   assert.ok(metadata.iamConfiguration.publicAccessPrevention);
 });
 
+it('should set public access prevention to unspecified', async () => {
+  const output = execSync(
+    `node setPublicAccessPreventionUnspecified.js ${bucketName}`
+  );
+  assert.match(
+    output,
+    new RegExp(`Public access prevention is 'unspecified' for ${bucketName}.`)
+  );
+
+  const metadata = await bucket.getMetadata();
+  assert.strictEqual(
+    metadata[0].iamConfiguration.publicAccessPrevention,
+    PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
+  );
+});
+
 it('should set public access prevention to inherited', async () => {
   const output = execSync(
     `node setPublicAccessPreventionInherited.js ${bucketName}`
   );
   assert.match(
     output,
-    new RegExp(`Public access prevention is 'unspecified' for ${bucketName}.`)
+    new RegExp(`Public access prevention is 'inherited' for ${bucketName}.`)
   );
 
   const metadata = await bucket.getMetadata();

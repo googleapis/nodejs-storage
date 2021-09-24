@@ -878,7 +878,7 @@ describe('storage', () => {
       });
     });
 
-    it('inserts a bucket with unspecified public access prevention', async () => {
+    it('inserts a bucket with inherited public access prevention', async () => {
       await setPublicAccessPrevention(
         bucket,
         PUBLIC_ACCESS_PREVENTION_INHERITED
@@ -892,7 +892,7 @@ describe('storage', () => {
       );
     });
 
-    it('makes public a bucket with unspecified public access prevention', async () => {
+    it('makes public a bucket with inherited public access prevention', async () => {
       await setPublicAccessPrevention(
         bucket,
         PUBLIC_ACCESS_PREVENTION_INHERITED
