@@ -206,6 +206,7 @@ it('should set public access prevention to inherited', async () => {
 });
 
 it("should get a bucket's turbo replication metadata", async () => {
+  const [drBucket] = await dualRegionBucket.create({location: 'NAM4'});
   await storage.bucket(bucketNameDualRegion).setMetadata({
     rpo: TURBO_REPLICATION_ASYNC_TURBO,
   });
@@ -218,11 +219,12 @@ it("should get a bucket's turbo replication metadata", async () => {
     new RegExp(`Turbo replication is ASYNC_TURBO for ${bucketNameDualRegion}.`)
   );
 
-  const metadata = await dualRegionBucket.getMetadata();
+  const metadata = await drBucket.getMetadata();
   assert.strictEqual(metadata[0].rpo, TURBO_REPLICATION_ASYNC_TURBO);
 });
 
 it("should set a bucket's turbo replication status to ASYNC_TURBO", async () => {
+  const [drBucket] = await dualRegionBucket.create({location: 'NAM4'});
   const output = execSync(
     `node setTurboReplicationAsyncTurbo.js ${bucketNameDualRegion}`
   );
@@ -231,11 +233,12 @@ it("should set a bucket's turbo replication status to ASYNC_TURBO", async () => 
     new RegExp(`Turbo replication enabled for ${bucketNameDualRegion}.`)
   );
 
-  const metadata = await dualRegionBucket.getMetadata();
+  const metadata = await drBucket.getMetadata();
   assert.strictEqual(metadata[0].rpo, TURBO_REPLICATION_ASYNC_TURBO);
 });
 
 it("should set a bucket's turbo replication status to DEFAULT", async () => {
+  const [drBucket] = await dualRegionBucket.create({location: 'NAM4'});
   const output = execSync(
     `node setTurboReplicationDefault.js ${bucketNameDualRegion}`
   );
@@ -244,7 +247,7 @@ it("should set a bucket's turbo replication status to DEFAULT", async () => {
     new RegExp(`Turbo replication disabled for ${bucketNameDualRegion}.`)
   );
 
-  const metadata = await dualRegionBucket.getMetadata();
+  const metadata = await drBucket.getMetadata();
   assert.strictEqual(metadata[0].rpo, TURBO_REPLICATION_DEFAULT);
 });
 
