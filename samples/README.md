@@ -34,7 +34,7 @@ objects to users via direct download.
   * [Copy File](#copy-file)
   * [Copy Old Version Of File.](#copy-old-version-of-file.)
   * [Create Bucket With Storage Class and Location.](#create-bucket-with-storage-class-and-location.)
-  * [Create Bucket With Turbo Replication Enabled.](#create-bucket-with-turbo-replication-enabled)
+  * [Create Bucket With Turbo Replication](#create-bucket-with-turbo-replication)
   * [Create New Bucket](#create-new-bucket)
   * [Create Notification](#create-notification)
   * [Delete Bucket](#delete-bucket)
@@ -72,7 +72,7 @@ objects to users via direct download.
   * [Get Requester Pays Status](#get-requester-pays-status)
   * [Get Retention Policy](#get-retention-policy)
   * [Storage Get Service Account.](#storage-get-service-account.)
-  * [Get Turbo Replication Status.](#storage-get-turbo-replication)
+  * [Get Turbo Replication](#get-turbo-replication)
   * [Get Uniform Bucket Level Access](#get-uniform-bucket-level-access)
   * [Activate HMAC SA Key.](#activate-hmac-sa-key.)
   * [Create HMAC SA Key.](#create-hmac-sa-key.)
@@ -113,8 +113,8 @@ objects to users via direct download.
   * [Set Public Access Prevention Inherited](#set-public-access-prevention-inherited)
   * [Set Retention Policy](#set-retention-policy)
   * [Set Temporary Hold](#set-temporary-hold)
-  * [Set Turbo Replication Enabled](#set-turbo-replication-enabled)
-  * [Set Turbo Replication Disabled](#set-turbo-replication-disabled)
+  * [Set Turbo Replication Async Turbo](#set-turbo-replication-async-turbo)
+  * [Set Turbo Replication Default](#set-turbo-replication-default)
   * [Stream File Download](#stream-file-download)
   * [Stream File Upload](#stream-file-upload)
   * [Upload a directory to a bucket.](#upload-a-directory-to-a-bucket.)
@@ -430,9 +430,8 @@ __Usage:__
 
 
 
-### Create Bucket Turbo Replication Enabled.
 
-Create Bucket With Turbo Replication Enabled.
+### Create Bucket With Turbo Replication
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithTurboReplication.js).
 
@@ -441,7 +440,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/sa
 __Usage:__
 
 
-`node createBucketWithTurboReplication.js <BUCKET_NAME> <LOCATION> <RPO_SETTING>`
+`node samples/createBucketWithTurboReplication.js`
 
 
 -----
@@ -1091,9 +1090,8 @@ __Usage:__
 
 
 
-### Storage Get Turbo Replication Status.
 
-Get Turbo Replication Status.
+### Get Turbo Replication
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getTurboReplication.js).
 
@@ -1102,7 +1100,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/sa
 __Usage:__
 
 
-`node getTurboReplication.js <PROJECT_ID>`
+`node samples/getTurboReplication.js`
 
 
 -----
@@ -1812,7 +1810,7 @@ __Usage:__
 
 
 
-### Set Turbo Replication Enabled
+### Set Turbo Replication Async Turbo
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setTurboReplicationAsyncTurbo.js).
 
@@ -1828,7 +1826,8 @@ __Usage:__
 
 
 
-### Set Turbo Replication Disabled
+
+### Set Turbo Replication Default
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setTurboReplicationDefault.js).
 
@@ -1841,6 +1840,7 @@ __Usage:__
 
 
 -----
+
 
 
 
