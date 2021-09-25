@@ -32,7 +32,6 @@ const bucketWithClassAndLocation = storage.bucket(
   bucketNameWithClassAndLocation
 );
 const dualRegionBucket = storage.bucket(bucketNameDualRegion);
-const [drBucket] = await dualRegionBucket.create({location: 'NAM4'});
 
 const PUBLIC_ACCESS_PREVENTION_INHERITED = 'inherited';
 const PUBLIC_ACCESS_PREVENTION_ENFORCED = 'enforced';
@@ -206,6 +205,20 @@ it('should set public access prevention to inherited', async () => {
   );
 });
 
+it('should create a dual region bucket with turbo replication enabled', async () => {
+  const output = execSync(
+    `node createBucketWithTurboReplication.js ${bucketNameDualRegion}`
+  );
+  assert.match(
+    output,
+    new RegExp(
+      `${bucketNameDualRegion} created with turbo replication ASYNC_TURBO class in NAM4.`
+    )
+  );
+  const [exists] = await dualRegionBucket.exists();
+  assert.strictEqual(exists, true);
+});
+
 it("should get a bucket's turbo replication metadata", async () => {
   await storage.bucket(bucketNameDualRegion).setMetadata({
     rpo: TURBO_REPLICATION_ASYNC_TURBO,
@@ -219,7 +232,7 @@ it("should get a bucket's turbo replication metadata", async () => {
     new RegExp(`Turbo replication is ASYNC_TURBO for ${bucketNameDualRegion}.`)
   );
 
-  const metadata = await drBucket.getMetadata();
+  const metadata = await dualRegionBucket.getMetadata();
   assert.strictEqual(metadata[0].rpo, TURBO_REPLICATION_ASYNC_TURBO);
 });
 
@@ -232,7 +245,7 @@ it("should set a bucket's turbo replication status to ASYNC_TURBO", async () => 
     new RegExp(`Turbo replication enabled for ${bucketNameDualRegion}.`)
   );
 
-  const metadata = await drBucket.getMetadata();
+  const metadata = await dualRegionBucket.getMetadata();
   assert.strictEqual(metadata[0].rpo, TURBO_REPLICATION_ASYNC_TURBO);
 });
 
@@ -245,7 +258,7 @@ it("should set a bucket's turbo replication status to DEFAULT", async () => {
     new RegExp(`Turbo replication disabled for ${bucketNameDualRegion}.`)
   );
 
-  const metadata = await drBucket.getMetadata();
+  const metadata = await dualRegionBucket.getMetadata();
   assert.strictEqual(metadata[0].rpo, TURBO_REPLICATION_DEFAULT);
 });
 

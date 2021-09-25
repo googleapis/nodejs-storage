@@ -59,7 +59,7 @@ function main(
     });
 
     console.log(
-      `${bucket.name} created with turbo replication ${rpo} class in ${location}`
+      `${bucket.name} created with turbo replication ${rpo} class in ${location}.`
     );
   }
 
