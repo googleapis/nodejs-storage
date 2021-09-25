@@ -24,7 +24,7 @@ const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
 const storage = new Storage();
 const bucketName = `nodejs-storage-samples-${uuid.v4()}`;
-const bucketNameDualRegion = `nodejs-storage-samples-dual-region-${uuid.v4()}`;
+const bucketNameDualRegion = `nodejs-storage-samples-${uuid.v4()}`;
 const bucketNameWithClassAndLocation = `nodejs-storage-samples-${uuid.v4()}`;
 const defaultKmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA;
 const bucket = storage.bucket(bucketName);
@@ -32,6 +32,7 @@ const bucketWithClassAndLocation = storage.bucket(
   bucketNameWithClassAndLocation
 );
 const dualRegionBucket = storage.bucket(bucketNameDualRegion);
+const [drBucket] = await dualRegionBucket.create({location: 'NAM4'});
 
 const PUBLIC_ACCESS_PREVENTION_INHERITED = 'inherited';
 const PUBLIC_ACCESS_PREVENTION_ENFORCED = 'enforced';
@@ -206,7 +207,6 @@ it('should set public access prevention to inherited', async () => {
 });
 
 it("should get a bucket's turbo replication metadata", async () => {
-  const [drBucket] = await dualRegionBucket.create({location: 'NAM4'});
   await storage.bucket(bucketNameDualRegion).setMetadata({
     rpo: TURBO_REPLICATION_ASYNC_TURBO,
   });
@@ -224,7 +224,6 @@ it("should get a bucket's turbo replication metadata", async () => {
 });
 
 it("should set a bucket's turbo replication status to ASYNC_TURBO", async () => {
-  const [drBucket] = await dualRegionBucket.create({location: 'NAM4'});
   const output = execSync(
     `node setTurboReplicationAsyncTurbo.js ${bucketNameDualRegion}`
   );
@@ -238,7 +237,6 @@ it("should set a bucket's turbo replication status to ASYNC_TURBO", async () => 
 });
 
 it("should set a bucket's turbo replication status to DEFAULT", async () => {
-  const [drBucket] = await dualRegionBucket.create({location: 'NAM4'});
   const output = execSync(
     `node setTurboReplicationDefault.js ${bucketNameDualRegion}`
   );
