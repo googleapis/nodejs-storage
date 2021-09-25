@@ -426,6 +426,7 @@ class File extends ServiceObject<File> {
   private encryptionKeyHash?: string;
   private encryptionKeyInterceptor?: Interceptor;
   private instanceRetryValue?: boolean;
+  private instancePreconditionOpts?: PreconditionOptions;
 
   /**
    * Cloud Storage uses access control lists (ACLs) to manage object and
@@ -865,6 +866,7 @@ class File extends ServiceObject<File> {
     });
 
     this.instanceRetryValue = this.storage?.retryOptions?.autoRetry;
+    this.instancePreconditionOpts = options?.preconditionOpts;
   }
 
   copy(
@@ -1070,24 +1072,37 @@ class File extends ServiceObject<File> {
       delete options.predefinedAcl;
     }
 
-    if (options?.preconditionOpts?.ifGenerationMatch) {
-      query.ifGenerationMatch = options.preconditionOpts.ifGenerationMatch;
-      delete options.preconditionOpts.ifGenerationMatch;
+    if (
+      options?.preconditionOpts?.ifGenerationMatch ||
+      this.instancePreconditionOpts?.ifGenerationMatch
+    ) {
+      query.ifGenerationMatch =
+        options?.preconditionOpts?.ifGenerationMatch ||
+        this.instancePreconditionOpts?.ifGenerationMatch;
     }
-    if (options?.preconditionOpts?.ifGenerationNotMatch) {
+    if (
+      options?.preconditionOpts?.ifGenerationNotMatch ||
+      this.instancePreconditionOpts?.ifGenerationNotMatch
+    ) {
       query.ifGenerationNotMatch =
-        options.preconditionOpts.ifGenerationNotMatch;
-      delete options.preconditionOpts.ifGenerationNotMatch;
+        options?.preconditionOpts?.ifGenerationNotMatch ||
+        this.instancePreconditionOpts?.ifGenerationNotMatch;
     }
-    if (options?.preconditionOpts?.ifMetagenerationMatch) {
+    if (
+      options?.preconditionOpts?.ifMetagenerationMatch ||
+      this.instancePreconditionOpts?.ifMetagenerationMatch
+    ) {
       query.ifMetagenerationMatch =
-        options.preconditionOpts.ifMetagenerationMatch;
-      delete options.preconditionOpts.ifMetagenerationMatch;
+        options?.preconditionOpts?.ifMetagenerationMatch ||
+        this.instancePreconditionOpts?.ifMetagenerationMatch;
     }
-    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
+    if (
+      options?.preconditionOpts?.ifMetagenerationNotMatch ||
+      this.instancePreconditionOpts?.ifMetagenerationNotMatch
+    ) {
       query.ifMetagenerationNotMatch =
-        options.preconditionOpts.ifMetagenerationNotMatch;
-      delete options.preconditionOpts.ifMetagenerationNotMatch;
+        options?.preconditionOpts?.ifMetagenerationNotMatch ||
+        this.instancePreconditionOpts?.ifMetagenerationNotMatch;
     }
 
     newFile = newFile! || destBucket.file(destName);
@@ -1123,6 +1138,7 @@ class File extends ServiceObject<File> {
 
     if (
       (options?.preconditionOpts?.ifGenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
@@ -1614,6 +1630,7 @@ class File extends ServiceObject<File> {
     const retryOptions = this.storage.retryOptions;
     if (
       (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifMetagenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
@@ -1640,7 +1657,7 @@ class File extends ServiceObject<File> {
         public: options.public,
         userProject: options.userProject || this.userProject,
         retryOptions: retryOptions,
-        params: options.preconditionOpts,
+        params: options?.preconditionOpts || this.instancePreconditionOpts,
       },
       callback!
     );
@@ -3712,6 +3729,7 @@ class File extends ServiceObject<File> {
     let maxRetries = this.storage.retryOptions.maxRetries;
     if (
       (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifMetagenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
@@ -3896,6 +3914,7 @@ class File extends ServiceObject<File> {
     const retryOptions = this.storage.retryOptions;
     if (
       (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifMetagenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
@@ -3925,7 +3944,7 @@ class File extends ServiceObject<File> {
       uri: options.uri,
       userProject: options.userProject || this.userProject,
       retryOptions: retryOptions,
-      params: options.preconditionOpts,
+      params: options?.preconditionOpts || this.instancePreconditionOpts,
     });
 
     uploadStream
@@ -3997,20 +4016,37 @@ class File extends ServiceObject<File> {
       reqOpts.qs.predefinedAcl = 'publicRead';
     }
 
-    if (options?.preconditionOpts?.ifGenerationMatch) {
-      reqOpts.qs.ifGenerationMatch = options.preconditionOpts.ifGenerationMatch;
+    if (
+      options?.preconditionOpts?.ifGenerationMatch ||
+      this.instancePreconditionOpts?.ifGenerationMatch
+    ) {
+      reqOpts.qs.ifGenerationMatch =
+        options?.preconditionOpts?.ifGenerationMatch ||
+        this.instancePreconditionOpts?.ifGenerationMatch;
     }
-    if (options?.preconditionOpts?.ifGenerationNotMatch) {
+    if (
+      options?.preconditionOpts?.ifGenerationNotMatch ||
+      this.instancePreconditionOpts?.ifGenerationNotMatch
+    ) {
       reqOpts.qs.ifGenerationNotMatch =
-        options.preconditionOpts.ifGenerationNotMatch;
+        options?.preconditionOpts?.ifGenerationNotMatch ||
+        this.instancePreconditionOpts?.ifGenerationNotMatch;
     }
-    if (options?.preconditionOpts?.ifMetagenerationMatch) {
+    if (
+      options?.preconditionOpts?.ifMetagenerationMatch ||
+      this.instancePreconditionOpts?.ifMetagenerationMatch
+    ) {
       reqOpts.qs.ifMetagenerationMatch =
-        options.preconditionOpts.ifMetagenerationMatch;
+        options?.preconditionOpts?.ifMetagenerationMatch ||
+        this.instancePreconditionOpts?.ifMetagenerationMatch;
     }
-    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
+    if (
+      options?.preconditionOpts?.ifMetagenerationNotMatch ||
+      this.instancePreconditionOpts?.ifMetagenerationNotMatch
+    ) {
       reqOpts.qs.ifMetagenerationNotMatch =
-        options.preconditionOpts.ifMetagenerationNotMatch;
+        options?.preconditionOpts?.ifMetagenerationNotMatch ||
+        this.instancePreconditionOpts?.ifMetagenerationNotMatch;
     }
 
     util.makeWritableStream(dup, {

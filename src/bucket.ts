@@ -626,6 +626,7 @@ class Bucket extends ServiceObject {
   signer?: URLSigner;
 
   private instanceRetryValue?: boolean;
+  private instancePreconditionOpts?: PreconditionOptions;
 
   constructor(storage: Storage, name: string, options?: BucketOptions) {
     options = options || {};
@@ -1021,6 +1022,7 @@ class Bucket extends ServiceObject {
     this.getFilesStream = paginator.streamify('getFiles');
 
     this.instanceRetryValue = storage.retryOptions.autoRetry;
+    this.instancePreconditionOpts = options?.preconditionOpts;
   }
 
   addLifecycleRule(
@@ -1409,12 +1411,46 @@ class Bucket extends ServiceObject {
     let maxRetries = this.storage.retryOptions.maxRetries;
     if (
       (options?.ifGenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
         IdempotencyStrategy.RetryNever
     ) {
       maxRetries = 0;
+    }
+
+    if (
+      options?.ifGenerationMatch ||
+      this.instancePreconditionOpts?.ifGenerationMatch
+    ) {
+      options.ifGenerationMatch =
+        options?.ifGenerationMatch ||
+        this.instancePreconditionOpts?.ifGenerationMatch;
+    }
+    if (
+      options?.ifGenerationNotMatch ||
+      this.instancePreconditionOpts?.ifGenerationNotMatch
+    ) {
+      options.ifGenerationNotMatch =
+        options?.ifGenerationNotMatch ||
+        this.instancePreconditionOpts?.ifGenerationNotMatch;
+    }
+    if (
+      options?.ifMetagenerationMatch ||
+      this.instancePreconditionOpts?.ifMetagenerationMatch
+    ) {
+      options.ifMetagenerationMatch =
+        options?.ifMetagenerationMatch ||
+        this.instancePreconditionOpts?.ifMetagenerationMatch;
+    }
+    if (
+      options?.ifMetagenerationNotMatch ||
+      this.instancePreconditionOpts?.ifMetagenerationNotMatch
+    ) {
+      options.ifMetagenerationNotMatch =
+        options?.ifMetagenerationNotMatch ||
+        this.instancePreconditionOpts?.ifMetagenerationNotMatch;
     }
 
     // Make the request from the destination File object.
@@ -1432,8 +1468,13 @@ class Bucket extends ServiceObject {
               name: source.name,
             } as SourceObject;
 
-            if (source.metadata && source.metadata.generation) {
-              sourceObject.generation = source.metadata.generation;
+            if (
+              source?.metadata?.generation ||
+              this.instancePreconditionOpts?.ifGenerationMatch
+            ) {
+              sourceObject.generation =
+                source?.metadata?.generation ||
+                this.instancePreconditionOpts?.ifGenerationMatch;
             }
 
             return sourceObject;
@@ -1880,6 +1921,39 @@ class Bucket extends ServiceObject {
       this.methods.delete,
       AvailableServiceObjectMethods.delete
     );
+
+    if (
+      query?.ifGenerationMatch ||
+      this.instancePreconditionOpts?.ifGenerationMatch
+    ) {
+      query.ifGenerationMatch =
+        query?.ifGenerationMatch ||
+        this.instancePreconditionOpts?.ifGenerationMatch;
+    }
+    if (
+      query?.ifGenerationNotMatch ||
+      this.instancePreconditionOpts?.ifGenerationNotMatch
+    ) {
+      query.ifGenerationNotMatch =
+        query?.ifGenerationNotMatch ||
+        this.instancePreconditionOpts?.ifGenerationNotMatch;
+    }
+    if (
+      query?.ifMetagenerationMatch ||
+      this.instancePreconditionOpts?.ifMetagenerationMatch
+    ) {
+      query.ifMetagenerationMatch =
+        query?.ifMetagenerationMatch ||
+        this.instancePreconditionOpts?.ifMetagenerationMatch;
+    }
+    if (
+      query?.ifMetagenerationNotMatch ||
+      this.instancePreconditionOpts?.ifMetagenerationNotMatch
+    ) {
+      query.ifMetagenerationNotMatch =
+        query?.ifMetagenerationNotMatch ||
+        this.instancePreconditionOpts?.ifMetagenerationNotMatch;
+    }
 
     const deleteFile = (file: File) => {
       return file
@@ -3908,6 +3982,7 @@ class Bucket extends ServiceObject {
     let maxRetries = this.storage.retryOptions.maxRetries;
     if (
       (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifMetagenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
