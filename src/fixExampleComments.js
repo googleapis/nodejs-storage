@@ -13,13 +13,13 @@ async function processLineByLine(path, file) {
 
   const data = [];
 
-  for await (const line of rl) {
+  for await (let line of rl) {
     // Each line in input.txt will be successively available here as `line`.
     console.log(`Line from file: ${line}`);
-    data.push(line);
-    if (line.match(/example/)) {
-      data.push('foobar');
+    if (line.match(/@example/)) {
+      line += 'foobar';
     }
+    data.push(line);
   }
 
   fs.writeFileSync('tmp.ts', data.join('\n'), 'utf-8');
