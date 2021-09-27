@@ -43,8 +43,12 @@ function main(bucketName = 'my-bucket') {
     console.log(`Turbo replication enabled for ${bucketName}.`);
   }
 
-  setTurboReplicationAsyncTurbo().catch(console.error);
+  setTurboReplicationAsyncTurbo();
   // [END storage_set_turbo_replication_async_turbo]
 }
 
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

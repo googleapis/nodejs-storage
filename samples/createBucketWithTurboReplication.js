@@ -63,8 +63,11 @@ function main(
     );
   }
 
-  createBucketWithTurboReplication().catch(console.error);
+  createBucketWithTurboReplication();
   // [END storage_create_bucket_turbo_replication]
 }
-
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));

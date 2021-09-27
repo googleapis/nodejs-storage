@@ -43,8 +43,12 @@ function main(bucketName = 'my-bucket') {
     console.log(`Turbo replication disabled for ${bucketName}.`);
   }
 
-  setTurboReplicationDefault().catch(console.error);
+  setTurboReplicationDefault();
   // [END storage_set_turbo_replication_default]
 }
 
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));
