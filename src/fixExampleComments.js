@@ -12,14 +12,27 @@ async function processLineByLine(path, file) {
   // ('\r\n') in input.txt as a single line break.
 
   const data = [];
+  let insideExampleBlock = false;
 
-  for await (let line of rl) {
+  for await (const line of rl) {
     // Each line in input.txt will be successively available here as `line`.
-    console.log(`Line from file: ${line}`);
-    if (line.match(/@example/)) {
-      line += 'foobar';
+    // console.log(`Line from file: ${line}`);
+    const codeExampleFencing = '   * ```';
+    if (insideExampleBlock) {
+      const openingTag = /^\s*\* @/;
+      const endComment = /^\s*\*\//;
+      if (line.match(openingTag) || line.match(endComment)) {
+        data.push(codeExampleFencing);
+        insideExampleBlock = false;
+      }
     }
     data.push(line);
+    const exampleTag = /^\s*\* @example/;
+    if (line.match(exampleTag)) {
+      insideExampleBlock = true;
+      data.push(codeExampleFencing);
+      //   console.log(line);
+    }
   }
 
   fs.writeFileSync('tmp.ts', data.join('\n'), 'utf-8');
