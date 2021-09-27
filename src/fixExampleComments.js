@@ -1,8 +1,8 @@
 const fs = require('fs');
 const readline = require('readline');
 
-async function processLineByLine(path, file) {
-  const fileStream = fs.createReadStream(path + '/' + file);
+async function processLineByLine(file) {
+  const fileStream = fs.createReadStream(file);
 
   const rl = readline.createInterface({
     input: fileStream,
@@ -16,7 +16,6 @@ async function processLineByLine(path, file) {
 
   for await (const line of rl) {
     // Each line in input.txt will be successively available here as `line`.
-    // console.log(`Line from file: ${line}`);
     const codeExampleFencing = '   * ```';
     if (insideExampleBlock) {
       const openingTag = /^\s*\* @/;
@@ -31,11 +30,10 @@ async function processLineByLine(path, file) {
     if (line.match(exampleTag)) {
       insideExampleBlock = true;
       data.push(codeExampleFencing);
-      //   console.log(line);
     }
   }
 
-  fs.writeFileSync('tmp.ts', data.join('\n'), 'utf-8');
+  fs.writeFileSync(file, data.join('\n'), 'utf-8');
 }
 
 const main = async () => {
@@ -46,7 +44,7 @@ const main = async () => {
     for (const file of files) {
       if (file.match(/\.ts$/)) {
         // console.log(file);
-        processLineByLine(path, file);
+        processLineByLine(path + '/' + file);
       }
     }
   } catch (err) {
