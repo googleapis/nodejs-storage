@@ -1057,7 +1057,11 @@ class File extends ServiceObject<File> {
       delete options.predefinedAcl;
     }
 
-    Object.assign(query, this.instancePreconditionOpts, options.preconditionOpts);
+    Object.assign(
+      query,
+      this.instancePreconditionOpts,
+      options.preconditionOpts
+    );
 
     newFile = newFile! || destBucket.file(destName);
 
@@ -3970,7 +3974,11 @@ class File extends ServiceObject<File> {
       reqOpts.qs.predefinedAcl = 'publicRead';
     }
 
-    Object.assign(reqOpts.qs, this.instancePreconditionOpts, options.preconditionOpts);
+    Object.assign(
+      reqOpts.qs,
+      this.instancePreconditionOpts,
+      options.preconditionOpts
+    );
 
     util.makeWritableStream(dup, {
       makeAuthenticatedRequest: (reqOpts: object) => {
