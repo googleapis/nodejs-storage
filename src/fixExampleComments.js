@@ -16,24 +16,33 @@ async function processLineByLine(file) {
 
   for await (const line of rl) {
     // Each line in input.txt will be successively available here as `line`.
-    const codeExampleFencing = '   * ```';
+    const codeExampleFencing = '* ```';
     if (insideExampleBlock) {
-      const openingTag = /^\s*\* @/;
-      const endComment = /^\s*\*\//;
-      if (line.match(openingTag) || line.match(endComment)) {
-        data.push(codeExampleFencing);
+      const openingTagOrEndComment = /^(\s*)\*( @|\/)/;
+      const match = line.match(openingTagOrEndComment);
+      if (match) {
+        const whitespace = match[1];
+        // console.log(whitespace + codeExampleFencing + '###');
+        // console.log(line);
+        data.push(whitespace + codeExampleFencing);
         insideExampleBlock = false;
       }
     }
     data.push(line);
-    const exampleTag = /^\s*\* @example/;
-    if (line.match(exampleTag)) {
+    const exampleTag = /^(\s*)\* @example$/;
+    const match = line.match(exampleTag);
+    if (match) {
       insideExampleBlock = true;
-      data.push(codeExampleFencing);
+      const whitespace = match[1];
+      //   console.log(line);
+      //   console.log(whitespace + codeExampleFencing + '###');
+      data.push(whitespace + codeExampleFencing);
     }
   }
 
-  fs.writeFileSync(file, data.join('\n'), 'utf-8');
+  fs.writeFileSync('tmp.ts', data.join('\n'), 'utf-8');
+
+  //   fs.writeFileSync(file, data.join('\n'), 'utf-8');
 }
 
 const main = async () => {
