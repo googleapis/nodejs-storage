@@ -22,7 +22,11 @@ const main = async () => {
   const {readdir} = fs.promises;
   try {
     const files = await readdir(path);
-    for (const file of files) console.log(file);
+    for (const file of files) {
+      if (file.match(/\.ts$/)) {
+        console.log(file);
+      }
+    }
   } catch (err) {
     console.error(err);
   }
