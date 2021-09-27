@@ -157,6 +157,7 @@ class AclRoleAccessorMethods {
      *
      * @example
      * ```
+     * ```
      * const storage = require('@google-cloud/storage')();
      * const myBucket = storage.bucket('my-bucket');
      * const myFile = myBucket.file('my-file');
@@ -185,6 +186,7 @@ class AclRoleAccessorMethods {
      *   const apiResponse = data[1];
      * });
      * ```
+     * ```
      */
     this.owners = {};
 
@@ -210,6 +212,7 @@ class AclRoleAccessorMethods {
      * @name Acl#readers
      *
      * @example
+     * ```
      * ```
      * const storage = require('@google-cloud/storage')();
      * const myBucket = storage.bucket('my-bucket');
@@ -237,6 +240,7 @@ class AclRoleAccessorMethods {
      *   const apiResponse = data[1];
      * });
      * ```
+     * ```
      */
     this.readers = {};
 
@@ -262,6 +266,7 @@ class AclRoleAccessorMethods {
      * @name Acl#writers
      *
      * @example
+     * ```
      * const storage = require('@google-cloud/storage')();
      * const myBucket = storage.bucket('my-bucket');
      * const myFile = myBucket.file('my-file');
@@ -287,6 +292,7 @@ class AclRoleAccessorMethods {
      *   const aclObject = data[0];
      *   const apiResponse = data[1];
      * });
+     * ```
      */
     this.writers = {};
     AclRoleAccessorMethods.roles.forEach(this._assignAccessMethods.bind(this));
@@ -444,6 +450,7 @@ class Acl extends AclRoleAccessorMethods {
    * @returns {Promise<AddAclResponse>}
    *
    * @example
+   * ```
    * const storage = require('@google-cloud/storage')();
    * const myBucket = storage.bucket('my-bucket');
    * const myFile = myBucket.file('my-file');
@@ -475,6 +482,7 @@ class Acl extends AclRoleAccessorMethods {
    *   const apiResponse = data[1];
    * });
    *
+   * ```
    * @example <caption>include:samples/acl.js</caption>
    * region_tag:storage_add_file_owner
    * Example of adding an owner to a file:
@@ -549,6 +557,7 @@ class Acl extends AclRoleAccessorMethods {
    * @returns {Promise<RemoveAclResponse>}
    *
    * @example
+   * ```
    * const storage = require('@google-cloud/storage')();
    * const myBucket = storage.bucket('my-bucket');
    * const myFile = myBucket.file('my-file');
@@ -572,6 +581,7 @@ class Acl extends AclRoleAccessorMethods {
    *   const apiResponse = data[0];
    * });
    *
+   * ```
    * @example <caption>include:samples/acl.js</caption>
    * region_tag:storage_remove_bucket_owner
    * Example of removing an owner from a bucket:
@@ -644,6 +654,7 @@ class Acl extends AclRoleAccessorMethods {
    * @returns {Promise<GetAclResponse>}
    *
    * @example
+   * ```
    * const storage = require('@google-cloud/storage')();
    * const myBucket = storage.bucket('my-bucket');
    * const myFile = myBucket.file('my-file');
@@ -680,6 +691,7 @@ class Acl extends AclRoleAccessorMethods {
    *   const apiResponse = data[1];
    * });
    *
+   * ```
    * @example <caption>include:samples/acl.js</caption>
    * region_tag:storage_print_file_acl
    * Example of printing a file's ACL:
@@ -774,6 +786,7 @@ class Acl extends AclRoleAccessorMethods {
    * @returns {Promise<UpdateAclResponse>}
    *
    * @example
+   * ```
    * const storage = require('@google-cloud/storage')();
    * const myBucket = storage.bucket('my-bucket');
    * const myFile = myBucket.file('my-file');
@@ -801,6 +814,7 @@ class Acl extends AclRoleAccessorMethods {
    *   const aclObject = data[0];
    *   const apiResponse = data[1];
    * });
+   * ```
    */
   update(
     options: UpdateAclOptions,

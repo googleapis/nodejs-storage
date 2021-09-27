@@ -40,9 +40,8 @@ async function processLineByLine(file) {
     }
   }
 
-  fs.writeFileSync('tmp.ts', data.join('\n'), 'utf-8');
-
-  //   fs.writeFileSync(file, data.join('\n'), 'utf-8');
+  //   fs.writeFileSync('tmp.ts', data.join('\n'), 'utf-8');
+  fs.writeFileSync(file, data.join('\n'), 'utf-8');
 }
 
 const main = async () => {
