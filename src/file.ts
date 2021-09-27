@@ -531,22 +531,7 @@ class File extends ServiceObject<File> {
       }
     }
 
-    if (options?.preconditionOpts?.ifGenerationMatch) {
-      requestQueryObject.ifGenerationMatch =
-        options.preconditionOpts.ifGenerationMatch;
-    }
-    if (options?.preconditionOpts?.ifGenerationNotMatch) {
-      requestQueryObject.ifGenerationNotMatch =
-        options.preconditionOpts.ifGenerationNotMatch;
-    }
-    if (options?.preconditionOpts?.ifMetagenerationMatch) {
-      requestQueryObject.ifMetagenerationMatch =
-        options.preconditionOpts.ifMetagenerationMatch;
-    }
-    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
-      requestQueryObject.ifMetagenerationNotMatch =
-        options.preconditionOpts.ifMetagenerationNotMatch;
-    }
+    Object.assign(requestQueryObject, options.preconditionOpts);
 
     const userProject = options.userProject || bucket.userProject;
     if (typeof userProject === 'string') {
@@ -1072,38 +1057,7 @@ class File extends ServiceObject<File> {
       delete options.predefinedAcl;
     }
 
-    if (
-      options?.preconditionOpts?.ifGenerationMatch ||
-      this.instancePreconditionOpts?.ifGenerationMatch
-    ) {
-      query.ifGenerationMatch =
-        options?.preconditionOpts?.ifGenerationMatch ||
-        this.instancePreconditionOpts?.ifGenerationMatch;
-    }
-    if (
-      options?.preconditionOpts?.ifGenerationNotMatch ||
-      this.instancePreconditionOpts?.ifGenerationNotMatch
-    ) {
-      query.ifGenerationNotMatch =
-        options?.preconditionOpts?.ifGenerationNotMatch ||
-        this.instancePreconditionOpts?.ifGenerationNotMatch;
-    }
-    if (
-      options?.preconditionOpts?.ifMetagenerationMatch ||
-      this.instancePreconditionOpts?.ifMetagenerationMatch
-    ) {
-      query.ifMetagenerationMatch =
-        options?.preconditionOpts?.ifMetagenerationMatch ||
-        this.instancePreconditionOpts?.ifMetagenerationMatch;
-    }
-    if (
-      options?.preconditionOpts?.ifMetagenerationNotMatch ||
-      this.instancePreconditionOpts?.ifMetagenerationNotMatch
-    ) {
-      query.ifMetagenerationNotMatch =
-        options?.preconditionOpts?.ifMetagenerationNotMatch ||
-        this.instancePreconditionOpts?.ifMetagenerationNotMatch;
-    }
+    Object.assign(query, this.instancePreconditionOpts, options.preconditionOpts);
 
     newFile = newFile! || destBucket.file(destName);
 
@@ -4016,38 +3970,7 @@ class File extends ServiceObject<File> {
       reqOpts.qs.predefinedAcl = 'publicRead';
     }
 
-    if (
-      options?.preconditionOpts?.ifGenerationMatch ||
-      this.instancePreconditionOpts?.ifGenerationMatch
-    ) {
-      reqOpts.qs.ifGenerationMatch =
-        options?.preconditionOpts?.ifGenerationMatch ||
-        this.instancePreconditionOpts?.ifGenerationMatch;
-    }
-    if (
-      options?.preconditionOpts?.ifGenerationNotMatch ||
-      this.instancePreconditionOpts?.ifGenerationNotMatch
-    ) {
-      reqOpts.qs.ifGenerationNotMatch =
-        options?.preconditionOpts?.ifGenerationNotMatch ||
-        this.instancePreconditionOpts?.ifGenerationNotMatch;
-    }
-    if (
-      options?.preconditionOpts?.ifMetagenerationMatch ||
-      this.instancePreconditionOpts?.ifMetagenerationMatch
-    ) {
-      reqOpts.qs.ifMetagenerationMatch =
-        options?.preconditionOpts?.ifMetagenerationMatch ||
-        this.instancePreconditionOpts?.ifMetagenerationMatch;
-    }
-    if (
-      options?.preconditionOpts?.ifMetagenerationNotMatch ||
-      this.instancePreconditionOpts?.ifMetagenerationNotMatch
-    ) {
-      reqOpts.qs.ifMetagenerationNotMatch =
-        options?.preconditionOpts?.ifMetagenerationNotMatch ||
-        this.instancePreconditionOpts?.ifMetagenerationNotMatch;
-    }
+    Object.assign(reqOpts.qs, this.instancePreconditionOpts, options.preconditionOpts);
 
     util.makeWritableStream(dup, {
       makeAuthenticatedRequest: (reqOpts: object) => {

@@ -1420,38 +1420,7 @@ class Bucket extends ServiceObject {
       maxRetries = 0;
     }
 
-    if (
-      options?.ifGenerationMatch ||
-      this.instancePreconditionOpts?.ifGenerationMatch
-    ) {
-      options.ifGenerationMatch =
-        options?.ifGenerationMatch ||
-        this.instancePreconditionOpts?.ifGenerationMatch;
-    }
-    if (
-      options?.ifGenerationNotMatch ||
-      this.instancePreconditionOpts?.ifGenerationNotMatch
-    ) {
-      options.ifGenerationNotMatch =
-        options?.ifGenerationNotMatch ||
-        this.instancePreconditionOpts?.ifGenerationNotMatch;
-    }
-    if (
-      options?.ifMetagenerationMatch ||
-      this.instancePreconditionOpts?.ifMetagenerationMatch
-    ) {
-      options.ifMetagenerationMatch =
-        options?.ifMetagenerationMatch ||
-        this.instancePreconditionOpts?.ifMetagenerationMatch;
-    }
-    if (
-      options?.ifMetagenerationNotMatch ||
-      this.instancePreconditionOpts?.ifMetagenerationNotMatch
-    ) {
-      options.ifMetagenerationNotMatch =
-        options?.ifMetagenerationNotMatch ||
-        this.instancePreconditionOpts?.ifMetagenerationNotMatch;
-    }
+    Object.assign(options, this.instancePreconditionOpts, options);
 
     // Make the request from the destination File object.
     destinationFile.request(
@@ -1922,38 +1891,7 @@ class Bucket extends ServiceObject {
       AvailableServiceObjectMethods.delete
     );
 
-    if (
-      query?.ifGenerationMatch ||
-      this.instancePreconditionOpts?.ifGenerationMatch
-    ) {
-      query.ifGenerationMatch =
-        query?.ifGenerationMatch ||
-        this.instancePreconditionOpts?.ifGenerationMatch;
-    }
-    if (
-      query?.ifGenerationNotMatch ||
-      this.instancePreconditionOpts?.ifGenerationNotMatch
-    ) {
-      query.ifGenerationNotMatch =
-        query?.ifGenerationNotMatch ||
-        this.instancePreconditionOpts?.ifGenerationNotMatch;
-    }
-    if (
-      query?.ifMetagenerationMatch ||
-      this.instancePreconditionOpts?.ifMetagenerationMatch
-    ) {
-      query.ifMetagenerationMatch =
-        query?.ifMetagenerationMatch ||
-        this.instancePreconditionOpts?.ifMetagenerationMatch;
-    }
-    if (
-      query?.ifMetagenerationNotMatch ||
-      this.instancePreconditionOpts?.ifMetagenerationNotMatch
-    ) {
-      query.ifMetagenerationNotMatch =
-        query?.ifMetagenerationNotMatch ||
-        this.instancePreconditionOpts?.ifMetagenerationNotMatch;
-    }
+    Object.assign(query, this.instancePreconditionOpts, query);
 
     const deleteFile = (file: File) => {
       return file
