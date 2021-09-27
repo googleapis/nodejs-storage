@@ -33,7 +33,6 @@ const bucketWithClassAndLocation = storage.bucket(
 
 const PUBLIC_ACCESS_PREVENTION_INHERITED = 'inherited';
 const PUBLIC_ACCESS_PREVENTION_ENFORCED = 'enforced';
-const PUBLIC_ACCESS_PREVENTION_UNSPECIFIED = 'unspecified';
 
 after(async () => {
   await bucket.delete().catch(console.error);
