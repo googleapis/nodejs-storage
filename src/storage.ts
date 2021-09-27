@@ -650,10 +650,12 @@ export class Storage extends Service {
    * @see Bucket
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const albums = storage.bucket('albums');
    * const photos = storage.bucket('photos');
+   * ```
    */
   bucket(name: string, options?: BucketOptions) {
     if (!name) {

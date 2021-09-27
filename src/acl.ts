@@ -156,6 +156,7 @@ class AclRoleAccessorMethods {
      * @name Acl#owners
      *
      * @example
+     * ```
      * const storage = require('@google-cloud/storage')();
      * const myBucket = storage.bucket('my-bucket');
      * const myFile = myBucket.file('my-file');
@@ -183,6 +184,7 @@ class AclRoleAccessorMethods {
      *   const aclObject = data[0];
      *   const apiResponse = data[1];
      * });
+     * ```
      */
     this.owners = {};
 
@@ -208,6 +210,7 @@ class AclRoleAccessorMethods {
      * @name Acl#readers
      *
      * @example
+     * ```
      * const storage = require('@google-cloud/storage')();
      * const myBucket = storage.bucket('my-bucket');
      * const myFile = myBucket.file('my-file');
@@ -233,6 +236,7 @@ class AclRoleAccessorMethods {
      *   const aclObject = data[0];
      *   const apiResponse = data[1];
      * });
+     * ```
      */
     this.readers = {};
 
