@@ -2351,7 +2351,6 @@ class Bucket extends ServiceObject {
    * @returns {Promise<GetFilesResponse>}
    *
    * @example
-   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const bucket = storage.bucket('albums');
@@ -2400,11 +2399,9 @@ class Bucket extends ServiceObject {
    * //-
    * bucket.getFiles().then(function(data) {
    *   const files = data[0];
-   * ```
    * });
    *
    * @example <caption><h6>Simulating a File System</h6><p>With `autoPaginate: false`, it's possible to iterate over files which incorporate a common structure using a delimiter.</p><p>Consider the following remote objects:</p><ol><li>"a"</li><li>"a/b/c/d"</li><li>"b/d/e"</li></ol><p>Using a delimiter of `/` will return a single file, "a".</p><p>`apiResponse.prefixes` will return the "sub-directories" that were found:</p><ol><li>"a/"</li><li>"b/"</li></ol></caption>
-   * ```
    * bucket.getFiles({
    *   autoPaginate: false,
    *   delimiter: '/'
@@ -2418,7 +2415,6 @@ class Bucket extends ServiceObject {
    *   //   'b/'
    *   // ]
    * });
-   * ```
    *
    * @example <caption>Using prefixes, it's now possible to simulate a file system with follow-up requests.</caption>
    * bucket.getFiles({
