@@ -184,7 +184,7 @@ it("should get a bucket's public access prevention metadata", async () => {
   assert.ok(metadata.iamConfiguration.publicAccessPrevention);
 });
 
-it('should set public access prevention to unspecified', async () => {
+it.skip('should set public access prevention to unspecified', async () => {
   const output = execSync(
     `node setPublicAccessPreventionUnspecified.js ${bucketName}`
   );
@@ -198,7 +198,7 @@ it('should set public access prevention to unspecified', async () => {
     metadata[0].iamConfiguration.publicAccessPrevention,
     PUBLIC_ACCESS_PREVENTION_UNSPECIFIED
   );
-}).skip();
+});
 
 it("should add a bucket's website configuration", async () => {
   const output = execSync(
