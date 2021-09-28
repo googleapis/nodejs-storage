@@ -390,8 +390,8 @@ class Notification extends ServiceObject {
    *   const apiResponse = data[1];
    * });
    *
-   * @example <caption>include:samples/notifications.js</caption>
-   * region_tag:
+   * @example <caption>include:samples/getMetadataNotifications.js</caption>
+   * region_tag:storage_print_pubsub_bucket_notification
    * Another example:
    */
   getMetadata(
