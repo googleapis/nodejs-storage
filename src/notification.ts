@@ -244,8 +244,8 @@ class Notification extends ServiceObject {
    *   const apiResponse = data[0];
    * });
    *
-   * @example <caption>include:samples/notifications.js</caption>
-   * region_tag:storage_delete_notification
+   * @example <caption>include:samples/deleteNotification.js</caption>
+   * region_tag:storage_delete_bucket_notification
    * Another example:
    */
   delete(
@@ -391,7 +391,7 @@ class Notification extends ServiceObject {
    * });
    *
    * @example <caption>include:samples/notifications.js</caption>
-   * region_tag:storage_notifications_get_metadata
+   * region_tag:
    * Another example:
    */
   getMetadata(
