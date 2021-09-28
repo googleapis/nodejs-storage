@@ -1,5 +1,0 @@
-line
-endings
-are
-a
-PITA
