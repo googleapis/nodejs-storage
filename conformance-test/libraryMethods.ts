@@ -16,7 +16,6 @@ import {Bucket, File, HmacKey, Iam, Notification, Storage} from '../src';
 import * as fs from 'fs';
 import * as path from 'path';
 
-
 /////////////////////////////////////////////////
 //////////////////// BUCKET /////////////////////
 /////////////////////////////////////////////////
@@ -281,10 +280,13 @@ export async function bucketUploadResumable(
   _notification: Notification,
   _storage: Storage
 ) {
-  await bucket.upload(path.join(
-    __dirname,
-    '../../conformance-test/test-data/retryStrategyTestData.json'
-  ), {resumable: true});
+  await bucket.upload(
+    path.join(
+      __dirname,
+      '../../conformance-test/test-data/retryStrategyTestData.json'
+    ),
+    {resumable: true}
+  );
 }
 
 export async function bucketUploadMultipart(
@@ -293,10 +295,13 @@ export async function bucketUploadMultipart(
   _notification: Notification,
   _storage: Storage
 ) {
-  await bucket.upload(path.join(
-    __dirname,
-    '../../conformance-test/test-data/retryStrategyTestData.json'
-  ), {resumable: false});
+  await bucket.upload(
+    path.join(
+      __dirname,
+      '../../conformance-test/test-data/retryStrategyTestData.json'
+    ),
+    {resumable: false}
+  );
 }
 
 /////////////////////////////////////////////////
@@ -342,10 +347,12 @@ export async function createWriteStreamResumable(
   _storage: Storage
 ) {
   await fs
-    .createReadStream(path.join(
-      __dirname,
-      '../../conformance-test/test-data/retryStrategyTestData.json'
-    ))
+    .createReadStream(
+      path.join(
+        __dirname,
+        '../../conformance-test/test-data/retryStrategyTestData.json'
+      )
+    )
     .pipe(file.createWriteStream({resumable: true}));
 }
 
@@ -356,10 +363,12 @@ export async function createWriteStreamMultipart(
   _storage: Storage
 ) {
   await fs
-    .createReadStream(path.join(
-      __dirname,
-      '../../conformance-test/test-data/retryStrategyTestData.json'
-    ))
+    .createReadStream(
+      path.join(
+        __dirname,
+        '../../conformance-test/test-data/retryStrategyTestData.json'
+      )
+    )
     .pipe(file.createWriteStream({resumable: false}));
 }
 
