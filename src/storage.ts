@@ -307,7 +307,6 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  * @property {string} WRITER_ROLE
  *
  * @example
- * ```
  * const {Storage} = require('@google-cloud/storage');
  * const storage = new Storage();
  * const albums = storage.bucket('albums');
@@ -342,7 +341,6 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *   const aclObject = data[0];
  *   const apiResponse = data[1];
  * });
- * ```
  */
 /**
  * Get {@link Bucket} objects for all of the buckets in your project as
@@ -354,7 +352,6 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *     instances.
  *
  * @example
- * ```
  * storage.getBucketsStream()
  *   .on('error', console.error)
  *   .on('data', function(bucket) {
@@ -372,7 +369,6 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *   .on('data', function(bucket) {
  *     this.end();
  *   });
- * ```
  */
 /**
  * Get {@link HmacKey} objects for all of the HMAC keys in the project in a
@@ -384,7 +380,6 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *     instances.
  *
  * @example
- * ```
  * storage.getHmacKeysStream()
  *   .on('error', console.error)
  *   .on('data', function(hmacKey) {
@@ -402,7 +397,6 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *   .on('data', function(bucket) {
  *     this.end();
  *   });
- * ```
  */
 /**
  * <h4>ACLs</h4>
@@ -656,12 +650,10 @@ export class Storage extends Service {
    * @see Bucket
    *
    * @example
-   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const albums = storage.bucket('albums');
    * const photos = storage.bucket('photos');
-   * ```
    */
   bucket(name: string, options?: BucketOptions) {
     if (!name) {
@@ -679,11 +671,9 @@ export class Storage extends Service {
    * @see Channel
    *
    * @example
-   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const channel = storage.channel('id', 'resource-id');
-   * ```
    */
   channel(id: string, resourceId: string) {
     return new Channel(this, id, resourceId);
@@ -760,7 +750,6 @@ export class Storage extends Service {
    * @see Bucket#create
    *
    * @example
-   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const callback = function(err, bucket, apiResponse) {
@@ -813,7 +802,6 @@ export class Storage extends Service {
    *   const apiResponse = data[1];
    * });
    *
-   * ```
    * @example <caption>include:samples/buckets.js</caption>
    * region_tag:storage_create_bucket
    * Another example:
@@ -959,7 +947,6 @@ export class Storage extends Service {
    * @return {Promise<CreateHmacKeyResponse>}
    *
    * @example
-   * ```
    * const {Storage} = require('google-cloud/storage');
    * const storage = new Storage();
    *
@@ -982,7 +969,6 @@ export class Storage extends Service {
    *     const secret = response[1];
    *     // Securely store the secret for use with the XML API.
    *   });
-   * ```
    */
   createHmacKey(
     serviceAccountEmail: string,
@@ -1071,7 +1057,6 @@ export class Storage extends Service {
    * @returns {Promise<GetBucketsResponse>}
    *
    * @example
-   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * storage.getBuckets(function(err, buckets) {
@@ -1110,7 +1095,6 @@ export class Storage extends Service {
    *   const buckets = data[0];
    * });
    *
-   * ```
    * @example <caption>include:samples/buckets.js</caption>
    * region_tag:storage_list_buckets
    * Another example:
@@ -1198,7 +1182,6 @@ export class Storage extends Service {
    * @return {Promise<GetHmacKeysResponse>}
    *
    * @example
-   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * storage.getHmacKeys(function(err, hmacKeys) {
@@ -1232,7 +1215,6 @@ export class Storage extends Service {
    * storage.getHmacKeys().then(function(data) {
    *   const hmacKeys = data[0];
    * });
-   * ```
    */
   getHmacKeys(options?: GetHmacKeysOptions): Promise<GetHmacKeysResponse>;
   getHmacKeys(callback: GetHmacKeysCallback): void;
@@ -1316,7 +1298,6 @@ export class Storage extends Service {
    * @returns {Promise<GetServiceAccountResponse>}
    *
    * @example
-   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    *
@@ -1333,7 +1314,6 @@ export class Storage extends Service {
    *   const serviceAccountEmail = data[0].emailAddress;
    *   const apiResponse = data[1];
    * });
-   * ```
    */
   getServiceAccount(
     optionsOrCallback?: GetServiceAccountOptions | GetServiceAccountCallback,
@@ -1386,11 +1366,9 @@ export class Storage extends Service {
    * @see HmacKey
    *
    * @example
-   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const hmacKey = storage.hmacKey('ACCESS_ID');
-   * ```
    */
   hmacKey(accessId: string, options?: HmacKeyOptions) {
     if (!accessId) {
