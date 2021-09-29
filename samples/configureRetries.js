@@ -79,7 +79,7 @@ function main(bucketName = 'my-bucket', fileName = 'test.txt') {
 
   async function deleteFileWithCustomizedRetrySetting() {
     await storage.bucket(bucketName).file(fileName).delete();
-    console.log(`File ${file} deleted with a customized retry strategy.`);
+    console.log(`File ${fileName} deleted with a customized retry strategy.`);
   }
 
   deleteFileWithCustomizedRetrySetting();
