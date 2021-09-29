@@ -485,9 +485,7 @@ describe('file', () => {
       );
       assert.match(
         output,
-        new RegExp(
-          `File ${fileName} deleted with a customized retry strategy.`
-        )
+        new RegExp(`File ${fileName} deleted with a customized retry strategy.`)
       );
     });
 
