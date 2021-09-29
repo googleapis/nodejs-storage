@@ -4,7 +4,8 @@
     "https://codecov.io/gh/googleapis/",
     "www.googleapis.com",
     "img.shields.io",
-    "node_modules/"
+    "node_modules/",
+    "CHANGELOG.md"
   ],
   "silent": true,
   "concurrency": 10
