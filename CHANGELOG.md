@@ -4,6 +4,20 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [5.14.4](https://www.github.com/googleapis/nodejs-storage/compare/v5.14.3...v5.14.4) (2021-09-27)
+
+
+### Bug Fixes
+
+* respect precondition settings from constructors ([#1617](https://www.github.com/googleapis/nodejs-storage/issues/1617)) ([6a48942](https://www.github.com/googleapis/nodejs-storage/commit/6a48942e540e3d96e2a5b396b8e74cbe732178be))
+
+### [5.14.3](https://www.github.com/googleapis/nodejs-storage/compare/v5.14.2...v5.14.3) (2021-09-22)
+
+
+### Bug Fixes
+
+* set autoretry back to instance value at end of file functions ([#1604](https://www.github.com/googleapis/nodejs-storage/issues/1604)) ([db3b59d](https://www.github.com/googleapis/nodejs-storage/commit/db3b59d731c9760d55bf112c211bdd644da911c4))
+
 ### [5.14.2](https://www.github.com/googleapis/nodejs-storage/compare/v5.14.1...v5.14.2) (2021-09-13)
 
 

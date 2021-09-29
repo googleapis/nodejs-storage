@@ -426,6 +426,7 @@ class File extends ServiceObject<File> {
   private encryptionKeyHash?: string;
   private encryptionKeyInterceptor?: Interceptor;
   private instanceRetryValue?: boolean;
+  private instancePreconditionOpts?: PreconditionOptions;
 
   /**
    * Cloud Storage uses access control lists (ACLs) to manage object and
@@ -530,22 +531,7 @@ class File extends ServiceObject<File> {
       }
     }
 
-    if (options?.preconditionOpts?.ifGenerationMatch) {
-      requestQueryObject.ifGenerationMatch =
-        options.preconditionOpts.ifGenerationMatch;
-    }
-    if (options?.preconditionOpts?.ifGenerationNotMatch) {
-      requestQueryObject.ifGenerationNotMatch =
-        options.preconditionOpts.ifGenerationNotMatch;
-    }
-    if (options?.preconditionOpts?.ifMetagenerationMatch) {
-      requestQueryObject.ifMetagenerationMatch =
-        options.preconditionOpts.ifMetagenerationMatch;
-    }
-    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
-      requestQueryObject.ifMetagenerationNotMatch =
-        options.preconditionOpts.ifMetagenerationNotMatch;
-    }
+    Object.assign(requestQueryObject, options.preconditionOpts);
 
     const userProject = options.userProject || bucket.userProject;
     if (typeof userProject === 'string') {
@@ -865,6 +851,7 @@ class File extends ServiceObject<File> {
     });
 
     this.instanceRetryValue = this.storage?.retryOptions?.autoRetry;
+    this.instancePreconditionOpts = options?.preconditionOpts;
   }
 
   copy(
@@ -1070,25 +1057,11 @@ class File extends ServiceObject<File> {
       delete options.predefinedAcl;
     }
 
-    if (options?.preconditionOpts?.ifGenerationMatch) {
-      query.ifGenerationMatch = options.preconditionOpts.ifGenerationMatch;
-      delete options.preconditionOpts.ifGenerationMatch;
-    }
-    if (options?.preconditionOpts?.ifGenerationNotMatch) {
-      query.ifGenerationNotMatch =
-        options.preconditionOpts.ifGenerationNotMatch;
-      delete options.preconditionOpts.ifGenerationNotMatch;
-    }
-    if (options?.preconditionOpts?.ifMetagenerationMatch) {
-      query.ifMetagenerationMatch =
-        options.preconditionOpts.ifMetagenerationMatch;
-      delete options.preconditionOpts.ifMetagenerationMatch;
-    }
-    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
-      query.ifMetagenerationNotMatch =
-        options.preconditionOpts.ifMetagenerationNotMatch;
-      delete options.preconditionOpts.ifMetagenerationNotMatch;
-    }
+    Object.assign(
+      query,
+      this.instancePreconditionOpts,
+      options.preconditionOpts
+    );
 
     newFile = newFile! || destBucket.file(destName);
 
@@ -1123,6 +1096,7 @@ class File extends ServiceObject<File> {
 
     if (
       (options?.preconditionOpts?.ifGenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
@@ -1614,6 +1588,7 @@ class File extends ServiceObject<File> {
     const retryOptions = this.storage.retryOptions;
     if (
       (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifMetagenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
@@ -1640,10 +1615,11 @@ class File extends ServiceObject<File> {
         public: options.public,
         userProject: options.userProject || this.userProject,
         retryOptions: retryOptions,
-        params: options.preconditionOpts,
+        params: options?.preconditionOpts || this.instancePreconditionOpts,
       },
       callback!
     );
+    this.storage.retryOptions.autoRetry = this.instanceRetryValue;
   }
 
   /**
@@ -1693,7 +1669,7 @@ class File extends ServiceObject<File> {
    *     working with streams, the file format and size is unknown until it's
    *     completely consumed. Because of this, it's best for you to be explicit
    *     for what makes sense given your input.
-   * @param {number} [timeout=60000] Set the HTTP request timeout in
+   * @property {number} [timeout=60000] Set the HTTP request timeout in
    *     milliseconds. This option is not available for resumable uploads.
    *     Default: `60000`
    * @property {string} [uri] The URI for an already-created resumable
@@ -3711,6 +3687,7 @@ class File extends ServiceObject<File> {
     let maxRetries = this.storage.retryOptions.maxRetries;
     if (
       (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifMetagenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
@@ -3895,6 +3872,7 @@ class File extends ServiceObject<File> {
     const retryOptions = this.storage.retryOptions;
     if (
       (options?.preconditionOpts?.ifMetagenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifMetagenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
@@ -3924,7 +3902,7 @@ class File extends ServiceObject<File> {
       uri: options.uri,
       userProject: options.userProject || this.userProject,
       retryOptions: retryOptions,
-      params: options.preconditionOpts,
+      params: options?.preconditionOpts || this.instancePreconditionOpts,
     });
 
     uploadStream
@@ -3940,6 +3918,7 @@ class File extends ServiceObject<File> {
       .on('progress', evt => dup.emit('progress', evt));
 
     dup.setWritable(uploadStream);
+    this.storage.retryOptions.autoRetry = this.instanceRetryValue;
   }
 
   /**
@@ -3995,21 +3974,11 @@ class File extends ServiceObject<File> {
       reqOpts.qs.predefinedAcl = 'publicRead';
     }
 
-    if (options?.preconditionOpts?.ifGenerationMatch) {
-      reqOpts.qs.ifGenerationMatch = options.preconditionOpts.ifGenerationMatch;
-    }
-    if (options?.preconditionOpts?.ifGenerationNotMatch) {
-      reqOpts.qs.ifGenerationNotMatch =
-        options.preconditionOpts.ifGenerationNotMatch;
-    }
-    if (options?.preconditionOpts?.ifMetagenerationMatch) {
-      reqOpts.qs.ifMetagenerationMatch =
-        options.preconditionOpts.ifMetagenerationMatch;
-    }
-    if (options?.preconditionOpts?.ifMetagenerationNotMatch) {
-      reqOpts.qs.ifMetagenerationNotMatch =
-        options.preconditionOpts.ifMetagenerationNotMatch;
-    }
+    Object.assign(
+      reqOpts.qs,
+      this.instancePreconditionOpts,
+      options.preconditionOpts
+    );
 
     util.makeWritableStream(dup, {
       makeAuthenticatedRequest: (reqOpts: object) => {
