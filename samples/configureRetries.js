@@ -76,9 +76,13 @@ function main(bucketName = 'my-bucket', fileName = 'test.txt') {
   console.log(
     `Idempotency strategy: ${storage.retryOptions.idempotencyStrategy}`
   );
-
-  await storage.bucket(bucketName).file(fileName).delete();
-  console.log(`File ${file} deleted with a customized retry strategy.`)
+  
+  async function deleteFileWithCustomizedRetrySetting() {
+    await storage.bucket(bucketName).file(fileName).delete();
+    console.log(`File ${file} deleted with a customized retry strategy.`)
+  }
+  
+  deleteFileWithCustomizedRetrySetting()
   // [END storage_configure_retries]
 }
 main(...process.argv.slice(2));
