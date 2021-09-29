@@ -85,4 +85,8 @@ function main(bucketName = 'my-bucket', fileName = 'test.txt') {
   deleteFileWithCustomizedRetrySetting();
   // [END storage_configure_retries]
 }
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));
