@@ -3241,6 +3241,8 @@ describe('Bucket', () => {
   describe('disableAutoRetryConditionallyIdempotent_', () => {
     beforeEach(() => {
       bucket.storage.retryOptions.autoRetry = true;
+      STORAGE.retryOptions.idempotencyStrategy =
+        IdempotencyStrategy.RetryConditional;
     });
 
     it('should set autoRetry to false when ifMetagenerationMatch is undefined (setMetadata)', done => {
@@ -3273,6 +3275,20 @@ describe('Bucket', () => {
         AvailableServiceObjectMethods.delete
       );
       assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+      done();
+    });
+
+    it('autoRetry should remain true when ifMetagenerationMatch is not undefined', done => {
+      bucket = new Bucket(STORAGE, BUCKET_NAME, {
+        preconditionOpts: {
+          ifMetagenerationMatch: 100,
+        },
+      });
+      bucket.disableAutoRetryConditionallyIdempotent_(
+        bucket.methods.delete,
+        AvailableServiceObjectMethods.delete
+      );
+      assert.strictEqual(bucket.storage.retryOptions.autoRetry, true);
       done();
     });
   });
