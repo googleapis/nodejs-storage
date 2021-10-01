@@ -43,6 +43,7 @@
         "fileMakePublic"
     ],
     "storage.objects.rewrite": [
+        "copy",
         "move",
         "rename",
         "rotateEncryptionKey",
