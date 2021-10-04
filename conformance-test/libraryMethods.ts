@@ -77,9 +77,14 @@ export async function deleteFiles(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-  _storage: Storage
+  storage: Storage
 ) {
-  await bucket.deleteFiles();
+  const b = new Bucket(storage, bucket.name, {
+    preconditionOpts: {
+      ifMetagenerationMatch: bucket.metadata.metageneration
+    }
+  });
+  await b.deleteFiles();
 }
 
 export async function deleteLabels(
@@ -378,7 +383,12 @@ export async function fileDelete(
   _notification: Notification,
   _storage: Storage
 ) {
-  await file.delete();
+  const f = new File(file.bucket, file.name, {
+    preconditionOpts: {
+      ifGenerationMatch: file.metadata.generation
+    }
+  });
+  await f.delete();
 }
 
 export async function deleteResumableCache(
