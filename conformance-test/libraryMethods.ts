@@ -81,8 +81,8 @@ export async function deleteFiles(
 ) {
   const b = new Bucket(storage, bucket.name, {
     preconditionOpts: {
-      ifMetagenerationMatch: bucket.metadata.metageneration
-    }
+      ifMetagenerationMatch: bucket.metadata.metageneration,
+    },
   });
   await b.deleteFiles();
 }
@@ -385,8 +385,8 @@ export async function fileDelete(
 ) {
   const f = new File(file.bucket, file.name, {
     preconditionOpts: {
-      ifGenerationMatch: file.metadata.generation
-    }
+      ifGenerationMatch: file.metadata.generation,
+    },
   });
   await f.delete();
 }
