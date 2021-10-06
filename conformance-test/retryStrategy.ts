@@ -83,8 +83,8 @@ const FILE_OPTIONS = {
 
 const BUCKET_OPTIONS = {
   preconditionOpts: {
-    ifMetagenerationMatch: 1
-  }
+    ifMetagenerationMatch: 1,
+  },
 };
 
 const TESTBENCH_HOST =
