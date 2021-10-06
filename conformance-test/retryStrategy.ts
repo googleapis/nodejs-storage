@@ -74,11 +74,17 @@ const methodMap: Map<String, String[]> = new Map(
 );
 
 const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
-const OPTIONS = {
+const FILE_OPTIONS = {
   preconditionOpts: {
     ifGenerationMatch: 0,
-    ifMetagenerationMatch: 0,
+    ifMetagenerationMatch: 1,
   },
+};
+
+const BUCKET_OPTIONS = {
+  preconditionOpts: {
+    ifMetagenerationMatch: 1
+  }
 };
 
 const TESTBENCH_HOST =
@@ -171,7 +177,7 @@ async function createBucketForTest(
 ) {
   const name = generateName(storageMethodString, 'bucket');
   const bucket = preconditionProvided
-    ? storage.bucket(name, OPTIONS)
+    ? storage.bucket(name, BUCKET_OPTIONS)
     : storage.bucket(name);
   await bucket.create();
   return bucket;
@@ -184,7 +190,7 @@ async function createFileForTest(
 ) {
   const name = generateName(storageMethodString, 'file');
   const file = preconditionProvided
-    ? bucket.file(name, OPTIONS)
+    ? bucket.file(name, FILE_OPTIONS)
     : bucket.file(name);
   await file.save(name);
   return file;

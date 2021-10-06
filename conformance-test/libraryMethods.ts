@@ -77,14 +77,9 @@ export async function deleteFiles(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-  storage: Storage
+  _storage: Storage
 ) {
-  const b = new Bucket(storage, bucket.name, {
-    preconditionOpts: {
-      ifMetagenerationMatch: bucket.metadata.metageneration,
-    },
-  });
-  await b.deleteFiles();
+  await bucket.deleteFiles();
 }
 
 export async function deleteLabels(
