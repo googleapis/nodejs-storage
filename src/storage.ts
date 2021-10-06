@@ -604,6 +604,7 @@ export class Storage extends Service {
       },
       baseUrl,
       customEndpoint,
+      useAuthWithCustomEndpoint: options?.useAuthWithCustomEndpoint,
       projectIdRequired: false,
       scopes: [
         'https://www.googleapis.com/auth/iam',
