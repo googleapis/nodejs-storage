@@ -77,14 +77,9 @@ export async function deleteFiles(
   bucket: Bucket,
   _file: File,
   _notification: Notification,
-  storage: Storage
+  _storage: Storage
 ) {
-  const b = new Bucket(storage, bucket.name, {
-    preconditionOpts: {
-      ifMetagenerationMatch: bucket.metadata.metageneration,
-    },
-  });
-  await b.deleteFiles();
+  await bucket.deleteFiles();
 }
 
 export async function deleteLabels(
@@ -343,38 +338,6 @@ export async function createResumableUpload(
   _storage: Storage
 ) {
   await file.createResumableUpload();
-}
-
-export async function createWriteStreamResumable(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage
-) {
-  await fs
-    .createReadStream(
-      path.join(
-        __dirname,
-        '../../conformance-test/test-data/retryStrategyTestData.json'
-      )
-    )
-    .pipe(file.createWriteStream({resumable: true}));
-}
-
-export async function createWriteStreamMultipart(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage
-) {
-  await fs
-    .createReadStream(
-      path.join(
-        __dirname,
-        '../../conformance-test/test-data/retryStrategyTestData.json'
-      )
-    )
-    .pipe(file.createWriteStream({resumable: false}));
 }
 
 export async function fileDelete(

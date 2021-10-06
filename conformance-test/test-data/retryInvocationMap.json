@@ -53,8 +53,6 @@
         "bucketUploadResumable",
         "bucketUploadMultipart",
         "createResumableUpload",
-        "createWriteStreamResumable",
-        "createWriteStreamMultipart",
         "saveResumable",
         "saveMultipart",
         "deleteResumableCache"
