@@ -345,38 +345,6 @@ export async function createResumableUpload(
   await file.createResumableUpload();
 }
 
-export async function createWriteStreamResumable(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage
-) {
-  await fs
-    .createReadStream(
-      path.join(
-        __dirname,
-        '../../conformance-test/test-data/retryStrategyTestData.json'
-      )
-    )
-    .pipe(file.createWriteStream({resumable: true}));
-}
-
-export async function createWriteStreamMultipart(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage
-) {
-  await fs
-    .createReadStream(
-      path.join(
-        __dirname,
-        '../../conformance-test/test-data/retryStrategyTestData.json'
-      )
-    )
-    .pipe(file.createWriteStream({resumable: false}));
-}
-
 export async function fileDelete(
   _bucket: Bucket,
   file: File,
