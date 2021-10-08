@@ -414,7 +414,6 @@ export async function isPublic(
   _notification: Notification,
   _storage: Storage
 ) {
-  console.log("about to determine public status")
   await file.isPublic();
 }
 
