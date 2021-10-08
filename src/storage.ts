@@ -128,6 +128,7 @@ export interface CreateBucketRequest {
   userProject?: string;
   location?: string;
   versioning?: Versioning;
+  rpo?: string;
 }
 
 export type CreateBucketResponse = [Bucket, Metadata];
@@ -732,6 +733,8 @@ export class Storage extends Service {
    * @property {Versioning} [versioning=undefined] Specify the versioning status.
    * @property {string} [userProject] The ID of the project which will be billed
    *     for the request.
+   * @property {string} [rpo] For dual region buckets, controls whether turbo
+   *      replication is enabled (`ASYNC_TURBO`) or disabled (`DEFAULT`)
    */
   /**
    * Create a bucket.
