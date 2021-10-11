@@ -73,6 +73,8 @@ const methodMap: Map<String, String[]> = new Map(
   Object.entries(JSON.parse(jsonToNodeApiMapping))
 );
 
+const DURATION_SECONDS = 600; // 10 mins.
+
 const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
 const FILE_OPTIONS = {
   preconditionOpts: {
@@ -180,6 +182,7 @@ async function createBucketForTest(
     ? storage.bucket(name, BUCKET_OPTIONS)
     : storage.bucket(name);
   await bucket.create();
+  await bucket.setRetentionPeriod(DURATION_SECONDS);
   return bucket;
 }
 

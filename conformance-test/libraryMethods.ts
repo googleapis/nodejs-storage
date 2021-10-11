@@ -396,8 +396,6 @@ export async function getExpirationDate(
   _notification: Notification,
   _storage: Storage
 ) {
-  const DURATION_SECONDS = 15780000; // 6 months.
-  await bucket.setRetentionPeriod(DURATION_SECONDS);
   await file.getExpirationDate();
 }
 
