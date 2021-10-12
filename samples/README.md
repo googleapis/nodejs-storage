@@ -1091,16 +1091,16 @@ __Usage:__
 
 
 
-### Get Turbo Replication
+### Get RPO
 
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getTurboReplication.js).
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getRPO.js).
 
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getTurboReplication.js,samples/README.md)
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getRPO.js,samples/README.md)
 
 __Usage:__
 
 
-`node samples/getTurboReplication.js`
+`node samples/getRPO.js`
 
 
 -----
@@ -1810,16 +1810,16 @@ __Usage:__
 
 
 
-### Set Turbo Replication Async Turbo
+### Set RPO Async Turbo
 
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setTurboReplicationAsyncTurbo.js).
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setRPOAsyncTurbo.js).
 
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setTurboReplicationAsyncTurbo.js,samples/README.md)
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setRPOAsyncTurbo.js,samples/README.md)
 
 __Usage:__
 
 
-`node samples/setTurboReplicationAsyncTurbo.js`
+`node samples/setRPOAsyncTurbo.js`
 
 
 -----
@@ -1827,16 +1827,16 @@ __Usage:__
 
 
 
-### Set Turbo Replication Default
+### Set RPO Default
 
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setTurboReplicationDefault.js).
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setRPODefault.js).
 
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setTurboReplicationDefault.js,samples/README.md)
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setRPODefault.js,samples/README.md)
 
 __Usage:__
 
 
-`node samples/setTurboReplicationDefault.js`
+`node samples/setRPODefault.js`
 
 
 -----

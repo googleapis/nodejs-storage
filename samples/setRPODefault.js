@@ -21,7 +21,7 @@
  */
 
 function main(bucketName = 'my-bucket') {
-  // [START storage_set_turbo_replication_async_turbo]
+  // [START storage_set_rpo_default]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -34,17 +34,18 @@ function main(bucketName = 'my-bucket') {
   // Creates a client
   const storage = new Storage();
 
-  // Enable turbo replication for the bucket. The bucket must be a dual region bucket.
-  async function setTurboReplicationAsyncTurbo() {
+  // Disable turbo replication for the bucket by setting RPO to default.
+  // The bucket must be a dual region bucket.
+  async function setRPODefault() {
     await storage.bucket(bucketName).setMetadata({
-      rpo: 'ASYNC_TURBO',
+      rpo: 'DEFAULT',
     });
 
-    console.log(`Turbo replication enabled for ${bucketName}.`);
+    console.log(`Turbo replication disabled for ${bucketName}.`);
   }
 
-  setTurboReplicationAsyncTurbo();
-  // [END storage_set_turbo_replication_async_turbo]
+  setRPODefault();
+  // [END storage_set_rpo_default]
 }
 
 process.on('unhandledRejection', err => {

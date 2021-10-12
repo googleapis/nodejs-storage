@@ -224,12 +224,10 @@ it("should get a bucket's turbo replication metadata", async () => {
     rpo: TURBO_REPLICATION_ASYNC_TURBO,
   });
 
-  const output = execSync(
-    `node getTurboReplication.js ${bucketNameDualRegion}`
-  );
+  const output = execSync(`node getRPO.js ${bucketNameDualRegion}`);
   assert.match(
     output,
-    new RegExp(`Turbo replication is ASYNC_TURBO for ${bucketNameDualRegion}.`)
+    new RegExp(`RPO is ASYNC_TURBO for ${bucketNameDualRegion}.`)
   );
 
   const metadata = await dualRegionBucket.getMetadata();
@@ -237,9 +235,7 @@ it("should get a bucket's turbo replication metadata", async () => {
 });
 
 it("should set a bucket's turbo replication status to ASYNC_TURBO", async () => {
-  const output = execSync(
-    `node setTurboReplicationAsyncTurbo.js ${bucketNameDualRegion}`
-  );
+  const output = execSync(`node setRPOAsyncTurbo.js ${bucketNameDualRegion}`);
   assert.match(
     output,
     new RegExp(`Turbo replication enabled for ${bucketNameDualRegion}.`)
@@ -250,9 +246,7 @@ it("should set a bucket's turbo replication status to ASYNC_TURBO", async () => 
 });
 
 it("should set a bucket's turbo replication status to DEFAULT", async () => {
-  const output = execSync(
-    `node setTurboReplicationDefault.js ${bucketNameDualRegion}`
-  );
+  const output = execSync(`node setRPODefault.js ${bucketNameDualRegion}`);
   assert.match(
     output,
     new RegExp(`Turbo replication disabled for ${bucketNameDualRegion}.`)
