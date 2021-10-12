@@ -3,6 +3,7 @@
         "deleteBucket"
     ],
     "storage.buckets.patch": [
+        "bucketMakePrivate",
         "deleteLabels",
         "disableRequesterPays",
         "enableRequesterPays",
@@ -34,7 +35,6 @@
         "lock"
     ],
     "storage.objects.patch": [
-        "bucketMakePrivate",
         "fileMakePrivate",
         "setMetadata"
     ],
