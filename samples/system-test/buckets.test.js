@@ -36,8 +36,8 @@ const dualRegionBucket = storage.bucket(bucketNameDualRegion);
 const PUBLIC_ACCESS_PREVENTION_INHERITED = 'inherited';
 const PUBLIC_ACCESS_PREVENTION_ENFORCED = 'enforced';
 
-const TURBO_REPLICATION_ASYNC_TURBO = 'ASYNC_TURBO';
-const TURBO_REPLICATION_DEFAULT = 'DEFAULT';
+const RPO_ASYNC_TURBO = 'ASYNC_TURBO';
+const RPO_DEFAULT = 'DEFAULT';
 
 after(async () => {
   await bucket.delete().catch(console.error);
@@ -219,9 +219,9 @@ it('should create a dual region bucket with turbo replication enabled', async ()
   assert.strictEqual(exists, true);
 });
 
-it("should get a bucket's turbo replication metadata", async () => {
+it("should get a bucket's RPO metadata", async () => {
   await storage.bucket(bucketNameDualRegion).setMetadata({
-    rpo: TURBO_REPLICATION_ASYNC_TURBO,
+    rpo: RPO_ASYNC_TURBO,
   });
 
   const output = execSync(`node getRPO.js ${bucketNameDualRegion}`);
@@ -231,10 +231,10 @@ it("should get a bucket's turbo replication metadata", async () => {
   );
 
   const metadata = await dualRegionBucket.getMetadata();
-  assert.strictEqual(metadata[0].rpo, TURBO_REPLICATION_ASYNC_TURBO);
+  assert.strictEqual(metadata[0].rpo, RPO_ASYNC_TURBO);
 });
 
-it("should set a bucket's turbo replication status to ASYNC_TURBO", async () => {
+it("should set a bucket's RPO to ASYNC_TURBO", async () => {
   const output = execSync(`node setRPOAsyncTurbo.js ${bucketNameDualRegion}`);
   assert.match(
     output,
@@ -242,10 +242,10 @@ it("should set a bucket's turbo replication status to ASYNC_TURBO", async () => 
   );
 
   const metadata = await dualRegionBucket.getMetadata();
-  assert.strictEqual(metadata[0].rpo, TURBO_REPLICATION_ASYNC_TURBO);
+  assert.strictEqual(metadata[0].rpo, RPO_ASYNC_TURBO);
 });
 
-it("should set a bucket's turbo replication status to DEFAULT", async () => {
+it("should set a bucket's RPO to DEFAULT", async () => {
   const output = execSync(`node setRPODefault.js ${bucketNameDualRegion}`);
   assert.match(
     output,
@@ -253,7 +253,7 @@ it("should set a bucket's turbo replication status to DEFAULT", async () => {
   );
 
   const metadata = await dualRegionBucket.getMetadata();
-  assert.strictEqual(metadata[0].rpo, TURBO_REPLICATION_DEFAULT);
+  assert.strictEqual(metadata[0].rpo, RPO_DEFAULT);
 });
 
 it("should add a bucket's website configuration", async () => {
