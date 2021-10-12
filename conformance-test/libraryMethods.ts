@@ -427,12 +427,15 @@ export async function isPublic(
 }
 
 export async function fileMakePrivate(
-  _bucket: Bucket,
+  bucket: Bucket,
   file: File,
   _notification: Notification,
   _storage: Storage
 ) {
-  await file.makePrivate();
+  const fileWithGeneration = new File(bucket, file.name, {
+    preconditionOpts: file.metadata.generation,
+  });
+  await fileWithGeneration.makePrivate();
 }
 
 export async function fileMakePublic(
@@ -495,11 +498,14 @@ export async function saveMultipart(
 }
 
 export async function setMetadata(
-  _bucket: Bucket,
+  bucket: Bucket,
   file: File,
   _notification: Notification,
   _storage: Storage
 ) {
+  const fileWithGeneration = new File(bucket, file.name, {
+    preconditionOpts: file.metadata.generation,
+  });
   const metadata = {
     contentType: 'application/x-font-ttf',
     metadata: {
@@ -507,7 +513,7 @@ export async function setMetadata(
       properties: 'go here',
     },
   };
-  await file.setMetadata(metadata);
+  await fileWithGeneration.setMetadata(metadata);
 }
 
 export async function setStorageClass(
