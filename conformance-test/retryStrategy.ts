@@ -183,12 +183,12 @@ async function createBucketForTest(
     : storage.bucket(name);
   await bucket.create();
   const bucketToReturn = preconditionProvided
-  ? new Bucket(storage, bucket.name, {
-    preconditionOpts: {
-      ifMetagenerationMatch: 2,
-    },
-  })
-  : storage.bucket(name);
+    ? new Bucket(storage, bucket.name, {
+        preconditionOpts: {
+          ifMetagenerationMatch: 2,
+        },
+      })
+    : storage.bucket(name);
   await bucket.setRetentionPeriod(DURATION_SECONDS);
   return bucketToReturn;
 }
