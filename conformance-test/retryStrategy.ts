@@ -182,15 +182,15 @@ async function createBucketForTest(
     ? storage.bucket(name, BUCKET_OPTIONS)
     : storage.bucket(name);
   await bucket.create();
-  const bucketToReturn = preconditionProvided
-    ? new Bucket(storage, bucket.name, {
-        preconditionOpts: {
-          ifMetagenerationMatch: 2,
-        },
-      })
-    : storage.bucket(name);
   await bucket.setRetentionPeriod(DURATION_SECONDS);
-  return bucketToReturn;
+  if (preconditionProvided){
+    return new Bucket(storage, bucket.name, {
+      preconditionOpts: {
+        ifMetagenerationMatch: 2,
+      },
+    });
+  }
+  return bucket;
 }
 
 async function createFileForTest(
@@ -203,6 +203,14 @@ async function createFileForTest(
     ? bucket.file(name, FILE_OPTIONS)
     : bucket.file(name);
   await file.save(name);
+  if (preconditionProvided){
+    return new File(bucket, file.name, {
+      preconditionOpts: {
+        ifMetagenerationMatch: file.metadata.metageneration,
+        ifGenerationMatch: file.metadata.generation
+      },
+    });
+  }
   return file;
 }
 

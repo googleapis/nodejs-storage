@@ -355,12 +355,7 @@ export async function fileDelete(
   _notification: Notification,
   _storage: Storage
 ) {
-  const f = new File(file.bucket, file.name, {
-    preconditionOpts: {
-      ifGenerationMatch: file.metadata.generation,
-    },
-  });
-  await f.delete();
+  await file.delete();
 }
 
 export async function deleteResumableCache(
@@ -427,15 +422,12 @@ export async function isPublic(
 }
 
 export async function fileMakePrivate(
-  bucket: Bucket,
+  _bucket: Bucket,
   file: File,
   _notification: Notification,
   _storage: Storage
 ) {
-  const fileWithGeneration = new File(bucket, file.name, {
-    preconditionOpts: file.metadata.generation,
-  });
-  await fileWithGeneration.makePrivate();
+  await file.makePrivate();
 }
 
 export async function fileMakePublic(
@@ -498,14 +490,11 @@ export async function saveMultipart(
 }
 
 export async function setMetadata(
-  bucket: Bucket,
+  _bucket: Bucket,
   file: File,
   _notification: Notification,
   _storage: Storage
 ) {
-  const fileWithGeneration = new File(bucket, file.name, {
-    preconditionOpts: file.metadata.generation,
-  });
   const metadata = {
     contentType: 'application/x-font-ttf',
     metadata: {
@@ -513,7 +502,7 @@ export async function setMetadata(
       properties: 'go here',
     },
   };
-  await fileWithGeneration.setMetadata(metadata);
+  await file.setMetadata(metadata);
 }
 
 export async function setStorageClass(
