@@ -432,12 +432,9 @@ export async function fileMakePrivate(
   _notification: Notification,
   _storage: Storage
 ) {
-  const fileWithGeneration = new File(
-    bucket,
-    file.name,
-    {
-      preconditionOpts: file.metadata.generation
-    });
+  const fileWithGeneration = new File(bucket, file.name, {
+    preconditionOpts: file.metadata.generation,
+  });
   await fileWithGeneration.makePrivate();
 }
 
@@ -506,13 +503,9 @@ export async function setMetadata(
   _notification: Notification,
   _storage: Storage
 ) {
-  const fileWithGeneration = new File(
-    bucket,
-    file.name,
-    {
-      preconditionOpts: file.metadata.generation
-    }
-  )
+  const fileWithGeneration = new File(bucket, file.name, {
+    preconditionOpts: file.metadata.generation,
+  });
   const metadata = {
     contentType: 'application/x-font-ttf',
     metadata: {
