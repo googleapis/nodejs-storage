@@ -973,10 +973,7 @@ describe('storage', () => {
     it("sets bucket's RPO to ASYNC_TURBO", async () => {
       await setTurboReplication(bucket, RPO_ASYNC_TURBO);
       const [bucketMetadata] = await bucket.getMetadata();
-      return assert.strictEqual(
-        bucketMetadata.rpo,
-        RPO_ASYNC_TURBO
-      );
+      return assert.strictEqual(bucketMetadata.rpo, RPO_ASYNC_TURBO);
     });
 
     it("sets a bucket's RPO to DEFAULT", async () => {

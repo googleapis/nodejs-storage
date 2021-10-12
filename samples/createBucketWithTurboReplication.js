@@ -34,7 +34,7 @@ function main(
   // The ID of your GCS bucket
   // const bucketName = 'your-unique-bucket-name';
 
-  // The name of a dual region location
+  // The name of a dual-region location
   // See this documentation for other valid locations:
   // https://cloud.google.com/storage/docs/locations#location-dr
   // const location = 'NAM4';

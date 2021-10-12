@@ -205,7 +205,7 @@ it('should set public access prevention to inherited', async () => {
   );
 });
 
-it('should create a dual region bucket with turbo replication enabled', async () => {
+it('should create a dual-region bucket with turbo replication enabled', async () => {
   const output = execSync(
     `node createBucketWithTurboReplication.js ${bucketNameDualRegion}`
   );

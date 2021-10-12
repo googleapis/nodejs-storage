@@ -35,7 +35,7 @@ function main(bucketName = 'my-bucket') {
   const storage = new Storage();
 
   // Enable turbo replication for the bucket by setting rpo to ASYNC_TURBO.
-  // The bucket must be a dual region bucket.
+  // The bucket must be a dual-region bucket.
   async function setRPOAsyncTurbo() {
     await storage.bucket(bucketName).setMetadata({
       rpo: 'ASYNC_TURBO',

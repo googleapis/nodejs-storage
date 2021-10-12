@@ -35,7 +35,7 @@ function main(bucketName = 'my-bucket') {
   const storage = new Storage();
 
   // Disable turbo replication for the bucket by setting RPO to default.
-  // The bucket must be a dual region bucket.
+  // The bucket must be a dual-region bucket.
   async function setRPODefault() {
     await storage.bucket(bucketName).setMetadata({
       rpo: 'DEFAULT',
