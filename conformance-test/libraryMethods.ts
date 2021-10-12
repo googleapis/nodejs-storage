@@ -39,9 +39,18 @@ export async function combine(
   const file2 = bucket.file('file2.txt');
   await file1.save('file1 contents');
   await file2.save('file2 contents');
-  const sources = [file1, file2];
+  const f1WithPrecondition = new File(file1.bucket, file1.name, {
+    preconditionOpts: {
+      ifGenerationMatch: file1.metadata.generation,
+    },
+  });
+  const f2WithPrecondition = new File(file2.bucket, file2.name, {
+    preconditionOpts: {
+      ifGenerationMatch: file2.metadata.generation,
+    },
+  });
+  const sources = [f1WithPrecondition, f2WithPrecondition];
   const allFiles = bucket.file('all-files.txt');
-
   await bucket.combine(sources, allFiles);
 }
 
