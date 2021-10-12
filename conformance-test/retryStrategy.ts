@@ -183,7 +183,11 @@ async function createBucketForTest(
     : storage.bucket(name);
   await bucket.create();
   await bucket.setRetentionPeriod(DURATION_SECONDS);
-  return bucket;
+  return new Bucket(storage, bucket.name, {
+    preconditionOpts: {
+      ifMetagenerationMatch: 2,
+    },
+  });
 }
 
 async function createFileForTest(
