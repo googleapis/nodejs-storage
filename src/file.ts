@@ -304,6 +304,10 @@ export interface FileOptions {
   preconditionOpts?: PreconditionOptions;
 }
 
+export interface RetryOptions {
+  preconditionOpts?: PreconditionOptions;
+}
+
 export interface CopyOptions {
   cacheControl?: string;
   contentEncoding?: string;
@@ -854,6 +858,24 @@ class File extends ServiceObject<File> {
     this.instancePreconditionOpts = options?.preconditionOpts;
   }
 
+  /**
+   * A helper method for determining if a request should be retried.
+   *
+   * A request should not be retried under the following conditions:
+   * - if precondition option `ifGenerationMatch` is not set OR
+   * - if `idempotencyStrategy` is set to `RetryNever`
+   */
+  private shouldRetry(options: RetryOptions): boolean {
+    return !(
+      (options?.preconditionOpts?.ifGenerationMatch === undefined &&
+        this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
+        this.storage.retryOptions.idempotencyStrategy ===
+          IdempotencyStrategy.RetryConditional) ||
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryNever
+    );
+  }
+
   copy(
     destination: string | Bucket | File,
     options?: CopyOptions
@@ -1094,14 +1116,7 @@ class File extends ServiceObject<File> {
       }
     }
 
-    if (
-      (options?.preconditionOpts?.ifGenerationMatch === undefined &&
-        this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
-        this.storage.retryOptions.idempotencyStrategy ===
-          IdempotencyStrategy.RetryConditional) ||
-      this.storage.retryOptions.idempotencyStrategy ===
-        IdempotencyStrategy.RetryNever
-    ) {
+    if (!this.shouldRetry(options)) {
       this.storage.retryOptions.autoRetry = false;
     }
     this.request(
@@ -3683,16 +3698,8 @@ class File extends ServiceObject<File> {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
 
-    // Do not retry if precondition option ifGenerationMatch is not set
     let maxRetries = this.storage.retryOptions.maxRetries;
-    if (
-      (options?.preconditionOpts?.ifGenerationMatch === undefined &&
-        this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
-        this.storage.retryOptions.idempotencyStrategy ===
-          IdempotencyStrategy.RetryConditional) ||
-      this.storage.retryOptions.idempotencyStrategy ===
-        IdempotencyStrategy.RetryNever
-    ) {
+    if (!this.shouldRetry(options)) {
       maxRetries = 0;
     }
     const returnValue = retry(
@@ -3868,16 +3875,8 @@ class File extends ServiceObject<File> {
       options
     );
 
-    // Do not retry if precondition option ifGenerationMatch is not set
     const retryOptions = this.storage.retryOptions;
-    if (
-      (options?.preconditionOpts?.ifGenerationMatch === undefined &&
-        this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
-        this.storage.retryOptions.idempotencyStrategy ===
-          IdempotencyStrategy.RetryConditional) ||
-      this.storage.retryOptions.idempotencyStrategy ===
-        IdempotencyStrategy.RetryNever
-    ) {
+    if (!this.shouldRetry(options)) {
       retryOptions.autoRetry = false;
     }
 
