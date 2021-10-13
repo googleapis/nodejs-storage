@@ -3056,12 +3056,38 @@ class File extends ServiceObject<File> {
    */
 
   isPublic(callback?: IsPublicCallback): Promise<IsPublicResponse> | void {
+    // Build any custom headers based on the defined interceptors on the parent
+    // storage object
+    let headers: {} | undefined;
+    headers = this.storage?.interceptors?.reduce((acc, curInterceptor) => {
+      const currentHeaders = curInterceptor.request({
+        uri: `${this.storage.apiEndpoint}/${
+          this.bucket.name
+        }/${encodeURIComponent(this.name)}`,
+      });
+
+      Object.assign(acc, currentHeaders.headers);
+      return acc;
+    }, {});
+
+    headers = this?.interceptors?.reduce((acc, curInterceptor) => {
+      const currentHeaders = curInterceptor.request({
+        uri: `${this.storage.apiEndpoint}/${
+          this.bucket.name
+        }/${encodeURIComponent(this.name)}`,
+      });
+
+      Object.assign(acc, currentHeaders.headers);
+      return acc;
+    }, headers || {});
+
     util.makeRequest(
       {
         method: 'HEAD',
         uri: `${this.storage.apiEndpoint}/${
           this.bucket.name
         }/${encodeURIComponent(this.name)}`,
+        headers,
       },
       {
         retryOptions: this.storage.retryOptions,
