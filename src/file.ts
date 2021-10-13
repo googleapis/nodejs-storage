@@ -861,7 +861,9 @@ class File extends ServiceObject<File> {
    * - if precondition option `ifGenerationMatch` is not set OR
    * - if `idempotencyStrategy` is set to `RetryNever`
    */
-  private shouldRetryRequest(options?: PreconditionOptions): boolean {
+  private shouldRetryBasedOnPreconditionAndIdempotencyStrat(
+    options?: PreconditionOptions
+  ): boolean {
     return !(
       (options?.ifGenerationMatch === undefined &&
         this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
@@ -1112,7 +1114,11 @@ class File extends ServiceObject<File> {
       }
     }
 
-    if (!this.shouldRetryRequest(options.preconditionOpts)) {
+    if (
+      !this.shouldRetryBasedOnPreconditionAndIdempotencyStrat(
+        options.preconditionOpts
+      )
+    ) {
       this.storage.retryOptions.autoRetry = false;
     }
     this.request(
@@ -3695,7 +3701,11 @@ class File extends ServiceObject<File> {
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
 
     let maxRetries = this.storage.retryOptions.maxRetries;
-    if (!this.shouldRetryRequest(options?.preconditionOpts)) {
+    if (
+      !this.shouldRetryBasedOnPreconditionAndIdempotencyStrat(
+        options?.preconditionOpts
+      )
+    ) {
       maxRetries = 0;
     }
     const returnValue = retry(
@@ -3872,7 +3882,11 @@ class File extends ServiceObject<File> {
     );
 
     const retryOptions = this.storage.retryOptions;
-    if (!this.shouldRetryRequest(options?.preconditionOpts)) {
+    if (
+      !this.shouldRetryBasedOnPreconditionAndIdempotencyStrat(
+        options?.preconditionOpts
+      )
+    ) {
       retryOptions.autoRetry = false;
     }
 
