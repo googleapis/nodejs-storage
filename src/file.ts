@@ -3056,15 +3056,12 @@ class File extends ServiceObject<File> {
    */
 
   isPublic(callback?: IsPublicCallback): Promise<IsPublicResponse> | void {
-    util.makeRequest(
+    this.request(
       {
         method: 'HEAD',
         uri: `${this.storage.apiEndpoint}/${
           this.bucket.name
         }/${encodeURIComponent(this.name)}`,
-      },
-      {
-        retryOptions: this.storage.retryOptions,
       },
       (err: Error | ApiError | null) => {
         if (err) {

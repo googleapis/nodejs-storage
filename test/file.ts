@@ -3984,6 +3984,12 @@ describe('File', () => {
     afterEach(() => sandbox.restore());
 
     it('should execute callback with `true` in response', done => {
+      file.request = function (
+        reqOpts: DecorateRequestOptions,
+        callback: BodyResponseCallback
+      ) {
+        callback(null);
+      };
       file.isPublic((err: ApiError, resp: boolean) => {
         assert.ifError(err);
         assert.strictEqual(resp, true);
@@ -3992,9 +3998,8 @@ describe('File', () => {
     });
 
     it('should execute callback with `false` in response', done => {
-      fakeUtil.makeRequest = function (
+      file.request = function (
         reqOpts: DecorateRequestOptions,
-        config: object,
         callback: BodyResponseCallback
       ) {
         const error = new ApiError('Permission Denied.');
@@ -4011,9 +4016,8 @@ describe('File', () => {
     it('should propagate non-403 errors to user', done => {
       const error = new ApiError('400 Error.');
       error.code = 400;
-      fakeUtil.makeRequest = function (
+      file.request = function (
         reqOpts: DecorateRequestOptions,
-        config: object,
         callback: BodyResponseCallback
       ) {
         callback(error);
@@ -4025,9 +4029,8 @@ describe('File', () => {
     });
 
     it('should correctly send a HEAD request', done => {
-      fakeUtil.makeRequest = function (
+      file.request = function (
         reqOpts: DecorateRequestOptions,
-        config: object,
         callback: BodyResponseCallback
       ) {
         assert.strictEqual(reqOpts.method, 'HEAD');
@@ -4045,9 +4048,8 @@ describe('File', () => {
         BUCKET.name
       }/${encodeURIComponent(file.name)}`;
 
-      fakeUtil.makeRequest = function (
+      file.request = function (
         reqOpts: DecorateRequestOptions,
-        config: object,
         callback: BodyResponseCallback
       ) {
         assert.strictEqual(reqOpts.uri, expectedURL);
