@@ -897,8 +897,8 @@ class File extends ServiceObject<File> {
   /**
    * Copy this file to another file. By default, this will copy the file to the
    * same bucket, but you can choose to copy it to another Bucket by providing
-   * a Bucket or File object or a URL starting with "gs://". The generation
-   * of the file will not be preserved.
+   * a Bucket or File object or a URL starting with "gs://".
+   * The generation of the file will not be preserved.
    *
    * @see [Objects: rewrite API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/rewrite}
    *
