@@ -4,6 +4,20 @@
 
 [1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
 
+### [5.15.2](https://www.github.com/googleapis/nodejs-storage/compare/v5.15.1...v5.15.2) (2021-10-13)
+
+
+### Bug Fixes
+
+* remove bucket preconditions from deleteFiles, it is a file operation not bucket ([#1661](https://www.github.com/googleapis/nodejs-storage/issues/1661)) ([6b7a06d](https://www.github.com/googleapis/nodejs-storage/commit/6b7a06defe1a3cadc6fad9258ff3fb01a2ecce0a))
+
+### [5.15.1](https://www.github.com/googleapis/nodejs-storage/compare/v5.15.0...v5.15.1) (2021-10-12)
+
+
+### Bug Fixes
+
+* check generation on source files not metageneration on bucket ([#1654](https://www.github.com/googleapis/nodejs-storage/issues/1654)) ([760231c](https://www.github.com/googleapis/nodejs-storage/commit/760231ca520f4eedf878c245489cb07f95e153af))
+
 ## [5.15.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.14.7...v5.15.0) (2021-10-07)
 
 
