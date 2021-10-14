@@ -22,11 +22,7 @@
  * at https://cloud.google.com/storage/docs.
  */
 
-function main(
-  bucketName = 'my-bucket',
-  location = 'NAM4',
-  rpo = 'ASYNC_TURBO'
-) {
+function main(bucketName = 'my-bucket', location = 'NAM4') {
   // [START storage_create_bucket_turbo_replication]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
@@ -40,7 +36,7 @@ function main(
   // const location = 'NAM4';
 
   // Flag to enable turbo replication for this bucket
-  // const rpo = 'ASYNC_TURBO';
+  const rpo = 'ASYNC_TURBO';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
