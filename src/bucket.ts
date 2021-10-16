@@ -1409,16 +1409,17 @@ class Bucket extends ServiceObject {
     }
 
     let maxRetries = this.storage.retryOptions.maxRetries;
-    if (
-      (options?.ifGenerationMatch === undefined &&
-        this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
+    (sources as File[]).forEach(source => {
+      if (
+        (source?.instancePreconditionOpts?.ifGenerationMatch === undefined &&
+          this.storage.retryOptions.idempotencyStrategy ===
+            IdempotencyStrategy.RetryConditional) ||
         this.storage.retryOptions.idempotencyStrategy ===
-          IdempotencyStrategy.RetryConditional) ||
-      this.storage.retryOptions.idempotencyStrategy ===
-        IdempotencyStrategy.RetryNever
-    ) {
-      maxRetries = 0;
-    }
+          IdempotencyStrategy.RetryNever
+      ) {
+        maxRetries = 0;
+      }
+    });
 
     Object.assign(options, this.instancePreconditionOpts, options);
 
@@ -1439,11 +1440,11 @@ class Bucket extends ServiceObject {
 
             if (
               source?.metadata?.generation ||
-              this.instancePreconditionOpts?.ifGenerationMatch
+              source?.instancePreconditionOpts?.ifGenerationMatch
             ) {
               sourceObject.generation =
                 source?.metadata?.generation ||
-                this.instancePreconditionOpts?.ifGenerationMatch;
+                source?.instancePreconditionOpts?.ifGenerationMatch;
             }
 
             return sourceObject;
@@ -1886,25 +1887,14 @@ class Bucket extends ServiceObject {
 
     const MAX_PARALLEL_LIMIT = 10;
     const errors = [] as Error[];
-    this.disableAutoRetryConditionallyIdempotent_(
-      this.methods.delete,
-      AvailableServiceObjectMethods.delete
-    );
-
-    Object.assign(query, this.instancePreconditionOpts, query);
 
     const deleteFile = (file: File) => {
-      return file
-        .delete(query)
-        .catch(err => {
-          if (!query.force) {
-            throw err;
-          }
-          errors.push(err);
-        })
-        .finally(() => {
-          this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-        });
+      return file.delete(query).catch(err => {
+        if (!query.force) {
+          throw err;
+        }
+        errors.push(err);
+      });
     };
 
     this.getFiles(query)

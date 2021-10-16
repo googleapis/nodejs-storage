@@ -426,7 +426,7 @@ class File extends ServiceObject<File> {
   private encryptionKeyHash?: string;
   private encryptionKeyInterceptor?: Interceptor;
   private instanceRetryValue?: boolean;
-  private instancePreconditionOpts?: PreconditionOptions;
+  instancePreconditionOpts?: PreconditionOptions;
 
   /**
    * Cloud Storage uses access control lists (ACLs) to manage object and
@@ -920,6 +920,7 @@ class File extends ServiceObject<File> {
    * Copy this file to another file. By default, this will copy the file to the
    * same bucket, but you can choose to copy it to another Bucket by providing
    * a Bucket or File object or a URL starting with "gs://".
+   * The generation of the file will not be preserved.
    *
    * @see [Objects: rewrite API Documentation]{@link https://cloud.google.com/storage/docs/json_api/v1/objects/rewrite}
    *
@@ -1079,12 +1080,6 @@ class File extends ServiceObject<File> {
       delete options.predefinedAcl;
     }
 
-    Object.assign(
-      query,
-      this.instancePreconditionOpts,
-      options.preconditionOpts
-    );
-
     newFile = newFile! || destBucket.file(destName);
 
     const headers: {[index: string]: string | undefined} = {};
@@ -1116,13 +1111,6 @@ class File extends ServiceObject<File> {
       }
     }
 
-    if (
-      !this.shouldRetryBasedOnPreconditionAndIdempotencyStrat(
-        options.preconditionOpts
-      )
-    ) {
-      this.storage.retryOptions.autoRetry = false;
-    }
     this.request(
       {
         method: 'POST',
@@ -1159,7 +1147,6 @@ class File extends ServiceObject<File> {
         callback!(null, newFile, resp);
       }
     );
-    this.storage.retryOptions.autoRetry = this.instanceRetryValue;
   }
 
   /**
