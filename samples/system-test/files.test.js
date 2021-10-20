@@ -335,7 +335,7 @@ describe('file', () => {
 
     assert.include(
       output,
-      `<form action='https://storage.googleapis.com/${bucketName}/`
+      `<form action="https://storage.googleapis.com/${bucketName}/`
     );
     assert.include(output, `<input name='key' value='${signedFileName}'`);
     assert.include(output, "<input name='x-goog-signature'");
