@@ -345,7 +345,7 @@ describe('file', () => {
       output,
       `<input name="x-goog-algorithm" value="GOOG4-RSA-SHA256"`
     );
-    assert.include(output, `<input name="policy'`);
+    assert.include(output, `<input name="policy"`);
     assert.include(output, `<input name="x-goog-meta-test" value="data"`);
     assert.include(output, `<input type="file" name="file"/>`);
   });
