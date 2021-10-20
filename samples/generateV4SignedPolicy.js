@@ -59,10 +59,9 @@ function main(bucketName = 'my-bucket', fileName = 'test.txt') {
       const value = response.fields[name];
       output += `  <input name="${name}" value="${value}" type="hidden"/>\n`;
     }
-    output += `  <input type="file" name="file"/><br />\n`;
-    output +=
-      `  <input type="submit" value="Upload File"/><br />\n`;
-    output += `</form>`;
+    output += '  <input type="file" name="file"/><br />\n';
+    output += '  <input type="submit" value="Upload File"/><br />\n';
+    output += '</form>';
 
     console.log(output);
   }
