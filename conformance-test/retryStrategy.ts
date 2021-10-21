@@ -28,6 +28,8 @@ import {
   stopTestBenchDockerImage,
 } from './test-bench-util';
 import {DecorateRequestOptions} from '@google-cloud/common';
+import * as testFile from './test-data/retryStrategyTestData.json';
+import * as jsonToNodeApiMapping from './test-data/retryInvocationMap.json';
 
 interface RetryCase {
   instructions: String[];
@@ -49,29 +51,9 @@ interface RetryTestCase {
 
 type LibraryMethodsModuleType = typeof import('./libraryMethods');
 
-const testFile = fs.readFileSync(
-  //TODO change to require
-  path.join(
-    __dirname,
-    '../../conformance-test/test-data/retryStrategyTestData.json'
-  ),
-  'utf-8'
-);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const testFileParsed = JSON.parse(testFile);
-const retryTestCases: RetryTestCase[] = testFileParsed.retryStrategyTests;
-
-const jsonToNodeApiMapping = fs.readFileSync(
-  //TODO change to require
-  path.join(
-    __dirname,
-    '../../conformance-test/test-data/retryInvocationMap.json'
-  ),
-  'utf-8'
-);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const retryTestCases: RetryTestCase[] = testFile.retryStrategyTests;
 const methodMap: Map<String, String[]> = new Map(
-  Object.entries(JSON.parse(jsonToNodeApiMapping))
+  Object.entries(jsonToNodeApiMapping)
 );
 
 const DURATION_SECONDS = 600; // 10 mins.
