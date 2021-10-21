@@ -25,6 +25,7 @@ import {Bucket, File, Iam, Notification, Storage} from '../src/';
 import {
   getTestBenchDockerImage,
   runTestBenchDockerImage,
+  stopTestBenchDockerImage,
 } from './test-bench-util';
 import {DecorateRequestOptions} from '@google-cloud/common';
 
@@ -92,10 +93,21 @@ const BUCKET_OPTIONS = {
 const TESTBENCH_HOST =
   process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000/';
 
+const CONF_TEST_PROJECT_ID = 'my-project-id';
+const TIMEOUT_FOR_DOCKER_OPS = 60000;
+
 describe('retry conformance testing', () => {
-  before(async () => {
+  before(async function () {
+    // Increase the timeout for this before block so that the docker images have time to download and run.
+    this.timeout(TIMEOUT_FOR_DOCKER_OPS);
     await getTestBenchDockerImage();
     await runTestBenchDockerImage();
+  });
+
+  after(async function () {
+    // Increase the timeout for this block so that docker has time to stop the container.
+    this.timeout(TIMEOUT_FOR_DOCKER_OPS);
+    await stopTestBenchDockerImage();
   });
 
   for (
@@ -123,7 +135,10 @@ function excecuteScenario(testCase: RetryTestCase) {
         let creationResult: any;
         let storage: Storage;
         before(async () => {
-          storage = new Storage({apiEndpoint: TESTBENCH_HOST});
+          storage = new Storage({
+            apiEndpoint: TESTBENCH_HOST,
+            projectId: CONF_TEST_PROJECT_ID,
+          });
           bucket = await createBucketForTest(
             storage,
             testCase.preconditionProvided,
