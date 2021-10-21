@@ -92,6 +92,8 @@ const BUCKET_OPTIONS = {
 const TESTBENCH_HOST =
   process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000/';
 
+const CONF_TEST_PROJECT_ID = 'my-project-id';
+
 describe('retry conformance testing', () => {
   before(async () => {
     await getTestBenchDockerImage();
@@ -123,7 +125,7 @@ function excecuteScenario(testCase: RetryTestCase) {
         let creationResult: any;
         let storage: Storage;
         before(async () => {
-          storage = new Storage({apiEndpoint: TESTBENCH_HOST});
+          storage = new Storage({apiEndpoint: TESTBENCH_HOST, projectId: CONF_TEST_PROJECT_ID});
           bucket = await createBucketForTest(
             storage,
             testCase.preconditionProvided,
