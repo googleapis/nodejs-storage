@@ -95,7 +95,9 @@ const TESTBENCH_HOST =
 const CONF_TEST_PROJECT_ID = 'my-project-id';
 
 describe('retry conformance testing', () => {
-  before(async () => {
+  before(async function () {
+    // Increase the timeout for this before block so that the docker images have time to download.
+    this.timeout(60000);
     await getTestBenchDockerImage();
     await runTestBenchDockerImage();
   });
