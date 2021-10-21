@@ -23,7 +23,7 @@ const DEFAULT_IMAGE_NAME =
 const DEFAULT_IMAGE_TAG = 'latest';
 const DOCKER_IMAGE = `${DEFAULT_IMAGE_NAME}:${DEFAULT_IMAGE_TAG}`;
 const PULL_CMD = `docker pull ${DOCKER_IMAGE}`;
-const RUN_CMD = `docker run --rm -d -p ${PORT} ${DOCKER_IMAGE}`;
+const RUN_CMD = `docker run --rm -d -p ${PORT}:${PORT} ${DOCKER_IMAGE}`;
 
 export async function getTestBenchDockerImage(): Promise<Buffer> {
   return execSync(PULL_CMD);
