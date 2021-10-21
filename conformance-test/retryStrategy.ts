@@ -125,7 +125,10 @@ function excecuteScenario(testCase: RetryTestCase) {
         let creationResult: any;
         let storage: Storage;
         before(async () => {
-          storage = new Storage({apiEndpoint: TESTBENCH_HOST, projectId: CONF_TEST_PROJECT_ID});
+          storage = new Storage({
+            apiEndpoint: TESTBENCH_HOST,
+            projectId: CONF_TEST_PROJECT_ID,
+          });
           bucket = await createBucketForTest(
             storage,
             testCase.preconditionProvided,
