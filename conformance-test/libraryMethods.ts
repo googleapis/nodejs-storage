@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Bucket, File, HmacKey, Iam, Notification, Storage} from '../src';
-import * as fs from 'fs';
+import {Bucket, File, Notification, Storage} from '../src';
 import * as path from 'path';
+import { ApiError} from '@google-cloud/common';
 
 /////////////////////////////////////////////////
 //////////////////// BUCKET /////////////////////
@@ -154,11 +154,15 @@ export async function getFilesStream(
   _notification: Notification,
   _storage: Storage
 ) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     bucket
       .getFilesStream()
       .on('data', () => {})
-      .on('end', () => resolve(undefined));
+      .on('end', () => resolve(undefined))
+      .on('error', (err: ApiError) => reject(err));
+  })
+  .catch(() => {
+    throw Error()
   });
 }
 
@@ -332,11 +336,15 @@ export async function createReadStream(
   _notification: Notification,
   _storage: Storage
 ) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     file
       .createReadStream()
       .on('data', () => {})
-      .on('end', () => resolve(undefined));
+      .on('end', () => resolve(undefined))
+      .on('error', (err: ApiError) => reject(err));
+  })
+  .catch(() => {
+    throw Error()
   });
 }
 
@@ -511,7 +519,10 @@ export async function setStorageClass(
   _notification: Notification,
   _storage: Storage
 ) {
-  await file.setStorageClass('nearline');
+  const result = await file.setStorageClass('nearline');
+  if (!result){
+    throw Error();
+  }
 }
 
 // /////////////////////////////////////////////////
@@ -664,11 +675,15 @@ export async function getBucketsStream(
   _notification: Notification,
   storage: Storage
 ) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     storage
       .getBucketsStream()
       .on('data', () => {})
-      .on('end', () => resolve(undefined));
+      .on('end', () => resolve(undefined))
+      .on('error', (err) => reject(err));
+  })
+  .catch(() => {
+    throw Error()
   });
 }
 
