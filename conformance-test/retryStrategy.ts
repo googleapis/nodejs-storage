@@ -106,7 +106,7 @@ describe('retry conformance testing', () => {
 
 function excecuteScenario(testCase: RetryTestCase) {
   for (
-    var instructionNumber = 0;
+    let instructionNumber = 0;
     instructionNumber < testCase.cases.length;
     instructionNumber++
   ) {
