@@ -1314,12 +1314,16 @@ class File extends ServiceObject<File> {
         headers.Range = `bytes=${tailRequest ? end : `${start}-${end}`}`;
       }
 
-      const reqOpts = {
+      const reqOpts: DecorateRequestOptions = {
         forever: false,
         uri: '',
         headers,
         qs: query,
       };
+
+      if (this.storage.retryOptions.autoRetry) {
+        reqOpts.maxRetries = this.storage.retryOptions.maxRetries;
+      }
 
       const hashes: {crc32c?: string; md5?: string} = {};
 
