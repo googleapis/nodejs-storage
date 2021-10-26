@@ -1593,12 +1593,9 @@ class File extends ServiceObject<File> {
 
     const retryOptions = this.storage.retryOptions;
     if (
-      (options?.preconditionOpts?.ifGenerationMatch === undefined &&
-        this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
-        this.storage.retryOptions.idempotencyStrategy ===
-          IdempotencyStrategy.RetryConditional) ||
-      this.storage.retryOptions.idempotencyStrategy ===
-        IdempotencyStrategy.RetryNever
+      !this.shouldRetryBasedOnPreconditionAndIdempotencyStrat(
+        options?.preconditionOpts
+      )
     ) {
       retryOptions.autoRetry = false;
     }
