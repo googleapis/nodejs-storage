@@ -14,7 +14,7 @@
 
 import {Bucket, File, Notification, Storage} from '../src';
 import * as path from 'path';
-import { ApiError} from '@google-cloud/common';
+import {ApiError} from '@google-cloud/common';
 
 /////////////////////////////////////////////////
 //////////////////// BUCKET /////////////////////
@@ -160,9 +160,8 @@ export async function getFilesStream(
       .on('data', () => {})
       .on('end', () => resolve(undefined))
       .on('error', (err: ApiError) => reject(err));
-  })
-  .catch(() => {
-    throw Error()
+  }).catch(() => {
+    throw Error();
   });
 }
 
@@ -342,9 +341,8 @@ export async function createReadStream(
       .on('data', () => {})
       .on('end', () => resolve(undefined))
       .on('error', (err: ApiError) => reject(err));
-  })
-  .catch(() => {
-    throw Error()
+  }).catch(() => {
+    throw Error();
   });
 }
 
@@ -520,7 +518,7 @@ export async function setStorageClass(
   _storage: Storage
 ) {
   const result = await file.setStorageClass('nearline');
-  if (!result){
+  if (!result) {
     throw Error();
   }
 }
@@ -680,10 +678,9 @@ export async function getBucketsStream(
       .getBucketsStream()
       .on('data', () => {})
       .on('end', () => resolve(undefined))
-      .on('error', (err) => reject(err));
-  })
-  .catch(() => {
-    throw Error()
+      .on('error', err => reject(err));
+  }).catch(() => {
+    throw Error();
   });
 }
 
