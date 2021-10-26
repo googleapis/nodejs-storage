@@ -405,7 +405,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  * and allow other users to access your buckets and files.
  *
  * To learn more about ACLs, read this overview on
- * [Access Control](https://cloud.google.com/storage/docs/access-control).
+ * {@link https://cloud.google.com/storage/docs/access-control| Access Control}.
  *
  * See {@link https://cloud.google.com/storage/docs/overview| Cloud Storage overview}
  * See {@link https://cloud.google.com/storage/docs/access-control| Access Control}

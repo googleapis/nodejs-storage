@@ -740,7 +740,7 @@ class File extends ServiceObject<File> {
        *
        * You can set custom key/value pairs in the metadata key of the given
        * object, however the other properties outside of this object must adhere
-       * to the [official API documentation](https://goo.gl/BOnnCK).
+       * to the {@link https://goo.gl/BOnnCK| official API documentation}.
        *
        *
        * See the examples below for more information.
@@ -1184,7 +1184,7 @@ class File extends ServiceObject<File> {
    * recourse is to try downloading the file again.
    *
    * For faster crc32c computation, you must manually install
-   * [`fast-crc32c`](https://www.npmjs.com/package/fast-crc32c):
+   * {@link https://www.npmjs.com/package/fast-crc32c| `fast-crc32c`}:
    *
    *     $ npm install --save fast-crc32c
    *
@@ -1701,7 +1701,7 @@ class File extends ServiceObject<File> {
    * by setting `options.resumable` to `false`.
    *
    * Resumable uploads require write access to the $HOME directory. Through
-   * [`config-store`](https://www.npmjs.com/package/configstore), some metadata
+   * {@link https://www.npmjs.com/package/configstore| `config-store`}, some metadata
    * is stored. By default, if the directory is not writable, we will fall back
    * to a simple upload. However, if you explicitly request a resumable upload,
    * and we cannot write to the config directory, we will return a
@@ -1715,7 +1715,7 @@ class File extends ServiceObject<File> {
    * </p>
    *
    * For faster crc32c computation, you must manually install
-   * [`fast-crc32c`](https://www.npmjs.com/package/fast-crc32c):
+   * {@link https://www.npmjs.com/package/fast-crc32c| `fast-crc32c`}:
    *
    *     $ npm install --save fast-crc32c
    *
@@ -2853,7 +2853,7 @@ class File extends ServiceObject<File> {
    *     save the file as when the signed url is accessed. This is ignored if
    *     `config.responseDisposition` is set.
    * @param {string} [config.responseDisposition] The
-   *     [response-content-disposition parameter](http://goo.gl/yMWxQV) of the
+   *     {@link http://goo.gl/yMWxQV| response-content-disposition parameter} of the
    *     signed url.
    * @param {*} [config.accessibleAt=Date.now()] A timestamp when this link became usable. Any value
    *     given is passed to `new Date()`.
