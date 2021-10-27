@@ -160,8 +160,6 @@ export async function getFilesStream(
       .on('data', () => {})
       .on('end', () => resolve(undefined))
       .on('error', (err: ApiError) => reject(err));
-  }).catch(() => {
-    throw Error();
   });
 }
 
@@ -341,8 +339,6 @@ export async function createReadStream(
       .on('data', () => {})
       .on('end', () => resolve(undefined))
       .on('error', (err: ApiError) => reject(err));
-  }).catch(() => {
-    throw Error();
   });
 }
 
@@ -679,8 +675,6 @@ export async function getBucketsStream(
       .on('data', () => {})
       .on('end', () => resolve(undefined))
       .on('error', err => reject(err));
-  }).catch(() => {
-    throw Error();
   });
 }
 
