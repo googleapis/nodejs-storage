@@ -307,6 +307,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  * @property {string} WRITER_ROLE
  *
  * @example
+ * ```
  * const {Storage} = require('@google-cloud/storage');
  * const storage = new Storage();
  * const albums = storage.bucket('albums');
@@ -341,6 +342,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *   const aclObject = data[0];
  *   const apiResponse = data[1];
  * });
+ * ```
  */
 /**
  * Get {@link Bucket} objects for all of the buckets in your project as
@@ -352,6 +354,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *     instances.
  *
  * @example
+ * ```
  * storage.getBucketsStream()
  *   .on('error', console.error)
  *   .on('data', function(bucket) {
@@ -369,6 +372,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *   .on('data', function(bucket) {
  *     this.end();
  *   });
+ * ```
  */
 /**
  * Get {@link HmacKey} objects for all of the HMAC keys in the project in a
@@ -380,6 +384,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *     instances.
  *
  * @example
+ * ```
  * storage.getHmacKeysStream()
  *   .on('error', console.error)
  *   .on('data', function(hmacKey) {
@@ -397,6 +402,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *   .on('data', function(bucket) {
  *     this.end();
  *   });
+ * ```
  */
 /**
  * <h4>ACLs</h4>
@@ -405,7 +411,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  * and allow other users to access your buckets and files.
  *
  * To learn more about ACLs, read this overview on
- * [Access Control](https://cloud.google.com/storage/docs/access-control).
+ * {@link https://cloud.google.com/storage/docs/access-control| Access Control}.
  *
  * See {@link https://cloud.google.com/storage/docs/overview| Cloud Storage overview}
  * See {@link https://cloud.google.com/storage/docs/access-control| Access Control}
@@ -652,10 +658,12 @@ export class Storage extends Service {
    * @see Bucket
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const albums = storage.bucket('albums');
    * const photos = storage.bucket('photos');
+   * ```
    */
   bucket(name: string, options?: BucketOptions) {
     if (!name) {
@@ -673,9 +681,11 @@ export class Storage extends Service {
    * @see Channel
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const channel = storage.channel('id', 'resource-id');
+   * ```
    */
   channel(id: string, resourceId: string) {
     return new Channel(this, id, resourceId);
@@ -738,8 +748,7 @@ export class Storage extends Service {
    *
    * Cloud Storage uses a flat namespace, so you can't create a bucket with
    * a name that is already in use. For more information, see
-   * [Bucket Naming
-   * Guidelines](https://cloud.google.com/storage/docs/bucketnaming.html#requirements).
+   * {@link https://cloud.google.com/storage/docs/bucketnaming.html#requirements| Bucket Naming Guidelines}.
    *
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/insert| Buckets: insert API Documentation}
    * See {@link https://cloud.google.com/storage/docs/storage-classes| Storage Classes}
@@ -752,6 +761,7 @@ export class Storage extends Service {
    * @see Bucket#create
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const callback = function(err, bucket, apiResponse) {
@@ -804,6 +814,7 @@ export class Storage extends Service {
    *   const apiResponse = data[1];
    * });
    *
+   * ```
    * @example <caption>include:samples/buckets.js</caption>
    * region_tag:storage_create_bucket
    * Another example:
@@ -949,6 +960,7 @@ export class Storage extends Service {
    * @return {Promise<CreateHmacKeyResponse>}
    *
    * @example
+   * ```
    * const {Storage} = require('google-cloud/storage');
    * const storage = new Storage();
    *
@@ -971,6 +983,7 @@ export class Storage extends Service {
    *     const secret = response[1];
    *     // Securely store the secret for use with the XML API.
    *   });
+   * ```
    */
   createHmacKey(
     serviceAccountEmail: string,
@@ -1059,6 +1072,7 @@ export class Storage extends Service {
    * @returns {Promise<GetBucketsResponse>}
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * storage.getBuckets(function(err, buckets) {
@@ -1097,6 +1111,7 @@ export class Storage extends Service {
    *   const buckets = data[0];
    * });
    *
+   * ```
    * @example <caption>include:samples/buckets.js</caption>
    * region_tag:storage_list_buckets
    * Another example:
@@ -1184,6 +1199,7 @@ export class Storage extends Service {
    * @return {Promise<GetHmacKeysResponse>}
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * storage.getHmacKeys(function(err, hmacKeys) {
@@ -1217,6 +1233,7 @@ export class Storage extends Service {
    * storage.getHmacKeys().then(function(data) {
    *   const hmacKeys = data[0];
    * });
+   * ```
    */
   getHmacKeys(options?: GetHmacKeysOptions): Promise<GetHmacKeysResponse>;
   getHmacKeys(callback: GetHmacKeysCallback): void;
@@ -1273,8 +1290,7 @@ export class Storage extends Service {
    * @typedef {array} GetServiceAccountResponse
    * @property {object} 0 The service account resource.
    * @property {object} 1 The full
-   * [API
-   * response](https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource).
+   * {@link https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource| API response}.
    */
   /**
    * @callback GetServiceAccountCallback
@@ -1283,8 +1299,7 @@ export class Storage extends Service {
    * @param {string} serviceAccount.emailAddress The service account email
    *     address.
    * @param {object} apiResponse The full
-   * [API
-   * response](https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource).
+   * {@link https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource| API response}.
    */
   /**
    * Get the email address of this project's Google Cloud Storage service
@@ -1300,6 +1315,7 @@ export class Storage extends Service {
    * @returns {Promise<GetServiceAccountResponse>}
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    *
@@ -1316,6 +1332,7 @@ export class Storage extends Service {
    *   const serviceAccountEmail = data[0].emailAddress;
    *   const apiResponse = data[1];
    * });
+   * ```
    */
   getServiceAccount(
     optionsOrCallback?: GetServiceAccountOptions | GetServiceAccountCallback,
@@ -1368,9 +1385,11 @@ export class Storage extends Service {
    * @see HmacKey
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const hmacKey = storage.hmacKey('ACCESS_ID');
+   * ```
    */
   hmacKey(accessId: string, options?: HmacKeyOptions) {
     if (!accessId) {

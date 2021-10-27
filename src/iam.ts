@@ -122,18 +122,20 @@ interface GetPolicyRequest {
 /**
  * Get and set IAM policies for your Cloud Storage bucket.
  *
- * @see [Cloud Storage IAM Management](https://cloud.google.com/storage/docs/access-control/iam#short_title_iam_management)
- * @see [Granting, Changing, and Revoking Access](https://cloud.google.com/iam/docs/granting-changing-revoking-access)
- * @see [IAM Roles](https://cloud.google.com/iam/docs/understanding-roles)
+ * See {@link https://cloud.google.com/storage/docs/access-control/iam#short_title_iam_management| Cloud Storage IAM Management}
+ * See {@link https://cloud.google.com/iam/docs/granting-changing-revoking-access| Granting, Changing, and Revoking Access}
+ * See {@link https://cloud.google.com/iam/docs/understanding-roles| IAM Roles}
  *
  * @constructor Iam
  *
  * @param {Bucket} bucket The parent instance.
  * @example
+ * ```
  * const {Storage} = require('@google-cloud/storage');
  * const storage = new Storage();
  * const bucket = storage.bucket('my-bucket');
  * // bucket.iam
+ * ```
  */
 class Iam {
   private request_: (
@@ -209,6 +211,7 @@ class Iam {
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/getIamPolicy| Buckets: setIamPolicy API Documentation}
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const bucket = storage.bucket('my-bucket');
@@ -229,6 +232,7 @@ class Iam {
    *     const apiResponse = data[1];
    *   });
    *
+   * ```
    * @example <caption>include:samples/iam.js</caption>
    * region_tag:storage_view_bucket_iam_members
    * Example of retrieving a bucket's IAM policy:
@@ -284,9 +288,10 @@ class Iam {
    * @returns {Promise<SetPolicyResponse>}
    *
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/setIamPolicy| Buckets: setIamPolicy API Documentation}
-   * @see [IAM Roles](https://cloud.google.com/iam/docs/understanding-roles)
+   * See {@link https://cloud.google.com/iam/docs/understanding-roles| IAM Roles}
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const bucket = storage.bucket('my-bucket');
@@ -311,6 +316,7 @@ class Iam {
    *   const apiResponse = data[1];
    * });
    *
+   * ```
    * @example <caption>include:samples/iam.js</caption>
    * region_tag:storage_add_bucket_iam_member
    * Example of adding to a bucket's IAM policy:
@@ -375,6 +381,7 @@ class Iam {
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/testIamPermissions| Buckets: testIamPermissions API Documentation}
    *
    * @example
+   * ```
    * const {Storage} = require('@google-cloud/storage');
    * const storage = new Storage();
    * const bucket = storage.bucket('my-bucket');
@@ -414,6 +421,7 @@ class Iam {
    *   const permissions = data[0];
    *   const apiResponse = data[1];
    * });
+   * ```
    */
   testPermissions(
     permissions: string | string[],
