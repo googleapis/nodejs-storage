@@ -1033,6 +1033,7 @@ describe('File', () => {
               'Accept-Encoding': 'gzip',
               'Cache-Control': 'no-store',
             },
+            maxRetries: 3,
             qs: {
               alt: 'media',
             },
@@ -1734,6 +1735,34 @@ describe('File', () => {
         };
 
         file.createReadStream({end: endOffset}).resume();
+      });
+    });
+
+    describe('retry', () => {
+      it('should retry by default', done => {
+        const nonDefaultMaxRetries = file.storage.retryOptions.maxRetries + 1;
+
+        file.storage.retryOptions.maxRetries = nonDefaultMaxRetries;
+
+        file.requestStream = (opts: DecorateRequestOptions) => {
+          assert.strictEqual(opts.maxRetries, nonDefaultMaxRetries);
+          setImmediate(() => done());
+          return duplexify();
+        };
+
+        file.createReadStream().resume();
+      });
+
+      it('should not retry if `storage.retryOptions.autoRetry` is `false`', done => {
+        file.storage.retryOptions.autoRetry = false;
+
+        file.requestStream = (opts: DecorateRequestOptions) => {
+          assert.strictEqual(opts.maxRetries, undefined);
+          setImmediate(() => done());
+          return duplexify();
+        };
+
+        file.createReadStream().resume();
       });
     });
   });
