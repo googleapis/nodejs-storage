@@ -373,7 +373,10 @@ describe('Storage', () => {
           message: 'some error message',
         },
       ];
-      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), false);
+      assert.strictEqual(
+        calledWith.retryOptions.retryableErrorFn(error),
+        false
+      );
     });
 
     it('should retry a 999 error if dictated by custom function', () => {
