@@ -75,9 +75,7 @@
         "notificationCreate"
     ],
     "storage.notifications.get": [
-        "notificationExists",
-        "notificationGet",
-        "notificationGetMetadata"
+        "notificationExists"
     ],
     "storage.buckets.getIamPolicy": [
         "iamGetPolicy"
