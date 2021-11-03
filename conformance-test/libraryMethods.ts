@@ -343,12 +343,13 @@ export async function createReadStream(
 }
 
 export async function createResumableUpload(
-  _bucket: Bucket,
-  file: File,
+  bucket: Bucket,
+  _file: File,
   _notification: Notification,
   _storage: Storage
 ) {
-  await file.createResumableUpload();
+  const newFile = bucket.file('createResumableUploadFile');
+  await newFile.createResumableUpload();
 }
 
 export async function fileDelete(
