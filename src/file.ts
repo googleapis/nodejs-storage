@@ -3756,6 +3756,9 @@ class File extends ServiceObject<File> {
     const returnValue = retry(
       async (bail: (err: Error) => void) => {
         await new Promise<void>((resolve, reject) => {
+          if (maxRetries === 0) {
+            this.storage.retryOptions.autoRetry = false;
+          }
           const writable = this.createWriteStream(options)
             .on('error', err => {
               if (
@@ -4081,7 +4084,13 @@ class File extends ServiceObject<File> {
  * that a callback is omitted.
  */
 promisifyAll(File, {
-  exclude: ['publicUrl', 'request', 'save', 'setEncryptionKey'],
+  exclude: [
+    'publicUrl',
+    'request',
+    'save',
+    'setEncryptionKey',
+    'shouldRetryBasedOnPreconditionAndIdempotencyStrat',
+  ],
 });
 
 /**
