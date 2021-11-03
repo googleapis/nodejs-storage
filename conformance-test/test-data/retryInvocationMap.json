@@ -68,7 +68,6 @@
         "createReadStream"
     ],
     "storage.notifications.delete": [
-        "notificationDelete"
     ],
     "storage.notifications.insert": [
         "createNotification",
