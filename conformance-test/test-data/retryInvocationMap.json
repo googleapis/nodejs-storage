@@ -55,7 +55,8 @@
         "bucketUploadResumable",
         "saveResumable",
         "bucketUploadMultipart",
-        "saveMultipart"
+        "saveMultipart",
+        "createResumableUpload"
     ],
     "storage.objects.delete": [
         "deleteFiles",
