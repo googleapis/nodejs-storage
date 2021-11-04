@@ -54,7 +54,6 @@
     "storage.objects.insert": [
         "bucketUploadResumable",
         "saveResumable",
-        "createResumableUpload",
         "bucketUploadMultipart",
         "saveMultipart"
     ],
