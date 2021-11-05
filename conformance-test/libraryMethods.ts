@@ -767,11 +767,12 @@ export function getHMACKeyStream(
   storage: Storage,
   _hmacKey: HmacKey
 ) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     storage
       .getHmacKeysStream()
       .on('data', () => {})
-      .on('end', () => resolve(undefined));
+      .on('end', () => resolve(undefined))
+      .on('error', err => reject(err));
   });
 }
 
