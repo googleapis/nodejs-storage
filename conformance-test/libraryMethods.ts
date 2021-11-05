@@ -20,13 +20,13 @@ import {ApiError} from '@google-cloud/common';
 //////////////////// BUCKET /////////////////////
 /////////////////////////////////////////////////
 
-export async function addLifecycleRule(  
-    bucket: Bucket,
-    _file: File,
-    _notification: Notification,
-    _storage: Storage,
-    _hmacKey: HmacKey
-  ) {
+export async function addLifecycleRule(
+  bucket: Bucket,
+  _file: File,
+  _notification: Notification,
+  _storage: Storage,
+  _hmacKey: HmacKey
+) {
   await bucket.addLifecycleRule({
     action: 'delete',
     condition: {
