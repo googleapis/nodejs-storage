@@ -265,7 +265,6 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
 
     if (err.errors) {
       for (const e of err.errors) {
-        console.log(e?.reason);
         const reason = e?.reason?.toString().toLowerCase();
         if (
           (reason && reason.includes('eai_again')) || //DNS lookup error

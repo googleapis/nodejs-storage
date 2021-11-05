@@ -1619,13 +1619,6 @@ class File extends ServiceObject<File> {
       retryOptions.autoRetry = false;
     }
 
-    console.log(
-      this.getRequestInterceptors().reduce(
-        (reqOpts, interceptorFn) => interceptorFn(reqOpts),
-        {}
-      )
-    );
-
     resumableUpload.createURI(
       {
         authClient: this.storage.authClient,

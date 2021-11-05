@@ -249,7 +249,6 @@ describe('storage', () => {
             /Could not load the default credentials/,
             /does not have storage\.objects\.create access/,
           ];
-          console.log(e);
           assert(allowedErrorMessages.some(msg => msg.test(e.message)));
         }
       });
@@ -2044,8 +2043,6 @@ describe('storage', () => {
               done: (err: Error) => void
             ) => {
               file.createResumableUpload(options, (err, uri) => {
-                console.log(options);
-                console.log(uri);
                 if (err) {
                   done(err);
                   return;
