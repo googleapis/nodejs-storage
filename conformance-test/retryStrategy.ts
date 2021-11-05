@@ -169,11 +169,23 @@ function excecuteScenario(testCase: RetryTestCase) {
         it(`${storageMethodString}${instructionNumber}`, async () => {
           if (testCase.expectSuccess) {
             assert.ifError(
-              await storageMethodObject(bucket, file, notification, storage, hmacKey)
+              await storageMethodObject(
+                bucket,
+                file,
+                notification,
+                storage,
+                hmacKey
+              )
             );
           } else {
             try {
-              await storageMethodObject(bucket, file, notification, storage, hmacKey);
+              await storageMethodObject(
+                bucket,
+                file,
+                notification,
+                storage,
+                hmacKey
+              );
               throw Error(`${storageMethodString} was supposed to throw.`);
             } catch (e) {
               assert.notStrictEqual(e, undefined);
