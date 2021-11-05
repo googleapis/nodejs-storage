@@ -576,6 +576,10 @@ export async function deleteHMAC(
   _storage: Storage,
   hmacKey: HmacKey
 ) {
+  const metadata = {
+    state: 'INACTIVE',
+  };
+  hmacKey.setMetadata(metadata);
   await hmacKey.delete();
 }
 

@@ -149,7 +149,7 @@ function excecuteScenario(testCase: RetryTestCase) {
           notification = bucket.notification(`${TESTS_PREFIX}`);
           await notification.create();
 
-          [hmacKey] = await storage.createHmacKey('dummytestemail@email.com');
+          [hmacKey] = await storage.createHmacKey(`${TESTS_PREFIX}@email.com`);
 
           storage.interceptors.push({
             request: requestConfig => {
