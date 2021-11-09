@@ -1926,11 +1926,10 @@ class File extends ServiceObject<File> {
               ].join(' ')
             );
             fs.access(configDir, fs.constants.R_OK, noReadErr => {
-              if (noReadErr){
-                error.additionalInfo = 'The directory does not exist.'
-              }
-              else {
-                error.additionalInfo = 'The directory is read-only.'
+              if (noReadErr) {
+                error.additionalInfo = 'The directory does not exist.';
+              } else {
+                error.additionalInfo = 'The directory is read-only.';
               }
               stream.destroy(error);
             });

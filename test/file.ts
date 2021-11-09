@@ -2145,7 +2145,10 @@ describe('File', () => {
               'this time setting `options.resumable` to `false`.',
             ].join(' ')
           );
-          assert.strictEqual(err.additionalInfo, 'The directory does not exist.')
+          assert.strictEqual(
+            err.additionalInfo,
+            'The directory does not exist.'
+          );
 
           done();
         });
