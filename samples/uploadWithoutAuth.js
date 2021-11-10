@@ -57,7 +57,7 @@ function main(
     };
     //auth required
     const [signedUrl] = await file.getSignedUrl(options);
-    
+
     // no auth required
     const resumableSession = await fetch(signedUrl, {
       method: 'POST',
@@ -69,14 +69,11 @@ function main(
 
     // passing the location to file.save removes the need to
     // authenticate this call
-    await file.save(
-      contents,
-      {
-        uri: location,
-        resumable: true,
-        validation: false,
-      }
-    );
+    await file.save(contents, {
+      uri: location,
+      resumable: true,
+      validation: false,
+    });
 
     console.log(`${destFileName} uploaded to ${bucketName}`);
   }
