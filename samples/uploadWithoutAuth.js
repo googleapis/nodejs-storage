@@ -37,7 +37,6 @@ function main(
   const storage = new Storage();
 
   async function uploadWithoutAuthentication() {
-
     const file = storage.bucket(bucketName).file(destFileName);
     let location; // endpoint to which we should upload the file
 
@@ -55,23 +54,24 @@ function main(
       expires: Date.now() + 30 * 60 * 1000,
     };
     const [signedUrl] = await file.getSignedUrl(options); //auth required
-    const resumableSession = await fetch(signedUrl, { // no auth required
+    const resumableSession = await fetch(signedUrl, {
+      // no auth required
       method: 'POST',
       headers: {
-          'x-goog-resumable': 'start'
-      }
+        'x-goog-resumable': 'start',
+      },
     });
     location = resumableSession.headers.location;
 
-    
     // passing the location to file.save removes the need to
     // authenticate this call
-    await file.save( // no auth required
+    await file.save(
+      // no auth required
       contents,
       {
         uri: location,
         resumable: true,
-        validation: false
+        validation: false,
       }
     );
 
