@@ -33,6 +33,8 @@ function main(
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
+  const fetch = require('node-fetch');
+
   // Creates a client
   const storage = new Storage();
 
@@ -53,9 +55,11 @@ function main(
       action: 'resumable',
       expires: Date.now() + 30 * 60 * 1000,
     };
-    const [signedUrl] = await file.getSignedUrl(options); //auth required
+    //auth required
+    const [signedUrl] = await file.getSignedUrl(options);
+    
+    // no auth required
     const resumableSession = await fetch(signedUrl, {
-      // no auth required
       method: 'POST',
       headers: {
         'x-goog-resumable': 'start',
@@ -66,7 +70,6 @@ function main(
     // passing the location to file.save removes the need to
     // authenticate this call
     await file.save(
-      // no auth required
       contents,
       {
         uri: location,
