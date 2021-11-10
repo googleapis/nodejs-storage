@@ -78,7 +78,7 @@ function main(
     console.log(`${destFileName} uploaded to ${bucketName}`);
   }
 
-  uploadFile().catch(console.error);
+  uploadWithoutAuthentication().catch(console.error);
   // [END storage_upload_without_authentication]
 }
 
