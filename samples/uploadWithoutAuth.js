@@ -39,11 +39,12 @@ function main(
   async function uploadWithoutAuthentication() {
 
     const file = storage.bucket(bucketName).file(destFileName);
+    let location; // endpoint to which we should upload the file
 
     // Option 1: use file.createResumableUpload
     // file.createResumableUpload returns an authenticated endpoint
     // to which we can make requests without credentials
-    const [location] = await file.createResumableUpload(); //auth required
+    [location] = await file.createResumableUpload(); //auth required
 
     // Option 2: use signed URLs to manually start resumable upload
     // Auth is required to get the signed URL, but is not required
@@ -61,7 +62,7 @@ function main(
           'x-goog-resumable': 'start'
       }
     });
-    const location = resumableSession.headers.location;
+    location = resumableSession.headers.location;
 
 
     // passing the location to file.save removes the need to
