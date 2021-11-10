@@ -55,7 +55,6 @@ function main(
       expires: Date.now() + 30 * 60 * 1000,
     };
     const [signedUrl] = await file.getSignedUrl(options); //auth required
-
     const resumableSession = await fetch(signedUrl, { // no auth required
       method: 'POST',
       headers: {
@@ -64,7 +63,7 @@ function main(
     });
     location = resumableSession.headers.location;
 
-
+    
     // passing the location to file.save removes the need to
     // authenticate this call
     await file.save( // no auth required
