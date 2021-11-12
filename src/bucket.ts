@@ -1047,19 +1047,6 @@ class Bucket extends ServiceObject {
     this.instancePreconditionOpts = options?.preconditionOpts;
   }
 
-  addLifecycleRule(
-    rule: LifecycleRule,
-    options?: AddLifecycleRuleOptions
-  ): Promise<SetBucketMetadataResponse>;
-  addLifecycleRule(
-    rule: LifecycleRule,
-    options: AddLifecycleRuleOptions,
-    callback: SetBucketMetadataCallback
-  ): void;
-  addLifecycleRule(
-    rule: LifecycleRule,
-    callback: SetBucketMetadataCallback
-  ): void;
   /**
    * @typedef {object} AddLifecycleRuleOptions Configuration options for Bucket#addLifecycleRule().
    * @property {boolean} [append=true] The new rules will be appended to any
@@ -1226,6 +1213,19 @@ class Bucket extends ServiceObject {
    */
   addLifecycleRule(
     rule: LifecycleRule,
+    options?: AddLifecycleRuleOptions
+  ): Promise<SetBucketMetadataResponse>;
+  addLifecycleRule(
+    rule: LifecycleRule,
+    options: AddLifecycleRuleOptions,
+    callback: SetBucketMetadataCallback
+  ): void;
+  addLifecycleRule(
+    rule: LifecycleRule,
+    callback: SetBucketMetadataCallback
+  ): void;
+  addLifecycleRule(
+    rule: LifecycleRule,
     optionsOrCallback?: AddLifecycleRuleOptions | SetBucketMetadataCallback,
     callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
@@ -1307,22 +1307,6 @@ class Bucket extends ServiceObject {
     this.storage.retryOptions.autoRetry = this.instanceRetryValue;
   }
 
-  combine(
-    sources: string[] | File[],
-    destination: string | File,
-    options?: CombineOptions
-  ): Promise<CombineResponse>;
-  combine(
-    sources: string[] | File[],
-    destination: string | File,
-    options: CombineOptions,
-    callback: CombineCallback
-  ): void;
-  combine(
-    sources: string[] | File[],
-    destination: string | File,
-    callback: CombineCallback
-  ): void;
   /**
    * @typedef {object} CombineOptions
    * @property {string} [kmsKeyName] Resource name of the Cloud KMS key, of
@@ -1393,6 +1377,22 @@ class Bucket extends ServiceObject {
    * });
    * ```
    */
+  combine(
+    sources: string[] | File[],
+    destination: string | File,
+    options?: CombineOptions
+  ): Promise<CombineResponse>;
+  combine(
+    sources: string[] | File[],
+    destination: string | File,
+    options: CombineOptions,
+    callback: CombineCallback
+  ): void;
+  combine(
+    sources: string[] | File[],
+    destination: string | File,
+    callback: CombineCallback
+  ): void;
   combine(
     sources: string[] | File[],
     destination: string | File,
@@ -1489,22 +1489,6 @@ class Bucket extends ServiceObject {
     );
   }
 
-  createChannel(
-    id: string,
-    config: CreateChannelConfig,
-    options?: CreateChannelOptions
-  ): Promise<CreateChannelResponse>;
-  createChannel(
-    id: string,
-    config: CreateChannelConfig,
-    callback: CreateChannelCallback
-  ): void;
-  createChannel(
-    id: string,
-    config: CreateChannelConfig,
-    options: CreateChannelOptions,
-    callback: CreateChannelCallback
-  ): void;
   /**
    * See a {@link https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll| Objects: watchAll request body}.
    *
@@ -1599,6 +1583,22 @@ class Bucket extends ServiceObject {
   createChannel(
     id: string,
     config: CreateChannelConfig,
+    options?: CreateChannelOptions
+  ): Promise<CreateChannelResponse>;
+  createChannel(
+    id: string,
+    config: CreateChannelConfig,
+    callback: CreateChannelCallback
+  ): void;
+  createChannel(
+    id: string,
+    config: CreateChannelConfig,
+    options: CreateChannelOptions,
+    callback: CreateChannelCallback
+  ): void;
+  createChannel(
+    id: string,
+    config: CreateChannelConfig,
     optionsOrCallback?: CreateChannelOptions | CreateChannelCallback,
     callback?: CreateChannelCallback
   ): Promise<CreateChannelResponse> | void {
@@ -1646,16 +1646,6 @@ class Bucket extends ServiceObject {
     );
   }
 
-  createNotification(
-    topic: string,
-    options?: CreateNotificationOptions
-  ): Promise<CreateNotificationResponse>;
-  createNotification(
-    topic: string,
-    options: CreateNotificationOptions,
-    callback: CreateNotificationCallback
-  ): void;
-  createNotification(topic: string, callback: CreateNotificationCallback): void;
   /**
    * Metadata to set for the Notification.
    *
@@ -1762,6 +1752,16 @@ class Bucket extends ServiceObject {
    */
   createNotification(
     topic: string,
+    options?: CreateNotificationOptions
+  ): Promise<CreateNotificationResponse>;
+  createNotification(
+    topic: string,
+    options: CreateNotificationOptions,
+    callback: CreateNotificationCallback
+  ): void;
+  createNotification(topic: string, callback: CreateNotificationCallback): void;
+  createNotification(
+    topic: string,
     optionsOrCallback?: CreateNotificationOptions | CreateNotificationCallback,
     callback?: CreateNotificationCallback
   ): Promise<CreateNotificationResponse> | void {
@@ -1824,9 +1824,6 @@ class Bucket extends ServiceObject {
     );
   }
 
-  deleteFiles(query?: DeleteFilesOptions): Promise<void>;
-  deleteFiles(callback: DeleteFilesCallback): void;
-  deleteFiles(query: DeleteFilesOptions, callback: DeleteFilesCallback): void;
   /**
    * @typedef {object} DeleteFilesOptions Query object. See {@link Bucket#getFiles}
    *     for all of the supported properties.
@@ -1904,6 +1901,9 @@ class Bucket extends ServiceObject {
    * bucket.deleteFiles().then(function() {});
    * ```
    */
+  deleteFiles(query?: DeleteFilesOptions): Promise<void>;
+  deleteFiles(callback: DeleteFilesCallback): void;
+  deleteFiles(query: DeleteFilesOptions, callback: DeleteFilesCallback): void;
   deleteFiles(
     queryOrCallback?: DeleteFilesOptions | DeleteFilesCallback,
     callback?: DeleteFilesCallback
@@ -1938,9 +1938,6 @@ class Bucket extends ServiceObject {
       .then(() => callback!(errors.length > 0 ? errors : null), callback!);
   }
 
-  deleteLabels(labels?: string | string[]): Promise<DeleteLabelsResponse>;
-  deleteLabels(callback: DeleteLabelsCallback): void;
-  deleteLabels(labels: string | string[], callback: DeleteLabelsCallback): void;
   /**
    * @typedef {array} DeleteLabelsResponse
    * @property {object} 0 The full API response.
@@ -1990,6 +1987,9 @@ class Bucket extends ServiceObject {
    * });
    * ```
    */
+  deleteLabels(labels?: string | string[]): Promise<DeleteLabelsResponse>;
+  deleteLabels(callback: DeleteLabelsCallback): void;
+  deleteLabels(labels: string | string[], callback: DeleteLabelsCallback): void;
   deleteLabels(
     labelsOrCallback?: string | string[] | DeleteLabelsCallback,
     callback?: DeleteLabelsCallback
@@ -2023,8 +2023,6 @@ class Bucket extends ServiceObject {
     }
   }
 
-  disableRequesterPays(): Promise<DisableRequesterPaysResponse>;
-  disableRequesterPays(callback: DisableRequesterPaysCallback): void;
   /**
    * @typedef {array} DisableRequesterPaysResponse
    * @property {object} 0 The full API response.
@@ -2071,6 +2069,8 @@ class Bucket extends ServiceObject {
    * region_tag:storage_disable_requester_pays
    * Example of disabling requester pays:
    */
+  disableRequesterPays(): Promise<DisableRequesterPaysResponse>;
+  disableRequesterPays(callback: DisableRequesterPaysCallback): void;
   disableRequesterPays(
     callback?: DisableRequesterPaysCallback
   ): Promise<DisableRequesterPaysResponse> | void {
@@ -2089,13 +2089,6 @@ class Bucket extends ServiceObject {
     this.storage.retryOptions.autoRetry = this.instanceRetryValue;
   }
 
-  enableLogging(
-    config: EnableLoggingOptions
-  ): Promise<SetBucketMetadataResponse>;
-  enableLogging(
-    config: EnableLoggingOptions,
-    callback: SetBucketMetadataCallback
-  ): void;
   /**
    * Configuration object for enabling logging.
    *
@@ -2153,6 +2146,13 @@ class Bucket extends ServiceObject {
    * ```
    */
   enableLogging(
+    config: EnableLoggingOptions
+  ): Promise<SetBucketMetadataResponse>;
+  enableLogging(
+    config: EnableLoggingOptions,
+    callback: SetBucketMetadataCallback
+  ): void;
+  enableLogging(
     config: EnableLoggingOptions,
     callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
@@ -2199,8 +2199,6 @@ class Bucket extends ServiceObject {
     })();
   }
 
-  enableRequesterPays(): Promise<EnableRequesterPaysResponse>;
-  enableRequesterPays(callback: EnableRequesterPaysCallback): void;
   /**
    * @typedef {array} EnableRequesterPaysResponse
    * @property {object} 0 The full API response.
@@ -2249,6 +2247,8 @@ class Bucket extends ServiceObject {
    * region_tag:storage_enable_requester_pays
    * Example of enabling requester pays:
    */
+  enableRequesterPays(): Promise<EnableRequesterPaysResponse>;
+  enableRequesterPays(callback: EnableRequesterPaysCallback): void;
   enableRequesterPays(
     callback?: EnableRequesterPaysCallback
   ): Promise<EnableRequesterPaysResponse> | void {
@@ -2301,9 +2301,6 @@ class Bucket extends ServiceObject {
     return new File(this, name, options);
   }
 
-  getFiles(query?: GetFilesOptions): Promise<GetFilesResponse>;
-  getFiles(query: GetFilesOptions, callback: GetFilesCallback): void;
-  getFiles(callback: GetFilesCallback): void;
   /**
    * @typedef {array} GetFilesResponse
    * @property {File[]} 0 Array of {@link File} instances.
@@ -2495,6 +2492,9 @@ class Bucket extends ServiceObject {
    * region_tag:storage_list_files_with_prefix
    * Example of listing files, filtered by a prefix:
    */
+  getFiles(query?: GetFilesOptions): Promise<GetFilesResponse>;
+  getFiles(query: GetFilesOptions, callback: GetFilesCallback): void;
+  getFiles(callback: GetFilesCallback): void;
   getFiles(
     queryOrCallback?: GetFilesOptions | GetFilesCallback,
     callback?: GetFilesCallback
@@ -2551,9 +2551,6 @@ class Bucket extends ServiceObject {
     );
   }
 
-  getLabels(options?: GetLabelsOptions): Promise<GetLabelsResponse>;
-  getLabels(callback: GetLabelsCallback): void;
-  getLabels(options: GetLabelsOptions, callback: GetLabelsCallback): void;
   /**
    * @typedef {object} GetLabelsOptions Configuration options for Bucket#getLabels().
    * @param {string} [userProject] The ID of the project which will be
@@ -2602,6 +2599,9 @@ class Bucket extends ServiceObject {
    * });
    * ```
    */
+  getLabels(options?: GetLabelsOptions): Promise<GetLabelsResponse>;
+  getLabels(callback: GetLabelsCallback): void;
+  getLabels(options: GetLabelsOptions, callback: GetLabelsCallback): void;
   getLabels(
     optionsOrCallback?: GetLabelsOptions | GetLabelsCallback,
     callback?: GetLabelsCallback
@@ -2626,14 +2626,6 @@ class Bucket extends ServiceObject {
     );
   }
 
-  getNotifications(
-    options?: GetNotificationsOptions
-  ): Promise<GetNotificationsResponse>;
-  getNotifications(callback: GetNotificationsCallback): void;
-  getNotifications(
-    options: GetNotificationsOptions,
-    callback: GetNotificationsCallback
-  ): void;
   /**
    * @typedef {object} GetNotificationsOptions Configuration options for Bucket#getNotification().
    * @property {string} [userProject] The ID of the project which will be
@@ -2688,6 +2680,14 @@ class Bucket extends ServiceObject {
    * Another example:
    */
   getNotifications(
+    options?: GetNotificationsOptions
+  ): Promise<GetNotificationsResponse>;
+  getNotifications(callback: GetNotificationsCallback): void;
+  getNotifications(
+    options: GetNotificationsOptions,
+    callback: GetNotificationsCallback
+  ): void;
+  getNotifications(
     optionsOrCallback?: GetNotificationsOptions | GetNotificationsCallback,
     callback?: GetNotificationsCallback
   ): Promise<GetNotificationsResponse> | void {
@@ -2722,11 +2722,6 @@ class Bucket extends ServiceObject {
     );
   }
 
-  getSignedUrl(cfg: GetBucketSignedUrlConfig): Promise<GetSignedUrlResponse>;
-  getSignedUrl(
-    cfg: GetBucketSignedUrlConfig,
-    callback: GetSignedUrlCallback
-  ): void;
   /**
    * @typedef {array} GetSignedUrlResponse
    * @property {object} 0 The signed URL.
@@ -2853,6 +2848,11 @@ class Bucket extends ServiceObject {
    * });
    * ```
    */
+  getSignedUrl(cfg: GetBucketSignedUrlConfig): Promise<GetSignedUrlResponse>;
+  getSignedUrl(
+    cfg: GetBucketSignedUrlConfig,
+    callback: GetSignedUrlCallback
+  ): void;
   getSignedUrl(
     cfg: GetBucketSignedUrlConfig,
     callback?: GetSignedUrlCallback
@@ -2880,8 +2880,6 @@ class Bucket extends ServiceObject {
       .then(signedUrl => callback!(null, signedUrl), callback!);
   }
 
-  lock(metageneration: number | string): Promise<BucketLockResponse>;
-  lock(metageneration: number | string, callback: BucketLockCallback): void;
   /**
    * @callback BucketLockCallback
    * @param {?Error} err Request error, if any.
@@ -2915,6 +2913,8 @@ class Bucket extends ServiceObject {
    * });
    * ```
    */
+  lock(metageneration: number | string): Promise<BucketLockResponse>;
+  lock(metageneration: number | string, callback: BucketLockCallback): void;
   lock(
     metageneration: number | string,
     callback?: BucketLockCallback
@@ -2936,14 +2936,6 @@ class Bucket extends ServiceObject {
     );
   }
 
-  makePrivate(
-    options?: MakeBucketPrivateOptions
-  ): Promise<MakeBucketPrivateResponse>;
-  makePrivate(callback: MakeBucketPrivateCallback): void;
-  makePrivate(
-    options: MakeBucketPrivateOptions,
-    callback: MakeBucketPrivateCallback
-  ): void;
   /**
    * @typedef {array} MakeBucketPrivateResponse
    * @property {File[]} 0 List of files made private.
@@ -3046,6 +3038,14 @@ class Bucket extends ServiceObject {
    * ```
    */
   makePrivate(
+    options?: MakeBucketPrivateOptions
+  ): Promise<MakeBucketPrivateResponse>;
+  makePrivate(callback: MakeBucketPrivateCallback): void;
+  makePrivate(
+    options: MakeBucketPrivateOptions,
+    callback: MakeBucketPrivateCallback
+  ): void;
+  makePrivate(
     optionsOrCallback?: MakeBucketPrivateOptions | MakeBucketPrivateCallback,
     callback?: MakeBucketPrivateCallback
   ): Promise<MakeBucketPrivateResponse> | void {
@@ -3088,14 +3088,6 @@ class Bucket extends ServiceObject {
       });
   }
 
-  makePublic(
-    options?: MakeBucketPublicOptions
-  ): Promise<MakeBucketPublicResponse>;
-  makePublic(callback: MakeBucketPublicCallback): void;
-  makePublic(
-    options: MakeBucketPublicOptions,
-    callback: MakeBucketPublicCallback
-  ): void;
   /**
    * @typedef {object} MakeBucketPublicOptions
    * @property {boolean} [includeFiles=false] Make each file in the bucket
@@ -3190,6 +3182,14 @@ class Bucket extends ServiceObject {
    * ```
    */
   makePublic(
+    options?: MakeBucketPublicOptions
+  ): Promise<MakeBucketPublicResponse>;
+  makePublic(callback: MakeBucketPublicCallback): void;
+  makePublic(
+    options: MakeBucketPublicOptions,
+    callback: MakeBucketPublicCallback
+  ): void;
+  makePublic(
     optionsOrCallback?: MakeBucketPublicOptions | MakeBucketPublicCallback,
     callback?: MakeBucketPublicCallback
   ): Promise<MakeBucketPublicResponse> | void {
@@ -3245,8 +3245,6 @@ class Bucket extends ServiceObject {
     return new Notification(this, id);
   }
 
-  removeRetentionPeriod(): Promise<SetBucketMetadataResponse>;
-  removeRetentionPeriod(callback: SetBucketMetadataCallback): void;
   /**
    * Remove an already-existing retention policy from this bucket, if it is not
    * locked.
@@ -3269,6 +3267,8 @@ class Bucket extends ServiceObject {
    * });
    * ```
    */
+  removeRetentionPeriod(): Promise<SetBucketMetadataResponse>;
+  removeRetentionPeriod(callback: SetBucketMetadataCallback): void;
   removeRetentionPeriod(
     callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
@@ -3285,11 +3285,6 @@ class Bucket extends ServiceObject {
     this.storage.retryOptions.autoRetry = this.instanceRetryValue;
   }
 
-  request(reqOpts: DecorateRequestOptions): Promise<[ResponseBody, Metadata]>;
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback: BodyResponseCallback
-  ): void;
   /**
    * Makes request and applies userProject query parameter if necessary.
    *
@@ -3298,6 +3293,11 @@ class Bucket extends ServiceObject {
    * @param {object} reqOpts - The request options.
    * @param {function} callback - The callback function.
    */
+  request(reqOpts: DecorateRequestOptions): Promise<[ResponseBody, Metadata]>;
+  request(
+    reqOpts: DecorateRequestOptions,
+    callback: BodyResponseCallback
+  ): void;
   request(
     reqOpts: DecorateRequestOptions,
     callback?: BodyResponseCallback
@@ -3308,16 +3308,6 @@ class Bucket extends ServiceObject {
     return super.request(reqOpts, callback!);
   }
 
-  setLabels(
-    labels: Labels,
-    options?: SetLabelsOptions
-  ): Promise<SetLabelsResponse>;
-  setLabels(labels: Labels, callback: SetLabelsCallback): void;
-  setLabels(
-    labels: Labels,
-    options: SetLabelsOptions,
-    callback: SetLabelsCallback
-  ): void;
   /**
    * @typedef {array} SetLabelsResponse
    * @property {object} 0 The bucket metadata.
@@ -3373,6 +3363,16 @@ class Bucket extends ServiceObject {
    */
   setLabels(
     labels: Labels,
+    options?: SetLabelsOptions
+  ): Promise<SetLabelsResponse>;
+  setLabels(labels: Labels, callback: SetLabelsCallback): void;
+  setLabels(
+    labels: Labels,
+    options: SetLabelsOptions,
+    callback: SetLabelsCallback
+  ): void;
+  setLabels(
+    labels: Labels,
     optionsOrCallback?: SetLabelsOptions | SetLabelsCallback,
     callback?: SetLabelsCallback
   ): Promise<SetLabelsResponse> | void {
@@ -3391,11 +3391,6 @@ class Bucket extends ServiceObject {
     this.storage.retryOptions.autoRetry = this.instanceRetryValue;
   }
 
-  setRetentionPeriod(duration: number): Promise<SetBucketMetadataResponse>;
-  setRetentionPeriod(
-    duration: number,
-    callback: SetBucketMetadataCallback
-  ): void;
   /**
    * Lock all objects contained in the bucket, based on their creation time. Any
    * attempt to overwrite or delete objects younger than the retention period
@@ -3433,6 +3428,11 @@ class Bucket extends ServiceObject {
    * });
    * ```
    */
+  setRetentionPeriod(duration: number): Promise<SetBucketMetadataResponse>;
+  setRetentionPeriod(
+    duration: number,
+    callback: SetBucketMetadataCallback
+  ): void;
   setRetentionPeriod(
     duration: number,
     callback?: SetBucketMetadataCallback
@@ -3452,13 +3452,6 @@ class Bucket extends ServiceObject {
     this.storage.retryOptions.autoRetry = this.instanceRetryValue;
   }
 
-  setCorsConfiguration(
-    corsConfiguration: Cors[]
-  ): Promise<SetBucketMetadataResponse>;
-  setCorsConfiguration(
-    corsConfiguration: Cors[],
-    callback: SetBucketMetadataCallback
-  ): void;
   /**
    *
    * @typedef {object} Cors
@@ -3505,6 +3498,13 @@ class Bucket extends ServiceObject {
    * ```
    */
   setCorsConfiguration(
+    corsConfiguration: Cors[]
+  ): Promise<SetBucketMetadataResponse>;
+  setCorsConfiguration(
+    corsConfiguration: Cors[],
+    callback: SetBucketMetadataCallback
+  ): void;
+  setCorsConfiguration(
     corsConfiguration: Cors[],
     callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
@@ -3521,19 +3521,6 @@ class Bucket extends ServiceObject {
     this.storage.retryOptions.autoRetry = this.instanceRetryValue;
   }
 
-  setStorageClass(
-    storageClass: string,
-    options?: SetBucketStorageClassOptions
-  ): Promise<SetBucketMetadataResponse>;
-  setStorageClass(
-    storageClass: string,
-    callback: SetBucketStorageClassCallback
-  ): void;
-  setStorageClass(
-    storageClass: string,
-    options: SetBucketStorageClassOptions,
-    callback: SetBucketStorageClassCallback
-  ): void;
   /**
    * @typedef {object} SetBucketStorageClassOptions
    * @property {string} [userProject] - The ID of the project which will be
@@ -3579,6 +3566,19 @@ class Bucket extends ServiceObject {
    * bucket.setStorageClass('nearline').then(function() {});
    * ```
    */
+  setStorageClass(
+    storageClass: string,
+    options?: SetBucketStorageClassOptions
+  ): Promise<SetBucketMetadataResponse>;
+  setStorageClass(
+    storageClass: string,
+    callback: SetBucketStorageClassCallback
+  ): void;
+  setStorageClass(
+    storageClass: string,
+    options: SetBucketStorageClassOptions,
+    callback: SetBucketStorageClassCallback
+  ): void;
   setStorageClass(
     storageClass: string,
     optionsOrCallback?:
@@ -3647,13 +3647,6 @@ class Bucket extends ServiceObject {
     });
   }
 
-  upload(pathString: string, options?: UploadOptions): Promise<UploadResponse>;
-  upload(
-    pathString: string,
-    options: UploadOptions,
-    callback: UploadCallback
-  ): void;
-  upload(pathString: string, callback: UploadCallback): void;
   /**
    * @typedef {object} UploadOptions Configuration options for Bucket#upload().
    * @property {string|File} [destination] The place to save
@@ -3916,6 +3909,13 @@ class Bucket extends ServiceObject {
    * region_tag:storage_upload_encrypted_file
    * Example of uploading an encrypted file:
    */
+  upload(pathString: string, options?: UploadOptions): Promise<UploadResponse>;
+  upload(
+    pathString: string,
+    options: UploadOptions,
+    callback: UploadCallback
+  ): void;
+  upload(pathString: string, callback: UploadCallback): void;
   upload(
     pathString: string,
     optionsOrCallback?: UploadOptions | UploadCallback,
@@ -4046,14 +4046,6 @@ class Bucket extends ServiceObject {
     }
   }
 
-  makeAllFilesPublicPrivate_(
-    options?: MakeAllFilesPublicPrivateOptions
-  ): Promise<MakeAllFilesPublicPrivateResponse>;
-  makeAllFilesPublicPrivate_(callback: MakeAllFilesPublicPrivateCallback): void;
-  makeAllFilesPublicPrivate_(
-    options: MakeAllFilesPublicPrivateOptions,
-    callback: MakeAllFilesPublicPrivateCallback
-  ): void;
   /**
    * @private
    *
@@ -4098,6 +4090,14 @@ class Bucket extends ServiceObject {
    *
    * @return {Promise<MakeAllFilesPublicPrivateResponse>}
    */
+  makeAllFilesPublicPrivate_(
+    options?: MakeAllFilesPublicPrivateOptions
+  ): Promise<MakeAllFilesPublicPrivateResponse>;
+  makeAllFilesPublicPrivate_(callback: MakeAllFilesPublicPrivateCallback): void;
+  makeAllFilesPublicPrivate_(
+    options: MakeAllFilesPublicPrivateOptions,
+    callback: MakeAllFilesPublicPrivateCallback
+  ): void;
   makeAllFilesPublicPrivate_(
     optionsOrCallback?:
       | MakeAllFilesPublicPrivateOptions

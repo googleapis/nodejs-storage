@@ -63,8 +63,6 @@ class Channel extends ServiceObject {
     metadata.resourceId = resourceId;
   }
 
-  stop(): Promise<Metadata>;
-  stop(callback: StopCallback): void;
   /**
    * @typedef {array} StopResponse
    * @property {object} 0 The full API response.
@@ -99,6 +97,8 @@ class Channel extends ServiceObject {
    * });
    * ```
    */
+  stop(): Promise<Metadata>;
+  stop(callback: StopCallback): void;
   stop(callback?: StopCallback): Promise<Metadata> | void {
     callback = callback || util.noop;
     this.request(

@@ -704,21 +704,6 @@ export class Storage extends Service {
     return new Channel(this, id, resourceId);
   }
 
-  createBucket(
-    name: string,
-    metadata?: CreateBucketRequest
-  ): Promise<CreateBucketResponse>;
-  createBucket(name: string, callback: BucketCallback): void;
-  createBucket(
-    name: string,
-    metadata: CreateBucketRequest,
-    callback: BucketCallback
-  ): void;
-  createBucket(
-    name: string,
-    metadata: CreateBucketRequest,
-    callback: BucketCallback
-  ): void;
   /**
    * @typedef {array} CreateBucketResponse
    * @property {Bucket} 0 The new {@link Bucket}.
@@ -834,6 +819,21 @@ export class Storage extends Service {
    */
   createBucket(
     name: string,
+    metadata?: CreateBucketRequest
+  ): Promise<CreateBucketResponse>;
+  createBucket(name: string, callback: BucketCallback): void;
+  createBucket(
+    name: string,
+    metadata: CreateBucketRequest,
+    callback: BucketCallback
+  ): void;
+  createBucket(
+    name: string,
+    metadata: CreateBucketRequest,
+    callback: BucketCallback
+  ): void;
+  createBucket(
+    name: string,
     metadataOrCallback?: BucketCallback | CreateBucketRequest,
     callback?: BucketCallback
   ): Promise<CreateBucketResponse> | void {
@@ -912,19 +912,6 @@ export class Storage extends Service {
     );
   }
 
-  createHmacKey(
-    serviceAccountEmail: string,
-    options?: CreateHmacKeyOptions
-  ): Promise<CreateHmacKeyResponse>;
-  createHmacKey(
-    serviceAccountEmail: string,
-    callback: CreateHmacKeyCallback
-  ): void;
-  createHmacKey(
-    serviceAccountEmail: string,
-    options: CreateHmacKeyOptions,
-    callback: CreateHmacKeyCallback
-  ): void;
   /**
    * @typedef {object} CreateHmacKeyOptions
    * @property {string} [projectId] The project ID of the project that owns
@@ -1000,6 +987,19 @@ export class Storage extends Service {
    */
   createHmacKey(
     serviceAccountEmail: string,
+    options?: CreateHmacKeyOptions
+  ): Promise<CreateHmacKeyResponse>;
+  createHmacKey(
+    serviceAccountEmail: string,
+    callback: CreateHmacKeyCallback
+  ): void;
+  createHmacKey(
+    serviceAccountEmail: string,
+    options: CreateHmacKeyOptions,
+    callback: CreateHmacKeyCallback
+  ): void;
+  createHmacKey(
+    serviceAccountEmail: string,
     optionsOrCb?: CreateHmacKeyOptions | CreateHmacKeyCallback,
     cb?: CreateHmacKeyCallback
   ): Promise<CreateHmacKeyResponse> | void {
@@ -1041,9 +1041,6 @@ export class Storage extends Service {
     );
   }
 
-  getBuckets(options?: GetBucketsRequest): Promise<GetBucketsResponse>;
-  getBuckets(options: GetBucketsRequest, callback: GetBucketsCallback): void;
-  getBuckets(callback: GetBucketsCallback): void;
   /**
    * Query object for listing buckets.
    *
@@ -1129,6 +1126,9 @@ export class Storage extends Service {
    * region_tag:storage_list_buckets
    * Another example:
    */
+  getBuckets(options?: GetBucketsRequest): Promise<GetBucketsResponse>;
+  getBuckets(options: GetBucketsRequest, callback: GetBucketsCallback): void;
+  getBuckets(callback: GetBucketsCallback): void;
   getBuckets(
     optionsOrCallback?: GetBucketsRequest | GetBucketsCallback,
     cb?: GetBucketsCallback
@@ -1288,17 +1288,6 @@ export class Storage extends Service {
     );
   }
 
-  getServiceAccount(
-    options?: GetServiceAccountOptions
-  ): Promise<GetServiceAccountResponse>;
-  getServiceAccount(
-    options?: GetServiceAccountOptions
-  ): Promise<GetServiceAccountResponse>;
-  getServiceAccount(
-    options: GetServiceAccountOptions,
-    callback: GetServiceAccountCallback
-  ): void;
-  getServiceAccount(callback: GetServiceAccountCallback): void;
   /**
    * @typedef {array} GetServiceAccountResponse
    * @property {object} 0 The service account resource.
@@ -1347,6 +1336,17 @@ export class Storage extends Service {
    * });
    * ```
    */
+  getServiceAccount(
+    options?: GetServiceAccountOptions
+  ): Promise<GetServiceAccountResponse>;
+  getServiceAccount(
+    options?: GetServiceAccountOptions
+  ): Promise<GetServiceAccountResponse>;
+  getServiceAccount(
+    options: GetServiceAccountOptions,
+    callback: GetServiceAccountCallback
+  ): void;
+  getServiceAccount(callback: GetServiceAccountCallback): void;
   getServiceAccount(
     optionsOrCallback?: GetServiceAccountOptions | GetServiceAccountCallback,
     cb?: GetServiceAccountCallback

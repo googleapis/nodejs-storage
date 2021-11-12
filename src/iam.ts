@@ -149,9 +149,6 @@ class Iam {
     this.resourceId_ = 'buckets/' + bucket.getId();
   }
 
-  getPolicy(options?: GetPolicyOptions): Promise<GetPolicyResponse>;
-  getPolicy(options: GetPolicyOptions, callback: GetPolicyCallback): void;
-  getPolicy(callback: GetPolicyCallback): void;
   /**
    * @typedef {object} GetPolicyOptions Requested options for IAM#getPolicy().
    * @property {number} [requestedPolicyVersion] The version of IAM policies to
@@ -237,6 +234,9 @@ class Iam {
    * region_tag:storage_view_bucket_iam_members
    * Example of retrieving a bucket's IAM policy:
    */
+  getPolicy(options?: GetPolicyOptions): Promise<GetPolicyResponse>;
+  getPolicy(options: GetPolicyOptions, callback: GetPolicyCallback): void;
+  getPolicy(callback: GetPolicyCallback): void;
   getPolicy(
     optionsOrCallback?: GetPolicyOptions | GetPolicyCallback,
     callback?: GetPolicyCallback
@@ -267,16 +267,6 @@ class Iam {
     );
   }
 
-  setPolicy(
-    policy: Policy,
-    options?: SetPolicyOptions
-  ): Promise<SetPolicyResponse>;
-  setPolicy(policy: Policy, callback: SetPolicyCallback): void;
-  setPolicy(
-    policy: Policy,
-    options: SetPolicyOptions,
-    callback: SetPolicyCallback
-  ): void;
   /**
    * Set the IAM policy.
    *
@@ -327,6 +317,16 @@ class Iam {
    */
   setPolicy(
     policy: Policy,
+    options?: SetPolicyOptions
+  ): Promise<SetPolicyResponse>;
+  setPolicy(policy: Policy, callback: SetPolicyCallback): void;
+  setPolicy(
+    policy: Policy,
+    options: SetPolicyOptions,
+    callback: SetPolicyCallback
+  ): void;
+  setPolicy(
+    policy: Policy,
     optionsOrCallback?: SetPolicyOptions | SetPolicyCallback,
     callback?: SetPolicyCallback
   ): Promise<SetPolicyResponse> | void {
@@ -355,19 +355,6 @@ class Iam {
     );
   }
 
-  testPermissions(
-    permissions: string | string[],
-    options?: TestIamPermissionsOptions
-  ): Promise<TestIamPermissionsResponse>;
-  testPermissions(
-    permissions: string | string[],
-    callback: TestIamPermissionsCallback
-  ): void;
-  testPermissions(
-    permissions: string | string[],
-    options: TestIamPermissionsOptions,
-    callback: TestIamPermissionsCallback
-  ): void;
   /**
    * Test a set of permissions for a resource.
    *
@@ -423,6 +410,19 @@ class Iam {
    * });
    * ```
    */
+  testPermissions(
+    permissions: string | string[],
+    options?: TestIamPermissionsOptions
+  ): Promise<TestIamPermissionsResponse>;
+  testPermissions(
+    permissions: string | string[],
+    callback: TestIamPermissionsCallback
+  ): void;
+  testPermissions(
+    permissions: string | string[],
+    options: TestIamPermissionsOptions,
+    callback: TestIamPermissionsCallback
+  ): void;
   testPermissions(
     permissions: string | string[],
     optionsOrCallback?: TestIamPermissionsOptions | TestIamPermissionsCallback,

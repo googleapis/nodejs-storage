@@ -414,8 +414,6 @@ class Acl extends AclRoleAccessorMethods {
     this.request_ = options.request;
   }
 
-  add(options: AddAclOptions): Promise<AddAclResponse>;
-  add(options: AddAclOptions, callback: AddAclCallback): void;
   /**
    * @typedef {array} AddAclResponse
    * @property {object} 0 The Acl Objects.
@@ -491,6 +489,8 @@ class Acl extends AclRoleAccessorMethods {
    * region_tag:storage_add_bucket_default_owner
    * Example of adding a default owner to a bucket:
    */
+  add(options: AddAclOptions): Promise<AddAclResponse>;
+  add(options: AddAclOptions, callback: AddAclCallback): void;
   add(
     options: AddAclOptions,
     callback?: AddAclCallback
@@ -526,8 +526,6 @@ class Acl extends AclRoleAccessorMethods {
     );
   }
 
-  delete(options: RemoveAclOptions): Promise<RemoveAclResponse>;
-  delete(options: RemoveAclOptions, callback: RemoveAclCallback): void;
   /**
    * @typedef {array} RemoveAclResponse
    * @property {object} 0 The full API response.
@@ -590,6 +588,8 @@ class Acl extends AclRoleAccessorMethods {
    * region_tag:storage_remove_file_owner
    * Example of removing an owner from a bucket:
    */
+  delete(options: RemoveAclOptions): Promise<RemoveAclResponse>;
+  delete(options: RemoveAclOptions, callback: RemoveAclCallback): void;
   delete(
     options: RemoveAclOptions,
     callback?: RemoveAclCallback
@@ -616,9 +616,6 @@ class Acl extends AclRoleAccessorMethods {
     );
   }
 
-  get(options?: GetAclOptions): Promise<GetAclResponse>;
-  get(options: GetAclOptions, callback: GetAclCallback): void;
-  get(callback: GetAclCallback): void;
   /**
    * @typedef {array} GetAclResponse
    * @property {object|object[]} 0 Single or array of Acl Objects.
@@ -704,6 +701,9 @@ class Acl extends AclRoleAccessorMethods {
    * region_tag:storage_print_bucket_acl_for_user
    * Example of printing a bucket's ACL for a specific user:
    */
+  get(options?: GetAclOptions): Promise<GetAclResponse>;
+  get(options: GetAclOptions, callback: GetAclCallback): void;
+  get(callback: GetAclCallback): void;
   get(
     optionsOrCallback?: GetAclOptions | GetAclCallback,
     cb?: GetAclCallback
@@ -751,8 +751,6 @@ class Acl extends AclRoleAccessorMethods {
     );
   }
 
-  update(options: UpdateAclOptions): Promise<UpdateAclResponse>;
-  update(options: UpdateAclOptions, callback: UpdateAclCallback): void;
   /**
    * @typedef {array} UpdateAclResponse
    * @property {object} 0 The updated Acl Objects.
@@ -812,6 +810,8 @@ class Acl extends AclRoleAccessorMethods {
    * });
    * ```
    */
+  update(options: UpdateAclOptions): Promise<UpdateAclResponse>;
+  update(options: UpdateAclOptions, callback: UpdateAclCallback): void;
   update(
     options: UpdateAclOptions,
     callback?: UpdateAclCallback

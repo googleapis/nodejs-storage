@@ -214,12 +214,6 @@ class Notification extends ServiceObject {
     });
   }
 
-  delete(options?: DeleteNotificationOptions): Promise<[Metadata]>;
-  delete(
-    options: DeleteNotificationOptions,
-    callback: DeleteNotificationCallback
-  ): void;
-  delete(callback: DeleteNotificationCallback): void;
   /**
    * @typedef {array} DeleteNotificationResponse
    * @property {object} 0 The full API response.
@@ -256,6 +250,12 @@ class Notification extends ServiceObject {
    * region_tag:storage_delete_bucket_notification
    * Another example:
    */
+  delete(options?: DeleteNotificationOptions): Promise<[Metadata]>;
+  delete(
+    options: DeleteNotificationOptions,
+    callback: DeleteNotificationCallback
+  ): void;
+  delete(callback: DeleteNotificationCallback): void;
   delete(
     optionsOrCallback?: DeleteNotificationOptions | DeleteNotificationCallback,
     callback?: DeleteNotificationCallback
@@ -274,9 +274,6 @@ class Notification extends ServiceObject {
     );
   }
 
-  get(options?: GetNotificationOptions): Promise<GetNotificationResponse>;
-  get(options: GetNotificationOptions, callback: GetNotificationCallback): void;
-  get(callback: GetNotificationCallback): void;
   /**
    * Get a notification and its metadata if it exists.
    *
@@ -311,6 +308,9 @@ class Notification extends ServiceObject {
    * });
    * ```
    */
+  get(options?: GetNotificationOptions): Promise<GetNotificationResponse>;
+  get(options: GetNotificationOptions, callback: GetNotificationCallback): void;
+  get(callback: GetNotificationCallback): void;
   get(
     optionsOrCallback?: GetNotificationOptions | GetNotificationCallback,
     callback?: GetNotificationCallback
@@ -365,14 +365,6 @@ class Notification extends ServiceObject {
     });
   }
 
-  getMetadata(
-    options?: GetNotificationMetadataOptions
-  ): Promise<GetNotificationMetadataResponse>;
-  getMetadata(
-    options: GetNotificationMetadataOptions,
-    callback: MetadataCallback
-  ): void;
-  getMetadata(callback: MetadataCallback): void;
   /**
    * Get the notification's metadata.
    *
@@ -406,6 +398,14 @@ class Notification extends ServiceObject {
    * region_tag:storage_print_pubsub_bucket_notification
    * Another example:
    */
+  getMetadata(
+    options?: GetNotificationMetadataOptions
+  ): Promise<GetNotificationMetadataResponse>;
+  getMetadata(
+    options: GetNotificationMetadataOptions,
+    callback: MetadataCallback
+  ): void;
+  getMetadata(callback: MetadataCallback): void;
   getMetadata(
     optionsOrCallback?: GetNotificationMetadataOptions | MetadataCallback,
     callback?: MetadataCallback
