@@ -120,7 +120,7 @@ export interface GetFilesOptions {
   /**
    * @deprecated dirrectory is deprecated
    * @internal
-  */
+   */
   directory?: string;
   endOffset?: string;
   includeTrailingDelimiter?: boolean;
