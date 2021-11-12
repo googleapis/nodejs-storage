@@ -551,7 +551,7 @@ export class Storage extends Service {
    *   keyFilename: '/path/to/keyfile.json'
    * });
    * ```
-
+   *
    * @param {StorageOptions} [options] Configuration options.
    */
   constructor(options: StorageOptions = {}) {
