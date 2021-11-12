@@ -30,7 +30,7 @@ function main(
   // The new ID for your GCS file
   // const destFileName = 'your-new-file-name';
 
-  // Imports the Google Cloud client library
+  // Imports the Google Cloud Node.js client library
   const {Storage} = require('@google-cloud/storage');
 
   const fetch = require('node-fetch');
@@ -43,13 +43,13 @@ function main(
     let location; // endpoint to which we should upload the file
 
     // Option 1: use file.createResumableUpload
-    // file.createResumableUpload returns an authenticated endpoint
-    // to which we can make requests without credentials
+    // Returns an authenticated endpoint to which
+    // you can make requests without credentials.
     [location] = await file.createResumableUpload(); //auth required
 
-    // Option 2: use signed URLs to manually start resumable upload
-    // Auth is required to get the signed URL, but is not required
-    // to start the resumable upload
+    // Option 2: Use signed URLs to manually start resumable uploads.
+    // Authenticating is required to get the signed URL, but isn't
+    // required to start the resumable upload
     const options = {
       version: 'v4',
       action: 'resumable',
@@ -67,7 +67,7 @@ function main(
     });
     location = resumableSession.headers.location;
 
-    // passing the location to file.save removes the need to
+    // Passes the location to file.save so you don't need to
     // authenticate this call
     await file.save(contents, {
       uri: location,
