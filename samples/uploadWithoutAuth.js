@@ -81,5 +81,8 @@ function main(
   uploadWithoutAuthentication().catch(console.error);
   // [END storage_upload_without_authentication]
 }
-
+process.on('unhandledRejection', err => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
 main(...process.argv.slice(2));
