@@ -3617,10 +3617,6 @@ class File extends ServiceObject<File> {
   }
 
   /**
-   * @callback RotateEncryptionKeyCallback
-   * @extends CopyCallback
-   */
-  /**
    * @typedef RotateEncryptionKeyResponse
    * @extends CopyResponse
    */
