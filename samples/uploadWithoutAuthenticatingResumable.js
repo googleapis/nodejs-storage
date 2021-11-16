@@ -17,7 +17,7 @@ function main(
   contents = 'these are my file contents',
   destFileName = 'file.txt'
 ) {
-  // [START storage_upload_without_authentication]
+  // [START storage_upload_without_authentication_create_resumable]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -33,39 +33,15 @@ function main(
   // Imports the Google Cloud Node.js client library
   const {Storage} = require('@google-cloud/storage');
 
-  const fetch = require('node-fetch');
-
   // Creates a client
   const storage = new Storage();
 
-  async function uploadWithoutAuthentication() {
+  async function uploadWithoutAuthenticationCreateResumableUploadStrategy() {
     const file = storage.bucket(bucketName).file(destFileName);
-    let location; // endpoint to which we should upload the file
 
-    // Option 1: use file.createResumableUpload
     // Returns an authenticated endpoint to which
     // you can make requests without credentials.
-    [location] = await file.createResumableUpload(); //auth required
-
-    // Option 2: Use signed URLs to manually start resumable uploads.
-    // Authenticating is required to get the signed URL, but isn't
-    // required to start the resumable upload
-    const options = {
-      version: 'v4',
-      action: 'resumable',
-      expires: Date.now() + 30 * 60 * 1000,
-    };
-    //auth required
-    const [signedUrl] = await file.getSignedUrl(options);
-
-    // no auth required
-    const resumableSession = await fetch(signedUrl, {
-      method: 'POST',
-      headers: {
-        'x-goog-resumable': 'start',
-      },
-    });
-    location = resumableSession.headers.location;
+    const [location] = await file.createResumableUpload(); //auth required
 
     // Passes the location to file.save so you don't need to
     // authenticate this call
@@ -78,8 +54,8 @@ function main(
     console.log(`${destFileName} uploaded to ${bucketName}`);
   }
 
-  uploadWithoutAuthentication().catch(console.error);
-  // [END storage_upload_without_authentication]
+  uploadWithoutAuthenticationCreateResumableUploadStrategy().catch(console.error);
+  // [END storage_upload_without_authentication_create_resumable]
 }
 process.on('unhandledRejection', err => {
   console.error(err.message);
