@@ -25,5 +25,6 @@ if [[ -z "$CREDENTIALS" ]]; then
 fi
 
 npm install
-npm install --no-save @google-cloud/cloud-rad@^0.2.5
+# npm install --no-save @google-cloud/cloud-rad@^0.2.5
+npm install --no-save googleapis/nodejs-cloud-rad#fhinkel-toc
 npx @google-cloud/cloud-rad
