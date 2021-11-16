@@ -54,7 +54,9 @@ function main(
     console.log(`${destFileName} uploaded to ${bucketName}`);
   }
 
-  uploadWithoutAuthenticationCreateResumableUploadStrategy().catch(console.error);
+  uploadWithoutAuthenticationCreateResumableUploadStrategy().catch(
+    console.error
+  );
   // [END storage_upload_without_authentication_create_resumable]
 }
 process.on('unhandledRejection', err => {
