@@ -285,8 +285,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  * configuration options. For each object that can be created (e.g., a bucket),
  * there is an equivalent static and instance method. While they are classes,
  * they can be instantiated without use of the `new` keyword.
- */
-/**
+ *
  * Cloud Storage uses access control lists (ACLs) to manage object and
  * bucket access. ACLs are the mechanism you use to share objects with other
  * users and allow other users to access your buckets and objects.
@@ -343,8 +342,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *   const apiResponse = data[1];
  * });
  * ```
- */
-/**
+ *
  * Get {@link Bucket} objects for all of the buckets in your project as
  * a readable object stream.
  *
@@ -373,8 +371,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *     this.end();
  *   });
  * ```
- */
-/**
+ *
  * Get {@link HmacKey} objects for all of the HMAC keys in the project in a
  * readable object stream.
  *
@@ -403,8 +400,7 @@ const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *     this.end();
  *   });
  * ```
- */
-/**
+ *
  * <h4>ACLs</h4>
  * Cloud Storage uses access control lists (ACLs) to manage object and
  * bucket access. ACLs are the mechanism you use to share files with other users
