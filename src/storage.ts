@@ -304,7 +304,6 @@ export class Storage extends Service {
   /**
    * {@link Bucket} class.
    *
-   * @name Storage.Bucket
    * @see Bucket
    * @type {Constructor}
    */
@@ -313,7 +312,6 @@ export class Storage extends Service {
   /**
    * {@link Channel} class.
    *
-   * @name Storage.Channel
    * @see Channel
    * @type {Constructor}
    */
@@ -322,7 +320,6 @@ export class Storage extends Service {
   /**
    * {@link File} class.
    *
-   * @name Storage.File
    * @see File
    * @type {Constructor}
    */
@@ -331,7 +328,6 @@ export class Storage extends Service {
   /**
    * {@link HmacKey} class.
    *
-   * @name Storage.HmacKey
    * @see HmacKey
    * @type {Constructor}
    */
@@ -352,16 +348,12 @@ export class Storage extends Service {
    * can be granted to an entity:
    *
    *   - `gcs.acl.OWNER_ROLE` - ("OWNER")
+   *
    *   - `gcs.acl.READER_ROLE` - ("READER")
+   *
    *   - `gcs.acl.WRITER_ROLE` - ("WRITER")
    *
    * See {@link https://cloud.google.com/storage/docs/access-control/lists| About Access Control Lists}
-   *
-   * @name Storage#acl
-   * @type {object}
-   * @property {string} OWNER_ROLE
-   * @property {string} READER_ROLE
-   * @property {string} WRITER_ROLE
    *
    * @example
    * ```
@@ -407,7 +399,6 @@ export class Storage extends Service {
    * Get {@link Bucket} objects for all of the buckets in your project as
    * a readable object stream.
    *
-   * @method Storage#getBucketsStream
    * @param {GetBucketsRequest} [query] Query object for listing buckets.
    * @returns {ReadableStream} A readable stream that emits {@link Bucket}
    *     instances.

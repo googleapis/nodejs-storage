@@ -409,26 +409,6 @@ const SEVEN_DAYS = 7 * 24 * 60 * 60;
  * @class
  */
 class File extends ServiceObject<File> {
-  acl: Acl;
-
-  bucket: Bucket;
-  storage: Storage;
-  kmsKeyName?: string;
-  userProject?: string;
-  signer?: URLSigner;
-  metadata: Metadata;
-  name: string;
-
-  generation?: number;
-  parent!: Bucket;
-
-  private encryptionKey?: string | Buffer;
-  private encryptionKeyBase64?: string;
-  private encryptionKeyHash?: string;
-  private encryptionKeyInterceptor?: Interceptor;
-  private instanceRetryValue?: boolean;
-  instancePreconditionOpts?: PreconditionOptions;
-
   /**
    * Cloud Storage uses access control lists (ACLs) to manage object and
    * bucket access. ACLs are the mechanism you use to share objects with other
@@ -445,7 +425,6 @@ class File extends ServiceObject<File> {
    *
    * See {@link http://goo.gl/6qBBPO| About Access Control lists}
    *
-   * @name File#acl
    * @mixes Acl
    *
    * @example
@@ -474,20 +453,38 @@ class File extends ServiceObject<File> {
    * });
    * ```
    */
+  acl: Acl;
+
+  bucket: Bucket;
+  storage: Storage;
+  kmsKeyName?: string;
+  userProject?: string;
+  signer?: URLSigner;
   /**
    * The API-formatted resource description of the file.
    *
    * Note: This is not guaranteed to be up-to-date when accessed. To get the
    * latest record, call the `getMetadata()` method.
    *
-   * @name File#metadata
    * @type {object}
    */
+  metadata: Metadata;
   /**
    * The file's name.
-   * @name File#name
    * @type {string}
    */
+  name: string;
+
+  generation?: number;
+  parent!: Bucket;
+
+  private encryptionKey?: string | Buffer;
+  private encryptionKeyBase64?: string;
+  private encryptionKeyHash?: string;
+  private encryptionKeyInterceptor?: Interceptor;
+  private instanceRetryValue?: boolean;
+  instancePreconditionOpts?: PreconditionOptions;
+
   /**
    * @typedef {object} FileOptions Options passed to the File constructor.
    * @property {string} [encryptionKey] A custom encryption key.
