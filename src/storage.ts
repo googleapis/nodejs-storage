@@ -333,6 +333,9 @@ export class Storage extends Service {
    */
   static HmacKey: typeof HmacKey = HmacKey;
 
+  /**
+   * @internal
+   */
   static acl = {
     OWNER_ROLE: 'OWNER',
     READER_ROLE: 'READER',
