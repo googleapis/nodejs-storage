@@ -255,7 +255,7 @@ const IDEMPOTENCY_STRATEGY_DEFAULT = IdempotencyStrategy.RetryConditional;
  * @const
  * @private
  * @param {error} err - The API error to check if it is appropriate to retry.
- * @return {boolean} True if the API request should be retried, false otherwise.
+ * @return True if the API request should be retried, false otherwise.
  */
 const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
   if (err) {
@@ -403,7 +403,7 @@ export class Storage extends Service {
    * a readable object stream.
    *
    * @param {GetBucketsRequest} [query] Query object for listing buckets.
-   * @returns {ReadableStream} A readable stream that emits {@link Bucket}
+   * @returns A readable stream that emits {@link Bucket}
    *     instances.
    *
    * @example
@@ -438,7 +438,7 @@ export class Storage extends Service {
    *
    * @method Storage#getHmacKeysStream
    * @param {GetHmacKeysOptions} [options] Configuration options.
-   * @returns {ReadableStream} A readable stream that emits {@link HmacKey}
+   * @returns A readable stream that emits {@link HmacKey}
    *     instances.
    *
    * @example
@@ -654,7 +654,6 @@ export class Storage extends Service {
    *     specified.
    * @param {string} [options.userProject] User project to be billed for all
    *     requests made from this Bucket object.
-   * @returns {Bucket}
    * @see Bucket
    *
    * @example
@@ -677,7 +676,6 @@ export class Storage extends Service {
    *
    * @param {string} id The ID of the channel.
    * @param {string} resourceId The resource ID of the channel.
-   * @returns {Channel}
    * @see Channel
    *
    * @example
@@ -741,7 +739,6 @@ export class Storage extends Service {
    * @param {string} name Name of the bucket to create.
    * @param {CreateBucketRequest} [metadata] Metadata to set for the bucket.
    * @param {CreateBucketCallback} [callback] Callback function.
-   * @returns {Promise<CreateBucketResponse>}
    * @throws {Error} If a name is not provided.
    * @see Bucket#create
    *
@@ -944,7 +941,6 @@ export class Storage extends Service {
    * @param {string} serviceAccountEmail The service account's email address
    *     with which the HMAC key is created for.
    * @param {CreateHmacKeyCallback} [callback] Callback function.
-   * @return {Promise<CreateHmacKeyResponse>}
    *
    * @example
    * ```
@@ -1066,7 +1062,6 @@ export class Storage extends Service {
    *
    * @param {GetBucketsRequest} [query] Query object for listing buckets.
    * @param {GetBucketsCallback} [callback] Callback function.
-   * @returns {Promise<GetBucketsResponse>}
    *
    * @example
    * ```
@@ -1196,7 +1191,6 @@ export class Storage extends Service {
    *
    * @param {GetHmacKeysOption} options Configuration options.
    * @param {GetHmacKeysCallback} callback Callback function.
-   * @return {Promise<GetHmacKeysResponse>}
    *
    * @example
    * ```
@@ -1301,7 +1295,6 @@ export class Storage extends Service {
    * @param {string} [options.userProject] User project to be billed for this
    *     request.
    * @param {GetServiceAccountCallback} [callback] Callback function.
-   * @returns {Promise<GetServiceAccountResponse>}
    *
    * @example
    * ```
@@ -1381,7 +1374,6 @@ export class Storage extends Service {
    *
    * @param {string} accessId The HMAC key's access ID.
    * @param {HmacKeyOptions} options HmacKey constructor owptions.
-   * @returns {HmacKey}
    * @see HmacKey
    *
    * @example

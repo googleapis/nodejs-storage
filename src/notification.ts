@@ -141,7 +141,6 @@ class Notification extends ServiceObject {
        * @param {CreateNotificationRequest} [options] Metadata to set for
        *     the notification.
        * @param {CreateNotificationCallback} [callback] Callback function.
-       * @returns {Promise<CreateNotificationResponse>}
        * @throws {Error} If a valid topic is not provided.
        *
        * @example
@@ -182,7 +181,6 @@ class Notification extends ServiceObject {
        *
        * @method Notification#exists
        * @param {NotificationExistsCallback} [callback] Callback function.
-       * @returns {Promise<NotificationExistsResponse>}
        *
        * @example
        * ```
@@ -226,7 +224,6 @@ class Notification extends ServiceObject {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {DeleteNotificationCallback} [callback] Callback function.
-   * @returns {Promise<DeleteNotificationResponse>}
    *
    * @example
    * ```
@@ -285,7 +282,6 @@ class Notification extends ServiceObject {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {GetNotificationCallback} [callback] Callback function.
-   * @return {Promise<GetNotificationCallback>}
    *
    * @example
    * ```
@@ -373,7 +369,6 @@ class Notification extends ServiceObject {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {GetNotificationMetadataCallback} [callback] Callback function.
-   * @returns {Promise<GetNotificationMetadataResponse>}
    *
    * @example
    * ```

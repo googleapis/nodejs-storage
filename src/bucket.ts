@@ -576,7 +576,7 @@ class Bucket extends ServiceObject {
    *
    * @method Bucket#getFilesStream
    * @param {GetFilesOptions} [query] Query object for listing files.
-   * @returns {ReadableStream} A readable stream that emits {@link File} instances.
+   * @returns A readable stream that emits {@link File} instances.
    *
    * @example
    * ```
@@ -677,7 +677,6 @@ class Bucket extends ServiceObject {
        * @method Bucket#create
        * @param {CreateBucketRequest} [metadata] Metadata to set for the bucket.
        * @param {CreateBucketCallback} [callback] Callback function.
-       * @returns {Promise<CreateBucketResponse>}
        *
        * @example
        * ```
@@ -732,7 +731,6 @@ class Bucket extends ServiceObject {
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {DeleteBucketCallback} [callback] Callback function.
-       * @returns {Promise<DeleteBucketResponse>}
        *
        * @example
        * ```
@@ -780,7 +778,6 @@ class Bucket extends ServiceObject {
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {BucketExistsCallback} [callback] Callback function.
-       * @returns {Promise<BucketExistsResponse>}
        *
        * @example
        * ```
@@ -836,7 +833,6 @@ class Bucket extends ServiceObject {
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {GetBucketCallback} [callback] Callback function.
-       * @returns {Promise<GetBucketResponse>}
        *
        * @example
        * ```
@@ -890,7 +886,6 @@ class Bucket extends ServiceObject {
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {GetBucketMetadataCallback} [callback] Callback function.
-       * @returns {Promise<GetBucketMetadataResponse>}
        *
        * @example
        * ```
@@ -943,7 +938,6 @@ class Bucket extends ServiceObject {
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {SetBucketMetadataCallback} [callback] Callback function.
-       * @returns {Promise<SetBucketMetadataResponse>}
        *
        * @example
        * ```
@@ -1088,7 +1082,6 @@ class Bucket extends ServiceObject {
    * @param {boolean} [options.append=true] Append the new rule to the existing
    *     policy.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
-   * @returns {Promise<SetBucketMetadataResponse>}
    *
    * @example
    * ```
@@ -1347,7 +1340,6 @@ class Bucket extends ServiceObject {
    *     billed for the request.
    *
    * @param {CombineCallback} [callback] Callback function.
-   * @returns {Promise<CombineResponse>}
    *
    * @example
    * ```
@@ -1548,7 +1540,6 @@ class Bucket extends ServiceObject {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {CreateChannelCallback} [callback] Callback function.
-   * @returns {Promise<CreateChannelResponse>}
    *
    * @example
    * ```
@@ -1706,7 +1697,6 @@ class Bucket extends ServiceObject {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {CreateNotificationCallback} [callback] Callback function.
-   * @returns {Promise<CreateNotificationResponse>}
    * @throws {Error} If a valid topic is not provided.
    * @see Notification#create
    *
@@ -1853,7 +1843,6 @@ class Bucket extends ServiceObject {
    * @param {boolean} [query.force] Suppress errors until all files have been
    *     processed.
    * @param {DeleteFilesCallback} [callback] Callback function.
-   * @returns {Promise}
    *
    * @example
    * ```
@@ -1949,7 +1938,6 @@ class Bucket extends ServiceObject {
    * @param {string|string[]} [labels] The labels to delete. If no labels are
    *     provided, all of the labels are removed.
    * @param {DeleteLabelsCallback} [callback] Callback function.
-   * @returns {Promise<DeleteLabelsResponse>}
    *
    * @example
    * ```
@@ -2039,7 +2027,6 @@ class Bucket extends ServiceObject {
    * Disable `requesterPays` functionality from this bucket.
    *
    * @param {DisableRequesterPaysCallback} [callback] Callback function.
-   * @returns {Promise<DisableRequesterPaysCallback>}
    *
    * @example
    * ```
@@ -2103,7 +2090,6 @@ class Bucket extends ServiceObject {
    *     default, the current bucket is used.
    * @param {string} config.prefix A unique prefix for log object names.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
-   * @returns {Promise<SetBucketMetadataResponse>}
    *
    * @example
    * ```
@@ -2217,7 +2203,6 @@ class Bucket extends ServiceObject {
    * to your bucket and its contents.
    *
    * @param {EnableRequesterPaysCallback} [callback] Callback function.
-   * @returns {Promise<EnableRequesterPaysResponse>}
    *
    * @example
    * ```
@@ -2279,7 +2264,6 @@ class Bucket extends ServiceObject {
    *     KMS key ring must use the same location as the bucket.
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for all requests made from File object.
-   * @returns {File}
    *
    * @example
    * ```
@@ -2388,7 +2372,6 @@ class Bucket extends ServiceObject {
    * @param {boolean} [query.versions] If true, returns File objects scoped to
    *     their versions.
    * @param {GetFilesCallback} [callback] Callback function.
-   * @returns {Promise<GetFilesResponse>}
    *
    * @example
    * ```
@@ -2568,7 +2551,6 @@ class Bucket extends ServiceObject {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {GetLabelsCallback} [callback] Callback function.
-   * @returns {Promise<GetLabelsCallback>}
    *
    * @example
    * ```
@@ -2648,7 +2630,6 @@ class Bucket extends ServiceObject {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {GetNotificationsCallback} [callback] Callback function.
-   * @returns {Promise<GetNotificationsResponse>}
    *
    * @example
    * ```
@@ -2806,7 +2787,6 @@ class Bucket extends ServiceObject {
    * @property {object} [config.queryParams] Additional query parameters to include
    *     in the signed URL.
    * @param {GetSignedUrlCallback} [callback] Callback function.
-   * @returns {Promise<GetSignedUrlResponse>}
    *
    * @example
    * ```
@@ -2890,7 +2870,6 @@ class Bucket extends ServiceObject {
    * @param {number|string} metageneration The bucket's metageneration. This is
    *     accesssible from calling {@link File#getMetadata}.
    * @param {BucketLockCallback} [callback] Callback function.
-   * @returns {Promise<BucketLockResponse>}
    *
    * @example
    * ```
@@ -2980,7 +2959,6 @@ class Bucket extends ServiceObject {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {MakeBucketPrivateCallback} [callback] Callback function.
-   * @returns {Promise<MakeBucketPrivateResponse>}
    *
    * @example
    * ```
@@ -3124,7 +3102,6 @@ class Bucket extends ServiceObject {
    * @param {boolean} [options.force] Queue errors occurred while making files
    *     private until all files have been processed.
    * @param {MakeBucketPublicCallback} [callback] Callback function.
-   * @returns {Promise<MakeBucketPublicResponse>}
    *
    * @example
    * ```
@@ -3222,7 +3199,6 @@ class Bucket extends ServiceObject {
    * Get a reference to a Cloud Pub/Sub Notification.
    *
    * @param {string} id ID of notification.
-   * @returns {Notification}
    * @see Notification
    *
    * @example
@@ -3246,7 +3222,6 @@ class Bucket extends ServiceObject {
    * locked.
    *
    * @param {SetBucketMetadataCallback} [callback] Callback function.
-   * @returns {Promise<SetBucketMetadataResponse>}
    *
    * @example
    * ```
@@ -3330,7 +3305,6 @@ class Bucket extends ServiceObject {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {SetLabelsCallback} [callback] Callback function.
-   * @returns {Promise<SetLabelsResponse>}
    *
    * @example
    * ```
@@ -3402,7 +3376,6 @@ class Bucket extends ServiceObject {
    * @param {*} duration In seconds, the minimum retention time for all objects
    *     contained in this bucket.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
-   * @returns {Promise<SetBucketMetadataResponse>}
    *
    * @example
    * ```
@@ -3475,7 +3448,6 @@ class Bucket extends ServiceObject {
    * @param {string[]} [corsConfiguration.responseHeader] A header allowed for cross origin
    *     resource sharing with this bucket.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
-   * @returns {Promise<SetBucketMetadataResponse>}
    *
    * @example
    * ```
@@ -3540,7 +3512,6 @@ class Bucket extends ServiceObject {
    * @param {string} [options.userProject] - The ID of the project which will be
    *     billed for the request.
    * @param {SetStorageClassCallback} [callback] Callback function.
-   * @returns {Promise}
    *
    * @example
    * ```
@@ -3786,7 +3757,6 @@ class Bucket extends ServiceObject {
    *     performance with less reliability. You may also choose to skip
    * validation completely, however this is **not recommended**.
    * @param {UploadCallback} [callback] Callback function.
-   * @returns {Promise<UploadResponse>}
    *
    * @example
    * ```
@@ -4084,7 +4054,6 @@ class Bucket extends ServiceObject {
    *
    * @param {MakeAllFilesPublicPrivateCallback} callback Callback function.
    *
-   * @return {Promise<MakeAllFilesPublicPrivateResponse>}
    */
   makeAllFilesPublicPrivate_(
     options?: MakeAllFilesPublicPrivateOptions

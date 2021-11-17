@@ -116,7 +116,6 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        * @method HmacKey#delete
        * @param {DeleteHmacKeyOptions} [options] Configuration options.
        * @param {DeleteHmacKeyCallback} [callback] Callback function.
-       * @returns {Promise<DeleteHmacKeyResponse>}
        *
        * @example
        * ```
@@ -182,7 +181,6 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        * @method HmacKey#get
        * @param {GetHmacKeyOptions} [options] Configuration options.
        * @param {GetHmacKeyCallback} [callback] Callback function.
-       * @returns {Promise<GetHmacKeyResponse>}
        *
        * @example
        * ```
@@ -230,7 +228,6 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        * @method HmacKey#getMetadata
        * @param {GetHmacKeyMetadataOptions} [options] Configuration options.
        * @param {HmacKeyMetadataCallback} [callback] Callback function.
-       * @returns {Promise<HmacKeyMetadataResponse>}
        *
        * @example
        * ```
@@ -291,7 +288,6 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
        * @param {SetHmacKeyMetadata} metadata The new metadata.
        * @param {SetHmacKeyMetadataOptions} [options] Configuration options.
        * @param {HmacKeyMetadataCallback} [callback] Callback function.
-       * @returns {Promise<HmacKeyMetadataResponse>}
        *
        * @example
        * ```

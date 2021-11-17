@@ -562,7 +562,6 @@ class File extends ServiceObject<File> {
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {DeleteFileCallback} [callback] Callback function.
-       * @returns {Promise<DeleteFileResponse>}
        *
        * @example
        * ```
@@ -607,7 +606,6 @@ class File extends ServiceObject<File> {
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {FileExistsCallback} [callback] Callback function.
-       * @returns {Promise<FileExistsResponse>}
        *
        * @example
        * ```
@@ -651,7 +649,6 @@ class File extends ServiceObject<File> {
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {GetFileCallback} [callback] Callback function.
-       * @returns {Promise<GetFileResponse>}
        *
        * @example
        * ```
@@ -700,7 +697,6 @@ class File extends ServiceObject<File> {
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {GetFileMetadataCallback} [callback] Callback function.
-       * @returns {Promise<GetFileMetadataResponse>}
        *
        * @example
        * ```
@@ -761,7 +757,6 @@ class File extends ServiceObject<File> {
        * @param {object} [metadata] The metadata you wish to update.
        * @param {SetFileMetadataOptions} [options] Configuration options.
        * @param {SetFileMetadataCallback} [callback] Callback function.
-       * @returns {Promise<SetFileMetadataResponse>}
        *
        * @example
        * ```
@@ -930,7 +925,6 @@ class File extends ServiceObject<File> {
    * @param {string|Bucket|File} destination Destination file.
    * @param {CopyOptions} [options] Configuration options. See an
    * @param {CopyCallback} [callback] Callback function.
-   * @returns {Promise<CopyResponse>}
    *
    * @example
    * ```
@@ -1205,7 +1199,6 @@ class File extends ServiceObject<File> {
    * downloaded.
    *
    * @param {CreateReadStreamOptions} [options] Configuration options.
-   * @returns {ReadableStream}
    *
    * @example
    * ```
@@ -1553,7 +1546,6 @@ class File extends ServiceObject<File> {
    *
    * @param {CreateResumableUploadOptions} [options] Configuration options.
    * @param {CreateResumableUploadCallback} [callback] Callback function.
-   * @returns {Promise<CreateResumableUploadResponse>}
    *
    * @example
    * ```
@@ -1732,7 +1724,6 @@ class File extends ServiceObject<File> {
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert| Objects: insert API Documentation}
    *
    * @param {CreateWriteStreamOptions} [options] Configuration options.
-   * @returns {WritableStream}
    *
    * @example
    * ```
@@ -2070,7 +2061,6 @@ class File extends ServiceObject<File> {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {DownloadCallback} [callback] Callback function.
-   * @returns {Promise<DownloadResponse>}
    *
    * @example
    * ```
@@ -2161,7 +2151,6 @@ class File extends ServiceObject<File> {
    * See {@link https://cloud.google.com/storage/docs/encryption#customer-supplied| Customer-supplied Encryption Keys}
    *
    * @param {string|buffer} encryptionKey An AES-256 encryption key.
-   * @returns {File}
    *
    * @example
    * ```
@@ -2243,7 +2232,6 @@ class File extends ServiceObject<File> {
    * Date object representing the earliest time this file will expire.
    *
    * @param {GetExpirationDateCallback} [callback] Callback function.
-   * @returns {Promise<GetExpirationDateResponse>}
    *
    * @example
    * ```
@@ -2348,7 +2336,6 @@ class File extends ServiceObject<File> {
    * @param {number} [options.contentLengthRange.max] Maximum value for the
    *     request's content length.
    * @param {GetSignedPolicyCallback} [callback] Callback function.
-   * @returns {Promise<GetSignedPolicyResponse>}
    *
    * @example
    * ```
@@ -2468,7 +2455,6 @@ class File extends ServiceObject<File> {
    * @param {number} [options.contentLengthRange.max] Maximum value for the
    *     request's content length.
    * @param {GenerateSignedPostPolicyV2Callback} [callback] Callback function.
-   * @returns {Promise<GenerateSignedPostPolicyV2Response>}
    *
    * @example
    * ```
@@ -2669,7 +2655,6 @@ class File extends ServiceObject<File> {
    *     in both `fields` and `conditions` will result in duplicate entries.
    *
    * @param {GenerateSignedPostPolicyV4Callback} [callback] Callback function.
-   * @returns {Promise<GenerateSignedPostPolicyV4Response>}
    *
    * @example
    * ```
@@ -2887,7 +2872,6 @@ class File extends ServiceObject<File> {
    * @param {string} [config.responseType] The response-content-type parameter
    *     of the signed url.
    * @param {GetSignedUrlCallback} [callback] Callback function.
-   * @returns {Promise<GetSignedUrlResponse>}
    *
    * @example
    * ```
@@ -3062,7 +3046,6 @@ class File extends ServiceObject<File> {
    * Any other non 403 error is propagated to user.
    *
    * @param {IsPublicCallback} [callback] Callback function.
-   * @returns {Promise<IsPublicResponse>}
    *
    * @example
    * ```
@@ -3162,7 +3145,6 @@ class File extends ServiceObject<File> {
    *
    * @param {MakeFilePrivateOptions} [options] Configuration options.
    * @param {MakeFilePrivateCallback} [callback] Callback function.
-   * @returns {Promise<MakeFilePrivateResponse>}
    *
    * @example
    * ```
@@ -3245,7 +3227,6 @@ class File extends ServiceObject<File> {
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/objectAccessControls/insert| ObjectAccessControls: insert API Documentation}
    *
    * @param {MakeFilePublicCallback} [callback] Callback function.
-   * @returns {Promise<MakeFilePublicResponse>}
    *
    * @example
    * ```
@@ -3289,8 +3270,6 @@ class File extends ServiceObject<File> {
   /**
    * The public URL of this File
    * Use {@link File#makePublic} to enable anonymous access via the returned URL.
-   *
-   * @returns {string}
    *
    * @example
    * ```
@@ -3345,7 +3324,6 @@ class File extends ServiceObject<File> {
    *
    * @param {string|Bucket|File} destination Destination file.
    * @param {MoveCallback} [callback] Callback function.
-   * @returns {Promise<MoveResponse>}
    *
    * @example
    * ```
@@ -3516,7 +3494,6 @@ class File extends ServiceObject<File> {
    *
    * @param {string|File} destinationFile Destination file.
    * @param {RenameCallback} [callback] Callback function.
-   * @returns {Promise<RenameResponse>}
    *
    * @example
    * ```
@@ -3635,7 +3612,6 @@ class File extends ServiceObject<File> {
    *
    * @param {RotateEncryptionKeyOptions} [options] - Configuration options.
    * @param {RotateEncryptionKeyCallback} [callback]
-   * @returns {Promise<File>}
    *
    * @example <caption>include:samples/encryption.js</caption>
    * region_tag:storage_rotate_encryption_key
@@ -3703,7 +3679,6 @@ class File extends ServiceObject<File> {
    * @param {SaveOptions} [options] See {@link File#createWriteStream}'s `options`
    *     parameter.
    * @param {SaveCallback} [callback] Callback function.
-   * @returns {Promise}
    *
    * @example
    * ```
@@ -3825,7 +3800,6 @@ class File extends ServiceObject<File> {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {SetStorageClassCallback} [callback] Callback function.
-   * @returns {Promise<SetStorageClassResponse>}
    *
    * @example
    * ```

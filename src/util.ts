@@ -43,7 +43,7 @@ export function objectEntries<T>(obj: {[key: string]: T}): Array<[string, T]> {
  * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent| MDN: fixedEncodeURIComponent}
  *
  * @param {string} str The URI component to encode.
- * @return {string} The encoded string.
+ * @return The encoded string.
  */
 export function fixedEncodeURIComponent(str: string): string {
   return encodeURIComponent(str).replace(
@@ -59,7 +59,7 @@ export function fixedEncodeURIComponent(str: string): string {
  *
  * @param {string} uri The URI to encode.
  * @param [boolean=false] encodeSlash If `true`, the "/" character is not encoded.
- * @return {string} The encoded string.
+ * @return The encoded string.
  */
 export function encodeURI(uri: string, encodeSlash: boolean): string {
   // Split the string by `/`, and conditionally rejoin them with either
@@ -73,7 +73,7 @@ export function encodeURI(uri: string, encodeSlash: boolean): string {
 /**
  * Serialize an object to a URL query string using util.encodeURI(uri, true).
  * @param {string} url The object to serialize.
- * @return {string} Serialized string.
+ * @return Serialized string.
  */
 export function qsStringify(qs: querystring.ParsedUrlQueryInput): string {
   return querystring.stringify(qs, '&', '=', {
@@ -94,7 +94,7 @@ export function objectKeyToLowercase<T>(object: {[key: string]: T}) {
 /**
  * JSON encode str, with unicode \u+ representation.
  * @param {object} obj The object to encode.
- * @return {string} Serialized string.
+ * @return Serialized string.
  */
 export function unicodeJSONStringify(obj: object) {
   return JSON.stringify(obj).replace(

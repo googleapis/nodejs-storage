@@ -203,7 +203,6 @@ class Iam {
    *
    * @param {GetPolicyOptions} [options] Request options.
    * @param {GetPolicyCallback} [callback] Callback function.
-   * @returns {Promise<GetPolicyResponse>}
    *
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/getIamPolicy| Buckets: setIamPolicy API Documentation}
    *
@@ -275,7 +274,6 @@ class Iam {
    * @param {Policy} policy The policy.
    * @param {SetPolicyOptions} [options] Configuration opbject.
    * @param {SetPolicyCallback} callback Callback function.
-   * @returns {Promise<SetPolicyResponse>}
    *
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/setIamPolicy| Buckets: setIamPolicy API Documentation}
    * See {@link https://cloud.google.com/iam/docs/understanding-roles| IAM Roles}
@@ -363,7 +361,6 @@ class Iam {
    * @param {string|string[]} permissions The permission(s) to test for.
    * @param {TestIamPermissionsOptions} [options] Configuration object.
    * @param {TestIamPermissionsCallback} [callback] Callback function.
-   * @returns {Promise<TestIamPermissionsResponse>}
    *
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/testIamPermissions| Buckets: testIamPermissions API Documentation}
    *

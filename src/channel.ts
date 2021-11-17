@@ -76,7 +76,6 @@ class Channel extends ServiceObject {
    * Stop this channel.
    *
    * @param {StopCallback} [callback] Callback function.
-   * @returns {Promise<StopResponse>}
    *
    * @example
    * ```

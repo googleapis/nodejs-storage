@@ -438,7 +438,6 @@ class Acl extends AclRoleAccessorMethods {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {AddAclCallback} [callback] Callback function.
-   * @returns {Promise<AddAclResponse>}
    *
    * @example
    * ```
@@ -545,7 +544,6 @@ class Acl extends AclRoleAccessorMethods {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {RemoveAclCallback} callback The callback function.
-   * @returns {Promise<RemoveAclResponse>}
    *
    * @example
    * ```
@@ -641,7 +639,6 @@ class Acl extends AclRoleAccessorMethods {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {GetAclCallback} [callback] Callback function.
-   * @returns {Promise<GetAclResponse>}
    *
    * @example
    * ```
@@ -774,7 +771,6 @@ class Acl extends AclRoleAccessorMethods {
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {UpdateAclCallback} [callback] Callback function.
-   * @returns {Promise<UpdateAclResponse>}
    *
    * @example
    * ```
