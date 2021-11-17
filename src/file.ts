@@ -4094,7 +4094,6 @@ promisifyAll(File, {
 
 /**
  * Reference to the {@link File} class.
- * @name module:@google-cloud/storage.File
  * @see File
  */
 export {File};

@@ -624,7 +624,6 @@ export class Storage extends Service {
     /**
      * Reference to {@link Storage.acl}.
      *
-     * @name Storage#acl
      * @see Storage.acl
      */
     this.acl = Storage.acl;

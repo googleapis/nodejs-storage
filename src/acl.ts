@@ -153,7 +153,6 @@ class AclRoleAccessorMethods {
      *   - `myFile.acl.owners.addUser`
      *   - `myFile.acl.owners.deleteUser`
      *
-     * @name Acl#owners
      *
      * @example
      * ```
@@ -207,7 +206,6 @@ class AclRoleAccessorMethods {
      *   - `myFile.acl.readers.addUser`
      *   - `myFile.acl.readers.deleteUser`
      *
-     * @name Acl#readers
      *
      * @example
      * ```
@@ -259,7 +257,6 @@ class AclRoleAccessorMethods {
      *   - `myFile.acl.writers.addUser`
      *   - `myFile.acl.writers.deleteUser`
      *
-     * @name Acl#writers
      *
      * @example
      * ```

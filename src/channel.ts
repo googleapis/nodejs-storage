@@ -123,7 +123,6 @@ promisifyAll(Channel);
 
 /**
  * Reference to the {@link Channel} class.
- * @name module:@google-cloud/storage.Channel
  * @see Channel
  */
 export {Channel};

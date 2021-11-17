@@ -419,14 +419,12 @@ class Bucket extends ServiceObject {
    * Note: This is not guaranteed to be up-to-date when accessed. To get the
    * latest record, call the `getMetadata()` method.
    *
-   * @name Bucket#metadata
    * @type {object}
    */
   metadata: Metadata;
 
   /**
    * The bucket's name.
-   * @name Bucket#name
    * @type {string}
    */
   name: string;
@@ -434,14 +432,12 @@ class Bucket extends ServiceObject {
   /**
    * A reference to the {@link Storage} associated with this {@link Bucket}
    * instance.
-   * @name Bucket#storage
    * @type {Storage}
    */
   storage: Storage;
 
   /**
    * A user project to apply to each request from this bucket.
-   * @name Bucket#userProject
    * @type {string}
    */
   userProject?: string;
@@ -470,7 +466,6 @@ class Bucket extends ServiceObject {
    * See {@link http://goo.gl/6qBBPO| About Access Control Lists}
    * See {@link https://cloud.google.com/storage/docs/access-control/lists#default| Default ACLs}
    *
-   * @name Bucket#acl
    * @mixes Acl
    * @property {Acl} default Cloud Storage Buckets have
    * {@link https://cloud.google.com/storage/docs/access-control/lists#default| default ACLs}
@@ -533,7 +528,6 @@ class Bucket extends ServiceObject {
   /**
    * Get and set IAM policies for your bucket.
    *
-   * @name Bucket#iam
    * @mixes Iam
    *
    * See {@link https://cloud.google.com/storage/docs/access-control/iam#short_title_iam_management| Cloud Storage IAM Management}
@@ -4185,7 +4179,6 @@ promisifyAll(Bucket, {
 
 /**
  * Reference to the {@link Bucket} class.
- * @name module:@google-cloud/storage.Bucket
  * @see Bucket
  */
 export {Bucket};

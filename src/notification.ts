@@ -97,7 +97,6 @@ export interface DeleteNotificationCallback {
  * Note: This is not guaranteed to be up-to-date when accessed. To get the
  * latest record, call the `getMetadata()` method.
  *
- * @name Notification#metadata
  * @type {object}
  */
 /**
@@ -440,7 +439,6 @@ promisifyAll(Notification);
 
 /**
  * Reference to the {@link Notification} class.
- * @name module:@google-cloud/storage.Notification
  * @see Notification
  */
 export {Notification};
