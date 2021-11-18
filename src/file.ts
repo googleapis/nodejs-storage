@@ -278,7 +278,7 @@ export enum ActionToHTTPMethod {
 /**
  * Custom error type for errors related to creating a resumable upload.
  *
- * @private
+ * @internal
  */
 class ResumableUploadError extends Error {
   name = 'ResumableUploadError';
@@ -287,13 +287,13 @@ class ResumableUploadError extends Error {
 
 /**
  * @const {string}
- * @private
+ * @internal
  */
 export const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
 
 /**
  * @const {RegExp}
- * @private
+ * @internal
  */
 const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
 
@@ -3573,7 +3573,7 @@ class File extends ServiceObject<File> {
   /**
    * Makes request and applies userProject query parameter if necessary.
    *
-   * @private
+   * @internal
    *
    * @param {object} reqOpts - The request options.
    * @param {function} callback - The callback function.
@@ -3893,7 +3893,7 @@ class File extends ServiceObject<File> {
    * @param {Duplexify} stream - Duplexify stream of data to pipe to the file.
    * @param {object=} options - Configuration object.
    *
-   * @private
+   * @internal
    */
   startResumableUpload_(
     dup: Duplexify,
@@ -3963,7 +3963,7 @@ class File extends ServiceObject<File> {
    * @param {Duplexify} dup - Duplexify stream of data to pipe to the file.
    * @param {object=} options - Configuration object.
    *
-   * @private
+   * @internal
    */
   startSimpleUpload_(dup: Duplexify, options?: CreateWriteStreamOptions): void {
     options = Object.assign(

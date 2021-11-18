@@ -96,7 +96,7 @@ const SEVEN_DAYS = 604800;
 
 /**
  * @const {string}
- * @private
+ * @internal
  */
 export const PATH_STYLED_HOST = 'https://storage.googleapis.com';
 
@@ -333,7 +333,7 @@ export class URLSigner {
    *  <lowercasedHeaderName> + ":" + Trim(<value>) + "\n"
    *
    * @param headers
-   * @private
+   * @internal
    */
   getCanonicalHeaders(headers: http.OutgoingHttpHeaders) {
     // Sort headers by their lowercased names
@@ -428,7 +428,7 @@ export class URLSigner {
 /**
  * Custom error type for errors related to getting signed errors and policies.
  *
- * @private
+ * @internal
  */
 export class SigningError extends Error {
   name = 'SigningError';

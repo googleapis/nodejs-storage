@@ -118,7 +118,7 @@ export interface GetFilesOptions {
   autoPaginate?: boolean;
   delimiter?: string;
   /**
-   * @deprecated dirrectory is deprecated
+   * @deprecated directory is deprecated
    * @internal
    */
   directory?: string;
@@ -390,7 +390,7 @@ type MakeAllFilesPublicPrivateResponse = [File[]];
  * automatically trigger a resumable upload.
  *
  * @const {number}
- * @private
+ * @internal
  */
 const RESUMABLE_THRESHOLD = 5000000;
 
@@ -3259,7 +3259,7 @@ class Bucket extends ServiceObject {
   /**
    * Makes request and applies userProject query parameter if necessary.
    *
-   * @private
+   * @internal
    *
    * @param {object} reqOpts - The request options.
    * @param {function} callback - The callback function.
@@ -4013,7 +4013,7 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @private
+   * @internal
    *
    * @typedef {object} MakeAllFilesPublicPrivateOptions
    * @property {boolean} [force] Suppress errors until all files have been
@@ -4024,7 +4024,7 @@ class Bucket extends ServiceObject {
    *     billed for the request.
    */
   /**
-   * @private
+   * @internal
    *
    * @callback SetBucketMetadataCallback
    * @param {?Error} err Request error, if any.
@@ -4042,7 +4042,7 @@ class Bucket extends ServiceObject {
    * breaks the loop, and will execute the provided callback with it. Specify
    * `{ force: true }` to suppress the errors.
    *
-   * @private
+   * @internal
    *
    * @param {MakeAllFilesPublicPrivateOptions} [options] Configuration options.
    * @param {boolean} [options.force] Suppress errors until all files have been

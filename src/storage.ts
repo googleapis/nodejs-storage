@@ -204,7 +204,7 @@ export const PROTOCOL_REGEX = /^(\w*):\/\//;
  * Default behavior: Automatically retry retriable server errors.
  *
  * @const {boolean}
- * @private
+ * @internal
  */
 const AUTO_RETRY_DEFAULT = true;
 
@@ -212,7 +212,7 @@ const AUTO_RETRY_DEFAULT = true;
  * Default behavior: Only attempt to retry retriable errors 3 times.
  *
  * @const {number}
- * @private
+ * @internal
  */
 const MAX_RETRY_DEFAULT = 3;
 
@@ -220,7 +220,7 @@ const MAX_RETRY_DEFAULT = 3;
  * Default behavior: Wait twice as long as previous retry before retrying.
  *
  * @const {number}
- * @private
+ * @internal
  */
 const RETRY_DELAY_MULTIPLIER_DEFAULT = 2;
 
@@ -229,7 +229,7 @@ const RETRY_DELAY_MULTIPLIER_DEFAULT = 2;
  *  stop retrying.
  *
  * @const {number}
- * @private
+ * @internal
  */
 const TOTAL_TIMEOUT_DEFAULT = 600;
 
@@ -237,7 +237,7 @@ const TOTAL_TIMEOUT_DEFAULT = 600;
  * Default behavior: Wait no more than 64 seconds between retries.
  *
  * @const {number}
- * @private
+ * @internal
  */
 const MAX_RETRY_DELAY_DEFAULT = 64;
 
@@ -245,7 +245,7 @@ const MAX_RETRY_DELAY_DEFAULT = 64;
  * Default behavior: Retry conditionally idempotent operations if correct preconditions are set.
  *
  * @const {enum}
- * @private
+ * @internal
  */
 const IDEMPOTENCY_STRATEGY_DEFAULT = IdempotencyStrategy.RetryConditional;
 
@@ -253,7 +253,7 @@ const IDEMPOTENCY_STRATEGY_DEFAULT = IdempotencyStrategy.RetryConditional;
  * Returns true if the API request should be retried, given the error that was
  * given the first time the request was attempted.
  * @const
- * @private
+ * @internal
  * @param {error} err - The API error to check if it is appropriate to retry.
  * @return True if the API request should be retried, false otherwise.
  */

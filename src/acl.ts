@@ -108,7 +108,7 @@ export interface AccessControlObject {
  *
  *   myBucket.acl.writers.addDomain('example.com', function(err, acl) {});
  *
- * @private
+ * @internal
  */
 class AclRoleAccessorMethods {
   private static accessMethods = ['add', 'delete'];
@@ -842,7 +842,7 @@ class Acl extends AclRoleAccessorMethods {
   /**
    * Transform API responses to a consistent object format.
    *
-   * @private
+   * @internal
    */
   makeAclObject_(
     accessControlObject: AccessControlObject
@@ -862,7 +862,7 @@ class Acl extends AclRoleAccessorMethods {
   /**
    * Patch requests up to the bucket's request object.
    *
-   * @private
+   * @internal
    *
    * @param {string} method Action.
    * @param {string} path Request path.
