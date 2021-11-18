@@ -374,10 +374,24 @@ export const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
  */
 const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
 
+/**
+ * Options passed to the File constructor.
+ */
 export interface FileOptions {
+  /** A custom encryption key. */
   encryptionKey?: string | Buffer;
+  /** Generation to scope the file to. */
   generation?: number | string;
+  /**
+   * Cloud KMS Key used to encrypt this
+   * object, if the object is encrypted by such a key. Limited availability;
+   * usable only by enabled projects.
+   */
   kmsKeyName?: string;
+  /**
+   * The ID of the project which will be
+   * billed for all requests made from File object.
+   */
   userProject?: string;
   preconditionOpts?: PreconditionOptions;
 }
@@ -562,16 +576,6 @@ class File extends ServiceObject<File> {
   private instanceRetryValue?: boolean;
   instancePreconditionOpts?: PreconditionOptions;
 
-  /**
-   * @typedef {object} FileOptions Options passed to the File constructor.
-   * @property {string} [encryptionKey] A custom encryption key.
-   * @property {number} [generation] Generation to scope the file to.
-   * @property {string} [kmsKeyName] Cloud KMS Key used to encrypt this
-   *     object, if the object is encrypted by such a key. Limited availability;
-   *     usable only by enabled projects.
-   * @property {string} [userProject] The ID of the project which will be
-   *     billed for all requests made from File object.
-   */
   /**
    * Constructs a file object.
    *
