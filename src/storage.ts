@@ -305,7 +305,6 @@ export class Storage extends Service {
    * {@link Bucket} class.
    *
    * @see Bucket
-   * @type {Constructor}
    */
   static Bucket: typeof Bucket = Bucket;
 
@@ -313,7 +312,6 @@ export class Storage extends Service {
    * {@link Channel} class.
    *
    * @see Channel
-   * @type {Constructor}
    */
   static Channel: typeof Channel = Channel;
 
@@ -321,7 +319,6 @@ export class Storage extends Service {
    * {@link File} class.
    *
    * @see File
-   * @type {Constructor}
    */
   static File: typeof File = File;
 
@@ -329,7 +326,6 @@ export class Storage extends Service {
    * {@link HmacKey} class.
    *
    * @see HmacKey
-   * @type {Constructor}
    */
   static HmacKey: typeof HmacKey = HmacKey;
 

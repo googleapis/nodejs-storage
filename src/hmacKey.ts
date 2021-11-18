@@ -64,7 +64,6 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
    * Note: This is not guaranteed to be up-to-date when accessed. To get the
    * latest record, call the `getMetadata()` method.
    *
-   * @type {object}
    */
   metadata: HmacKeyMetadata | undefined;
 

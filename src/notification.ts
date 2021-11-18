@@ -97,11 +97,10 @@ export interface DeleteNotificationCallback {
  * Note: This is not guaranteed to be up-to-date when accessed. To get the
  * latest record, call the `getMetadata()` method.
  *
- * @type {object}
  */
 /**
  * A Notification object is created from your {@link Bucket} object using
- * {@link Bucket#notification}. Use it to interact with Cloud Pub/Sub
+ * {@link Bucket.notification}. Use it to interact with Cloud Pub/Sub
  * notifications.
  *
  * See {@link https://cloud.google.com/storage/docs/pubsub-notifications| Cloud Pub/Sub Notifications for Google Cloud Storage}

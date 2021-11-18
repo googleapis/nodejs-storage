@@ -419,26 +419,22 @@ class Bucket extends ServiceObject {
    * Note: This is not guaranteed to be up-to-date when accessed. To get the
    * latest record, call the `getMetadata()` method.
    *
-   * @type {object}
    */
   metadata: Metadata;
 
   /**
    * The bucket's name.
-   * @type {string}
    */
   name: string;
 
   /**
    * A reference to the {@link Storage} associated with this {@link Bucket}
    * instance.
-   * @type {Storage}
    */
   storage: Storage;
 
   /**
    * A user project to apply to each request from this bucket.
-   * @type {string}
    */
   userProject?: string;
 

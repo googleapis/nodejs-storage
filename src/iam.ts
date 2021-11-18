@@ -126,8 +126,6 @@ interface GetPolicyRequest {
  * See {@link https://cloud.google.com/iam/docs/granting-changing-revoking-access| Granting, Changing, and Revoking Access}
  * See {@link https://cloud.google.com/iam/docs/understanding-roles| IAM Roles}
  *
- * @constructor Iam
- *
  * @param {Bucket} bucket The parent instance.
  * @example
  * ```

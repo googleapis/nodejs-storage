@@ -557,12 +557,10 @@ class File extends ServiceObject<File> {
    * Note: This is not guaranteed to be up-to-date when accessed. To get the
    * latest record, call the `getMetadata()` method.
    *
-   * @type {object}
    */
   metadata: Metadata;
   /**
    * The file's name.
-   * @type {string}
    */
   name: string;
 
