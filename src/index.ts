@@ -250,6 +250,7 @@ export {
   GetServiceAccountOptions,
   GetServiceAccountResponse,
   HmacKeyResourceResponse,
+  RetryOptions,
   ServiceAccount,
   Storage,
   StorageOptions,

@@ -55,13 +55,56 @@ export enum IdempotencyStrategy {
   RetryNever,
 }
 
+/**
+ * Options for customizing retries. Retriable server errors
+ * will be retried with exponential delay between them dictated by the formula
+ * max(maxRetryDelay, retryDelayMultiplier*retryNumber) until maxRetries or totalTimeout
+ * has been reached. Retries will only happen if autoRetry is set to true.
+ *
+ * {@link RetryOptions}
+ */
 export interface RetryOptions {
+  /**
+   * The multiplier by which to
+   * increase the delay time between the completion of failed requests, and the
+   * initiation of the subsequent retrying request.
+   */
   retryDelayMultiplier?: number;
+  /**
+   * The total time, starting from
+   * when the initial request is sent, after which an error will
+   * be returned, regardless of the retrying attempts made meanwhile.
+   */
   totalTimeout?: number;
+  /**
+   * The maximum delay time between requests.
+   * When this value is reached, ``retryDelayMultiplier`` will no longer be used to
+   * increase delay time.
+   */
   maxRetryDelay?: number;
+  /**
+   * Automatically retry requests if the
+   * response is related to rate limits or certain intermittent server
+   * errors. We will exponentially backoff subsequent requests by default.
+   */
   autoRetry?: boolean;
+  /**
+   * Maximum number of automatic retries
+   * attempted before returning the error.
+   */
   maxRetries?: number;
+  /**
+   * Function that returns true if a given
+   *     error should be retried and false otherwise.
+   */
   retryableErrorFn?: (err: ApiError) => boolean;
+  /**
+   *  Enumeration
+   *     controls how conditionally idempotent operations are retried. Possible values are: RetryAlways -
+   *     will respect other retry settings and attempt to retry conditionally idempotent operations. RetryConditional -
+   *     will retry conditionally idempotent operations if the correct preconditions are set. RetryNever - never
+   *     retry a conditionally idempotent operation.
+   */
   idempotencyStrategy?: IdempotencyStrategy;
 }
 
@@ -73,6 +116,9 @@ export interface PreconditionOptions {
 }
 
 export interface StorageOptions extends ServiceOptions {
+  /**
+   * {@inheritdoc RetryOptions}
+   */
   retryOptions?: RetryOptions;
   /**
    * @deprecated Use retryOptions instead.
@@ -483,38 +529,10 @@ export class Storage extends Service {
    * @property {object} [credentials] Credentials object.
    * @property {string} [credentials.client_email]
    * @property {string} [credentials.private_key]
-   * @property {object} [retryOptions] Options for customizing retries. Retriable server errors
-   *     will be retried with exponential delay between them dictated by the formula
-   *     max(maxRetryDelay, retryDelayMultiplier*retryNumber) until maxRetries or totalTimeout
-   *     has been reached. Retries will only happen if autoRetry is set to true.
-   * @property {boolean} [retryOptions.autoRetry=true] Automatically retry requests if the
-   *     response is related to rate limits or certain intermittent server
-   * errors. We will exponentially backoff subsequent requests by default.
-   * @property {number} [retryOptions.retryDelayMultiplier = 2] the multiplier by which to
-   *   increase the delay time between the completion of failed requests, and the
-   *   initiation of the subsequent retrying request.
-   * @property {number} [retryOptions.totalTimeout = 600] The total time, starting from
-   *  when the initial request is sent, after which an error will
-   *   be returned, regardless of the retrying attempts made meanwhile.
-   * @property {number} [retryOptions.maxRetryDelay = 64] The maximum delay time between requests.
-   *   When this value is reached, ``retryDelayMultiplier`` will no longer be used to
-   *   increase delay time.
-   * @property {number} [retryOptions.maxRetries=3] Maximum number of automatic retries
-   *     attempted before returning the error.
-   * @property {function} [retryOptions.retryableErrorFn] Function that returns true if a given
-   *     error should be retried and false otherwise.
-   * @property {enum} [retryOptions.idempotencyStrategy=IdempotencyStrategy.RetryConditional] Enumeration
-   *     controls how conditionally idempotent operations are retried. Possible values are: RetryAlways -
-   *     will respect other retry settings and attempt to retry conditionally idempotent operations. RetryConditional -
-   *     will retry conditionally idempotent operations if the correct preconditions are set. RetryNever - never
-   *     retry a conditionally idempotent operation.
    * @property {string} [userAgent] The value to be prepended to the User-Agent
    *     header in API requests.
-   * @property {object} [authClient] GoogleAuth client to reuse instead of creating a new one.
    * @property {number} [timeout] The amount of time in milliseconds to wait per http request before timing out.
    * @property {object[]} [interceptors_] Array of custom request interceptors to be returned in the order they were assigned.
-   * @property {string} [apiEndpoint = storage.google.com] The API endpoint of the service used to make requests.
-   * @property {boolean} [useAuthWithCustomEndpoint] Controls whether or not to use authentication when using a custom endpoint.
    */
   /**
    * Constructs the Storage client.
