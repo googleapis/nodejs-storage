@@ -1451,12 +1451,14 @@ describe('File', () => {
           .resume();
       });
 
-      it('should pass the userProject to getMetadata', done => {
+      it.only('should pass the userProject to getMetadata', done => {
         const fakeOptions = {
           userProject: 'grapce-spaceship-123',
         };
 
         file.getMetadata = (options: GetFileMetadataOptions) => {
+          console.log(options.userProject);
+          console.log(fakeOptions.userProject);
           assert.strictEqual(options.userProject, fakeOptions.userProject);
           setImmediate(done);
           return Promise.resolve({});
