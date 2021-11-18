@@ -457,7 +457,7 @@ class Bucket extends ServiceObject {
    * for all created files. Default ACLs specify permissions that all new
    * objects added to the bucket will inherit by default. You can add, delete,
    * get, and update entities and permissions for these as well with
-   * {@link Bucket#acl.default}.
+   * {@link Bucket.acl.default}.
    *
    * See {@link http://goo.gl/6qBBPO| About Access Control Lists}
    * See {@link https://cloud.google.com/storage/docs/access-control/lists#default| Default ACLs}
@@ -600,7 +600,7 @@ class Bucket extends ServiceObject {
    *
    * //-
    * // If you're filtering files with a delimiter, you should use
-   * // {@link Bucket#getFiles} and set `autoPaginate: false` in order to
+   * // {@link Bucket.getFiles} and set `autoPaginate: false` in order to
    * // preserve the `apiResponse` argument.
    * //-
    * const prefixes = [];
@@ -873,7 +873,7 @@ class Bucket extends ServiceObject {
       /**
        * Get the bucket's metadata.
        *
-       * To set metadata, see {@link Bucket#setMetadata}.
+       * To set metadata, see {@link Bucket.setMetadata}.
        *
        * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/get| Buckets: get API Documentation}
        *
@@ -1807,7 +1807,7 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {object} DeleteFilesOptions Query object. See {@link Bucket#getFiles}
+   * @typedef {object} DeleteFilesOptions Query object. See {@link Bucket.getFiles}
    *     for all of the supported properties.
    * @property {boolean} [force] Suppress errors until all files have been
    *     processed.
@@ -1831,11 +1831,11 @@ class Bucket extends ServiceObject {
    * to be processed.
    *
    * The `query` object passed as the first argument will also be passed to
-   * {@link Bucket#getFiles}.
+   * {@link Bucket.getFiles}.
    *
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/objects/delete| Objects: delete API Documentation}
    *
-   * @param {DeleteFilesOptions} [query] Query object. See {@link Bucket#getFiles}
+   * @param {DeleteFilesOptions} [query] Query object. See {@link Bucket.getFiles}
    * @param {boolean} [query.force] Suppress errors until all files have been
    *     processed.
    * @param {DeleteFilesCallback} [callback] Callback function.
@@ -1865,7 +1865,7 @@ class Bucket extends ServiceObject {
    *
    * //-
    * // The first argument to this method acts as a query to
-   * // {@link Bucket#getFiles}. As an example, you can delete files
+   * // {@link Bucket.getFiles}. As an example, you can delete files
    * // which match a prefix.
    * //-
    * bucket.deleteFiles({
@@ -2864,7 +2864,7 @@ class Bucket extends ServiceObject {
    * @throws {Error} if a metageneration is not provided.
    *
    * @param {number|string} metageneration The bucket's metageneration. This is
-   *     accesssible from calling {@link File#getMetadata}.
+   *     accesssible from calling {@link File.getMetadata}.
    * @param {BucketLockCallback} [callback] Callback function.
    *
    * @example
@@ -2932,7 +2932,7 @@ class Bucket extends ServiceObject {
    *
    * You may also choose to make the contents of the bucket private by
    * specifying `includeFiles: true`. This will automatically run
-   * {@link File#makePrivate} for every file in the bucket.
+   * {@link File.makePrivate} for every file in the bucket.
    *
    * When specifying `includeFiles: true`, use `force: true` to delay execution
    * of your callback until all files have been processed. By default, the
@@ -3079,7 +3079,7 @@ class Bucket extends ServiceObject {
    *
    * You may also choose to make the contents of the bucket publicly readable by
    * specifying `includeFiles: true`. This will automatically run
-   * {@link File#makePublic} for every file in the bucket.
+   * {@link File.makePublic} for every file in the bucket.
    *
    * When specifying `includeFiles: true`, use `force: true` to delay execution
    * of your callback until all files have been processed. By default, the
@@ -3292,7 +3292,7 @@ class Bucket extends ServiceObject {
   /**
    * Set labels on the bucket.
    *
-   * This makes an underlying call to {@link Bucket#setMetadata}, which
+   * This makes an underlying call to {@link Bucket.setMetadata}, which
    * is a PATCH request. This means an individual label can be overwritten, but
    * unmentioned labels will not be touched.
    *
@@ -3363,7 +3363,7 @@ class Bucket extends ServiceObject {
    * will result in a `PERMISSION_DENIED` error.
    *
    * An unlocked retention policy can be modified or removed from the bucket via
-   * {@link File#removeRetentionPeriod} and {@link File#setRetentionPeriod}. A
+   * {@link File#removeRetentionPeriod} and {@link File.setRetentionPeriod}. A
    * locked retention policy cannot be removed or shortened in duration for the
    * lifetime of the bucket. Attempting to remove or decrease period of a locked
    * retention policy will result in a `PERMISSION_DENIED` error. You can still
@@ -3659,7 +3659,7 @@ class Bucket extends ServiceObject {
    *     milliseconds. This option is not available for resumable uploads.
    *     Default: `60000`
    * @property {string} [uri] The URI for an already-created resumable
-   *     upload. See {@link File#createResumableUpload}.
+   *     upload. See {@link File.createResumableUpload}.
    * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
    * @property {string|boolean} [validation] Possible values: `"md5"`,
@@ -3681,7 +3681,7 @@ class Bucket extends ServiceObject {
    */
   /**
    * Upload a file to the bucket. This is a convenience method that wraps
-   * {@link File#createWriteStream}.
+   * {@link File.createWriteStream}.
    *
    * You can specify whether or not an upload is resumable by setting
    * `options.resumable`. *Resumable uploads are enabled by default if your
@@ -3744,7 +3744,7 @@ class Bucket extends ServiceObject {
    *     milliseconds. This option is not available for resumable uploads.
    *     Default: `60000`
    * @param {string} [options.uri] The URI for an already-created resumable
-   *     upload. See {@link File#createResumableUpload}.
+   *     upload. See {@link File.createResumableUpload}.
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {string|boolean} [options.validation] Possible values: `"md5"`,
@@ -3860,7 +3860,7 @@ class Bucket extends ServiceObject {
    *   const file = data[0];
    * });
    *
-   * To upload a file from a URL, use {@link File#createWriteStream}.
+   * To upload a file from a URL, use {@link File.createWriteStream}.
    *
    * ```
    * @example <caption>include:samples/files.js</caption>

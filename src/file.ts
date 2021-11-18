@@ -1257,7 +1257,7 @@ class File extends ServiceObject<File> {
    * @property {boolean} [decompress=true] Disable auto decompression of the
    *     received data. By default this option is set to `true`.
    *     Applicable in cases where the data was uploaded with
-   *     `gzip: true` option. See {@link File#createWriteStream}.
+   *     `gzip: true` option. See {@link File.createWriteStream}.
    */
   /**
    * Create a readable stream to read the contents of the remote file. It can be
@@ -1618,7 +1618,7 @@ class File extends ServiceObject<File> {
    * <h4>Note</h4>
    *
    * If you are just looking to perform a resumable upload without worrying
-   * about any of the details, see {@link File#createWriteStream}. Resumable
+   * about any of the details, see {@link File.createWriteStream}. Resumable
    * uploads are performed by default.
    *
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/resumable-upload| Resumable upload guide}
@@ -1756,7 +1756,7 @@ class File extends ServiceObject<File> {
    *     milliseconds. This option is not available for resumable uploads.
    *     Default: `60000`
    * @property {string} [uri] The URI for an already-created resumable
-   *     upload. See {@link File#createResumableUpload}.
+   *     upload. See {@link File.createResumableUpload}.
    * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
    * @property {string|boolean} [validation] Possible values: `"md5"`,
@@ -1817,7 +1817,7 @@ class File extends ServiceObject<File> {
    * // <h4>Uploading a File</h4>
    * //
    * // Now, consider a case where we want to upload a file to your bucket. You
-   * // have the option of using {@link Bucket#upload}, but that is just
+   * // have the option of using {@link Bucket.upload}, but that is just
    * // a convenience method which will do the following.
    * //-
    * fs.createReadStream('/Users/stephen/Photos/birthday-at-the-zoo/panda.jpg')
@@ -1847,7 +1847,7 @@ class File extends ServiceObject<File> {
    * //
    * // One last case you may run into is when you want to upload a file to your
    * // bucket and set its metadata at the same time. Like above, you can use
-   * // {@link Bucket#upload} to do this, which is just a wrapper around
+   * // {@link Bucket.upload} to do this, which is just a wrapper around
    * // the following.
    * //-
    * fs.createReadStream('/Users/stephen/Photos/birthday-at-the-zoo/panda.jpg')
@@ -2134,7 +2134,7 @@ class File extends ServiceObject<File> {
    * destination.
    *
    * @param {object} [options] Configuration options. The arguments match those
-   *     passed to {@link File#createReadStream}.
+   *     passed to {@link File.createReadStream}.
    * @param {string} [options.destination] Local file path to write the file's
    *     contents to.
    * @param {string} [options.userProject] The ID of the project which will be
@@ -3292,7 +3292,7 @@ class File extends ServiceObject<File> {
 
   /**
    * The public URL of this File
-   * Use {@link File#makePublic} to enable anonymous access via the returned URL.
+   * Use {@link File.makePublic} to enable anonymous access via the returned URL.
    *
    * @example
    * ```
@@ -3334,8 +3334,8 @@ class File extends ServiceObject<File> {
    *
    * **Warning**:
    * There is currently no atomic `move` method in the Cloud Storage API,
-   * so this method is a composition of {@link File#copy} (to the new
-   * location) and {@link File#delete} (from the old location). While
+   * so this method is a composition of {@link File.copy} (to the new
+   * location) and {@link File.delete} (from the old location). While
    * unlikely, it is possible that an error returned to your callback could be
    * triggered from either one of these API calls failing, which could leave a
    * duplicate file lingering. The error message will indicate what operation
@@ -3507,9 +3507,9 @@ class File extends ServiceObject<File> {
    *
    * **Warning**:
    * There is currently no atomic `rename` method in the Cloud Storage API,
-   * so this method is an alias of {@link File#move}, which in turn is a
-   * composition of {@link File#copy} (to the new location) and
-   * {@link File#delete} (from the old location). While
+   * so this method is an alias of {@link File.move}, which in turn is a
+   * composition of {@link File.copy} (to the new location) and
+   * {@link File.delete} (from the old location). While
    * unlikely, it is possible that an error returned to your callback could be
    * triggered from either one of these API calls failing, which could leave a
    * duplicate file lingering. The error message will indicate what operation
@@ -3683,8 +3683,8 @@ class File extends ServiceObject<File> {
   /**
    * Write strings or buffers to a file.
    *
-   * *This is a convenience method which wraps {@link File#createWriteStream}.*
-   * To upload arbitrary data to a file, please use {@link File#createWriteStream} directly.
+   * *This is a convenience method which wraps {@link File.createWriteStream}.*
+   * To upload arbitrary data to a file, please use {@link File.createWriteStream} directly.
    *
    * Resumable uploads are automatically enabled and must be shut off explicitly
    * by setting `options.resumable` to `false`.
@@ -3699,7 +3699,7 @@ class File extends ServiceObject<File> {
    * </p>
    *
    * @param {string | Buffer} data The data to write to a file.
-   * @param {SaveOptions} [options] See {@link File#createWriteStream}'s `options`
+   * @param {SaveOptions} [options] See {@link File.createWriteStream}'s `options`
    *     parameter.
    * @param {SaveCallback} [callback] Callback function.
    *
