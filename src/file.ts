@@ -495,7 +495,7 @@ const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
 /**
  * A File object is created from your {@link Bucket} object using
- * {@link Bucket#file}.
+ * {@link Bucket.file}.
  *
  * @class
  */
