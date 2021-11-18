@@ -125,18 +125,95 @@ export interface SignedPostPolicyV4Output {
 }
 
 export interface GetSignedUrlConfig {
+  /**
+   * "read" (HTTP: GET), "write" (HTTP: PUT), or
+   * "delete" (HTTP: DELETE), "resumable" (HTTP: POST).
+   * When using "resumable", the header `X-Goog-Resumable: start` has
+   * to be sent when making a request with the signed URL.
+   */
   action: 'read' | 'write' | 'delete' | 'resumable';
+  /**
+   * The signing version to use, either 'v2' or 'v4'.
+   */
   version?: 'v2' | 'v4';
+  /**
+   * Use virtual hosted-style
+   * URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
+   * ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
+   * should generally be preferred instaed of path-style URL.
+   * Currently defaults to `false` for path-style, although this may change in a
+   * future major-version release.
+   */
   virtualHostedStyle?: boolean;
+  /**
+   * The cname for this bucket, i.e., "https://cdn.example.com".
+   *  */
   cname?: string;
+  /**
+   * The MD5 digest value in base64. Just like
+   * if you provide this, the client must provide this HTTP header with this same
+   * value in its request, so to if this parameter is not provided here,
+   * the client must not provide any value for this HTTP header in its request.
+   */
   contentMd5?: string;
+  /**
+   * Just like if you provide this, the client
+   * must provide this HTTP header with this same value in its request, so to if
+   * this parameter is not provided here, the client must not provide any value
+   * for this HTTP header in its request.
+   */
   contentType?: string;
+  /**
+   * A timestamp when this link will expire. Any value
+   * given is passed to `new Date()`.
+   * Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
+   * See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
+   */
   expires: string | number | Date;
+  /**
+   * A timestamp when this link became usable. Any value
+   * given is passed to `new Date()`.
+   * Note: Use for 'v4' only.
+   */
   accessibleAt?: string | number | Date;
+  /**
+   * If these headers are used, the
+   * server will check to make sure that the client provides matching
+   * values. See {@link https://cloud.google.com/storage/docs/access-control/signed-urls#about-canonical-extension-headers| Canonical extension headers}
+   * for the requirements of this feature, most notably:
+   *
+   * - The header name must be prefixed with `x-goog-`
+   *
+   * - The header name must be all lowercase
+   *
+   * Note: Multi-valued header passed as an array in the extensionHeaders
+   * object is converted into a string, delimited by `,` with
+   * no space. Requests made using the signed URL will need to
+   * delimit multi-valued headers using a single `,` as well, or
+   * else the server will report a mismatched signature.
+   */
   extensionHeaders?: http.OutgoingHttpHeaders;
+  /**
+   *  The filename to prompt the user to
+   *  save the file as when the signed url is accessed. This is ignored if
+   *  `config.responseDisposition` is set.
+   */
   promptSaveAs?: string;
+  /**
+   *  The
+   *  {@link http://goo.gl/yMWxQV| response-content-disposition parameter} of the
+   *  signed url.
+   */
   responseDisposition?: string;
+  /**
+   * The response-content-type parameter
+   * of the signed url.
+   */
   responseType?: string;
+  /**
+   * Additional query parameters to include
+   * in the signed URL.
+   */
   queryParams?: Query;
 }
 
@@ -2799,11 +2876,6 @@ class File extends ServiceObject<File> {
    * @property {object} 0 The signed URL.
    */
   /**
-   * @callback GetSignedUrlCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} url The signed URL.
-   */
-  /**
    * Get a signed URL to allow limited time access to the file.
    *
    * In Google Cloud Platform environments, such as Cloud Functions and App
@@ -2820,57 +2892,6 @@ class File extends ServiceObject<File> {
    * @throws {Error} if an expiration timestamp from the past is given.
    *
    * @param {object} config Configuration object.
-   * @param {string} config.action "read" (HTTP: GET), "write" (HTTP: PUT), or
-   *     "delete" (HTTP: DELETE), "resumable" (HTTP: POST).
-   *     When using "resumable", the header `X-Goog-Resumable: start` has
-   *     to be sent when making a request with the signed URL.
-   * @param {*} config.expires A timestamp when this link will expire. Any value
-   *     given is passed to `new Date()`.
-   *     Note: 'v4' supports maximum duration of 7 days (604800 seconds) from now.
-   *     See [reference]{@link https://cloud.google.com/storage/docs/access-control/signed-urls#example}
-   * @param {string} [config.version='v2'] The signing version to use, either
-   *     'v2' or 'v4'.
-   * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
-   *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
-   *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
-   *     should generally be preferred instaed of path-style URL.
-   *     Currently defaults to `false` for path-style, although this may change in a
-   *     future major-version release.
-   * @param {string} [config.cname] The cname for this bucket, i.e.,
-   *     "https://cdn.example.com".
-   * @param {string} [config.contentMd5] The MD5 digest value in base64. Just like
-   *     if you provide this, the client must provide this HTTP header with this same
-   *     value in its request, so to if this parameter is not provided here,
-   *     the client must not provide any value for this HTTP header in its request.
-   * @param {string} [config.contentType] Just like if you provide this, the client
-   *     must provide this HTTP header with this same value in its request, so to if
-   *     this parameter is not provided here, the client must not provide any value
-   *     for this HTTP header in its request.
-   * @param {object} [config.extensionHeaders] If these headers are used, the
-   * server will check to make sure that the client provides matching
-   * values. See {@link https://cloud.google.com/storage/docs/access-control/signed-urls#about-canonical-extension-headers| Canonical extension headers}
-   * for the requirements of this feature, most notably:
-   * - The header name must be prefixed with `x-goog-`
-   * - The header name must be all lowercase
-   *
-   * Note: Multi-valued header passed as an array in the extensionHeaders
-   *       object is converted into a string, delimited by `,` with
-   *       no space. Requests made using the signed URL will need to
-   *       delimit multi-valued headers using a single `,` as well, or
-   *       else the server will report a mismatched signature.
-   * @param {object} [config.queryParams] Additional query parameters to include
-   *     in the signed URL.
-   * @param {string} [config.promptSaveAs] The filename to prompt the user to
-   *     save the file as when the signed url is accessed. This is ignored if
-   *     `config.responseDisposition` is set.
-   * @param {string} [config.responseDisposition] The
-   *     {@link http://goo.gl/yMWxQV| response-content-disposition parameter} of the
-   *     signed url.
-   * @param {*} [config.accessibleAt=Date.now()] A timestamp when this link became usable. Any value
-   *     given is passed to `new Date()`.
-   *     Note: Use for 'v4' only.
-   * @param {string} [config.responseType] The response-content-type parameter
-   *     of the signed url.
    * @param {GetSignedUrlCallback} [callback] Callback function.
    *
    * @example

@@ -81,6 +81,10 @@ export type SignerGetSignedUrlResponse = string;
 
 export type GetSignedUrlResponse = [SignerGetSignedUrlResponse];
 
+/**
+ * @param err - Request error, if any.
+ * @param url - The signed URL.
+ */
 export interface GetSignedUrlCallback {
   (err: Error | null, url?: string): void;
 }
