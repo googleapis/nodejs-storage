@@ -1379,7 +1379,7 @@ class File extends ServiceObject<File> {
         rawResponseStream.on('error', onComplete);
 
         const headers = rawResponseStream.toJSON().headers;
-        isCompressed = headers['content-encoding'] === 'gzip'
+        isCompressed = headers['content-encoding'] === 'gzip';
         const throughStreams: Writable[] = [];
 
         if (shouldRunValidation) {
