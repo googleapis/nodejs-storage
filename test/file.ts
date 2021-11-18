@@ -1387,24 +1387,6 @@ describe('File', () => {
         file.requestStream = getFakeSuccessfulRequest(data);
       });
 
-      describe('server decompression', () => {
-        it('should skip validation if file was stored compressed', done => {
-          file.metadata.contentEncoding = 'gzip';
-
-          const validateStub = sinon.stub().returns(true);
-          fakeValidationStream.test = validateStub;
-
-          file
-            .createReadStream({validation: 'crc32c'})
-            .on('error', done)
-            .on('end', () => {
-              assert(validateStub.notCalled);
-              done();
-            })
-            .resume();
-        });
-      });
-
       it('should emit errors from the validation stream', done => {
         const error = new Error('Error.');
 
@@ -1451,14 +1433,12 @@ describe('File', () => {
           .resume();
       });
 
-      it.only('should pass the userProject to getMetadata', done => {
+      it('should pass the userProject to getMetadata', done => {
         const fakeOptions = {
           userProject: 'grapce-spaceship-123',
         };
 
         file.getMetadata = (options: GetFileMetadataOptions) => {
-          console.log(options.userProject);
-          console.log(fakeOptions.userProject);
           assert.strictEqual(options.userProject, fakeOptions.userProject);
           setImmediate(done);
           return Promise.resolve({});

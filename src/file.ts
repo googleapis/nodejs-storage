@@ -1272,6 +1272,7 @@ class File extends ServiceObject<File> {
 
     const throughStream = streamEvents(new PassThrough());
 
+    let isCompressed = true;
     let crc32c = true;
     let md5 = false;
 
@@ -1378,7 +1379,7 @@ class File extends ServiceObject<File> {
         rawResponseStream.on('error', onComplete);
 
         const headers = rawResponseStream.toJSON().headers;
-        const isCompressed = headers['content-encoding'] === 'gzip';
+        isCompressed = headers['content-encoding'] === 'gzip'
         const throughStreams: Writable[] = [];
 
         if (shouldRunValidation) {
@@ -1437,6 +1438,15 @@ class File extends ServiceObject<File> {
         if (rangeRequest || !shouldRunValidation) {
           throughStream.end();
           return;
+        }
+
+        if (!isCompressed) {
+          try {
+            await this.getMetadata({userProject: options.userProject});
+          } catch (e) {
+            throughStream.destroy(e);
+            return;
+          }
         }
 
         // If we're doing validation, assume the worst-- a data integrity
