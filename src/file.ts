@@ -579,10 +579,10 @@ class File extends ServiceObject<File> {
   /**
    * Constructs a file object.
    *
-   * @param {Bucket} bucket The Bucket instance this file is
+   * @param bucket - The Bucket instance this file is
    *     attached to.
-   * @param {string} name The name of the remote file.
-   * @param {FileOptions} [options] Configuration options.
+   * @param name - The name of the remote file.
+   * @param options - Configuration options.
    * @example
    * ```
    * const {Storage} = require('@google-cloud/storage');
