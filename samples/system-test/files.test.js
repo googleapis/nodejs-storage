@@ -69,7 +69,7 @@ describe('file', () => {
     const output = execSync(
       `node uploadWithoutAuthenticationResumable.js ${bucketName} ${fileContents} ${fileName}`
     );
-    assert.match(output, new RegExp(`${filePath} uploaded to ${bucketName}`));
+    assert.match(output, new RegExp(`${fileName} uploaded to ${bucketName}`));
     const [exists] = await bucket.file(fileName).exists();
     assert.strictEqual(exists, true);
   });
@@ -78,7 +78,7 @@ describe('file', () => {
     const output = execSync(
       `node uploadWithoutAuthenticationSignedUrl.js ${bucketName} ${fileContents} ${fileName}`
     );
-    assert.match(output, new RegExp(`${filePath} uploaded to ${bucketName}`));
+    assert.match(output, new RegExp(`${fileName} uploaded to ${bucketName}`));
     const [exists] = await bucket.file(fileName).exists();
     assert.strictEqual(exists, true);
   });
