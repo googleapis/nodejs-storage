@@ -2166,20 +2166,6 @@ class File extends ServiceObject<File> {
         .then(contents => callback?.(null, contents))
         .catch(callback as (error: RequestError) => void);
     }
-    // }
-
-    // if (destination) {
-    //   fileStream
-    //     .on('error', callback)
-    //     .pipe(fs.createWriteStream(destination))
-    //     .on('error', callback)
-    //     .on('finish', callback);
-    // } else {
-    //   getStream
-    //     .buffer(fileStream)
-    //     .then(contents => callback?.(null, contents))
-    //     .catch(callback as (error: RequestError) => void);
-    // }
   }
 
   /**
