@@ -60,7 +60,7 @@ function main(
       },
     });
 
-    // endpoint to which we should upload the file
+    // Endpoint to which we should upload the file
     const location = resumableSession.headers.location;
 
     // Passes the location to file.save so you don't need to
