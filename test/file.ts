@@ -2722,22 +2722,20 @@ describe('File', () => {
           assert.ifError(err);
 
           const fileContents = 'file contents that should remain unchanged';
-          fs.writeFile(tmpFilePath, fileContents, 'utf-8', (err) => {
-            assert.ifError(err);
-          });
+          fs.writeFileSync(tmpFilePath, fileContents, 'utf-8');
 
           const error = new Error('Error.');
-          Object.assign(fileReadStream, {
-            _read(this: Readable) {
-              process.nextTick(() => {
-                this.emit('error', error);
-              });
-            },
+          fileReadStream.on('resume', () => {
+            setImmediate(() => {
+              fileReadStream.emit('error', error);
+              console.log('emit error');
+            });
           });
 
-          file.download({destination: tmpFilePath},  (err: Error) => {
+          file.download({destination: tmpFilePath}, (err: Error) => {
             assert.strictEqual(err, error);
-            fs.readFileSync(tmpFilePath, (err, tmpFileContents) => {
+            fs.readFile(tmpFilePath, (err, tmpFileContents) => {
+              console.log('readFile');
               assert.ifError(err);
               assert.strictEqual(fileContents, tmpFileContents.toString());
               done();
