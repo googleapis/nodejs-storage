@@ -2715,6 +2715,37 @@ describe('File', () => {
         });
       });
 
+      it.only('file contents should remain unchanged if file nonexistent', done => {
+        tmp.setGracefulCleanup();
+        tmp.file(async (err, tmpFilePath) => {
+          console.log(tmpFilePath);
+          assert.ifError(err);
+
+          const fileContents = 'file contents that should remain unchanged';
+          fs.writeFile(tmpFilePath, fileContents, 'utf-8', (err) => {
+            assert.ifError(err);
+          });
+
+          const error = new Error('Error.');
+          Object.assign(fileReadStream, {
+            _read(this: Readable) {
+              process.nextTick(() => {
+                this.emit('error', error);
+              });
+            },
+          });
+
+          file.download({destination: tmpFilePath},  (err: Error) => {
+            assert.strictEqual(err, error);
+            fs.readFileSync(tmpFilePath, (err, tmpFileContents) => {
+              assert.ifError(err);
+              assert.strictEqual(fileContents, tmpFileContents.toString());
+              done();
+            });
+          });
+        });
+      });
+
       it('should execute callback with error', done => {
         tmp.setGracefulCleanup();
         tmp.file((err, tmpFilePath) => {
