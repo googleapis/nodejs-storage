@@ -2734,7 +2734,10 @@ describe('File', () => {
             assert.ifError(err);
             fs.readFile(tmpFilePath, (err, tmpFileContents) => {
               assert.ifError(err);
-              assert.strictEqual(fileContents+fileContents, tmpFileContents.toString());
+              assert.strictEqual(
+                fileContents + fileContents,
+                tmpFileContents.toString()
+              );
               done();
             });
           });
