@@ -134,6 +134,7 @@ export interface GetSignedUrlConfig {
   action: 'read' | 'write' | 'delete' | 'resumable';
   /**
    * The signing version to use, either 'v2' or 'v4'.
+   * @defaultValue `v2`
    */
   version?: 'v2' | 'v4';
   /**
@@ -143,6 +144,7 @@ export interface GetSignedUrlConfig {
    * should generally be preferred instaed of path-style URL.
    * Currently defaults to `false` for path-style, although this may change in a
    * future major-version release.
+   * @defaultValue `false`
    */
   virtualHostedStyle?: boolean;
   /**
@@ -174,6 +176,8 @@ export interface GetSignedUrlConfig {
    * A timestamp when this link became usable. Any value
    * given is passed to `new Date()`.
    * Note: Use for 'v4' only.
+   *
+   * @defaultValue `Date.now()`
    */
   accessibleAt?: string | number | Date;
   /**
