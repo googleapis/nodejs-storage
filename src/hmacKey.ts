@@ -51,7 +51,7 @@ export type HmacKeyMetadataResponse = [HmacKeyMetadata, Metadata];
 /**
  * An HmacKey object contains metadata of an HMAC key created from a
  * service account through the {@link Storage} client using
- * {@link Storage.createHmacKey}.
+ * {@link Storage#(createHmacKey:1)}.
  *
  * See {@link https://cloud.google.com/storage/docs/authentication/hmackeys| HMAC keys documentation}
  *
@@ -77,7 +77,7 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
    * Constructs an HmacKey object.
    *
    * Note: this only create a local reference to an HMAC key, to create
-   * an HMAC key, use {@link Storage.createHmacKey}.
+   * an HMAC key, use {@link Storage#(createHmacKey:1)}.
    *
    * @param {Storage} storage The Storage instance this HMAC key is
    *     attached to.

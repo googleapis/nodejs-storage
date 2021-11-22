@@ -600,7 +600,7 @@ class Bucket extends ServiceObject {
    *
    * //-
    * // If you're filtering files with a delimiter, you should use
-   * // {@link Bucket.getFiles} and set `autoPaginate: false` in order to
+   * // {@link Bucket#(getFiles:1)} and set `autoPaginate: false` in order to
    * // preserve the `apiResponse` argument.
    * //-
    * const prefixes = [];
@@ -873,7 +873,7 @@ class Bucket extends ServiceObject {
       /**
        * Get the bucket's metadata.
        *
-       * To set metadata, see {@link Bucket.setMetadata}.
+       * To set metadata, see {@link ServiceObject#setMetadata}.
        *
        * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/get| Buckets: get API Documentation}
        *
@@ -1807,7 +1807,7 @@ class Bucket extends ServiceObject {
   }
 
   /**
-   * @typedef {object} DeleteFilesOptions Query object. See {@link Bucket.getFiles}
+   * @typedef {object} DeleteFilesOptions Query object. See {@link Bucket#(getFiles:1)}
    *     for all of the supported properties.
    * @property {boolean} [force] Suppress errors until all files have been
    *     processed.
@@ -1831,11 +1831,11 @@ class Bucket extends ServiceObject {
    * to be processed.
    *
    * The `query` object passed as the first argument will also be passed to
-   * {@link Bucket.getFiles}.
+   * {@link Bucket#(getFiles:1)}.
    *
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/objects/delete| Objects: delete API Documentation}
    *
-   * @param {DeleteFilesOptions} [query] Query object. See {@link Bucket.getFiles}
+   * @param {DeleteFilesOptions} [query] Query object. See {@link Bucket#(getFiles:1)}
    * @param {boolean} [query.force] Suppress errors until all files have been
    *     processed.
    * @param {DeleteFilesCallback} [callback] Callback function.
@@ -1865,7 +1865,7 @@ class Bucket extends ServiceObject {
    *
    * //-
    * // The first argument to this method acts as a query to
-   * // {@link Bucket.getFiles}. As an example, you can delete files
+   * // {@link Bucket#(getFiles:1)}. As an example, you can delete files
    * // which match a prefix.
    * //-
    * bucket.deleteFiles({
@@ -2932,7 +2932,7 @@ class Bucket extends ServiceObject {
    *
    * You may also choose to make the contents of the bucket private by
    * specifying `includeFiles: true`. This will automatically run
-   * {@link File.makePrivate} for every file in the bucket.
+   * {@link File#(makePrivate:1)} for every file in the bucket.
    *
    * When specifying `includeFiles: true`, use `force: true` to delay execution
    * of your callback until all files have been processed. By default, the
@@ -3079,7 +3079,7 @@ class Bucket extends ServiceObject {
    *
    * You may also choose to make the contents of the bucket publicly readable by
    * specifying `includeFiles: true`. This will automatically run
-   * {@link File.makePublic} for every file in the bucket.
+   * {@link File#(makePublic:1)} for every file in the bucket.
    *
    * When specifying `includeFiles: true`, use `force: true` to delay execution
    * of your callback until all files have been processed. By default, the
@@ -3292,7 +3292,7 @@ class Bucket extends ServiceObject {
   /**
    * Set labels on the bucket.
    *
-   * This makes an underlying call to {@link Bucket.setMetadata}, which
+   * This makes an underlying call to {@link Bucket#(setMetadata:1)}, which
    * is a PATCH request. This means an individual label can be overwritten, but
    * unmentioned labels will not be touched.
    *
@@ -3363,7 +3363,7 @@ class Bucket extends ServiceObject {
    * will result in a `PERMISSION_DENIED` error.
    *
    * An unlocked retention policy can be modified or removed from the bucket via
-   * {@link File#removeRetentionPeriod} and {@link File.setRetentionPeriod}. A
+   * {@link File#removeRetentionPeriod} and {@link File#setRetentionPeriod}. A
    * locked retention policy cannot be removed or shortened in duration for the
    * lifetime of the bucket. Attempting to remove or decrease period of a locked
    * retention policy will result in a `PERMISSION_DENIED` error. You can still
@@ -3659,7 +3659,7 @@ class Bucket extends ServiceObject {
    *     milliseconds. This option is not available for resumable uploads.
    *     Default: `60000`
    * @property {string} [uri] The URI for an already-created resumable
-   *     upload. See {@link File.createResumableUpload}.
+   *     upload. See {@link File#(reateResumableUpload:1)}.
    * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
    * @property {string|boolean} [validation] Possible values: `"md5"`,
@@ -3744,7 +3744,7 @@ class Bucket extends ServiceObject {
    *     milliseconds. This option is not available for resumable uploads.
    *     Default: `60000`
    * @param {string} [options.uri] The URI for an already-created resumable
-   *     upload. See {@link File.createResumableUpload}.
+   *     upload. See {@link File#(createResumableUpload:1)}.
    * @param {string} [options.userProject] The ID of the project which will be
    *     billed for the request.
    * @param {string|boolean} [options.validation] Possible values: `"md5"`,

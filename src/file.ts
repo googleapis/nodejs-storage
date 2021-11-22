@@ -3296,7 +3296,7 @@ class File extends ServiceObject<File> {
 
   /**
    * The public URL of this File
-   * Use {@link File.makePublic} to enable anonymous access via the returned URL.
+   * Use {@link File#(makePublic:1)} to enable anonymous access via the returned URL.
    *
    * @example
    * ```
@@ -3338,8 +3338,8 @@ class File extends ServiceObject<File> {
    *
    * **Warning**:
    * There is currently no atomic `move` method in the Cloud Storage API,
-   * so this method is a composition of {@link File.copy} (to the new
-   * location) and {@link File.delete} (from the old location). While
+   * so this method is a composition of {@link File#(copy:1)} (to the new
+   * location) and {@link File#(delete:1)} (from the old location). While
    * unlikely, it is possible that an error returned to your callback could be
    * triggered from either one of these API calls failing, which could leave a
    * duplicate file lingering. The error message will indicate what operation
@@ -3511,9 +3511,9 @@ class File extends ServiceObject<File> {
    *
    * **Warning**:
    * There is currently no atomic `rename` method in the Cloud Storage API,
-   * so this method is an alias of {@link File.move}, which in turn is a
-   * composition of {@link File.copy} (to the new location) and
-   * {@link File.delete} (from the old location). While
+   * so this method is an alias of {@link File#(move:1)}, which in turn is a
+   * composition of {@link File#(copy:1)} (to the new location) and
+   * {@link File#(delete:1)} (from the old location). While
    * unlikely, it is possible that an error returned to your callback could be
    * triggered from either one of these API calls failing, which could leave a
    * duplicate file lingering. The error message will indicate what operation

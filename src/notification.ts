@@ -275,7 +275,7 @@ class Notification extends ServiceObject {
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/notifications/get| Notifications: get API Documentation}
    *
    * @param {object} [options] Configuration options.
-   *     See {@link Bucket.createNotification} for create options.
+   *     See {@link Bucket#(createNotification:1)} for create options.
    * @param {boolean} [options.autoCreate] Automatically create the object if
    *     it does not exist. Default: `false`.
    * @param {string} [options.userProject] The ID of the project which will be
