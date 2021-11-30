@@ -35,6 +35,11 @@ export interface GetServiceAccountOptions {
 export interface ServiceAccount {
   emailAddress?: string;
 }
+/**
+ * 0\. The service account resource.
+ * 1\. The full
+ * {@link https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource| API response}.
+ */
 export type GetServiceAccountResponse = [ServiceAccount, Metadata];
 export interface GetServiceAccountCallback {
   (
@@ -176,12 +181,21 @@ export interface CreateBucketRequest {
   versioning?: Versioning;
 }
 
+/**
+ * 0\. {@link Bucket} The new {@link Bucket}.
+ * 1\. The full API response.
+ */
 export type CreateBucketResponse = [Bucket, Metadata];
 
 export interface BucketCallback {
   (err: Error | null, bucket?: Bucket | null, apiResponse?: Metadata): void;
 }
 
+/**
+ * 0\. Array of {@link Bucket} instances.
+ * 1\. nextQuery A query object to receive more results.
+ * 2\. The full API response.
+ */
 export type GetBucketsResponse = [Bucket[], {}, Metadata];
 export interface GetBucketsCallback {
   (
@@ -209,11 +223,11 @@ export interface HmacKeyResourceResponse {
   secret: string;
 }
 
-  /**
-   * 0\. {@link HmacKey} The HmacKey instance created from API response.
-   * 1\. The HMAC key's secret used to access the XML API.
-   * 2\. {@link HmacKeyResourceResponse} The raw API response.
-   */
+/**
+ * 0\. {@link HmacKey} The HmacKey instance created from API response.
+ * 1\. The HMAC key's secret used to access the XML API.
+ * 2\. {@link HmacKeyResourceResponse} The raw API response.
+ */
 export type CreateHmacKeyResponse = [HmacKey, string, HmacKeyResourceResponse];
 
 export interface CreateHmacKeyOptions {
@@ -250,6 +264,11 @@ export interface GetHmacKeysCallback {
   ): void;
 }
 
+/**
+ * 0\. Array of {@link HmacKey} instances.
+ * 1\. A query object to receive more results.
+ * 2\. The full API response.
+ */
 export type GetHmacKeysResponse = [HmacKey[]];
 
 export const PROTOCOL_REGEX = /^(\w*):\/\//;
@@ -712,11 +731,6 @@ export class Storage extends Service {
   }
 
   /**
-   * @typedef {array} CreateBucketResponse
-   * @property {Bucket} 0 The new {@link Bucket}.
-   * @property {object} 1 The full API response.
-   */
-  /**
    * @callback CreateBucketCallback
    * @param {?Error} err Request error, if any.
    * @param {Bucket} bucket The new {@link Bucket}.
@@ -1059,12 +1073,7 @@ export class Storage extends Service {
    * @property {string} [userProject] The ID of the project which will be billed
    *     for the request.
    */
-  /**
-   * @typedef {array} GetBucketsResponse
-   * @property {Bucket[]} 0 Array of {@link Bucket} instances.
-   * @property {objcet} 1 nextQuery A query object to receive more results.
-   * @property {object} 2 The full API response.
-   */
+
   /**
    * @callback GetBucketsCallback
    * @param {?Error} err Request error, if any.
@@ -1188,12 +1197,7 @@ export class Storage extends Service {
    *     representing part of the larger set of results to view.
    * @property {string} [userProject] This parameter is currently ignored.
    */
-  /**
-   * @typedef {array} GetHmacKeysResponse
-   * @property {HmacKey[]} 0 Array of {@link HmacKey} instances.
-   * @param {object} nextQuery 1 A query object to receive more results.
-   * @param {object} apiResponse 2 The full API response.
-   */
+
   /**
    * @callback GetHmacKeysCallback
    * @param {?Error} err Request error, if any.
@@ -1286,12 +1290,6 @@ export class Storage extends Service {
     );
   }
 
-  /**
-   * @typedef {array} GetServiceAccountResponse
-   * @property {object} 0 The service account resource.
-   * @property {object} 1 The full
-   * {@link https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource| API response}.
-   */
   /**
    * @callback GetServiceAccountCallback
    * @param {?Error} err Request error, if any.
