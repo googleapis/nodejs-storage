@@ -621,6 +621,8 @@ class Bucket extends ServiceObject {
    * }, callback);
    * ```
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   getFilesStream(query?: GetFilesOptions): Readable {
     // placeholder body, overwritten in constructor
     return new Readable();
