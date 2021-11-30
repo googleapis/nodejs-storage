@@ -201,11 +201,19 @@ export interface GetBucketsRequest {
   userProject?: string;
 }
 
+/**
+ * The raw API response.
+ */
 export interface HmacKeyResourceResponse {
   metadata: HmacKeyMetadata;
   secret: string;
 }
 
+  /**
+   * 0\. {@link HmacKey} The HmacKey instance created from API response.
+   * 1\. The HMAC key's secret used to access the XML API.
+   * 2\. {@link HmacKeyResourceResponse} The raw API response.
+   */
 export type CreateHmacKeyResponse = [HmacKey, string, HmacKeyResourceResponse];
 
 export interface CreateHmacKeyOptions {
@@ -933,12 +941,7 @@ export class Storage extends Service {
    * @property {string} [updated] The time this HMAC key was last updated in
    *     RFC 3339 format.
    */
-  /**
-   * @typedef {array} CreateHmacKeyResponse
-   * @property {HmacKey} 0 The HmacKey instance created from API response.
-   * @property {string} 1 The HMAC key's secret used to access the XML API.
-   * @property {object} 3 The raw API response.
-   */
+
   /**
    * @callback CreateHmacKeyCallback Callback function.
    * @param {?Error} err Request error, if any.
