@@ -20,10 +20,7 @@
  * at https://cloud.google.com/storage/docs.
  */
 
-function main(
-  bucketName = 'my-bucket',
-  fileName = 'test.txt',
-) {
+function main(bucketName = 'my-bucket', fileName = 'test.txt') {
   // [START storage_file_download_into_memory]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.

@@ -70,7 +70,12 @@ describe('file', () => {
     const output = execSync(
       `node uploadFromMemory.js ${bucketName} ${fileContents} ${memoryFileName}`
     );
-    assert.match(output, new RegExp(`${memoryFileName} with contents ${fileContents} uploaded to ${bucketName}.`));
+    assert.match(
+      output,
+      new RegExp(
+        `${memoryFileName} with contents ${fileContents} uploaded to ${bucketName}.`
+      )
+    );
     const [exists] = await bucket.file(memoryFileName).exists();
     assert.strictEqual(exists, true);
   });

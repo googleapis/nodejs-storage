@@ -39,12 +39,12 @@ function main(
   async function uploadFromMemory() {
     await storage.bucket(bucketName).file(destFileName).save(contents);
 
-    console.log(`${destFileName} with contents ${contents} uploaded to ${bucketName}.`);
+    console.log(
+      `${destFileName} with contents ${contents} uploaded to ${bucketName}.`
+    );
   }
 
-  uploadFromMemory().catch(
-    console.error
-  );
+  uploadFromMemory().catch(console.error);
   // [END storage_file_upload_from_memory]
 }
 process.on('unhandledRejection', err => {
