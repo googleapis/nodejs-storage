@@ -619,7 +619,7 @@ __Usage:__
 
 
 
-### Download Byte Rage
+### Download Byte Range
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/downloadByteRange.js).
 
