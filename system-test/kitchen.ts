@@ -15,7 +15,10 @@ import {Readable} from 'stream';
 import {createURI, ErrorWithCode, upload} from '../src/gcs-resumable-upload';
 
 const bucketName = process.env.BUCKET_NAME || 'gcs-resumable-upload-test';
-const fileName = '20MB.zip';
+const filePath = path.join(
+  __dirname,
+  '../../system-test/data/20MB.zip'
+)
 
 async function delay(
   title: string,
@@ -29,19 +32,19 @@ async function delay(
   setTimeout(done(), ms);
 }
 
-describe('end to end', () => {
+describe('gcs-resumable-upload', () => {
   beforeEach(() => {
-    upload({bucket: bucketName, file: fileName}).deleteConfig();
+    upload({bucket: bucketName, file: filePath}).deleteConfig();
   });
 
   it('should work', done => {
     let uploadSucceeded = false;
-    fs.createReadStream(fileName)
+    fs.createReadStream(filePath)
       .on('error', done)
       .pipe(
         upload({
           bucket: bucketName,
-          file: fileName,
+          file: filePath,
           metadata: {contentType: 'image/jpg'},
         })
       )
@@ -61,7 +64,7 @@ describe('end to end', () => {
     delay(this.test!.title, retries, () => {
       retries++;
       // If we've retried, delay.
-      fs.stat(fileName, (err, fd) => {
+      fs.stat(filePath, (err, fd) => {
         assert.ifError(err);
 
         const size = fd.size;
@@ -77,11 +80,11 @@ describe('end to end', () => {
 
           const ws = upload({
             bucket: bucketName,
-            file: fileName,
+            file: filePath,
             metadata: {contentType: 'image/jpg'},
           });
 
-          fs.createReadStream(fileName)
+          fs.createReadStream(filePath)
             .on('error', callback)
             .on('data', function (this: Readable, chunk) {
               sizeStreamed += chunk.length;
@@ -119,7 +122,7 @@ describe('end to end', () => {
     createURI(
       {
         bucket: bucketName,
-        file: fileName,
+        file: filePath,
         metadata: {contentType: 'image/jpg'},
       },
       done
@@ -131,12 +134,12 @@ describe('end to end', () => {
       metadata: {largeString: 'a'.repeat(2.1e6)},
     };
 
-    fs.createReadStream(fileName)
+    fs.createReadStream(filePath)
       .on('error', done)
       .pipe(
         upload({
           bucket: bucketName,
-          file: fileName,
+          file: filePath,
           metadata,
         })
       )
@@ -149,7 +152,7 @@ describe('end to end', () => {
   it('should set custom config file', done => {
     const uploadOptions = {
       bucket: bucketName,
-      file: fileName,
+      file: filePath,
       metadata: {contentType: 'image/jpg'},
       configPath: path.join(
         os.tmpdir(),
@@ -158,7 +161,7 @@ describe('end to end', () => {
     };
     let uploadSucceeded = false;
 
-    fs.createReadStream(fileName)
+    fs.createReadStream(filePath)
       .on('error', done)
       .pipe(upload(uploadOptions))
       .on('error', done)
@@ -172,7 +175,7 @@ describe('end to end', () => {
           fs.readFileSync(uploadOptions.configPath, 'utf8')
         );
         const keyName = `${uploadOptions.bucket}/${uploadOptions.file}`.replace(
-          path.extname(fileName),
+          path.extname(filePath),
           ''
         );
         assert.ok(Object.keys(configData).includes(keyName));
