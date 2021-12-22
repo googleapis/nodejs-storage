@@ -132,7 +132,7 @@ const fakeOs = extend(true, {}, osCached);
 let resumableUploadOverride: any;
 function fakeResumableUpload() {
   return () => {
-    console.log("here fake resumable")
+    console.log('here fake resumable');
     return resumableUploadOverride || resumableUpload;
   };
 }
