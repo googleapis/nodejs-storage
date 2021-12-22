@@ -132,6 +132,7 @@ const fakeOs = extend(true, {}, osCached);
 let resumableUploadOverride: any;
 function fakeResumableUpload() {
   return () => {
+    console.log("here fake resumable")
     return resumableUploadOverride || resumableUpload;
   };
 }
@@ -210,7 +211,7 @@ describe('File', () => {
       },
       '@google-cloud/promisify': fakePromisify,
       fs: fakeFs,
-      'gcs-resumable-upload': fakeResumableUpload,
+      '../src/gcs-resumable-upload': fakeResumableUpload,
       'hash-stream-validation': fakeHashStreamValidation,
       os: fakeOs,
       './signer': fakeSigner,

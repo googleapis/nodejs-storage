@@ -13,10 +13,21 @@ import * as path from 'path';
 import * as os from 'os';
 import {Readable} from 'stream';
 import {createURI, ErrorWithCode, upload} from '../src/gcs-resumable-upload';
-import delay from './util';
 
 const bucketName = process.env.BUCKET_NAME || 'gcs-resumable-upload-test';
 const fileName = '20MB.zip';
+
+async function delay(
+  title: string,
+  retries: number,
+  done: Function
+) {
+  if (retries === 0) return done(); // no retry on the first failure.
+  // see: https://cloud.google.com/storage/docs/exponential-backoff:
+  const ms = Math.pow(2, retries) * 1000 + Math.random() * 2000;
+  console.info(`retrying "${title}" in ${ms}ms`);
+  setTimeout(done(), ms);
+}
 
 describe('end to end', () => {
   beforeEach(() => {
