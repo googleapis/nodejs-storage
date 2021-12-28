@@ -12,5 +12,5 @@
   "requires_billing": true,
   "codeowner_team": "@googleapis/cloud-storage-dpe",
   "api_shortname": "storage",
-  "library_type": ""
+  "library_type": "GAPIC_MANUAL"
 }
