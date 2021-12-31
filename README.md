@@ -6,7 +6,6 @@
 
 
 [![npm version](https://img.shields.io/npm/v/@google-cloud/storage.svg)](https://www.npmjs.org/package/@google-cloud/storage)
-[![codecov](https://img.shields.io/codecov/c/github/googleapis/nodejs-storage/main.svg?style=flat)](https://codecov.io/gh/googleapis/nodejs-storage)
 
 
 
