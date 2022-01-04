@@ -16,12 +16,17 @@ import * as assert from 'assert';
 import {describe, it, beforeEach} from 'mocha';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as tmp from 'tmp';
+import * as crypto from 'crypto';
 import * as os from 'os';
 import {Readable} from 'stream';
 import {createURI, ErrorWithCode, upload} from '../src/gcs-resumable-upload';
 
 const bucketName = process.env.BUCKET_NAME || 'gcs-resumable-upload-test';
-const filePath = path.join(__dirname, '../../system-test/data/20MB.zip');
+tmp.setGracefulCleanup();
+const tmpFileContents = crypto.randomBytes(1024 * 1024 * 20);
+const filePath = fs.mkdtempSync(path.join(os.tmpdir(), 'gcs-resumable-upload'));
+fs.writeFileSync(filePath, tmpFileContents);
 
 async function delay(title: string, retries: number, done: Function) {
   if (retries === 0) return done(); // no retry on the first failure.
