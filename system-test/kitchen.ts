@@ -25,8 +25,8 @@ import {createURI, ErrorWithCode, upload} from '../src/gcs-resumable-upload';
 const bucketName = process.env.BUCKET_NAME || 'gcs-resumable-upload-test';
 tmp.setGracefulCleanup();
 const tmpFileContents = crypto.randomBytes(1024 * 1024 * 20);
-const filePath = fs.mkdtempSync(path.join(os.tmpdir(), 'gcs-resumable-upload'));
-fs.writeFileSync(filePath, tmpFileContents);
+const filePath = path.join(os.tmpdir(), "gcs-resumable-upload-file")
+fs.createWriteStream(filePath).write(tmpFileContents);
 
 async function delay(title: string, retries: number, done: Function) {
   if (retries === 0) return done(); // no retry on the first failure.
