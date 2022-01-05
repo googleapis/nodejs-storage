@@ -15,18 +15,13 @@
 import * as assert from 'assert';
 import {describe, it, beforeEach, before, afterEach, after} from 'mocha';
 import * as crypto from 'crypto';
-import * as isStream from 'is-stream';
 import * as mockery from 'mockery';
 import * as nock from 'nock';
 import * as path from 'path';
 import * as sinon from 'sinon';
-import {PassThrough, Stream} from 'stream';
+import {PassThrough, Readable} from 'stream';
 
-import {
-  ApiError,
-  CreateUriCallback,
-  PROTOCOL_REGEX,
-} from '../src/gcs-resumable-upload/index';
+import {ApiError, CreateUriCallback, PROTOCOL_REGEX} from '../src/gcs-resumable-upload/index';
 import {GaxiosOptions, GaxiosError, GaxiosResponse} from 'gaxios';
 
 nock.disableNetConnect();
@@ -56,6 +51,9 @@ class ConfigStore {
   }
 }
 
+const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
+/** 256 KiB */
+const CHUNK_SIZE_MULTIPLE = 2 ** 18;
 const queryPath = '/?userProject=user-project-id';
 
 function mockAuthorizeRequest(
@@ -302,11 +300,65 @@ describe('gcs-resumable-upload', () => {
       assert.strictEqual(up.uri, 'fake-uri');
     });
 
+    it('should not have `chunkSize` by default', () => {
+      const up = upload({bucket: BUCKET, file: FILE});
+      assert.strictEqual(up.chunkSize, undefined);
+    });
+
+    it('should accept and set `chunkSize`', () => {
+      const up = upload({bucket: BUCKET, file: FILE, chunkSize: 123});
+      assert.strictEqual(up.chunkSize, 123);
+    });
+
     describe('on write', () => {
-      const URI = 'uri';
+      let uri = '';
+
+      beforeEach(() => {
+        uri = 'uri';
+      });
+
+      it("should emit 'writing' when piped", done => {
+        let read = false;
+        const upstreamBuffer = new Readable({
+          read() {
+            if (!read) {
+              this.push(Buffer.alloc(1));
+              read = true;
+            }
+          },
+        });
+
+        up.createURI = () => {};
+        up.once('writing', () => {
+          upstreamBuffer.push(null);
+          done();
+        });
+        upstreamBuffer.pipe(up);
+      });
+
+      it("should emit 'finished' after 'prepareFinish'", async () => {
+        const upstreamBuffer = new Readable({
+          read() {
+            this.push(null);
+          },
+        });
+
+        up.createURI = () => {};
+        await new Promise(resolve => {
+          up.once('writing', resolve);
+          upstreamBuffer.pipe(up);
+        });
+
+        assert(up.upstream.readable);
+
+        await new Promise(resolve => {
+          up.once('finish', resolve);
+          up.emit('prepareFinish');
+        });
+      });
 
       it('should continue uploading', done => {
-        up.uri = URI;
+        up.uri = uri;
         up.continueUploading = done;
         up.emit('writing');
       });
@@ -348,6 +400,313 @@ describe('gcs-resumable-upload', () => {
         };
         up.emit('writing');
       });
+    });
+  });
+
+  describe('#upstream', () => {
+    beforeEach(() => {
+      up.createURI = () => {};
+    });
+
+    it('should write to `writeToChunkBuffer`', done => {
+      up.on('wroteToChunkBuffer', () => {
+        assert.equal(up.upstreamChunkBuffer.byteLength, 16);
+        assert.equal(up.chunkBufferEncoding, 'buffer');
+        done();
+      });
+
+      up.write(Buffer.alloc(16));
+    });
+
+    it("should setup a 'prepareFinish' handler", done => {
+      assert.equal(up.eventNames().includes('prepareFinish'), false);
+
+      up.on('wroteToChunkBuffer', () => {
+        assert.equal(up.eventNames().includes('prepareFinish'), true);
+        done();
+      });
+
+      up.write(Buffer.alloc(16));
+    });
+
+    it("should finish only after 'prepareFinish' is emitted", done => {
+      const upstreamBuffer = new Readable({
+        read() {
+          this.push(Buffer.alloc(1));
+          this.push(null);
+        },
+      });
+
+      // Readable has ended
+      upstreamBuffer.on('end', () => {
+        // The data has been written to the buffer
+        up.on('wroteToChunkBuffer', () => {
+          // Allow the writer's callback be called immediately
+          up.emit('readFromChunkBuffer');
+
+          // setting up the listener now to prove it hasn't been fired before
+          up.on('finish', done);
+          up.emit('prepareFinish');
+        });
+      });
+
+      upstreamBuffer.pipe(up);
+    });
+  });
+
+  describe('#writeToChunkBuffer', () => {
+    it('should append buffer to existing `upstreamChunkBuffer`', () => {
+      up.upstreamChunkBuffer = Buffer.from('abc');
+      up.writeToChunkBuffer(Buffer.from('def'), 'buffer', () => {});
+
+      assert.equal(
+        Buffer.compare(up.upstreamChunkBuffer, Buffer.from('abcdef')),
+        0
+      );
+    });
+
+    it('should convert string with encoding to Buffer and append to existing `upstreamChunkBuffer`', () => {
+      const sample = '🦃';
+
+      assert.equal(up.chunkBufferEncoding, undefined);
+      up.writeToChunkBuffer(sample, 'utf-8', () => {});
+
+      assert(Buffer.isBuffer(up.upstreamChunkBuffer));
+      assert.equal(up.upstreamChunkBuffer.toString(), sample);
+      assert.equal(up.chunkBufferEncoding, 'utf-8');
+    });
+
+    it("should callback on 'readFromChunkBuffer'", done => {
+      up.writeToChunkBuffer('sample', 'utf-8', done);
+      up.emit('readFromChunkBuffer');
+    });
+
+    it("should emit 'wroteToChunkBuffer' asynchronously", done => {
+      up.writeToChunkBuffer('sample', 'utf-8', () => {});
+
+      // setting this here proves it's async
+      up.on('wroteToChunkBuffer', done);
+    });
+  });
+
+  describe('#unshiftChunkBuffer', () => {
+    it('should synchronously prepend to existing buffer', () => {
+      up.upstreamChunkBuffer = Buffer.from('456');
+
+      up.unshiftChunkBuffer(Buffer.from('123'));
+      assert.equal(
+        Buffer.compare(up.upstreamChunkBuffer, Buffer.from('123456')),
+        0
+      );
+    });
+  });
+
+  describe('#pullFromChunkBuffer', () => {
+    it('should retrieve from the beginning of the `upstreamChunkBuffer`', () => {
+      up.upstreamChunkBuffer = Buffer.from('ab');
+
+      const chunk = up.pullFromChunkBuffer(1);
+      assert.equal(chunk.toString(), 'a');
+      assert.equal(up.upstreamChunkBuffer.toString(), 'b');
+    });
+
+    it('should retrieve no more than the limit provided', () => {
+      up.upstreamChunkBuffer = Buffer.from('0123456789');
+
+      const chunk = up.pullFromChunkBuffer(4);
+      assert.equal(chunk.toString(), '0123');
+      assert.equal(up.upstreamChunkBuffer.toString(), '456789');
+    });
+
+    it('should retrieve less than the limit if no more data is available', () => {
+      up.upstreamChunkBuffer = Buffer.from('0123456789');
+
+      const chunk = up.pullFromChunkBuffer(512);
+      assert.equal(chunk.toString(), '0123456789');
+      assert.equal(up.upstreamChunkBuffer.toString(), '');
+    });
+
+    it('should return all data if `Infinity` is provided', () => {
+      up.upstreamChunkBuffer = Buffer.from('0123456789');
+      const chunk = up.pullFromChunkBuffer(Infinity);
+      assert.equal(chunk.toString(), '0123456789');
+      assert.equal(up.upstreamChunkBuffer.toString(), '');
+    });
+
+    it("should emit 'readFromChunkBuffer' asynchronously", done => {
+      up.pullFromChunkBuffer(0);
+
+      // setting this here proves it's async
+      up.on('readFromChunkBuffer', done);
+    });
+  });
+
+  describe('#waitForNextChunk', () => {
+    it('should resolve `true` asynchronously if `upstreamChunkBuffer.byteLength` has data', async () => {
+      up.upstreamChunkBuffer = Buffer.from('ab');
+
+      assert(await up.waitForNextChunk());
+    });
+
+    it('should resolve `false` asynchronously if `upstreamEnded`', async () => {
+      up.upstreamEnded = true;
+
+      assert.equal(await up.waitForNextChunk(), false);
+    });
+
+    it('should resolve `true` asynchronously if `upstreamChunkBuffer.byteLength` and `upstreamEnded`', async () => {
+      up.upstreamChunkBuffer = Buffer.from('ab');
+      up.upstreamEnded = true;
+
+      assert(await up.waitForNextChunk());
+    });
+
+    it('should wait for `wroteToChunkBuffer` if !`upstreamChunkBuffer.byteLength` && !`upstreamEnded`', async () => {
+      const result = await new Promise(resolve => {
+        up.waitForNextChunk().then(resolve);
+        up.emit('wroteToChunkBuffer');
+      });
+
+      assert(result);
+    });
+
+    it("should wait for upstream to 'finish' if !`upstreamChunkBuffer.byteLength` && !`upstreamEnded`", async () => {
+      await new Promise(resolve => {
+        up.waitForNextChunk().then(resolve);
+        up.upstream.emit('finish');
+      });
+    });
+
+    it("should wait for upstream to 'finish' and resolve `false` if data is not available", async () => {
+      const result = await new Promise(resolve => {
+        up.waitForNextChunk().then(resolve);
+        up.upstream.emit('finish');
+      });
+
+      assert.equal(result, false);
+    });
+
+    it("should wait for upstream to 'finish' and resolve `true` if data is available", async () => {
+      const result = await new Promise(resolve => {
+        up.upstream.once('newListener', (event: string) => {
+          if (event === 'finish') {
+            // Update the `upstreamChunkBuffer` before emitting 'finish'
+            up.upstreamChunkBuffer = Buffer.from('abc');
+
+            process.nextTick(() => up.upstream.emit('finish'));
+          }
+        });
+
+        up.waitForNextChunk().then(resolve);
+      });
+
+      assert.equal(result, true);
+    });
+
+    it('should remove listeners after calling back from `wroteToChunkBuffer`', async () => {
+      assert.equal(up.listenerCount('finish'), 0);
+      assert.equal(up.listenerCount('wroteToChunkBuffer'), 0);
+
+      await new Promise(resolve => {
+        up.once('newListener', (event: string) => {
+          if (event === 'wroteToChunkBuffer') {
+            process.nextTick(() => up.emit('wroteToChunkBuffer'));
+          }
+        });
+
+        up.waitForNextChunk().then(resolve);
+      });
+
+      assert.equal(up.listenerCount('finish'), 0);
+      assert.equal(up.listenerCount('wroteToChunkBuffer'), 0);
+    });
+
+    it("should remove listeners after calling back from upstream to 'finish'", async () => {
+      assert.equal(up.listenerCount('finish'), 0);
+      assert.equal(up.listenerCount('wroteToChunkBuffer'), 0);
+
+      await new Promise(resolve => {
+        up.upstream.once('newListener', (event: string) => {
+          if (event === 'finish') {
+            process.nextTick(() => up.upstream.emit('finish'));
+          }
+        });
+
+        up.waitForNextChunk().then(resolve);
+      });
+
+      assert.equal(up.listenerCount('finish'), 0);
+      assert.equal(up.listenerCount('wroteToChunkBuffer'), 0);
+    });
+  });
+
+  describe('#upstreamIterator', () => {
+    it('should yield all data from upstream by default', done => {
+      up.upstreamChunkBuffer = Buffer.alloc(1);
+      up.pullFromChunkBuffer = (limit: number) => {
+        assert.equal(limit, Infinity);
+        done();
+      };
+
+      const iterator = up.upstreamIterator();
+      iterator.next();
+    });
+
+    it('should yield up to limit if provided', async () => {
+      up.upstreamChunkBuffer = Buffer.alloc(16);
+
+      let data = Buffer.alloc(0);
+
+      for await (const {chunk} of up.upstreamIterator(8)) {
+        data = Buffer.concat([data, chunk]);
+      }
+
+      assert.equal(data.byteLength, 8);
+    });
+
+    it("should yield less than the limit if that's all that's available", async () => {
+      up.upstreamChunkBuffer = Buffer.alloc(8);
+      up.upstreamEnded = true;
+
+      let data = Buffer.alloc(0);
+
+      for await (const {chunk} of up.upstreamIterator(16)) {
+        data = Buffer.concat([data, chunk]);
+      }
+
+      assert.equal(data.byteLength, 8);
+    });
+
+    it('should yield many, arbitrarily sized chunks by default', async () => {
+      up.waitForNextChunk = () => true;
+      up.pullFromChunkBuffer = () => Buffer.from('a');
+
+      let data = Buffer.alloc(0);
+      let count = 0;
+
+      for await (const {chunk} of up.upstreamIterator(16)) {
+        data = Buffer.concat([data, chunk]);
+        count++;
+      }
+
+      assert.equal(data.toString(), 'a'.repeat(16));
+      assert.equal(count, 16);
+    });
+
+    it('should yield one single chunk if `oneChunkMode`', async () => {
+      up.waitForNextChunk = () => true;
+      up.pullFromChunkBuffer = () => Buffer.from('b');
+
+      let data = Buffer.alloc(0);
+      let count = 0;
+
+      for await (const {chunk} of up.upstreamIterator(16, true)) {
+        data = Buffer.concat([data, chunk]);
+        count++;
+      }
+
+      assert.equal(data.toString(), 'b'.repeat(16));
+      assert.equal(count, 1);
     });
   });
 
@@ -477,311 +836,446 @@ describe('gcs-resumable-upload', () => {
   describe('#startUploading', () => {
     beforeEach(() => {
       up.makeRequestStream = async () => new PassThrough();
+      up.upstreamChunkBuffer = Buffer.alloc(16);
     });
 
-    it('should make the correct request', done => {
-      const URI = 'uri';
-      const OFFSET = 8;
+    it('should reset `numChunksReadInRequest` to 0', async () => {
+      up.numChunksReadInRequest = 1;
 
-      up.uri = URI;
-      up.offset = OFFSET;
+      await up.startUploading();
 
-      up.makeRequestStream = async (reqOpts: GaxiosOptions) => {
-        assert.strictEqual(reqOpts.method, 'PUT');
-        assert.strictEqual(reqOpts.url, up.uri);
-        assert.deepStrictEqual(reqOpts.headers, {
-          'Content-Range': 'bytes ' + OFFSET + '-*/' + up.contentLength,
-        });
-        done();
-        return new PassThrough();
-      };
-
-      up.startUploading();
+      assert.equal(up.numChunksReadInRequest, 0);
     });
 
-    it('should create a buffer stream', () => {
-      assert.strictEqual(up.bufferStream, undefined);
-      up.startUploading();
-      assert.strictEqual(isStream(up.bufferStream), true);
+    it('should set `offset` to 0 when not set', async () => {
+      assert.equal(up.offset, undefined);
+
+      await up.startUploading();
+
+      assert.equal(up.offset, 0);
     });
 
-    it('should reuse the buffer stream', () => {
-      const bufferStream = new PassThrough();
-      up.bufferStream = bufferStream;
-      up.startUploading();
-      assert.strictEqual(up.bufferStream, bufferStream);
-    });
+    it('should emit error if `offset` < `numBytesWritten`', done => {
+      up.numBytesWritten = 1;
 
-    it('should create an offset stream', () => {
-      assert.strictEqual(up.offsetStream, undefined);
-      up.startUploading();
-      assert.strictEqual(isStream(up.offsetStream), true);
-    });
-
-    it('should cork the stream on prefinish', done => {
-      up.cork = done;
-      up.setPipeline = (buffer: Stream, offset: Stream, delay: Stream) => {
-        setImmediate(() => {
-          delay.emit('prefinish');
-        });
-      };
-
-      up.makeRequestStream = async () => new PassThrough();
-      up.startUploading();
-    });
-
-    it('should set the pipeline', done => {
-      up.setPipeline = (buffer: Stream, offset: Stream, delay: Stream) => {
-        assert.strictEqual(buffer, up.bufferStream);
-        assert.strictEqual(offset, up.offsetStream);
-        assert.strictEqual(isStream(delay), true);
-
-        done();
-      };
-
-      up.makeRequestStream = async () => new PassThrough();
-      up.startUploading();
-    });
-
-    it('should pipe to the request stream', done => {
-      let requestStreamEmbeddedStream: PassThrough;
-      up.pipe = (requestStream: PassThrough) => {
-        requestStreamEmbeddedStream = requestStream;
-      };
-      up.makeRequestStream = async (reqOpts: GaxiosOptions) => {
-        assert.strictEqual(reqOpts.body, requestStreamEmbeddedStream);
-        setImmediate(done);
-        return new PassThrough();
-      };
-      up.startUploading();
-    });
-
-    it('should unpipe the request stream on restart', done => {
-      let requestStreamEmbeddedStream: PassThrough;
-      up.pipe = (requestStream: PassThrough) => {
-        requestStreamEmbeddedStream = requestStream;
-      };
-      up.unpipe = (requestStream: PassThrough) => {
-        assert.strictEqual(requestStream, requestStreamEmbeddedStream);
-        done();
-      };
-      up.makeRequestStream = async () => new PassThrough();
-      up.startUploading();
-      up.emit('restart');
-    });
-
-    it('should emit the metadata', done => {
-      const BODY = {hi: 1};
-      const RESP = {data: BODY};
-      up.on('metadata', (body: {}) => {
-        assert.strictEqual(body, BODY);
+      up.on('error', (error: Error) => {
+        assert(error instanceof RangeError);
+        assert(
+          /The offset is lower than the number of bytes written/.test(
+            error.message
+          )
+        );
         done();
       });
-      const requestStream = new PassThrough();
-      up.makeRequestStream = async () => requestStream;
+
       up.startUploading();
-      up.emit('response', RESP);
     });
 
-    it('should return response data size as number', done => {
-      const metadata = {
-        size: '0',
+    it("should 'fast-forward' upstream if `numBytesWritten` < `offset`", async () => {
+      up.upstreamChunkBuffer = Buffer.alloc(24);
+
+      up.offset = 9;
+      up.numBytesWritten = 1;
+
+      await up.startUploading();
+
+      // Should fast-forward (9-1) bytes
+      assert.equal(up.offset, 9);
+      assert.equal(up.numBytesWritten, 9);
+      assert.equal(up.upstreamChunkBuffer.byteLength, 16);
+    });
+
+    it('should emit a progress event with the bytes written', done => {
+      up.upstreamChunkBuffer = Buffer.alloc(24);
+      up.upstreamEnded = true;
+      up.contentLength = 24;
+
+      up.on(
+        'progress',
+        (data: {bytesWritten: number; contentLength: number}) => {
+          assert.equal(data.bytesWritten, 24);
+          assert.equal(data.contentLength, 24);
+
+          done();
+        }
+      );
+
+      up.makeRequestStream = async (reqOpts: GaxiosOptions) => {
+        reqOpts.body.on('data', () => {});
       };
-      const RESP = {data: metadata};
-      up.on('metadata', (data: {size: number}) => {
-        assert.strictEqual(Number(metadata.size), data.size);
-        assert.strictEqual(typeof data.size, 'number');
-        done();
-      });
-      const requestStream = new PassThrough();
-      up.makeRequestStream = async () => requestStream;
+
       up.startUploading();
-      up.emit('response', RESP);
     });
 
-    it('should destroy the stream if an error occurred', done => {
-      const RESP = {data: {error: new Error('Error.')}};
-      const requestStream = new PassThrough();
-      up.on('metadata', done);
-      // metadata shouldn't be emitted... will blow up test if called
-      up.destroy = (err: Error) => {
-        assert.strictEqual(err, RESP.data.error);
-        done();
-      };
-      up.makeRequestStream = async () => requestStream;
-      up.startUploading();
-      up.emit('response', RESP);
+    it("should setup a 'response' listener", async () => {
+      assert.equal(up.eventNames().includes('response'), false);
+
+      await up.startUploading();
+
+      assert.equal(up.eventNames().includes('response'), true);
     });
 
-    it('should destroy the stream if the status code is out of range', done => {
-      const RESP = {data: {}, status: 300};
-      const requestStream = new PassThrough();
-      up.on('metadata', done);
-      // metadata shouldn't be emitted... will blow up test if called
-      up.destroy = (err: Error) => {
-        assert.strictEqual(err.message, 'Upload failed');
-        done();
-      };
-      up.makeRequestStream = async () => requestStream;
-      up.startUploading();
-      up.emit('response', RESP);
-    });
-
-    it('should estroy the stream if hte request failed', done => {
+    it('should destroy the stream if the request failed', done => {
       const error = new Error('Error.');
-      up.destroy = (err: Error) => {
-        assert.strictEqual(err, error);
+      up.on('error', (e: Error) => {
+        assert.strictEqual(e, error);
         done();
-      };
+      });
+
       up.makeRequestStream = async () => {
         throw error;
       };
       up.startUploading();
     });
 
-    it('should delete the config', done => {
-      const RESP = {data: ''};
-      const requestStream = new PassThrough();
-      up.makeRequestStream = async () => {
-        up.deleteConfig = done;
-        return requestStream;
-      };
-      up.startUploading();
-      up.emit('response', RESP);
-    });
+    describe('request preparation', () => {
+      // a convenient handle for getting the request options
+      let reqOpts: GaxiosOptions;
 
-    it('should uncork the stream', done => {
-      const RESP = {data: ''};
-      const requestStream = new PassThrough();
-      up.makeRequestStream = () => {
-        up.uncork = done;
-        up.emit('response', RESP);
-        return requestStream;
-      };
-      up.startUploading();
+      async function getAllDataFromRequest() {
+        let payload = Buffer.alloc(0);
+
+        await new Promise(resolve => {
+          reqOpts.body.on('data', (data: Buffer) => {
+            payload = Buffer.concat([payload, data]);
+          });
+
+          reqOpts.body.on('end', () => {
+            resolve(payload);
+          });
+        });
+
+        return payload;
+      }
+
+      beforeEach(() => {
+        reqOpts = {};
+        up.makeRequestStream = async (requestOptions: GaxiosOptions) => {
+          assert.equal(requestOptions.method, 'PUT');
+          assert.equal(requestOptions.url, up.uri);
+          assert.equal(typeof requestOptions.headers, 'object');
+          assert(requestOptions.body instanceof Readable);
+
+          reqOpts = requestOptions;
+        };
+        up.upstreamChunkBuffer = Buffer.alloc(512);
+        up.upstreamEnded = true;
+      });
+
+      describe('single chunk', () => {
+        it('should use `contentLength` and `offset` if set', async () => {
+          const OFFSET = 100;
+          const CONTENT_LENGTH = 123;
+
+          up.offset = OFFSET;
+          up.contentLength = CONTENT_LENGTH;
+
+          await up.startUploading();
+
+          assert.deepEqual(reqOpts.headers, {
+            'Content-Range': `bytes ${OFFSET}-*/${CONTENT_LENGTH}`,
+          });
+
+          const data = await getAllDataFromRequest();
+
+          assert.equal(data.byteLength, 23);
+        });
+
+        it('should prepare a valid request if `contentLength` is unknown', async () => {
+          up.contentLength = '*';
+
+          await up.startUploading();
+
+          assert.deepEqual(reqOpts.headers, {
+            'Content-Range': 'bytes 0-*/*',
+          });
+
+          const data = await getAllDataFromRequest();
+
+          assert.equal(data.byteLength, 512);
+        });
+      });
+
+      describe('multiple chunk', () => {
+        const CHUNK_SIZE = 256;
+
+        beforeEach(() => {
+          up.chunkSize = CHUNK_SIZE;
+        });
+
+        it('should use `chunkSize` if less than `contentLength`', async () => {
+          const OFFSET = 100;
+          const CONTENT_LENGTH = 512;
+
+          up.offset = OFFSET;
+          up.contentLength = CONTENT_LENGTH;
+
+          await up.startUploading();
+
+          const endByte = OFFSET + CHUNK_SIZE - 1;
+          assert.deepEqual(reqOpts.headers, {
+            'Content-Length': CHUNK_SIZE,
+            'Content-Range': `bytes ${OFFSET}-${endByte}/${CONTENT_LENGTH}`,
+          });
+
+          const data = await getAllDataFromRequest();
+
+          assert.equal(data.byteLength, CHUNK_SIZE);
+        });
+
+        it('should prepare a valid request if `contentLength` is unknown', async () => {
+          const OFFSET = 100;
+
+          up.offset = OFFSET;
+          up.contentLength = '*';
+
+          await up.startUploading();
+
+          const endByte = OFFSET + CHUNK_SIZE - 1;
+          assert.deepEqual(reqOpts.headers, {
+            'Content-Length': CHUNK_SIZE,
+            'Content-Range': `bytes ${OFFSET}-${endByte}/*`,
+          });
+
+          const data = await getAllDataFromRequest();
+
+          assert.equal(data.byteLength, CHUNK_SIZE);
+        });
+
+        it('should prepare a valid request if the remaining data is less than `chunkSize`', async () => {
+          const NUM_BYTES_WRITTEN = 400;
+          const OFFSET = NUM_BYTES_WRITTEN;
+          const CONTENT_LENGTH = 512;
+
+          up.offset = OFFSET;
+          up.numBytesWritten = NUM_BYTES_WRITTEN;
+          up.contentLength = CONTENT_LENGTH;
+
+          await up.startUploading();
+
+          const endByte = CONTENT_LENGTH - NUM_BYTES_WRITTEN + OFFSET - 1;
+          assert.deepEqual(reqOpts.headers, {
+            'Content-Length': CONTENT_LENGTH - NUM_BYTES_WRITTEN,
+            'Content-Range': `bytes ${OFFSET}-${endByte}/${CONTENT_LENGTH}`,
+          });
+          const data = await getAllDataFromRequest();
+
+          assert.equal(data.byteLength, CONTENT_LENGTH - NUM_BYTES_WRITTEN);
+        });
+      });
     });
   });
 
-  describe('#onChunk', () => {
-    const CHUNK = Buffer.from('abcdefghijklmnopqrstuvwxyz');
-    const ENC = 'utf-8';
-    const NEXT = () => {};
-
-    describe('first write', () => {
-      beforeEach(() => {
-        up.numBytesWritten = 0;
+  describe('#responseHandler', () => {
+    it('should emit the metadata', done => {
+      const BODY = {hi: 1};
+      const RESP = {data: BODY, status: 200};
+      up.on('metadata', (body: {}) => {
+        assert.strictEqual(body, BODY);
+        done();
       });
 
-      it('should get the first chunk', done => {
+      up.responseHandler(RESP);
+    });
+
+    it('should return response data size as number', done => {
+      const metadata = {
+        size: '0',
+      };
+      const RESP = {data: metadata, status: 200};
+      up.on('metadata', (data: {size: number}) => {
+        assert.strictEqual(Number(metadata.size), data.size);
+        assert.strictEqual(typeof data.size, 'number');
+        done();
+      });
+
+      up.responseHandler(RESP);
+    });
+
+    it('should destroy the stream if an error occurred', done => {
+      const RESP = {data: {error: new Error('Error.')}};
+      up.on('metadata', done);
+      // metadata shouldn't be emitted... will blow up test if called
+      up.destroy = (err: Error) => {
+        assert.strictEqual(err, RESP.data.error);
+        done();
+      };
+      up.responseHandler(RESP);
+    });
+
+    it('should destroy the stream if the status code is out of range', done => {
+      const RESP = {data: {}, status: 300};
+      up.on('metadata', done);
+      // metadata shouldn't be emitted... will blow up test if called
+      up.destroy = (err: Error) => {
+        assert.strictEqual(err.message, 'Upload failed');
+        done();
+      };
+      up.responseHandler(RESP);
+    });
+
+    it('should delete the config', done => {
+      const RESP = {data: '', status: 200};
+      up.deleteConfig = done;
+      up.responseHandler(RESP);
+    });
+
+    it('should emit `prepareFinish` when request succeeds', done => {
+      const RESP = {data: '', status: 200};
+      up.once('prepareFinish', done);
+
+      up.responseHandler(RESP);
+    });
+
+    it('should continue with multi-chunk upload when incomplete', done => {
+      const lastByteReceived = 9;
+
+      const RESP = {
+        data: '',
+        status: RESUMABLE_INCOMPLETE_STATUS_CODE,
+        headers: {
+          range: `bytes=0-${lastByteReceived}`,
+        },
+      };
+
+      up.chunkSize = 1;
+
+      up.continueUploading = () => {
+        assert.equal(up.offset, lastByteReceived + 1);
+
+        done();
+      };
+
+      up.responseHandler(RESP);
+    });
+
+    it('should unshift missing data if server did not receive the entire chunk', done => {
+      const NUM_BYTES_WRITTEN = 20;
+      const LAST_CHUNK_LENGTH = 256;
+      const UPSTREAM_BUFFER_LENGTH = 1024;
+      const lastByteReceived = 9;
+      const expectedUnshiftAmount = NUM_BYTES_WRITTEN - lastByteReceived - 1;
+
+      const RESP = {
+        data: '',
+        status: RESUMABLE_INCOMPLETE_STATUS_CODE,
+        headers: {
+          range: `bytes=0-${lastByteReceived}`,
+        },
+      };
+
+      up.chunkSize = 256;
+      up.numBytesWritten = NUM_BYTES_WRITTEN;
+      up.upstreamChunkBuffer = Buffer.alloc(UPSTREAM_BUFFER_LENGTH, 'b');
+
+      up.lastChunkSent = Buffer.concat([
+        Buffer.alloc(LAST_CHUNK_LENGTH, 'c'),
+        // different to ensure this is the data that's prepended
+        Buffer.alloc(expectedUnshiftAmount, 'a'),
+      ]);
+
+      up.continueUploading = () => {
+        assert.equal(up.offset, lastByteReceived + 1);
+        assert.equal(
+          up.upstreamChunkBuffer.byteLength,
+          UPSTREAM_BUFFER_LENGTH + expectedUnshiftAmount
+        );
+        assert.equal(
+          up.upstreamChunkBuffer.slice(0, expectedUnshiftAmount).toString(),
+          'a'.repeat(expectedUnshiftAmount)
+        );
+
+        // we should discard part of the last chunk, as we know what the server
+        // has at this point.
+        assert.equal(up.lastChunkSent.byteLength, 0);
+
+        done();
+      };
+
+      up.responseHandler(RESP);
+    });
+  });
+
+  describe('#ensureUploadingSameObject', () => {
+    let chunk = Buffer.alloc(0);
+
+    beforeEach(() => {
+      chunk = crypto.randomBytes(512);
+      up.upstreamChunkBuffer = chunk;
+    });
+
+    it('should not alter the chunk buffer', async () => {
+      await up.ensureUploadingSameObject();
+
+      assert.equal(Buffer.compare(up.upstreamChunkBuffer, chunk), 0);
+    });
+
+    describe('first write', () => {
+      it('should get the first chunk', async () => {
+        let calledGet = false;
         up.get = (prop: string) => {
           assert.strictEqual(prop, 'firstChunk');
-          done();
+          calledGet = true;
         };
 
-        up.onChunk(CHUNK, ENC, NEXT);
+        const result = await up.ensureUploadingSameObject();
+
+        assert(result);
+        assert(calledGet);
       });
 
       describe('new upload', () => {
-        beforeEach(() => {
-          up.get = () => {};
-        });
-
-        it('should save the uri and first chunk if its not cached', () => {
+        it('should save the uri and first chunk (16 bytes) if its not cached', done => {
           const URI = 'uri';
           up.uri = URI;
+          up.get = () => {};
           up.set = (props: {uri?: string; firstChunk: Buffer}) => {
-            const firstChunk = CHUNK.slice(0, 16);
+            const firstChunk = chunk.slice(0, 16);
             assert.deepStrictEqual(props.uri, URI);
             assert.strictEqual(Buffer.compare(props.firstChunk, firstChunk), 0);
+            done();
           };
-          up.onChunk(CHUNK, ENC, NEXT);
+          up.ensureUploadingSameObject();
         });
       });
 
       describe('continued upload', () => {
         beforeEach(() => {
-          up.bufferStream = new PassThrough();
-          up.offsetStream = new PassThrough();
-          up.get = () => CHUNK;
           up.restart = () => {};
         });
 
-        it('should push data back to the buffer stream if different', done => {
-          up.bufferStream.unshift = (chunk: string) => {
-            assert.strictEqual(chunk, CHUNK);
-            done();
+        it('should not `#restart` and return `true` if cache is the same', async () => {
+          up.upstreamChunkBuffer = Buffer.alloc(512, 'a');
+          up.get = (param: string) => {
+            return param === 'firstChunk' ? Buffer.alloc(16, 'a') : undefined;
           };
 
-          up.onChunk(CHUNK, ENC, NEXT);
-        });
-
-        it('should unpipe the offset stream', done => {
-          up.bufferStream.unpipe = (stream: Stream) => {
-            assert.strictEqual(stream, up.offsetStream);
-            done();
+          let calledRestart = false;
+          up.restart = () => {
+            calledRestart = true;
           };
 
-          up.onChunk(CHUNK, ENC, NEXT);
+          const result = await up.ensureUploadingSameObject();
+
+          assert(result);
+          assert.equal(calledRestart, false);
         });
 
-        it('should restart the stream', done => {
-          up.restart = done;
+        it('should `#restart` and return `false` if different', async () => {
+          up.upstreamChunkBuffer = Buffer.alloc(512, 'a');
+          up.get = (param: string) => {
+            return param === 'firstChunk' ? Buffer.alloc(16, 'b') : undefined;
+          };
 
-          up.onChunk(CHUNK, ENC, NEXT);
-        });
-      });
-    });
+          let calledRestart = false;
+          up.restart = () => {
+            calledRestart = true;
+          };
 
-    describe('successive writes', () => {
-      it('should increase the length of the bytes written by the bytelength of the chunk', () => {
-        assert.strictEqual(up.numBytesWritten, 0);
-        up.onChunk(CHUNK, ENC, NEXT);
-        assert.strictEqual(up.numBytesWritten, Buffer.byteLength(CHUNK, ENC));
-      });
+          const result = await up.ensureUploadingSameObject();
 
-      it('should slice the chunk by the offset - numBytesWritten', done => {
-        const OFFSET = 8;
-        up.offset = OFFSET;
-        up.onChunk(CHUNK, ENC, (err: Error, chunk: Buffer) => {
-          assert.ifError(err);
-
-          const expectedChunk = CHUNK.slice(OFFSET);
-          assert.strictEqual(Buffer.compare(chunk, expectedChunk), 0);
-          done();
-        });
-      });
-
-      it('should emit a progress event with the bytes written', done => {
-        let happened = false;
-        up.on('progress', () => {
-          happened = true;
-        });
-        up.onChunk(CHUNK, ENC, NEXT);
-        assert.strictEqual(happened, true);
-        done();
-      });
-    });
-
-    describe('next()', () => {
-      it('should push data to the stream if the bytes written is > offset', done => {
-        up.numBytesWritten = 10;
-        up.offset = 0;
-
-        up.onChunk(CHUNK, ENC, (err: Error, chunk: string) => {
-          assert.ifError(err);
-          assert.strictEqual(Buffer.isBuffer(chunk), true);
-          done();
-        });
-      });
-
-      it('should not push data to the stream if the bytes written is < offset', done => {
-        up.numBytesWritten = 0;
-        up.offset = 1000;
-
-        up.onChunk(CHUNK, ENC, (err: Error, chunk: string) => {
-          assert.ifError(err);
-          assert.strictEqual(chunk, undefined);
-          done();
+          assert(calledRestart);
+          assert.equal(result, false);
         });
       });
     });
@@ -1147,15 +1641,20 @@ describe('gcs-resumable-upload', () => {
       up.createURI = () => {};
     });
 
-    it('should emit the restart event', done => {
-      up.on('restart', done);
-      up.restart();
-    });
-
-    it('should set numBytesWritten to 0', () => {
+    it('should throw if `numBytesWritten` is not 0', done => {
       up.numBytesWritten = 8;
+
+      up.on('error', (error: Error) => {
+        assert(error instanceof RangeError);
+        assert(
+          /Attempting to restart an upload after unrecoverable bytes have been written/.test(
+            error.message
+          )
+        );
+        done();
+      });
+
       up.restart();
-      assert.strictEqual(up.numBytesWritten, 0);
     });
 
     it('should delete the config', done => {
@@ -1300,12 +1799,14 @@ describe('gcs-resumable-upload', () => {
       const RESP = {status: 500, data: 'error message from server'};
 
       it('should increase the retry count if less than limit', () => {
+        up.getRetryDelay = () => 1;
         assert.strictEqual(up.numRetries, 0);
         assert.strictEqual(up.onResponse(RESP), false);
         assert.strictEqual(up.numRetries, 1);
       });
 
       it('should destroy the stream if greater than limit', done => {
+        up.getRetryDelay = () => 1;
         up.destroy = (err: Error) => {
           assert.strictEqual(
             err.message,
@@ -1367,6 +1868,7 @@ describe('gcs-resumable-upload', () => {
       const RESP = {status: 200};
 
       it('should emit the response on the stream', done => {
+        up.getRetryDelay = () => 1;
         up.on('response', (resp: {}) => {
           assert.strictEqual(resp, RESP);
           done();
@@ -1375,10 +1877,12 @@ describe('gcs-resumable-upload', () => {
       });
 
       it('should return true', () => {
+        up.getRetryDelay = () => 1;
         assert.strictEqual(up.onResponse(RESP), true);
       });
 
       it('should handle a custom status code when passed a retry function', () => {
+        up.getRetryDelay = () => 1;
         const RESP = {status: 1000};
         const customHandlerFunction = (err: ApiError) => {
           return err.code === 1000;
@@ -1387,6 +1891,128 @@ describe('gcs-resumable-upload', () => {
 
         assert.strictEqual(up.onResponse(RESP), false);
       });
+    });
+  });
+
+  describe('#attemptDelayedRetry', () => {
+    beforeEach(() => {
+      up.startUploading = () => {};
+      up.continueUploading = () => {};
+      up.getRetryDelay = () => 1;
+    });
+
+    it('should increment numRetries', () => {
+      assert.equal(up.numRetries, 0);
+
+      up.attemptDelayedRetry({});
+
+      assert.equal(up.numRetries, 1);
+    });
+
+    it('should call `startUploading` on 404 && !this.numChunksReadInRequest', done => {
+      up.startUploading = done;
+      up.continueUploading = () => done('wanted `startUploading`');
+
+      up.attemptDelayedRetry({status: 404});
+    });
+
+    it('should not call `startUploading` when on 404 && this.numChunksReadInRequest != 0', done => {
+      up.startUploading = () => done('wanted `continueUploading`');
+      up.continueUploading = done;
+
+      up.numChunksReadInRequest = 1;
+      up.attemptDelayedRetry({status: 404});
+    });
+
+    it('should not call `startUploading` when !this.numChunksReadInRequest && status != 404', done => {
+      up.startUploading = () => done('wanted `continueUploading`');
+      up.continueUploading = done;
+
+      up.attemptDelayedRetry({status: 400});
+    });
+
+    it('should call `getRetryDelay` when not calling `startUploading`', done => {
+      up.startUploading = () => done('wanted `continueUploading`');
+      up.getRetryDelay = () => {
+        process.nextTick(done);
+        return 1;
+      };
+
+      up.attemptDelayedRetry({});
+    });
+
+    it('should unshift last buffer, unset `offset`, and call `continueUploading` when not calling `startUploading`', done => {
+      up.startUploading = () => done('wanted `continueUploading`');
+      up.continueUploading = () => {
+        assert.equal(up.numBytesWritten, 4);
+        assert.equal(up.lastChunkSent.byteLength, 0);
+        assert.equal(
+          up.upstreamChunkBuffer.toString(),
+          'a'.repeat(12) + 'b'.repeat(10)
+        );
+        assert.equal(up.offset, undefined);
+
+        done();
+      };
+
+      up.numBytesWritten = 16;
+      up.lastChunkSent = Buffer.alloc(12, 'a');
+      up.upstreamChunkBuffer = Buffer.alloc(10, 'b');
+      up.offset = 16;
+
+      up.attemptDelayedRetry({});
+    });
+
+    it('should destroy if retry total time limit exceeded (0)', done => {
+      up.getRetryDelay = () => 0;
+      up.on('error', (error: Error) => {
+        assert(error.message.match(/Retry total time limit exceeded/));
+        done();
+      });
+
+      up.attemptDelayedRetry({});
+    });
+
+    it('should destroy if retry total time limit exceeded (< 0)', done => {
+      up.getRetryDelay = () => -123;
+      up.on('error', (error: Error) => {
+        assert(error.message.match(/Retry total time limit exceeded/));
+        done();
+      });
+
+      up.attemptDelayedRetry({});
+    });
+
+    it('should destroy the object if this.numRetries > this.retryLimit', done => {
+      up.startUploading = () => done("shouldn't have called this");
+      up.continueUploading = () => done("shouldn't have called this");
+      up.getRetryDelay = () => done("shouldn't have called this");
+
+      up.on('error', (error: Error) => {
+        assert(error.message.match(/Retry limit exceeded/));
+        done();
+      });
+
+      up.numRetries = 4;
+      up.retryLimit = 3;
+
+      up.attemptDelayedRetry({});
+    });
+
+    it('should destroy the object if this.numRetries === this.retryLimit', done => {
+      up.startUploading = () => done("shouldn't have called this");
+      up.continueUploading = () => done("shouldn't have called this");
+      up.getRetryDelay = () => done("shouldn't have called this");
+
+      up.on('error', (error: Error) => {
+        assert(error.message.match(/Retry limit exceeded/));
+        done();
+      });
+
+      up.numRetries = 3;
+      up.retryLimit = 3;
+
+      up.attemptDelayedRetry({});
     });
   });
 
@@ -1481,6 +2107,312 @@ describe('gcs-resumable-upload', () => {
       const delayValue = up.getRetryDelay();
 
       assert.strictEqual(delayValue, 1000);
+    });
+  });
+
+  describe('upload', () => {
+    describe('single chunk', () => {
+      let uri = '';
+
+      beforeEach(() => {
+        uri = 'uri';
+
+        up.contentLength = CHUNK_SIZE_MULTIPLE * 8;
+        up.createURI = (
+          callback: (error: Error | null, uri: string) => void
+        ) => {
+          up.uri = uri;
+          up.offset = 0;
+          callback(null, uri);
+        };
+      });
+
+      it('should make the correct request', done => {
+        // For additional information:
+        // - https://cloud.google.com/storage/docs/performing-resumable-uploads#single-chunk-upload
+
+        const CHUNK_SIZE = CHUNK_SIZE_MULTIPLE * 2;
+        const NON_CHUNK_SIZE_DIVISIBLE_AMOUNT = 2;
+        const CONTENT_LENGTH = CHUNK_SIZE * 8 + NON_CHUNK_SIZE_DIVISIBLE_AMOUNT;
+        const EXPECTED_NUM_REQUESTS = 1;
+
+        // We want the class to be able to handle varying chunk sizes uniformly.
+        let wrote = 0;
+        let wroteChunkLargerThanChunkSize = false;
+        let wroteChunkEqualToChunkSize = false;
+        let wroteChunkLessThanChunkSize = false;
+
+        const upstreamBuffer = new Readable({
+          read() {
+            const remainingToWrite = CONTENT_LENGTH - wrote;
+
+            if (!remainingToWrite) {
+              // signal finish
+              this.push(null);
+            } else if (remainingToWrite > CHUNK_SIZE * 3) {
+              // write large chunk
+              const LARGE_CHUNK = Buffer.alloc(CHUNK_SIZE * 2);
+
+              wrote += LARGE_CHUNK.byteLength;
+              wroteChunkLargerThanChunkSize = true;
+
+              this.push(LARGE_CHUNK);
+            } else if (remainingToWrite > CHUNK_SIZE) {
+              // write chunk-sized chunk
+              const EQUAL_CHUNK = Buffer.alloc(CHUNK_SIZE);
+
+              wrote += EQUAL_CHUNK.byteLength;
+              wroteChunkEqualToChunkSize = true;
+
+              this.push(EQUAL_CHUNK);
+            } else {
+              // write small chunk
+              const SMALL_CHUNK = Buffer.alloc(remainingToWrite);
+
+              wrote += SMALL_CHUNK.byteLength;
+              wroteChunkLessThanChunkSize = true;
+
+              this.push(SMALL_CHUNK);
+            }
+          },
+        });
+
+        const requests: {
+          dataReceived: number;
+          opts: GaxiosOptions;
+          chunkWritesInRequest: number;
+        }[] = [];
+        let overallDataReceived = 0;
+
+        up.contentLength = CONTENT_LENGTH;
+
+        up.makeRequestStream = async (opts: GaxiosOptions) => {
+          let dataReceived = 0;
+          let chunkWritesInRequest = 0;
+
+          await new Promise(resolve => {
+            opts.body.on('data', (data: Buffer) => {
+              dataReceived += data.byteLength;
+              overallDataReceived += data.byteLength;
+              chunkWritesInRequest++;
+            });
+
+            opts.body.on('end', () => {
+              requests.push({dataReceived, opts, chunkWritesInRequest});
+
+              up.emit('response', {
+                status: 200,
+                data: {},
+              });
+
+              resolve(null);
+            });
+          });
+        };
+
+        up.on('error', done);
+
+        up.on('finish', () => {
+          // Ensure the correct number of requests and data look correct
+          assert.equal(requests.length, EXPECTED_NUM_REQUESTS);
+          assert.equal(overallDataReceived, CONTENT_LENGTH);
+
+          // Make sure we wrote the desire mix of chunk sizes
+          assert(wroteChunkLargerThanChunkSize);
+          assert(wroteChunkEqualToChunkSize);
+          assert(wroteChunkLessThanChunkSize);
+
+          // Validate the single request
+          const request = requests[0];
+
+          assert.strictEqual(request.opts.method, 'PUT');
+          assert.strictEqual(request.opts.url, uri);
+
+          // We should be writing multiple chunks down the wire
+          assert(request.chunkWritesInRequest > 1);
+
+          assert.equal(request.dataReceived, CONTENT_LENGTH);
+          assert.deepStrictEqual(request.opts.headers, {
+            'Content-Range': `bytes 0-*/${CONTENT_LENGTH}`,
+          });
+
+          done();
+        });
+
+        // init the request
+        upstreamBuffer.pipe(up);
+      });
+    });
+
+    describe('multiple chunk', () => {
+      let uri = '';
+
+      beforeEach(() => {
+        uri = 'uri';
+
+        up.chunkSize = CHUNK_SIZE_MULTIPLE;
+        up.contentLength = CHUNK_SIZE_MULTIPLE * 8;
+        up.createURI = (
+          callback: (error: Error | null, uri: string) => void
+        ) => {
+          up.uri = uri;
+          up.offset = 0;
+          callback(null, uri);
+        };
+      });
+
+      it('should make the correct requests', done => {
+        // For additional information:
+        // - https://cloud.google.com/storage/docs/performing-resumable-uploads#chunked-upload
+        // - https://cloud.google.com/storage/docs/resumable-uploads#resent-data
+
+        const CHUNK_SIZE = CHUNK_SIZE_MULTIPLE * 2;
+        // This is important - we want to make sure requests
+        // where `CONTENT_LENGTH % CHUNK_SIZE !== 0` are fine.
+        const LAST_REQUEST_SIZE = 2;
+        const CONTENT_LENGTH = CHUNK_SIZE * 8 + LAST_REQUEST_SIZE;
+        const EXPECTED_NUM_REQUESTS =
+          Math.floor(CONTENT_LENGTH / CHUNK_SIZE) + 1;
+
+        // We want the class to be able to handle varying chunk sizes uniformly.
+        let wrote = 0;
+        let wroteChunkLargerThanChunkSize = false;
+        let wroteChunkEqualToChunkSize = false;
+        let wroteChunkLessThanChunkSize = false;
+
+        const upstreamBuffer = new Readable({
+          read() {
+            const remainingToWrite = CONTENT_LENGTH - wrote;
+
+            if (!remainingToWrite) {
+              // signal finish
+              this.push(null);
+            } else if (remainingToWrite > CHUNK_SIZE * 3) {
+              // write large chunk
+              const LARGE_CHUNK = Buffer.alloc(CHUNK_SIZE * 2);
+
+              wrote += LARGE_CHUNK.byteLength;
+              wroteChunkLargerThanChunkSize = true;
+
+              this.push(LARGE_CHUNK);
+            } else if (remainingToWrite > CHUNK_SIZE) {
+              // write chunk-sized chunk
+              const EQUAL_CHUNK = Buffer.alloc(CHUNK_SIZE);
+
+              wrote += EQUAL_CHUNK.byteLength;
+              wroteChunkEqualToChunkSize = true;
+
+              this.push(EQUAL_CHUNK);
+            } else {
+              // write small chunk
+              const SMALL_CHUNK = Buffer.alloc(remainingToWrite);
+
+              wrote += SMALL_CHUNK.byteLength;
+              wroteChunkLessThanChunkSize = true;
+
+              this.push(SMALL_CHUNK);
+            }
+          },
+        });
+
+        const requests: {
+          dataReceived: number;
+          opts: GaxiosOptions;
+          chunkWritesInRequest: number;
+        }[] = [];
+        let overallDataReceived = 0;
+
+        up.chunkSize = CHUNK_SIZE;
+        up.contentLength = CONTENT_LENGTH;
+
+        up.makeRequestStream = async (opts: GaxiosOptions) => {
+          let dataReceived = 0;
+          let chunkWritesInRequest = 0;
+
+          await new Promise(resolve => {
+            opts.body.on('data', (data: Buffer) => {
+              dataReceived += data.byteLength;
+              overallDataReceived += data.byteLength;
+              chunkWritesInRequest++;
+            });
+
+            opts.body.on('end', () => {
+              requests.push({dataReceived, opts, chunkWritesInRequest});
+
+              if (overallDataReceived < CONTENT_LENGTH) {
+                const lastByteReceived = overallDataReceived
+                  ? overallDataReceived - 1
+                  : 0;
+
+                up.emit('response', {
+                  status: RESUMABLE_INCOMPLETE_STATUS_CODE,
+                  headers: {
+                    range: `bytes=0-${lastByteReceived}`,
+                  },
+                  data: {},
+                });
+              } else {
+                up.emit('response', {
+                  status: 200,
+                  data: {},
+                });
+              }
+
+              resolve(null);
+            });
+          });
+        };
+
+        up.on('error', done);
+
+        up.on('finish', () => {
+          // Ensure the correct number of requests and data look correct
+          assert.equal(requests.length, EXPECTED_NUM_REQUESTS);
+          assert.equal(overallDataReceived, CONTENT_LENGTH);
+
+          // Make sure we wrote the desire mix of chunk sizes
+          assert(wroteChunkLargerThanChunkSize);
+          assert(wroteChunkEqualToChunkSize);
+          assert(wroteChunkLessThanChunkSize);
+
+          // Validate each request
+          for (let i = 0; i < requests.length; i++) {
+            const request = requests[i];
+            const offset = i * CHUNK_SIZE;
+
+            assert.strictEqual(request.opts.method, 'PUT');
+            assert.strictEqual(request.opts.url, uri);
+
+            // We should be writing 1, single chunk down the wire
+            assert.strictEqual(request.chunkWritesInRequest, 1);
+
+            if (requests.length - i === 1) {
+              // The last chunk
+              const endByte = offset + LAST_REQUEST_SIZE - 1;
+
+              assert.equal(request.dataReceived, LAST_REQUEST_SIZE);
+              assert.deepStrictEqual(request.opts.headers, {
+                'Content-Length': LAST_REQUEST_SIZE,
+                'Content-Range': `bytes ${offset}-${endByte}/${CONTENT_LENGTH}`,
+              });
+            } else {
+              // The preceding chunks
+              const endByte = offset + CHUNK_SIZE - 1;
+
+              assert.equal(request.dataReceived, CHUNK_SIZE);
+              assert.deepStrictEqual(request.opts.headers, {
+                'Content-Length': CHUNK_SIZE,
+                'Content-Range': `bytes ${offset}-${endByte}/${CONTENT_LENGTH}`,
+              });
+            }
+          }
+
+          done();
+        });
+
+        // init the request
+        upstreamBuffer.pipe(up);
+      });
     });
   });
 });
