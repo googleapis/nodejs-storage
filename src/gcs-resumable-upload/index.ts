@@ -399,6 +399,10 @@ export class Upload extends Pumpify {
       this.upstreamEnded = true;
     });
 
+    this.on('prefinish', () => {
+      this.upstreamEnded = true;
+    });
+
     this.once('writing', () => {
       // Now that someone is writing to this object, let's attach
       // some duplexes. These duplexes enable this object to be
@@ -523,6 +527,7 @@ export class Upload extends Pumpify {
       const removeListeners = () => {
         this.removeListener('wroteToChunkBuffer', wroteToChunkBufferCallback);
         this.upstream.removeListener('finish', upstreamFinishedCallback);
+        this.removeListener('prefinish', upstreamFinishedCallback);
       };
 
       // If there's data recently written it should be digested
@@ -530,6 +535,7 @@ export class Upload extends Pumpify {
 
       // If the upstream finishes let's see if there's anything to grab
       this.upstream.once('finish', upstreamFinishedCallback);
+      this.once('prefinish', upstreamFinishedCallback);
     });
 
     return willBeMoreChunks;
