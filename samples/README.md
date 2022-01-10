@@ -69,10 +69,10 @@ objects to users via direct download.
   * [Get Metadata](#get-metadata)
   * [Get Metadata Notifications](#get-metadata-notifications)
   * [Get Public Access Prevention](#get-public-access-prevention)
+  * [Get RPO](#get-rpo)
   * [Get Requester Pays Status](#get-requester-pays-status)
   * [Get Retention Policy](#get-retention-policy)
   * [Storage Get Service Account.](#storage-get-service-account.)
-  * [Get RPO](#get-rpo)
   * [Get Uniform Bucket Level Access](#get-uniform-bucket-level-access)
   * [Activate HMAC SA Key.](#activate-hmac-sa-key.)
   * [Create HMAC SA Key.](#create-hmac-sa-key.)
@@ -111,10 +111,10 @@ objects to users via direct download.
   * [Set Event Based Hold](#set-event-based-hold)
   * [Set Public Access Prevention Enforced](#set-public-access-prevention-enforced)
   * [Set Public Access Prevention Inherited](#set-public-access-prevention-inherited)
-  * [Set Retention Policy](#set-retention-policy)
-  * [Set Temporary Hold](#set-temporary-hold)
   * [Set RPO Async Turbo](#set-rpo-async-turbo)
   * [Set RPO Default](#set-rpo-default)
+  * [Set Retention Policy](#set-retention-policy)
+  * [Set Temporary Hold](#set-temporary-hold)
   * [Stream File Download](#stream-file-download)
   * [Stream File Upload](#stream-file-upload)
   * [Upload a directory to a bucket.](#upload-a-directory-to-a-bucket.)
@@ -1038,6 +1038,23 @@ __Usage:__
 
 
 
+### Get RPO
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getRPO.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getRPO.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/getRPO.js`
+
+
+-----
+
+
+
+
 ### Get Requester Pays Status
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getRequesterPaysStatus.js).
@@ -1084,23 +1101,6 @@ __Usage:__
 
 
 `node getServiceAccount.js <PROJECT_ID>`
-
-
------
-
-
-
-
-### Get RPO
-
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getRPO.js).
-
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getRPO.js,samples/README.md)
-
-__Usage:__
-
-
-`node samples/getRPO.js`
 
 
 -----
@@ -1776,40 +1776,6 @@ __Usage:__
 
 
 
-### Set Retention Policy
-
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setRetentionPolicy.js).
-
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setRetentionPolicy.js,samples/README.md)
-
-__Usage:__
-
-
-`node samples/setRetentionPolicy.js`
-
-
------
-
-
-
-
-### Set Temporary Hold
-
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setTemporaryHold.js).
-
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setTemporaryHold.js,samples/README.md)
-
-__Usage:__
-
-
-`node samples/setTemporaryHold.js`
-
-
------
-
-
-
-
 ### Set RPO Async Turbo
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setRPOAsyncTurbo.js).
@@ -1837,6 +1803,40 @@ __Usage:__
 
 
 `node samples/setRPODefault.js`
+
+
+-----
+
+
+
+
+### Set Retention Policy
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setRetentionPolicy.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setRetentionPolicy.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/setRetentionPolicy.js`
+
+
+-----
+
+
+
+
+### Set Temporary Hold
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setTemporaryHold.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setTemporaryHold.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/setTemporaryHold.js`
 
 
 -----
