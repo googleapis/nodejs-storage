@@ -84,7 +84,7 @@ const TESTBENCH_HOST =
 const CONF_TEST_PROJECT_ID = 'my-project-id';
 const TIMEOUT_FOR_DOCKER_OPS = 60000;
 const TIMEOUT_FOR_INDIVIDUAL_TEST = 20000;
-const RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS = .1;
+const RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS = 0.01;
 
 describe('retry conformance testing', () => {
   before(async function () {
@@ -135,8 +135,8 @@ function excecuteScenario(testCase: RetryTestCase) {
             apiEndpoint: TESTBENCH_HOST,
             projectId: CONF_TEST_PROJECT_ID,
             retryOptions: {
-              retryDelayMultiplier: RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS
-            }
+              retryDelayMultiplier: RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS,
+            },
           });
           creationResult = await createTestBenchRetryTest(
             instructionSet.instructions,
