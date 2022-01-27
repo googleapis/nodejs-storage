@@ -81,7 +81,9 @@ describe('retry conformance testing', () => {
     await getTestBenchDockerImage();
     await runTestBenchDockerImage();
     // Introduce an artificial wait to make sure the docker container is up and ready to accept connections.
-    await new Promise(resolve => setTimeout(resolve, TIME_TO_WAIT_FOR_CONTAINER_READY));
+    await new Promise(resolve =>
+      setTimeout(resolve, TIME_TO_WAIT_FOR_CONTAINER_READY)
+    );
   });
 
   after(async function () {
