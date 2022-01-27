@@ -21,6 +21,7 @@ import {
 
 const TIMEOUT_FOR_DOCKER_OPS = 60000;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function mochaGlobalSetup(this: any) {
   // Increase the timeout for this before block so that the docker images have time to download and run.
   this.suite._timeout = TIMEOUT_FOR_DOCKER_OPS;
@@ -28,6 +29,7 @@ export async function mochaGlobalSetup(this: any) {
   await runTestBenchDockerImage();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function mochaGlobalTeardown(this: any) {
   // Increase the timeout for this block so that docker has time to stop the container.
   this.suite._timeout = TIMEOUT_FOR_DOCKER_OPS;
