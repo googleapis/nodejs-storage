@@ -54,9 +54,7 @@ function main(
     console.log(`${destFileName} uploaded to ${bucketName}`);
   }
 
-  uploadWithoutAuthentication().catch(
-    console.error
-  );
+  uploadWithoutAuthentication().catch(console.error);
   // [END storage_upload_without_authentication]
 }
 process.on('unhandledRejection', err => {
