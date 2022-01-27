@@ -64,26 +64,15 @@ const methodMap: Map<String, String[]> = new Map(
 
 const DURATION_SECONDS = 600; // 10 mins.
 
-const TESTS_PREFIX = `storage-retry-tests-${shortUUID()}-`;
-const FILE_OPTIONS = {
-  preconditionOpts: {
-    ifGenerationMatch: 0,
-    ifMetagenerationMatch: 1,
-  },
-};
-
-const BUCKET_OPTIONS = {
-  preconditionOpts: {
-    ifMetagenerationMatch: 1,
-  },
-};
-
+const TESTS_PREFIX = `storage.retry.tests.${shortUUID()}.`;
 const TESTBENCH_HOST =
   process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000/';
 
 const CONF_TEST_PROJECT_ID = 'my-project-id';
 const TIMEOUT_FOR_DOCKER_OPS = 60000;
+const TIME_TO_WAIT_FOR_CONTAINER_READY = 10000;
 const TIMEOUT_FOR_INDIVIDUAL_TEST = 20000;
+const RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS = 0.01;
 
 describe('retry conformance testing', () => {
   before(async function () {
@@ -91,6 +80,10 @@ describe('retry conformance testing', () => {
     this.timeout(TIMEOUT_FOR_DOCKER_OPS);
     await getTestBenchDockerImage();
     await runTestBenchDockerImage();
+    // Introduce an artificial wait to make sure the docker container is up and ready to accept connections.
+    await new Promise(resolve =>
+      setTimeout(resolve, TIME_TO_WAIT_FOR_CONTAINER_READY)
+    );
   });
 
   after(async function () {
@@ -106,12 +99,12 @@ describe('retry conformance testing', () => {
   ) {
     const testCase: RetryTestCase = retryTestCases[testCaseIndex];
     describe(`Scenario ${testCase.id}`, () => {
-      excecuteScenario(testCase);
+      executeScenario(testCase);
     });
   }
 });
 
-function excecuteScenario(testCase: RetryTestCase) {
+function executeScenario(testCase: RetryTestCase) {
   for (
     let instructionNumber = 0;
     instructionNumber < testCase.cases.length;
@@ -129,79 +122,79 @@ function excecuteScenario(testCase: RetryTestCase) {
         let creationResult: {id: string};
         let storage: Storage;
         let hmacKey: HmacKey;
-        before(async () => {
-          storage = new Storage({
-            apiEndpoint: TESTBENCH_HOST,
-            projectId: CONF_TEST_PROJECT_ID,
-          });
-          creationResult = await createTestBenchRetryTest(
-            instructionSet.instructions,
-            jsonMethod?.name.toString()
-          );
-        });
 
-        beforeEach(async () => {
-          bucket = await createBucketForTest(
-            storage,
-            testCase.preconditionProvided,
-            storageMethodString
-          );
-          file = await createFileForTest(
-            testCase.preconditionProvided,
-            storageMethodString,
-            bucket
-          );
-
-          notification = bucket.notification(`${TESTS_PREFIX}`);
-          await notification.create();
-
-          [hmacKey] = await storage.createHmacKey(`${TESTS_PREFIX}@email.com`);
-
-          storage.interceptors.push({
-            request: requestConfig => {
-              requestConfig.headers = requestConfig.headers || {};
-              Object.assign(requestConfig.headers, {
-                'x-retry-test-id': creationResult.id,
-              });
-              return requestConfig as DecorateRequestOptions;
-            },
-          });
-        });
-
-        afterEach(() => {
-          storage.interceptors.pop();
-        });
-
-        it(`${storageMethodString}${instructionNumber}`, async () => {
-          if (testCase.expectSuccess) {
-            assert.ifError(
-              await storageMethodObject(
-                bucket,
-                file,
-                notification,
-                storage,
-                hmacKey
-              )
+        describe(`${storageMethodString}`, async () => {
+          beforeEach(async () => {
+            storage = new Storage({
+              apiEndpoint: TESTBENCH_HOST,
+              projectId: CONF_TEST_PROJECT_ID,
+              retryOptions: {
+                retryDelayMultiplier: RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS,
+              },
+            });
+            creationResult = await createTestBenchRetryTest(
+              instructionSet.instructions,
+              jsonMethod?.name.toString()
             );
-          } else {
-            try {
-              await storageMethodObject(
-                bucket,
-                file,
-                notification,
-                storage,
-                hmacKey
+            bucket = await createBucketForTest(
+              storage,
+              testCase.preconditionProvided,
+              storageMethodString
+            );
+            file = await createFileForTest(
+              testCase.preconditionProvided,
+              storageMethodString,
+              bucket
+            );
+            notification = bucket.notification(`${TESTS_PREFIX}`);
+            await notification.create();
+
+            [hmacKey] = await storage.createHmacKey(
+              `${TESTS_PREFIX}@email.com`
+            );
+
+            storage.interceptors.push({
+              request: requestConfig => {
+                requestConfig.headers = requestConfig.headers || {};
+                Object.assign(requestConfig.headers, {
+                  'x-retry-test-id': creationResult.id,
+                });
+                return requestConfig as DecorateRequestOptions;
+              },
+            });
+          });
+
+          it(`${instructionNumber}`, async () => {
+            if (testCase.expectSuccess) {
+              assert.ifError(
+                await storageMethodObject(
+                  bucket,
+                  file,
+                  notification,
+                  storage,
+                  hmacKey
+                )
               );
-              throw Error(`${storageMethodString} was supposed to throw.`);
-            } catch (e) {
-              assert.notStrictEqual(e, undefined);
+            } else {
+              try {
+                await storageMethodObject(
+                  bucket,
+                  file,
+                  notification,
+                  storage,
+                  hmacKey
+                );
+                throw Error(`${storageMethodString} was supposed to throw.`);
+              } catch (e) {
+                assert.notStrictEqual(e, undefined);
+              }
             }
-          }
-          const testBenchResult = await getTestBenchRetryTest(
-            creationResult.id
-          );
-          assert.strictEqual(testBenchResult.completed, true);
-        }).timeout(TIMEOUT_FOR_INDIVIDUAL_TEST);
+            const testBenchResult = await getTestBenchRetryTest(
+              creationResult.id
+            );
+            assert.strictEqual(testBenchResult.completed, true);
+          }).timeout(TIMEOUT_FOR_INDIVIDUAL_TEST);
+        });
       });
     });
   }
@@ -213,11 +206,10 @@ async function createBucketForTest(
   storageMethodString: String
 ) {
   const name = generateName(storageMethodString, 'bucket');
-  const bucket = preconditionProvided
-    ? storage.bucket(name, BUCKET_OPTIONS)
-    : storage.bucket(name);
+  const bucket = storage.bucket(name);
   await bucket.create();
   await bucket.setRetentionPeriod(DURATION_SECONDS);
+
   if (preconditionProvided) {
     return new Bucket(storage, bucket.name, {
       preconditionOpts: {
@@ -234,9 +226,7 @@ async function createFileForTest(
   bucket: Bucket
 ) {
   const name = generateName(storageMethodString, 'file');
-  const file = preconditionProvided
-    ? bucket.file(name, FILE_OPTIONS)
-    : bucket.file(name);
+  const file = bucket.file(name);
   await file.save(name);
   if (preconditionProvided) {
     return new File(bucket, file.name, {
@@ -250,7 +240,7 @@ async function createFileForTest(
 }
 
 function generateName(storageMethodString: String, bucketOrFile: string) {
-  return `${TESTS_PREFIX}${storageMethodString.toLowerCase()}${bucketOrFile}`;
+  return `${TESTS_PREFIX}${storageMethodString.toLowerCase()}${bucketOrFile}.${shortUUID()}`;
 }
 
 async function createTestBenchRetryTest(
