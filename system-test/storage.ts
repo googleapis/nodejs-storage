@@ -2546,7 +2546,7 @@ describe('storage', () => {
       });
 
       assert.strictEqual(contents.toString(), expectedContents);
-      file.delete();
+      await file.delete();
     });
 
     it('should skip validation if file is served decompressed', async () => {
