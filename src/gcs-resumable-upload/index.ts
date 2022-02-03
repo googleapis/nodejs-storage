@@ -28,7 +28,15 @@ import * as Pumpify from 'pumpify';
 import {Duplex, PassThrough, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
 import retry = require('async-retry');
-import { RetryOptions, RETRY_DELAY_MULTIPLIER_DEFAULT, TOTAL_TIMEOUT_DEFAULT, MAX_RETRY_DELAY_DEFAULT, AUTO_RETRY_DEFAULT, MAX_RETRY_DEFAULT, PreconditionOptions } from '../storage';
+import {
+  RetryOptions,
+  RETRY_DELAY_MULTIPLIER_DEFAULT,
+  TOTAL_TIMEOUT_DEFAULT,
+  MAX_RETRY_DELAY_DEFAULT,
+  AUTO_RETRY_DEFAULT,
+  MAX_RETRY_DEFAULT,
+  PreconditionOptions,
+} from '../storage';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const TERMINATED_UPLOAD_STATUS_CODE = 410;
