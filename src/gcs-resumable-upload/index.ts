@@ -28,16 +28,12 @@ import * as Pumpify from 'pumpify';
 import {Duplex, PassThrough, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
 import retry = require('async-retry');
+import { RetryOptions, RETRY_DELAY_MULTIPLIER_DEFAULT, TOTAL_TIMEOUT_DEFAULT, MAX_RETRY_DELAY_DEFAULT, AUTO_RETRY_DEFAULT, MAX_RETRY_DEFAULT, PreconditionOptions } from '../storage';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const TERMINATED_UPLOAD_STATUS_CODE = 410;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
-const RETRY_LIMIT = 5;
 const DEFAULT_API_ENDPOINT_REGEX = /.*\.googleapis\.com/;
-const MAX_RETRY_DELAY = 64;
-const RETRY_DELAY_MULTIPLIER = 2;
-const MAX_TOTAL_RETRY_TIMEOUT = 600;
-const AUTO_RETRY_VALUE = true;
 
 export const PROTOCOL_REGEX = /^(\w*):\/\//;
 
@@ -60,12 +56,8 @@ export type PredefinedAcl =
   | 'projectPrivate'
   | 'publicRead';
 
-export interface QueryParameters {
+export interface QueryParameters extends PreconditionOptions {
   contentEncoding?: string;
-  ifGenerationMatch?: number;
-  ifGenerationNotMatch?: number;
-  ifMetagenerationMatch?: number;
-  ifMetagenerationNotMatch?: number;
   kmsKeyName?: string;
   predefinedAcl?: PredefinedAcl;
   projection?: 'full' | 'noAcl';
@@ -225,15 +217,6 @@ export interface ConfigMetadata {
   contentType?: string;
 }
 
-export interface RetryOptions {
-  retryDelayMultiplier?: number;
-  totalTimeout?: number;
-  maxRetryDelay?: number;
-  autoRetry?: boolean;
-  maxRetries?: number;
-  retryableErrorFn?: (err: ApiError) => boolean;
-}
-
 export interface GoogleInnerError {
   reason?: string;
 }
@@ -279,10 +262,10 @@ export class Upload extends Pumpify {
   numBytesWritten = 0;
   numRetries = 0;
   contentLength: number | '*';
-  retryLimit: number = RETRY_LIMIT;
-  maxRetryDelay: number = MAX_RETRY_DELAY;
-  retryDelayMultiplier: number = RETRY_DELAY_MULTIPLIER;
-  maxRetryTotalTimeout: number = MAX_TOTAL_RETRY_TIMEOUT;
+  retryLimit: number = MAX_RETRY_DEFAULT;
+  maxRetryDelay: number = MAX_RETRY_DELAY_DEFAULT;
+  retryDelayMultiplier: number = RETRY_DELAY_MULTIPLIER_DEFAULT;
+  maxRetryTotalTimeout: number = TOTAL_TIMEOUT_DEFAULT;
   timeOfFirstRequest: number;
   retryableErrorFn?: (err: ApiError) => boolean;
   private upstreamChunkBuffer: Buffer = Buffer.alloc(0);
@@ -363,7 +346,7 @@ export class Upload extends Pumpify {
       configPath,
     });
 
-    const autoRetry = cfg?.retryOptions?.autoRetry || AUTO_RETRY_VALUE;
+    const autoRetry = cfg?.retryOptions?.autoRetry || AUTO_RETRY_DEFAULT;
     this.uriProvidedManually = !!cfg.uri;
     this.uri = cfg.uri || this.get('uri');
     this.numBytesWritten = 0;
