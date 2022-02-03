@@ -1861,8 +1861,6 @@ describe('gcs-resumable-upload', () => {
         up.onResponse(RESP);
         up.onResponse(RESP);
         up.onResponse(RESP);
-        up.onResponse(RESP);
-        up.onResponse(RESP);
       });
 
       it('should start an upload', done => {
@@ -1891,8 +1889,6 @@ describe('gcs-resumable-upload', () => {
           done();
         };
 
-        up.onResponse(RESP);
-        up.onResponse(RESP);
         up.onResponse(RESP);
         up.onResponse(RESP);
         up.onResponse(RESP);
