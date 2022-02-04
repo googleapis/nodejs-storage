@@ -28,10 +28,7 @@ import * as Pumpify from 'pumpify';
 import {Duplex, PassThrough, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
 import retry = require('async-retry');
-import {
-  RetryOptions,
-  PreconditionOptions,
-} from '../storage';
+import {RetryOptions, PreconditionOptions} from '../storage';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const TERMINATED_UPLOAD_STATUS_CODE = 410;
@@ -1086,9 +1083,12 @@ export class Upload extends Pumpify {
   private getRetryDelay(): number {
     const randomMs = Math.round(Math.random() * 1000);
     const waitTime =
-      Math.pow(this.retryOptions.retryDelayMultiplier!, this.numRetries) * 1000 + randomMs;
+      Math.pow(this.retryOptions.retryDelayMultiplier!, this.numRetries) *
+        1000 +
+      randomMs;
     const maxAllowableDelayMs =
-      this.retryOptions.totalTimeout! * 1000 - (Date.now() - this.timeOfFirstRequest);
+      this.retryOptions.totalTimeout! * 1000 -
+      (Date.now() - this.timeOfFirstRequest);
     const maxRetryDelayMs = this.retryOptions.maxRetryDelay! * 1000;
 
     return Math.min(waitTime, maxRetryDelayMs, maxAllowableDelayMs);

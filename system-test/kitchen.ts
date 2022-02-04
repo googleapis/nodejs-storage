@@ -27,7 +27,7 @@ import {
   MAX_RETRY_DELAY_DEFAULT,
   AUTO_RETRY_DEFAULT,
   MAX_RETRY_DEFAULT,
-  RETRYABLE_ERR_FN_DEFAULT
+  RETRYABLE_ERR_FN_DEFAULT,
 } from '../src/storage';
 
 const bucketName = process.env.BUCKET_NAME || 'gcs-resumable-upload-test';
@@ -41,8 +41,8 @@ const retryOptions = {
   maxRetryDelay: MAX_RETRY_DELAY_DEFAULT,
   autoRetry: AUTO_RETRY_DEFAULT,
   maxRetries: MAX_RETRY_DEFAULT,
-  retryableErrorFn: RETRYABLE_ERR_FN_DEFAULT
-}
+  retryableErrorFn: RETRYABLE_ERR_FN_DEFAULT,
+};
 writeStream.write(tmpFileContents);
 writeStream.close();
 
@@ -56,7 +56,11 @@ async function delay(title: string, retries: number, done: Function) {
 
 describe('gcs-resumable-upload', () => {
   beforeEach(() => {
-    upload({bucket: bucketName, file: filePath, retryOptions: retryOptions}).deleteConfig();
+    upload({
+      bucket: bucketName,
+      file: filePath,
+      retryOptions: retryOptions,
+    }).deleteConfig();
   });
 
   it('should work', done => {
