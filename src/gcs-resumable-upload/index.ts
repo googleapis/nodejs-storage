@@ -348,7 +348,6 @@ export class Upload extends Pumpify {
     this.uri = cfg.uri || this.get('uri');
     this.numBytesWritten = 0;
     this.numRetries = 0; //counter for number of retries currently executed
-
     if (!autoRetry) {
       cfg.retryOptions.maxRetries = 0;
     }
@@ -1023,9 +1022,7 @@ export class Upload extends Pumpify {
           code: resp.status,
           message: resp.statusText,
           name: resp.statusText,
-        })) ||
-      resp.status === NOT_FOUND_STATUS_CODE ||
-      this.isServerErrorResponse(resp.status)
+        }))
     ) {
       this.attemptDelayedRetry(resp);
       return false;
