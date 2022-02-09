@@ -1017,12 +1017,12 @@ export class Upload extends Pumpify {
    */
   private onResponse(resp: GaxiosResponse) {
     if (
-      (this.retryOptions.retryableErrorFn &&
-        this.retryOptions.retryableErrorFn({
-          code: resp.status,
-          message: resp.statusText,
-          name: resp.statusText,
-        }))
+      this.retryOptions.retryableErrorFn &&
+      this.retryOptions.retryableErrorFn({
+        code: resp.status,
+        message: resp.statusText,
+        name: resp.statusText,
+      })
     ) {
       this.attemptDelayedRetry(resp);
       return false;
