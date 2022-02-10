@@ -610,7 +610,6 @@ export class Upload extends Pumpify {
           };
           if (
             this.retryOptions.maxRetries! > 0 &&
-            this.retryOptions.retryableErrorFn &&
             this.retryOptions.retryableErrorFn!(apiError as ApiError)
           ) {
             throw e;
@@ -1017,8 +1016,7 @@ export class Upload extends Pumpify {
    */
   private onResponse(resp: GaxiosResponse) {
     if (
-      this.retryOptions.retryableErrorFn &&
-      this.retryOptions.retryableErrorFn({
+      this.retryOptions.retryableErrorFn!({
         code: resp.status,
         message: resp.statusText,
         name: resp.statusText,
@@ -1109,16 +1107,6 @@ export class Upload extends Pumpify {
    */
   public isSuccessfulResponse(status: number): boolean {
     return status >= 200 && status < 300;
-  }
-
-  /**
-   * Check if a given status code is 5xx
-   *
-   * @param status The status code to check
-   * @returns if the status is 5xx
-   */
-  public isServerErrorResponse(status: number): boolean {
-    return status >= 500 && status < 600;
   }
 }
 
