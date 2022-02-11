@@ -379,6 +379,8 @@ export class Upload extends Pumpify {
       this.maxRetryDelay = cfg.retryOptions.maxRetryDelay;
     }
 
+    console.log("arbitraty change");
+
     if (cfg?.retryOptions?.retryDelayMultiplier !== undefined) {
       this.retryDelayMultiplier = cfg.retryOptions.retryDelayMultiplier;
     }
