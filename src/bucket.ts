@@ -636,7 +636,7 @@ class Bucket extends ServiceObject {
   }
   signer?: URLSigner;
 
-  instanceRetryValue?: boolean;
+  private instanceRetryValue?: boolean;
   instancePreconditionOpts?: PreconditionOptions;
 
   constructor(storage: Storage, name: string, options?: BucketOptions) {
