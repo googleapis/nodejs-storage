@@ -1907,6 +1907,7 @@ describe('storage', () => {
 
           return (done: Function) => {
             testFunction({}, (err: Error) => {
+              console.log(err.message);
               assert(err.message.indexOf(failureMessage) > -1);
               testFunction(USER_PROJECT_OPTIONS, done);
             });
