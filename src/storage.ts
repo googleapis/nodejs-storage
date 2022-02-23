@@ -197,6 +197,21 @@ export interface GetHmacKeysCallback {
   ): void;
 }
 
+export enum ExceptionMessages {
+  EXPIRATION_DATE_INVALID = 'The expiration date provided was invalid.',
+  EXPIRATION_DATE_PAST = 'An expiration date cannot be in the past.',
+  INVALID_ACTION = 'The action is not provided or invalid.',
+}
+
+export enum StorageExceptionMessages {
+  AUTO_RETRY_DEPRECATED = 'autoRetry is deprecated. Use retryOptions.autoRetry instead.',
+  MAX_RETRIES_DEPRECATED = 'maxRetries is deprecated. Use retryOptions.maxRetries instead.',
+  BUCKET_NAME_REQUIRED = 'A bucket name is needed to use Cloud Storage.',
+  BUCKET_NAME_REQUIRED_CREATE = 'A name is required to create a bucket.',
+  HMAC_SERVICE_ACCOUNT = 'The first argument must be a service account email to create an HMAC key.',
+  HMAC_ACCESS_ID = 'An access ID is needed to create an HmacKey object.',
+}
+
 export type GetHmacKeysResponse = [HmacKey[]];
 
 export const PROTOCOL_REGEX = /^(\w*):\/\//;
@@ -588,9 +603,7 @@ export class Storage extends Service {
       options.autoRetry !== undefined &&
       options.retryOptions?.autoRetry !== undefined
     ) {
-      throw new ApiError(
-        'autoRetry is deprecated. Use retryOptions.autoRetry instead.'
-      );
+      throw new ApiError(StorageExceptionMessages.AUTO_RETRY_DEPRECATED);
     } else if (options.autoRetry !== undefined) {
       autoRetryValue = options.autoRetry;
     } else if (options.retryOptions?.autoRetry !== undefined) {
@@ -599,9 +612,7 @@ export class Storage extends Service {
 
     let maxRetryValue = MAX_RETRY_DEFAULT;
     if (options.maxRetries && options.retryOptions?.maxRetries) {
-      throw new ApiError(
-        'maxRetries is deprecated. Use retryOptions.maxRetries instead.'
-      );
+      throw new ApiError(StorageExceptionMessages.MAX_RETRIES_DEPRECATED);
     } else if (options.maxRetries) {
       maxRetryValue = options.maxRetries;
     } else if (options.retryOptions?.maxRetries) {
@@ -688,7 +699,7 @@ export class Storage extends Service {
    */
   bucket(name: string, options?: BucketOptions) {
     if (!name) {
-      throw new Error('A bucket name is needed to use Cloud Storage.');
+      throw new Error(StorageExceptionMessages.BUCKET_NAME_REQUIRED);
     }
     return new Bucket(this, name, options);
   }
@@ -849,7 +860,7 @@ export class Storage extends Service {
     callback?: BucketCallback
   ): Promise<CreateBucketResponse> | void {
     if (!name) {
-      throw new Error('A name is required to create a bucket.');
+      throw new Error(StorageExceptionMessages.BUCKET_NAME_REQUIRED_CREATE);
     }
 
     let metadata: CreateBucketRequest;
@@ -1015,9 +1026,7 @@ export class Storage extends Service {
     cb?: CreateHmacKeyCallback
   ): Promise<CreateHmacKeyResponse> | void {
     if (typeof serviceAccountEmail !== 'string') {
-      throw new Error(
-        'The first argument must be a service account email to create an HMAC key.'
-      );
+      throw new Error(StorageExceptionMessages.HMAC_SERVICE_ACCOUNT);
     }
 
     const {options, callback} = normalize<
@@ -1417,7 +1426,7 @@ export class Storage extends Service {
    */
   hmacKey(accessId: string, options?: HmacKeyOptions) {
     if (!accessId) {
-      throw new Error('An access ID is needed to create an HmacKey object.');
+      throw new Error(StorageExceptionMessages.HMAC_ACCESS_ID);
     }
 
     return new HmacKey(this, accessId, options);
