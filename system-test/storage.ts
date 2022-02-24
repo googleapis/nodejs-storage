@@ -1873,10 +1873,16 @@ describe('storage', () => {
           }
 
           assert(expectedError instanceof Error);
-          assert(expectedError.message.includes(failureMessage));
+          assert(
+            expectedError.message.includes(failureMessage),
+            `Expected '${expectedError.message}' to include '${failureMessage}'`
+          );
 
           // TEMP: should remove before merging
-          console.dir({expectedError, keys: Object.keys(expectedError)});
+          console.dir(
+            {expectedError, keys: Object.keys(expectedError)},
+            {depth: 10}
+          );
 
           // Validate the desired functionality
           const results = await testFunction(USER_PROJECT_OPTIONS);
