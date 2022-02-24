@@ -1878,12 +1878,6 @@ describe('storage', () => {
             `Expected '${expectedError.message}' to include '${failureMessage}'`
           );
 
-          // TEMP: should remove before merging
-          console.dir(
-            {expectedError, keys: Object.keys(expectedError)},
-            {depth: 10}
-          );
-
           // Validate the desired functionality
           const results = await testFunction(USER_PROJECT_OPTIONS);
           return results;
@@ -1923,23 +1917,33 @@ describe('storage', () => {
         });
 
         it('bucket#exists', async () => {
-          await requesterPaysDoubleTest(bucketNonAllowList.exists);
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.exists(options);
+          });
         });
 
         it('bucket#get', async () => {
-          await requesterPaysDoubleTest(bucketNonAllowList.get);
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.get(options);
+          });
         });
 
         it('bucket#getMetadata', async () => {
-          await requesterPaysDoubleTest(bucketNonAllowList.getMetadata);
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.getMetadata(options);
+          });
         });
 
         it('bucket#getNotifications', async () => {
-          await requesterPaysDoubleTest(bucketNonAllowList.getNotifications);
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.getNotifications(options);
+          });
         });
 
         it('bucket#makePrivate', async () => {
-          await requesterPaysDoubleTest(bucketNonAllowList.makePrivate);
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.makePrivate(options);
+          });
         });
 
         it('bucket#setMetadata', async () => {
@@ -1996,23 +2000,33 @@ describe('storage', () => {
         });
 
         it('file#download', async () => {
-          await requesterPaysDoubleTest(file.download);
+          await requesterPaysDoubleTest(async options => {
+            return file.download(options);
+          });
         });
 
         it('file#exists', async () => {
-          await requesterPaysDoubleTest(file.exists);
+          await requesterPaysDoubleTest(async options => {
+            return file.exists(options);
+          });
         });
 
         it('file#get', async () => {
-          await requesterPaysDoubleTest(file.get);
+          await requesterPaysDoubleTest(async options => {
+            return file.get(options);
+          });
         });
 
         it('file#getMetadata', async () => {
-          await requesterPaysDoubleTest(file.getMetadata);
+          await requesterPaysDoubleTest(async options => {
+            return file.getMetadata(options);
+          });
         });
 
         it('file#makePrivate', async () => {
-          await requesterPaysDoubleTest(file.makePrivate);
+          await requesterPaysDoubleTest(async options => {
+            return file.makePrivate(options);
+          });
         });
 
         it('file#move', async () => {
@@ -2088,7 +2102,9 @@ describe('storage', () => {
         });
 
         it('iam#getPolicy', async () => {
-          await requesterPaysDoubleTest(bucketNonAllowList.iam.getPolicy);
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.iam.getPolicy(options);
+          });
         });
 
         it('iam#setPolicy', async () => {
@@ -2113,15 +2129,21 @@ describe('storage', () => {
         });
 
         it('notification#get', async () => {
-          await requesterPaysDoubleTest(notification.get);
+          await requesterPaysDoubleTest(async options => {
+            return notification.get(options);
+          });
         });
 
         it('notification#getMetadata', async () => {
-          await requesterPaysDoubleTest(notification.getMetadata);
+          await requesterPaysDoubleTest(async options => {
+            return notification.getMetadata(options);
+          });
         });
 
         it('notification#delete', async () => {
-          await requesterPaysDoubleTest(notification.delete);
+          await requesterPaysDoubleTest(async options => {
+            return notification.delete(options);
+          });
         });
       });
     });
