@@ -1852,11 +1852,27 @@ describe('storage', () => {
           file = bucketNonAllowList.file(file.name);
         });
 
+        /**
+         * A type for requester pays functions. The `options` parameter
+         *
+         * Using `typeof USER_PROJECT_OPTIONS` ensures the function should
+         * support requester pays options, otherwise will fail early at build-
+         * time rather than runtime.
+         */
         type requesterPaysFunction<
           T = {} | typeof USER_PROJECT_OPTIONS,
           R = {} | void
         > = (options: T) => Promise<R>;
 
+        /**
+         * Accepts a function and runs 2 tests - a test where the requester pays
+         * option is absent and another where it is present:
+         * - The missing requester pays test will assert the expected error
+         * - The added request pays test will return the function's result
+         *
+         * @param testFunction The function/method to test.
+         * @returns The result of the successful request pays operation.
+         */
         async function requesterPaysDoubleTest<F extends requesterPaysFunction>(
           testFunction: F
         ): Promise<ReturnType<F>> {
