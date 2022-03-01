@@ -1029,7 +1029,7 @@ describe('gcs-resumable-upload', () => {
 
         const m = error.message;
         assert(m.includes('offset is lower than the number of bytes written'));
-        assert(m.includes(`Server has ${expectedServer} bytes`));
+        assert(m.includes(`server has ${expectedServer} bytes`));
         assert(m.includes(`stream has sent ${up.numBytesWritten} bytes`));
         assert(m.includes(`${expectedDelta} bytes are missing`));
         done();

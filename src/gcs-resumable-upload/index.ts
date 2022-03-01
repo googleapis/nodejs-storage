@@ -662,11 +662,7 @@ export class Upload extends Pumpify {
     // Check if the offset (server) is too far behind the current stream
     if (this.offset < this.numBytesWritten) {
       const delta = this.numBytesWritten - this.offset;
-      let message = 'The offset is lower than the number of bytes written. ';
-      message += `Server has ${this.offset} bytes, the stream has sent `;
-      message += `${this.numBytesWritten} bytes - thus ${delta} bytes are missing. `;
-      message += 'Stopping as this could result in data loss. ';
-      message += 'Create a new upload object to continue.';
+      const message = `The offset is lower than the number of bytes written. The server has ${this.offset} bytes and while  ${this.numBytesWritten} bytes has been uploaded - thus ${delta} bytes are missing. Stopping as this could result in data loss. Initiate a new upload to continue.`;
 
       this.emit('error', new RangeError(message));
       return;
@@ -982,10 +978,8 @@ export class Upload extends Pumpify {
 
   private restart() {
     if (this.numBytesWritten) {
-      let message =
-        'Attempting to restart an upload after unrecoverable bytes have been written from upstream. ';
-      message += 'Stopping as this could result in data loss. ';
-      message += 'Create a new upload object to continue.';
+      const message =
+        'Attempting to restart an upload after unrecoverable bytes have been written from upstream. Stopping as this could result in data loss. Initiate a new upload to continue.';
 
       this.emit('error', new RangeError(message));
       return;
