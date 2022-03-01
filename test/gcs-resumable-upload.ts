@@ -1020,13 +1020,18 @@ describe('gcs-resumable-upload', () => {
     it('should emit error if `offset` < `numBytesWritten`', done => {
       up.numBytesWritten = 1;
 
+      const expectedSent = up.numBytesWritten;
+      const expectedServer = 0;
+      const expectedDelta = expectedSent - expectedServer;
+
       up.on('error', (error: Error) => {
         assert(error instanceof RangeError);
-        assert(
-          /The offset is lower than the number of bytes written/.test(
-            error.message
-          )
-        );
+
+        const m = error.message;
+        assert(m.includes('offset is lower than the number of bytes written'));
+        assert(m.includes(`Server has ${expectedServer} bytes`));
+        assert(m.includes(`stream has sent ${up.numBytesWritten} bytes`));
+        assert(m.includes(`${expectedDelta} bytes are missing`));
         done();
       });
 

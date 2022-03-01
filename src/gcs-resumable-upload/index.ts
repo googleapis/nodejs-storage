@@ -661,10 +661,14 @@ export class Upload extends Pumpify {
 
     // Check if the offset (server) is too far behind the current stream
     if (this.offset < this.numBytesWritten) {
-      this.emit(
-        'error',
-        new RangeError('The offset is lower than the number of bytes written')
-      );
+      const delta = this.numBytesWritten - this.offset;
+      let message = 'The offset is lower than the number of bytes written. ';
+      message += `Server has ${this.offset} bytes, the stream has sent `;
+      message += `${this.numBytesWritten} bytes - thus ${delta} bytes are missing. `;
+      message += 'Stopping as this could result in data loss. ';
+      message += 'Create a new upload object to continue.';
+
+      this.emit('error', new RangeError(message));
       return;
     }
 
