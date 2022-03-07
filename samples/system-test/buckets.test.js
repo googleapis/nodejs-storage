@@ -209,6 +209,7 @@ it('should create a dual-region bucket with turbo replication enabled', async ()
   const output = execSync(
     `node createBucketWithTurboReplication.js ${bucketNameDualRegion}`
   );
+  console.log(output);
   assert.match(
     output,
     new RegExp(
