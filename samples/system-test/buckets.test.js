@@ -209,11 +209,10 @@ it('should create a dual-region bucket with turbo replication enabled', async ()
   const output = execSync(
     `node createBucketWithTurboReplication.js ${bucketNameDualRegion}`
   );
-  console.log(output);
   assert.match(
     output,
     new RegExp(
-      `${bucketNameDualRegion} created with the recovery point objective (RPO) set to ASYNC_TURBO in NAM4.`
+      `${bucketNameDualRegion} created with the recovery point objective \(RPO\) set to ASYNC_TURBO in NAM4.`
     )
   );
   const [exists] = await dualRegionBucket.exists();
