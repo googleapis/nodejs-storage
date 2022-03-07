@@ -212,6 +212,7 @@ it('should create a dual-region bucket with turbo replication enabled', async ()
   assert.match(
     output,
     new RegExp(
+      // eslint-disable-next-line no-useless-escape
       `${bucketNameDualRegion} created with the recovery point objective \(RPO\) set to ASYNC_TURBO in NAM4.`
     )
   );
