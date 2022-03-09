@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+### [5.18.3](https://github.com/googleapis/nodejs-storage/compare/v5.18.2...v5.18.3) (2022-03-09)
+
+
+### Bug Fixes
+
+* fixed typo ([#1803](https://github.com/googleapis/nodejs-storage/issues/1803)) ([be70dae](https://github.com/googleapis/nodejs-storage/commit/be70dae33751ddc3e0ae5a55b5cdbf2002a42932))
+
 ### [5.18.2](https://github.com/googleapis/nodejs-storage/compare/v5.18.1...v5.18.2) (2022-02-16)
 
 
