@@ -24,8 +24,7 @@ import {
 } from 'gaxios';
 import * as gaxios from 'gaxios';
 import {GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
-import * as Pumpify from 'pumpify';
-import {Duplex, PassThrough, Readable} from 'stream';
+import {Duplex, PassThrough, pipeline, Readable} from 'stream';
 import * as streamEvents from 'stream-events';
 import retry = require('async-retry');
 import {RetryOptions, PreconditionOptions} from '../storage';
@@ -226,7 +225,7 @@ export interface ApiError extends Error {
   errors?: GoogleInnerError[];
 }
 
-export class Upload extends Pumpify {
+export class Upload extends Duplex {
   bucket: string;
   file: string;
   apiEndpoint: string;
@@ -391,16 +390,12 @@ export class Upload extends Pumpify {
     });
   }
 
-  /** A stream representing the incoming data to upload */
-  private readonly upstream = new Duplex({
-    read: async () => {
-      this.once('prepareFinish', () => {
-        // Allows this (`Upload`) to finish/end once the upload has succeeded.
-        this.upstream.push(null);
-      });
-    },
-    write: this.writeToChunkBuffer.bind(this),
-  });
+  private async read () {
+    this.once('prepareFinish', () => {
+      // Allows this (`Upload`) to finish/end once the upload has succeeded.
+      this.push(null);
+    });
+  }
 
   /**
    * A handler for `upstream` to write and buffer its data.
@@ -409,11 +404,11 @@ export class Upload extends Pumpify {
    * @param encoding The encoding of the chunk
    * @param readCallback A callback for when the buffer has been read downstream
    */
-  private writeToChunkBuffer(
+  write(
     chunk: Buffer | string,
     encoding: BufferEncoding,
     readCallback: () => void
-  ) {
+  ) : boolean {
     this.upstreamChunkBuffer = Buffer.concat([
       this.upstreamChunkBuffer,
       typeof chunk === 'string' ? Buffer.from(chunk, encoding) : chunk,
@@ -422,6 +417,7 @@ export class Upload extends Pumpify {
 
     this.once('readFromChunkBuffer', readCallback);
     process.nextTick(() => this.emit('wroteToChunkBuffer'));
+    return false;
   }
 
   /**
@@ -491,7 +487,7 @@ export class Upload extends Pumpify {
       // - https://nodejs.org/api/events.html#eventsdefaultmaxlisteners
       const removeListeners = () => {
         this.removeListener('wroteToChunkBuffer', wroteToChunkBufferCallback);
-        this.upstream.removeListener('finish', upstreamFinishedCallback);
+        this.removeListener('finish', upstreamFinishedCallback);
         this.removeListener('prefinish', upstreamFinishedCallback);
       };
 
@@ -499,7 +495,7 @@ export class Upload extends Pumpify {
       this.once('wroteToChunkBuffer', wroteToChunkBufferCallback);
 
       // If the upstream finishes let's see if there's anything to grab
-      this.upstream.once('finish', upstreamFinishedCallback);
+      this.once('finish', upstreamFinishedCallback);
       this.once('prefinish', upstreamFinishedCallback);
     });
 
