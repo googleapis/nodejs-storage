@@ -417,13 +417,13 @@ export enum FileExceptionMessages {
   STARTS_WITH_TWO_ELEMENTS = 'StartsWith condition must be an array of 2 elements.',
   CONTENT_LENGTH_RANGE_MIN_MAX = 'ContentLengthRange must have numeric min & max fields.',
   DOWNLOAD_MISMATCH = 'The downloaded data did not match the data from the server. To be sure the content is the same, you should download the file again.',
-  UPLOAD_MISMATCH_DELETE_FAIL = `The uploaded data did not match the data from the server. 
-    As a precaution, we attempted to delete the file, but it was not successful. 
-    To be sure the content is the same, you should try removing the file manually, 
-    then uploading the file again. 
+  UPLOAD_MISMATCH_DELETE_FAIL = `The uploaded data did not match the data from the server.
+    As a precaution, we attempted to delete the file, but it was not successful.
+    To be sure the content is the same, you should try removing the file manually,
+    then uploading the file again.
     \n\nThe delete attempt failed with this message:\n\n  `,
-  UPLOAD_MISMATCH = `The uploaded data did not match the data from the server. 
-    As a precaution, the file has been deleted. 
+  UPLOAD_MISMATCH = `The uploaded data did not match the data from the server.
+    As a precaution, the file has been deleted.
     To be sure the content is the same, you should try uploading the file again.`,
 }
 
@@ -1574,8 +1574,8 @@ class File extends ServiceObject<File> {
    *     `options.predefinedAcl = 'publicRead'`)
    * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
-   * @property {string} [chunkSize] Create a separate request per chunk. Should
-   *     be a multiple of 256 KiB (2^18).
+   * @property {string} [chunkSize] Create a separate request per chunk. This
+   *     value is in bytes and should be a multiple of 256 KiB (2^18).
    *     {@link https://cloud.google.com/storage/docs/performing-resumable-uploads#chunked-upload| We recommend using at least 8 MiB for the chunk size.}
    */
   /**
@@ -1882,6 +1882,7 @@ class File extends ServiceObject<File> {
     });
 
     const stream = streamEvents(
+      // TODO: deal with this:
       pumpify([
         gzip ? zlib.createGzip() : new PassThrough(),
         validateStream,
@@ -1970,6 +1971,7 @@ class File extends ServiceObject<File> {
     //
     // Reference for tracking when we can use a non-hack solution:
     // https://github.com/nodejs/node/pull/2314
+    // TODO: ^ we may not need this anymore...
     fileWriteStream.on('prefinish', () => {
       stream.cork();
     });
