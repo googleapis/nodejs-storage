@@ -38,10 +38,10 @@ function main(apiEndpoint = 'https://storage.googleapis.com') {
   // Creates a client
   const storage = new Storage({
     apiEndpoint: apiEndpoint,
-    useAuthWithCustomEndpoint: true
+    useAuthWithCustomEndpoint: true,
   });
 
-  console.log(`Client initiated with endpoint: ${storage.apiEndpoint}.`)
+  console.log(`Client initiated with endpoint: ${storage.apiEndpoint}.`);
 
   // [END storage_set_client_endpoint]
 }
