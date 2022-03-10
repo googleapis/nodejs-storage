@@ -1879,7 +1879,6 @@ class File extends ServiceObject<File> {
     });
 
     const stream = streamEvents(
-      // TODO: deal with this:
       pumpify([
         gzip ? zlib.createGzip() : new PassThrough(),
         validateStream,
@@ -1968,7 +1967,7 @@ class File extends ServiceObject<File> {
     //
     // Reference for tracking when we can use a non-hack solution:
     // https://github.com/nodejs/node/pull/2314
-    // TODO: ^ we may not need this anymore...
+    // TODO: ^ we do not need this anymore... - e.g. setup `_final` handler
     fileWriteStream.on('prefinish', () => {
       stream.cork();
     });
