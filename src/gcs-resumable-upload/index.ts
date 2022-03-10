@@ -950,10 +950,8 @@ export class Upload extends Writable {
 
   private restart() {
     if (this.numBytesWritten) {
-      let message =
-        'Attempting to restart an upload after unrecoverable bytes have been written from upstream. ';
-      message += 'Stopping as this could result in data loss. ';
-      message += 'Create a new upload object to continue.';
+      const message =
+        'Attempting to restart an upload after unrecoverable bytes have been written from upstream. Stopping as this could result in data loss. Initiate a new upload to continue.';
 
       this.emit('error', new RangeError(message));
       return;
