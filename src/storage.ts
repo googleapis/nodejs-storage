@@ -86,7 +86,7 @@ export interface StorageOptions extends ServiceOptions {
   maxRetries?: number;
   /**
    * **This option is deprecated.**
-   * @todo Remove in next major release.
+   * @deprecated will be removed in future release
    */
   promise?: typeof Promise;
   /**
