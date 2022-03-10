@@ -33,11 +33,8 @@ import * as fs from 'fs';
 const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
 import * as os from 'os';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const pumpify = require('pumpify');
 import * as resumableUpload from './gcs-resumable-upload';
 import {Duplex, Writable, Readable, PassThrough} from 'stream';
-import * as streamEvents from 'stream-events';
 import * as xdgBasedir from 'xdg-basedir';
 import * as zlib from 'zlib';
 import * as http from 'http';
@@ -2164,7 +2161,7 @@ class File extends ServiceObject<File> {
 
     if (destination) {
       fileStream.on('error', callback).once('data', data => {
-        // We know that the file exists the server
+        // We know that the file exists - now we can truncate/write to a file
         const writable = fs.createWriteStream(destination);
         writable.write(data);
         fileStream.pipe(writable).on('error', callback).on('finish', callback);
