@@ -15,7 +15,12 @@
 import {Bucket, File, Notification, Storage, HmacKey} from '../src';
 import * as path from 'path';
 import {ApiError} from '../src/nodejs-common';
-import {createTestBuffer, createTestFileFromBuffer} from './testBenchUtil';
+import {
+  createTestBuffer,
+  createTestFileFromBuffer,
+  deleteTestFile,
+} from './testBenchUtil';
+import * as uuid from 'uuid';
 
 const FILE_SIZE_BYTES = 9 * 1024 * 1024;
 const CHUNK_SIZE_BYTES = 2 * 1024 * 1024;
@@ -187,15 +192,14 @@ export async function bucketUploadResumable(bucket: Bucket) {
     delete bucket.instancePreconditionOpts.ifMetagenerationMatch;
     bucket.instancePreconditionOpts.ifGenerationMatch = 0;
   }
-  createTestFileFromBuffer(
-    FILE_SIZE_BYTES,
-    path.join(__dirname, 'test-data/tmp.dat')
-  );
-  await bucket.upload(path.join(__dirname, 'test-data/tmp.dat'), {
+  const filePath = path.join(__dirname, `test-data/tmp-${uuid.v4()}.dat`);
+  createTestFileFromBuffer(FILE_SIZE_BYTES, filePath);
+  await bucket.upload(filePath, {
     resumable: true,
     chunkSize: CHUNK_SIZE_BYTES,
     metadata: {contentLength: FILE_SIZE_BYTES},
   });
+  deleteTestFile(filePath);
 }
 
 export async function bucketUploadMultipart(bucket: Bucket) {

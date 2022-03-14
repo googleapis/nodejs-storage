@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {execSync} from 'child_process';
-import {writeFileSync} from 'fs';
+import {unlinkSync, writeFileSync} from 'fs';
 import {URL} from 'url';
 
 const HOST = process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000';
@@ -47,4 +47,8 @@ export function createTestBuffer(sizeInBytes: number): Buffer {
 export function createTestFileFromBuffer(sizeInMb: number, path: string): void {
   const buf = createTestBuffer(sizeInMb);
   writeFileSync(path, buf);
+}
+
+export function deleteTestFile(path: string): void {
+  unlinkSync(path);
 }
