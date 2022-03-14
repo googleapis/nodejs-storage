@@ -15,6 +15,10 @@
 import {Bucket, File, Notification, Storage, HmacKey} from '../src';
 import * as path from 'path';
 import {ApiError} from '../src/nodejs-common';
+import {createTestBuffer, createTestFileFromBuffer} from './testBenchUtil';
+
+const FILE_SIZE_BYTES = 9 * 1024 * 1024;
+const CHUNK_SIZE_BYTES = 2 * 1024 * 1024;
 
 /////////////////////////////////////////////////
 //////////////////// BUCKET /////////////////////
@@ -180,15 +184,18 @@ export async function bucketSetStorageClass(bucket: Bucket) {
 
 export async function bucketUploadResumable(bucket: Bucket) {
   if (bucket.instancePreconditionOpts) {
+    delete bucket.instancePreconditionOpts.ifMetagenerationMatch;
     bucket.instancePreconditionOpts.ifGenerationMatch = 0;
   }
-  await bucket.upload(
-    path.join(
-      __dirname,
-      '../../conformance-test/test-data/retryStrategyTestData.json'
-    ),
-    {resumable: true}
+  await createTestFileFromBuffer(
+    FILE_SIZE_BYTES,
+    path.join(__dirname, 'test-data/tmp.dat')
   );
+  await bucket.upload(path.join(__dirname, 'test-data/tmp.dat'), {
+    resumable: true,
+    chunkSize: CHUNK_SIZE_BYTES,
+    metadata: {contentLength: FILE_SIZE_BYTES},
+  });
 }
 
 export async function bucketUploadMultipart(bucket: Bucket) {
@@ -281,7 +288,13 @@ export async function rotateEncryptionKey(_bucket: Bucket, file: File) {
 }
 
 export async function saveResumable(_bucket: Bucket, file: File) {
-  await file.save('testdata', {resumable: true});
+  const buf = await createTestBuffer(FILE_SIZE_BYTES);
+  console.log(buf.byteLength);
+  await file.save(buf, {
+    resumable: true,
+    chunkSize: CHUNK_SIZE_BYTES,
+    metadata: {contentLength: FILE_SIZE_BYTES},
+  });
 }
 
 export async function saveMultipart(_bucket: Bucket, file: File) {

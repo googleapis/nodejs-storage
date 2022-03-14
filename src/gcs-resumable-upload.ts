@@ -553,6 +553,19 @@ export class Upload extends Pumpify {
 
   protected async createURIAsync(): Promise<string> {
     const metadata = this.metadata;
+    const headers: gaxios.Headers = {};
+
+    // Delete content length and content type from metadata if they exist.
+    // These are headers and should not be sent as part of the metadata.
+    if (metadata.contentLength) {
+      headers['X-Upload-Content-Length'] = metadata.contentLength.toString();
+      delete metadata.contentLength;
+    }
+
+    if (metadata.contentType) {
+      headers!['X-Upload-Content-Type'] = metadata.contentType;
+      delete metadata.contentType;
+    }
 
     const reqOpts: GaxiosOptions = {
       method: 'POST',
@@ -567,15 +580,6 @@ export class Upload extends Pumpify {
       data: metadata,
       headers: {},
     };
-
-    if (metadata.contentLength) {
-      reqOpts.headers!['X-Upload-Content-Length'] =
-        metadata.contentLength.toString();
-    }
-
-    if (metadata.contentType) {
-      reqOpts.headers!['X-Upload-Content-Type'] = metadata.contentType;
-    }
 
     if (typeof this.generation !== 'undefined') {
       reqOpts.params.ifGenerationMatch = this.generation;

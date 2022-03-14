@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import {execSync} from 'child_process';
+import {writeFile} from 'fs/promises';
 import {URL} from 'url';
 
 const HOST = process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000';
@@ -21,7 +22,7 @@ const PORT = new URL(HOST).port;
 const CONTAINER_NAME = 'storage-testbench';
 const DEFAULT_IMAGE_NAME =
   'gcr.io/cloud-devrel-public-resources/storage-testbench';
-const DEFAULT_IMAGE_TAG = 'v0.14.0';
+const DEFAULT_IMAGE_TAG = 'v0.15.0';
 const DOCKER_IMAGE = `${DEFAULT_IMAGE_NAME}:${DEFAULT_IMAGE_TAG}`;
 const PULL_CMD = `docker pull ${DOCKER_IMAGE}`;
 const RUN_CMD = `docker run --rm -d -p ${PORT}:${PORT} --name ${CONTAINER_NAME} ${DOCKER_IMAGE} && sleep 1`;
@@ -37,4 +38,16 @@ export async function runTestBenchDockerImage(): Promise<Buffer> {
 
 export async function stopTestBenchDockerImage(): Promise<Buffer> {
   return execSync(STOP_CMD);
+}
+
+export function createTestBuffer(sizeInBytes: number): Buffer {
+  return Buffer.alloc(sizeInBytes, 'testdata');
+}
+
+export async function createTestFileFromBuffer(
+  sizeInMb: number,
+  path: string
+): Promise<void> {
+  const buf = createTestBuffer(sizeInMb);
+  await writeFile(path, buf);
 }
