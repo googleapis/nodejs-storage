@@ -187,7 +187,7 @@ export async function bucketUploadResumable(bucket: Bucket) {
     delete bucket.instancePreconditionOpts.ifMetagenerationMatch;
     bucket.instancePreconditionOpts.ifGenerationMatch = 0;
   }
-  await createTestFileFromBuffer(
+  createTestFileFromBuffer(
     FILE_SIZE_BYTES,
     path.join(__dirname, 'test-data/tmp.dat')
   );
@@ -289,7 +289,6 @@ export async function rotateEncryptionKey(_bucket: Bucket, file: File) {
 
 export async function saveResumable(_bucket: Bucket, file: File) {
   const buf = await createTestBuffer(FILE_SIZE_BYTES);
-  console.log(buf.byteLength);
   await file.save(buf, {
     resumable: true,
     chunkSize: CHUNK_SIZE_BYTES,

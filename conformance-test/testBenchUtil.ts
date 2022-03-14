@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {execSync} from 'child_process';
-import {writeFile} from 'fs/promises';
+import {writeFileSync} from 'fs';
 import {URL} from 'url';
 
 const HOST = process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000';
@@ -44,10 +44,10 @@ export function createTestBuffer(sizeInBytes: number): Buffer {
   return Buffer.alloc(sizeInBytes, 'testdata');
 }
 
-export async function createTestFileFromBuffer(
+export function createTestFileFromBuffer(
   sizeInMb: number,
   path: string
-): Promise<void> {
+): void {
   const buf = createTestBuffer(sizeInMb);
-  await writeFile(path, buf);
+  writeFileSync(path, buf);
 }
