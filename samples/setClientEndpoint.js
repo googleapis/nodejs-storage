@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /**
- * This application demonstrates how to perform basic operations on buckets with
+ * This application demonstrates set a custom endpoint with
  * the Google Cloud Storage API.
  *
  * For more information, see the README.md under /storage and the documentation
