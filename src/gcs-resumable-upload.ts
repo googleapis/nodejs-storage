@@ -578,7 +578,7 @@ export class Upload extends Pumpify {
         this.params
       ),
       data: metadata,
-      headers: headers,
+      headers,
     };
 
     if (typeof this.generation !== 'undefined') {
