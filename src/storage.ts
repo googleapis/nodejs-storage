@@ -118,7 +118,7 @@ export interface CreateBucketRequest {
   coldline?: boolean;
   cors?: Cors[];
   dra?: boolean;
-  location?: string;
+  location?: string | string[];
   multiRegional?: boolean;
   nearline?: boolean;
   regional?: boolean;
@@ -758,7 +758,12 @@ export class Storage extends Service {
    * @property {Cors[]} [cors=[]] Specify the CORS configuration to use.
    * @property {boolean} [dra=false] Specify the storage class as Durable Reduced
    *     Availability.
-   * @property {string} [location] Specify the location / region in which to create the bucket.
+   * @property {string|string[]} [location] Specify the bucket's location(s)
+   *     (e.g. `US-CENTRAL1`, `SOUTHAMERICA-WEST1`, `EU`, `NAM4`). If
+   *     specifying a custom dual region, can be specified as a string or array
+   *     of strings, e.g. `"US-CENTRAL1+US-WEST1"` or
+   *     `["US-CENTRAL1", "US-WEST1"]`. For more information, see
+   *     {@link https://cloud.google.com/storage/docs/locations| Bucket Locations}.
    * @property {boolean} [multiRegional=false] Specify the storage class as
    *     Multi-Regional.
    * @property {boolean} [nearline=false] Specify the storage class as Nearline.
@@ -911,6 +916,12 @@ export class Storage extends Service {
     if (body.userProject) {
       query.userProject = body.userProject as string;
       delete body.userProject;
+    }
+
+    if (Array.isArray(body.location)) {
+      // merge custom dual region locations into a string
+      // e.g. ["US-CENTRAL1", "US-WEST1"] -> "US-CENTRAL1+US-WEST1"
+      body.location = body.location.join('+');
     }
 
     this.request(
