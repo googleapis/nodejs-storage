@@ -552,7 +552,7 @@ export class Upload extends Pumpify {
   }
 
   protected async createURIAsync(): Promise<string> {
-    const metadata = this.metadata;
+    const metadata = {...this.metadata};
     const headers: gaxios.Headers = {};
 
     // Delete content length and content type from metadata if they exist.
@@ -578,7 +578,7 @@ export class Upload extends Pumpify {
         this.params
       ),
       data: metadata,
-      headers: {},
+      headers: headers,
     };
 
     if (typeof this.generation !== 'undefined') {
