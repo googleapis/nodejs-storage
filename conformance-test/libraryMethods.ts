@@ -288,7 +288,7 @@ export async function rotateEncryptionKey(_bucket: Bucket, file: File) {
 }
 
 export async function saveResumable(_bucket: Bucket, file: File) {
-  const buf = await createTestBuffer(FILE_SIZE_BYTES);
+  const buf = createTestBuffer(FILE_SIZE_BYTES);
   await file.save(buf, {
     resumable: true,
     chunkSize: CHUNK_SIZE_BYTES,

@@ -44,10 +44,7 @@ export function createTestBuffer(sizeInBytes: number): Buffer {
   return Buffer.alloc(sizeInBytes, 'testdata');
 }
 
-export function createTestFileFromBuffer(
-  sizeInMb: number,
-  path: string
-): void {
+export function createTestFileFromBuffer(sizeInMb: number, path: string): void {
   const buf = createTestBuffer(sizeInMb);
   writeFileSync(path, buf);
 }
