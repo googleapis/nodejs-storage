@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-const {
-  IdempotencyStrategy,
-} = require('@google-cloud/storage/build/src/storage');
-
 /**
  * This application demonstrates how to perform basic operations on buckets with
  * the Google Cloud Storage API.
