@@ -23,5 +23,8 @@ const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 it('should intialize storage with a custom api enpoint', async () => {
   const apiEndpoint = 'https://storage.googleapis.com';
   const output = execSync(`node setClientEndpoint.js ${apiEndpoint}`);
-  assert.match(output, new RegExp(`Client initiated with endpoint: ${apiEndpoint}.`));
+  assert.match(
+    output,
+    new RegExp(`Client initiated with endpoint: ${apiEndpoint}.`)
+  );
 });
