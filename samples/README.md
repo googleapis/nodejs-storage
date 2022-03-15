@@ -33,6 +33,7 @@ objects to users via direct download.
   * [Configure Retries](#configure-retries)
   * [Copy File](#copy-file)
   * [Copy Old Version Of File.](#copy-old-version-of-file.)
+  * [Create Bucket With Custom Dual Region](#create-bucket-with-custom-dual-region)
   * [Create Bucket With Storage Class and Location.](#create-bucket-with-storage-class-and-location.)
   * [Create Bucket With Turbo Replication](#create-bucket-with-turbo-replication)
   * [Create New Bucket](#create-new-bucket)
@@ -405,6 +406,25 @@ __Usage:__
 
 
 `node copyOldVersionOfFile.js <SRC_BUCKET_NAME> <SRC_FILE_NAME> <DEST_BUCKET_NAME> <DEST_FILE_NAME> <GENERATION>`
+
+
+-----
+
+
+
+
+### Create Bucket With Custom Dual Region
+
+Create Bucket With Storage Class and Location.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithCustomDualRegion.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithCustomDualRegion.js,samples/README.md)
+
+__Usage:__
+
+
+`node createBucketWithCustomDualRegion.js <BUCKET_NAME> <LOCATION1> <LOCATION2>`
 
 
 -----
