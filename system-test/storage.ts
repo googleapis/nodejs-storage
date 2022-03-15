@@ -929,6 +929,31 @@ describe('storage', () => {
     });
   });
 
+  describe('custom dual region', () => {
+    let bucket: Bucket;
+
+    const REGION1 = 'US-EAST1';
+    const REGION2 = 'US-WEST1';
+
+    beforeEach(() => {
+      bucket = storage.bucket(generateName());
+    });
+
+    it('creates a custom dual region bucket with string', async () => {
+      await bucket.create({location: `${REGION1}+${REGION2}`});
+
+      const [bucketMetadata] = await bucket.getMetadata();
+      console.dir({bucketMetadata});
+    });
+
+    it('creates a custom dual region bucket with string', async () => {
+      await bucket.create({location: [REGION1, REGION2]});
+
+      const bucketMetadataRes = await bucket.getMetadata();
+      console.dir({bucketMetadataRes});
+    });
+  });
+
   describe('uniform bucket-level access', () => {
     let bucket: Bucket;
 
