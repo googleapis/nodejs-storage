@@ -36,6 +36,7 @@ const dualRegionBucket = storage.bucket(bucketNameDualRegion);
 const PUBLIC_ACCESS_PREVENTION_INHERITED = 'inherited';
 const PUBLIC_ACCESS_PREVENTION_ENFORCED = 'enforced';
 
+const CUSTOM_DUAL_REGION = ['US-EAST1', 'US-WEST1'];
 const RPO_ASYNC_TURBO = 'ASYNC_TURBO';
 const RPO_DEFAULT = 'DEFAULT';
 
@@ -203,6 +204,22 @@ it('should set public access prevention to inherited', async () => {
     metadata[0].iamConfiguration.publicAccessPrevention,
     PUBLIC_ACCESS_PREVENTION_INHERITED
   );
+});
+
+it('should create a custom dual-region bucket', async () => {
+  const output = execSync(
+    `node createBucketWithCustomDualRegion.js ${bucketNameDualRegion} ${CUSTOM_DUAL_REGION[0]} ${CUSTOM_DUAL_REGION[1]}`
+  );
+  assert.match(
+    output,
+    new RegExp(
+      `${bucketNameDualRegion} created in '${CUSTOM_DUAL_REGION[0]}+${CUSTOM_DUAL_REGION[1]}'`
+    )
+  );
+  const [exists] = await dualRegionBucket.exists();
+  // TODO: assert custom dual region metadata once API is ready...
+  // const [bucketMetadata] = await bucket.getMetadata();
+  assert.strictEqual(exists, true);
 });
 
 it('should create a dual-region bucket with turbo replication enabled', async () => {
