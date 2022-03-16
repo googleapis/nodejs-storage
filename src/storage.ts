@@ -758,8 +758,7 @@ export class Storage extends Service {
    * @property {Cors[]} [cors=[]] Specify the CORS configuration to use.
    * @property {boolean} [dra=false] Specify the storage class as Durable Reduced
    *     Availability.
-   * @property {string|string[]} [location] Specify the bucket's location(s)
-   *     (e.g. `US-CENTRAL1`, `SOUTHAMERICA-WEST1`, `EU`, `NAM4`). If
+   * @property {string|string[]} [location] Specify the bucket's location(s). If
    *     specifying a custom dual region, can be specified as a string or array
    *     of strings, e.g. `"US-CENTRAL1+US-WEST1"` or
    *     `["US-CENTRAL1", "US-WEST1"]`. For more information, see

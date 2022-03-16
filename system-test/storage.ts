@@ -946,7 +946,7 @@ describe('storage', () => {
       console.dir({bucketMetadata});
     });
 
-    it('creates a custom dual region bucket with string', async () => {
+    it('creates a custom dual region bucket with an array', async () => {
       await bucket.create({location: [REGION1, REGION2]});
 
       const bucketMetadataRes = await bucket.getMetadata();
