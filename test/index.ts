@@ -876,6 +876,32 @@ describe('Storage', () => {
       });
     });
 
+    it('should accept `location` as an array and send as a string (single)', done => {
+      const location = ['US-EAST1'];
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        assert.strictEqual(reqOpts.json.location, location[0]);
+        callback();
+      };
+      storage.createBucket(BUCKET_NAME, {location}, done);
+    });
+
+    it('should accept `location` as an array and send as a string (tuple)', done => {
+      const location = ['US-EAST1', 'US-WEST1'];
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        const combined = `${location[0]}+${location[1]}`;
+
+        assert.strictEqual(reqOpts.json.location, combined);
+        callback();
+      };
+      storage.createBucket(BUCKET_NAME, {location}, done);
+    });
+
     it('should allow setting rpo', done => {
       const location = 'NAM4';
       const rpo = 'ASYNC_TURBO';
