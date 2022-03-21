@@ -1427,9 +1427,7 @@ class File extends ServiceObject<File> {
           throughStreams.push(zlib.createGunzip());
         }
 
-        rawResponseStream = rawResponseStream.pipe(
-          pipeline(throughStreams)
-        );
+        rawResponseStream = rawResponseStream.pipe(pipeline(throughStreams));
 
         rawResponseStream
           .on('error', onComplete)
