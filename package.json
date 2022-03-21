@@ -69,6 +69,7 @@
     "mime-types": "^2.0.8",
     "p-limit": "^3.0.1",
     "snakeize": "^0.1.0",
+    "stream-events": "^1.0.4",
     "xdg-basedir": "^4.0.0"
   },
   "devDependencies": {
