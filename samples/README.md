@@ -33,7 +33,7 @@ objects to users via direct download.
   * [Configure Retries](#configure-retries)
   * [Copy File](#copy-file)
   * [Copy Old Version Of File.](#copy-old-version-of-file.)
-  * [Create Bucket With Custom Dual Region](#create-bucket-with-custom-dual-region)
+  * [Create a Dual-Region Bucket](#create-a-dual-region-bucket)
   * [Create Bucket With Storage Class and Location.](#create-bucket-with-storage-class-and-location.)
   * [Create Bucket With Turbo Replication](#create-bucket-with-turbo-replication)
   * [Create New Bucket](#create-new-bucket)
@@ -413,18 +413,18 @@ __Usage:__
 
 
 
-### Create Bucket With Custom Dual Region
+### Create a Dual-Region Bucket
 
-Create Bucket With Storage Class and Location.
+Create a Dual-Region Bucket with provided locations.
 
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithCustomDualRegion.js).
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithDualRegion.js).
 
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithCustomDualRegion.js,samples/README.md)
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithDualRegion.js,samples/README.md)
 
 __Usage:__
 
 
-`node createBucketWithCustomDualRegion.js <BUCKET_NAME> <LOCATION1> <LOCATION2>`
+`node createBucketWithDualRegion.js <BUCKET_NAME> <LOCATION1> <LOCATION2>`
 
 
 -----
