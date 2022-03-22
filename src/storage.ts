@@ -759,7 +759,7 @@ export class Storage extends Service {
    * @property {boolean} [dra=false] Specify the storage class as Durable Reduced
    *     Availability.
    * @property {string|string[]} [location] Specify the bucket's location(s). If
-   *     specifying a custom dual region, can be specified as a string or array
+   *     specifying a dual region, can be specified as a string or array
    *     of strings, e.g. `"US-CENTRAL1+US-WEST1"` or
    *     `["US-CENTRAL1", "US-WEST1"]`. For more information, see
    *     {@link https://cloud.google.com/storage/docs/locations| Bucket Locations}.
@@ -918,7 +918,7 @@ export class Storage extends Service {
     }
 
     if (Array.isArray(body.location)) {
-      // merge custom dual region locations into a string
+      // merge dual region locations into a string
       // e.g. ["US-CENTRAL1", "US-WEST1"] -> "US-CENTRAL1+US-WEST1"
       body.location = body.location.join('+');
     }

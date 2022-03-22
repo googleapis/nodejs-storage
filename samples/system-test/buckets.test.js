@@ -206,9 +206,9 @@ it('should set public access prevention to inherited', async () => {
   );
 });
 
-it('should create a custom dual-region bucket', async () => {
+it('should create a dual-region bucket', async () => {
   const output = execSync(
-    `node createBucketWithCustomDualRegion.js ${bucketNameDualRegion} ${CUSTOM_DUAL_REGION[0]} ${CUSTOM_DUAL_REGION[1]}`
+    `node createBucketWithDualRegion.js ${bucketNameDualRegion} ${CUSTOM_DUAL_REGION[0]} ${CUSTOM_DUAL_REGION[1]}`
   );
   assert.match(
     output,
@@ -217,7 +217,7 @@ it('should create a custom dual-region bucket', async () => {
     )
   );
   const [exists] = await dualRegionBucket.exists();
-  // TODO: assert custom dual region metadata once API is ready...
+  // TODO: assert dual region metadata once API is ready...
   // const [bucketMetadata] = await bucket.getMetadata();
   assert.strictEqual(exists, true);
 });

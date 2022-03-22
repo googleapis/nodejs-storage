@@ -929,7 +929,7 @@ describe('storage', () => {
     });
   });
 
-  describe('custom dual region', () => {
+  describe('dual region', () => {
     let bucket: Bucket;
 
     const REGION1 = 'US-EAST1';
@@ -939,14 +939,14 @@ describe('storage', () => {
       bucket = storage.bucket(generateName());
     });
 
-    it('creates a custom dual region bucket with string', async () => {
+    it('creates a dual region bucket with string', async () => {
       await bucket.create({location: `${REGION1}+${REGION2}`});
 
       const [bucketMetadata] = await bucket.getMetadata();
       console.dir({bucketMetadata});
     });
 
-    it('creates a custom dual region bucket with an array', async () => {
+    it('creates a dual region bucket with an array', async () => {
       await bucket.create({location: [REGION1, REGION2]});
 
       const bucketMetadataRes = await bucket.getMetadata();

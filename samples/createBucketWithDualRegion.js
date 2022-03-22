@@ -17,16 +17,16 @@
 'use strict';
 
 // sample-metadata:
-//   title: Create Bucket With Custom Dual Region
-//   description: Create Bucket With Storage Class and Location.
-//   usage: node createBucketWithCustomDualRegion.js <BUCKET_NAME> <LOCATION1> <LOCATION2>
+//   title: Create a Dual-Region Bucket
+//   description: Create a Dual-Region Bucket with provided locations.
+//   usage: node createBucketWithDualRegion.js <BUCKET_NAME> <LOCATION1> <LOCATION2>
 
 function main(
   bucketName = 'my-bucket',
   location1 = 'US-EAST1',
   location2 = 'US-WEST1'
 ) {
-  // [START storage_create_bucket_custom_dual_region]
+  // [START storage_create_bucket_dual_region]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -47,8 +47,8 @@ function main(
   // For more information, please see https://cloud.google.com/docs/authentication/production or https://googleapis.dev/nodejs/storage/latest/Storage.html
   const storage = new Storage();
 
-  async function createBucketWithCustomDualRegion() {
-    // For regions supporting custom dual regions see: https://cloud.google.com/storage/docs/locations
+  async function createDualRegionBucket() {
+    // For regions supporting dual regions see: https://cloud.google.com/storage/docs/locations
     const [bucket] = await storage.createBucket(bucketName, {
       location: [location1, location2], // can also be passed as a string, e.g. `US-EAST1+US-WEST1`
     });
@@ -56,8 +56,8 @@ function main(
     console.log(`${bucket.name} created in '${location1}+${location2}'`);
   }
 
-  createBucketWithCustomDualRegion().catch(console.error);
-  // [END storage_create_bucket_custom_dual_region]
+  createDualRegionBucket().catch(console.error);
+  // [END storage_create_bucket_dual_region]
 }
 
 process.on('unhandledRejection', err => {
