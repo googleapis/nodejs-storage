@@ -939,18 +939,12 @@ describe('storage', () => {
       bucket = storage.bucket(generateName());
     });
 
-    it('creates a dual region bucket with string', async () => {
+    it('creates a dual region bucket', async () => {
       await bucket.create({location: `${REGION1}+${REGION2}`});
 
       const [bucketMetadata] = await bucket.getMetadata();
+      // TODO: assert dual region metadata once API is ready...
       console.dir({bucketMetadata});
-    });
-
-    it('creates a dual region bucket with an array', async () => {
-      await bucket.create({location: [REGION1, REGION2]});
-
-      const bucketMetadataRes = await bucket.getMetadata();
-      console.dir({bucketMetadataRes});
     });
   });
 
