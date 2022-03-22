@@ -20,7 +20,7 @@ const cp = require('child_process');
 
 const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
-it('should intialize storage with a custom api enpoint', async () => {
+it('should intialize storage with a custom api endpoint', async () => {
   const apiEndpoint = 'https://storage.googleapis.com';
   const output = execSync(`node setClientEndpoint.js ${apiEndpoint}`);
   assert.match(
