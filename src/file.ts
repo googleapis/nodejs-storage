@@ -1877,7 +1877,7 @@ class File extends ServiceObject<File> {
       gzip ? zlib.createGzip() : new PassThrough(),
       validateStream,
       fileWriteStream,
-    ]
+    ];
     pipeline(streamArray);
 
     // Wait until we've received data to determine what upload technique to use.
