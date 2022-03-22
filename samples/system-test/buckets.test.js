@@ -36,7 +36,7 @@ const dualRegionBucket = storage.bucket(bucketNameDualRegion);
 const PUBLIC_ACCESS_PREVENTION_INHERITED = 'inherited';
 const PUBLIC_ACCESS_PREVENTION_ENFORCED = 'enforced';
 
-const CUSTOM_DUAL_REGION = ['US-EAST1', 'US-WEST1'];
+const DUAL_REGION = ['US-EAST1', 'US-WEST1'];
 const RPO_ASYNC_TURBO = 'ASYNC_TURBO';
 const RPO_DEFAULT = 'DEFAULT';
 
@@ -208,12 +208,12 @@ it('should set public access prevention to inherited', async () => {
 
 it('should create a dual-region bucket', async () => {
   const output = execSync(
-    `node createBucketWithDualRegion.js ${bucketNameDualRegion} ${CUSTOM_DUAL_REGION[0]} ${CUSTOM_DUAL_REGION[1]}`
+    `node createBucketWithDualRegion.js ${bucketNameDualRegion} ${DUAL_REGION[0]} ${DUAL_REGION[1]}`
   );
   assert.match(
     output,
     new RegExp(
-      `${bucketNameDualRegion} created in '${CUSTOM_DUAL_REGION[0]}+${CUSTOM_DUAL_REGION[1]}'`
+      `${bucketNameDualRegion} created in '${DUAL_REGION[0]}+${DUAL_REGION[1]}'`
     )
   );
   const [exists] = await dualRegionBucket.exists();
