@@ -19,12 +19,12 @@
 // sample-metadata:
 //   title: Create a Dual-Region Bucket
 //   description: Create a Dual-Region Bucket with provided locations.
-//   usage: node createBucketWithDualRegion.js <BUCKET_NAME> <LOCATION1> <LOCATION2>
+//   usage: node createBucketWithDualRegion.js <BUCKET_NAME> <REGION1> <REGION2>
 
 function main(
   bucketName = 'my-bucket',
-  location1 = 'US-EAST1',
-  location2 = 'US-WEST1'
+  region1 = 'US-EAST1',
+  region2 = 'US-WEST1'
 ) {
   // [START storage_create_bucket_dual_region]
   /**
@@ -33,11 +33,11 @@ function main(
   // The ID of your GCS bucket
   // const bucketName = 'your-unique-bucket-name';
 
-  // The bucket's locations. Case-insensitive.
+  // The bucket's pair of regions. Case-insensitive.
   // See this documentation for other valid locations:
   // https://cloud.google.com/storage/docs/locations
-  // const location1 = 'US-EAST1';
-  // const location2 = 'US-WEST1';
+  // const region1 = 'US-EAST1';
+  // const region2 = 'US-WEST1';
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -50,10 +50,10 @@ function main(
   async function createDualRegionBucket() {
     // For regions supporting dual regions see: https://cloud.google.com/storage/docs/locations
     const [bucket] = await storage.createBucket(bucketName, {
-      location: `${location1}+${location2}`, // e.g. `US-EAST1+US-WEST1`
+      location: `${region1}+${region2}`, // e.g. `US-EAST1+US-WEST1`
     });
 
-    console.log(`${bucket.name} created in '${location1}+${location2}'`);
+    console.log(`${bucket.name} created in '${region1}+${region2}'`);
   }
 
   createDualRegionBucket().catch(console.error);
