@@ -1427,7 +1427,7 @@ class File extends ServiceObject<File> {
           throughStreams.push(zlib.createGunzip());
         }
 
-        rawResponseStream = rawResponseStream.pipe(pipeline(throughStreams));
+        rawResponseStream = pipeline([rawResponseStream, ...throughStreams]);
 
         rawResponseStream
           .on('error', onComplete)
@@ -1871,12 +1871,14 @@ class File extends ServiceObject<File> {
       stream.emit('progress', evt);
     });
 
-    const stream1 = new Duplex();
-    stream1.push(gzip ? zlib.createGzip() : new PassThrough());
-    stream1.push(validateStream);
-    stream1.push(fileWriteStream);
-
-    const stream = streamEvents(stream1) as Duplex;
+    const stream = new PassThrough();
+    const streamArray = [
+      stream,
+      gzip ? zlib.createGzip() : new PassThrough(),
+      validateStream,
+      fileWriteStream,
+    ]
+    pipeline(streamArray);
 
     // Wait until we've received data to determine what upload technique to use.
     stream.on('writing', () => {
