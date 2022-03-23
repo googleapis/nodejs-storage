@@ -424,7 +424,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/sa
 __Usage:__
 
 
-`node createBucketWithDualRegion.js <BUCKET_NAME> <LOCATION1> <LOCATION2>`
+`node createBucketWithDualRegion.js <BUCKET_NAME> <REGION1> <REGION2>`
 
 
 -----
