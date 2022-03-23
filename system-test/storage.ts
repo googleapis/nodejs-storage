@@ -940,11 +940,15 @@ describe('storage', () => {
     });
 
     it('creates a dual region bucket', async () => {
-      await bucket.create({location: `${REGION1}+${REGION2}`});
+      const dualRegion = `${REGION1}+${REGION2}`;
+      await bucket.create({location: dualRegion});
+
+      const [exists] = await bucket.exists();
+      assert.strictEqual(exists, true);
 
       const [bucketMetadata] = await bucket.getMetadata();
-      // TODO: assert dual region metadata once API is ready...
-      console.dir({bucketMetadata});
+      assert.strictEqual(bucketMetadata.location, dualRegion);
+      assert.strictEqual(bucketMetadata.locationType, 'dual-region');
     });
   });
 
