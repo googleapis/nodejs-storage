@@ -1427,7 +1427,10 @@ class File extends ServiceObject<File> {
           throughStreams.push(zlib.createGunzip());
         }
 
-        rawResponseStream = pipeline([rawResponseStream, ...throughStreams], () => {});
+        rawResponseStream = pipeline(
+          [rawResponseStream, ...throughStreams],
+          () => {}
+        );
 
         rawResponseStream
           .on('error', onComplete)
@@ -1878,7 +1881,7 @@ class File extends ServiceObject<File> {
       validateStream,
       fileWriteStream,
     ];
-    pipeline(streamArray, () => { });
+    pipeline(streamArray, () => {});
 
     // Wait until we've received data to determine what upload technique to use.
     stream.on('writing', () => {
