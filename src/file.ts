@@ -34,7 +34,7 @@ const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
 import * as os from 'os';
 import * as resumableUpload from './gcs-resumable-upload';
-import {Writable, Readable, PassThrough, pipeline} from 'stream';
+import {Writable, Readable, PassThrough, pipeline, Duplex} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as xdgBasedir from 'xdg-basedir';
 import * as zlib from 'zlib';
@@ -1426,8 +1426,10 @@ class File extends ServiceObject<File> {
         if (isServedCompressed && options.decompress) {
           throughStreams.push(zlib.createGunzip());
         }
-
-        rawResponseStream = pipeline([rawResponseStream, ...throughStreams], () => {});
+        
+        if (throughStreams.length > 0) {
+            rawResponseStream = pipeline([rawResponseStream, ...throughStreams], () => {});
+        }
 
         rawResponseStream
           .on('error', onComplete)
@@ -1871,14 +1873,8 @@ class File extends ServiceObject<File> {
       stream.emit('progress', evt);
     });
 
-    const stream = new PassThrough();
-    const streamArray = [
-      stream,
-      gzip ? zlib.createGzip() : new PassThrough(),
-      validateStream,
-      fileWriteStream,
-    ];
-    pipeline(streamArray, () => { });
+    const streamPipeline = pipeline(gzip ? zlib.createGzip() : new PassThrough(), validateStream, fileWriteStream, () => {});
+    const stream = streamEvents(streamPipeline) as Duplex;
 
     // Wait until we've received data to determine what upload technique to use.
     stream.on('writing', () => {
