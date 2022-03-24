@@ -34,7 +34,7 @@ const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
 import * as os from 'os';
 import * as resumableUpload from './gcs-resumable-upload';
-import {Duplex, Writable, Readable, PassThrough, pipeline} from 'stream';
+import {Writable, Readable, PassThrough, pipeline} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as xdgBasedir from 'xdg-basedir';
 import * as zlib from 'zlib';
@@ -66,6 +66,7 @@ import {
 const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectKeyToLowercase, unicodeJSONStringify} from './util';
 import retry = require('async-retry');
+import { ReadableStream } from 'stream/web';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -1427,7 +1428,7 @@ class File extends ServiceObject<File> {
           throughStreams.push(zlib.createGunzip());
         }
 
-        rawResponseStream = pipeline([rawResponseStream, ...throughStreams]);
+        rawResponseStream = pipeline([rawResponseStream, ...throughStreams], () => {});
 
         rawResponseStream
           .on('error', onComplete)
@@ -1871,14 +1872,12 @@ class File extends ServiceObject<File> {
       stream.emit('progress', evt);
     });
 
-    const stream = new PassThrough();
-    const streamArray = [
-      stream,
+    const stream = new ReadableStream();
+    const streamArray : Writable[] = [
       gzip ? zlib.createGzip() : new PassThrough(),
       validateStream,
-      fileWriteStream,
     ];
-    pipeline(streamArray);
+    pipeline(stream, ...streamArray, fileWriteStream);
 
     // Wait until we've received data to determine what upload technique to use.
     stream.on('writing', () => {
