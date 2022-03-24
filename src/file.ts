@@ -1426,18 +1426,11 @@ class File extends ServiceObject<File> {
         if (isServedCompressed && options.decompress) {
           throughStreams.push(zlib.createGunzip());
         }
-<<<<<<< HEAD
-        
-        if (throughStreams.length > 0) {
-            rawResponseStream = pipeline([rawResponseStream, ...throughStreams], () => {});
-        }
-=======
 
         rawResponseStream = pipeline(
           [rawResponseStream, ...throughStreams],
           () => {}
         );
->>>>>>> 3a392fbf5b181320fb63aae714f06eaa8ad222d4
 
         rawResponseStream
           .on('error', onComplete)
