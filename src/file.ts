@@ -1881,19 +1881,8 @@ class File extends ServiceObject<File> {
       stream.emit('progress', evt);
     });
 
-<<<<<<< HEAD
     const streamPipeline = pipeline(gzip ? zlib.createGzip() : new PassThrough(), validateStream, fileWriteStream, () => {});
     const stream = streamEvents(streamPipeline) as Duplex;
-=======
-    const stream = new PassThrough();
-    const streamArray = [
-      stream,
-      gzip ? zlib.createGzip() : new PassThrough(),
-      validateStream,
-      fileWriteStream,
-    ];
-    pipeline(streamArray, () => {});
->>>>>>> 3a392fbf5b181320fb63aae714f06eaa8ad222d4
 
     // Wait until we've received data to determine what upload technique to use.
     stream.on('writing', () => {
