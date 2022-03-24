@@ -1427,10 +1427,13 @@ class File extends ServiceObject<File> {
           throughStreams.push(zlib.createGunzip());
         }
 
-        rawResponseStream = pipeline(
-          [rawResponseStream, ...throughStreams],
-          () => {}
-        );
+        if (throughStreams.length > 0) {
+          rawResponseStream = pipeline(
+            [rawResponseStream, ...throughStreams],
+            () => {}
+          );
+        }
+
 
         rawResponseStream
           .on('error', onComplete)
@@ -1870,15 +1873,15 @@ class File extends ServiceObject<File> {
 
     const fileWriteStream = duplexify();
 
-    fileWriteStream.on('progress', evt => {
-      stream.emit('progress', evt);
-    });
+    // fileWriteStream.on('progress', evt => {
+    //   stream.emit('progress', evt);
+    // });
 
     const streamPipeline = pipeline(gzip ? zlib.createGzip() : new PassThrough(), validateStream, fileWriteStream, () => {});
     const stream = streamEvents(streamPipeline) as Duplex;
 
     // Wait until we've received data to determine what upload technique to use.
-    stream.on('writing', () => {
+    stream.once('writing', () => {
       if (options.resumable === false) {
         this.startSimpleUpload_(fileWriteStream, options);
         return;
@@ -1950,7 +1953,6 @@ class File extends ServiceObject<File> {
       });
     });
 
-    fileWriteStream.on('response', stream.emit.bind(stream, 'response'));
 
     // This is to preserve the `finish` event. We wait until the request stream
     // emits "complete", as that is when we do validation of the data. After
@@ -1965,6 +1967,7 @@ class File extends ServiceObject<File> {
 
     // Compare our hashed version vs the completed upload's version.
     fileWriteStream.on('complete', () => {
+      console.log("in on complete")
       const metadata = this.metadata;
 
       // If we're doing validation, assume the worst-- a data integrity
