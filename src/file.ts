@@ -66,7 +66,6 @@ import {
 const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectKeyToLowercase, unicodeJSONStringify} from './util';
 import retry = require('async-retry');
-import { ReadableStream } from 'stream/web';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -1872,12 +1871,14 @@ class File extends ServiceObject<File> {
       stream.emit('progress', evt);
     });
 
-    const stream = new ReadableStream();
-    const streamArray : Writable[] = [
+    const stream = new PassThrough();
+    const streamArray = [
+      stream,
       gzip ? zlib.createGzip() : new PassThrough(),
       validateStream,
+      fileWriteStream,
     ];
-    pipeline(stream, ...streamArray, fileWriteStream);
+    pipeline(streamArray, () => { });
 
     // Wait until we've received data to determine what upload technique to use.
     stream.on('writing', () => {
