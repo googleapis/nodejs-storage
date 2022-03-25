@@ -54,6 +54,10 @@ function main(
     });
 
     console.log(`${bucket.name} created in '${region1}+${region2}'`);
+
+    await bucket.delete();
+
+    console.log(`${bucket.name} deleted`);
   }
 
   createDualRegionBucket().catch(console.error);
