@@ -24,9 +24,9 @@ const execSync = cmd => cp.execSync(cmd, {encoding: 'utf-8'});
 
 const storage = new Storage();
 const samplesTestBucketPrefix = `nodejs-storage-samples-${uuid.v4()}`;
-const bucketName = `${samplesTestBucketPrefix}-bucket`;
-const bucketNameDualRegion = `${samplesTestBucketPrefix}-dual-region`;
-const bucketNameWithClassAndLocation = `${samplesTestBucketPrefix}-class-location`;
+const bucketName = `${samplesTestBucketPrefix}-a`;
+const bucketNameDualRegion = `${samplesTestBucketPrefix}-b`;
+const bucketNameWithClassAndLocation = `${samplesTestBucketPrefix}-c`;
 const defaultKmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA;
 const bucket = storage.bucket(bucketName);
 const bucketWithClassAndLocation = storage.bucket(
