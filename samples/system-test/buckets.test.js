@@ -214,6 +214,9 @@ it('should create a dual-region bucket', async () => {
   const output = execSync(
     `node createBucketWithDualRegion.js ${bucketNameDualRegion} ${DUAL_REGION[0]} ${DUAL_REGION[1]}`
   );
+
+  console.dir({output});
+
   assert.match(
     output,
     new RegExp(`${bucketNameDualRegion} created in '${dualRegion}'`)
