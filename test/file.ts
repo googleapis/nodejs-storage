@@ -3974,7 +3974,7 @@ describe('File', () => {
 
     it('with an ampersand in the name', done => {
       const NAME = '&foo';
-      const file =  new File(BUCKET, NAME);
+      const file = new File(BUCKET, NAME);
       assert.strictEqual(
         file.publicUrl(),
         `https://storage.googleapis.com/bucket-name/${encodeURIComponent(NAME)}`
