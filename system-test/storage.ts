@@ -23,7 +23,7 @@ import {promisify} from 'util';
 import * as path from 'path';
 import * as tmp from 'tmp';
 import * as uuid from 'uuid';
-import {ApiError, Metadata} from '@google-cloud/common';
+import {ApiError, Metadata} from '../src/nodejs-common';
 import {
   Storage,
   Bucket,
