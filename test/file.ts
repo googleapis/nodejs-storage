@@ -2386,7 +2386,7 @@ describe('File', () => {
       //   writable.on('error', done);
       // });
 
-      it.only('should validate with crc32c', done => {
+      it('should validate with crc32c', done => {
         const writable = file.createWriteStream({validation: 'crc32c'});
 
         file.startResumableUpload_ = (stream: Duplex) => {

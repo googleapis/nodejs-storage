@@ -21,7 +21,7 @@ import {
   ServiceObject,
   util,
 } from '@google-cloud/common';
-import {promisifyAll} from '@google-cloud/promisify';
+import { promisifyAll } from '@google-cloud/promisify';
 
 import compressible = require('compressible');
 import getStream = require('get-stream');
@@ -34,7 +34,7 @@ const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
 import * as os from 'os';
 import * as resumableUpload from './gcs-resumable-upload';
-import {Writable, Readable, PassThrough, pipeline, Duplex} from 'stream';
+import { Writable, Readable, PassThrough, pipeline, Duplex } from 'stream';
 import * as streamEvents from 'stream-events';
 import * as xdgBasedir from 'xdg-basedir';
 import * as zlib from 'zlib';
@@ -46,8 +46,8 @@ import {
   PreconditionOptions,
   Storage,
 } from './storage';
-import {AvailableServiceObjectMethods, Bucket} from './bucket';
-import {Acl} from './acl';
+import { AvailableServiceObjectMethods, Bucket } from './bucket';
+import { Acl } from './acl';
 import {
   GetSignedUrlResponse,
   SigningError,
@@ -64,7 +64,7 @@ import {
 } from '@google-cloud/common/build/src/util';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');
-import {normalize, objectKeyToLowercase, unicodeJSONStringify} from './util';
+import { normalize, objectKeyToLowercase, unicodeJSONStringify } from './util';
 import retry = require('async-retry');
 
 export type GetExpirationDateResponse = [Date];
@@ -95,7 +95,7 @@ export interface GetSignedPolicyOptions {
   acl?: string;
   successRedirect?: string;
   successStatus?: string;
-  contentLengthRange?: {min?: number; max?: number};
+  contentLengthRange?: { min?: number; max?: number };
 }
 
 export type GenerateSignedPostPolicyV2Options = GetSignedPolicyOptions;
@@ -908,9 +908,9 @@ class File extends ServiceObject<File> {
       (options?.ifGenerationMatch === undefined &&
         this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
-          IdempotencyStrategy.RetryConditional) ||
+        IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
-        IdempotencyStrategy.RetryNever
+      IdempotencyStrategy.RetryNever
     );
   }
 
@@ -1121,7 +1121,7 @@ class File extends ServiceObject<File> {
 
     newFile = newFile! || destBucket.file(destName);
 
-    const headers: {[index: string]: string | undefined} = {};
+    const headers: { [index: string]: string | undefined } = {};
 
     if (this.encryptionKey !== undefined) {
       headers['x-goog-copy-source-encryption-algorithm'] = 'AES256';
@@ -1285,7 +1285,7 @@ class File extends ServiceObject<File> {
    * ```
    */
   createReadStream(options: CreateReadStreamOptions = {}): Readable {
-    options = Object.assign({decompress: true}, options);
+    options = Object.assign({ decompress: true }, options);
     const rangeRequest =
       typeof options.start === 'number' || typeof options.end === 'number';
     const tailRequest = options.end! < 0;
@@ -1362,7 +1362,7 @@ class File extends ServiceObject<File> {
         qs: query,
       };
 
-      const hashes: {crc32c?: string; md5?: string} = {};
+      const hashes: { crc32c?: string; md5?: string } = {};
 
       this.requestStream(reqOpts)
         .on('error', err => {
@@ -1419,7 +1419,7 @@ class File extends ServiceObject<File> {
               });
           }
 
-          validateStream = hashStreamValidation({crc32c, md5});
+          validateStream = hashStreamValidation({ crc32c, md5 });
           throughStreams.push(validateStream);
         }
 
@@ -1430,7 +1430,7 @@ class File extends ServiceObject<File> {
         if (throughStreams.length > 0) {
           rawResponseStream = pipeline(
             [rawResponseStream, ...throughStreams],
-            () => {}
+            () => { }
           );
         }
 
@@ -1438,7 +1438,7 @@ class File extends ServiceObject<File> {
         rawResponseStream
           .on('error', onComplete)
           .on('end', onComplete)
-          .pipe(throughStream, {end: false});
+          .pipe(throughStream, { end: false });
       };
       // This is hooked to the `complete` event from the request stream. This is
       // our chance to validate the data and let the user know if anything went
@@ -1469,7 +1469,7 @@ class File extends ServiceObject<File> {
         // against the compressed version of the object.
         if (!isServedCompressed) {
           try {
-            await this.getMetadata({userProject: options.userProject});
+            await this.getMetadata({ userProject: options.userProject });
           } catch (e) {
             throughStream.destroy(e);
             return;
@@ -1630,9 +1630,9 @@ class File extends ServiceObject<File> {
       (options?.preconditionOpts?.ifGenerationMatch === undefined &&
         this.instancePreconditionOpts?.ifGenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
-          IdempotencyStrategy.RetryConditional) ||
+        IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
-        IdempotencyStrategy.RetryNever
+      IdempotencyStrategy.RetryNever
     ) {
       retryOptions.autoRetry = false;
     }
@@ -1827,7 +1827,7 @@ class File extends ServiceObject<File> {
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
-    options = Object.assign({metadata: {}}, options);
+    options = Object.assign({ metadata: {} }, options);
 
     if (options.contentType) {
       options.metadata.contentType = options.contentType;
@@ -1864,6 +1864,16 @@ class File extends ServiceObject<File> {
       crc32c = false;
     }
 
+    const fileWriteStream = duplexify();
+
+    fileWriteStream.on('progress', evt => {
+      stream.emit('progress', evt);
+    });
+
+    fileWriteStream.on('response', evt => {
+      stream.emit('response', evt);
+    });
+
     // Collect data as it comes in to store in a hash. This is compared to the
     // checksum value on the returned metadata from the API.
     const validateStream = hashStreamValidation({
@@ -1871,13 +1881,57 @@ class File extends ServiceObject<File> {
       md5,
     });
 
-    const fileWriteStream = duplexify();
+    // Compare our hashed version vs the completed upload's version.
+    const compareHash = new PassThrough({
+      final: callback => {
+        const metadata = this.metadata;
 
-    // fileWriteStream.on('progress', evt => {
-    //   stream.emit('progress', evt);
-    // });
+        // If we're doing validation, assume the worst-- a data integrity
+        // mismatch. If not, these tests won't be performed, and we can assume the
+        // best.
+        let failed = crc32c || md5;
 
-    const streamPipeline = pipeline(gzip ? zlib.createGzip() : new PassThrough(), validateStream, fileWriteStream, () => {});
+        if (crc32c && metadata.crc32c) {
+          // We must remove the first four bytes from the returned checksum.
+          // http://stackoverflow.com/questions/25096737/
+          //   base64-encoding-of-crc32c-long-value
+          failed = !validateStream.test('crc32c', metadata.crc32c.substr(4));
+        }
+
+        if (md5 && metadata.md5Hash) {
+          failed = !validateStream.test('md5', metadata.md5Hash);
+        }
+
+        if (failed) {
+          this.delete((err: ApiError) => {
+            let code;
+            let message;
+
+            if (err) {
+              code = 'FILE_NO_UPLOAD_DELETE';
+              message = `${FileExceptionMessages.UPLOAD_MISMATCH_DELETE_FAIL}${err.message}`;
+            } else if (md5 && !metadata.md5Hash) {
+              code = 'MD5_NOT_AVAILABLE';
+              message = FileExceptionMessages.MD5_NOT_AVAILABLE;
+            } else {
+              code = 'FILE_NO_UPLOAD';
+              message = FileExceptionMessages.UPLOAD_MISMATCH;
+            }
+
+            const error = new RequestError(message);
+            error.code = code;
+            error.errors = [err!];
+
+            callback(error);
+          });
+        }
+        else {
+          callback();
+        }
+      }
+    });
+
+    const streamPipeline = pipeline(gzip ? zlib.createGzip() : new PassThrough(), validateStream, fileWriteStream, compareHash, () => { });
     const stream = streamEvents(streamPipeline) as Duplex;
 
     // Wait until we've received data to determine what upload technique to use.
@@ -1916,7 +1970,7 @@ class File extends ServiceObject<File> {
         // it now to confirm that it won't have any issues. That way, if we catch the
         // issue before we start the resumable upload, we can instead start a simple
         // upload.
-        fs.mkdir(configDir, {mode: 0o0700}, err => {
+        fs.mkdir(configDir, { mode: 0o0700 }, err => {
           if (!err) {
             // We successfully created a configuration directory that
             // gcs-resumable-upload will use.
@@ -1951,68 +2005,6 @@ class File extends ServiceObject<File> {
           }
         });
       });
-    });
-
-
-    // This is to preserve the `finish` event. We wait until the request stream
-    // emits "complete", as that is when we do validation of the data. After
-    // that is successful, we can allow the stream to naturally finish.
-    //
-    // Reference for tracking when we can use a non-hack solution:
-    // https://github.com/nodejs/node/pull/2314
-    // TODO: ^ we do not need this anymore... - e.g. setup `_final` handler
-    fileWriteStream.on('prefinish', () => {
-      stream.cork();
-    });
-
-    // Compare our hashed version vs the completed upload's version.
-    fileWriteStream.on('complete', () => {
-      console.log("in on complete")
-      const metadata = this.metadata;
-
-      // If we're doing validation, assume the worst-- a data integrity
-      // mismatch. If not, these tests won't be performed, and we can assume the
-      // best.
-      let failed = crc32c || md5;
-
-      if (crc32c && metadata.crc32c) {
-        // We must remove the first four bytes from the returned checksum.
-        // http://stackoverflow.com/questions/25096737/
-        //   base64-encoding-of-crc32c-long-value
-        failed = !validateStream.test('crc32c', metadata.crc32c.substr(4));
-      }
-
-      if (md5 && metadata.md5Hash) {
-        failed = !validateStream.test('md5', metadata.md5Hash);
-      }
-
-      if (failed) {
-        this.delete((err: ApiError) => {
-          let code;
-          let message;
-
-          if (err) {
-            code = 'FILE_NO_UPLOAD_DELETE';
-            message = `${FileExceptionMessages.UPLOAD_MISMATCH_DELETE_FAIL}${err.message}`;
-          } else if (md5 && !metadata.md5Hash) {
-            code = 'MD5_NOT_AVAILABLE';
-            message = FileExceptionMessages.MD5_NOT_AVAILABLE;
-          } else {
-            code = 'FILE_NO_UPLOAD';
-            message = FileExceptionMessages.UPLOAD_MISMATCH;
-          }
-
-          const error = new RequestError(message);
-          error.code = code;
-          error.errors = [err!];
-
-          fileWriteStream.destroy(error);
-        });
-
-        return;
-      }
-
-      stream.uncork();
     });
 
     return stream as Writable;
@@ -2754,7 +2746,7 @@ class File extends ServiceObject<File> {
     const todayISO = dateFormat.format(now, 'YYYYMMDD', true);
 
     const sign = async () => {
-      const {client_email} = await this.storage.authClient.getCredentials();
+      const { client_email } = await this.storage.authClient.getCredentials();
       const credential = `${client_email}/${todayISO}/auto/storage/goog4_request`;
 
       fields = {
@@ -2770,7 +2762,7 @@ class File extends ServiceObject<File> {
 
       Object.entries(fields).forEach(([key, value]) => {
         if (!key.startsWith('x-ignore-')) {
-          conditions.push({[key]: value});
+          conditions.push({ [key]: value });
         }
       });
 
@@ -3109,9 +3101,8 @@ class File extends ServiceObject<File> {
     const allInterceptors = storageInterceptors.concat(fileInterceptors);
     const headers = allInterceptors.reduce((acc, curInterceptor) => {
       const currentHeaders = curInterceptor.request({
-        uri: `${this.storage.apiEndpoint}/${
-          this.bucket.name
-        }/${encodeURIComponent(this.name)}`,
+        uri: `${this.storage.apiEndpoint}/${this.bucket.name
+          }/${encodeURIComponent(this.name)}`,
       });
 
       Object.assign(acc, currentHeaders.headers);
@@ -3121,9 +3112,8 @@ class File extends ServiceObject<File> {
     util.makeRequest(
       {
         method: 'HEAD',
-        uri: `${this.storage.apiEndpoint}/${
-          this.bucket.name
-        }/${encodeURIComponent(this.name)}`,
+        uri: `${this.storage.apiEndpoint}/${this.bucket.name
+          }/${encodeURIComponent(this.name)}`,
         headers,
       },
       {
@@ -3232,7 +3222,7 @@ class File extends ServiceObject<File> {
     // You aren't allowed to set both predefinedAcl & acl properties on a file,
     // so acl must explicitly be nullified, destroying all previous acls on the
     // file.
-    const metadata = extend({}, options.metadata, {acl: null});
+    const metadata = extend({}, options.metadata, { acl: null });
 
     this.setMetadata(metadata, query, callback!);
     this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -3973,7 +3963,7 @@ class File extends ServiceObject<File> {
       public: options.public,
       uri: options.uri,
       userProject: options.userProject || this.userProject,
-      retryOptions: {...retryOptions},
+      retryOptions: { ...retryOptions },
       params: options?.preconditionOpts || this.instancePreconditionOpts,
       chunkSize: options?.chunkSize,
     });
@@ -3981,6 +3971,7 @@ class File extends ServiceObject<File> {
     uploadStream
       .on('response', resp => {
         dup.emit('response', resp);
+        console.log("emitted response")
       })
       .on('metadata', metadata => {
         this.metadata = metadata;
@@ -4081,9 +4072,9 @@ class File extends ServiceObject<File> {
         coreOpts?.reqOpts?.qs?.ifGenerationMatch === undefined &&
         methodType === AvailableServiceObjectMethods.setMetadata &&
         this.storage.retryOptions.idempotencyStrategy ===
-          IdempotencyStrategy.RetryConditional) ||
+        IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
-        IdempotencyStrategy.RetryNever
+      IdempotencyStrategy.RetryNever
     ) {
       this.storage.retryOptions.autoRetry = false;
     }
@@ -4110,4 +4101,4 @@ promisifyAll(File, {
  * @name module:@google-cloud/storage.File
  * @see File
  */
-export {File};
+export { File };
