@@ -1727,11 +1727,9 @@ class File extends ServiceObject<File> {
    *     CRC32c checksum. You may use MD5 if preferred, but that hash is not
    *     supported for composite objects. An error will be raised if MD5 is
    *     specified but is not available. You may also choose to skip validation
-   *     completely, however this is **not recommended**. If using CRC32c
-   *     the checksum can be set in `metadata.crc32c`. For MD5 the hash can
-   *     be set in `metadata.md5Hash`. Providing `metadata.crc32c` or
-   *     `metadata.md5Hash` will cause the server to perform validation in
-   *     addition to client validation.
+   *     completely, however this is **not recommended**. In addition to specifying
+   *     validation type, providing `metadata.crc32c` or `metadata.md5Hash` will
+   *     cause the server to perform validation in addition to client validation.
    *     NOTE: Validation is automatically skipped for objects that were
    *     uploaded using the `gzip` option and have already compressed content.
    */
