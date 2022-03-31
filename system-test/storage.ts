@@ -942,14 +942,15 @@ describe('storage', () => {
       return bucket.create();
     };
 
-    const setUniformBucketLevelAccess = (bucket: Bucket, enabled: boolean) =>
-      bucket.setMetadata({
+    const setUniformBucketLevelAccess = (bucket: Bucket, enabled: boolean) => {
+      return bucket.setMetadata({
         iamConfiguration: {
           uniformBucketLevelAccess: {
             enabled,
           },
         },
       });
+    };
 
     describe('files', () => {
       before(createBucket);
