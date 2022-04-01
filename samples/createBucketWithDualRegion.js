@@ -48,7 +48,7 @@ function main(
   const storage = new Storage();
 
   async function createDualRegionBucket() {
-    // For regions supporting dual regions see: https://cloud.google.com/storage/docs/locations
+    // For regions supporting dual-regions see: https://cloud.google.com/storage/docs/locations
     const [bucket] = await storage.createBucket(bucketName, {
       location: `${region1}+${region2}`, // e.g. `US-EAST1+US-WEST1`
     });

@@ -929,7 +929,7 @@ describe('storage', () => {
     });
   });
 
-  describe('dual region', () => {
+  describe('dual-region', () => {
     let bucket: Bucket;
 
     const REGION1 = 'US-EAST1';
@@ -939,7 +939,7 @@ describe('storage', () => {
       bucket = storage.bucket(generateName());
     });
 
-    it('creates a dual region bucket', async () => {
+    it('creates a dual-region bucket', async () => {
       const dualRegion = `${REGION1}+${REGION2}`;
       await bucket.create({location: dualRegion});
 
