@@ -19,7 +19,7 @@ import {
   ServiceObject,
   ServiceObjectConfig,
   util,
-} from '@google-cloud/common';
+} from '../src/nodejs-common';
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
@@ -205,7 +205,7 @@ describe('File', () => {
 
   before(() => {
     File = proxyquire('../src/file.js', {
-      '@google-cloud/common': {
+      './nodejs-common': {
         ServiceObject: FakeServiceObject,
         util: fakeUtil,
       },
@@ -3937,7 +3937,7 @@ describe('File', () => {
       const file = new File(BUCKET, NAME);
       assert.strictEqual(
         file.publicUrl(),
-        `https://storage.googleapis.com/bucket-name/${NAME}`
+        `https://storage.googleapis.com/bucket-name/${encodeURIComponent(NAME)}`
       );
       done();
     });
@@ -3947,7 +3947,7 @@ describe('File', () => {
       const file = new File(BUCKET, NAME);
       assert.strictEqual(
         file.publicUrl(),
-        `https://storage.googleapis.com/bucket-name/${NAME}`
+        `https://storage.googleapis.com/bucket-name/${encodeURIComponent(NAME)}`
       );
       done();
     });
@@ -3957,7 +3957,7 @@ describe('File', () => {
       const file = new File(BUCKET, NAME);
       assert.strictEqual(
         file.publicUrl(),
-        `https://storage.googleapis.com/bucket-name/${NAME}`
+        `https://storage.googleapis.com/bucket-name/${encodeURIComponent(NAME)}`
       );
       done();
     });
@@ -3967,7 +3967,17 @@ describe('File', () => {
       const file = new File(BUCKET, NAME);
       assert.strictEqual(
         file.publicUrl(),
-        `https://storage.googleapis.com/bucket-name/${NAME}`
+        `https://storage.googleapis.com/bucket-name/${encodeURIComponent(NAME)}`
+      );
+      done();
+    });
+
+    it('with an ampersand in the name', done => {
+      const NAME = '&foo';
+      const file = new File(BUCKET, NAME);
+      assert.strictEqual(
+        file.publicUrl(),
+        `https://storage.googleapis.com/bucket-name/${encodeURIComponent(NAME)}`
       );
       done();
     });

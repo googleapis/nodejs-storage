@@ -12,12 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ApiError,
-  Metadata,
-  Service,
-  ServiceOptions,
-} from '@google-cloud/common';
+import {ApiError, Metadata, Service, ServiceOptions} from './nodejs-common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import arrify = require('arrify');
@@ -540,7 +535,7 @@ export class Storage extends Service {
    * @property {number} [timeout] The amount of time in milliseconds to wait per http request before timing out.
    * @property {object[]} [interceptors_] Array of custom request interceptors to be returned in the order they were assigned.
    * @property {string} [apiEndpoint = storage.google.com] The API endpoint of the service used to make requests.
-   * @property {boolean} [useAuthWithCustomEndpoint] Controls whether or not to use authentication when using a custom endpoint.
+   * @property {boolean} [useAuthWithCustomEndpoint = false] Controls whether or not to use authentication when using a custom endpoint.
    */
   /**
    * Constructs the Storage client.

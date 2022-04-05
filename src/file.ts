@@ -20,7 +20,7 @@ import {
   Metadata,
   ServiceObject,
   util,
-} from '@google-cloud/common';
+} from './nodejs-common';
 import {promisifyAll} from '@google-cloud/promisify';
 
 import compressible = require('compressible');
@@ -61,7 +61,7 @@ import {
   ApiError,
   Duplexify,
   DuplexifyConstructor,
-} from '@google-cloud/common/build/src/util';
+} from './nodejs-common/util';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');
 import {normalize, objectKeyToLowercase, unicodeJSONStringify} from './util';
@@ -1542,6 +1542,7 @@ class File extends ServiceObject<File> {
    * @property {string} [configPath] A full JSON file path to use with
    *     `gcs-resumable-upload`. This maps to the {@link https://github.com/yeoman/configstore/tree/0df1ec950d952b1f0dfb39ce22af8e505dffc71a#configpath| configstore option by the same name}.
    * @property {object} [metadata] Metadata to set on the file.
+   * @property {number} [offset] The starting byte of the upload stream for resuming an interrupted upload.
    * @property {string} [origin] Origin header to set for the upload.
    * @property {string} [predefinedAcl] Apply a predefined set of access
    * controls to this object.
@@ -1722,7 +1723,9 @@ class File extends ServiceObject<File> {
    *     CRC32c checksum. You may use MD5 if preferred, but that hash is not
    *     supported for composite objects. An error will be raised if MD5 is
    *     specified but is not available. You may also choose to skip validation
-   *     completely, however this is **not recommended**.
+   *     completely, however this is **not recommended**. In addition to specifying
+   *     validation type, providing `metadata.crc32c` or `metadata.md5Hash` will
+   *     cause the server to perform validation in addition to client validation.
    *     NOTE: Validation is automatically skipped for objects that were
    *     uploaded using the `gzip` option and have already compressed content.
    */
@@ -3308,7 +3311,9 @@ class File extends ServiceObject<File> {
    * ```
    */
   publicUrl(): string {
-    return `${this.storage.apiEndpoint}/${this.bucket.name}/${this.name}`;
+    return `${this.storage.apiEndpoint}/${
+      this.bucket.name
+    }/${encodeURIComponent(this.name)}`;
   }
 
   move(

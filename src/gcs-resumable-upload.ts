@@ -26,7 +26,7 @@ import * as gaxios from 'gaxios';
 import {GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {Readable, Writable} from 'stream';
 import retry = require('async-retry');
-import {RetryOptions, PreconditionOptions} from '../storage';
+import {RetryOptions, PreconditionOptions} from './storage';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const TERMINATED_UPLOAD_STATUS_CODE = 410;
