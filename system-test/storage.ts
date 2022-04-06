@@ -1332,7 +1332,7 @@ describe('storage', () => {
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
-          matches_prefix: [TESTS_PREFIX]
+          matches_prefix: [TESTS_PREFIX],
         },
       });
 
@@ -1352,7 +1352,7 @@ describe('storage', () => {
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
-          matches_suffix: [TESTS_PREFIX, "test_suffix"]
+          matches_suffix: [TESTS_PREFIX, 'test_suffix'],
         },
       });
 
@@ -1365,7 +1365,6 @@ describe('storage', () => {
         )
       );
     });
-
 
     it('should convert a rule with createdBefore to a date in string', done => {
       bucket.addLifecycleRule(
@@ -1439,7 +1438,6 @@ describe('storage', () => {
     });
 
     it('should append a prefix & suffix rules to existing rules', async () => {
-
       const CUSTOM_TIME_BEFORE = '2020-01-01';
 
       await bucket.addLifecycleRule({
@@ -1450,13 +1448,16 @@ describe('storage', () => {
         },
       });
 
-      await bucket.addLifecycleRule({
-        action: 'delete',
-        condition: {
-          matches_prefix: [TESTS_PREFIX],
-          matches_suffix: [TESTS_PREFIX]
+      await bucket.addLifecycleRule(
+        {
+          action: 'delete',
+          condition: {
+            matches_prefix: [TESTS_PREFIX],
+            matches_suffix: [TESTS_PREFIX],
+          },
         },
-      }, {append: true});
+        {append: true}
+      );
 
       assert(
         bucket.metadata.lifecycle.rule.some(
