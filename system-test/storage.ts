@@ -1328,6 +1328,45 @@ describe('storage', () => {
       );
     });
 
+    it('should add a prefix rule', async () => {
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          matches_prefix: [TESTS_PREFIX]
+        },
+      });
+
+      assert(
+        bucket.metadata.lifecycle.rule.some(
+          (rule: LifecycleRule) =>
+            typeof rule.action === 'object' &&
+            rule.action.type === 'Delete' &&
+            typeof rule.condition.matches_prefix === 'object' &&
+            (rule.condition.matches_prefix as string[]).length === 1 &&
+            (rule.condition.matches_prefix as string[])[0] === TESTS_PREFIX
+        )
+      );
+    });
+
+    it('should add a suffix rule', async () => {
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          matches_suffix: [TESTS_PREFIX, "test_suffix"]
+        },
+      });
+
+      assert(
+        bucket.metadata.lifecycle.rule.some(
+          (rule: LifecycleRule) =>
+            typeof rule.action === 'object' &&
+            rule.action.type === 'Delete' &&
+            (rule.condition.matches_suffix as string[]).length === 2
+        )
+      );
+    });
+
+
     it('should convert a rule with createdBefore to a date in string', done => {
       bucket.addLifecycleRule(
         {
@@ -1395,6 +1434,39 @@ describe('storage', () => {
             rule.action.type === 'Delete' &&
             rule.condition.customTimeBefore === CUSTOM_TIME_BEFORE &&
             rule.condition.daysSinceCustomTime === 100
+        )
+      );
+    });
+
+    it('should append a prefix & suffix rules to existing rules', async () => {
+
+      const CUSTOM_TIME_BEFORE = '2020-01-01';
+
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          customTimeBefore: new Date(CUSTOM_TIME_BEFORE),
+          daysSinceCustomTime: 100,
+        },
+      });
+
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          matches_prefix: [TESTS_PREFIX],
+          matches_suffix: [TESTS_PREFIX]
+        },
+      }, {append: true});
+
+      assert(
+        bucket.metadata.lifecycle.rule.some(
+          (rule: LifecycleRule) =>
+            typeof rule.action === 'object' &&
+            rule.action.type === 'Delete' &&
+            rule.condition.customTimeBefore === CUSTOM_TIME_BEFORE &&
+            rule.condition.daysSinceCustomTime === 100 &&
+            (rule.condition.matches_prefix as string[]).length === 1 &&
+            (rule.condition.matches_suffix as string[]).length === 1
         )
       );
     });
