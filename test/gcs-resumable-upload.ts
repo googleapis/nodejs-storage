@@ -536,7 +536,7 @@ describe('gcs-resumable-upload', () => {
 
           // setting up the listener now to prove it hasn't been fired before
           up.on('finish', done);
-          up.emit('uploadFinished');
+          process.nextTick(() => up.emit('uploadFinished'));
         });
       });
 
