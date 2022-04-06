@@ -1332,11 +1332,7 @@ describe('storage', () => {
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
-<<<<<<< HEAD
           matchesPrefix: [TESTS_PREFIX]
-=======
-          matches_prefix: [TESTS_PREFIX],
->>>>>>> 625788e33cc329b771c024a4d225fc8b43ac8256
         },
       });
 
