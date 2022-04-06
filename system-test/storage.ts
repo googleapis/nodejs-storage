@@ -1332,7 +1332,7 @@ describe('storage', () => {
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
-          matches_prefix: [TESTS_PREFIX]
+          matchesPrefix: [TESTS_PREFIX]
         },
       });
 
@@ -1341,9 +1341,9 @@ describe('storage', () => {
           (rule: LifecycleRule) =>
             typeof rule.action === 'object' &&
             rule.action.type === 'Delete' &&
-            typeof rule.condition.matches_prefix === 'object' &&
-            (rule.condition.matches_prefix as string[]).length === 1 &&
-            (rule.condition.matches_prefix as string[])[0] === TESTS_PREFIX
+            typeof rule.condition.matchesPrefix === 'object' &&
+            (rule.condition.matchesPrefix as string[]).length === 1 &&
+            (rule.condition.matchesPrefix as string[])[0] === TESTS_PREFIX
         )
       );
     });
@@ -1352,7 +1352,7 @@ describe('storage', () => {
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
-          matches_suffix: [TESTS_PREFIX, "test_suffix"]
+          matchesSuffix: [TESTS_PREFIX, "test_suffix"]
         },
       });
 
@@ -1361,7 +1361,7 @@ describe('storage', () => {
           (rule: LifecycleRule) =>
             typeof rule.action === 'object' &&
             rule.action.type === 'Delete' &&
-            (rule.condition.matches_suffix as string[]).length === 2
+            (rule.condition.matchesSuffix as string[]).length === 2
         )
       );
     });
@@ -1453,8 +1453,8 @@ describe('storage', () => {
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
-          matches_prefix: [TESTS_PREFIX],
-          matches_suffix: [TESTS_PREFIX]
+          matchesPrefix: [TESTS_PREFIX],
+          matchesSuffix: [TESTS_PREFIX]
         },
       }, {append: true});
 
@@ -1465,8 +1465,8 @@ describe('storage', () => {
             rule.action.type === 'Delete' &&
             rule.condition.customTimeBefore === CUSTOM_TIME_BEFORE &&
             rule.condition.daysSinceCustomTime === 100 &&
-            (rule.condition.matches_prefix as string[]).length === 1 &&
-            (rule.condition.matches_suffix as string[]).length === 1
+            (rule.condition.matchesPrefix as string[]).length === 1 &&
+            (rule.condition.matchesSuffix as string[]).length === 1
         )
       );
     });
