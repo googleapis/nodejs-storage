@@ -1332,7 +1332,11 @@ describe('storage', () => {
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
+<<<<<<< HEAD
           matchesPrefix: [TESTS_PREFIX]
+=======
+          matches_prefix: [TESTS_PREFIX],
+>>>>>>> 625788e33cc329b771c024a4d225fc8b43ac8256
         },
       });
 
@@ -1365,7 +1369,6 @@ describe('storage', () => {
         )
       );
     });
-
 
     it('should convert a rule with createdBefore to a date in string', done => {
       bucket.addLifecycleRule(
@@ -1439,7 +1442,6 @@ describe('storage', () => {
     });
 
     it('should append a prefix & suffix rules to existing rules', async () => {
-
       const CUSTOM_TIME_BEFORE = '2020-01-01';
 
       await bucket.addLifecycleRule({
@@ -1456,7 +1458,8 @@ describe('storage', () => {
           matchesPrefix: [TESTS_PREFIX],
           matchesSuffix: [TESTS_PREFIX]
         },
-      }, {append: true});
+        {append: true}
+      );
 
       assert(
         bucket.metadata.lifecycle.rule.some(
