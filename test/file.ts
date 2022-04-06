@@ -57,6 +57,7 @@ import {
   FileExceptionMessages,
 } from '../src/file';
 import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
+import {Duplexify} from '../src/nodejs-common/util';
 
 class HTTPError extends Error {
   code: number;
@@ -203,6 +204,8 @@ describe('File', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let BUCKET: any;
 
+  let sandbox: sinon.SinonSandbox;
+
   before(() => {
     File = proxyquire('../src/file.js', {
       './nodejs-common': {
@@ -221,6 +224,8 @@ describe('File', () => {
   });
 
   beforeEach(() => {
+    sandbox = sinon.createSandbox();
+
     extend(true, fakeFs, fsCached);
     extend(true, fakeOs, osCached);
     xdgConfigOverride = null;
@@ -269,6 +274,10 @@ describe('File', () => {
     hashStreamValidationOverride = null;
     makeWritableStreamOverride = null;
     resumableUploadOverride = null;
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   describe('initialization', () => {
@@ -2345,113 +2354,87 @@ describe('File', () => {
       writable.write('data');
     });
 
-    // it('should cork data on prefinish', done => {
-    //   const writable = file.createWriteStream({resumable: false});
-
-    //   file.startSimpleUpload_ = (stream: Duplex) => {
-    //     assert.strictEqual(writable._corked, 0);
-    //     stream.emit('prefinish');
-    //     assert.strictEqual(writable._corked, 1);
-    //     done();
-    //   };
-
-    //   writable.end('data');
-    // });
-
     describe('validation', () => {
-      const data = 'test';
-
+      const data = 'test' as const;
       const fakeMetadata = {
         crc32c: {crc32c: '####wA=='},
         md5: {md5Hash: 'CY9rzUYh03PK3k6DJie09g=='},
-      };
+      } as const;
 
-      // it('should uncork after successful write', done => {
-      //   const writable = file.createWriteStream({validation: 'crc32c'});
+      let deleteSpy: sinon.SinonSpy;
 
-      //   file.startResumableUpload_ = (stream: Duplex) => {
-      //     setImmediate(() => {
-      //       assert.strictEqual(writable._corked, 1);
+      beforeEach(() => {
+        file.delete = (cb: Function) => cb();
 
-      //       file.metadata = fakeMetadata.crc32c;
-      //       stream.emit('complete');
-
-      //       assert.strictEqual(writable._corked, 0);
-      //       done();
-      //     });
-      //   };
-
-      //   writable.end(data);
-
-      //   writable.on('error', done);
-      // });
+        deleteSpy = sandbox.spy(file, 'delete');
+      });
 
       it('should validate with crc32c', done => {
         const writable = file.createWriteStream({validation: 'crc32c'});
 
-        file.startResumableUpload_ = (stream: Duplex) => {
+        file.startResumableUpload_ = (stream: Duplexify) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.crc32c;
-            stream.emit('complete');
+            stream.setWritable(new PassThrough());
           });
         };
 
-        writable.end(data);
+        writable.on('error', done).on('finish', () => {
+          sinon.assert.notCalled(deleteSpy);
+          done();
+        });
 
-        writable.on('error', done).on('finish', done);
+        writable.end(data);
       });
 
       it('should emit an error if crc32c validation fails', done => {
         const writable = file.createWriteStream({validation: 'crc32c'});
 
-        file.startResumableUpload_ = (stream: Duplex) => {
+        file.startResumableUpload_ = (stream: Duplexify) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.crc32c;
-            stream.emit('complete');
+            stream.setWritable(new PassThrough());
           });
         };
 
-        file.delete = (cb: Function) => {
-          cb();
-        };
+        writable.on('error', (err: ApiError) => {
+          assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
+          sinon.assert.calledOnce(deleteSpy);
+
+          done();
+        });
 
         writable.write('bad-data');
         writable.end();
-
-        writable.on('error', (err: ApiError) => {
-          assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
-          done();
-        });
       });
 
       it('should validate with md5', done => {
         const writable = file.createWriteStream({validation: 'md5'});
 
-        file.startResumableUpload_ = (stream: Duplex) => {
+        file.startResumableUpload_ = (stream: Duplexify) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.md5;
-            stream.emit('complete');
+            stream.setWritable(new PassThrough());
           });
         };
 
         writable.write(data);
         writable.end();
 
-        writable.on('error', done).on('finish', done);
+        writable.on('error', done).on('finish', () => {
+          sinon.assert.notCalled(deleteSpy);
+          done();
+        });
       });
 
       it('should emit an error if md5 validation fails', done => {
         const writable = file.createWriteStream({validation: 'md5'});
 
-        file.startResumableUpload_ = (stream: Duplex) => {
+        file.startResumableUpload_ = (stream: Duplexify) => {
           setImmediate(() => {
             file.metadata = fakeMetadata.md5;
-            stream.emit('complete');
+            stream.setWritable(new PassThrough());
           });
-        };
-
-        file.delete = (cb: Function) => {
-          cb();
         };
 
         writable.write('bad-data');
@@ -2459,6 +2442,8 @@ describe('File', () => {
 
         writable.on('error', (err: ApiError) => {
           assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
+          sinon.assert.calledOnce(deleteSpy);
+
           done();
         });
       });
@@ -2466,15 +2451,11 @@ describe('File', () => {
       it('should default to md5 validation', done => {
         const writable = file.createWriteStream();
 
-        file.startResumableUpload_ = (stream: Duplex) => {
+        file.startResumableUpload_ = (stream: Duplexify) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
-            stream.emit('complete');
+            stream.setWritable(new PassThrough());
           });
-        };
-
-        file.delete = (cb: Function) => {
-          cb();
         };
 
         writable.write(data);
@@ -2482,6 +2463,8 @@ describe('File', () => {
 
         writable.on('error', (err: ApiError) => {
           assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
+          sinon.assert.calledOnce(deleteSpy);
+
           done();
         });
       });
@@ -2489,10 +2472,10 @@ describe('File', () => {
       it('should ignore a data mismatch if validation: false', done => {
         const writable = file.createWriteStream({validation: false});
 
-        file.startResumableUpload_ = (stream: Duplex) => {
+        file.startResumableUpload_ = (stream: Duplexify) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
-            stream.emit('complete');
+            stream.setWritable(new PassThrough());
           });
         };
 
@@ -2500,22 +2483,27 @@ describe('File', () => {
         writable.end();
 
         writable.on('error', done);
-        writable.on('finish', done);
+        writable.on('finish', () => {
+          sinon.assert.notCalled(deleteSpy);
+
+          done();
+        });
       });
 
       it('should delete the file if validation fails', done => {
         const writable = file.createWriteStream();
 
-        file.startResumableUpload_ = (stream: Duplex) => {
+        file.startResumableUpload_ = (stream: Duplexify) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
-            stream.emit('complete');
+            stream.setWritable(new PassThrough());
           });
         };
 
-        file.delete = () => {
+        writable.on('error', () => {
+          sinon.assert.calledOnce(deleteSpy);
           done();
-        };
+        });
 
         writable.write(data);
         writable.end();
@@ -2524,15 +2512,11 @@ describe('File', () => {
       it('should emit an error if MD5 is requested but absent', done => {
         const writable = file.createWriteStream({validation: 'md5'});
 
-        file.startResumableUpload_ = (stream: Duplex) => {
+        file.startResumableUpload_ = (stream: Duplexify) => {
           setImmediate(() => {
             file.metadata = {crc32c: 'not-md5'};
-            stream.emit('complete');
+            stream.setWritable(new PassThrough());
           });
-        };
-
-        file.delete = (cb: Function) => {
-          cb();
         };
 
         writable.write(data);
@@ -2540,6 +2524,8 @@ describe('File', () => {
 
         writable.on('error', (err: ApiError) => {
           assert.strictEqual(err.code, 'MD5_NOT_AVAILABLE');
+          sinon.assert.calledOnce(deleteSpy);
+
           done();
         });
       });
@@ -2547,10 +2533,10 @@ describe('File', () => {
       it('should emit a different error if delete fails', done => {
         const writable = file.createWriteStream();
 
-        file.startResumableUpload_ = (stream: Duplex) => {
+        file.startResumableUpload_ = (stream: Duplexify) => {
           setImmediate(() => {
             file.metadata = {md5Hash: 'bad-hash'};
-            stream.emit('complete');
+            stream.setWritable(new PassThrough());
           });
         };
 
@@ -2565,7 +2551,7 @@ describe('File', () => {
 
         writable.on('error', (err: ApiError) => {
           assert.strictEqual(err.code, 'FILE_NO_UPLOAD_DELETE');
-          assert(err.message.indexOf(deleteErrorMessage) > -1);
+          assert(err.message.includes(deleteErrorMessage));
           done();
         });
       });

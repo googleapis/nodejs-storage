@@ -34,7 +34,7 @@ const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
 import * as os from 'os';
 import * as resumableUpload from './gcs-resumable-upload';
-import {Writable, Readable, PassThrough, pipeline, Duplex} from 'stream';
+import {Writable, Readable, PassThrough, pipeline} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as xdgBasedir from 'xdg-basedir';
 import * as zlib from 'zlib';
@@ -1831,6 +1831,10 @@ class File extends ServiceObject<File> {
   createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
     options = Object.assign({metadata: {}}, options);
 
+    // The source from which the caller can write to
+    const source = streamEvents(new PassThrough());
+    const fileWriteStream = duplexify();
+
     if (options.contentType) {
       options.metadata.contentType = options.contentType;
     }
@@ -1855,6 +1859,8 @@ class File extends ServiceObject<File> {
       options.metadata.contentEncoding = 'gzip';
     }
 
+    const gzipStream = gzip ? zlib.createGzip() : new PassThrough();
+
     let crc32c = true;
     let md5 = false;
 
@@ -1866,25 +1872,12 @@ class File extends ServiceObject<File> {
       crc32c = false;
     }
 
-    const fileWriteStream = duplexify();
-
-    fileWriteStream.on('progress', evt => {
-      stream.emit('progress', evt);
-    });
-
-    fileWriteStream.on('response', evt => {
-      stream.emit('response', evt);
-    });
-
     // Collect data as it comes in to store in a hash. This is compared to the
     // checksum value on the returned metadata from the API.
-    const validateStream = hashStreamValidation({
-      crc32c,
-      md5,
-    });
+    const streamHash = hashStreamValidation({crc32c, md5});
 
     // Compare our hashed version vs the completed upload's version.
-    const compareHash = new PassThrough({
+    const validateStream = new PassThrough({
       final: callback => {
         const metadata = this.metadata;
 
@@ -1897,11 +1890,11 @@ class File extends ServiceObject<File> {
           // We must remove the first four bytes from the returned checksum.
           // http://stackoverflow.com/questions/25096737/
           //   base64-encoding-of-crc32c-long-value
-          failed = !validateStream.test('crc32c', metadata.crc32c.substr(4));
+          failed = !streamHash.test('crc32c', metadata.crc32c.substr(4));
         }
 
         if (md5 && metadata.md5Hash) {
-          failed = !validateStream.test('md5', metadata.md5Hash);
+          failed = !streamHash.test('md5', metadata.md5Hash);
         }
 
         if (failed) {
@@ -1932,17 +1925,8 @@ class File extends ServiceObject<File> {
       },
     });
 
-    const streamPipeline = pipeline(
-      gzip ? zlib.createGzip() : new PassThrough(),
-      validateStream,
-      fileWriteStream,
-      compareHash,
-      () => {}
-    );
-    const stream = streamEvents(streamPipeline) as Duplex;
-
     // Wait until we've received data to determine what upload technique to use.
-    stream.once('writing', () => {
+    source.once('writing', () => {
       if (options.resumable === false) {
         this.startSimpleUpload_(fileWriteStream, options);
         return;
@@ -2004,7 +1988,7 @@ class File extends ServiceObject<File> {
               } else {
                 error.additionalInfo = 'The directory is read-only.';
               }
-              stream.destroy(error);
+              source.destroy(error);
             });
           } else {
             // The user didn't care, resumable or not. Fall back to simple upload.
@@ -2014,7 +1998,51 @@ class File extends ServiceObject<File> {
       });
     });
 
-    return stream as Writable;
+    let streamFinishCallback: (e: Error | null) => void = () => {};
+
+    const pipelineCallback = (error: Error | null) => {
+      streamFinishCallback(error);
+
+      if (error) {
+        stream.emit('error', error);
+      } else if (stream.writable) {
+        // If the underlying pipeline has finished before upstream, then destroy
+        // the stream
+        stream.destroy(error || undefined);
+      }
+    };
+
+    // `duplexify` doesn't emit 'end' properly; adding for 'pipeline' to end properly
+    fileWriteStream.on('finish', () => fileWriteStream.emit('end'));
+
+    pipeline(
+      source,
+      gzipStream,
+      streamHash,
+      fileWriteStream,
+      validateStream,
+      pipelineCallback
+    );
+
+    const stream = new Writable({
+      autoDestroy: true,
+      // destroy the pipeline source stream when this stream is destroyed
+      destroy: e => (e ? source.destroy(e) : source.destroy()),
+      // pass writes to the source stream
+      write: source.write.bind(source),
+      // prevent 'finish' until the pipeline has finished
+      final: callback => {
+        streamFinishCallback = callback;
+
+        source.end();
+      },
+    });
+
+    // re-publish events for callers
+    fileWriteStream.on('progress', evt => stream.emit('progress', evt));
+    fileWriteStream.on('response', evt => stream.emit('response', evt));
+
+    return stream;
   }
 
   /**
