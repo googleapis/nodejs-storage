@@ -1296,6 +1296,8 @@ describe('storage', () => {
   });
 
   describe('bucket object lifecycle management', () => {
+    const CUSTOM_TIME_BEFORE = '2020-01-01';
+
     it('should add a rule', done => {
       bucket.addLifecycleRule(
         {
@@ -1401,8 +1403,6 @@ describe('storage', () => {
     });
 
     it('should add a custom time rule', async () => {
-      const CUSTOM_TIME_BEFORE = '2020-01-01';
-
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
@@ -1432,6 +1432,55 @@ describe('storage', () => {
           assert.strictEqual(bucket.metadata.lifecycle, undefined);
           done();
         }
+      );
+    });
+
+    it('should add a lifecycle management for multipart upload rule', async () => {
+      await bucket.addLifecycleRule({
+        action: 'AbortIncompleteMultipartUpload',
+        condition: {
+          age: 7,
+        },
+      });
+
+      assert(
+        bucket.metadata.lifecycle.rule.some(
+          (rule: LifecycleRule) =>
+            typeof rule.action === 'object' &&
+            rule.action.type === 'AbortIncompleteMultipartUpload' &&
+            rule.condition.age === 7
+        )
+      );
+    });
+
+    it('should append a lifecycle management for multipart upload rule to existing rules', async () => {
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          customTimeBefore: new Date(CUSTOM_TIME_BEFORE),
+          daysSinceCustomTime: 100,
+        },
+      });
+
+      await bucket.addLifecycleRule(
+        {
+          action: 'AbortIncompleteMultipartUpload',
+          condition: {
+            age: 7,
+          },
+        },
+        {append: true}
+      );
+
+      assert(
+        bucket.metadata.lifecycle.rule.some(
+          (rule: LifecycleRule) =>
+            typeof rule.action === 'object' &&
+            rule.action.type === 'Delete' &&
+            rule.condition.customTimeBefore === CUSTOM_TIME_BEFORE &&
+            rule.condition.daysSinceCustomTime === 100 &&
+            rule.condition.age === 7
+        )
       );
     });
   });
