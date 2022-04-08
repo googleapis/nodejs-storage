@@ -70,21 +70,6 @@ export interface PreconditionOptions {
 export interface StorageOptions extends ServiceOptions {
   retryOptions?: RetryOptions;
   /**
-   * @deprecated Use retryOptions instead.
-   * @internal
-   */
-  autoRetry?: boolean;
-  /**
-   * @deprecated Use retryOptions instead.
-   * @internal
-   */
-  maxRetries?: number;
-  /**
-   * **This option is deprecated.**
-   * @todo Remove in next major release.
-   */
-  promise?: typeof Promise;
-  /**
    * The API endpoint of the service used to make requests.
    * Defaults to `storage.googleapis.com`.
    */
@@ -199,8 +184,6 @@ export enum ExceptionMessages {
 }
 
 export enum StorageExceptionMessages {
-  AUTO_RETRY_DEPRECATED = 'autoRetry is deprecated. Use retryOptions.autoRetry instead.',
-  MAX_RETRIES_DEPRECATED = 'maxRetries is deprecated. Use retryOptions.maxRetries instead.',
   BUCKET_NAME_REQUIRED = 'A bucket name is needed to use Cloud Storage.',
   BUCKET_NAME_REQUIRED_CREATE = 'A name is required to create a bucket.',
   HMAC_SERVICE_ACCOUNT = 'The first argument must be a service account email to create an HMAC key.',
@@ -593,32 +576,11 @@ export class Storage extends Service {
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
     const baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
 
-    let autoRetryValue = AUTO_RETRY_DEFAULT;
-    if (
-      options.autoRetry !== undefined &&
-      options.retryOptions?.autoRetry !== undefined
-    ) {
-      throw new ApiError(StorageExceptionMessages.AUTO_RETRY_DEPRECATED);
-    } else if (options.autoRetry !== undefined) {
-      autoRetryValue = options.autoRetry;
-    } else if (options.retryOptions?.autoRetry !== undefined) {
-      autoRetryValue = options.retryOptions.autoRetry;
-    }
-
-    let maxRetryValue = MAX_RETRY_DEFAULT;
-    if (options.maxRetries && options.retryOptions?.maxRetries) {
-      throw new ApiError(StorageExceptionMessages.MAX_RETRIES_DEPRECATED);
-    } else if (options.maxRetries) {
-      maxRetryValue = options.maxRetries;
-    } else if (options.retryOptions?.maxRetries) {
-      maxRetryValue = options.retryOptions.maxRetries;
-    }
-
     const config = {
       apiEndpoint: options.apiEndpoint!,
       retryOptions: {
-        autoRetry: autoRetryValue,
-        maxRetries: maxRetryValue,
+        autoRetry: options.retryOptions?.autoRetry ? options.retryOptions?.autoRetry : AUTO_RETRY_DEFAULT,
+        maxRetries: options.retryOptions?.maxRetries ? options.retryOptions?.maxRetries : MAX_RETRY_DEFAULT,
         retryDelayMultiplier: options.retryOptions?.retryDelayMultiplier
           ? options.retryOptions?.retryDelayMultiplier
           : RETRY_DELAY_MULTIPLIER_DEFAULT,
