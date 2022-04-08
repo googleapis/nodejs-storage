@@ -14,63 +14,70 @@
  * limitations under the License.
  */
 
-import { appendFile } from 'fs/promises';
-import { Worker } from 'worker_threads'; 
+import {appendFile} from 'fs/promises';
+import {Worker} from 'worker_threads';
 import yargs = require('yargs');
-import { TestResult } from './performPerformanceTest';
-import { existsSync } from 'fs';
-import { writeFile } from 'fs/promises';
+import {TestResult} from './performPerformanceTest';
+import {existsSync} from 'fs';
+import {writeFile} from 'fs/promises';
 
 const DEFAULT_ITERATIONS = 100;
 const DEFAULT_THREADS = 1;
-const CSV_HEADERS = 'Op,ObjectSize,AppBufferSize,LibBufferSize,Crc32cEnabled,MD5Enabled,ApiName,ElapsedTimeUs,CpuTimeUs,Status\n';
+const CSV_HEADERS =
+  'Op,ObjectSize,AppBufferSize,LibBufferSize,Crc32cEnabled,MD5Enabled,ApiName,ElapsedTimeUs,CpuTimeUs,Status\n';
 const START_TIME = Date.now();
 
 const argv = yargs(process.argv.slice(2))
   .options({
     iterations: {type: 'number', default: DEFAULT_ITERATIONS},
-    numthreads: {type: 'number', default: DEFAULT_THREADS}
+    numthreads: {type: 'number', default: DEFAULT_THREADS},
   })
   .parseSync();
 
 let iterationsRemaining = argv.iterations;
 
 function main() {
-    let numThreads = argv.numthreads;
-    if (numThreads > iterationsRemaining) {
-        console.log(`${numThreads} is greater than number of iterations (${iterationsRemaining}). Using ${iterationsRemaining} threads instead.`);
-        numThreads = iterationsRemaining;
-    }
-    for(let i = 0; i < numThreads; i++) {
-        createWorker();
-    }
+  let numThreads = argv.numthreads;
+  if (numThreads > iterationsRemaining) {
+    console.log(
+      `${numThreads} is greater than number of iterations (${iterationsRemaining}). Using ${iterationsRemaining} threads instead.`
+    );
+    numThreads = iterationsRemaining;
+  }
+  for (let i = 0; i < numThreads; i++) {
+    createWorker();
+  }
 }
 
 function createWorker() {
-    iterationsRemaining--;
-    console.log(`Starting new iteration. Current iterations remaining: ${iterationsRemaining}`);
-    const w = new Worker(__dirname + '/performPerformanceTest.js', {argv: process.argv.slice(2)});
-    w.on('message', (data) => {
-        console.log('Successfully completed iteration.');
-        appendResultToCSV(data);
-        if (iterationsRemaining > 0) {
-            createWorker();
-        }
-    });
-    w.on('error', () => {
-        console.log('An error occurred.');
-    });
+  iterationsRemaining--;
+  console.log(
+    `Starting new iteration. Current iterations remaining: ${iterationsRemaining}`
+  );
+  const w = new Worker(__dirname + '/performPerformanceTest.js', {
+    argv: process.argv.slice(2),
+  });
+  w.on('message', data => {
+    console.log('Successfully completed iteration.');
+    appendResultToCSV(data);
+    if (iterationsRemaining > 0) {
+      createWorker();
+    }
+  });
+  w.on('error', () => {
+    console.log('An error occurred.');
+  });
 }
 
 async function appendResultToCSV(results: TestResult[]) {
-    const fileName = `nodejs-perf-metrics-${START_TIME}-${argv.iterations}.csv`;
+  const fileName = `nodejs-perf-metrics-${START_TIME}-${argv.iterations}.csv`;
 
-    if (!existsSync(fileName)) {
-        await writeFile(fileName, CSV_HEADERS);
-    }
-    const csv = results.map(result => Object.values(result));
-    const csvString = csv.join('\n');
-    await appendFile(fileName, `${csvString}\n`);
+  if (!existsSync(fileName)) {
+    await writeFile(fileName, CSV_HEADERS);
+  }
+  const csv = results.map(result => Object.values(result));
+  const csvString = csv.join('\n');
+  await appendFile(fileName, `${csvString}\n`);
 }
 
 main();

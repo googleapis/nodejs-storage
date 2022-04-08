@@ -20,14 +20,14 @@ import {execSync} from 'child_process';
 import {unlinkSync} from 'fs';
 import {Storage} from '../src';
 import {performance} from 'perf_hooks';
-import { parentPort } from 'worker_threads';
+import {parentPort} from 'worker_threads';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
 const DEFAULT_NUMBER_OF_READS = 3;
 const DEFAULT_BUCKET_NAME = 'nodejs-perf-metrics';
 const DEFAULT_SMALL_FILE_SIZE_BYTES = 5120;
-const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e+9;
+const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e9;
 const BLOCK_SIZE_IN_BYTES = 1024;
 
 export interface TestResult {
@@ -44,14 +44,16 @@ export interface TestResult {
 }
 
 const randomInteger = (minInclusive: number, maxInclusive: number) => {
-  return Math.floor(Math.random() * (maxInclusive - minInclusive + 1)) + minInclusive;
-}
+  return (
+    Math.floor(Math.random() * (maxInclusive - minInclusive + 1)) + minInclusive
+  );
+};
 
 const argv = yargs(process.argv.slice(2))
   .options({
     bucket: {type: 'string', default: DEFAULT_BUCKET_NAME},
     small: {type: 'number', default: DEFAULT_SMALL_FILE_SIZE_BYTES},
-    large: {type: 'number', default: DEFAULT_LARGE_FILE_SIZE_BYTES}
+    large: {type: 'number', default: DEFAULT_LARGE_FILE_SIZE_BYTES},
   })
   .parseSync();
 
@@ -88,7 +90,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       apiName: 'JSON',
       elapsedTimeUs: Math.round((end - start) * 1000),
       cpuTimeUs: -1,
-      status: '[OK]'
+      status: '[OK]',
     };
     results.push(iterationResult);
   }
@@ -107,7 +109,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       apiName: 'JSON',
       elapsedTimeUs: 0,
       cpuTimeUs: -1,
-      status: '[OK]'
+      status: '[OK]',
     };
 
     const checkType = randomInteger(0, 2);
@@ -131,7 +133,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   }
 
   cleanupFile(fileName);
-  
+
   return results;
 }
 
