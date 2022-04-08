@@ -46,7 +46,6 @@ import {
   SetFileMetadataOptions,
   GetSignedUrlConfig,
   GenerateSignedPostPolicyV2Options,
-  GenerateSignedPostPolicyV2Callback,
 } from '../src';
 import {
   SignedPostPolicyV4Output,
@@ -2877,26 +2876,6 @@ describe('File', () => {
           done();
         }
       );
-    });
-  });
-
-  describe('getSignedPolicy', () => {
-    it('should alias to generateSignedPostPolicyV2', done => {
-      const options = {
-        expires: Date.now() + 2000,
-      };
-      const callback = () => {};
-
-      file.generateSignedPostPolicyV2 = (
-        argOpts: GenerateSignedPostPolicyV2Options,
-        argCb: GenerateSignedPostPolicyV2Callback
-      ) => {
-        assert.strictEqual(argOpts, options);
-        assert.strictEqual(argCb, callback);
-        done();
-      };
-
-      file.getSignedPolicy(options, callback);
     });
   });
 

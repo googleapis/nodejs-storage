@@ -1713,27 +1713,6 @@ describe('Bucket', () => {
       bucket.getFiles({maxResults: 5, pageToken: token}, util.noop);
     });
 
-    it('should allow setting a directory', done => {
-      //Note: Directory is deprecated.
-      const directory = 'directory-name';
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.prefix, `${directory}/`);
-        assert.strictEqual(reqOpts.qs.directory, undefined);
-        done();
-      };
-      bucket.getFiles({directory}, assert.ifError);
-    });
-
-    it('should strip excess slashes from a directory', done => {
-      //Note: Directory is deprecated.
-      const directory = 'directory-name///';
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.prefix, 'directory-name/');
-        done();
-      };
-      bucket.getFiles({directory}, assert.ifError);
-    });
-
     it('should return nextQuery if more results exist', () => {
       const token = 'next-page-token';
       bucket.request = (
