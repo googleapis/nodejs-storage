@@ -11,6 +11,6 @@
     "system-test/*.ts",
     "conformance-test/*.ts",
     "conformance-test/scenarios/*.ts",
-    "performance-metrics/*.ts"
+    "internal-tooling/*.ts"
   ]
 }

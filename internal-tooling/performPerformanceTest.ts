@@ -113,7 +113,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
     };
 
     const checkType = randomInteger(0, 2);
-    if (checkType == 0) {
+    if (checkType === 0) {
       start = performance.now();
       await bucket.file(`${fileName}`).download({validation: false});
       end = performance.now();
@@ -122,7 +122,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       start = performance.now();
       await file.download({validation: 'crc32c'});
       end = performance.now();
-    } else if (checkType == 2) {
+    } else if (checkType === 2) {
       iterationResult.md5Enabled = true;
       start = performance.now();
       await file.download({validation: 'md5'});
