@@ -1328,21 +1328,7 @@ describe('common/util', () => {
         done();
       };
     }
-
-    const retryOptionsTwoMaxRetries = {
-      retryOptions: {
-        maxRetries: 7,
-      },
-      maxRetries: 7,
-    };
-
-    const retryOptionsTwoAutoRetry = {
-      retryOptions: {
-        autoRetry: false,
-      },
-      autoRetry: false,
-    };
-
+    
     const retryOptionsConfig = {
       retryOptions: {
         autoRetry: false,

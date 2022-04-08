@@ -47,7 +47,6 @@ import {
   SetFileMetadataOptions,
   GetSignedUrlConfig,
   GenerateSignedPostPolicyV2Options,
-  GenerateSignedPostPolicyV2Callback,
 } from '../src';
 import {
   SignedPostPolicyV4Output,
