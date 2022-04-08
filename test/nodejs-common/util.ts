@@ -1328,7 +1328,7 @@ describe('common/util', () => {
         done();
       };
     }
-    
+
     const retryOptionsConfig = {
       retryOptions: {
         autoRetry: false,
