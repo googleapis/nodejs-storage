@@ -3263,31 +3263,6 @@ describe('storage', () => {
         });
     });
 
-    it('should get files from a directory', done => {
-      //Note: Directory is deprecated.
-      bucket.getFiles({directory: DIRECTORY_NAME}, (err, files) => {
-        assert.ifError(err);
-        assert.strictEqual(files!.length, 3);
-        done();
-      });
-    });
-
-    it('should get files from a directory as a stream', done => {
-      //Note: Directory is deprecated.
-      let numFilesEmitted = 0;
-
-      bucket
-        .getFilesStream({directory: DIRECTORY_NAME})
-        .on('error', done)
-        .on('data', () => {
-          numFilesEmitted++;
-        })
-        .on('end', () => {
-          assert.strictEqual(numFilesEmitted, 3);
-          done();
-        });
-    });
-
     it('should paginate the list', done => {
       const query = {
         maxResults: NEW_FILES.length - 1,
