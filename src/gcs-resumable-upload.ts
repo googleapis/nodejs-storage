@@ -1015,7 +1015,7 @@ export class Upload extends Pumpify {
    * @return {bool} is the request good?
    */
   private onResponse(resp: GaxiosResponse) {
-    if (
+    if ( resp.status != 200 &&
       this.retryOptions.retryableErrorFn!({
         code: resp.status,
         message: resp.statusText,
