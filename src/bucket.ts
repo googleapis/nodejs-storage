@@ -2512,11 +2512,6 @@ class Bucket extends ServiceObject {
     }
     query = Object.assign({}, query);
 
-    if (query.directory) {
-      query.prefix = `${query.directory}/`.replace(/\/*$/, '/');
-      delete query.directory;
-    }
-
     this.request(
       {
         uri: '/o',

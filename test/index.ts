@@ -188,16 +188,6 @@ describe('Storage', () => {
       assert.strictEqual(calledWith.useAuthWithCustomEndpoint, true);
     });
 
-    it('should propagate autoRetry', () => {
-      const autoRetry = false;
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        autoRetry,
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.autoRetry, autoRetry);
-    });
-
     it('should propagate autoRetry in retryOptions', () => {
       const autoRetry = false;
       const storage = new Storage({
@@ -265,16 +255,6 @@ describe('Storage', () => {
         calledWith.retryOptions.maxRetryDelay,
         maxRetryDelayDefault
       );
-    });
-
-    it('should propagate maxRetries', () => {
-      const maxRetries = 10;
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        maxRetries,
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.maxRetries, maxRetries);
     });
 
     it('should propagate maxRetries in retryOptions', () => {
