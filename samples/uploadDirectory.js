@@ -19,7 +19,7 @@
 //   description: Uploads full hierarchy of a local directory to a bucket.
 //   usage: node files.js upload-directory <bucketName> <directoryPath>
 
-async function main(bucketName, directoryPath) {
+async function main(bucketName, directoryPath, concurrencyLimit = 200) {
   // [START upload_directory]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
@@ -31,7 +31,7 @@ async function main(bucketName, directoryPath) {
   // const directoryPath = './local/path/to/directory';
 
   // Imports the Google Cloud client library
-  const {Storage} = require('@google-cloud/storage');
+  const { Storage } = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -69,10 +69,10 @@ async function main(bucketName, directoryPath) {
         });
       });
     }
-
-    async function onComplete() {
-      const resp = await Promise.all(
-        fileList.map(filePath => {
+ 
+    function fileUploadPromises(list) {
+      return (
+        list.map(filePath => {
           let destination = path.relative(pathDirName, filePath);
           // If running on Windows
           if (process.platform === 'win32') {
@@ -80,16 +80,28 @@ async function main(bucketName, directoryPath) {
           }
           return storage
             .bucket(bucketName)
-            .upload(filePath, {destination})
+            .upload(filePath, { destination })
             .then(
-              uploadResp => ({fileName: destination, status: uploadResp[0]}),
-              err => ({fileName: destination, response: err})
+              uploadResp => ({ fileName: destination, status: uploadResp[0] }),
+              err => ({ fileName: destination, response: err })
             );
         })
-      );
+      )
+    }
+    async function onComplete() {
+
+      let resultChunks = []
+
+      for (let i = 0; i < fileList.length; i += concurrencyLimit) {
+        const chunk = fileList.slice(i, i + concurrencyLimit);
+        const resp = await Promise.all(fileUploadPromises(chunk));
+        resultChunks.push(resp)
+      }
+      let result = resultChunks.flat()
+      let errors = result.filter(r => r.response instanceof Error)
 
       const successfulUploads =
-        fileList.length - resp.filter(r => r.status instanceof Error).length;
+        fileList.length - errors.length;
       console.log(
         `${successfulUploads} files uploaded to ${bucketName} successfully.`
       );
