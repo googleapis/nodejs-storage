@@ -87,7 +87,7 @@ async function main(bucketName, directoryPath, concurrencyLimit = 200) {
             );
         })
       )
-    }
+    }  
     async function onComplete() {
 
       let resultChunks = []
