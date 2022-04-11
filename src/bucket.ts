@@ -3688,7 +3688,7 @@ class Bucket extends ServiceObject {
    *     `options.predefinedAcl = 'private'`)
    * @property {boolean} [public] Make the uploaded file public. (Alias for
    *     `options.predefinedAcl = 'publicRead'`)
-   * @property {boolean} [resumable=true] Resumable uploads are automatically 
+   * @property {boolean} [resumable=true] Resumable uploads are automatically
    *     enabled and must be shut off explicitly by setting to false.
    * @property {number} [timeout=60000] Set the HTTP request timeout in
    *     milliseconds. This option is not available for resumable uploads.
@@ -3771,7 +3771,7 @@ class Bucket extends ServiceObject {
    *     `options.predefinedAcl = 'private'`)
    * @param {boolean} [options.public] Make the uploaded file public. (Alias for
    *     `options.predefinedAcl = 'publicRead'`)
-   * @property {boolean} [options.resumable=true] Resumable uploads are automatically 
+   * @property {boolean} [options.resumable=true] Resumable uploads are automatically
    *     enabled and must be shut off explicitly by setting to false.
    * @param {number} [options.timeout=60000] Set the HTTP request timeout in
    *     milliseconds. This option is not available for resumable uploads.
