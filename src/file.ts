@@ -1925,6 +1925,11 @@ class File extends ServiceObject<File> {
       },
     });
 
+    function setPipelineWithWritable() {
+      // TODO: `startSimpleUpload_` & `startResumableUpload_` to Writables
+      // pass to pipeline
+    }
+
     // Wait until we've received data to determine what upload technique to use.
     source.once('writing', () => {
       if (options.resumable === false) {
@@ -2015,7 +2020,7 @@ class File extends ServiceObject<File> {
     // `duplexify` doesn't emit 'end' properly; adding for 'pipeline' to end properly
     fileWriteStream.on('finish', () => fileWriteStream.emit('end'));
 
-    pipeline(
+    const a = pipeline(
       source,
       gzipStream,
       streamHash,
@@ -2036,6 +2041,7 @@ class File extends ServiceObject<File> {
 
         source.end();
       },
+      // TODO: signal: abort; - CreateWriteStreamOptions
     });
 
     // re-publish events for callers
@@ -3960,9 +3966,8 @@ class File extends ServiceObject<File> {
    * @param {Duplexify} stream - Duplexify stream of data to pipe to the file.
    * @param {object=} options - Configuration object.
    *
-   * @private
    */
-  startResumableUpload_(
+  private startResumableUpload_(
     dup: Duplexify,
     options: CreateResumableUploadOptions
   ): void {
@@ -4010,7 +4015,6 @@ class File extends ServiceObject<File> {
     uploadStream
       .on('response', resp => {
         dup.emit('response', resp);
-        console.log('emitted response');
       })
       .on('metadata', metadata => {
         this.metadata = metadata;
