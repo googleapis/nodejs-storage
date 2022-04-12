@@ -71,12 +71,17 @@ async function performWriteReadTest(): Promise<TestResult[]> {
     projectId: 'ddelgrosso-test',
   });
 
-  const bucket = stg.bucket(argv.bucket);
+  let bucket = stg.bucket(argv.bucket);
   if (!(await bucket.exists())[0]) {
     await bucket.create();
   }
 
   for (let j = 0; j < DEFAULT_NUMBER_OF_WRITES; j++) {
+    bucket = stg.bucket(argv.bucket, {
+      preconditionOpts: {
+        ifGenerationMatch: 1,
+      },
+    });
     const start = performance.now();
     await bucket.upload(`${__dirname}/${fileName}`);
     const end = performance.now();
@@ -96,6 +101,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   }
 
   for (let j = 0; j < DEFAULT_NUMBER_OF_READS; j++) {
+    bucket = stg.bucket(argv.bucket);
     let start = 0;
     let end = 0;
     const file = bucket.file(`${fileName}`);
@@ -113,21 +119,23 @@ async function performWriteReadTest(): Promise<TestResult[]> {
     };
 
     const checkType = randomInteger(0, 2);
+    const destination = generateRandomFileName();
     if (checkType === 0) {
       start = performance.now();
-      await bucket.file(`${fileName}`).download({validation: false});
+      await file.download({validation: false, destination});
       end = performance.now();
     } else if (checkType === 1) {
       iterationResult.crc32Enabled = true;
       start = performance.now();
-      await file.download({validation: 'crc32c'});
+      await file.download({validation: 'crc32c', destination});
       end = performance.now();
     } else if (checkType === 2) {
       iterationResult.md5Enabled = true;
       start = performance.now();
-      await file.download({validation: 'md5'});
+      await file.download({validation: 'md5', destination});
       end = performance.now();
     }
+    cleanupFile(destination);
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);
   }
