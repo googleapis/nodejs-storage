@@ -120,7 +120,6 @@ objects to users via direct download.
   * [Stream File Download](#stream-file-download)
   * [Stream File Upload](#stream-file-upload)
   * [Upload a directory to a bucket.](#upload-a-directory-to-a-bucket.)
-  * [Upload a directory to a bucket.](#upload-a-directory-to-a-bucket.)
   * [Upload Encrypted File](#upload-encrypted-file)
   * [Upload File](#upload-file)
   * [Upload File With Kms Key](#upload-file-with-kms-key)
@@ -1924,25 +1923,6 @@ Uploads full hierarchy of a local directory to a bucket.
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadDirectory.js).
 
 [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadDirectory.js,samples/README.md)
-
-__Usage:__
-
-
-`node files.js upload-directory <bucketName> <directoryPath>`
-
-
------
-
-
-
-
-### Upload a directory to a bucket.
-
-Uploads full hierarchy of a local directory to a bucket.
-
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadDirectory2.js).
-
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadDirectory2.js,samples/README.md)
 
 __Usage:__
 
