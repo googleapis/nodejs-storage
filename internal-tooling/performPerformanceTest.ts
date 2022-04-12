@@ -21,6 +21,7 @@ import {unlinkSync} from 'fs';
 import {Storage} from '../src';
 import {performance} from 'perf_hooks';
 import {parentPort} from 'worker_threads';
+import path = require('path');
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
@@ -79,7 +80,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   for (let j = 0; j < DEFAULT_NUMBER_OF_WRITES; j++) {
     bucket = stg.bucket(argv.bucket, {
       preconditionOpts: {
-        ifGenerationMatch: 1,
+        ifGenerationMatch: 0,
       },
     });
     const start = performance.now();
@@ -100,8 +101,8 @@ async function performWriteReadTest(): Promise<TestResult[]> {
     results.push(iterationResult);
   }
 
+  bucket = stg.bucket(argv.bucket);
   for (let j = 0; j < DEFAULT_NUMBER_OF_READS; j++) {
-    bucket = stg.bucket(argv.bucket);
     let start = 0;
     let end = 0;
     const file = bucket.file(`${fileName}`);
@@ -119,7 +120,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
     };
 
     const checkType = randomInteger(0, 2);
-    const destination = generateRandomFileName();
+    const destination = path.join(__dirname, generateRandomFileName());
     if (checkType === 0) {
       start = performance.now();
       await file.download({validation: false, destination});
