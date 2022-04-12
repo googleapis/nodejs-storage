@@ -19,7 +19,10 @@
 //   description: Uploads full hierarchy of a local directory to a bucket.
 //   usage: node files.js upload-directory <bucketName> <directoryPath>
 
-function main(bucketName = 'my-bucket', directoryPath = '.') {
+function main(
+  bucketName = 'your-unique-bucket-name',
+  directoryPath = './local/path/to/directory'
+) {
   // [START upload_directory]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
