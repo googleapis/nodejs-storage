@@ -36,7 +36,8 @@ function main(bucketName = 'my-bucket', directoryPath = '.') {
   // Creates a client
   const storage = new Storage();
 
-  const fs = require('fs/promises');
+  const {promisify} = require('util');
+  const fs = promisify(require('fs'));
   const path = require('path');
 
   async function* getFiles(directory = '.') {
