@@ -67,7 +67,8 @@ function main(
 
     for await (const filePath of getFiles(directoryPath)) {
       try {
-        const destination = path.relative(directoryPath, filePath);
+        const dirname = path.dirname(directoryPath);
+        const destination = path.relative(dirname, filePath);
 
         await bucket.upload(filePath, {destination});
 
