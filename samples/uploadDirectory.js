@@ -40,19 +40,22 @@ function main(
   const storage = new Storage();
 
   const {promisify} = require('util');
-  const fs = promisify(require('fs'));
+  const fs = require('fs');
   const path = require('path');
 
-  async function* getFiles(directory = '.') {
-    for (const file of await fs.readdir(directory)) {
-      const fullPath = path.join(directory, file);
-      const stat = await fs.stat(fullPath);
+  const readdir = promisify(fs.readdir);
+  const stat = promisify(fs.stat);
 
-      if (stat.isDirectory()) {
+  async function* getFiles(directory = '.') {
+    for (const file of await readdir(directory)) {
+      const fullPath = path.join(directory, file);
+      const stats = await stat(fullPath);
+
+      if (stats.isDirectory()) {
         yield* getFiles(fullPath);
       }
 
-      if (stat.isFile()) {
+      if (stats.isFile()) {
         yield fullPath;
       }
     }
@@ -84,4 +87,4 @@ function main(
   // [END upload_directory]
 }
 
-main(...process.argv.slice(2)).catch(console.error);
+main(...process.argv.slice(2));
