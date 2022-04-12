@@ -31,7 +31,7 @@ async function main(bucketName, directoryPath, concurrencyLimit = 200) {
   // const directoryPath = './local/path/to/directory';
 
   // Imports the Google Cloud client library
-  const { Storage } = require('@google-cloud/storage');
+  const {Storage} = require('@google-cloud/storage');
 
   // Creates a client
   const storage = new Storage();
@@ -69,39 +69,35 @@ async function main(bucketName, directoryPath, concurrencyLimit = 200) {
         });
       });
     }
- 
-    function fileUploadPromises(list) {
-      return (
-        list.map(filePath => {
-          let destination = path.relative(pathDirName, filePath);
-          // If running on Windows
-          if (process.platform === 'win32') {
-            destination = destination.replace(/\\/g, '/');
-          }
-          return storage
-            .bucket(bucketName)
-            .upload(filePath, { destination })
-            .then(
-              uploadResp => ({ fileName: destination, status: uploadResp[0] }),
-              err => ({ fileName: destination, response: err })
-            );
-        })
-      )
-    }  
-    async function onComplete() {
 
-      let resultChunks = []
+    function fileUploadPromises(list) {
+      return list.map(filePath => {
+        let destination = path.relative(pathDirName, filePath);
+        // If running on Windows
+        if (process.platform === 'win32') {
+          destination = destination.replace(/\\/g, '/');
+        }
+        return storage
+          .bucket(bucketName)
+          .upload(filePath, {destination})
+          .then(
+            uploadResp => ({fileName: destination, status: uploadResp[0]}),
+            err => ({fileName: destination, response: err})
+          );
+      });
+    }
+    async function onComplete() {
+      const resultChunks = [];
 
       for (let i = 0; i < fileList.length; i += concurrencyLimit) {
         const chunk = fileList.slice(i, i + concurrencyLimit);
         const resp = await Promise.all(fileUploadPromises(chunk));
-        resultChunks.push(resp)
+        resultChunks.push(resp);
       }
-      let result = resultChunks.flat()
-      let errors = result.filter(r => r.response instanceof Error)
+      const result = resultChunks.flat();
+      const errors = result.filter(r => r.response instanceof Error);
 
-      const successfulUploads =
-        fileList.length - errors.length;
+      const successfulUploads = fileList.length - errors.length;
       console.log(
         `${successfulUploads} files uploaded to ${bucketName} successfully.`
       );
