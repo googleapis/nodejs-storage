@@ -929,6 +929,29 @@ describe('storage', () => {
     });
   });
 
+  describe('dual-region', () => {
+    let bucket: Bucket;
+
+    const REGION1 = 'US-EAST1';
+    const REGION2 = 'US-WEST1';
+
+    beforeEach(() => {
+      bucket = storage.bucket(generateName());
+    });
+
+    it('creates a dual-region bucket', async () => {
+      const dualRegion = `${REGION1}+${REGION2}`;
+      await bucket.create({location: dualRegion});
+
+      const [exists] = await bucket.exists();
+      assert.strictEqual(exists, true);
+
+      const [bucketMetadata] = await bucket.getMetadata();
+      assert.strictEqual(bucketMetadata.location, dualRegion);
+      assert.strictEqual(bucketMetadata.locationType, 'dual-region');
+    });
+  });
+
   describe('uniform bucket-level access', () => {
     let bucket: Bucket;
 
@@ -957,7 +980,7 @@ describe('storage', () => {
 
       it('can be written to the bucket by project owner w/o configuration', async () => {
         await setUniformBucketLevelAccess(bucket, true);
-        const file = bucket.file('file');
+        const file = bucket.file(`file-${uuid.v4()}`);
         return assert.doesNotReject(() => file.save('data'));
       });
     });
@@ -974,7 +997,7 @@ describe('storage', () => {
         await createBucket();
         await setUniformBucketLevelAccess(bucket, true);
 
-        file = bucket.file('file');
+        file = bucket.file(`file-${uuid.v4()}`);
         await file.save('data');
       });
 
@@ -1008,7 +1031,7 @@ describe('storage', () => {
       });
 
       it('should preserve file ACL', async () => {
-        const file = bucket.file('file');
+        const file = bucket.file(`file-${uuid.v4()}`);
         await file.save('data');
 
         await file.acl.update(customAcl);

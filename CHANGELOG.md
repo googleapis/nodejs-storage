@@ -4,6 +4,20 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+### [5.19.1](https://github.com/googleapis/nodejs-storage/compare/v5.19.0...v5.19.1) (2022-04-08)
+
+
+### Bug Fixes
+
+* prevent retrying 200 response ([#1857](https://github.com/googleapis/nodejs-storage/issues/1857)) ([638a47b](https://github.com/googleapis/nodejs-storage/commit/638a47b4e7ecc6e94b3b11d1ccc7c52afdeaafe1))
+
+## [5.19.0](https://github.com/googleapis/nodejs-storage/compare/v5.18.3...v5.19.0) (2022-04-06)
+
+
+### Features
+
+* Dual Region Support ([#1814](https://github.com/googleapis/nodejs-storage/issues/1814)) ([caf7ee5](https://github.com/googleapis/nodejs-storage/commit/caf7ee561fd640b0daea92c7837c47e66070c30c))
+
 ### [5.18.3](https://github.com/googleapis/nodejs-storage/compare/v5.18.2...v5.18.3) (2022-03-28)
 
 

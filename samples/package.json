@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
-    "node": ">=8"
+    "node": ">=10"
   },
   "repository": "googleapis/nodejs-storage",
   "private": true,
@@ -17,8 +17,8 @@
   },
   "dependencies": {
     "@google-cloud/pubsub": "^2.0.0",
-    "@google-cloud/storage": "^5.18.3",
-    "node-fetch": "^2.3.0",
+    "@google-cloud/storage": "^5.19.1",
+    "node-fetch": "^2.6.7",
     "uuid": "^8.0.0",
     "yargs": "^16.0.0"
   },
