@@ -332,7 +332,7 @@ export class Upload extends Pumpify {
 
     const autoRetry = cfg.retryOptions.autoRetry;
     this.uriProvidedManually = !!cfg.uri;
-    this.uri = cfg.uri
+    this.uri = cfg.uri;
     this.numBytesWritten = 0;
     this.numRetries = 0; //counter for number of retries currently executed
     if (!autoRetry) {
@@ -366,7 +366,7 @@ export class Upload extends Pumpify {
       if (this.uri) {
         this.continueUploading();
       } else {
-        this.createURI((err) => {
+        this.createURI(err => {
           if (err) {
             return this.destroy(err);
           }
@@ -895,7 +895,7 @@ export class Upload extends Pumpify {
     }
 
     this.lastChunkSent = Buffer.alloc(0);
-    this.createURI((err) => {
+    this.createURI(err => {
       if (err) {
         return this.destroy(err);
       }
