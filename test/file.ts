@@ -29,8 +29,6 @@ import * as dateFormat from 'date-and-time';
 import * as duplexify from 'duplexify';
 import * as extend from 'extend';
 import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
 import * as proxyquire from 'proxyquire';
 import * as resumableUpload from '../src/gcs-resumable-upload';
 import * as sinon from 'sinon';
@@ -63,10 +61,6 @@ class HTTPError extends Error {
     super(message);
     this.code = code;
   }
-}
-
-class ResumableUploadError extends Error {
-  additionalInfo?: string;
 }
 
 let promisified = false;

@@ -281,16 +281,6 @@ export enum ActionToHTTPMethod {
 }
 
 /**
- * Custom error type for errors related to creating a resumable upload.
- *
- * @private
- */
-class ResumableUploadError extends Error {
-  name = 'ResumableUploadError';
-  additionalInfo?: string;
-}
-
-/**
  * @const {string}
  * @private
  */
