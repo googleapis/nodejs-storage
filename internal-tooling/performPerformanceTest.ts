@@ -57,7 +57,7 @@ const argv = yargs(process.argv.slice(2))
     bucket: {type: 'string', default: DEFAULT_BUCKET_NAME},
     small: {type: 'number', default: DEFAULT_SMALL_FILE_SIZE_BYTES},
     large: {type: 'number', default: DEFAULT_LARGE_FILE_SIZE_BYTES},
-    projectid: {type: 'string'}
+    projectid: {type: 'string'},
   })
   .parseSync();
 
@@ -119,7 +119,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       await bucket.upload(`${__dirname}/${fileName}`, {validation: 'md5'});
       end = performance.now();
     }
-    
+
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);
   }
