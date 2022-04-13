@@ -1771,7 +1771,6 @@ describe('File', () => {
 
     it('should create a resumable upload URI', done => {
       const options = {
-        configPath: '/Users/user/.config/here',
         metadata: {
           contentType: 'application/json',
         },
@@ -1806,7 +1805,6 @@ describe('File', () => {
           assert.strictEqual(opts.authClient, storage.authClient);
           assert.strictEqual(opts.apiEndpoint, storage.apiEndpoint);
           assert.strictEqual(opts.bucket, bucket.name);
-          assert.strictEqual(opts.configPath, options.configPath);
           assert.strictEqual(opts.file, file.name);
           assert.strictEqual(opts.generation, file.generation);
           assert.strictEqual(opts.key, file.encryptionKey);
@@ -1856,7 +1854,6 @@ describe('File', () => {
         },
       });
       const options = {
-        configPath: '/Users/user/.config/here',
         metadata: {
           contentType: 'application/json',
         },
@@ -1887,7 +1884,6 @@ describe('File', () => {
           assert.strictEqual(opts.authClient, storage.authClient);
           assert.strictEqual(opts.apiEndpoint, storage.apiEndpoint);
           assert.strictEqual(opts.bucket, bucket.name);
-          assert.strictEqual(opts.configPath, options.configPath);
           assert.strictEqual(opts.file, file.name);
           assert.strictEqual(opts.generation, file.generation);
           assert.strictEqual(opts.key, file.encryptionKey);
@@ -2026,21 +2022,6 @@ describe('File', () => {
       writable.write('data');
     });
 
-    it('should start a resumable upload if configPath is provided', done => {
-      const options = {
-        metadata: METADATA,
-        configPath: '/config/path.json',
-      };
-      const writable = file.createWriteStream(options);
-
-      file.startResumableUpload_ = (stream: {}, options_: {}) => {
-        assert.deepStrictEqual(options_, options);
-        done();
-      };
-
-      writable.write('data');
-    });
-
     it('should start a resumable upload if specified', done => {
       const options = {
         metadata: METADATA,
@@ -2055,127 +2036,6 @@ describe('File', () => {
       };
 
       writable.write('data');
-    });
-
-    it('should check if xdg-basedir is writable', done => {
-      const fakeDir = 'fake-xdg-dir';
-
-      xdgConfigOverride = fakeDir;
-
-      Object.assign(fakeFs, {
-        access(dir: {}) {
-          assert.strictEqual(dir, fakeDir);
-          done();
-        },
-      });
-
-      file.createWriteStream({resumable: true}).write('data');
-    });
-
-    it('should fall back to checking tmpdir', done => {
-      const fakeDir = 'fake-tmp-dir';
-
-      xdgConfigOverride = false;
-
-      fakeOs.tmpdir = () => {
-        return fakeDir;
-      };
-
-      Object.assign(fakeFs, {
-        access(dir: {}) {
-          assert.strictEqual(dir, fakeDir);
-          done();
-        },
-      });
-
-      file.createWriteStream({resumable: true}).write('data');
-    });
-
-    describe('config directory does not exist', () => {
-      const CONFIG_DIR = path.join(os.tmpdir(), `/fake-xdg-dir/${Date.now()}`);
-
-      beforeEach(() => {
-        xdgConfigOverride = CONFIG_DIR;
-        fakeFs.access = fsCached.access;
-      });
-
-      it('should attempt to create the config directory', done => {
-        Object.assign(fakeFs, {
-          mkdir(dir: string, options: {}) {
-            assert.strictEqual(dir, CONFIG_DIR);
-            assert.deepStrictEqual(options, {mode: 0o0700});
-            done();
-          },
-        });
-
-        const writable = file.createWriteStream({resumable: true});
-        writable.write('data');
-      });
-
-      it('should start a resumable upload if config directory created successfully', done => {
-        Object.assign(fakeFs, {
-          mkdir(dir: string, options: {}, callback: Function) {
-            callback();
-          },
-        });
-
-        file.startResumableUpload_ = () => {
-          // If no error is thrown here, we know the request completed successfully.
-          done();
-        };
-
-        file.createWriteStream().write('data');
-      });
-
-      it('should return error if resumable was requested, but a config directory could not be created', done => {
-        Object.assign(fakeFs, {
-          mkdir(dir: string, options: {}, callback: Function) {
-            callback(new Error());
-          },
-        });
-
-        const writable = file.createWriteStream({resumable: true});
-
-        writable.on('error', (err: ResumableUploadError) => {
-          assert.strictEqual(err.name, 'ResumableUploadError');
-          assert.strictEqual(
-            err.message,
-            [
-              'A resumable upload could not be performed. The directory,',
-              `${CONFIG_DIR}, is not writable. You may try another upload,`,
-              'this time setting `options.resumable` to `false`.',
-            ].join(' ')
-          );
-          assert.strictEqual(
-            err.additionalInfo,
-            'The directory does not exist.'
-          );
-
-          done();
-        });
-
-        writable.write('data');
-      });
-
-      it('should fallback to a simple upload if the config directory could not be created', done => {
-        const options = {
-          metadata: METADATA,
-          customValue: true,
-        };
-
-        Object.assign(fakeFs, {
-          mkdir(dir: string, options: {}, callback: Function) {
-            callback(new Error());
-          },
-        });
-
-        file.startSimpleUpload_ = (stream: Stream, _options: {}) => {
-          assert.deepStrictEqual(_options, options);
-          done();
-        };
-
-        file.createWriteStream(options).write('data');
-      });
     });
 
     it('should default to a resumable upload', done => {
@@ -2569,30 +2429,6 @@ describe('File', () => {
           done();
         });
       });
-    });
-  });
-
-  describe('deleteResumableCache', () => {
-    it('should delete resumable file upload cache', done => {
-      file.generation = 123;
-
-      resumableUploadOverride = {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        upload(opts: any) {
-          assert.strictEqual(opts.bucket, file.bucket.name);
-          assert.strictEqual(opts.file, file.name);
-          assert.strictEqual(opts.generation, file.generation);
-          assert.strictEqual(opts.retryOptions, file.storage.retryOptions);
-          assert.strictEqual(opts.params, file.preconditionOpts);
-
-          return {
-            deleteConfig: () => {
-              done();
-            },
-          };
-        },
-      };
-      file.deleteResumableCache();
     });
   });
 
@@ -4776,7 +4612,6 @@ describe('File', () => {
     describe('starting', () => {
       it('should start a resumable upload', done => {
         const options = {
-          configPath: '/Users/user/.config/here',
           metadata: {},
           offset: 1234,
           public: true,
@@ -4819,7 +4654,6 @@ describe('File', () => {
             assert.strictEqual(opts.authClient, authClient);
             assert.strictEqual(opts.apiEndpoint, storage.apiEndpoint);
             assert.strictEqual(opts.bucket, bucket.name);
-            assert.strictEqual(opts.configPath, options.configPath);
             assert.deepStrictEqual(opts.customRequestOptions, {
               headers: {
                 a: 'b',
