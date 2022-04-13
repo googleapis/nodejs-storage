@@ -30,6 +30,7 @@ const DEFAULT_BUCKET_NAME = 'nodejs-perf-metrics';
 const DEFAULT_SMALL_FILE_SIZE_BYTES = 5120;
 const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e9;
 const BLOCK_SIZE_IN_BYTES = 1024;
+const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
 
 export interface TestResult {
   op: string;
@@ -45,6 +46,7 @@ export interface TestResult {
 }
 
 const randomInteger = (minInclusive: number, maxInclusive: number) => {
+  // Utilizing Math.random will generate uniformly distributed random numbers.
   return (
     Math.floor(Math.random() * (maxInclusive - minInclusive + 1)) + minInclusive
   );
@@ -55,6 +57,7 @@ const argv = yargs(process.argv.slice(2))
     bucket: {type: 'string', default: DEFAULT_BUCKET_NAME},
     small: {type: 'number', default: DEFAULT_SMALL_FILE_SIZE_BYTES},
     large: {type: 'number', default: DEFAULT_LARGE_FILE_SIZE_BYTES},
+    projectid: {type: 'string'}
   })
   .parseSync();
 
@@ -67,9 +70,10 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
   const fileName = generateRandomFileName();
   const sizeInBytes = generateRandomFile(fileName);
+  const checkType = randomInteger(0, 2);
 
   const stg = new Storage({
-    projectId: 'ddelgrosso-test',
+    projectId: argv.projectid,
   });
 
   let bucket = stg.bucket(argv.bucket);
@@ -78,26 +82,45 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   }
 
   for (let j = 0; j < DEFAULT_NUMBER_OF_WRITES; j++) {
+    let start = 0;
+    let end = 0;
+
+    const iterationResult: TestResult = {
+      op: 'WRITE',
+      objectSize: sizeInBytes,
+      appBufferSize: BLOCK_SIZE_IN_BYTES,
+      libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+      crc32Enabled: false,
+      md5Enabled: false,
+      apiName: 'JSON',
+      elapsedTimeUs: 0,
+      cpuTimeUs: -1,
+      status: '[OK]',
+    };
+
     bucket = stg.bucket(argv.bucket, {
       preconditionOpts: {
         ifGenerationMatch: 0,
       },
     });
-    const start = performance.now();
-    await bucket.upload(`${__dirname}/${fileName}`);
-    const end = performance.now();
-    const iterationResult: TestResult = {
-      op: 'WRITE',
-      objectSize: sizeInBytes,
-      appBufferSize: BLOCK_SIZE_IN_BYTES,
-      libBufferSize: 16384, //Node default
-      crc32Enabled: false,
-      md5Enabled: false,
-      apiName: 'JSON',
-      elapsedTimeUs: Math.round((end - start) * 1000),
-      cpuTimeUs: -1,
-      status: '[OK]',
-    };
+
+    if (checkType === 0) {
+      start = performance.now();
+      await bucket.upload(`${__dirname}/${fileName}`, {validation: false});
+      end = performance.now();
+    } else if (checkType === 1) {
+      iterationResult.crc32Enabled = true;
+      start = performance.now();
+      await bucket.upload(`${__dirname}/${fileName}`, {validation: 'crc32c'});
+      end = performance.now();
+    } else {
+      iterationResult.md5Enabled = true;
+      start = performance.now();
+      await bucket.upload(`${__dirname}/${fileName}`, {validation: 'md5'});
+      end = performance.now();
+    }
+    
+    iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);
   }
 
@@ -110,7 +133,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       op: `READ[${j}]`,
       objectSize: sizeInBytes,
       appBufferSize: BLOCK_SIZE_IN_BYTES,
-      libBufferSize: 16384, //Node default
+      libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
       crc32Enabled: false,
       md5Enabled: false,
       apiName: 'JSON',
@@ -119,8 +142,8 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       status: '[OK]',
     };
 
-    const checkType = randomInteger(0, 2);
-    const destination = path.join(__dirname, generateRandomFileName());
+    const destinationFileName = generateRandomFileName();
+    const destination = path.join(__dirname, destinationFileName);
     if (checkType === 0) {
       start = performance.now();
       await file.download({validation: false, destination});
@@ -130,13 +153,13 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       start = performance.now();
       await file.download({validation: 'crc32c', destination});
       end = performance.now();
-    } else if (checkType === 2) {
+    } else {
       iterationResult.md5Enabled = true;
       start = performance.now();
       await file.download({validation: 'md5', destination});
       end = performance.now();
     }
-    cleanupFile(destination);
+    cleanupFile(destinationFileName);
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);
   }
