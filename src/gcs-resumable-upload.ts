@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import AbortController from 'abort-controller';
-import * as ConfigStore from 'configstore';
 import {createHash} from 'crypto';
 import * as extend from 'extend';
 import {
@@ -100,12 +99,6 @@ export interface UploadConfig {
       opts: GaxiosOptions
     ) => Promise<GaxiosResponse<T>> | GaxiosPromise<T>;
   };
-
-  /**
-   * Where the gcs-resumable-upload configuration file should be stored on your
-   * system. This maps to the configstore option by the same name.
-   */
-  configPath?: string;
 
   /**
    * Create a separate request per chunk.
@@ -257,7 +250,6 @@ export class Upload extends Pumpify {
   uri?: string;
   userProject?: string;
   encryption?: Encryption;
-  configStore: ConfigStore;
   uriProvidedManually: boolean;
   numBytesWritten = 0;
   numRetries = 0;
@@ -338,14 +330,9 @@ export class Upload extends Pumpify {
     if (cfg.private) this.predefinedAcl = 'private';
     if (cfg.public) this.predefinedAcl = 'publicRead';
 
-    const configPath = cfg.configPath;
-    this.configStore = new ConfigStore('gcs-resumable-upload', null, {
-      configPath,
-    });
-
     const autoRetry = cfg.retryOptions.autoRetry;
     this.uriProvidedManually = !!cfg.uri;
-    this.uri = cfg.uri || this.get('uri');
+    this.uri = cfg.uri;
     this.numBytesWritten = 0;
     this.numRetries = 0; //counter for number of retries currently executed
     if (!autoRetry) {
@@ -379,11 +366,10 @@ export class Upload extends Pumpify {
       if (this.uri) {
         this.continueUploading();
       } else {
-        this.createURI((err, uri) => {
+        this.createURI(err => {
           if (err) {
             return this.destroy(err);
           }
-          this.set({uri});
           this.startUploading();
           return;
         });
@@ -650,15 +636,6 @@ export class Upload extends Pumpify {
       this.offset = 0;
     }
 
-    // Check if we're uploading the expected object
-    if (this.numBytesWritten === 0) {
-      const isSameObject = await this.ensureUploadingSameObject();
-      if (!isSameObject) {
-        // `ensureUploadingSameObject` will restart the upload.
-        return;
-      }
-    }
-
     // Check if the offset (server) is too far behind the current stream
     if (this.offset < this.numBytesWritten) {
       const delta = this.numBytesWritten - this.offset;
@@ -818,55 +795,11 @@ export class Upload extends Pumpify {
         resp.data.size = Number(resp.data.size);
       }
       this.emit('metadata', resp.data);
-      this.deleteConfig();
 
       // Allow the object (Upload) to continue naturally so the user's
       // "finish" event fires.
       this.emit('prepareFinish');
     }
-  }
-
-  /**
-   * Check if this is the same content uploaded previously. This caches a
-   * slice of the first chunk, then compares it with the first byte of
-   * incoming data.
-   *
-   * @returns if the request is ok to continue as-is
-   */
-  private async ensureUploadingSameObject() {
-    // A queue for the upstream data
-    const upstreamQueue = this.upstreamIterator(
-      16,
-      true // we just want one chunk for this validation
-    );
-
-    const upstreamChunk = await upstreamQueue.next();
-    const chunk = upstreamChunk.value
-      ? upstreamChunk.value.chunk
-      : Buffer.alloc(0);
-
-    // Put the original chunk back into the buffer as we just wanted to 'peek'
-    // at the stream for validation.
-    this.unshiftChunkBuffer(chunk);
-
-    let cachedFirstChunk = this.get('firstChunk');
-    const firstChunk = chunk.valueOf();
-
-    if (!cachedFirstChunk) {
-      // This is a new upload. Cache the first chunk.
-      this.set({uri: this.uri, firstChunk});
-    } else {
-      // this continues an upload in progress. check if the bytes are the same
-      cachedFirstChunk = Buffer.from(cachedFirstChunk);
-      const nextChunk = Buffer.from(firstChunk);
-      if (Buffer.compare(cachedFirstChunk, nextChunk) !== 0) {
-        // this data is not the same. start a new upload
-        this.restart();
-        return false;
-      }
-    }
-
-    return true;
   }
 
   private async getAndSetOffset() {
@@ -887,30 +820,6 @@ export class Upload extends Pumpify {
       this.offset = 0;
     } catch (e) {
       const err = e as GaxiosError;
-      const resp = err.response;
-      // we don't return a 404 to the user if they provided the resumable
-      // URI. if we're just using the configstore file to tell us that this
-      // file exists, and it turns out that it doesn't (the 404), that's
-      // probably stale config data.
-      if (
-        resp &&
-        resp.status === NOT_FOUND_STATUS_CODE &&
-        !this.uriProvidedManually
-      ) {
-        this.restart();
-        return;
-      }
-
-      // this resumable upload is unrecoverable (bad data or service error).
-      //  -
-      //  https://github.com/googleapis/gcs-resumable-upload/issues/15
-      //  -
-      //  https://github.com/googleapis/gcs-resumable-upload/pull/16#discussion_r80363774
-      if (resp && resp.status === TERMINATED_UPLOAD_STATUS_CODE) {
-        this.restart();
-        return;
-      }
-
       this.destroy(err);
     }
   }
@@ -986,29 +895,13 @@ export class Upload extends Pumpify {
     }
 
     this.lastChunkSent = Buffer.alloc(0);
-    this.deleteConfig();
-    this.createURI((err, uri) => {
+    this.createURI(err => {
       if (err) {
         return this.destroy(err);
       }
-      this.set({uri});
       this.startUploading();
       return;
     });
-  }
-
-  private get(prop: string) {
-    const store = this.configStore.get(this.cacheKey);
-    return store && store[prop];
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private set(props: any) {
-    this.configStore.set(this.cacheKey, props);
-  }
-
-  deleteConfig() {
-    this.configStore.delete(this.cacheKey);
   }
 
   /**
