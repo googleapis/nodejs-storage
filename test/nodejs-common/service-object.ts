@@ -176,28 +176,6 @@ describe('ServiceObject', () => {
       serviceObject.create(options, done);
     });
 
-    it('should not change id', done => {
-      const config = extend({}, CONFIG, {
-        createMethod,
-      });
-      const options = {};
-
-      function createMethod(
-        id: string,
-        options_: {},
-        callback: (err: Error | null, a: {}, b: {}) => void
-      ) {
-        assert.strictEqual(id, config.id);
-        assert.strictEqual(options_, options);
-        callback(null, {metadata: {id: 14}}, {});
-      }
-
-      const serviceObject = new ServiceObject(config);
-      serviceObject.create(options);
-      assert.notStrictEqual(serviceObject.id, 14);
-      done();
-    });
-
     it('should not require options', done => {
       const config = extend({}, CONFIG, {
         createMethod,
