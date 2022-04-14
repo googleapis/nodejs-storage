@@ -214,6 +214,28 @@ describe('ServiceObject', () => {
       serviceObject.create(done);
     });
 
+    it('should update id with metadata id', done => {
+      const config = extend({}, CONFIG, {
+        createMethod,
+      });
+      const options = {};
+
+      function createMethod(
+        id: string,
+        options_: {},
+        callback: (err: Error | null, a: {}, b: {}) => void
+      ) {
+        assert.strictEqual(id, config.id);
+        assert.strictEqual(options_, options);
+        callback(null, {metadata: {id: 14}}, {});
+      }
+
+      const serviceObject = new ServiceObject(config);
+      serviceObject.create(options);
+      assert.strictEqual(serviceObject.id, 14);
+      done();
+    });
+
     it('should pass error to callback', done => {
       const config = extend({}, CONFIG, {createMethod});
       const options = {};
