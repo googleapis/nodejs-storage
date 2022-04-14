@@ -161,19 +161,6 @@ class FakeServiceObject extends ServiceObject {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let xdgConfigOverride: any;
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const xdgBasedirCached = require('xdg-basedir');
-const fakeXdgBasedir = extend(true, {}, xdgBasedirCached);
-Object.defineProperty(fakeXdgBasedir, 'config', {
-  get() {
-    return xdgConfigOverride === false
-      ? false
-      : xdgConfigOverride || xdgBasedirCached.config;
-  },
-});
-
 const fakeSigner = {
   URLSigner: () => {},
 };
@@ -208,7 +195,6 @@ describe('File', () => {
       'hash-stream-validation': fakeHashStreamValidation,
       os: fakeOs,
       './signer': fakeSigner,
-      'xdg-basedir': fakeXdgBasedir,
       zlib: fakeZlib,
     }).File;
   });
@@ -216,7 +202,6 @@ describe('File', () => {
   beforeEach(() => {
     extend(true, fakeFs, fsCached);
     extend(true, fakeOs, osCached);
-    xdgConfigOverride = null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     FakeServiceObject.prototype.request = util.noop as any;
 
