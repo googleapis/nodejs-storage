@@ -1,9 +1,4 @@
 branchProtectionRules:
-  - pattern: 4.x
-    isAdminEnforced: true
-    requiredApprovingReviewCount: 1
-    requiresCodeOwnerReviews: true
-    requiresStrictStatusChecks: false
   - pattern: main
     isAdminEnforced: true
     requiredApprovingReviewCount: 1
@@ -17,7 +12,6 @@ branchProtectionRules:
       - test (10)
       - test (12)
       - test (14)
-      - test (16)
       - cla/google
       - windows
       - OwlBot Post Processor
