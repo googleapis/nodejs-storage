@@ -2493,7 +2493,6 @@ describe('storage', () => {
         fs.stat(FILES.big.path, (err, metadata) => {
           assert.ifError(err);
 
-          // Use a random name to force an empty ConfigStore cache.
           const file = bucket.file(generateName());
           const fileSize = metadata.size;
           upload({interrupt: true}, err => {
