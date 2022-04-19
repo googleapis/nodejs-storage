@@ -27,6 +27,8 @@ import {GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {Readable, Writable} from 'stream';
 import retry = require('async-retry');
 import {RetryOptions, PreconditionOptions} from './storage';
+import * as packageJson from '../package.json';
+import * as uuid from 'uuid';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const TERMINATED_UPLOAD_STATUS_CODE = 410;
@@ -541,7 +543,11 @@ export class Upload extends Writable {
         this.params
       ),
       data: metadata,
-      headers: {},
+      headers: {
+        'x-goog-api-client': `gl-node/${process.versions.node} gccl/${
+          packageJson.version
+        } gccl-invocation-id/${uuid.v4()}`,
+      },
     };
 
     if (metadata.contentLength) {

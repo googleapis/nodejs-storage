@@ -31,6 +31,7 @@ import {
   util,
   Util,
 } from '../../src/nodejs-common/util';
+import * as uuid from 'uuid';
 
 proxyquire.noPreserveCache();
 
@@ -514,7 +515,9 @@ describe('Service', () => {
         const pkg = service.packageJson;
         assert.strictEqual(
           reqOpts.headers!['x-goog-api-client'],
-          `gl-node/${process.versions.node} gccl/${pkg.version}`
+          `gl-node/${process.versions.node} gccl/${
+            pkg.version
+          } gccl-invocation-id/${uuid.v4()}`
         );
         done();
       };
