@@ -1464,7 +1464,7 @@ class File extends ServiceObject<File> {
           try {
             await this.getMetadata({userProject: options.userProject});
           } catch (e) {
-            throughStream.destroy(e);
+            throughStream.destroy(e as Error);
             return;
           }
           if (this.metadata.contentEncoding === 'gzip') {
@@ -2573,7 +2573,7 @@ class File extends ServiceObject<File> {
           fields,
         };
       } catch (err) {
-        throw new SigningError(err.message);
+        throw new SigningError((err as Error).message);
       }
     };
 

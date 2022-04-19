@@ -195,7 +195,9 @@ describe('storage', () => {
             /Could not load the default credentials/,
             /does not have storage\.objects\.create access/,
           ];
-          assert(allowedErrorMessages.some(msg => msg.test(e.message)));
+          assert(
+            allowedErrorMessages.some(msg => msg.test((e as Error).message))
+          );
         }
       });
     });
@@ -2198,7 +2200,7 @@ describe('storage', () => {
         const file = FILES[filesKey];
         const hash = crypto.createHash('md5');
 
-        return new Promise(resolve =>
+        return new Promise<void>(resolve =>
           fs
             .createReadStream(file.path)
             .on('data', hash.update.bind(hash))
@@ -3923,7 +3925,8 @@ describe('storage', () => {
       } else {
         return false;
       }
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       if (error.code === 404) {
         return false;
       } else {
