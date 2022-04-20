@@ -44,6 +44,14 @@ import {PubSub} from '@google-cloud/pubsub';
 import {LifecycleRule} from '../src/bucket';
 import {IdempotencyStrategy} from '../src/storage';
 
+class HTTPError extends Error {
+  code: number;
+  constructor(message: string, code: number) {
+    super(message);
+    this.code = code;
+  }
+}
+
 // When set to true, skips all tests that is not compatible for
 // running inside VPCSC.
 const RUNNING_IN_VPCSC = !!process.env['GOOGLE_CLOUD_TESTS_IN_VPCSC'];
@@ -198,7 +206,9 @@ describe('storage', () => {
             /Could not load the default credentials/,
             /does not have storage\.objects\.create access/,
           ];
-          assert(allowedErrorMessages.some(msg => msg.test(e.message)));
+          assert(
+            allowedErrorMessages.some(msg => msg.test((e as Error).message))
+          );
         }
       });
     });
@@ -2217,7 +2227,7 @@ describe('storage', () => {
         const file = FILES[filesKey];
         const hash = crypto.createHash('md5');
 
-        return new Promise(resolve =>
+        return new Promise<void>(resolve =>
           fs
             .createReadStream(file.path)
             .on('data', hash.update.bind(hash))
@@ -3943,7 +3953,8 @@ describe('storage', () => {
         return false;
       }
     } catch (error) {
-      if (error.code === 404) {
+      const err = error as HTTPError;
+      if (err.code === 404) {
         return false;
       } else {
         throw error;

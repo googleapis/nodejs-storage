@@ -3519,9 +3519,10 @@ describe('File', () => {
     });
 
     it('should error if action is undefined', () => {
-      delete SIGNED_URL_CONFIG.action;
+      const urlConfig = {...SIGNED_URL_CONFIG} as Partial<GetSignedUrlConfig>;
+      delete urlConfig.action;
       assert.throws(() => {
-        file.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
+        file.getSignedUrl(urlConfig, () => {}),
           ExceptionMessages.INVALID_ACTION;
       });
     });
@@ -4264,7 +4265,7 @@ describe('File', () => {
           await file.save(DATA, options);
           throw Error('unreachable');
         } catch (e) {
-          assert.strictEqual(e.message, 'first error');
+          assert.strictEqual((e as Error).message, 'first error');
         }
       });
 
