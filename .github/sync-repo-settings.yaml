@@ -1,9 +1,4 @@
 branchProtectionRules:
-  - pattern: 4.x
-    isAdminEnforced: true
-    requiredApprovingReviewCount: 1
-    requiresCodeOwnerReviews: true
-    requiresStrictStatusChecks: false
   - pattern: main
     isAdminEnforced: true
     requiredApprovingReviewCount: 1
