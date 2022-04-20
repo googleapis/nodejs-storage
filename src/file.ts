@@ -83,13 +83,13 @@ export interface PolicyDocument {
   signature: string;
 }
 
-export type GetSignedPolicyResponse = [PolicyDocument];
+export type GenerateSignedPostPolicyV2Response = [PolicyDocument];
 
-export interface GetSignedPolicyCallback {
+export interface GenerateSignedPostPolicyV2Callback {
   (err: Error | null, policy?: PolicyDocument): void;
 }
 
-export interface GetSignedPolicyOptions {
+export interface GenerateSignedPostPolicyV2Options {
   equals?: string[] | string[][];
   expires: string | number | Date;
   startsWith?: string[] | string[][];
@@ -98,12 +98,6 @@ export interface GetSignedPolicyOptions {
   successStatus?: string;
   contentLengthRange?: {min?: number; max?: number};
 }
-
-export type GenerateSignedPostPolicyV2Options = GetSignedPolicyOptions;
-
-export type GenerateSignedPostPolicyV2Response = GetSignedPolicyResponse;
-
-export type GenerateSignedPostPolicyV2Callback = GetSignedPolicyCallback;
 
 export interface PolicyFields {
   [key: string]: string;
