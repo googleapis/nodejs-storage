@@ -32,7 +32,6 @@ import * as fs from 'fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
-import * as os from 'os';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pumpify = require('pumpify');
 import * as resumableUpload from './gcs-resumable-upload';

@@ -30,7 +30,6 @@ import retry = require('async-retry');
 import {RetryOptions, PreconditionOptions} from './storage';
 
 const NOT_FOUND_STATUS_CODE = 404;
-const TERMINATED_UPLOAD_STATUS_CODE = 410;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
 const DEFAULT_API_ENDPOINT_REGEX = /.*\.googleapis\.com/;
 
