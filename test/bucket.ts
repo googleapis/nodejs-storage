@@ -2080,9 +2080,12 @@ describe('Bucket', () => {
     });
 
     it('should error if action is undefined', () => {
-      delete SIGNED_URL_CONFIG.action;
+      const urlConfig = {
+        ...SIGNED_URL_CONFIG,
+      } as Partial<GetBucketSignedUrlConfig>;
+      delete urlConfig.action;
       assert.throws(() => {
-        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
+        bucket.getSignedUrl(urlConfig, () => {}),
           ExceptionMessages.INVALID_ACTION;
       });
     });

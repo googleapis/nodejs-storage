@@ -2189,7 +2189,7 @@ class Bucket extends ServiceObject {
           },
         });
       } catch (e) {
-        callback!(e);
+        callback!(e as Error);
         return;
       } finally {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -4093,7 +4093,7 @@ class Bucket extends ServiceObject {
         if (!options.force) {
           throw e;
         }
-        errors.push(e);
+        errors.push(e as Error);
       }
     };
 

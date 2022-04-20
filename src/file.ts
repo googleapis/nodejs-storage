@@ -32,7 +32,6 @@ import * as fs from 'fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
-import * as os from 'os';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pumpify = require('pumpify');
 import * as resumableUpload from './gcs-resumable-upload';
@@ -1458,7 +1457,7 @@ class File extends ServiceObject<File> {
           try {
             await this.getMetadata({userProject: options.userProject});
           } catch (e) {
-            throughStream.destroy(e);
+            throughStream.destroy(e as Error);
             return;
           }
           if (this.metadata.contentEncoding === 'gzip') {
@@ -2567,7 +2566,7 @@ class File extends ServiceObject<File> {
           fields,
         };
       } catch (err) {
-        throw new SigningError(err.message);
+        throw new SigningError((err as Error).message);
       }
     };
 
