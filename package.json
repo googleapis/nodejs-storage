@@ -62,7 +62,7 @@
     "duplexify": "^4.0.0",
     "ent": "^2.2.0",
     "extend": "^3.0.2",
-    "gaxios": "^4.0.0",
+    "gaxios": "^5.0.0",
     "get-stream": "^6.0.0",
     "google-auth-library": "^7.14.1",
     "hash-stream-validation": "^0.2.2",
