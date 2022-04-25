@@ -4,6 +4,20 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+### [5.19.3](https://github.com/googleapis/nodejs-storage/compare/v5.19.2...v5.19.3) (2022-04-20)
+
+
+### Bug Fixes
+
+* export idempotencystrategy and preconditionoptions from index ([#1880](https://github.com/googleapis/nodejs-storage/issues/1880)) ([8aafe04](https://github.com/googleapis/nodejs-storage/commit/8aafe0453a8e2dc41f848dd5165d3e86d6a160ed))
+
+### [5.19.2](https://github.com/googleapis/nodejs-storage/compare/v5.19.1...v5.19.2) (2022-04-14)
+
+
+### Bug Fixes
+
+* deleting, getting, and getting metadata for notifications ([#1872](https://github.com/googleapis/nodejs-storage/issues/1872)) ([451570e](https://github.com/googleapis/nodejs-storage/commit/451570e6038a1b91b5723db9b941cd916fd76348))
+
 ### [5.19.1](https://github.com/googleapis/nodejs-storage/compare/v5.19.0...v5.19.1) (2022-04-08)
 
 
