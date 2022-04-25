@@ -91,7 +91,6 @@ describe('gcs-resumable-upload', () => {
   const keyFile = path.join(__dirname, '../../test/fixtures/keys.json');
 
   before(() => {
-    mockery.registerMock('abort-controller', {default: AbortController});
     mockery.enable({useCleanCache: true, warnOnUnregistered: false});
     upload = require('../src/gcs-resumable-upload').upload;
   });
