@@ -1927,8 +1927,8 @@ class File extends ServiceObject<File> {
     });
 
     function setPipelineWithWritable() {
-      // TODO: `startSimpleUpload_` & `startResumableUpload_` to Writables
-      // pass to pipeline
+      // TODO:  `startSimpleUpload_` & `startResumableUpload_` to Writables
+      //  pass to pipeline
     }
 
     // Wait until we've received data to determine what upload technique to use.
@@ -1939,7 +1939,7 @@ class File extends ServiceObject<File> {
       }
 
       if (options.configPath) {
-        this.startResumableUpload_(fileWriteStream, options);
+        this.generateResumableUpload(options);
         return;
       }
 
@@ -1958,7 +1958,7 @@ class File extends ServiceObject<File> {
         if (!accessErr) {
           // A configuration directory exists, and it's writable. gcs-resumable-upload
           // should have everything it needs to work.
-          this.startResumableUpload_(fileWriteStream, options);
+          this.generateResumableUpload(options);
           return;
         }
 
@@ -1971,7 +1971,7 @@ class File extends ServiceObject<File> {
           if (!err) {
             // We successfully created a configuration directory that
             // gcs-resumable-upload will use.
-            this.startResumableUpload_(fileWriteStream, options);
+            this.generateResumableUpload(options);
             return;
           }
 
@@ -3963,21 +3963,13 @@ class File extends ServiceObject<File> {
    * This creates a gcs-resumable-upload upload stream.
    *
    * See {@link https://github.com/googleapis/gcs-resumable-upload| gcs-resumable-upload}
-   *
-   * @param {Duplexify} stream - Duplexify stream of data to pipe to the file.
-   * @param {object=} options - Configuration object.
+   * @param {object} options - Configuration object.
    *
    */
-  private startResumableUpload_(
-    dup: Duplexify,
+  private generateResumableUpload(
     options: CreateResumableUploadOptions
-  ): void {
-    options = Object.assign(
-      {
-        metadata: {},
-      },
-      options
-    );
+  ): resumableUpload.Upload {
+    options = {metadata: {}, ...options};
 
     const retryOptions = this.storage.retryOptions;
     if (
@@ -4025,8 +4017,9 @@ class File extends ServiceObject<File> {
       })
       .on('progress', evt => dup.emit('progress', evt));
 
-    dup.setWritable(uploadStream);
     this.storage.retryOptions.autoRetry = this.instanceRetryValue;
+
+    return uploadStream;
   }
 
   /**
@@ -4139,6 +4132,9 @@ promisifyAll(File, {
     'shouldRetryBasedOnPreconditionAndIdempotencyStrat',
   ],
 });
+
+const a = new File({});
+a.metadata;
 
 /**
  * Reference to the {@link File} class.
