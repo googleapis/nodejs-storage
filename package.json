@@ -29,11 +29,11 @@
   "scripts": {
     "predocs": "npm run compile",
     "docs": "jsdoc -c .jsdoc.js",
-    "system-test": "mocha build/system-test --timeout 600000 --exit",
-    "conformance-test": "mocha --parallel build/conformance-test/ --require build/conformance-test/globalHooks.js",
+    "system-test": "mocha system-test --timeout 600000 --exit",
+    "conformance-test": "mocha --parallel conformance-test/ --require conformance-test/globalHooks.ts",
     "preconformance-test": "npm run compile",
     "presystem-test": "npm run compile",
-    "test": "c8 mocha build/test",
+    "test": "c8 mocha test",
     "pretest": "npm run compile",
     "lint": "gts check",
     "samples-test": "npm link && cd samples/ && npm link ../ && npm test && cd ../",
@@ -113,6 +113,7 @@
     "proxyquire": "^2.1.3",
     "sinon": "^13.0.0",
     "tmp": "^0.2.0",
+    "ts-node": "^10.7.0",
     "typescript": "~3.9.10",
     "uuid": "^8.0.0",
     "yargs": "^16.0.0"
