@@ -867,7 +867,9 @@ export class Upload extends Pumpify {
       reqOpts.params = reqOpts.params || {};
       reqOpts.params.userProject = this.userProject;
     }
-    reqOpts.signal = controller.signal;
+
+    // TypeScript doesn't fully support `AbortSignal` just yet. Remove `as` once supported
+    reqOpts.signal = controller.signal as typeof reqOpts.signal;
     reqOpts.validateStatus = () => true;
 
     const combinedReqOpts = extend(
