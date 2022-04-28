@@ -3951,7 +3951,8 @@ class File extends ServiceObject<File> {
     dup: Duplexify,
     options: CreateResumableUploadOptions
   ): void {
-    options = extend(true,
+    options = extend(
+      true,
       {
         metadata: {},
       },
@@ -4019,7 +4020,8 @@ class File extends ServiceObject<File> {
    * @private
    */
   startSimpleUpload_(dup: Duplexify, options?: CreateWriteStreamOptions): void {
-    options = extend(true,
+    options = extend(
+      true,
       {
         metadata: {},
       },
