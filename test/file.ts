@@ -2227,7 +2227,7 @@ describe('File', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       file.startResumableUpload_ = (stream: {}, options: any) => {
         assert.strictEqual(options.metadata.contentType, 'image/png');
-        assert.deepStrictEqual(emptyObject, {})
+        assert.deepStrictEqual(emptyObject, {});
         done();
       };
 
