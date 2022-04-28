@@ -2221,18 +2221,18 @@ describe('File', () => {
       writable.write('data');
     });
 
-    // it.only('should not overwrite passed in options', done => {
-    //   const emptyObject = {};
-    //   const writable = file.createWriteStream(emptyObject);
-    //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    //   file.startResumableUpload_ = (stream: {}, options: any) => {
-    //     assert.strictEqual(options.metadata.contentType, 'image/png');
-    //     assert.strictEqual(options, {});
-    //     done();
-    //   };
+    it('should not overwrite passed in options', done => {
+      const emptyObject = {};
+      const writable = file.createWriteStream(emptyObject);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file.startResumableUpload_ = (stream: {}, options: any) => {
+        assert.strictEqual(options.metadata.contentType, 'image/png');
+        assert.deepStrictEqual(emptyObject, {})
+        done();
+      };
 
-    //   writable.write('data');
-    // });
+      writable.write('data');
+    });
 
     it('should not set a contentType if mime lookup failed', done => {
       const file = new File('file-without-ext');
