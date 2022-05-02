@@ -20,6 +20,7 @@ import {execSync} from 'child_process';
 import {unlinkSync} from 'fs';
 import {Storage} from '../src';
 import {performance} from 'perf_hooks';
+// eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
 import path = require('path');
 

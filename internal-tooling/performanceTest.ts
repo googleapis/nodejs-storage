@@ -15,6 +15,7 @@
  */
 
 import {appendFile} from 'fs/promises';
+// eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {Worker} from 'worker_threads';
 import yargs = require('yargs');
 import {TestResult} from './performPerformanceTest';
