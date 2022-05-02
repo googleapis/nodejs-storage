@@ -31,6 +31,17 @@ import {
 } from '../src/signer';
 import {encodeURI, qsStringify} from '../src/util';
 import {ExceptionMessages} from '../src/storage';
+import {OutgoingHttpHeaders} from 'http';
+
+interface SignedUrlArgs {
+  bucket: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  contentMd5?: string;
+  contentType?: string;
+  extensionHeaders?: OutgoingHttpHeaders;
+  expiration?: number;
+  file: string;
+}
 
 describe('signer', () => {
   const BUCKET_NAME = 'bucket-name';
@@ -120,7 +131,7 @@ describe('signer', () => {
 
           await signer.getSignedUrl(CONFIG);
           assert(v2.calledOnce);
-          const v2arg = v2.getCall(0).args[0];
+          const v2arg = v2.getCall(0).args[0] as SignedUrlArgs;
           assert.strictEqual(v2arg.bucket, bucket.name);
           assert.strictEqual(v2arg.method, CONFIG.method);
           assert.strictEqual(v2arg.contentMd5, CONFIG.contentMd5);
@@ -148,7 +159,7 @@ describe('signer', () => {
 
           await signer.getSignedUrl(CONFIG);
           assert(v4.calledOnce);
-          const v4arg = v4.getCall(0).args[0];
+          const v4arg = v4.getCall(0).args[0] as SignedUrlArgs;
           assert.strictEqual(v4arg.bucket, bucket.name);
           assert.strictEqual(v4arg.method, CONFIG.method);
           assert.strictEqual(v4arg.contentMd5, CONFIG.contentMd5);
@@ -282,7 +293,10 @@ describe('signer', () => {
           assert(parseExpires.calledOnceWith(CONFIG.expires));
           const expiresInSeconds = parseExpires.getCall(0).lastArg;
 
-          assert(v2.getCall(0).args[0].expiration, expiresInSeconds);
+          assert(
+            (v2.getCall(0).args[0] as SignedUrlArgs).expiration,
+            expiresInSeconds
+          );
         });
       });
 
@@ -378,7 +392,7 @@ describe('signer', () => {
           .resolves({});
 
         await signer.getSignedUrl(CONFIG);
-        const v2arg = v2.getCall(0).args[0];
+        const v2arg = v2.getCall(0).args[0] as SignedUrlArgs;
         assert.strictEqual(v2arg.file, encoded);
         assert(signedUrl.includes(encoded));
       });
