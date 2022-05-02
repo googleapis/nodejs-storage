@@ -46,6 +46,13 @@ export interface TestResult {
   status: '[OK]';
 }
 
+/**
+ * Create a uniformly distributed random integer beween the inclusive min and max provided.
+ *
+ * @param {number} minInclusive lower bound (inclusive) of the range of random integer to return.
+ * @param {number} maxInclusive upper bound (inclusive) of the range of random integer to return.
+ * @returns {number} returns a random integer between minInclusive and maxInclusive
+ */
 const randomInteger = (minInclusive: number, maxInclusive: number) => {
   // Utilizing Math.random will generate uniformly distributed random numbers.
   return (
@@ -62,11 +69,20 @@ const argv = yargs(process.argv.slice(2))
   })
   .parseSync();
 
+/**
+ * Main entry point. This function performs a test iteration and posts the message back
+ * to the parent thread.
+ */
 async function main() {
   const results = await performWriteReadTest();
   parentPort?.postMessage(results);
 }
 
+/**
+ * Performs an iteration of the Write 1 / Read 3 performance measuring test.
+ *
+ * @returns {Promise<TestResult[]} Promise that resolves to an array of test results for the iteration.
+ */
 async function performWriteReadTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
   const fileName = generateRandomFileName();
@@ -170,6 +186,13 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   return results;
 }
 
+/**
+ * Creates a file with a size between the small (default 5120 bytes) and large (2.147e9 bytes) parameters.
+ * The file is filled with random data.
+ *
+ * @param {string} fileName name of the file to generate.
+ * @returns {number} the size of the file generated.
+ */
 function generateRandomFile(fileName: string) {
   const fileSizeBytes = randomInteger(argv.small, argv.large);
   const numberNeeded = Math.ceil(fileSizeBytes / BLOCK_SIZE_IN_BYTES);
@@ -179,10 +202,20 @@ function generateRandomFile(fileName: string) {
   return fileSizeBytes;
 }
 
+/**
+ * Creates a random file name by appending a UUID to the TEST_NAME_STRING.
+ *
+ * @returns {string} random file name that was generated.
+ */
 function generateRandomFileName(): string {
   return `${TEST_NAME_STRING}.${uuid.v4()}`;
 }
 
+/**
+ * Deletes the file specified by the fileName parameter.
+ *
+ * @param {string} fileName name of the file to delete.
+ */
 function cleanupFile(fileName: string) {
   unlinkSync(`${__dirname}/${fileName}`);
 }

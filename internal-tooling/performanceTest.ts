@@ -37,6 +37,12 @@ const argv = yargs(process.argv.slice(2))
 
 let iterationsRemaining = argv.iterations;
 
+/**
+ * Main entry point for performing a Write 1 Read 3 performance measurement test.
+ * This function will create the number of threads supplied in the numthreads argument or
+ * default to 1 if no argument is provided. The test will be run for the number of iterations
+ * specified by the iterations parameter or 100 if not specified.
+ */
 function main() {
   let numThreads = argv.numthreads;
   if (numThreads > iterationsRemaining) {
@@ -50,6 +56,10 @@ function main() {
   }
 }
 
+/**
+ * Creates a new worker thread and performs a test iteration in that worker.
+ * When the worker passes back the results, they are appended to the results file.
+ */
 function createWorker() {
   iterationsRemaining--;
   console.log(
@@ -70,6 +80,11 @@ function createWorker() {
   });
 }
 
+/**
+ * Appends the test results to the CSV file.
+ *
+ * @param {TestResult[]} results
+ */
 async function appendResultToCSV(results: TestResult[]) {
   const fileName = `nodejs-perf-metrics-${START_TIME}-${argv.iterations}.csv`;
 

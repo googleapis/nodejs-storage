@@ -1,9 +1,8 @@
 # nodejs-storage benchmarking
 
-**This is not an officially supported Google product**
+**This is not a supported Google product**
 
-This benchmarking script is used by Storage client library maintainers to benchmark various workloads and collect metrics in order to improve performance of the library.
-Currently the benchmarking runs a Write-1-Read-3 workload and measures throughput.
+This benchmarking script intended for use by Storage client library maintainers to benchmark various workloads and collect metrics in order to improve performance of the library. Currently the benchmarking runs a Write-1-Read-3 workload and measures throughput.
 
 ## Run example:
 This runs 10K iterations of Write-1-Read-3 on 5KiB to 2GiB files, and generates output to a CSV file:
