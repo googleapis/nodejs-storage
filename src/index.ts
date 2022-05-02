@@ -247,6 +247,8 @@ export {
   GetServiceAccountOptions,
   GetServiceAccountResponse,
   HmacKeyResourceResponse,
+  IdempotencyStrategy,
+  PreconditionOptions,
   ServiceAccount,
   Storage,
   StorageOptions,
