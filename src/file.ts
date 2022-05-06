@@ -26,7 +26,6 @@ import {promisifyAll} from '@google-cloud/promisify';
 import compressible = require('compressible');
 import getStream = require('get-stream');
 import * as crypto from 'crypto';
-import * as dateFormat from 'date-and-time';
 import * as extend from 'extend';
 import * as fs from 'fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -66,7 +65,12 @@ import {
 } from './nodejs-common/util';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');
-import {normalize, objectKeyToLowercase, unicodeJSONStringify} from './util';
+import {
+  normalize,
+  objectKeyToLowercase,
+  unicodeJSONStringify,
+  formatAsUTCISO,
+} from './util';
 import retry = require('async-retry');
 
 export type GetExpirationDateResponse = [Date];
@@ -2762,8 +2766,8 @@ class File extends ServiceObject<File> {
     let fields = Object.assign({}, options.fields);
 
     const now = new Date();
-    const nowISO = dateFormat.format(now, 'YYYYMMDD[T]HHmmss[Z]', true);
-    const todayISO = dateFormat.format(now, 'YYYYMMDD', true);
+    const nowISO = formatAsUTCISO(now, true);
+    const todayISO = formatAsUTCISO(now);
 
     const sign = async () => {
       const {client_email} = await this.storage.authClient.getCredentials();
@@ -2788,11 +2792,7 @@ class File extends ServiceObject<File> {
 
       delete fields.bucket;
 
-      const expiration = dateFormat.format(
-        expires,
-        'YYYY-MM-DD[T]HH:mm:ss[Z]',
-        true
-      );
+      const expiration = formatAsUTCISO(expires, true, '-', ':');
 
       const policy = {
         conditions,
