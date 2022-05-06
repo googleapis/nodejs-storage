@@ -264,6 +264,7 @@ export class Upload extends Writable {
   contentLength: number | '*';
   retryOptions: RetryOptions;
   timeOfFirstRequest: number;
+  currentInvocationId = uuid.v4();
   private upstreamChunkBuffer: Buffer = Buffer.alloc(0);
   private chunkBufferEncoding?: BufferEncoding = undefined;
   private numChunksReadInRequest = 0;
@@ -531,7 +532,12 @@ export class Upload extends Writable {
 
   protected async createURIAsync(): Promise<string> {
     const metadata = this.metadata;
+    // Create a new invocation id if this is not a retry call
+    if (this.numRetries === 0) {
+      this.currentInvocationId = uuid.v4();
+    }
 
+    // Check if headers already exist before creating new ones
     const reqOpts: GaxiosOptions = {
       method: 'POST',
       url: [this.baseURI, this.bucket, 'o'].join('/'),
@@ -544,9 +550,7 @@ export class Upload extends Writable {
       ),
       data: metadata,
       headers: {
-        'x-goog-api-client': `gl-node/${process.versions.node} gccl/${
-          packageJson.version
-        } gccl-invocation-id/${uuid.v4()}`,
+        'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId}`,
       },
     };
 
@@ -713,20 +717,25 @@ export class Upload extends Writable {
       },
     });
 
-    let headers: GaxiosOptions['headers'] = {};
+    // Create a new invocation id if this is not a retry call
+    if (this.numRetries === 0) {
+      this.currentInvocationId = uuid.v4();
+    }
+
+    const headers: GaxiosOptions['headers'] = {
+      'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId}`,
+    };
 
     // If using multiple chunk upload, set appropriate header
     if (multiChunkMode && expectedUploadSize) {
       // The '-1' is because the ending byte is inclusive in the request.
       const endingByte = expectedUploadSize + this.numBytesWritten - 1;
-      headers = {
-        'Content-Length': expectedUploadSize,
-        'Content-Range': `bytes ${this.offset}-${endingByte}/${this.contentLength}`,
-      };
+      headers['Content-Length'] = expectedUploadSize;
+      headers[
+        'Content-Range'
+      ] = `bytes ${this.offset}-${endingByte}/${this.contentLength}`;
     } else {
-      headers = {
-        'Content-Range': `bytes ${this.offset}-*/${this.contentLength}`,
-      };
+      headers['Content-Range'] = `bytes ${this.offset}-*/${this.contentLength}`;
     }
 
     const reqOpts: GaxiosOptions = {
@@ -852,10 +861,18 @@ export class Upload extends Writable {
   }
 
   private async getAndSetOffset() {
+    // Create a new invocation id if this is not a retry call
+    if (this.numRetries === 0) {
+      this.currentInvocationId = uuid.v4();
+    }
     const opts: GaxiosOptions = {
       method: 'PUT',
       url: this.uri!,
-      headers: {'Content-Length': 0, 'Content-Range': 'bytes */*'},
+      headers: {
+        'Content-Length': 0,
+        'Content-Range': 'bytes */*',
+        'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId}`,
+      },
     };
     try {
       const resp = await this.makeRequest(opts);

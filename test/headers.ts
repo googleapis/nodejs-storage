@@ -60,7 +60,7 @@ describe('headers', () => {
       if (err !== error) throw err;
     }
     assert.ok(
-      /^gl-node\/[0-9]+\.[0-9]+\.[-.\w]+ gccl\/[0-9]+\.[0-9]+\.[-.\w]+ gccl-invocation-id\/[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}$/.test(
+      /^gl-node\/[0-9]+\.[0-9]+\.[-.\w]+ gccl\/[0-9]+\.[0-9]+\.[-.\w]+$/.test(
         requests[0].headers['x-goog-api-client']
       )
     );
