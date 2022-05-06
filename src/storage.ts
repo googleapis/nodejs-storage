@@ -80,11 +80,6 @@ export interface StorageOptions extends ServiceOptions {
    */
   maxRetries?: number;
   /**
-   * **This option is deprecated.**
-   * @todo Remove in next major release.
-   */
-  promise?: typeof Promise;
-  /**
    * The API endpoint of the service used to make requests.
    * Defaults to `storage.googleapis.com`.
    */
