@@ -264,7 +264,11 @@ export class Upload extends Writable {
   contentLength: number | '*';
   retryOptions: RetryOptions;
   timeOfFirstRequest: number;
-  currentInvocationId = uuid.v4();
+  private currentInvocationId = {
+    chunk: uuid.v4(),
+    uri: uuid.v4(),
+    offset: uuid.v4(),
+  };
   private upstreamChunkBuffer: Buffer = Buffer.alloc(0);
   private chunkBufferEncoding?: BufferEncoding = undefined;
   private numChunksReadInRequest = 0;
@@ -532,10 +536,6 @@ export class Upload extends Writable {
 
   protected async createURIAsync(): Promise<string> {
     const metadata = this.metadata;
-    // Create a new invocation id if this is not a retry call
-    if (this.numRetries === 0) {
-      this.currentInvocationId = uuid.v4();
-    }
 
     // Check if headers already exist before creating new ones
     const reqOpts: GaxiosOptions = {
@@ -550,7 +550,7 @@ export class Upload extends Writable {
       ),
       data: metadata,
       headers: {
-        'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId}`,
+        'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId.uri}`,
       },
     };
 
@@ -582,6 +582,8 @@ export class Upload extends Writable {
       async (bail: (err: Error) => void) => {
         try {
           const res = await this.makeRequest(reqOpts);
+          // We have successfully got a URI we can now create a new invocation id
+          this.currentInvocationId.uri = uuid.v4();
           return res.headers.location;
         } catch (err) {
           const e = err as GaxiosError;
@@ -717,13 +719,8 @@ export class Upload extends Writable {
       },
     });
 
-    // Create a new invocation id if this is not a retry call
-    if (this.numRetries === 0) {
-      this.currentInvocationId = uuid.v4();
-    }
-
     const headers: GaxiosOptions['headers'] = {
-      'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId}`,
+      'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId.chunk}`,
     };
 
     // If using multiple chunk upload, set appropriate header
@@ -764,6 +761,9 @@ export class Upload extends Writable {
       this.destroy(resp.data.error);
       return;
     }
+
+    // At this point we can safely create a new id for the chunk
+    this.currentInvocationId.chunk = uuid.v4();
 
     const shouldContinueWithNextMultiChunkRequest =
       this.chunkSize &&
@@ -861,21 +861,19 @@ export class Upload extends Writable {
   }
 
   private async getAndSetOffset() {
-    // Create a new invocation id if this is not a retry call
-    if (this.numRetries === 0) {
-      this.currentInvocationId = uuid.v4();
-    }
     const opts: GaxiosOptions = {
       method: 'PUT',
       url: this.uri!,
       headers: {
         'Content-Length': 0,
         'Content-Range': 'bytes */*',
-        'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId}`,
+        'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId.offset}`,
       },
     };
     try {
       const resp = await this.makeRequest(opts);
+      // Successfully got the offset we can now create a new offset invocation id
+      this.currentInvocationId.offset = uuid.v4();
       if (resp.status === RESUMABLE_INCOMPLETE_STATUS_CODE) {
         if (resp.headers.range) {
           const range = resp.headers.range as string;

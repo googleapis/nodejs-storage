@@ -906,6 +906,15 @@ describe('gcs-resumable-upload', () => {
           done();
         });
       });
+
+      it('currentInvocationId.uri should remain the same on error', done => {
+        const beforeCallInvocationId = up.currentInvocationId.uri;
+        up.createURI((err: Error) => {
+          assert(err);
+          assert.equal(beforeCallInvocationId, up.currentInvocationId.uri);
+          done();
+        });
+      });
     });
 
     describe('success', () => {
@@ -939,6 +948,14 @@ describe('gcs-resumable-upload', () => {
         up.createURI((err: Error, uri: string) => {
           assert.ifError(err);
           assert.strictEqual(uri, URI);
+          done();
+        });
+      });
+
+      it('currentInvocationId.uri should be different after success', done => {
+        const beforeCallInvocationId = up.currentInvocationId.uri;
+        up.createURI(() => {
+          assert.notEqual(beforeCallInvocationId, up.currentInvocationId.uri);
           done();
         });
       });
@@ -1348,6 +1365,26 @@ describe('gcs-resumable-upload', () => {
 
       up.responseHandler(RESP);
     });
+
+    it('currentInvocationId.chunk should be different after success', done => {
+      const beforeCallInvocationId = up.currentInvocationId.chunk;
+      const RESP = {data: '', status: 200};
+      up.once('prepareFinish', () => {
+        assert.notEqual(beforeCallInvocationId, up.currentInvocationId.chunk);
+        done();
+      });
+      up.responseHandler(RESP);
+    });
+
+    it('currentInvocationId.chunk should be the same after error', done => {
+      const beforeCallInvocationId = up.currentInvocationId.chunk;
+      const RESP = {data: {error: new Error('Error.')}};
+      up.destroy = () => {
+        assert.equal(beforeCallInvocationId, up.currentInvocationId.chunk);
+        done();
+      };
+      up.responseHandler(RESP);
+    });
   });
 
   describe('#ensureUploadingSameObject', () => {
@@ -1455,6 +1492,27 @@ describe('gcs-resumable-upload', () => {
         return {};
       };
       up.getAndSetOffset();
+    });
+
+    it('currentInvocationId.offset should be different after success', async () => {
+      const beforeCallInvocationId = up.currentInvocationId.offset;
+      up.makeRequest = () => {
+        return {};
+      };
+      await up.getAndSetOffset();
+      assert.notEqual(beforeCallInvocationId, up.currentInvocationId.offset);
+    });
+
+    it('currentInvocationId.offset should be the same on error', async done => {
+      const beforeCallInvocationId = up.currentInvocationId.offset;
+      up.destroy = () => {
+        assert.equal(beforeCallInvocationId, up.currentInvocationId.offset);
+        done();
+      };
+      up.makeRequest = () => {
+        throw new Error() as GaxiosError;
+      };
+      await up.getAndSetOffset();
     });
 
     describe('restart on 404', () => {
