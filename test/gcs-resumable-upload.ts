@@ -1369,7 +1369,7 @@ describe('gcs-resumable-upload', () => {
     it('currentInvocationId.chunk should be different after success', done => {
       const beforeCallInvocationId = up.currentInvocationId.chunk;
       const RESP = {data: '', status: 200};
-      up.once('prepareFinish', () => {
+      up.on('uploadFinished', () => {
         assert.notEqual(beforeCallInvocationId, up.currentInvocationId.chunk);
         done();
       });
