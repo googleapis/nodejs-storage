@@ -27,13 +27,20 @@ import {GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {Readable, Writable} from 'stream';
 import retry = require('async-retry');
 import {RetryOptions, PreconditionOptions} from './storage';
-import * as packageJson from '../package.json';
 import * as uuid from 'uuid';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const TERMINATED_UPLOAD_STATUS_CODE = 410;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
 const DEFAULT_API_ENDPOINT_REGEX = /.*\.googleapis\.com/;
+let packageJson: ReturnType<JSON['parse']> = {};
+try {
+  // if requiring from 'build' (default)
+  packageJson = require('../../package.json');
+} catch (e) {
+  // if requiring directly from TypeScript context
+  packageJson = require('../package.json');
+}
 
 export const PROTOCOL_REGEX = /^(\w*):\/\//;
 

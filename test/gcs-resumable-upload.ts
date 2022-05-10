@@ -68,7 +68,7 @@ const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
 const CHUNK_SIZE_MULTIPLE = 2 ** 18;
 const queryPath = '/?userProject=user-project-id';
 const X_GOOG_API_HEADER_REGEX =
-  /^gl-node\/[0-9]+\.[0-9]+\.[-.\w]+ gccl\/[0-9]+\.[0-9]+\.[-.\w]+ gccl-invocation-id\/[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}$/;
+  /^gl-node\/(?<nodeVersion>[^W]+) gccl\/(?<gccl>[^W]+) gccl-invocation-id\/(?<gcclInvocationId>[^W]+)$/;
 
 function mockAuthorizeRequest(
   code = 200,

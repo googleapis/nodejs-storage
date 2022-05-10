@@ -77,7 +77,7 @@ function fakeRequest() {
 
 fakeRequest.defaults = (defaults: r.CoreOptions) => {
   assert.ok(
-    /^gl-node\/[0-9]+\.[0-9]+\.[-.\w]+ gccl\/[0-9]+\.[0-9]+\.[-.\w]+ gccl-invocation-id\/[\w]{8}-[\w]{4}-[\w]{4}-[\w]{4}-[\w]{12}$/.test(
+    /^gl-node\/(?<nodeVersion>[^W]+) gccl\/(?<gccl>[^W]+) gccl-invocation-id\/(?<gcclInvocationId>[^W]+)$/.test(
       defaults.headers!['x-goog-api-client']
     )
   );
