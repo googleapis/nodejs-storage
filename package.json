@@ -71,7 +71,7 @@
     "mime-types": "^2.0.8",
     "p-limit": "^3.0.1",
     "pumpify": "^2.0.0",
-    "retry-request": "^4.2.2",
+    "retry-request": "^5.0.0",
     "snakeize": "^0.1.0",
     "stream-events": "^1.0.4",
     "teeny-request": "^7.1.3",
