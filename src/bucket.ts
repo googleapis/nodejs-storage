@@ -35,7 +35,7 @@ import * as path from 'path';
 import pLimit = require('p-limit');
 import {promisify} from 'util';
 import retry = require('async-retry');
-import { convertObjKeysToSnakeCase } from './util';
+import {convertObjKeysToSnakeCase} from './util';
 
 import {Acl} from './acl';
 import {Channel} from './channel';
