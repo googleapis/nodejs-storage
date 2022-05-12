@@ -1394,7 +1394,7 @@ class File extends ServiceObject<File> {
         if (err) {
           // Get error message from the body.
           this.getBufferFromReadable(rawResponseStream).then(body => {
-            err.message = body.toString('utf-8');
+            err.message = body.toString('utf8');
             throughStream.destroy(err);
           });
 
@@ -4104,15 +4104,12 @@ class File extends ServiceObject<File> {
   }
 
   private async getBufferFromReadable(readable: Readable): Promise<Buffer> {
-    readable.once('error', e => {
-      throw e;
-    });
-    let buf = Buffer.alloc(0);
+    const buf = [];
     for await (const chunk of readable) {
-      buf = Buffer.concat([buf, chunk]);
+      buf.push(chunk);
     }
 
-    return buf;
+    return Buffer.concat(buf);
   }
 }
 
@@ -4128,6 +4125,7 @@ promisifyAll(File, {
     'save',
     'setEncryptionKey',
     'shouldRetryBasedOnPreconditionAndIdempotencyStrat',
+    'getBufferFromReadable',
   ],
 });
 
