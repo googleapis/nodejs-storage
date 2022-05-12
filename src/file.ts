@@ -4104,6 +4104,9 @@ class File extends ServiceObject<File> {
   }
 
   private async getBufferFromReadable(readable: Readable): Promise<Buffer> {
+    readable.once('error', e => {
+      throw e;
+    });
     let buf = Buffer.alloc(0);
     for await (const chunk of readable) {
       buf = Buffer.concat([buf, chunk]);
