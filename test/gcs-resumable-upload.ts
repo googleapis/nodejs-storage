@@ -1236,13 +1236,6 @@ describe('gcs-resumable-upload', () => {
       up.responseHandler(RESP);
     });
 
-    it('should emit `prepareFinish` when request succeeds', done => {
-      const RESP = {data: '', status: 200};
-      up.once('prepareFinish', done);
-
-      up.responseHandler(RESP);
-    });
-
     it('should continue with multi-chunk upload when incomplete', done => {
       const lastByteReceived = 9;
 
