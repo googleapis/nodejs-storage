@@ -23,9 +23,7 @@ import {
 } from 'gaxios';
 import * as gaxios from 'gaxios';
 import {GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
-import * as Pumpify from 'pumpify';
-import {Duplex, PassThrough, Readable} from 'stream';
-import * as streamEvents from 'stream-events';
+import {Readable, Writable} from 'stream';
 import retry = require('async-retry');
 import {RetryOptions, PreconditionOptions} from './storage';
 
@@ -102,7 +100,7 @@ export interface UploadConfig {
   /**
    * Create a separate request per chunk.
    *
-   * Should be a multiple of 256 KiB (2^18).
+   * This value is in bytes and should be a multiple of 256 KiB (2^18).
    * We recommend using at least 8 MiB for the chunk size.
    *
    * @link https://cloud.google.com/storage/docs/performing-resumable-uploads#chunked-upload
@@ -218,7 +216,7 @@ export interface ApiError extends Error {
   errors?: GoogleInnerError[];
 }
 
-export class Upload extends Pumpify {
+export class Upload extends Writable {
   bucket: string;
   file: string;
   apiEndpoint: string;
@@ -268,7 +266,6 @@ export class Upload extends Pumpify {
 
   constructor(cfg: UploadConfig) {
     super();
-    streamEvents(this);
 
     cfg = cfg || {};
 
@@ -313,12 +310,7 @@ export class Upload extends Pumpify {
     this.retryOptions = cfg.retryOptions;
 
     if (cfg.key) {
-      /**
-       * NOTE: This is `as string` because there appears to be some weird kind
-       * of TypeScript bug as 2.8. Tracking the issue here:
-       * https://github.com/Microsoft/TypeScript/issues/23155
-       */
-      const base64Key = Buffer.from(cfg.key as string).toString('base64');
+      const base64Key = Buffer.from(cfg.key).toString('base64');
       this.encryption = {
         key: base64Key,
         hash: createHash('sha256').update(cfg.key).digest('base64'),
@@ -333,7 +325,7 @@ export class Upload extends Pumpify {
     this.uriProvidedManually = !!cfg.uri;
     this.uri = cfg.uri;
     this.numBytesWritten = 0;
-    this.numRetries = 0; //counter for number of retries currently executed
+    this.numRetries = 0; // counter for number of retries currently executed
     if (!autoRetry) {
       cfg.retryOptions.maxRetries = 0;
     }
@@ -345,23 +337,7 @@ export class Upload extends Pumpify {
       : NaN;
     this.contentLength = isNaN(contentLength) ? '*' : contentLength;
 
-    this.upstream.on('end', () => {
-      this.upstreamEnded = true;
-    });
-
-    this.on('prefinish', () => {
-      this.upstreamEnded = true;
-    });
-
     this.once('writing', () => {
-      // Now that someone is writing to this object, let's attach
-      // some duplexes. These duplexes enable this object to be
-      // better managed in terms of 'end'/'finish' control and
-      // buffering writes downstream if someone enables multi-
-      // chunk upload support (`chunkSize`) w/o adding too much into
-      // memory.
-      this.setPipeline(this.upstream, new PassThrough());
-
       if (this.uri) {
         this.continueUploading();
       } else {
@@ -376,29 +352,34 @@ export class Upload extends Pumpify {
     });
   }
 
-  /** A stream representing the incoming data to upload */
-  private readonly upstream = new Duplex({
-    read: async () => {
-      this.once('prepareFinish', () => {
-        // Allows this (`Upload`) to finish/end once the upload has succeeded.
-        this.upstream.push(null);
-      });
-    },
-    write: this.writeToChunkBuffer.bind(this),
-  });
+  /**
+   * Prevent 'finish' event until the upload has succeeded.
+   *
+   * @param fireFinishEvent The finish callback
+   */
+  _final(fireFinishEvent = () => {}) {
+    this.upstreamEnded = true;
+
+    this.once('uploadFinished', fireFinishEvent);
+
+    process.nextTick(() => this.emit('upstreamFinished'));
+  }
 
   /**
-   * A handler for `upstream` to write and buffer its data.
+   * Handles incoming data from upstream
    *
    * @param chunk The chunk to append to the buffer
    * @param encoding The encoding of the chunk
    * @param readCallback A callback for when the buffer has been read downstream
    */
-  private writeToChunkBuffer(
+  _write(
     chunk: Buffer | string,
     encoding: BufferEncoding,
-    readCallback: () => void
+    readCallback = () => {}
   ) {
+    // Backwards-compatible event
+    this.emit('writing');
+
     this.upstreamChunkBuffer = Buffer.concat([
       this.upstreamChunkBuffer,
       typeof chunk === 'string' ? Buffer.from(chunk, encoding) : chunk,
@@ -406,6 +387,7 @@ export class Upload extends Pumpify {
     this.chunkBufferEncoding = encoding;
 
     this.once('readFromChunkBuffer', readCallback);
+
     process.nextTick(() => this.emit('wroteToChunkBuffer'));
   }
 
@@ -470,22 +452,16 @@ export class Upload extends Pumpify {
       };
 
       // Remove listeners when we're ready to callback.
-      // It's important to clean-up listeners as Node has a default max number of
-      // event listeners. Notably, The number of requests can be greater than the
-      // number of potential listeners.
-      // - https://nodejs.org/api/events.html#eventsdefaultmaxlisteners
       const removeListeners = () => {
         this.removeListener('wroteToChunkBuffer', wroteToChunkBufferCallback);
-        this.upstream.removeListener('finish', upstreamFinishedCallback);
-        this.removeListener('prefinish', upstreamFinishedCallback);
+        this.removeListener('upstreamFinished', upstreamFinishedCallback);
       };
 
       // If there's data recently written it should be digested
       this.once('wroteToChunkBuffer', wroteToChunkBufferCallback);
 
       // If the upstream finishes let's see if there's anything to grab
-      this.upstream.once('finish', upstreamFinishedCallback);
-      this.once('prefinish', upstreamFinishedCallback);
+      this.once('upstreamFinished', upstreamFinishedCallback);
     });
 
     return willBeMoreChunks;
@@ -638,7 +614,7 @@ export class Upload extends Pumpify {
     // Check if the offset (server) is too far behind the current stream
     if (this.offset < this.numBytesWritten) {
       const delta = this.numBytesWritten - this.offset;
-      const message = `The offset is lower than the number of bytes written. The server has ${this.offset} bytes and while  ${this.numBytesWritten} bytes has been uploaded - thus ${delta} bytes are missing. Stopping as this could result in data loss. Initiate a new upload to continue.`;
+      const message = `The offset is lower than the number of bytes written. The server has ${this.offset} bytes and while ${this.numBytesWritten} bytes has been uploaded - thus ${delta} bytes are missing. Stopping as this could result in data loss. Initiate a new upload to continue.`;
 
       this.emit('error', new RangeError(message));
       return;
@@ -787,7 +763,7 @@ export class Upload extends Pumpify {
       };
       this.destroy(err);
     } else {
-      // remove the last chunk sent
+      // remove the last chunk sent to free memory
       this.lastChunkSent = Buffer.alloc(0);
 
       if (resp && resp.data) {
@@ -797,7 +773,7 @@ export class Upload extends Pumpify {
 
       // Allow the object (Upload) to continue naturally so the user's
       // "finish" event fires.
-      this.emit('prepareFinish');
+      this.emit('uploadFinished');
     }
   }
 
