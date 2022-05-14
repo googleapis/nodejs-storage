@@ -32,13 +32,11 @@ import * as fs from 'fs';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
-import * as os from 'os';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pumpify = require('pumpify');
 import * as resumableUpload from './gcs-resumable-upload';
 import {Duplex, Writable, Readable, PassThrough} from 'stream';
 import * as streamEvents from 'stream-events';
-import * as xdgBasedir from 'xdg-basedir';
 import * as zlib from 'zlib';
 import * as http from 'http';
 
@@ -84,13 +82,13 @@ export interface PolicyDocument {
   signature: string;
 }
 
-export type GetSignedPolicyResponse = [PolicyDocument];
+export type GenerateSignedPostPolicyV2Response = [PolicyDocument];
 
-export interface GetSignedPolicyCallback {
+export interface GenerateSignedPostPolicyV2Callback {
   (err: Error | null, policy?: PolicyDocument): void;
 }
 
-export interface GetSignedPolicyOptions {
+export interface GenerateSignedPostPolicyV2Options {
   equals?: string[] | string[][];
   expires: string | number | Date;
   startsWith?: string[] | string[][];
@@ -99,12 +97,6 @@ export interface GetSignedPolicyOptions {
   successStatus?: string;
   contentLengthRange?: {min?: number; max?: number};
 }
-
-export type GenerateSignedPostPolicyV2Options = GetSignedPolicyOptions;
-
-export type GenerateSignedPostPolicyV2Response = GetSignedPolicyResponse;
-
-export type GenerateSignedPostPolicyV2Callback = GetSignedPolicyCallback;
 
 export interface PolicyFields {
   [key: string]: string;
@@ -196,7 +188,6 @@ export type PredefinedAcl =
 
 export interface CreateResumableUploadOptions {
   chunkSize?: number;
-  configPath?: string;
   metadata?: Metadata;
   origin?: string;
   offset?: number;
@@ -279,16 +270,6 @@ export enum ActionToHTTPMethod {
   write = 'PUT',
   delete = 'DELETE',
   resumable = 'POST',
-}
-
-/**
- * Custom error type for errors related to creating a resumable upload.
- *
- * @private
- */
-class ResumableUploadError extends Error {
-  name = 'ResumableUploadError';
-  additionalInfo?: string;
 }
 
 /**
@@ -417,13 +398,13 @@ export enum FileExceptionMessages {
   STARTS_WITH_TWO_ELEMENTS = 'StartsWith condition must be an array of 2 elements.',
   CONTENT_LENGTH_RANGE_MIN_MAX = 'ContentLengthRange must have numeric min & max fields.',
   DOWNLOAD_MISMATCH = 'The downloaded data did not match the data from the server. To be sure the content is the same, you should download the file again.',
-  UPLOAD_MISMATCH_DELETE_FAIL = `The uploaded data did not match the data from the server. 
-    As a precaution, we attempted to delete the file, but it was not successful. 
-    To be sure the content is the same, you should try removing the file manually, 
-    then uploading the file again. 
+  UPLOAD_MISMATCH_DELETE_FAIL = `The uploaded data did not match the data from the server.
+    As a precaution, we attempted to delete the file, but it was not successful.
+    To be sure the content is the same, you should try removing the file manually,
+    then uploading the file again.
     \n\nThe delete attempt failed with this message:\n\n  `,
-  UPLOAD_MISMATCH = `The uploaded data did not match the data from the server. 
-    As a precaution, the file has been deleted. 
+  UPLOAD_MISMATCH = `The uploaded data did not match the data from the server.
+    As a precaution, the file has been deleted.
     To be sure the content is the same, you should try uploading the file again.`,
 }
 
@@ -1476,7 +1457,7 @@ class File extends ServiceObject<File> {
           try {
             await this.getMetadata({userProject: options.userProject});
           } catch (e) {
-            throughStream.destroy(e);
+            throughStream.destroy(e as Error);
             return;
           }
           if (this.metadata.contentEncoding === 'gzip') {
@@ -1545,8 +1526,6 @@ class File extends ServiceObject<File> {
    */
   /**
    * @typedef {object} CreateResumableUploadOptions
-   * @property {string} [configPath] A full JSON file path to use with
-   *     `gcs-resumable-upload`. This maps to the {@link https://github.com/yeoman/configstore/tree/0df1ec950d952b1f0dfb39ce22af8e505dffc71a#configpath| configstore option by the same name}.
    * @property {object} [metadata] Metadata to set on the file.
    * @property {number} [offset] The starting byte of the upload stream for resuming an interrupted upload.
    * @property {string} [origin] Origin header to set for the upload.
@@ -1576,8 +1555,8 @@ class File extends ServiceObject<File> {
    *     `options.predefinedAcl = 'publicRead'`)
    * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
-   * @property {string} [chunkSize] Create a separate request per chunk. Should
-   *     be a multiple of 256 KiB (2^18).
+   * @property {string} [chunkSize] Create a separate request per chunk. This
+   *     value is in bytes and should be a multiple of 256 KiB (2^18).
    *     {@link https://cloud.google.com/storage/docs/performing-resumable-uploads#chunked-upload| We recommend using at least 8 MiB for the chunk size.}
    */
   /**
@@ -1648,7 +1627,6 @@ class File extends ServiceObject<File> {
         authClient: this.storage.authClient,
         apiEndpoint: this.storage.apiEndpoint,
         bucket: this.bucket.name,
-        configPath: options.configPath,
         customRequestOptions: this.getRequestInterceptors().reduce(
           (reqOpts, interceptorFn) => interceptorFn(reqOpts),
           {}
@@ -1674,9 +1652,6 @@ class File extends ServiceObject<File> {
 
   /**
    * @typedef {object} CreateWriteStreamOptions Configuration options for File#createWriteStream().
-   * @property {string} [configPath] **This only applies to resumable
-   *     uploads.** A full JSON file path to use with `gcs-resumable-upload`.
-   *     This maps to the {@link https://github.com/yeoman/configstore/tree/0df1ec950d952b1f0dfb39ce22af8e505dffc71a#configpath| configstore option by the same name}.
    * @property {string} [contentType] Alias for
    *     `options.metadata.contentType`. If set to `auto`, the file name is used
    *     to determine the contentType.
@@ -1744,12 +1719,6 @@ class File extends ServiceObject<File> {
    * Resumable uploads are automatically enabled and must be shut off explicitly
    * by setting `options.resumable` to `false`.
    *
-   * Resumable uploads require write access to the $HOME directory. Through
-   * {@link https://www.npmjs.com/package/configstore| `config-store`}, some metadata
-   * is stored. By default, if the directory is not writable, we will fall back
-   * to a simple upload. However, if you explicitly request a resumable upload,
-   * and we cannot write to the config directory, we will return a
-   * `ResumableUploadError`.
    *
    * <p class="notice">
    *   There is some overhead when using a resumable upload that can cause
@@ -1899,71 +1868,7 @@ class File extends ServiceObject<File> {
         this.startSimpleUpload_(fileWriteStream, options);
         return;
       }
-
-      if (options.configPath) {
-        this.startResumableUpload_(fileWriteStream, options);
-        return;
-      }
-
-      // The logic below attempts to mimic the resumable upload library,
-      // gcs-resumable-upload. That library requires a writable configuration
-      // directory in order to work. If we wait for that library to discover any
-      // issues, we've already started a resumable upload which is difficult to back
-      // out of. We want to catch any errors first, so we can choose a simple, non-
-      // resumable upload instead.
-
-      // Same as configstore (used by gcs-resumable-upload):
-      // https://github.com/yeoman/configstore/blob/f09f067e50e6a636cfc648a6fc36a522062bd49d/index.js#L11
-      const configDir = xdgBasedir.config || os.tmpdir();
-
-      fs.access(configDir, fs.constants.W_OK, accessErr => {
-        if (!accessErr) {
-          // A configuration directory exists, and it's writable. gcs-resumable-upload
-          // should have everything it needs to work.
-          this.startResumableUpload_(fileWriteStream, options);
-          return;
-        }
-
-        // The configuration directory is either not writable, or it doesn't exist.
-        // gcs-resumable-upload will attempt to create it for the user, but we'll try
-        // it now to confirm that it won't have any issues. That way, if we catch the
-        // issue before we start the resumable upload, we can instead start a simple
-        // upload.
-        fs.mkdir(configDir, {mode: 0o0700}, err => {
-          if (!err) {
-            // We successfully created a configuration directory that
-            // gcs-resumable-upload will use.
-            this.startResumableUpload_(fileWriteStream, options);
-            return;
-          }
-
-          if (options.resumable) {
-            // The user wanted a resumable upload, but we couldn't create a
-            // configuration directory, which means gcs-resumable-upload will fail.
-
-            // Determine if the issue is that the directory does not exist or
-            // if the directory exists, but is not writable.
-            const error = new ResumableUploadError(
-              [
-                'A resumable upload could not be performed. The directory,',
-                `${configDir}, is not writable. You may try another upload,`,
-                'this time setting `options.resumable` to `false`.',
-              ].join(' ')
-            );
-            fs.access(configDir, fs.constants.R_OK, noReadErr => {
-              if (noReadErr) {
-                error.additionalInfo = 'The directory does not exist.';
-              } else {
-                error.additionalInfo = 'The directory is read-only.';
-              }
-              stream.destroy(error);
-            });
-          } else {
-            // The user didn't care, resumable or not. Fall back to simple upload.
-            this.startSimpleUpload_(fileWriteStream, options);
-          }
-        });
-      });
+      this.startResumableUpload_(fileWriteStream, options);
     });
 
     fileWriteStream.on('response', stream.emit.bind(stream, 'response'));
@@ -2028,50 +1933,6 @@ class File extends ServiceObject<File> {
     });
 
     return stream as Writable;
-  }
-
-  /**
-   * Delete failed resumable upload file cache.
-   *
-   * Resumable file upload cache the config file to restart upload in case of
-   * failure. In certain scenarios, the resumable upload will not works and
-   * upload file cache needs to be deleted to upload the same file.
-   *
-   * Following are some of the scenarios.
-   *
-   * Resumable file upload failed even though the file is successfully saved
-   * on the google storage and need to clean up a resumable file cache to
-   * update the same file.
-   *
-   * Resumable file upload failed due to pre-condition
-   * (i.e generation number is not matched) and want to upload a same
-   * file with the new generation number.
-   *
-   * @example
-   * ```
-   * const {Storage} = require('@google-cloud/storage');
-   * const storage = new Storage();
-   * const myBucket = storage.bucket('my-bucket');
-   *
-   * const file = myBucket.file('my-file', { generation: 0 });
-   * const contents = 'This is the contents of the file.';
-   *
-   * file.save(contents, function(err) {
-   *   if (err) {
-   *     file.deleteResumableCache();
-   *   }
-   * });
-   *
-   * ```
-   */
-  deleteResumableCache() {
-    const uploadStream = resumableUpload.upload({
-      bucket: this.bucket.name,
-      file: this.name,
-      generation: this.generation,
-      retryOptions: this.storage.retryOptions,
-    });
-    uploadStream.deleteConfig();
   }
 
   download(options?: DownloadOptions): Promise<DownloadResponse>;
@@ -2166,7 +2027,7 @@ class File extends ServiceObject<File> {
 
     if (destination) {
       fileStream.on('error', callback).once('data', data => {
-        // We know that the file exists the server
+        // We know that the file exists the server - now we can truncate/write to a file
         const writable = fs.createWriteStream(destination);
         writable.write(data);
         fileStream.pipe(writable).on('error', callback).on('finish', callback);
@@ -2306,123 +2167,6 @@ class File extends ServiceObject<File> {
         );
       }
     );
-  }
-
-  getSignedPolicy(
-    options: GetSignedPolicyOptions
-  ): Promise<GetSignedPolicyResponse>;
-  getSignedPolicy(
-    options: GetSignedPolicyOptions,
-    callback: GetSignedPolicyCallback
-  ): void;
-  getSignedPolicy(callback: GetSignedPolicyCallback): void;
-  /**
-   * @typedef {array} GetSignedPolicyResponse
-   * @property {object} 0 The document policy.
-   */
-  /**
-   * @callback GetSignedPolicyCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} policy The document policy.
-   */
-  /**
-   * Get a v2 signed policy document to allow a user to upload data with a POST
-   * request.
-   *
-   * In Google Cloud Platform environments, such as Cloud Functions and App
-   * Engine, you usually don't provide a `keyFilename` or `credentials` during
-   * instantiation. In those environments, we call the
-   * {@link https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/signBlob| signBlob API}
-   * to create a signed policy. That API requires either the
-   * `https://www.googleapis.com/auth/iam` or
-   * `https://www.googleapis.com/auth/cloud-platform` scope, so be sure they are
-   * enabled.
-   *
-   * See {@link https://cloud.google.com/storage/docs/xml-api/post-object#policydocument| Policy Document Reference}
-   *
-   * @deprecated `getSignedPolicy()` is deprecated in favor of
-   *     `generateSignedPostPolicyV2()` and `generateSignedPostPolicyV4()`.
-   *     Currently, this method is an alias to `getSignedPolicyV2()`,
-   *     and will be removed in a future major release.
-   *     We recommend signing new policies using v4.
-   * @internal
-   *
-   * @throws {Error} If an expiration timestamp from the past is given.
-   * @throws {Error} If options.equals has an array with less or more than two
-   *     members.
-   * @throws {Error} If options.startsWith has an array with less or more than two
-   *     members.
-   *
-   * @param {object} options Configuration options.
-   * @param {array|array[]} [options.equals] Array of request parameters and
-   *     their expected value (e.g. [['$<field>', '<value>']]). Values are
-   *     translated into equality constraints in the conditions field of the
-   *     policy document (e.g. ['eq', '$<field>', '<value>']). If only one
-   *     equality condition is to be specified, options.equals can be a one-
-   *     dimensional array (e.g. ['$<field>', '<value>']).
-   * @param {*} options.expires - A timestamp when this policy will expire. Any
-   *     value given is passed to `new Date()`.
-   * @param {array|array[]} [options.startsWith] Array of request parameters and
-   *     their expected prefixes (e.g. [['$<field>', '<value>']). Values are
-   *     translated into starts-with constraints in the conditions field of the
-   *     policy document (e.g. ['starts-with', '$<field>', '<value>']). If only
-   *     one prefix condition is to be specified, options.startsWith can be a
-   * one- dimensional array (e.g. ['$<field>', '<value>']).
-   * @param {string} [options.acl] ACL for the object from possibly predefined
-   *     ACLs.
-   * @param {string} [options.successRedirect] The URL to which the user client
-   *     is redirected if the upload is successful.
-   * @param {string} [options.successStatus] - The status of the Google Storage
-   *     response if the upload is successful (must be string).
-   * @param {object} [options.contentLengthRange]
-   * @param {number} [options.contentLengthRange.min] Minimum value for the
-   *     request's content length.
-   * @param {number} [options.contentLengthRange.max] Maximum value for the
-   *     request's content length.
-   * @param {GetSignedPolicyCallback} [callback] Callback function.
-   * @returns {Promise<GetSignedPolicyResponse>}
-   *
-   * @example
-   * ```
-   * const {Storage} = require('@google-cloud/storage');
-   * const storage = new Storage();
-   * const myBucket = storage.bucket('my-bucket');
-   *
-   * const file = myBucket.file('my-file');
-   * const options = {
-   *   equals: ['$Content-Type', 'image/jpeg'],
-   *   expires: '10-25-2022',
-   *   contentLengthRange: {
-   *     min: 0,
-   *     max: 1024
-   *   }
-   * };
-   *
-   * file.getSignedPolicy(options, function(err, policy) {
-   *   // policy.string: the policy document in plain text.
-   *   // policy.base64: the policy document in base64.
-   *   // policy.signature: the policy signature in base64.
-   * });
-   *
-   * //-
-   * // If the callback is omitted, we'll return a Promise.
-   * //-
-   * file.getSignedPolicy(options).then(function(data) {
-   *   const policy = data[0];
-   * });
-   * ```
-   */
-  getSignedPolicy(
-    optionsOrCallback?: GetSignedPolicyOptions | GetSignedPolicyCallback,
-    cb?: GetSignedPolicyCallback
-  ): void | Promise<GetSignedPolicyResponse> {
-    const args = normalize<GetSignedPolicyOptions, GetSignedPolicyCallback>(
-      optionsOrCallback,
-      cb
-    );
-    const options = args.options;
-    const callback = args.callback;
-    this.generateSignedPostPolicyV2(options, callback);
   }
 
   generateSignedPostPolicyV2(
@@ -2822,7 +2566,7 @@ class File extends ServiceObject<File> {
           fields,
         };
       } catch (err) {
-        throw new SigningError(err.message);
+        throw new SigningError((err as Error).message);
       }
     };
 
@@ -3972,7 +3716,6 @@ class File extends ServiceObject<File> {
       authClient: this.storage.authClient,
       apiEndpoint: this.storage.apiEndpoint,
       bucket: this.bucket.name,
-      configPath: options.configPath,
       customRequestOptions: this.getRequestInterceptors().reduce(
         (reqOpts, interceptorFn) => interceptorFn(reqOpts),
         {}

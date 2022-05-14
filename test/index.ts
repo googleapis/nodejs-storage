@@ -188,16 +188,6 @@ describe('Storage', () => {
       assert.strictEqual(calledWith.useAuthWithCustomEndpoint, true);
     });
 
-    it('should propagate autoRetry', () => {
-      const autoRetry = false;
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        autoRetry,
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.autoRetry, autoRetry);
-    });
-
     it('should propagate autoRetry in retryOptions', () => {
       const autoRetry = false;
       const storage = new Storage({
@@ -206,18 +196,6 @@ describe('Storage', () => {
       });
       const calledWith = storage.calledWith_[0];
       assert.strictEqual(calledWith.retryOptions.autoRetry, autoRetry);
-    });
-
-    it('should throw if autoRetry is defined twice', () => {
-      const autoRetry = 10;
-      assert.throws(() => {
-        new Storage({
-          projectId: PROJECT_ID,
-          retryOptions: {autoRetry},
-          autoRetry,
-        }),
-          StorageExceptionMessages.AUTO_RETRY_DEPRECATED;
-      });
     });
 
     it('should propagate retryDelayMultiplier', () => {
@@ -279,16 +257,6 @@ describe('Storage', () => {
       );
     });
 
-    it('should propagate maxRetries', () => {
-      const maxRetries = 10;
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        maxRetries,
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.maxRetries, maxRetries);
-    });
-
     it('should propagate maxRetries in retryOptions', () => {
       const maxRetries = 1;
       const storage = new Storage({
@@ -297,18 +265,6 @@ describe('Storage', () => {
       });
       const calledWith = storage.calledWith_[0];
       assert.strictEqual(calledWith.retryOptions.maxRetries, maxRetries);
-    });
-
-    it('should throw if maxRetries is defined twice', () => {
-      const maxRetries = 10;
-      assert.throws(() => {
-        new Storage({
-          projectId: PROJECT_ID,
-          retryOptions: {maxRetries},
-          maxRetries,
-        }),
-          StorageExceptionMessages.MAX_RETRIES_DEPRECATED;
-      });
     });
 
     it('should set retryFunction', () => {
