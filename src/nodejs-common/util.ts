@@ -32,10 +32,10 @@ import * as uuid from 'uuid';
 let packageJson: ReturnType<JSON['parse']> = {};
 try {
   // if requiring from 'build' (default)
-  packageJson = require('../../package.json');
+  packageJson = require('../../../package.json');
 } catch (e) {
   // if requiring directly from TypeScript context
-  packageJson = require('../package.json');
+  packageJson = require('../../package.json');
 }
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
