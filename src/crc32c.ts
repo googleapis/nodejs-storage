@@ -172,7 +172,7 @@ class CRC32C implements CRC32CValidator {
     } else if (Buffer.isBuffer(input)) {
       return Buffer.compare(input, this.toBuffer()) === 0;
     } else {
-      // CRC32C object
+      // `CRC32C`-like object
       return input.toString() === this.toString();
     }
   }
@@ -188,7 +188,7 @@ class CRC32C implements CRC32CValidator {
   }
 
   /**
-   * Returns a JSON-compatible, base64-encoded string representation of the CRC32C value
+   * Returns a JSON-compatible, base64-encoded string representation of the CRC32C value.
    *
    * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify `JSON#stringify`}
    */
@@ -197,7 +197,7 @@ class CRC32C implements CRC32CValidator {
   }
 
   /**
-   * Returns a base64-encoded string representation of the CRC32C value
+   * Returns a base64-encoded string representation of the CRC32C value.
    *
    *
    * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString `Object#toString`}
@@ -207,7 +207,7 @@ class CRC32C implements CRC32CValidator {
   }
 
   /**
-   * Returns the `number` representation of the CRC32C value
+   * Returns the `number` representation of the CRC32C value as a signed 32-bit integer
    *
    * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/valueOf `Object#valueOf`}
    */
@@ -248,7 +248,7 @@ class CRC32C implements CRC32CValidator {
   }
 
   /**
-   * Generates a `CRC32C` from a 4-byte base64-encoded string
+   * Generates a `CRC32C` from a 4-byte base64-encoded string.
    *
    * @param value 4-byte base64-encoded string
    */
