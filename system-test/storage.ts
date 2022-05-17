@@ -1038,8 +1038,12 @@ describe('storage', () => {
         await setUniformBucketLevelAccess(bucket, true);
         await setUniformBucketLevelAccess(bucket, false);
 
-        const [aclAfter] = await file.acl.get();
-        assert.deepStrictEqual(aclAfter, aclBefore);
+        // Introduce a slight delay as it appears GCS might need time to
+        // propagate changes to the file.
+        process.nextTick(async () => {
+          const [aclAfter] = await file.acl.get();
+          assert.deepStrictEqual(aclAfter, aclBefore);
+        });
       });
     });
   });
