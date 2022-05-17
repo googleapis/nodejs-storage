@@ -2048,7 +2048,7 @@ describe('File', () => {
       };
       const writable = file.createWriteStream(options);
 
-      file.startResumableUpload_ = (stream: {}, options_: {}) => {
+      file.startResumableUpload_ = () => {
         done();
       };
 
@@ -2167,7 +2167,7 @@ describe('File', () => {
           },
         });
 
-        file.startSimpleUpload_ = (stream: Stream, _options: {}) => {
+        file.startSimpleUpload_ = () => {
           done();
         };
 
