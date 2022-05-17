@@ -113,14 +113,17 @@ interface CRC32CValidator {
 
 /** A function that generates a CRC32C Validator */
 interface CRC32CValidatorGenerator {
+  /** Should return a new, ready-to-use `CRC32CValidator` */
   (): CRC32CValidator;
 }
 
 const CRC32C_EXCEPTION_MESSAGES = {
+  INVALID_INIT_BASE64_RANGE: (l: number) =>
+    `base64-encoded data expected to equal 4 bytes, not ${l}`,
   INVALID_INIT_BUFFER_LENGTH: (l: number) =>
     `Buffer expected to equal 4 bytes, not ${l}`,
-  INVALID_INIT_BASE64_RANGE: (l: number) =>
-    `base64-encoded string expected to equal 4 bytes, not ${l}`,
+  INVALID_INIT_INTEGER: (l: number) =>
+    `Number expected to be a safe, unsigned 32-bit integer, not ${l}`,
 } as const;
 
 class CRC32C implements CRC32CValidator {
@@ -162,7 +165,7 @@ class CRC32C implements CRC32CValidator {
   /**
    * Validates a provided input to the current CRC32C value.
    *
-   * @param input A Buffer, `CRC32C`-compatible object, base64-encoded string, or signed 32-bit integer
+   * @param input A Buffer, `CRC32C`-compatible object, base64-encoded data (string), or signed 32-bit integer
    */
   validate(input: Buffer | CRC32CValidator | string | number): boolean {
     if (typeof input === 'number') {
@@ -188,7 +191,7 @@ class CRC32C implements CRC32CValidator {
   }
 
   /**
-   * Returns a JSON-compatible, base64-encoded string representation of the CRC32C value.
+   * Returns a JSON-compatible, base64-encoded representation of the CRC32C value.
    *
    * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify `JSON#stringify`}
    */
@@ -197,7 +200,7 @@ class CRC32C implements CRC32CValidator {
   }
 
   /**
-   * Returns a base64-encoded string representation of the CRC32C value.
+   * Returns a base64-encoded representation of the CRC32C value.
    *
    *
    * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString `Object#toString`}
@@ -248,9 +251,9 @@ class CRC32C implements CRC32CValidator {
   }
 
   /**
-   * Generates a `CRC32C` from a 4-byte base64-encoded string.
+   * Generates a `CRC32C` from 4-byte base64-encoded data (string).
    *
-   * @param value 4-byte base64-encoded string
+   * @param value 4-byte base64-encoded data (string)
    */
   private static fromString(value: string): CRC32C {
     const buffer = Buffer.from(value, 'base64');
@@ -265,15 +268,30 @@ class CRC32C implements CRC32CValidator {
   }
 
   /**
+   * Generates a `CRC32C` from a safe, unsigned 32-bit integer.
+   *
+   * @param value an unsigned 32-bit integer
+   */
+  private static fromNumber(value: number): CRC32C {
+    if (!Number.isSafeInteger(value) || value > 2 ** 32 || value < -(2 ** 32)) {
+      throw new RangeError(
+        CRC32C_EXCEPTION_MESSAGES.INVALID_INIT_INTEGER(value)
+      );
+    }
+
+    return new CRC32C(value);
+  }
+
+  /**
    * Generates a `CRC32C` from a variety of compatable types.
    *
-   * @param value A number, 4-byte `ArrayBufferView`/`Buffer`/`TypedArray`, or 4-byte base64-encoded string
+   * @param value A number, 4-byte `ArrayBufferView`/`Buffer`/`TypedArray`, or 4-byte base64-encoded data (string)
    */
   static from(
     value: ArrayBuffer | ArrayBufferView | CRC32CValidator | string | number
   ): CRC32C {
     if (typeof value === 'number') {
-      return new CRC32C(value);
+      return this.fromNumber(value);
     } else if (typeof value === 'string') {
       return this.fromString(value);
     } else if ('byteLength' in value) {
