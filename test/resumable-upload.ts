@@ -33,7 +33,7 @@ import {
   ApiError,
   CreateUriCallback,
   PROTOCOL_REGEX,
-} from '../src/gcs-resumable-upload';
+} from '../src/resumable-upload';
 import {GaxiosOptions, GaxiosError, GaxiosResponse} from 'gaxios';
 
 nock.disableNetConnect();
@@ -62,7 +62,7 @@ function mockAuthorizeRequest(
     .reply(code, data);
 }
 
-describe('gcs-resumable-upload', () => {
+describe('resumable-upload', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let upload: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,7 +93,7 @@ describe('gcs-resumable-upload', () => {
   before(() => {
     mockery.registerMock('abort-controller', {default: AbortController});
     mockery.enable({useCleanCache: true, warnOnUnregistered: false});
-    upload = require('../src/gcs-resumable-upload').upload;
+    upload = require('../src/resumable-upload').upload;
   });
 
   beforeEach(() => {
