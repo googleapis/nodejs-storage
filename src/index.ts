@@ -135,6 +135,7 @@ export {
   UploadOptions,
   UploadResponse,
 } from './bucket';
+export * from './crc32c';
 export {Channel, StopCallback} from './channel';
 export {
   CopyCallback,

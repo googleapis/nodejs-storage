@@ -32,6 +32,7 @@ import {
   Notification,
   DeleteBucketCallback,
   GetFileCallback,
+  CRC32C,
 } from '../src';
 import * as nock from 'nock';
 import {Transform} from 'stream';
@@ -3824,6 +3825,36 @@ describe('storage', () => {
         .then(data => {
           assert.strictEqual(data[0].length, notificationCount - 1);
         });
+    });
+  });
+
+  describe('CRC32C', () => {
+    const KNOWN_INPUT_TO_CRC32C = {
+      /** empty string (i.e. nothing to 'update') */
+      '': 'AAAAAA==',
+      /** known case #1 - validated from actual GCS object upload + metadata retrieval */
+      data: 'rth90Q==',
+      /** known case #2 - validated from actual GCS object upload + metadata retrieval */
+      'some text\n': 'DkjKuA==',
+      /** arbitrary large string */
+      ['a'.repeat(2 ** 16)]: 'TpXtPw==',
+    } as const;
+
+    it('should generate the appropriate hashes', async () => {
+      const file = bucket.file('crc32c-test-file');
+
+      for (const [input, expected] of Object.entries(KNOWN_INPUT_TO_CRC32C)) {
+        const buffer = Buffer.from(input);
+        const crc32c = new CRC32C();
+
+        await file.save(buffer);
+        crc32c.update(buffer);
+
+        const [metadata] = await file.getMetadata();
+
+        assert.equal(metadata.crc32c, expected);
+        assert(crc32c.validate(metadata.crc32c));
+      }
     });
   });
 
