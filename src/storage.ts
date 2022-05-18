@@ -576,16 +576,6 @@ export class Storage extends Service {
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
     const baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
 
-    let packageJson: ReturnType<JSON['parse']> = {};
-
-    try {
-      // if requiring from 'build' (default)
-      packageJson = require('../../package.json');
-    } catch (e) {
-      // if requiring directly from TypeScript context
-      packageJson = require('../package.json');
-    }
-
     const config = {
       apiEndpoint: options.apiEndpoint!,
       retryOptions: {
@@ -622,7 +612,7 @@ export class Storage extends Service {
         'https://www.googleapis.com/auth/cloud-platform',
         'https://www.googleapis.com/auth/devstorage.full_control',
       ],
-      packageJson,
+      packageJson: require('../../package.json'),
     };
 
     super(config, options);

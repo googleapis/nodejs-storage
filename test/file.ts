@@ -25,7 +25,6 @@ import {PromisifyAllOptions} from '@google-cloud/promisify';
 import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
 import * as assert from 'assert';
 import * as crypto from 'crypto';
-import * as dateFormat from 'date-and-time';
 import * as duplexify from 'duplexify';
 import * as extend from 'extend';
 import * as fs from 'fs';
@@ -54,6 +53,7 @@ import {
   FileExceptionMessages,
 } from '../src/file';
 import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
+import {formatAsUTCISO} from '../src/util';
 
 class HTTPError extends Error {
   code: number;
@@ -96,6 +96,7 @@ const fakePromisify = {
       'save',
       'setEncryptionKey',
       'shouldRetryBasedOnPreconditionAndIdempotencyStrat',
+      'getBufferFromReadable',
     ]);
   },
 };
@@ -184,7 +185,7 @@ describe('File', () => {
   let BUCKET: any;
 
   before(() => {
-    File = proxyquire('../src/file.ts', {
+    File = proxyquire('../src/file.js', {
       './nodejs-common': {
         ServiceObject: FakeServiceObject,
         util: fakeUtil,
@@ -1992,7 +1993,7 @@ describe('File', () => {
       };
       const writable = file.createWriteStream(options);
 
-      file.startSimpleUpload_ = (stream: {}, options_: {}) => {
+      file.startSimpleUpload_ = () => {
         done();
       };
 
@@ -2007,7 +2008,7 @@ describe('File', () => {
       };
       const writable = file.createWriteStream(options);
 
-      file.startResumableUpload_ = (stream: {}, options_: {}) => {
+      file.startResumableUpload_ = () => {
         done();
       };
 
@@ -2019,8 +2020,7 @@ describe('File', () => {
         metadata: METADATA,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      file.startResumableUpload_ = (stream: {}, options: any) => {
+      file.startResumableUpload_ = () => {
         done();
       };
 
@@ -2467,8 +2467,13 @@ describe('File', () => {
     it('should only execute callback once', done => {
       Object.assign(fileReadStream, {
         _read(this: Readable) {
-          this.emit('error', new Error('Error.'));
-          this.emit('error', new Error('Error.'));
+          // Do not fire the errors immediately as this is a synchronous operation here
+          // and the iterator getter is also synchronous in file.getBufferFromReadable.
+          // this is only an issue for <= node 12. This cannot happen in practice.
+          process.nextTick(() => {
+            this.emit('error', new Error('Error.'));
+            this.emit('error', new Error('Error.'));
+          });
         },
       });
 
@@ -2501,7 +2506,12 @@ describe('File', () => {
 
         Object.assign(fileReadStream, {
           _read(this: Readable) {
-            this.emit('error', error);
+            // Do not fire the errors immediately as this is a synchronous operation here
+            // and the iterator getter is also synchronous in file.getBufferFromReadable.
+            // this is only an issue for <= node 12. This cannot happen in practice.
+            process.nextTick(() => {
+              this.emit('error', error);
+            });
           },
         });
 
@@ -3109,11 +3119,7 @@ describe('File', () => {
           {bucket: BUCKET.name},
           ...fieldsToConditions(requiredFields),
         ],
-        expiration: dateFormat.format(
-          new Date(CONFIG.expires),
-          'YYYY-MM-DD[T]HH:mm:ss[Z]',
-          true
-        ),
+        expiration: formatAsUTCISO(new Date(CONFIG.expires), true, '-', ':'),
       };
 
       const policyString = JSON.stringify(policy);
@@ -3333,7 +3339,7 @@ describe('File', () => {
             );
             assert.strictEqual(
               policy.expiration,
-              dateFormat.format(expires, 'YYYY-MM-DD[T]HH:mm:ss[Z]', true)
+              formatAsUTCISO(expires, true, '-', ':')
             );
             done();
           }
@@ -3354,11 +3360,7 @@ describe('File', () => {
             );
             assert.strictEqual(
               policy.expiration,
-              dateFormat.format(
-                new Date(expires),
-                'YYYY-MM-DD[T]HH:mm:ss[Z]',
-                true
-              )
+              formatAsUTCISO(new Date(expires), true, '-', ':')
             );
             done();
           }
@@ -3366,10 +3368,10 @@ describe('File', () => {
       });
 
       it('should accept strings', done => {
-        const expires = dateFormat.format(
+        const expires = formatAsUTCISO(
           new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-          'YYYY-MM-DD',
-          true
+          false,
+          '-'
         );
 
         file.generateSignedPostPolicyV4(
@@ -3383,11 +3385,7 @@ describe('File', () => {
             );
             assert.strictEqual(
               policy.expiration,
-              dateFormat.format(
-                new Date(expires),
-                'YYYY-MM-DD[T]HH:mm:ss[Z]',
-                true
-              )
+              formatAsUTCISO(new Date(expires), true, '-', ':')
             );
             done();
           }

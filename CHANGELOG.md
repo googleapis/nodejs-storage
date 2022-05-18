@@ -4,6 +4,42 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+### [5.20.4](https://github.com/googleapis/nodejs-storage/compare/v5.20.3...v5.20.4) (2022-05-18)
+
+
+### Bug Fixes
+
+* revert native typescript mocha tests ([#1947](https://github.com/googleapis/nodejs-storage/issues/1947)) ([1d0ea7d](https://github.com/googleapis/nodejs-storage/commit/1d0ea7d2281a049bc99c6bd810dd24ffc83c6a09))
+* support empty object uploads for resumable upload ([#1949](https://github.com/googleapis/nodejs-storage/issues/1949)) ([da6016e](https://github.com/googleapis/nodejs-storage/commit/da6016e20b681d6a75ed1a5459cfd333b58c70a9))
+
+### [5.20.3](https://github.com/googleapis/nodejs-storage/compare/v5.20.2...v5.20.3) (2022-05-17)
+
+
+### Bug Fixes
+
+* move retrieval of package.json to utility function ([#1941](https://github.com/googleapis/nodejs-storage/issues/1941)) ([ac5cbdf](https://github.com/googleapis/nodejs-storage/commit/ac5cbdf0d3c363e7dab43e9002b01a0dae877642))
+
+### [5.20.2](https://github.com/googleapis/nodejs-storage/compare/v5.20.1...v5.20.2) (2022-05-17)
+
+
+### Bug Fixes
+
+* use path.join and __dirname for require package.json ([#1936](https://github.com/googleapis/nodejs-storage/issues/1936)) ([b868762](https://github.com/googleapis/nodejs-storage/commit/b86876201ec7d4ce58ae5c1d9635dad82a1fdc4b))
+
+### [5.20.1](https://github.com/googleapis/nodejs-storage/compare/v5.20.0...v5.20.1) (2022-05-16)
+
+
+### Bug Fixes
+
+* do not use import on package.json ([#1932](https://github.com/googleapis/nodejs-storage/issues/1932)) ([d0f0494](https://github.com/googleapis/nodejs-storage/commit/d0f04941f1cabf7c153f7e5abb91c358f12ef83e))
+
+## [5.20.0](https://github.com/googleapis/nodejs-storage/compare/v5.19.4...v5.20.0) (2022-05-16)
+
+
+### Features
+
+* add x-goog-api-client headers for retry metrics ([#1920](https://github.com/googleapis/nodejs-storage/issues/1920)) ([0c7e4f6](https://github.com/googleapis/nodejs-storage/commit/0c7e4f6ade4cee1715e14b3cd9abf2aa2a56c0b9))
+
 ### [5.19.4](https://github.com/googleapis/nodejs-storage/compare/v5.19.3...v5.19.4) (2022-04-28)
 
 
