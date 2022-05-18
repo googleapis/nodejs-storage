@@ -20,7 +20,7 @@ import * as tmp from 'tmp';
 import * as crypto from 'crypto';
 import * as os from 'os';
 import {Readable} from 'stream';
-import {createURI, ErrorWithCode, upload} from '../src/gcs-resumable-upload';
+import {createURI, ErrorWithCode, upload} from '../src/resumable-upload';
 import {
   RETRY_DELAY_MULTIPLIER_DEFAULT,
   TOTAL_TIMEOUT_DEFAULT,
@@ -30,7 +30,7 @@ import {
   RETRYABLE_ERR_FN_DEFAULT,
 } from '../src/storage';
 
-const bucketName = process.env.BUCKET_NAME || 'gcs-resumable-upload-test';
+const bucketName = process.env.BUCKET_NAME || 'resumable-upload-test';
 tmp.setGracefulCleanup();
 const tmpFileContents = crypto.randomBytes(1024 * 1024 * 20);
 const filePath = path.join(os.tmpdir(), '20MB.zip');
@@ -54,7 +54,7 @@ async function delay(title: string, retries: number, done: Function) {
   setTimeout(done(), ms);
 }
 
-describe('gcs-resumable-upload', () => {
+describe('resumable-upload', () => {
   beforeEach(() => {
     upload({
       bucket: bucketName,
