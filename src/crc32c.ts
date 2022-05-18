@@ -202,7 +202,6 @@ class CRC32C implements CRC32CValidator {
   /**
    * Returns a base64-encoded representation of the CRC32C value.
    *
-   *
    * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString `Object#toString`}
    */
   toString(): string {
