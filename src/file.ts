@@ -34,7 +34,7 @@ const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pumpify = require('pumpify');
-import * as resumableUpload from './gcs-resumable-upload';
+import * as resumableUpload from './resumable-upload';
 import {Duplex, Writable, Readable, PassThrough} from 'stream';
 import * as streamEvents from 'stream-events';
 import * as zlib from 'zlib';
@@ -3682,9 +3682,7 @@ class File extends ServiceObject<File> {
   }
 
   /**
-   * This creates a gcs-resumable-upload upload stream.
-   *
-   * See {@link https://github.com/googleapis/gcs-resumable-upload| gcs-resumable-upload}
+   * This creates a resumable-upload upload stream.
    *
    * @param {Duplexify} stream - Duplexify stream of data to pipe to the file.
    * @param {object=} options - Configuration object.
