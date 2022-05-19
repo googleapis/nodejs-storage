@@ -30,7 +30,7 @@ import * as path from 'path';
 import * as proxyquire from 'proxyquire';
 
 import * as stream from 'stream';
-import {Bucket, Channel, Notification} from '../src';
+import {Bucket, Channel, Notification, CRC32C} from '../src';
 import {
   CreateWriteStreamOptions,
   File,
@@ -197,6 +197,7 @@ describe('Bucket', () => {
       },
       idempotencyStrategy: IdempotencyStrategy.RetryConditional,
     },
+    crc32cGenerator: () => new CRC32C(),
   };
   const BUCKET_NAME = 'test-bucket';
 
@@ -428,6 +429,17 @@ describe('Bucket', () => {
       });
 
       assert.strictEqual(bucket.userProject, fakeUserProject);
+    });
+
+    it('should accept a `crc32cGenerator`', () => {
+      const crc32cGenerator = () => {};
+
+      const bucket = new Bucket(STORAGE, 'bucket-name', {crc32cGenerator});
+      assert.strictEqual(bucket.crc32cGenerator, crc32cGenerator);
+    });
+
+    it("should use storage's `crc32cGenerator` by default", () => {
+      assert.strictEqual(bucket.crc32cGenerator, STORAGE.crc32cGenerator);
     });
   });
 

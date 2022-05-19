@@ -433,6 +433,17 @@ describe('File', () => {
       new File(BUCKET, FILE_NAME, {encryptionKey: key});
     });
 
+    it('should accept a `crc32cGenerator`', () => {
+      const crc32cGenerator = () => {};
+
+      const file = new File(BUCKET, 'name', {crc32cGenerator});
+      assert.strictEqual(file.crc32cGenerator, crc32cGenerator);
+    });
+
+    it("should use the bucket's `crc32cGenerator` by default", () => {
+      assert.strictEqual(file.crc32cGenerator, BUCKET.crc32cGenerator);
+    });
+
     describe('userProject', () => {
       const USER_PROJECT = 'grapce-spaceship-123';
 
