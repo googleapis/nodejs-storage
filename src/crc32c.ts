@@ -117,6 +117,9 @@ interface CRC32CValidatorGenerator {
   (): CRC32CValidator;
 }
 
+const CRC32C_DEFAULT_VALIDATOR_GENERATOR: CRC32CValidatorGenerator = () =>
+  new CRC32C();
+
 const CRC32C_EXCEPTION_MESSAGES = {
   INVALID_INIT_BASE64_RANGE: (l: number) =>
     `base64-encoded data expected to equal 4 bytes, not ${l}`,
@@ -305,6 +308,7 @@ class CRC32C implements CRC32CValidator {
 
 export {
   CRC32C,
+  CRC32C_DEFAULT_VALIDATOR_GENERATOR,
   CRC32C_EXCEPTION_MESSAGES,
   CRC32C_EXTENSIONS,
   CRC32C_EXTENSION_TABLE,

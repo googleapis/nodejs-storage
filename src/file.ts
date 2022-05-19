@@ -27,8 +27,6 @@ import compressible = require('compressible');
 import * as crypto from 'crypto';
 import * as extend from 'extend';
 import * as fs from 'fs';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const hashStreamValidation = require('hash-stream-validation');
 import * as mime from 'mime';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const pumpify = require('pumpify');
@@ -68,6 +66,9 @@ import {
   unicodeJSONStringify,
   formatAsUTCISO,
 } from './util';
+import {CRC32CValidatorGenerator} from './crc32c';
+import {HashStreamValidator} from './hash-stream-validator';
+
 import retry = require('async-retry');
 
 export type GetExpirationDateResponse = [Date];
@@ -288,11 +289,12 @@ export const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
 const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
 
 export interface FileOptions {
+  crc32cGenerator?: CRC32CValidatorGenerator;
   encryptionKey?: string | Buffer;
   generation?: number | string;
   kmsKeyName?: string;
-  userProject?: string;
   preconditionOpts?: PreconditionOptions;
+  userProject?: string;
 }
 
 export interface CopyOptions {
@@ -419,7 +421,7 @@ export enum FileExceptionMessages {
  */
 class File extends ServiceObject<File> {
   acl: Acl;
-
+  crc32cGenerator: CRC32CValidatorGenerator;
   bucket: Bucket;
   storage: Storage;
   kmsKeyName?: string;
@@ -874,6 +876,9 @@ class File extends ServiceObject<File> {
       pathPrefix: '/acl',
     });
 
+    this.crc32cGenerator =
+      options.crc32cGenerator || this.bucket.crc32cGenerator;
+
     this.instanceRetryValue = this.storage?.retryOptions?.autoRetry;
     this.instancePreconditionOpts = options?.preconditionOpts;
   }
@@ -1209,11 +1214,6 @@ class File extends ServiceObject<File> {
    * code "CONTENT_DOWNLOAD_MISMATCH". If you receive this error, the best
    * recourse is to try downloading the file again.
    *
-   * For faster crc32c computation, you must manually install
-   * {@link https://www.npmjs.com/package/fast-crc32c| `fast-crc32c`}:
-   *
-   *     $ npm install --save fast-crc32c
-   *
    * NOTE: Readable streams will emit the `end` event when the file is fully
    * downloaded.
    *
@@ -1277,8 +1277,7 @@ class File extends ServiceObject<File> {
       typeof options.start === 'number' || typeof options.end === 'number';
     const tailRequest = options.end! < 0;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let validateStream: any; // Created later, if necessary.
+    let validateStream: HashStreamValidator | undefined = undefined;
 
     const throughStream = streamEvents(new PassThrough());
 
@@ -1287,12 +1286,10 @@ class File extends ServiceObject<File> {
     let md5 = false;
 
     if (typeof options.validation === 'string') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (options as any).validation = (
-        options.validation as string
-      ).toLowerCase();
-      crc32c = options.validation === 'crc32c';
-      md5 = options.validation === 'md5';
+      const value = options.validation.toLowerCase().trim();
+
+      crc32c = value === 'crc32c';
+      md5 = value === 'md5';
     } else if (options.validation === false) {
       crc32c = false;
     }
@@ -1406,7 +1403,12 @@ class File extends ServiceObject<File> {
               });
           }
 
-          validateStream = hashStreamValidation({crc32c, md5});
+          validateStream = new HashStreamValidator({
+            crc32c,
+            md5,
+            crc32cGenerator: this.crc32cGenerator,
+          });
+
           throughStreams.push(validateStream);
         }
 
@@ -1474,15 +1476,14 @@ class File extends ServiceObject<File> {
         // the best.
         let failed = crc32c || md5;
 
-        if (crc32c && hashes.crc32c) {
-          // We must remove the first four bytes from the returned checksum.
-          // http://stackoverflow.com/questions/25096737/
-          //   base64-encoding-of-crc32c-long-value
-          failed = !validateStream.test('crc32c', hashes.crc32c.substr(4));
-        }
+        if (validateStream) {
+          if (crc32c && hashes.crc32c) {
+            failed = !validateStream.test('crc32c', hashes.crc32c);
+          }
 
-        if (md5 && hashes.md5) {
-          failed = !validateStream.test('md5', hashes.md5);
+          if (md5 && hashes.md5) {
+            failed = !validateStream.test('md5', hashes.md5);
+          }
         }
 
         if (md5 && !hashes.md5) {
@@ -1730,11 +1731,6 @@ class File extends ServiceObject<File> {
    *   resumable feature is disabled.
    * </p>
    *
-   * For faster crc32c computation, you must manually install
-   * {@link https://www.npmjs.com/package/fast-crc32c| `fast-crc32c`}:
-   *
-   *     $ npm install --save fast-crc32c
-   *
    * NOTE: Writable streams will emit the `finish` event when the file is fully
    * uploaded.
    *
@@ -1846,9 +1842,10 @@ class File extends ServiceObject<File> {
 
     // Collect data as it comes in to store in a hash. This is compared to the
     // checksum value on the returned metadata from the API.
-    const validateStream = hashStreamValidation({
+    const validateStream = new HashStreamValidator({
       crc32c,
       md5,
+      crc32cGenerator: this.crc32cGenerator,
     });
 
     const fileWriteStream = duplexify();
@@ -1896,10 +1893,7 @@ class File extends ServiceObject<File> {
       let failed = crc32c || md5;
 
       if (crc32c && metadata.crc32c) {
-        // We must remove the first four bytes from the returned checksum.
-        // http://stackoverflow.com/questions/25096737/
-        //   base64-encoding-of-crc32c-long-value
-        failed = !validateStream.test('crc32c', metadata.crc32c.substr(4));
+        failed = !validateStream.test('crc32c', metadata.crc32c);
       }
 
       if (md5 && metadata.md5Hash) {

@@ -197,6 +197,7 @@ export {
   SetStorageClassResponse,
   SignedPostPolicyV4Output,
 } from './file';
+export * from './hash-stream-validator';
 export {
   HmacKey,
   HmacKeyMetadata,
