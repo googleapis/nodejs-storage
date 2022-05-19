@@ -182,9 +182,15 @@ describe('File', () => {
   const DATA = 'test data';
   // crc32c hash of 'test data'
   const CRC32C_HASH = 'M3m0yg==';
-  const CRC32C_HASH_GZIP = '8ZwJWA==';
   // md5 hash of 'test data'
   const MD5_HASH = '63M6AMDJ0zbmVpGjerVCkw==';
+  // crc32c hash of `zlib.gzipSync(Buffer.from(DATA), {level: 9})`
+  const GZIPPED_DATA = Buffer.from(
+    'H4sIAAAAAAACEytJLS5RSEksSQQAsq4I0wkAAAA=',
+    'base64'
+  );
+  //crc32c hash of `GZIPPED_DATA`
+  const CRC32C_HASH_GZIP = '64jygg==';
 
   before(() => {
     File = proxyquire('../src/file.js', {
@@ -1243,8 +1249,6 @@ describe('File', () => {
     });
 
     describe('compression', () => {
-      const GZIPPED_DATA = zlib.gzipSync(Buffer.from(DATA));
-
       beforeEach(() => {
         handleRespOverride = (
           err: Error,
