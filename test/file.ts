@@ -1264,33 +1264,33 @@ describe('File', () => {
             },
           });
           callback(null, null, rawResponseStream);
-          setImmediate(() => {
-            rawResponseStream.end(GZIPPED_DATA);
-          });
+
+          rawResponseStream.end(GZIPPED_DATA);
         };
         file.requestStream = getFakeSuccessfulRequest(GZIPPED_DATA);
       });
 
-      it('should gunzip the response', done => {
-        file
-          .createReadStream()
-          .once('error', done)
-          .on('data', (data: {}) => {
-            assert.strictEqual(data.toString(), DATA);
-            done();
-          })
-          .resume();
+      it('should gunzip the response', async () => {
+        const collection: Buffer[] = [];
+
+        for await (const data of file.createReadStream()) {
+          collection.push(data);
+        }
+
+        assert.equal(Buffer.concat(collection).toString(), DATA);
       });
 
-      it('should not gunzip the response if "decompress: false" is passed', done => {
-        file
-          .createReadStream({decompress: false})
-          .once('error', done)
-          .on('data', (data: {}) => {
-            assert.strictEqual(data, GZIPPED_DATA);
-            done();
-          })
-          .resume();
+      it('should not gunzip the response if "decompress: false" is passed', async () => {
+        const collection: Buffer[] = [];
+
+        for await (const data of file.createReadStream({decompress: false})) {
+          collection.push(data);
+        }
+
+        assert.equal(
+          Buffer.compare(Buffer.concat(collection), GZIPPED_DATA),
+          0
+        );
       });
 
       it('should emit errors from the gunzip stream', done => {
