@@ -69,6 +69,8 @@ class HashStreamValidator extends Transform {
   ) {
     this.push(chunk, encoding);
 
+    console.log('_transform', chunk.toString());
+
     try {
       if (this.#crc32cHash) this.#crc32cHash.update(chunk);
       if (this.#md5Hash) this.#md5Hash.update(chunk);
@@ -82,10 +84,14 @@ class HashStreamValidator extends Transform {
     const check = Buffer.isBuffer(sum) ? sum.toString('base64') : sum;
 
     if (hash === 'crc32c' && this.#crc32cHash) {
+      console.log('crc32c', this.#crc32cHash.toString(), check);
+
       return this.#crc32cHash.validate(check);
     }
 
     if (hash === 'md5' && this.#md5Hash) {
+      console.log('md5', this.#md5Digest, check);
+
       return this.#md5Digest === check;
     }
 
