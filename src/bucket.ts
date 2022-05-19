@@ -63,6 +63,7 @@ import {
   Query,
 } from './signer';
 import {Readable} from 'stream';
+import {CRC32CValidatorGenerator} from './crc32c';
 
 interface SourceObject {
   name: string;
@@ -623,6 +624,7 @@ class Bucket extends ServiceObject {
 
   acl: Acl;
   iam: Iam;
+  crc32cGenerator: CRC32CValidatorGenerator;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getFilesStream(query?: GetFilesOptions): Readable {
@@ -1034,6 +1036,9 @@ class Bucket extends ServiceObject {
       request: this.request.bind(this),
       pathPrefix: '/defaultObjectAcl',
     });
+
+    this.crc32cGenerator =
+      options.crc32cGenerator || this.storage.crc32cGenerator;
 
     this.iam = new Iam(this);
 
@@ -3717,11 +3722,6 @@ class Bucket extends ServiceObject {
    * {@link File#createWriteStream}.
    *
    * Resumable uploads are enabled by default
-   *
-   * For faster crc32c computation, you must manually install
-   * {@link https://www.npmjs.com/package/fast-crc32c| `fast-crc32c`}:
-   *
-   *     $ npm install --save fast-crc32c
    *
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload#uploads| Upload Options (Simple or Resumable)}
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert| Objects: insert API Documentation}
