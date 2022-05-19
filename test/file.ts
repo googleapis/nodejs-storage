@@ -1243,7 +1243,7 @@ describe('File', () => {
     });
 
     describe('compression', () => {
-      const GZIPPED_DATA = zlib.gzipSync(DATA);
+      const GZIPPED_DATA = zlib.gzipSync(Buffer.from(DATA));
 
       beforeEach(() => {
         handleRespOverride = (

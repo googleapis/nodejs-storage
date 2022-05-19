@@ -69,7 +69,13 @@ class HashStreamValidator extends Transform {
   ) {
     this.push(chunk, encoding);
 
-    console.log('_transform', chunk.toString());
+    console.log(
+      '_transform',
+      chunk.toString(),
+      encoding,
+      chunk.byteLength,
+      chunk.toString('base64')
+    );
 
     try {
       if (this.#crc32cHash) this.#crc32cHash.update(chunk);
