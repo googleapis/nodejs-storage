@@ -23,6 +23,10 @@ import {Channel} from './channel';
 import {File} from './file';
 import {normalize} from './util';
 import {HmacKey, HmacKeyMetadata, HmacKeyOptions} from './hmacKey';
+import {
+  CRC32CValidatorGenerator,
+  CRC32C_DEFAULT_VALIDATOR_GENERATOR,
+} from './crc32c';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -68,18 +72,20 @@ export interface PreconditionOptions {
 }
 
 export interface StorageOptions extends ServiceOptions {
-  retryOptions?: RetryOptions;
   /**
    * The API endpoint of the service used to make requests.
    * Defaults to `storage.googleapis.com`.
    */
   apiEndpoint?: string;
+  crc32cGenerator?: CRC32CValidatorGenerator;
+  retryOptions?: RetryOptions;
 }
 
 export interface BucketOptions {
+  crc32cGenerator?: CRC32CValidatorGenerator;
   kmsKeyName?: string;
-  userProject?: string;
   preconditionOpts?: PreconditionOptions;
+  userProject?: string;
 }
 
 export interface Cors {
@@ -457,6 +463,8 @@ export class Storage extends Service {
    */
   acl: typeof Storage.acl;
 
+  crc32cGenerator: CRC32CValidatorGenerator;
+
   getBucketsStream(): Readable {
     // placeholder body, overwritten in constructor
     return new Readable();
@@ -624,6 +632,8 @@ export class Storage extends Service {
      * @see Storage.acl
      */
     this.acl = Storage.acl;
+    this.crc32cGenerator =
+      options.crc32cGenerator || CRC32C_DEFAULT_VALIDATOR_GENERATOR;
 
     this.retryOptions = config.retryOptions;
 
