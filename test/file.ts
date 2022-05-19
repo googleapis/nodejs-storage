@@ -55,7 +55,6 @@ import {
 } from '../src/file';
 import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
 import {formatAsUTCISO} from '../src/util';
-import {HashStreamValidator} from '../src/hash-stream-validator';
 
 class HTTPError extends Error {
   code: number;
