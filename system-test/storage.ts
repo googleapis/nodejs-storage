@@ -1028,20 +1028,15 @@ describe('storage', () => {
         await setUniformBucketLevelAccess(bucket, false);
 
         // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
-        return new Promise(resolve => {
-          (async () => {
-            async function checkBucketAcl() {
-              try {
-                const [aclAfter] = await bucket.acl.default.get();
-                assert.deepStrictEqual(aclAfter, aclBefore);
-                resolve();
-              } catch {
-                setTimeout(checkBucketAcl, UNIFORM_ACCESS_WAIT_TIME);
-              }
-            }
-            await checkBucketAcl();
-          })();
-        });
+        for (;;) {
+          try {
+            const [aclAfter] = await bucket.acl.default.get();
+            assert.deepStrictEqual(aclAfter, aclBefore);
+            break;
+          } catch {
+            await new Promise(res => setTimeout(res, UNIFORM_ACCESS_WAIT_TIME));
+          }
+        }
       }).timeout(UNIFORM_ACCESS_TIMEOUT);
 
       it('should preserve file ACL', async () => {
@@ -1055,20 +1050,15 @@ describe('storage', () => {
         await setUniformBucketLevelAccess(bucket, false);
 
         // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
-        return new Promise(resolve => {
-          (async () => {
-            async function checkFileAcl() {
-              try {
-                const [aclAfter] = await file.acl.get();
-                assert.deepStrictEqual(aclAfter, aclBefore);
-                resolve();
-              } catch {
-                setTimeout(checkFileAcl, UNIFORM_ACCESS_WAIT_TIME);
-              }
-            }
-            await checkFileAcl();
-          })();
-        });
+        for (;;) {
+          try {
+            const [aclAfter] = await file.acl.get();
+            assert.deepStrictEqual(aclAfter, aclBefore);
+            break;
+          } catch {
+            await new Promise(res => setTimeout(res, UNIFORM_ACCESS_WAIT_TIME));
+          }
+        }
       }).timeout(UNIFORM_ACCESS_TIMEOUT);
     });
   });
