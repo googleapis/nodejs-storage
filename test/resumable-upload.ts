@@ -1325,6 +1325,27 @@ describe('resumable-upload', () => {
     });
   });
 
+  it('currentInvocationId.offset should be different after success', async () => {
+    const beforeCallInvocationId = up.currentInvocationId.offset;
+    up.makeRequest = () => {
+      return {};
+    };
+    await up.getAndSetOffset();
+    assert.notEqual(beforeCallInvocationId, up.currentInvocationId.offset);
+  });
+
+  it('currentInvocationId.offset should be the same on error', async done => {
+    const beforeCallInvocationId = up.currentInvocationId.offset;
+    up.destroy = () => {
+      assert.equal(beforeCallInvocationId, up.currentInvocationId.offset);
+      done();
+    };
+    up.makeRequest = () => {
+      throw new Error() as GaxiosError;
+    };
+    await up.getAndSetOffset();
+  });
+
   describe('#getAndSetOffset', () => {
     const RANGE = 123456;
     const RESP = {status: 308, headers: {range: `range-${RANGE}`}};
@@ -1345,44 +1366,6 @@ describe('resumable-upload', () => {
         return {};
       };
       up.getAndSetOffset();
-    });
-
-    it('currentInvocationId.offset should be different after success', async () => {
-      const beforeCallInvocationId = up.currentInvocationId.offset;
-      up.makeRequest = () => {
-        return {};
-      };
-      await up.getAndSetOffset();
-      assert.notEqual(beforeCallInvocationId, up.currentInvocationId.offset);
-    });
-
-    it('currentInvocationId.offset should be the same on error', async done => {
-      const beforeCallInvocationId = up.currentInvocationId.offset;
-      up.destroy = () => {
-        assert.equal(beforeCallInvocationId, up.currentInvocationId.offset);
-        done();
-      };
-      up.makeRequest = () => {
-        throw new Error() as GaxiosError;
-      };
-      await up.getAndSetOffset();
-    });
-
-    describe('restart on 410', () => {
-      const ERROR = new Error(':(') as GaxiosError;
-      const RESP = {status: 410} as GaxiosResponse;
-      ERROR.response = RESP;
-
-      beforeEach(() => {
-        up.makeRequest = async () => {
-          throw ERROR;
-        };
-      });
-
-      it('should restart the upload', done => {
-        up.restart = done;
-        up.getAndSetOffset();
-      });
     });
 
     it('should set the offset from the range', async () => {

@@ -26,10 +26,6 @@
     "google storage",
     "storage"
   ],
-  "mocha": {
-    "require": "ts-node/register",
-    "extension": "ts"
-  },
   "scripts": {
     "predocs": "npm run compile",
     "docs": "jsdoc -c .jsdoc.js",
