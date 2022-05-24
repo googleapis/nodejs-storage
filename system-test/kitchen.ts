@@ -30,7 +30,7 @@ import {
   RETRYABLE_ERR_FN_DEFAULT,
 } from '../src/storage';
 
-const bucketName = process.env.BUCKET_NAME || 'resumable-upload-test';
+const bucketName = process.env.BUCKET_NAME || 'gcs-resumable-upload-test';
 tmp.setGracefulCleanup();
 const tmpFileContents = crypto.randomBytes(1024 * 1024 * 20);
 const filePath = path.join(os.tmpdir(), '20MB.zip');
