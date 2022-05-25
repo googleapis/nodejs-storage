@@ -62,7 +62,7 @@ import {
   URLSigner,
   Query,
 } from './signer';
-import {pipeline, Readable} from 'stream';
+import {Readable} from 'stream';
 import {CRC32CValidatorGenerator} from './crc32c';
 
 interface SourceObject {
@@ -3921,21 +3921,22 @@ class Bucket extends ServiceObject {
             if (options.onUploadProgress) {
               writable.on('progress', options.onUploadProgress);
             }
-
-            pipeline(fs.createReadStream(pathString), writable, e => {
-              if (e) {
+            fs.createReadStream(pathString)
+              .on('error', bail)
+              .pipe(writable)
+              .on('error', err => {
                 if (
                   this.storage.retryOptions.autoRetry &&
-                  this.storage.retryOptions.retryableErrorFn!(e as ApiError)
+                  this.storage.retryOptions.retryableErrorFn!(err)
                 ) {
-                  return reject(e);
+                  return reject(err);
                 } else {
-                  return bail(e);
+                  return bail(err);
                 }
-              }
-
-              return resolve();
-            });
+              })
+              .on('finish', () => {
+                return resolve();
+              });
           });
         },
         {
