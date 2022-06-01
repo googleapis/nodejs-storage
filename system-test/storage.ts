@@ -957,7 +957,9 @@ describe('storage', () => {
     it('creates a dual-region bucket', async () => {
       await bucket.create({
         location: LOCATION,
-        dataPlacement: [REGION1, REGION2],
+        customPlacementConfig: {
+          dataLocations: [REGION1, REGION2],
+        },
       });
 
       const [exists] = await bucket.exists();
@@ -967,9 +969,13 @@ describe('storage', () => {
 
       assert.strictEqual(bucketMetadata.location, LOCATION);
 
-      assert(Array.isArray(bucketMetadata['data_placement']));
-      assert(bucketMetadata['data_placement'].includes(REGION1));
-      assert(bucketMetadata['data_placement'].includes(REGION2));
+      assert(bucketMetadata.customPlacementConfig);
+      assert(Array.isArray(bucketMetadata.customPlacementConfig.dataLocations));
+
+      const dataLocations = bucketMetadata.customPlacementConfig.dataLocations;
+
+      assert(dataLocations.includes(REGION1));
+      assert(dataLocations.includes(REGION2));
 
       assert.strictEqual(bucketMetadata.locationType, 'dual-region');
     });

@@ -103,7 +103,9 @@ export interface CreateBucketRequest {
   archive?: boolean;
   coldline?: boolean;
   cors?: Cors[];
-  dataPlacement?: string[];
+  customPlacementConfig?: {
+    dataLocations?: string[];
+  };
   dra?: boolean;
   location?: string;
   multiRegional?: boolean;
@@ -729,12 +731,12 @@ export class Storage extends Service {
    * @property {boolean} [archive=false] Specify the storage class as Archive.
    * @property {boolean} [coldline=false] Specify the storage class as Coldline.
    * @property {Cors[]} [cors=[]] Specify the CORS configuration to use.
-   * @property {string} [dataPlacement=[]] Specify the bucket's regions for dual-region buckets.
+   * @property {CreateBucketRequest['customPlacementConfig']} [customPlacementConfig={}] Specify the bucket's regions for dual-region buckets.
    *     For more information, see {@link https://cloud.google.com/storage/docs/locations| Bucket Locations}.
    * @property {boolean} [dra=false] Specify the storage class as Durable Reduced
    *     Availability.
    * @property {string} [location] Specify the bucket's location. If specifying
-   *     a dual-region, the `dataPlacement` property should be set in conjunction.
+   *     a dual-region, the `customPlacementConfig` property should be set in conjunction.
    *     For more information, see {@link https://cloud.google.com/storage/docs/locations| Bucket Locations}.
    * @property {boolean} [multiRegional=false] Specify the storage class as
    *     Multi-Regional.
@@ -892,11 +894,6 @@ export class Storage extends Service {
     if (body.userProject) {
       query.userProject = body.userProject as string;
       delete body.userProject;
-    }
-
-    if (body.dataPlacement) {
-      body['data_placement'] = body.dataPlacement;
-      delete body.dataPlacement;
     }
 
     this.request(

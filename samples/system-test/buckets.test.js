@@ -235,9 +235,13 @@ it('should create a dual-region bucket', async () => {
 
   assert.strictEqual(metadata.location, DUAL_REGION.LOCATION);
 
-  assert(Array.isArray(metadata['data_placement']));
-  assert(metadata['data_placement'].includes(DUAL_REGION.REGIONS[0]));
-  assert(metadata['data_placement'].includes(DUAL_REGION.REGIONS[1]));
+  assert(metadata.customPlacementConfig);
+  assert(Array.isArray(metadata.customPlacementConfig.dataLocations));
+
+  const dataLocations = metadata.customPlacementConfig.dataLocations;
+
+  assert(dataLocations.includes(DUAL_REGION.REGIONS[0]));
+  assert(dataLocations.includes(DUAL_REGION.REGIONS[1]));
 
   assert.strictEqual(metadata.locationType, 'dual-region');
 });

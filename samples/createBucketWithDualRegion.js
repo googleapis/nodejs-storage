@@ -53,7 +53,9 @@ function main(
     // For regions supporting dual-regions see: https://cloud.google.com/storage/docs/locations
     const [bucket] = await storage.createBucket(bucketName, {
       location,
-      dataPlacement: [region1, region2],
+      customPlacementConfig: {
+        dataLocations: [region1, region2],
+      },
     });
 
     console.log(`${bucket.name} created in '${region1}' and '${region2}'`);
