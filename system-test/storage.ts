@@ -1401,7 +1401,7 @@ describe('storage', () => {
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
-          matchesPrefix: [TESTS_PREFIX]
+          matchesPrefix: [TESTS_PREFIX],
         },
       });
 
@@ -1421,7 +1421,7 @@ describe('storage', () => {
       await bucket.addLifecycleRule({
         action: 'delete',
         condition: {
-          matchesSuffix: [TESTS_PREFIX, "test_suffix"]
+          matchesSuffix: [TESTS_PREFIX, 'test_suffix'],
         },
       });
 
@@ -1521,8 +1521,8 @@ describe('storage', () => {
         action: 'delete',
         condition: {
           matchesPrefix: [TESTS_PREFIX],
-          matchesSuffix: [TESTS_PREFIX]
-        }
+          matchesSuffix: [TESTS_PREFIX],
+        },
       });
       
       assert(
