@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import AbortController from 'abort-controller';
-import * as ConfigStore from 'configstore';
 import {createHash} from 'crypto';
 import * as extend from 'extend';
 import {
@@ -24,16 +23,15 @@ import {
 } from 'gaxios';
 import * as gaxios from 'gaxios';
 import {GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
-import * as Pumpify from 'pumpify';
-import {Duplex, PassThrough, Readable} from 'stream';
-import * as streamEvents from 'stream-events';
+import {Readable, Writable} from 'stream';
 import retry = require('async-retry');
 import {RetryOptions, PreconditionOptions} from './storage';
+import * as uuid from 'uuid';
 
 const NOT_FOUND_STATUS_CODE = 404;
-const TERMINATED_UPLOAD_STATUS_CODE = 410;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
 const DEFAULT_API_ENDPOINT_REGEX = /.*\.googleapis\.com/;
+const packageJson = require('../../package.json');
 
 export const PROTOCOL_REGEX = /^(\w*):\/\//;
 
@@ -102,15 +100,9 @@ export interface UploadConfig {
   };
 
   /**
-   * Where the gcs-resumable-upload configuration file should be stored on your
-   * system. This maps to the configstore option by the same name.
-   */
-  configPath?: string;
-
-  /**
    * Create a separate request per chunk.
    *
-   * Should be a multiple of 256 KiB (2^18).
+   * This value is in bytes and should be a multiple of 256 KiB (2^18).
    * We recommend using at least 8 MiB for the chunk size.
    *
    * @link https://cloud.google.com/storage/docs/performing-resumable-uploads#chunked-upload
@@ -226,7 +218,7 @@ export interface ApiError extends Error {
   errors?: GoogleInnerError[];
 }
 
-export class Upload extends Pumpify {
+export class Upload extends Writable {
   bucket: string;
   file: string;
   apiEndpoint: string;
@@ -257,13 +249,17 @@ export class Upload extends Pumpify {
   uri?: string;
   userProject?: string;
   encryption?: Encryption;
-  configStore: ConfigStore;
   uriProvidedManually: boolean;
   numBytesWritten = 0;
   numRetries = 0;
   contentLength: number | '*';
   retryOptions: RetryOptions;
   timeOfFirstRequest: number;
+  private currentInvocationId = {
+    chunk: uuid.v4(),
+    uri: uuid.v4(),
+    offset: uuid.v4(),
+  };
   private upstreamChunkBuffer: Buffer = Buffer.alloc(0);
   private chunkBufferEncoding?: BufferEncoding = undefined;
   private numChunksReadInRequest = 0;
@@ -277,7 +273,6 @@ export class Upload extends Pumpify {
 
   constructor(cfg: UploadConfig) {
     super();
-    streamEvents(this);
 
     cfg = cfg || {};
 
@@ -322,12 +317,7 @@ export class Upload extends Pumpify {
     this.retryOptions = cfg.retryOptions;
 
     if (cfg.key) {
-      /**
-       * NOTE: This is `as string` because there appears to be some weird kind
-       * of TypeScript bug as 2.8. Tracking the issue here:
-       * https://github.com/Microsoft/TypeScript/issues/23155
-       */
-      const base64Key = Buffer.from(cfg.key as string).toString('base64');
+      const base64Key = Buffer.from(cfg.key).toString('base64');
       this.encryption = {
         key: base64Key,
         hash: createHash('sha256').update(cfg.key).digest('base64'),
@@ -338,16 +328,11 @@ export class Upload extends Pumpify {
     if (cfg.private) this.predefinedAcl = 'private';
     if (cfg.public) this.predefinedAcl = 'publicRead';
 
-    const configPath = cfg.configPath;
-    this.configStore = new ConfigStore('gcs-resumable-upload', null, {
-      configPath,
-    });
-
     const autoRetry = cfg.retryOptions.autoRetry;
     this.uriProvidedManually = !!cfg.uri;
-    this.uri = cfg.uri || this.get('uri');
+    this.uri = cfg.uri;
     this.numBytesWritten = 0;
-    this.numRetries = 0; //counter for number of retries currently executed
+    this.numRetries = 0; // counter for number of retries currently executed
     if (!autoRetry) {
       cfg.retryOptions.maxRetries = 0;
     }
@@ -359,31 +344,14 @@ export class Upload extends Pumpify {
       : NaN;
     this.contentLength = isNaN(contentLength) ? '*' : contentLength;
 
-    this.upstream.on('end', () => {
-      this.upstreamEnded = true;
-    });
-
-    this.on('prefinish', () => {
-      this.upstreamEnded = true;
-    });
-
     this.once('writing', () => {
-      // Now that someone is writing to this object, let's attach
-      // some duplexes. These duplexes enable this object to be
-      // better managed in terms of 'end'/'finish' control and
-      // buffering writes downstream if someone enables multi-
-      // chunk upload support (`chunkSize`) w/o adding too much into
-      // memory.
-      this.setPipeline(this.upstream, new PassThrough());
-
       if (this.uri) {
         this.continueUploading();
       } else {
-        this.createURI((err, uri) => {
+        this.createURI(err => {
           if (err) {
             return this.destroy(err);
           }
-          this.set({uri});
           this.startUploading();
           return;
         });
@@ -391,29 +359,38 @@ export class Upload extends Pumpify {
     });
   }
 
-  /** A stream representing the incoming data to upload */
-  private readonly upstream = new Duplex({
-    read: async () => {
-      this.once('prepareFinish', () => {
-        // Allows this (`Upload`) to finish/end once the upload has succeeded.
-        this.upstream.push(null);
-      });
-    },
-    write: this.writeToChunkBuffer.bind(this),
-  });
+  /**
+   * Prevent 'finish' event until the upload has succeeded.
+   *
+   * @param fireFinishEvent The finish callback
+   */
+  _final(fireFinishEvent = () => {}) {
+    this.upstreamEnded = true;
+
+    this.once('uploadFinished', fireFinishEvent);
+
+    process.nextTick(() => {
+      this.emit('upstreamFinished');
+      // it's possible `_write` may not be called - namely for empty object uploads
+      this.emit('writing');
+    });
+  }
 
   /**
-   * A handler for `upstream` to write and buffer its data.
+   * Handles incoming data from upstream
    *
    * @param chunk The chunk to append to the buffer
    * @param encoding The encoding of the chunk
    * @param readCallback A callback for when the buffer has been read downstream
    */
-  private writeToChunkBuffer(
+  _write(
     chunk: Buffer | string,
     encoding: BufferEncoding,
-    readCallback: () => void
+    readCallback = () => {}
   ) {
+    // Backwards-compatible event
+    this.emit('writing');
+
     this.upstreamChunkBuffer = Buffer.concat([
       this.upstreamChunkBuffer,
       typeof chunk === 'string' ? Buffer.from(chunk, encoding) : chunk,
@@ -421,6 +398,7 @@ export class Upload extends Pumpify {
     this.chunkBufferEncoding = encoding;
 
     this.once('readFromChunkBuffer', readCallback);
+
     process.nextTick(() => this.emit('wroteToChunkBuffer'));
   }
 
@@ -485,22 +463,16 @@ export class Upload extends Pumpify {
       };
 
       // Remove listeners when we're ready to callback.
-      // It's important to clean-up listeners as Node has a default max number of
-      // event listeners. Notably, The number of requests can be greater than the
-      // number of potential listeners.
-      // - https://nodejs.org/api/events.html#eventsdefaultmaxlisteners
       const removeListeners = () => {
         this.removeListener('wroteToChunkBuffer', wroteToChunkBufferCallback);
-        this.upstream.removeListener('finish', upstreamFinishedCallback);
-        this.removeListener('prefinish', upstreamFinishedCallback);
+        this.removeListener('upstreamFinished', upstreamFinishedCallback);
       };
 
       // If there's data recently written it should be digested
       this.once('wroteToChunkBuffer', wroteToChunkBufferCallback);
 
       // If the upstream finishes let's see if there's anything to grab
-      this.upstream.once('finish', upstreamFinishedCallback);
-      this.once('prefinish', upstreamFinishedCallback);
+      this.once('upstreamFinished', upstreamFinishedCallback);
     });
 
     return willBeMoreChunks;
@@ -554,6 +526,7 @@ export class Upload extends Pumpify {
   protected async createURIAsync(): Promise<string> {
     const metadata = this.metadata;
 
+    // Check if headers already exist before creating new ones
     const reqOpts: GaxiosOptions = {
       method: 'POST',
       url: [this.baseURI, this.bucket, 'o'].join('/'),
@@ -565,7 +538,9 @@ export class Upload extends Pumpify {
         this.params
       ),
       data: metadata,
-      headers: {},
+      headers: {
+        'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId.uri}`,
+      },
     };
 
     if (metadata.contentLength) {
@@ -596,6 +571,8 @@ export class Upload extends Pumpify {
       async (bail: (err: Error) => void) => {
         try {
           const res = await this.makeRequest(reqOpts);
+          // We have successfully got a URI we can now create a new invocation id
+          this.currentInvocationId.uri = uuid.v4();
           return res.headers.location;
         } catch (err) {
           const e = err as GaxiosError;
@@ -650,19 +627,10 @@ export class Upload extends Pumpify {
       this.offset = 0;
     }
 
-    // Check if we're uploading the expected object
-    if (this.numBytesWritten === 0) {
-      const isSameObject = await this.ensureUploadingSameObject();
-      if (!isSameObject) {
-        // `ensureUploadingSameObject` will restart the upload.
-        return;
-      }
-    }
-
     // Check if the offset (server) is too far behind the current stream
     if (this.offset < this.numBytesWritten) {
       const delta = this.numBytesWritten - this.offset;
-      const message = `The offset is lower than the number of bytes written. The server has ${this.offset} bytes and while  ${this.numBytesWritten} bytes has been uploaded - thus ${delta} bytes are missing. Stopping as this could result in data loss. Initiate a new upload to continue.`;
+      const message = `The offset is lower than the number of bytes written. The server has ${this.offset} bytes and while ${this.numBytesWritten} bytes has been uploaded - thus ${delta} bytes are missing. Stopping as this could result in data loss. Initiate a new upload to continue.`;
 
       this.emit('error', new RangeError(message));
       return;
@@ -731,20 +699,20 @@ export class Upload extends Pumpify {
       },
     });
 
-    let headers: GaxiosOptions['headers'] = {};
+    const headers: GaxiosOptions['headers'] = {
+      'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId.chunk}`,
+    };
 
     // If using multiple chunk upload, set appropriate header
     if (multiChunkMode && expectedUploadSize) {
       // The '-1' is because the ending byte is inclusive in the request.
       const endingByte = expectedUploadSize + this.numBytesWritten - 1;
-      headers = {
-        'Content-Length': expectedUploadSize,
-        'Content-Range': `bytes ${this.offset}-${endingByte}/${this.contentLength}`,
-      };
+      headers['Content-Length'] = expectedUploadSize;
+      headers[
+        'Content-Range'
+      ] = `bytes ${this.offset}-${endingByte}/${this.contentLength}`;
     } else {
-      headers = {
-        'Content-Range': `bytes ${this.offset}-*/${this.contentLength}`,
-      };
+      headers['Content-Range'] = `bytes ${this.offset}-*/${this.contentLength}`;
     }
 
     const reqOpts: GaxiosOptions = {
@@ -773,6 +741,9 @@ export class Upload extends Pumpify {
       this.destroy(resp.data.error);
       return;
     }
+
+    // At this point we can safely create a new id for the chunk
+    this.currentInvocationId.chunk = uuid.v4();
 
     const shouldContinueWithNextMultiChunkRequest =
       this.chunkSize &&
@@ -811,72 +782,34 @@ export class Upload extends Pumpify {
       };
       this.destroy(err);
     } else {
-      // remove the last chunk sent
+      // remove the last chunk sent to free memory
       this.lastChunkSent = Buffer.alloc(0);
 
       if (resp && resp.data) {
         resp.data.size = Number(resp.data.size);
       }
       this.emit('metadata', resp.data);
-      this.deleteConfig();
 
       // Allow the object (Upload) to continue naturally so the user's
       // "finish" event fires.
-      this.emit('prepareFinish');
+      this.emit('uploadFinished');
     }
-  }
-
-  /**
-   * Check if this is the same content uploaded previously. This caches a
-   * slice of the first chunk, then compares it with the first byte of
-   * incoming data.
-   *
-   * @returns if the request is ok to continue as-is
-   */
-  private async ensureUploadingSameObject() {
-    // A queue for the upstream data
-    const upstreamQueue = this.upstreamIterator(
-      16,
-      true // we just want one chunk for this validation
-    );
-
-    const upstreamChunk = await upstreamQueue.next();
-    const chunk = upstreamChunk.value
-      ? upstreamChunk.value.chunk
-      : Buffer.alloc(0);
-
-    // Put the original chunk back into the buffer as we just wanted to 'peek'
-    // at the stream for validation.
-    this.unshiftChunkBuffer(chunk);
-
-    let cachedFirstChunk = this.get('firstChunk');
-    const firstChunk = chunk.valueOf();
-
-    if (!cachedFirstChunk) {
-      // This is a new upload. Cache the first chunk.
-      this.set({uri: this.uri, firstChunk});
-    } else {
-      // this continues an upload in progress. check if the bytes are the same
-      cachedFirstChunk = Buffer.from(cachedFirstChunk);
-      const nextChunk = Buffer.from(firstChunk);
-      if (Buffer.compare(cachedFirstChunk, nextChunk) !== 0) {
-        // this data is not the same. start a new upload
-        this.restart();
-        return false;
-      }
-    }
-
-    return true;
   }
 
   private async getAndSetOffset() {
     const opts: GaxiosOptions = {
       method: 'PUT',
       url: this.uri!,
-      headers: {'Content-Length': 0, 'Content-Range': 'bytes */*'},
+      headers: {
+        'Content-Length': 0,
+        'Content-Range': 'bytes */*',
+        'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId.offset}`,
+      },
     };
     try {
       const resp = await this.makeRequest(opts);
+      // Successfully got the offset we can now create a new offset invocation id
+      this.currentInvocationId.offset = uuid.v4();
       if (resp.status === RESUMABLE_INCOMPLETE_STATUS_CODE) {
         if (resp.headers.range) {
           const range = resp.headers.range as string;
@@ -887,30 +820,6 @@ export class Upload extends Pumpify {
       this.offset = 0;
     } catch (e) {
       const err = e as GaxiosError;
-      const resp = err.response;
-      // we don't return a 404 to the user if they provided the resumable
-      // URI. if we're just using the configstore file to tell us that this
-      // file exists, and it turns out that it doesn't (the 404), that's
-      // probably stale config data.
-      if (
-        resp &&
-        resp.status === NOT_FOUND_STATUS_CODE &&
-        !this.uriProvidedManually
-      ) {
-        this.restart();
-        return;
-      }
-
-      // this resumable upload is unrecoverable (bad data or service error).
-      //  -
-      //  https://github.com/googleapis/gcs-resumable-upload/issues/15
-      //  -
-      //  https://github.com/googleapis/gcs-resumable-upload/pull/16#discussion_r80363774
-      if (resp && resp.status === TERMINATED_UPLOAD_STATUS_CODE) {
-        this.restart();
-        return;
-      }
-
       this.destroy(err);
     }
   }
@@ -986,29 +895,13 @@ export class Upload extends Pumpify {
     }
 
     this.lastChunkSent = Buffer.alloc(0);
-    this.deleteConfig();
-    this.createURI((err, uri) => {
+    this.createURI(err => {
       if (err) {
         return this.destroy(err);
       }
-      this.set({uri});
       this.startUploading();
       return;
     });
-  }
-
-  private get(prop: string) {
-    const store = this.configStore.get(this.cacheKey);
-    return store && store[prop];
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private set(props: any) {
-    this.configStore.set(this.cacheKey, props);
-  }
-
-  deleteConfig() {
-    this.configStore.delete(this.cacheKey);
   }
 
   /**
@@ -1016,6 +909,7 @@ export class Upload extends Pumpify {
    */
   private onResponse(resp: GaxiosResponse) {
     if (
+      resp.status !== 200 &&
       this.retryOptions.retryableErrorFn!({
         code: resp.status,
         message: resp.statusText,

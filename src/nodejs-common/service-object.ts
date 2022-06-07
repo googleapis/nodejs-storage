@@ -89,12 +89,6 @@ export interface ServiceObjectConfig {
   parent: ServiceObjectParent;
 
   /**
-   * For long running operations, how often should the client poll
-   * for completion.
-   */
-  pollIntervalMs?: number;
-
-  /**
    * Override of projectId, used to allow access to resources in another project.
    * For example, a BigQuery dataset in another project to which the user has been
    * granted permission.
@@ -157,7 +151,6 @@ class ServiceObject<T = any> extends EventEmitter {
   baseUrl?: string;
   parent: ServiceObjectParent;
   id?: string;
-  pollIntervalMs?: number;
   private createMethod?: Function;
   protected methods: Methods;
   interceptors: Interceptor[];
@@ -190,7 +183,6 @@ class ServiceObject<T = any> extends EventEmitter {
     this.createMethod = config.createMethod;
     this.methods = config.methods || {};
     this.interceptors = [];
-    this.pollIntervalMs = config.pollIntervalMs;
     this.projectId = config.projectId;
 
     if (config.methods) {
@@ -256,6 +248,9 @@ class ServiceObject<T = any> extends EventEmitter {
       const [err, instance] = args;
       if (!err) {
         self.metadata = instance.metadata;
+        if (self.id && instance.metadata) {
+          self.id = instance.metadata.id;
+        }
         args[1] = self; // replace the created `instance` with this one.
       }
       callback!(...(args as {} as [Error, T]));

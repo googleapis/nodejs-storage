@@ -29,10 +29,8 @@ import pLimit = require('p-limit');
 import * as path from 'path';
 import * as proxyquire from 'proxyquire';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const snakeize = require('snakeize');
 import * as stream from 'stream';
-import {Bucket, Channel, Notification} from '../src';
+import {Bucket, Channel, Notification, CRC32C} from '../src';
 import {
   CreateWriteStreamOptions,
   File,
@@ -55,6 +53,7 @@ import {Policy} from '../src/iam';
 import sinon = require('sinon');
 import {Transform} from 'stream';
 import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
+import {convertObjKeysToSnakeCase} from '../src/util';
 
 class FakeFile {
   calledWith_: IArguments;
@@ -198,6 +197,7 @@ describe('Bucket', () => {
       },
       idempotencyStrategy: IdempotencyStrategy.RetryConditional,
     },
+    crc32cGenerator: () => new CRC32C(),
   };
   const BUCKET_NAME = 'test-bucket';
 
@@ -429,6 +429,17 @@ describe('Bucket', () => {
       });
 
       assert.strictEqual(bucket.userProject, fakeUserProject);
+    });
+
+    it('should accept a `crc32cGenerator`', () => {
+      const crc32cGenerator = () => {};
+
+      const bucket = new Bucket(STORAGE, 'bucket-name', {crc32cGenerator});
+      assert.strictEqual(bucket.crc32cGenerator, crc32cGenerator);
+    });
+
+    it("should use storage's `crc32cGenerator` by default", () => {
+      assert.strictEqual(bucket.crc32cGenerator, STORAGE.crc32cGenerator);
     });
   });
 
@@ -1109,7 +1120,7 @@ describe('Bucket', () => {
       const expectedTopic = PUBSUB_SERVICE_PATH + topic;
       const expectedJson = Object.assign(
         {topic: expectedTopic},
-        snakeize(options)
+        convertObjKeysToSnakeCase(options)
       );
 
       bucket.request = (reqOpts: DecorateRequestOptions) => {
@@ -1714,27 +1725,6 @@ describe('Bucket', () => {
       bucket.getFiles({maxResults: 5, pageToken: token}, util.noop);
     });
 
-    it('should allow setting a directory', done => {
-      //Note: Directory is deprecated.
-      const directory = 'directory-name';
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.prefix, `${directory}/`);
-        assert.strictEqual(reqOpts.qs.directory, undefined);
-        done();
-      };
-      bucket.getFiles({directory}, assert.ifError);
-    });
-
-    it('should strip excess slashes from a directory', done => {
-      //Note: Directory is deprecated.
-      const directory = 'directory-name///';
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.prefix, 'directory-name/');
-        done();
-      };
-      bucket.getFiles({directory}, assert.ifError);
-    });
-
     it('should return nextQuery if more results exist', () => {
       const token = 'next-page-token';
       bucket.request = (
@@ -2101,9 +2091,12 @@ describe('Bucket', () => {
     });
 
     it('should error if action is undefined', () => {
-      delete SIGNED_URL_CONFIG.action;
+      const urlConfig = {
+        ...SIGNED_URL_CONFIG,
+      } as Partial<GetBucketSignedUrlConfig>;
+      delete urlConfig.action;
       assert.throws(() => {
-        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
+        bucket.getSignedUrl(urlConfig, () => {}),
           ExceptionMessages.INVALID_ACTION;
       });
     });
@@ -2609,6 +2602,11 @@ describe('Bucket', () => {
   describe('upload', () => {
     const basename = 'testfile.json';
     const filepath = path.join(__dirname, '../../test/testdata/' + basename);
+    const nonExistentFilePath = path.join(
+      __dirname,
+      '../../test/testdata/',
+      'non-existent-file'
+    );
     const metadata = {
       metadata: {
         a: 'b',
@@ -2756,48 +2754,14 @@ describe('Bucket', () => {
         };
       });
 
-      it('should force a resumable upload', done => {
+      it('should respect setting a resumable upload to false', done => {
         const fakeFile = new FakeFile(bucket, 'file-name');
-        const options = {destination: fakeFile, resumable: true};
+        const options = {destination: fakeFile, resumable: false};
         fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
           const ws = new stream.Writable();
           ws.write = () => true;
           setImmediate(() => {
             assert.strictEqual(options_.resumable, options.resumable);
-            done();
-          });
-          return ws;
-        };
-        bucket.upload(filepath, options, assert.ifError);
-      });
-
-      it('should not pass resumable option to createWriteStream when file size is greater than minimum resumable threshold', done => {
-        const fakeFile = new FakeFile(bucket, 'file-name');
-        const options = {destination: fakeFile};
-        fsStatOverride = (path: string, callback: Function) => {
-          // Set size greater than threshold
-          callback(null, {size: 5000001});
-        };
-        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
-          const ws = new stream.Writable();
-          ws.write = () => true;
-          setImmediate(() => {
-            assert.strictEqual(typeof options_.resumable, 'undefined');
-            done();
-          });
-          return ws;
-        };
-        bucket.upload(filepath, options, assert.ifError);
-      });
-
-      it('should prevent resumable when file size is less than minimum resumable threshold', done => {
-        const fakeFile = new FakeFile(bucket, 'file-name');
-        const options = {destination: fakeFile};
-        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
-          const ws = new stream.Writable();
-          ws.write = () => true;
-          setImmediate(() => {
-            assert.strictEqual(options_.resumable, false);
             done();
           });
           return ws;
@@ -3070,6 +3034,14 @@ describe('Bucket', () => {
           done();
         }
       );
+    });
+
+    it('should capture and throw on non-existent files', done => {
+      bucket.upload(nonExistentFilePath, (err: Error) => {
+        assert(err);
+        assert(err.message.includes('ENOENT'));
+        done();
+      });
     });
   });
 

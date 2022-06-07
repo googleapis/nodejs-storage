@@ -75,9 +75,12 @@ function fakeRequest() {
   return (requestOverride || teenyRequest).apply(null, arguments);
 }
 
-fakeRequest.defaults = () => {
-  // Ignore the default values, so we don't have to test for them in every API
-  // call.
+fakeRequest.defaults = (defaults: r.CoreOptions) => {
+  assert.ok(
+    /^gl-node\/(?<nodeVersion>[^W]+) gccl\/(?<gccl>[^W]+) gccl-invocation-id\/(?<gcclInvocationId>[^W]+)$/.test(
+      defaults.headers!['x-goog-api-client']
+    )
+  );
   return fakeRequest;
 };
 
@@ -503,7 +506,6 @@ describe('common/util', () => {
           assert.strictEqual(request.qs.uploadType, 'multipart');
           assert.strictEqual(request.timeout, 0);
           assert.strictEqual(request.maxRetries, 0);
-
           assert.strictEqual(Array.isArray(request.multipart), true);
 
           const mp = request.multipart as r.RequestPart[];
@@ -1329,20 +1331,6 @@ describe('common/util', () => {
       };
     }
 
-    const retryOptionsTwoMaxRetries = {
-      retryOptions: {
-        maxRetries: 7,
-      },
-      maxRetries: 7,
-    };
-
-    const retryOptionsTwoAutoRetry = {
-      retryOptions: {
-        autoRetry: false,
-      },
-      autoRetry: false,
-    };
-
     const retryOptionsConfig = {
       retryOptions: {
         autoRetry: false,
@@ -1546,20 +1534,6 @@ describe('common/util', () => {
       it('should use retryOptions if provided', done => {
         retryRequestOverride = testRetryOptions(done);
         util.makeRequest(reqOpts, retryOptionsConfig, assert.ifError);
-      });
-
-      it('should throw if autoRetry is specified twice', done => {
-        assert.throws(() => {
-          util.makeRequest(reqOpts, retryOptionsTwoAutoRetry, util.noop);
-        }, /autoRetry is deprecated. Use retryOptions.autoRetry instead\./);
-        done();
-      });
-
-      it('should throw if maxRetries is specified twice', done => {
-        assert.throws(() => {
-          util.makeRequest(reqOpts, retryOptionsTwoMaxRetries, util.noop);
-        }, /maxRetries is deprecated. Use retryOptions.maxRetries instead\./);
-        done();
       });
 
       it('should allow request options to control retry setting', done => {

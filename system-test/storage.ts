@@ -32,6 +32,7 @@ import {
   Notification,
   DeleteBucketCallback,
   GetFileCallback,
+  CRC32C,
 } from '../src';
 import * as nock from 'nock';
 import {Transform} from 'stream';
@@ -44,9 +45,20 @@ import {PubSub} from '@google-cloud/pubsub';
 import {LifecycleRule} from '../src/bucket';
 import {IdempotencyStrategy} from '../src/storage';
 
+class HTTPError extends Error {
+  code: number;
+  constructor(message: string, code: number) {
+    super(message);
+    this.code = code;
+  }
+}
+
 // When set to true, skips all tests that is not compatible for
 // running inside VPCSC.
 const RUNNING_IN_VPCSC = !!process.env['GOOGLE_CLOUD_TESTS_IN_VPCSC'];
+
+const UNIFORM_ACCESS_TIMEOUT = 60 * 1000; // 60s see: https://cloud.google.com/storage/docs/consistency#eventually_consistent_operations
+const UNIFORM_ACCESS_WAIT_TIME = 5 * 1000; // 5s
 
 // block all attempts to chat with the metadata server (kokoro runs on GCE)
 nock('http://metadata.google.internal')
@@ -195,7 +207,9 @@ describe('storage', () => {
             /Could not load the default credentials/,
             /does not have storage\.objects\.create access/,
           ];
-          assert(allowedErrorMessages.some(msg => msg.test(e.message)));
+          assert(
+            allowedErrorMessages.some(msg => msg.test((e as Error).message))
+          );
         }
       });
     });
@@ -929,6 +943,29 @@ describe('storage', () => {
     });
   });
 
+  describe('dual-region', () => {
+    let bucket: Bucket;
+
+    const REGION1 = 'US-EAST1';
+    const REGION2 = 'US-WEST1';
+
+    beforeEach(() => {
+      bucket = storage.bucket(generateName());
+    });
+
+    it('creates a dual-region bucket', async () => {
+      const dualRegion = `${REGION1}+${REGION2}`;
+      await bucket.create({location: dualRegion});
+
+      const [exists] = await bucket.exists();
+      assert.strictEqual(exists, true);
+
+      const [bucketMetadata] = await bucket.getMetadata();
+      assert.strictEqual(bucketMetadata.location, dualRegion);
+      assert.strictEqual(bucketMetadata.locationType, 'dual-region');
+    });
+  });
+
   describe('uniform bucket-level access', () => {
     let bucket: Bucket;
 
@@ -957,7 +994,7 @@ describe('storage', () => {
 
       it('can be written to the bucket by project owner w/o configuration', async () => {
         await setUniformBucketLevelAccess(bucket, true);
-        const file = bucket.file('file');
+        const file = bucket.file(`file-${uuid.v4()}`);
         return assert.doesNotReject(() => file.save('data'));
       });
     });
@@ -974,23 +1011,39 @@ describe('storage', () => {
         await createBucket();
         await setUniformBucketLevelAccess(bucket, true);
 
-        file = bucket.file('file');
-        await file.save('data');
+        file = bucket.file(`file-${uuid.v4()}`);
+        await file.save('data', {resumable: false});
       });
 
-      it('should fail to get file ACL', () => {
-        return assert.rejects(
-          () => file.acl.get(),
-          validateUniformBucketLevelAccessEnabledError
-        );
-      });
+      it('should fail to get file ACL', async () => {
+        // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
+        for (;;) {
+          try {
+            await file.acl.get();
+            await new Promise(res => setTimeout(res, UNIFORM_ACCESS_WAIT_TIME));
+          } catch (err) {
+            assert(
+              validateUniformBucketLevelAccessEnabledError(err as ApiError)
+            );
+            break;
+          }
+        }
+      }).timeout(UNIFORM_ACCESS_TIMEOUT);
 
-      it('should fail to update file ACL', () => {
-        return assert.rejects(
-          () => file.acl.update(customAcl),
-          validateUniformBucketLevelAccessEnabledError
-        );
-      });
+      it('should fail to update file ACL', async () => {
+        // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
+        for (;;) {
+          try {
+            await file.acl.update(customAcl);
+            await new Promise(res => setTimeout(res, UNIFORM_ACCESS_WAIT_TIME));
+          } catch (err) {
+            assert(
+              validateUniformBucketLevelAccessEnabledError(err as ApiError)
+            );
+            break;
+          }
+        }
+      }).timeout(UNIFORM_ACCESS_TIMEOUT);
     });
 
     describe('preserves bucket/file ACL over uniform bucket-level access on/off', () => {
@@ -1003,13 +1056,21 @@ describe('storage', () => {
         await setUniformBucketLevelAccess(bucket, true);
         await setUniformBucketLevelAccess(bucket, false);
 
-        const [aclAfter] = await bucket.acl.default.get();
-        assert.deepStrictEqual(aclAfter, aclBefore);
-      });
+        // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
+        for (;;) {
+          try {
+            const [aclAfter] = await bucket.acl.default.get();
+            assert.deepStrictEqual(aclAfter, aclBefore);
+            break;
+          } catch {
+            await new Promise(res => setTimeout(res, UNIFORM_ACCESS_WAIT_TIME));
+          }
+        }
+      }).timeout(UNIFORM_ACCESS_TIMEOUT);
 
       it('should preserve file ACL', async () => {
-        const file = bucket.file('file');
-        await file.save('data');
+        const file = bucket.file(`file-${uuid.v4()}`);
+        await file.save('data', {resumable: false});
 
         await file.acl.update(customAcl);
         const [aclBefore] = await file.acl.get();
@@ -1017,9 +1078,17 @@ describe('storage', () => {
         await setUniformBucketLevelAccess(bucket, true);
         await setUniformBucketLevelAccess(bucket, false);
 
-        const [aclAfter] = await file.acl.get();
-        assert.deepStrictEqual(aclAfter, aclBefore);
-      });
+        // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
+        for (;;) {
+          try {
+            const [aclAfter] = await file.acl.get();
+            assert.deepStrictEqual(aclAfter, aclBefore);
+            break;
+          } catch {
+            await new Promise(res => setTimeout(res, UNIFORM_ACCESS_WAIT_TIME));
+          }
+        }
+      }).timeout(UNIFORM_ACCESS_TIMEOUT);
     });
   });
 
@@ -2246,7 +2315,7 @@ describe('storage', () => {
         const file = FILES[filesKey];
         const hash = crypto.createHash('md5');
 
-        return new Promise(resolve =>
+        return new Promise<void>(resolve =>
           fs
             .createReadStream(file.path)
             .on('data', hash.update.bind(hash))
@@ -2522,7 +2591,6 @@ describe('storage', () => {
         fs.stat(FILES.big.path, (err, metadata) => {
           assert.ifError(err);
 
-          // Use a random name to force an empty ConfigStore cache.
           const file = bucket.file(generateName());
           const fileSize = metadata.size;
           upload({interrupt: true}, err => {
@@ -3311,31 +3379,6 @@ describe('storage', () => {
         });
     });
 
-    it('should get files from a directory', done => {
-      //Note: Directory is deprecated.
-      bucket.getFiles({directory: DIRECTORY_NAME}, (err, files) => {
-        assert.ifError(err);
-        assert.strictEqual(files!.length, 3);
-        done();
-      });
-    });
-
-    it('should get files from a directory as a stream', done => {
-      //Note: Directory is deprecated.
-      let numFilesEmitted = 0;
-
-      bucket
-        .getFilesStream({directory: DIRECTORY_NAME})
-        .on('error', done)
-        .on('data', () => {
-          numFilesEmitted++;
-        })
-        .on('end', () => {
-          assert.strictEqual(numFilesEmitted, 3);
-          done();
-        });
-    });
-
     it('should paginate the list', done => {
       const query = {
         maxResults: NEW_FILES.length - 1,
@@ -3893,6 +3936,36 @@ describe('storage', () => {
     });
   });
 
+  describe('CRC32C', () => {
+    const KNOWN_INPUT_TO_CRC32C = {
+      /** empty string (i.e. nothing to 'update') */
+      '': 'AAAAAA==',
+      /** known case #1 - validated from actual GCS object upload + metadata retrieval */
+      data: 'rth90Q==',
+      /** known case #2 - validated from actual GCS object upload + metadata retrieval */
+      'some text\n': 'DkjKuA==',
+      /** arbitrary large string */
+      ['a'.repeat(2 ** 16)]: 'TpXtPw==',
+    } as const;
+
+    it('should generate the appropriate hashes', async () => {
+      const file = bucket.file('crc32c-test-file');
+
+      for (const [input, expected] of Object.entries(KNOWN_INPUT_TO_CRC32C)) {
+        const buffer = Buffer.from(input);
+        const crc32c = new CRC32C();
+
+        await file.save(buffer);
+        crc32c.update(buffer);
+
+        const [metadata] = await file.getMetadata();
+
+        assert.equal(metadata.crc32c, expected);
+        assert(crc32c.validate(metadata.crc32c));
+      }
+    });
+  });
+
   async function deleteBucketAsync(bucket: Bucket, options?: {}) {
     // After files are deleted, eventual consistency may require a bit of a
     // delay to ensure that the bucket recognizes that the files don't exist
@@ -3998,7 +4071,8 @@ describe('storage', () => {
         return false;
       }
     } catch (error) {
-      if (error.code === 404) {
+      const err = error as HTTPError;
+      if (err.code === 404) {
         return false;
       } else {
         throw error;

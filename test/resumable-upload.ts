@@ -19,7 +19,7 @@ import * as mockery from 'mockery';
 import * as nock from 'nock';
 import * as path from 'path';
 import * as sinon from 'sinon';
-import {Readable} from 'stream';
+import {Readable, Writable} from 'stream';
 import {
   RETRY_DELAY_MULTIPLIER_DEFAULT,
   TOTAL_TIMEOUT_DEFAULT,
@@ -33,7 +33,7 @@ import {
   ApiError,
   CreateUriCallback,
   PROTOCOL_REGEX,
-} from '../src/gcs-resumable-upload';
+} from '../src/resumable-upload';
 import {GaxiosOptions, GaxiosError, GaxiosResponse} from 'gaxios';
 
 nock.disableNetConnect();
@@ -46,27 +46,12 @@ class AbortController {
   }
 }
 
-let configData = {} as {[index: string]: {}};
-class ConfigStore {
-  constructor(packageName: string, defaults: object, config: object) {
-    this.set('packageName', packageName);
-    this.set('config', config);
-  }
-  delete(key: string) {
-    delete configData[key];
-  }
-  get(key: string) {
-    return configData[key];
-  }
-  set(key: string, value: {}) {
-    configData[key] = value;
-  }
-}
-
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
 /** 256 KiB */
 const CHUNK_SIZE_MULTIPLE = 2 ** 18;
 const queryPath = '/?userProject=user-project-id';
+const X_GOOG_API_HEADER_REGEX =
+  /^gl-node\/(?<nodeVersion>[^W]+) gccl\/(?<gccl>[^W]+) gccl-invocation-id\/(?<gcclInvocationId>[^W]+)$/;
 
 function mockAuthorizeRequest(
   code = 200,
@@ -79,7 +64,7 @@ function mockAuthorizeRequest(
     .reply(code, data);
 }
 
-describe('gcs-resumable-upload', () => {
+describe('resumable-upload', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let upload: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,13 +94,11 @@ describe('gcs-resumable-upload', () => {
 
   before(() => {
     mockery.registerMock('abort-controller', {default: AbortController});
-    mockery.registerMock('configstore', ConfigStore);
     mockery.enable({useCleanCache: true, warnOnUnregistered: false});
-    upload = require('../src/gcs-resumable-upload').upload;
+    upload = require('../src/resumable-upload').upload;
   });
 
   beforeEach(() => {
-    configData = {};
     REQ_OPTS = {url: 'http://fake.local'};
     up = upload({
       bucket: BUCKET,
@@ -143,6 +126,10 @@ describe('gcs-resumable-upload', () => {
   });
 
   describe('ctor', () => {
+    it('should be a Writable', () => {
+      assert(up instanceof Writable);
+    });
+
     it('should throw if a bucket or file is not given', () => {
       assert.throws(() => {
         upload();
@@ -312,22 +299,6 @@ describe('gcs-resumable-upload', () => {
       assert.strictEqual(up.predefinedAcl, 'private');
     });
 
-    it('should create a ConfigStore instance', () => {
-      assert.strictEqual(configData.packageName, 'gcs-resumable-upload');
-    });
-
-    it('should set the configPath', () => {
-      const configPath = '/custom/config/path';
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const up = upload({
-        bucket: BUCKET,
-        file: FILE,
-        configPath,
-        retryOptions: RETRY_OPTIONS,
-      });
-      assert.deepStrictEqual(configData.config, {configPath});
-    });
-
     it('should set numBytesWritten to 0', () => {
       assert.strictEqual(up.numBytesWritten, 0);
     });
@@ -355,7 +326,7 @@ describe('gcs-resumable-upload', () => {
       assert.strictEqual(up.contentLength, '*');
     });
 
-    it('should localize the uri or get one from config', () => {
+    it('should localize the uri', () => {
       const uri = 'http://www.blah.com/';
       const upWithUri = upload({
         bucket: BUCKET,
@@ -365,15 +336,6 @@ describe('gcs-resumable-upload', () => {
       });
       assert.strictEqual(upWithUri.uriProvidedManually, true);
       assert.strictEqual(upWithUri.uri, uri);
-
-      configData[`${BUCKET}/${FILE}`] = {uri: 'fake-uri'};
-      const up = upload({
-        bucket: BUCKET,
-        file: FILE,
-        retryOptions: RETRY_OPTIONS,
-      });
-      assert.strictEqual(up.uriProvidedManually, false);
-      assert.strictEqual(up.uri, 'fake-uri');
     });
 
     it('should not have `chunkSize` by default', () => {
@@ -393,21 +355,6 @@ describe('gcs-resumable-upload', () => {
         retryOptions: RETRY_OPTIONS,
       });
       assert.strictEqual(up.chunkSize, 123);
-    });
-
-    it('should set `upstreamEnded` to `true` on `prefinish`', () => {
-      const up = upload({
-        bucket: BUCKET,
-        file: FILE,
-        chunkSize: 123,
-        retryOptions: RETRY_OPTIONS,
-      });
-
-      assert.strictEqual(up.upstreamEnded, false);
-
-      up.emit('prefinish');
-
-      assert.strictEqual(up.upstreamEnded, true);
     });
 
     describe('on write', () => {
@@ -436,25 +383,26 @@ describe('gcs-resumable-upload', () => {
         upstreamBuffer.pipe(up);
       });
 
-      it("should emit 'finished' after 'prepareFinish'", async () => {
+      it("should set `upstreamEnded` to `true` and emit 'upstreamFinished' on `#end()`", done => {
         const upstreamBuffer = new Readable({
           read() {
+            this.push(Buffer.alloc(1));
             this.push(null);
           },
         });
 
         up.createURI = () => {};
-        await new Promise(resolve => {
-          up.once('writing', resolve);
-          upstreamBuffer.pipe(up);
-        });
+        up.once('writing', () => {
+          up.on('upstreamFinished', () => {
+            assert.equal(up.upstreamEnded, true);
+            done();
+          });
 
-        assert(up.upstream.readable);
+          assert.equal(up.upstreamEnded, false);
 
-        await new Promise(resolve => {
-          up.once('finish', resolve);
-          up.emit('prepareFinish');
+          up.once('wroteToChunkBuffer', () => up.emit('readFromChunkBuffer'));
         });
+        upstreamBuffer.pipe(up);
       });
 
       it('should continue uploading', done => {
@@ -488,27 +436,15 @@ describe('gcs-resumable-upload', () => {
         };
         up.emit('writing');
       });
-
-      it('should save the uri to config on first write event', done => {
-        const uri = 'http://newly-created-uri';
-        up.createURI = (callback: CreateUriCallback) => {
-          callback(null, uri);
-        };
-        up.set = (props: {}) => {
-          assert.deepStrictEqual(props, {uri});
-          done();
-        };
-        up.emit('writing');
-      });
     });
   });
 
-  describe('#upstream', () => {
+  describe('upstream', () => {
     beforeEach(() => {
       up.createURI = () => {};
     });
 
-    it('should write to `writeToChunkBuffer`', done => {
+    it('should handle writes to class', done => {
       up.on('wroteToChunkBuffer', () => {
         assert.equal(up.upstreamChunkBuffer.byteLength, 16);
         assert.equal(up.chunkBufferEncoding, 'buffer');
@@ -518,18 +454,18 @@ describe('gcs-resumable-upload', () => {
       up.write(Buffer.alloc(16));
     });
 
-    it("should setup a 'prepareFinish' handler", done => {
-      assert.equal(up.eventNames().includes('prepareFinish'), false);
+    it("should setup a 'uploadFinished' handler on 'upstreamFinished'", done => {
+      assert.equal(up.eventNames().includes('uploadFinished'), false);
 
-      up.on('wroteToChunkBuffer', () => {
-        assert.equal(up.eventNames().includes('prepareFinish'), true);
+      up.on('upstreamFinished', () => {
+        assert.equal(up.eventNames().includes('uploadFinished'), true);
         done();
       });
 
-      up.write(Buffer.alloc(16));
+      up.end();
     });
 
-    it("should finish only after 'prepareFinish' is emitted", done => {
+    it("should finish only after 'uploadFinished' is emitted", done => {
       const upstreamBuffer = new Readable({
         read() {
           this.push(Buffer.alloc(1));
@@ -546,7 +482,7 @@ describe('gcs-resumable-upload', () => {
 
           // setting up the listener now to prove it hasn't been fired before
           up.on('finish', done);
-          up.emit('prepareFinish');
+          process.nextTick(() => up.emit('uploadFinished'));
         });
       });
 
@@ -554,10 +490,14 @@ describe('gcs-resumable-upload', () => {
     });
   });
 
-  describe('#writeToChunkBuffer', () => {
+  describe('#_write', () => {
+    beforeEach(() => {
+      up.createURI = () => {};
+    });
+
     it('should append buffer to existing `upstreamChunkBuffer`', () => {
       up.upstreamChunkBuffer = Buffer.from('abc');
-      up.writeToChunkBuffer(Buffer.from('def'), 'buffer', () => {});
+      up.write(Buffer.from('def'));
 
       assert.equal(
         Buffer.compare(up.upstreamChunkBuffer, Buffer.from('abcdef')),
@@ -566,23 +506,28 @@ describe('gcs-resumable-upload', () => {
     });
 
     it('should convert string with encoding to Buffer and append to existing `upstreamChunkBuffer`', () => {
+      const existing = 'a ';
       const sample = '🦃';
+      const concat = existing + sample;
 
+      up.upstreamChunkBuffer = Buffer.from(existing);
       assert.equal(up.chunkBufferEncoding, undefined);
-      up.writeToChunkBuffer(sample, 'utf-8', () => {});
+
+      up.write(sample, 'utf-8', () => {});
 
       assert(Buffer.isBuffer(up.upstreamChunkBuffer));
-      assert.equal(up.upstreamChunkBuffer.toString(), sample);
-      assert.equal(up.chunkBufferEncoding, 'utf-8');
+      assert.equal(up.upstreamChunkBuffer.toString(), concat);
+      assert.equal(up.chunkBufferEncoding, 'buffer');
     });
 
     it("should callback on 'readFromChunkBuffer'", done => {
-      up.writeToChunkBuffer('sample', 'utf-8', done);
+      // The 'done' here is a callback from 'readFromChunkBuffer'
+      up.write('sample', 'utf-8', done);
       up.emit('readFromChunkBuffer');
     });
 
     it("should emit 'wroteToChunkBuffer' asynchronously", done => {
-      up.writeToChunkBuffer('sample', 'utf-8', () => {});
+      up.write('sample', 'utf-8', () => {});
 
       // setting this here proves it's async
       up.on('wroteToChunkBuffer', done);
@@ -670,30 +615,30 @@ describe('gcs-resumable-upload', () => {
       assert(result);
     });
 
-    it("should wait for upstream to 'finish' if !`upstreamChunkBuffer.byteLength` && !`upstreamEnded`", async () => {
+    it("should wait for 'upstreamFinished' if !`upstreamChunkBuffer.byteLength` && !`upstreamEnded`", async () => {
       await new Promise(resolve => {
         up.waitForNextChunk().then(resolve);
-        up.upstream.emit('finish');
+        up.emit('upstreamFinished');
       });
     });
 
-    it("should wait for upstream to 'finish' and resolve `false` if data is not available", async () => {
+    it("should wait for 'upstreamFinished' and resolve `false` if data is not available", async () => {
       const result = await new Promise(resolve => {
         up.waitForNextChunk().then(resolve);
-        up.upstream.emit('finish');
+        up.emit('upstreamFinished');
       });
 
       assert.equal(result, false);
     });
 
-    it("should wait for upstream to 'finish' and resolve `true` if data is available", async () => {
+    it("should wait for 'upstreamFinished' and resolve `true` if data is available", async () => {
       const result = await new Promise(resolve => {
-        up.upstream.on('newListener', (event: string) => {
-          if (event === 'finish') {
-            // Update the `upstreamChunkBuffer` before emitting 'finish'
+        up.on('newListener', (event: string) => {
+          if (event === 'upstreamFinished') {
+            // Update the `upstreamChunkBuffer` before emitting 'upstreamFinished'
             up.upstreamChunkBuffer = Buffer.from('abc');
 
-            process.nextTick(() => up.upstream.emit('finish'));
+            process.nextTick(() => up.emit('upstreamFinished'));
           }
         });
 
@@ -703,30 +648,30 @@ describe('gcs-resumable-upload', () => {
       assert.equal(result, true);
     });
 
-    it("should wait for 'prefinish' if !`upstreamChunkBuffer.byteLength` && !`upstreamEnded`", async () => {
+    it("should wait for 'upstreamFinished' if !`upstreamChunkBuffer.byteLength` && !`upstreamEnded`", async () => {
       await new Promise(resolve => {
         up.waitForNextChunk().then(resolve);
-        up.emit('prefinish');
+        up.emit('upstreamFinished');
       });
     });
 
-    it("should wait for 'prefinish' and resolve `false` if data is not available", async () => {
+    it("should wait for 'upstreamFinished' and resolve `false` if data is not available", async () => {
       const result = await new Promise(resolve => {
         up.waitForNextChunk().then(resolve);
-        up.emit('prefinish');
+        up.emit('upstreamFinished');
       });
 
       assert.equal(result, false);
     });
 
-    it("should wait for 'prefinish' and resolve `true` if data is available", async () => {
+    it("should wait for 'upstreamFinished' and resolve `true` if data is available", async () => {
       const result = await new Promise(resolve => {
         up.on('newListener', (event: string) => {
-          if (event === 'prefinish') {
-            // Update the `upstreamChunkBuffer` before emitting 'prefinish'
+          if (event === 'upstreamFinished') {
+            // Update the `upstreamChunkBuffer` before emitting 'upstreamFinished'
             up.upstreamChunkBuffer = Buffer.from('abc');
 
-            process.nextTick(() => up.emit('prefinish'));
+            process.nextTick(() => up.emit('upstreamFinished'));
           }
         });
 
@@ -737,9 +682,8 @@ describe('gcs-resumable-upload', () => {
     });
 
     it('should remove listeners after calling back from `wroteToChunkBuffer`', async () => {
-      assert.equal(up.listenerCount('finish'), 0);
       assert.equal(up.listenerCount('wroteToChunkBuffer'), 0);
-      assert.equal(up.listenerCount('prefinish'), 1);
+      assert.equal(up.listenerCount('upstreamFinished'), 0);
 
       await new Promise(resolve => {
         up.on('newListener', (event: string) => {
@@ -751,49 +695,26 @@ describe('gcs-resumable-upload', () => {
         up.waitForNextChunk().then(resolve);
       });
 
-      assert.equal(up.listenerCount('finish'), 0);
       assert.equal(up.listenerCount('wroteToChunkBuffer'), 0);
-      assert.equal(up.listenerCount('prefinish'), 1);
+      assert.equal(up.listenerCount('upstreamFinished'), 0);
     });
 
-    it("should remove listeners after calling back from upstream to 'finish'", async () => {
-      assert.equal(up.listenerCount('finish'), 0);
+    it("should remove listeners after calling back from 'upstreamFinished'", async () => {
       assert.equal(up.listenerCount('wroteToChunkBuffer'), 0);
-      assert.equal(up.listenerCount('prefinish'), 1);
-
-      await new Promise(resolve => {
-        up.upstream.on('newListener', (event: string) => {
-          if (event === 'finish') {
-            process.nextTick(() => up.upstream.emit('finish'));
-          }
-        });
-
-        up.waitForNextChunk().then(resolve);
-      });
-
-      assert.equal(up.listenerCount('finish'), 0);
-      assert.equal(up.listenerCount('wroteToChunkBuffer'), 0);
-      assert.equal(up.listenerCount('prefinish'), 1);
-    });
-
-    it("should remove listeners after calling back from 'prefinish'", async () => {
-      assert.equal(up.listenerCount('finish'), 0);
-      assert.equal(up.listenerCount('wroteToChunkBuffer'), 0);
-      assert.equal(up.listenerCount('prefinish'), 1);
+      assert.equal(up.listenerCount('upstreamFinished'), 0);
 
       await new Promise(resolve => {
         up.on('newListener', (event: string) => {
-          if (event === 'prefinish') {
-            process.nextTick(() => up.emit('prefinish'));
+          if (event === 'upstreamFinished') {
+            process.nextTick(() => up.emit('upstreamFinished'));
           }
         });
 
         up.waitForNextChunk().then(resolve);
       });
 
-      assert.equal(up.listenerCount('finish'), 0);
       assert.equal(up.listenerCount('wroteToChunkBuffer'), 0);
-      assert.equal(up.listenerCount('prefinish'), 1);
+      assert.equal(up.listenerCount('upstreamFinished'), 0);
     });
   });
 
@@ -929,6 +850,15 @@ describe('gcs-resumable-upload', () => {
           done();
         });
       });
+
+      it('currentInvocationId.uri should remain the same on error', done => {
+        const beforeCallInvocationId = up.currentInvocationId.uri;
+        up.createURI((err: Error) => {
+          assert(err);
+          assert.equal(beforeCallInvocationId, up.currentInvocationId.uri);
+          done();
+        });
+      });
     });
 
     describe('success', () => {
@@ -962,6 +892,14 @@ describe('gcs-resumable-upload', () => {
         up.createURI((err: Error, uri: string) => {
           assert.ifError(err);
           assert.strictEqual(uri, URI);
+          done();
+        });
+      });
+
+      it('currentInvocationId.uri should be different after success', done => {
+        const beforeCallInvocationId = up.currentInvocationId.uri;
+        up.createURI(() => {
+          assert.notEqual(beforeCallInvocationId, up.currentInvocationId.uri);
           done();
         });
       });
@@ -1046,7 +984,7 @@ describe('gcs-resumable-upload', () => {
 
       await up.startUploading();
 
-      // Should fast-forward (9-1) bytes
+      // Should fast-forward (up.offset - up.numBytesWritten) bytes
       assert.equal(up.offset, 9);
       assert.equal(up.numBytesWritten, 9);
       assert.equal(up.upstreamChunkBuffer.byteLength, 16);
@@ -1131,9 +1069,14 @@ describe('gcs-resumable-upload', () => {
 
           await up.startUploading();
 
-          assert.deepEqual(reqOpts.headers, {
-            'Content-Range': `bytes ${OFFSET}-*/${CONTENT_LENGTH}`,
-          });
+          assert(reqOpts.headers);
+          assert.equal(
+            reqOpts.headers['Content-Range'],
+            `bytes ${OFFSET}-*/${CONTENT_LENGTH}`
+          );
+          assert.ok(
+            X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
+          );
 
           const data = await getAllDataFromRequest();
 
@@ -1145,9 +1088,11 @@ describe('gcs-resumable-upload', () => {
 
           await up.startUploading();
 
-          assert.deepEqual(reqOpts.headers, {
-            'Content-Range': 'bytes 0-*/*',
-          });
+          assert(reqOpts.headers);
+          assert.equal(reqOpts.headers['Content-Range'], 'bytes 0-*/*');
+          assert.ok(
+            X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
+          );
 
           const data = await getAllDataFromRequest();
 
@@ -1172,10 +1117,15 @@ describe('gcs-resumable-upload', () => {
           await up.startUploading();
 
           const endByte = OFFSET + CHUNK_SIZE - 1;
-          assert.deepEqual(reqOpts.headers, {
-            'Content-Length': CHUNK_SIZE,
-            'Content-Range': `bytes ${OFFSET}-${endByte}/${CONTENT_LENGTH}`,
-          });
+          assert(reqOpts.headers);
+          assert.equal(reqOpts.headers['Content-Length'], CHUNK_SIZE);
+          assert.equal(
+            reqOpts.headers['Content-Range'],
+            `bytes ${OFFSET}-${endByte}/${CONTENT_LENGTH}`
+          );
+          assert.ok(
+            X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
+          );
 
           const data = await getAllDataFromRequest();
 
@@ -1191,10 +1141,15 @@ describe('gcs-resumable-upload', () => {
           await up.startUploading();
 
           const endByte = OFFSET + CHUNK_SIZE - 1;
-          assert.deepEqual(reqOpts.headers, {
-            'Content-Length': CHUNK_SIZE,
-            'Content-Range': `bytes ${OFFSET}-${endByte}/*`,
-          });
+          assert(reqOpts.headers);
+          assert.equal(reqOpts.headers['Content-Length'], CHUNK_SIZE);
+          assert.equal(
+            reqOpts.headers['Content-Range'],
+            `bytes ${OFFSET}-${endByte}/*`
+          );
+          assert.ok(
+            X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
+          );
 
           const data = await getAllDataFromRequest();
 
@@ -1213,10 +1168,18 @@ describe('gcs-resumable-upload', () => {
           await up.startUploading();
 
           const endByte = CONTENT_LENGTH - NUM_BYTES_WRITTEN + OFFSET - 1;
-          assert.deepEqual(reqOpts.headers, {
-            'Content-Length': CONTENT_LENGTH - NUM_BYTES_WRITTEN,
-            'Content-Range': `bytes ${OFFSET}-${endByte}/${CONTENT_LENGTH}`,
-          });
+          assert(reqOpts.headers);
+          assert.equal(
+            reqOpts.headers['Content-Length'],
+            CONTENT_LENGTH - NUM_BYTES_WRITTEN
+          );
+          assert.equal(
+            reqOpts.headers['Content-Range'],
+            `bytes ${OFFSET}-${endByte}/${CONTENT_LENGTH}`
+          );
+          assert.ok(
+            X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
+          );
           const data = await getAllDataFromRequest();
 
           assert.equal(data.byteLength, CONTENT_LENGTH - NUM_BYTES_WRITTEN);
@@ -1270,19 +1233,6 @@ describe('gcs-resumable-upload', () => {
         assert.strictEqual(err.message, 'Upload failed');
         done();
       };
-      up.responseHandler(RESP);
-    });
-
-    it('should delete the config', done => {
-      const RESP = {data: '', status: 200};
-      up.deleteConfig = done;
-      up.responseHandler(RESP);
-    });
-
-    it('should emit `prepareFinish` when request succeeds', done => {
-      const RESP = {data: '', status: 200};
-      up.once('prepareFinish', done);
-
       up.responseHandler(RESP);
     });
 
@@ -1353,91 +1303,47 @@ describe('gcs-resumable-upload', () => {
 
       up.responseHandler(RESP);
     });
+
+    it('currentInvocationId.chunk should be different after success', done => {
+      const beforeCallInvocationId = up.currentInvocationId.chunk;
+      const RESP = {data: '', status: 200};
+      up.on('uploadFinished', () => {
+        assert.notEqual(beforeCallInvocationId, up.currentInvocationId.chunk);
+        done();
+      });
+      up.responseHandler(RESP);
+    });
+
+    it('currentInvocationId.chunk should be the same after error', done => {
+      const beforeCallInvocationId = up.currentInvocationId.chunk;
+      const RESP = {data: {error: new Error('Error.')}};
+      up.destroy = () => {
+        assert.equal(beforeCallInvocationId, up.currentInvocationId.chunk);
+        done();
+      };
+      up.responseHandler(RESP);
+    });
   });
 
-  describe('#ensureUploadingSameObject', () => {
-    let chunk = Buffer.alloc(0);
+  it('currentInvocationId.offset should be different after success', async () => {
+    const beforeCallInvocationId = up.currentInvocationId.offset;
+    up.makeRequest = () => {
+      return {};
+    };
+    await up.getAndSetOffset();
+    assert.notEqual(beforeCallInvocationId, up.currentInvocationId.offset);
+  });
 
-    beforeEach(() => {
-      chunk = crypto.randomBytes(512);
-      up.upstreamChunkBuffer = chunk;
-    });
-
-    it('should not alter the chunk buffer', async () => {
-      await up.ensureUploadingSameObject();
-
-      assert.equal(Buffer.compare(up.upstreamChunkBuffer, chunk), 0);
-    });
-
-    describe('first write', () => {
-      it('should get the first chunk', async () => {
-        let calledGet = false;
-        up.get = (prop: string) => {
-          assert.strictEqual(prop, 'firstChunk');
-          calledGet = true;
-        };
-
-        const result = await up.ensureUploadingSameObject();
-
-        assert(result);
-        assert(calledGet);
-      });
-
-      describe('new upload', () => {
-        it('should save the uri and first chunk (16 bytes) if its not cached', done => {
-          const URI = 'uri';
-          up.uri = URI;
-          up.get = () => {};
-          up.set = (props: {uri?: string; firstChunk: Buffer}) => {
-            const firstChunk = chunk.slice(0, 16);
-            assert.deepStrictEqual(props.uri, URI);
-            assert.strictEqual(Buffer.compare(props.firstChunk, firstChunk), 0);
-            done();
-          };
-          up.ensureUploadingSameObject();
-        });
-      });
-
-      describe('continued upload', () => {
-        beforeEach(() => {
-          up.restart = () => {};
-        });
-
-        it('should not `#restart` and return `true` if cache is the same', async () => {
-          up.upstreamChunkBuffer = Buffer.alloc(512, 'a');
-          up.get = (param: string) => {
-            return param === 'firstChunk' ? Buffer.alloc(16, 'a') : undefined;
-          };
-
-          let calledRestart = false;
-          up.restart = () => {
-            calledRestart = true;
-          };
-
-          const result = await up.ensureUploadingSameObject();
-
-          assert(result);
-          assert.equal(calledRestart, false);
-        });
-
-        it('should `#restart` and return `false` if different', async () => {
-          up.upstreamChunkBuffer = Buffer.alloc(512, 'a');
-          up.get = (param: string) => {
-            return param === 'firstChunk' ? Buffer.alloc(16, 'b') : undefined;
-          };
-
-          let calledRestart = false;
-          up.restart = () => {
-            calledRestart = true;
-          };
-
-          const result = await up.ensureUploadingSameObject();
-
-          assert(calledRestart);
-          assert.equal(result, false);
-        });
-      });
-    });
+  it('currentInvocationId.offset should be the same on error', async done => {
+    const beforeCallInvocationId = up.currentInvocationId.offset;
+    up.destroy = () => {
+      assert.equal(beforeCallInvocationId, up.currentInvocationId.offset);
+      done();
+    };
+    up.makeRequest = () => {
+      throw new Error() as GaxiosError;
+    };
+    await up.getAndSetOffset();
   });
 
   describe('#getAndSetOffset', () => {
@@ -1450,58 +1356,16 @@ describe('gcs-resumable-upload', () => {
       up.makeRequest = async (reqOpts: GaxiosOptions) => {
         assert.strictEqual(reqOpts.method, 'PUT');
         assert.strictEqual(reqOpts.url, URI);
-        assert.deepStrictEqual(reqOpts.headers, {
-          'Content-Length': 0,
-          'Content-Range': 'bytes */*',
-        });
+        assert(reqOpts.headers);
+        assert.equal(reqOpts.headers['Content-Length'], 0);
+        assert.equal(reqOpts.headers['Content-Range'], 'bytes */*');
+        assert.ok(
+          X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
+        );
         done();
         return {};
       };
       up.getAndSetOffset();
-    });
-
-    describe('restart on 404', () => {
-      const RESP = {status: 404} as GaxiosResponse;
-      const ERROR = new Error(':(') as GaxiosError;
-      ERROR.response = RESP;
-
-      beforeEach(() => {
-        up.makeRequest = async () => {
-          throw ERROR;
-        };
-      });
-
-      it('should restart the upload', done => {
-        up.restart = done;
-        up.getAndSetOffset();
-      });
-
-      it('should not restart if URI provided manually', done => {
-        up.uriProvidedManually = true;
-        up.restart = done; // will cause test to fail
-        up.on('error', (err: Error) => {
-          assert.strictEqual(err, ERROR);
-          done();
-        });
-        up.getAndSetOffset();
-      });
-    });
-
-    describe('restart on 410', () => {
-      const ERROR = new Error(':(') as GaxiosError;
-      const RESP = {status: 410} as GaxiosResponse;
-      ERROR.response = RESP;
-
-      beforeEach(() => {
-        up.makeRequest = async () => {
-          throw ERROR;
-        };
-      });
-
-      it('should restart the upload', done => {
-        up.restart = done;
-        up.getAndSetOffset();
-      });
     });
 
     it('should set the offset from the range', async () => {
@@ -1833,11 +1697,6 @@ describe('gcs-resumable-upload', () => {
       up.restart();
     });
 
-    it('should delete the config', done => {
-      up.deleteConfig = done;
-      up.restart();
-    });
-
     describe('starting a new upload', () => {
       it('should create a new URI', done => {
         up.createURI = () => {
@@ -1862,21 +1721,6 @@ describe('gcs-resumable-upload', () => {
         up.restart();
       });
 
-      it('should save the uri to config when restarting', done => {
-        const uri = 'http://newly-created-uri';
-
-        up.createURI = (callback: Function) => {
-          callback(null, uri);
-        };
-
-        up.set = (props: {}) => {
-          assert.deepStrictEqual(props, {uri});
-          done();
-        };
-
-        up.restart();
-      });
-
       it('should start uploading', done => {
         up.createURI = (callback: Function) => {
           up.startUploading = done;
@@ -1884,51 +1728,6 @@ describe('gcs-resumable-upload', () => {
         };
         up.restart();
       });
-    });
-  });
-
-  describe('#get', () => {
-    it('should return the value from the config store', () => {
-      const prop = 'property';
-      const value = 'abc';
-      up.configStore = {
-        get(name: string) {
-          assert.strictEqual(name, up.cacheKey);
-          const obj: {[i: string]: string} = {};
-          obj[prop] = value;
-          return obj;
-        },
-      };
-      assert.strictEqual(up.get(prop), value);
-    });
-  });
-
-  describe('#set', () => {
-    it('should set the value to the config store', done => {
-      const props = {setting: true};
-      up.configStore = {
-        set(name: string, prps: {}) {
-          assert.strictEqual(name, up.cacheKey);
-          assert.strictEqual(prps, props);
-          done();
-        },
-      };
-      up.set(props);
-    });
-  });
-
-  describe('#deleteConfig', () => {
-    it('should delete the entry from the config store', done => {
-      const props = {setting: true};
-
-      up.configStore = {
-        delete(name: string) {
-          assert.strictEqual(name, up.cacheKey);
-          done();
-        },
-      };
-
-      up.deleteConfig(props);
     });
   });
 
@@ -2377,9 +2176,16 @@ describe('gcs-resumable-upload', () => {
           assert(request.chunkWritesInRequest > 1);
 
           assert.equal(request.dataReceived, CONTENT_LENGTH);
-          assert.deepStrictEqual(request.opts.headers, {
-            'Content-Range': `bytes 0-*/${CONTENT_LENGTH}`,
-          });
+          assert(request.opts.headers);
+          assert.equal(
+            request.opts.headers['Content-Range'],
+            `bytes 0-*/${CONTENT_LENGTH}`
+          );
+          assert.ok(
+            X_GOOG_API_HEADER_REGEX.test(
+              request.opts.headers['x-goog-api-client']
+            )
+          );
 
           done();
         });
@@ -2536,21 +2342,134 @@ describe('gcs-resumable-upload', () => {
               const endByte = offset + LAST_REQUEST_SIZE - 1;
 
               assert.equal(request.dataReceived, LAST_REQUEST_SIZE);
-              assert.deepStrictEqual(request.opts.headers, {
-                'Content-Length': LAST_REQUEST_SIZE,
-                'Content-Range': `bytes ${offset}-${endByte}/${CONTENT_LENGTH}`,
-              });
+              assert(request.opts.headers);
+              assert.equal(
+                request.opts.headers['Content-Length'],
+                LAST_REQUEST_SIZE
+              );
+              assert.equal(
+                request.opts.headers['Content-Range'],
+                `bytes ${offset}-${endByte}/${CONTENT_LENGTH}`
+              );
+              assert.ok(
+                X_GOOG_API_HEADER_REGEX.test(
+                  request.opts.headers['x-goog-api-client']
+                )
+              );
             } else {
               // The preceding chunks
               const endByte = offset + CHUNK_SIZE - 1;
 
               assert.equal(request.dataReceived, CHUNK_SIZE);
-              assert.deepStrictEqual(request.opts.headers, {
-                'Content-Length': CHUNK_SIZE,
-                'Content-Range': `bytes ${offset}-${endByte}/${CONTENT_LENGTH}`,
-              });
+              assert(request.opts.headers);
+              assert.equal(request.opts.headers['Content-Length'], CHUNK_SIZE);
+              assert.equal(
+                request.opts.headers['Content-Range'],
+                `bytes ${offset}-${endByte}/${CONTENT_LENGTH}`
+              );
+              assert.ok(
+                X_GOOG_API_HEADER_REGEX.test(
+                  request.opts.headers['x-goog-api-client']
+                )
+              );
             }
           }
+
+          done();
+        });
+
+        // init the request
+        upstreamBuffer.pipe(up);
+      });
+    });
+
+    describe('empty object', () => {
+      let uri = '';
+
+      beforeEach(() => {
+        uri = 'uri';
+
+        up.contentLength = 0;
+        up.createURI = (
+          callback: (error: Error | null, uri: string) => void
+        ) => {
+          up.uri = uri;
+          up.offset = 0;
+          callback(null, uri);
+        };
+      });
+
+      it('should support uploading empty objects', done => {
+        const CONTENT_LENGTH = 0;
+        const EXPECTED_NUM_REQUESTS = 1;
+
+        const upstreamBuffer = new Readable({
+          read() {
+            this.push(null);
+          },
+        });
+
+        const requests: {
+          dataReceived: number;
+          opts: GaxiosOptions;
+          chunkWritesInRequest: number;
+        }[] = [];
+        let overallDataReceived = 0;
+
+        up.makeRequestStream = async (opts: GaxiosOptions) => {
+          let dataReceived = 0;
+          let chunkWritesInRequest = 0;
+
+          const res = await new Promise(resolve => {
+            opts.body.on('data', (data: Buffer) => {
+              dataReceived += data.byteLength;
+              overallDataReceived += data.byteLength;
+              chunkWritesInRequest++;
+            });
+
+            opts.body.on('end', () => {
+              requests.push({dataReceived, opts, chunkWritesInRequest});
+
+              resolve({
+                status: 200,
+                data: {},
+              });
+
+              resolve(null);
+            });
+          });
+
+          return res;
+        };
+
+        up.on('error', done);
+
+        up.on('finish', () => {
+          // Ensure the correct number of requests and data look correct
+          assert.equal(requests.length, EXPECTED_NUM_REQUESTS);
+          assert.equal(overallDataReceived, CONTENT_LENGTH);
+
+          // Validate the single request
+          const request = requests[0];
+
+          assert.strictEqual(request.opts.method, 'PUT');
+          assert.strictEqual(request.opts.url, uri);
+
+          // We should be writing multiple chunks down the wire
+          assert(request.chunkWritesInRequest === 0);
+
+          assert.equal(request.dataReceived, CONTENT_LENGTH);
+          assert(request.opts.headers);
+
+          assert.equal(
+            request.opts.headers['Content-Range'],
+            `bytes 0-*/${CONTENT_LENGTH}`
+          );
+          assert.ok(
+            X_GOOG_API_HEADER_REGEX.test(
+              request.opts.headers['x-goog-api-client']
+            )
+          );
 
           done();
         });

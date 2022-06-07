@@ -27,13 +27,14 @@ import * as r from 'teeny-request';
 import * as retryRequest from 'retry-request';
 import {Duplex, DuplexOptions, Readable, Transform, Writable} from 'stream';
 import {teenyRequest} from 'teeny-request';
-
 import {Interceptor} from './service-object';
+import * as uuid from 'uuid';
+const packageJson = require('../../../package.json');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');
 
-const requestDefaults = {
+const requestDefaults: r.CoreOptions = {
   timeout: 60000,
   gzip: true,
   forever: true,
@@ -522,6 +523,7 @@ export class Util {
           return;
         }
 
+        requestDefaults.headers = util._getDefaultHeaders();
         const request = teenyRequest.defaults(requestDefaults);
         request(authenticatedReqOpts!, (err, resp, body) => {
           util.handleResp(err, resp, body, (err, data) => {
@@ -773,30 +775,20 @@ export class Util {
     callback: BodyResponseCallback
   ): void | Abortable {
     let autoRetryValue = AUTO_RETRY_DEFAULT;
-    if (
-      config.autoRetry !== undefined &&
-      config.retryOptions?.autoRetry !== undefined
-    ) {
-      throw new ApiError(
-        'autoRetry is deprecated. Use retryOptions.autoRetry instead.'
-      );
-    } else if (config.autoRetry !== undefined) {
+    if (config.autoRetry !== undefined) {
       autoRetryValue = config.autoRetry;
     } else if (config.retryOptions?.autoRetry !== undefined) {
       autoRetryValue = config.retryOptions.autoRetry;
     }
 
     let maxRetryValue = MAX_RETRY_DEFAULT;
-    if (config.maxRetries && config.retryOptions?.maxRetries) {
-      throw new ApiError(
-        'maxRetries is deprecated. Use retryOptions.maxRetries instead.'
-      );
-    } else if (config.maxRetries) {
+    if (config.maxRetries) {
       maxRetryValue = config.maxRetries;
     } else if (config.retryOptions?.maxRetries) {
       maxRetryValue = config.retryOptions.maxRetries;
     }
 
+    requestDefaults.headers = this._getDefaultHeaders();
     const options = {
       request: teenyRequest.defaults(requestDefaults),
       retries: autoRetryValue !== false ? maxRetryValue : 0,
@@ -944,6 +936,15 @@ export class Util {
     return typeof optionsOrCallback === 'function'
       ? [{} as T, optionsOrCallback as C]
       : [optionsOrCallback as T, cb as C];
+  }
+
+  _getDefaultHeaders() {
+    return {
+      'User-Agent': util.getUserAgentFromPackageJson(packageJson),
+      'x-goog-api-client': `gl-node/${process.versions.node} gccl/${
+        packageJson.version
+      } gccl-invocation-id/${uuid.v4()}`,
+    };
   }
 }
 
