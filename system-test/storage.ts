@@ -1430,7 +1430,7 @@ describe('storage', () => {
           (rule: LifecycleRule) =>
             typeof rule.action === 'object' &&
             rule.action.type === 'Delete' &&
-            (rule.condition.matchesSuffix as string[]).length === 2
+            Array.isArray(rule.condition.matchesPrefix)
         )
       );
     });
