@@ -1522,9 +1522,8 @@ describe('storage', () => {
         condition: {
           matchesPrefix: [TESTS_PREFIX],
           matchesSuffix: [TESTS_PREFIX]
-        },
-        {append: true}
-      );
+        }
+      });
 
       assert(
         bucket.metadata.lifecycle.rule.some(
