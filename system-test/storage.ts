@@ -1524,10 +1524,8 @@ describe('storage', () => {
           matchesSuffix: [TESTS_PREFIX],
         },
       });
-      
-      assert(
-        bucket.metadata.lifecycle.rule.length === 2
-      );
+
+      assert(bucket.metadata.lifecycle.rule.length === 2);
     });
 
     it('should remove all existing rules', done => {
