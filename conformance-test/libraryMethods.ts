@@ -16,11 +16,16 @@ import {Bucket, File, Notification, Storage, HmacKey} from '../src';
 import * as path from 'path';
 import {ApiError} from '../src/nodejs-common';
 
+
+const METAGENERATION_PRECONDITION = {
+  ifMetagenerationMatch: 2,
+}
+
 /////////////////////////////////////////////////
 //////////////////// BUCKET /////////////////////
 /////////////////////////////////////////////////
 
-export async function addLifecycleRule(bucket: Bucket) {
+export async function addLifecycleRuleInstancePrecondition(bucket: Bucket) {
   await bucket.addLifecycleRule({
     action: 'delete',
     condition: {
@@ -29,7 +34,43 @@ export async function addLifecycleRule(bucket: Bucket) {
   });
 }
 
-export async function combine(bucket: Bucket) {
+export async function addLifecycleRule(bucket: Bucket) { //TODO
+  await bucket.addLifecycleRule({
+    action: 'delete',
+    condition: {
+      age: 365 * 3, // Specified in days.
+    },
+  });
+}
+
+export async function combineInstancePrecondition(bucket: Bucket) {
+  bucket = new Bucket(bucket.storage, bucket.name, {
+    preconditionOpts: {
+      ifMetagenerationMatch: 1,
+    },
+  });
+  const file1 = bucket.file('file1.txt');
+  const file2 = bucket.file('file2.txt');
+  await file1.save('file1 contents');
+  await file2.save('file2 contents');
+  const f1WithPrecondition = new File(file1.bucket, file1.name, {
+    preconditionOpts: {
+      ifGenerationMatch: file1.metadata.generation,
+    },
+  });
+  const f2WithPrecondition = new File(file2.bucket, file2.name, {
+    preconditionOpts: {
+      ifGenerationMatch: file2.metadata.generation,
+    },
+  });
+  const sources = [f1WithPrecondition, f2WithPrecondition];
+  const allFiles = bucket.file('all-files.txt');
+  // If we are using a precondition we must make sure the file exists and the metageneration matches that provided as a query parameter
+  await allFiles.save('allfiles contents');
+  await bucket.combine(sources, allFiles);
+}
+
+export async function combine(bucket: Bucket) { //TODO
   bucket = new Bucket(bucket.storage, bucket.name, {
     preconditionOpts: {
       ifMetagenerationMatch: 1,
@@ -76,27 +117,50 @@ export async function deleteBucket(bucket: Bucket) {
   await bucket.delete();
 }
 
-export async function deleteFiles(bucket: Bucket) {
+export async function deleteFilesInstancePrecondition(bucket: Bucket) {
   await bucket.deleteFiles();
 }
 
-export async function deleteLabels(bucket: Bucket) {
+export async function deleteFiles(bucket: Bucket) { //TODO
+  await bucket.deleteFiles();
+}
+
+export async function deleteLabelsInstancePrecondition(bucket: Bucket) {
   await bucket.deleteLabels();
 }
 
-export async function disableRequesterPays(bucket: Bucket) {
+export async function deleteLabels(bucket: Bucket) { //TODO -- no options to modify
+  await bucket.deleteLabels();
+}
+
+export async function disableRequesterPaysInstancePrecondition(bucket: Bucket) {
   await bucket.disableRequesterPays();
 }
 
-export async function enableLogging(bucket: Bucket) {
+export async function disableRequesterPays(bucket: Bucket) { //TODO -- no options
+  await bucket.disableRequesterPays();
+}
+
+export async function enableLoggingInstancePrecondition(bucket: Bucket) {
   const config = {
     prefix: 'log',
   };
   await bucket.enableLogging(config);
 }
 
-export async function enableRequesterPays(bucket: Bucket) {
+export async function enableLogging(bucket: Bucket) { //TODO
+  const config = {
+    prefix: 'log',
+  };
+  await bucket.enableLogging(config);
+}
+
+export async function enableRequesterPaysInstancePrecondition(bucket: Bucket) {
   await bucket.enableRequesterPays();
+}
+
+export async function enableRequesterPays(bucket: Bucket) {
+  await bucket.enableRequesterPays(); //TODO
 }
 
 export async function bucketExists(bucket: Bucket) {
@@ -134,7 +198,11 @@ export async function lock(bucket: Bucket) {
   await bucket.lock(metageneration);
 }
 
-export async function bucketMakePrivate(bucket: Bucket) {
+export async function bucketMakePrivateInstancePrecondition(bucket: Bucket) {
+  await bucket.makePrivate();
+}
+
+export async function bucketMakePrivate(bucket: Bucket) { //TODO
   await bucket.makePrivate();
 }
 
@@ -142,16 +210,25 @@ export async function bucketMakePublic(bucket: Bucket) {
   await bucket.makePublic();
 }
 
-export async function removeRetentionPeriod(bucket: Bucket) {
+export async function removeRetentionPeriodInstancePrecondition(bucket: Bucket) {
   await bucket.removeRetentionPeriod();
 }
 
-export async function setCorsConfiguration(bucket: Bucket) {
+export async function removeRetentionPeriod(bucket: Bucket) { //TODO
+  await bucket.removeRetentionPeriod();
+}
+
+export async function setCorsConfigurationInstancePrecondition(bucket: Bucket) {
   const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
   await bucket.setCorsConfiguration(corsConfiguration);
 }
 
-export async function setLabels(bucket: Bucket) {
+export async function setCorsConfiguration(bucket: Bucket) { //TODO
+  const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
+  await bucket.setCorsConfiguration(corsConfiguration);
+}
+
+export async function setLabelsInstancePrecondition(bucket: Bucket) {
   const labels = {
     labelone: 'labelonevalue',
     labeltwo: 'labeltwovalue',
@@ -159,7 +236,15 @@ export async function setLabels(bucket: Bucket) {
   await bucket.setLabels(labels);
 }
 
-export async function bucketSetMetadata(bucket: Bucket) {
+export async function setLabels(bucket: Bucket) { //TODO
+  const labels = {
+    labelone: 'labelonevalue',
+    labeltwo: 'labeltwovalue',
+  };
+  await bucket.setLabels(labels);
+}
+
+export async function bucketSetMetadataInstancePrecondition(bucket: Bucket) {
   const metadata = {
     website: {
       mainPageSuffix: 'http://example.com',
@@ -169,16 +254,35 @@ export async function bucketSetMetadata(bucket: Bucket) {
   await bucket.setMetadata(metadata);
 }
 
-export async function setRetentionPeriod(bucket: Bucket) {
+export async function bucketSetMetadata(bucket: Bucket) { //TODO
+  const metadata = {
+    website: {
+      mainPageSuffix: 'http://example.com',
+      notFoundPage: 'http://example.com/404.html',
+    },
+  };
+  await bucket.setMetadata(metadata);
+}
+
+export async function setRetentionPeriodInstancePrecondition(bucket: Bucket) {
   const DURATION_SECONDS = 15780000; // 6 months.
   await bucket.setRetentionPeriod(DURATION_SECONDS);
 }
 
-export async function bucketSetStorageClass(bucket: Bucket) {
+export async function setRetentionPeriod(bucket: Bucket) { //TODO
+  const DURATION_SECONDS = 15780000; // 6 months.
+  await bucket.setRetentionPeriod(DURATION_SECONDS);
+}
+
+export async function bucketSetStorageClassInstancePrecondition(bucket: Bucket) {
   await bucket.setStorageClass('nearline');
 }
 
-export async function bucketUploadResumable(bucket: Bucket) {
+export async function bucketSetStorageClass(bucket: Bucket) { //TODO
+  await bucket.setStorageClass('nearline');
+}
+
+export async function bucketUploadResumableInstancePrecondition(bucket: Bucket) {
   if (bucket.instancePreconditionOpts) {
     bucket.instancePreconditionOpts.ifGenerationMatch = 0;
   }
@@ -191,7 +295,34 @@ export async function bucketUploadResumable(bucket: Bucket) {
   );
 }
 
-export async function bucketUploadMultipart(bucket: Bucket) {
+export async function bucketUploadResumable(bucket: Bucket) { //TODO
+  if (bucket.instancePreconditionOpts) {
+    bucket.instancePreconditionOpts.ifGenerationMatch = 0;
+  }
+  await bucket.upload(
+    path.join(
+      __dirname,
+      '../../conformance-test/test-data/retryStrategyTestData.json'
+    ),
+    {resumable: true}
+  );
+}
+
+export async function bucketUploadMultipartInstancePrecondition(bucket: Bucket) {
+  if (bucket.instancePreconditionOpts) {
+    delete bucket.instancePreconditionOpts.ifMetagenerationMatch;
+    bucket.instancePreconditionOpts.ifGenerationMatch = 0;
+  }
+  await bucket.upload(
+    path.join(
+      __dirname,
+      '../../conformance-test/test-data/retryStrategyTestData.json'
+    ),
+    {resumable: false}
+  );
+}
+
+export async function bucketUploadMultipart(bucket: Bucket) { //TODO
   if (bucket.instancePreconditionOpts) {
     delete bucket.instancePreconditionOpts.ifMetagenerationMatch;
     bucket.instancePreconditionOpts.ifGenerationMatch = 0;
@@ -209,7 +340,11 @@ export async function bucketUploadMultipart(bucket: Bucket) {
 //////////////////// FILE /////////////////////
 /////////////////////////////////////////////////
 
-export async function copy(_bucket: Bucket, file: File) {
+export async function copyInstancePrecondition(_bucket: Bucket, file: File) {
+  await file.copy('a-different-file.png');
+}
+
+export async function copy(_bucket: Bucket, file: File) { //TODO
   await file.copy('a-different-file.png');
 }
 
@@ -223,11 +358,19 @@ export async function createReadStream(_bucket: Bucket, file: File) {
   });
 }
 
-export async function createResumableUpload(_bucket: Bucket, file: File) {
+export async function createResumableUploadInstancePrecondition(_bucket: Bucket, file: File) {
   await file.createResumableUpload();
 }
 
-export async function fileDelete(_bucket: Bucket, file: File) {
+export async function createResumableUpload(_bucket: Bucket, file: File) { //TODO
+  await file.createResumableUpload();
+}
+
+export async function fileDeleteInstancePrecondition(_bucket: Bucket, file: File) {
+  await file.delete();
+}
+
+export async function fileDelete(_bucket: Bucket, file: File) { //TODO
   await file.delete();
 }
 
@@ -255,7 +398,11 @@ export async function isPublic(_bucket: Bucket, file: File) {
   await file.isPublic();
 }
 
-export async function fileMakePrivate(_bucket: Bucket, file: File) {
+export async function fileMakePrivateInstancePrecondition(_bucket: Bucket, file: File) {
+  await file.makePrivate();
+}
+
+export async function fileMakePrivate(_bucket: Bucket, file: File) { //TODO
   await file.makePrivate();
 }
 
@@ -263,15 +410,23 @@ export async function fileMakePublic(_bucket: Bucket, file: File) {
   await file.makePublic();
 }
 
-export async function move(_bucket: Bucket, file: File) {
+export async function moveInstancePrecondition(_bucket: Bucket, file: File) {
   await file.move('new-file');
 }
 
-export async function rename(_bucket: Bucket, file: File) {
+export async function move(_bucket: Bucket, file: File) { //TODO
+  await file.move('new-file');
+}
+
+export async function renameInstancePrecondition(_bucket: Bucket, file: File) {
   await file.rename('new-name');
 }
 
-export async function rotateEncryptionKey(_bucket: Bucket, file: File) {
+export async function rename(_bucket: Bucket, file: File) { //TODO
+  await file.rename('new-name');
+}
+
+export async function rotateEncryptionKeyInstancePrecondition(_bucket: Bucket, file: File) {
   const crypto = require('crypto');
   const buffer = crypto.randomBytes(32);
   const newKey = buffer.toString('base64');
@@ -280,15 +435,32 @@ export async function rotateEncryptionKey(_bucket: Bucket, file: File) {
   });
 }
 
-export async function saveResumable(_bucket: Bucket, file: File) {
+export async function rotateEncryptionKey(_bucket: Bucket, file: File) { //TODO
+  const crypto = require('crypto');
+  const buffer = crypto.randomBytes(32);
+  const newKey = buffer.toString('base64');
+  await file.rotateEncryptionKey({
+    encryptionKey: Buffer.from(newKey, 'base64'),
+  });
+}
+
+export async function saveResumableInstancePrecondition(_bucket: Bucket, file: File) {
   await file.save('testdata', {resumable: true});
 }
 
-export async function saveMultipart(_bucket: Bucket, file: File) {
+export async function saveResumable(_bucket: Bucket, file: File) { //TODO
+  await file.save('testdata', {resumable: true});
+}
+
+export async function saveMultipartInstancePrecondition(_bucket: Bucket, file: File) {
   await file.save('testdata', {resumable: false});
 }
 
-export async function setMetadata(_bucket: Bucket, file: File) {
+export async function saveMultipart(_bucket: Bucket, file: File) { //TODO
+  await file.save('testdata', {resumable: false});
+}
+
+export async function setMetadataInstancePrecondition(_bucket: Bucket, file: File) {
   const metadata = {
     contentType: 'application/x-font-ttf',
     metadata: {
@@ -299,7 +471,25 @@ export async function setMetadata(_bucket: Bucket, file: File) {
   await file.setMetadata(metadata);
 }
 
-export async function setStorageClass(_bucket: Bucket, file: File) {
+export async function setMetadata(_bucket: Bucket, file: File) { //TODO
+  const metadata = {
+    contentType: 'application/x-font-ttf',
+    metadata: {
+      my: 'custom',
+      properties: 'go here',
+    },
+  };
+  await file.setMetadata(metadata);
+}
+
+export async function setStorageClassInstancePrecondition(_bucket: Bucket, file: File) {
+  const result = await file.setStorageClass('nearline');
+  if (!result) {
+    throw Error();
+  }
+}
+
+export async function setStorageClass(_bucket: Bucket, file: File) { //TODO
   const result = await file.setStorageClass('nearline');
   if (!result) {
     throw Error();
@@ -344,7 +534,20 @@ export async function getMetadataHMAC(
   await hmacKey.getMetadata();
 }
 
-export async function setMetadataHMAC(
+export async function setMetadataHMACInstancePrecondition(
+  _bucket: Bucket,
+  file: File,
+  _notification: Notification,
+  _storage: Storage,
+  hmacKey: HmacKey
+) {
+  const metadata = {
+    state: 'INACTIVE',
+  };
+  await hmacKey.setMetadata(metadata);
+}
+
+export async function setMetadataHMAC( //TODO
   _bucket: Bucket,
   file: File,
   _notification: Notification,
@@ -365,7 +568,19 @@ export async function iamGetPolicy(bucket: Bucket) {
   await bucket.iam.getPolicy({requestedPolicyVersion: 1});
 }
 
-export async function iamSetPolicy(bucket: Bucket) {
+export async function iamSetPolicyInstancePrecondition(bucket: Bucket) {
+  const testPolicy = {
+    bindings: [
+      {
+        role: 'roles/storage.admin',
+        members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com'],
+      },
+    ],
+  };
+  await bucket.iam.setPolicy(testPolicy);
+}
+
+export async function iamSetPolicy(bucket: Bucket) { //TODO
   const testPolicy = {
     bindings: [
       {

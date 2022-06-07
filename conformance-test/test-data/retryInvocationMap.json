@@ -3,6 +3,18 @@
         "deleteBucket"
     ],
     "storage.buckets.patch": [
+        "addLifecycleRuleInstancePrecondition",
+        "bucketMakePrivateInstancePrecondition",
+        "deleteLabelsInstancePrecondition",
+        "disableRequesterPaysInstancePrecondition",
+        "enableRequesterPaysInstancePrecondition",
+        "enableLoggingInstancePrecondition",
+        "removeRetentionPeriodInstancePrecondition",
+        "setCorsConfigurationInstancePrecondition",
+        "setLabelsInstancePrecondition",
+        "setRetentionPeriodInstancePrecondition",
+        "bucketSetStorageClassInstancePrecondition",
+        "bucketSetMetadataInstancePrecondition",
         "addLifecycleRule",
         "bucketMakePrivate",
         "deleteLabels",
@@ -36,6 +48,8 @@
         "lock"
     ],
     "storage.objects.patch": [
+        "fileMakePrivateInstancePrecondition",
+        "setMetadataInstancePrecondition",
         "fileMakePrivate",
         "setMetadata"
     ],
@@ -46,6 +60,11 @@
         "fileMakePublic"
     ],
     "storage.objects.rewrite": [
+        "copyInstancePrecondition",
+        "moveInstancePrecondition",
+        "renameInstancePrecondition",
+        "rotateEncryptionKeyInstancePrecondition",
+        "setStorageClassInstancePrecondition",
         "copy",
         "move",
         "rename",
@@ -53,6 +72,11 @@
         "setStorageClass"
     ],
     "storage.objects.insert": [
+        "bucketUploadResumableInstancePrecondition",
+        "saveResumableInstancePrecondition",
+        "bucketUploadMultipartInstancePrecondition",
+        "saveMultipartInstancePrecondition",
+        "createResumableUploadInstancePrecondition",
         "bucketUploadResumable",
         "saveResumable",
         "bucketUploadMultipart",
@@ -60,6 +84,8 @@
         "createResumableUpload"
     ],
     "storage.objects.delete": [
+        "deleteFilesInstancePrecondition",
+        "fileDeleteInstancePrecondition",
         "deleteFiles",
         "fileDelete"
     ],
@@ -88,6 +114,7 @@
         "iamGetPolicy"
     ],
     "storage.buckets.setIamPolicy": [
+        "iamSetPolicyInstancePrecondition",
         "iamSetPolicy"
     ],
     "storage.buckets.testIamPermission": [
@@ -98,6 +125,7 @@
         "getBucketsStream"
     ],
     "storage.objects.compose": [
+        "combineInstancePrecondition",
         "combine"
     ],
     "storage.hmacKey.delete": [
@@ -108,6 +136,7 @@
         "getMetadataHMAC"
     ],
     "storage.hmacKey.update": [
+        "setMetadataHMACInstancePrecondition",
         "setMetadataHMAC"
     ],
     "storage.hmacKey.create": [
