@@ -1506,30 +1506,6 @@ describe('storage', () => {
       );
     });
 
-    it('should append a rule to existing rules', async () => {
-      const CUSTOM_TIME_BEFORE = '2020-01-01';
-
-      await bucket.addLifecycleRule({
-        action: 'delete',
-        condition: {
-          customTimeBefore: new Date(CUSTOM_TIME_BEFORE),
-          daysSinceCustomTime: 100,
-        },
-      });
-
-      await bucket.addLifecycleRule({
-        action: 'delete',
-        condition: {
-          matchesPrefix: [TESTS_PREFIX],
-          matchesSuffix: [TESTS_PREFIX],
-        },
-      });
-      
-      assert(
-        bucket.metadata.lifecycle.rule.length === 2
-      );
-    });
-
     it('should remove all existing rules', done => {
       bucket.setMetadata(
         {
