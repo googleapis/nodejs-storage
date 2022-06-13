@@ -105,7 +105,7 @@ export interface AddLifecycleRuleOptions {
 
 export interface LifecycleRule {
   action: {type: string; storageClass?: string} | string;
-  condition: {[key: string]: boolean | Date | number | string};
+  condition: {[key: string]: boolean | Date | number | string | string[]};
   storageClass?: string;
 }
 
@@ -1071,7 +1071,7 @@ class Bucket extends ServiceObject {
    * @typedef {object} LifecycleRule The new lifecycle rule to be added to objects
    *     in this bucket.
    * @property {string|object} action The action to be taken upon matching of
-   *     all the conditions 'delete' or 'setStorageClass'.
+   *     all the conditions 'delete', 'setStorageClass', or 'AbortIncompleteMultipartUpload'.
    *     **Note**: For configuring a raw-formatted rule object to be passed as `action`
    *               please refer to the [examples]{@link https://cloud.google.com/storage/docs/managing-lifecycles#configexamples}.
    * @property {object} condition Condition a bucket must meet before the
@@ -1094,7 +1094,7 @@ class Bucket extends ServiceObject {
    * @param {LifecycleRule} rule The new lifecycle rule to be added to objects
    *     in this bucket.
    * @param {string|object} rule.action The action to be taken upon matching of
-   *     all the conditions 'delete' or 'setStorageClass'.
+   *     all the conditions 'delete', 'setStorageClass', or 'AbortIncompleteMultipartUpload'.
    *     **Note**: For configuring a raw-formatted rule object to be passed as `action`
    *               please refer to the [examples]{@link https://cloud.google.com/storage/docs/managing-lifecycles#configexamples}.
    * @param {object} rule.condition Condition a bucket must meet before the
