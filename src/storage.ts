@@ -99,13 +99,19 @@ interface Versioning {
   enabled: boolean;
 }
 
+/**
+ * Custom placement configuration.
+ * Initially used for dual-region buckets.
+ **/
+export interface CustomPlacementConfig {
+  dataLocations?: string[];
+}
+
 export interface CreateBucketRequest {
   archive?: boolean;
   coldline?: boolean;
   cors?: Cors[];
-  customPlacementConfig?: {
-    dataLocations?: string[];
-  };
+  customPlacementConfig?: CustomPlacementConfig;
   dra?: boolean;
   location?: string;
   multiRegional?: boolean;
@@ -731,7 +737,7 @@ export class Storage extends Service {
    * @property {boolean} [archive=false] Specify the storage class as Archive.
    * @property {boolean} [coldline=false] Specify the storage class as Coldline.
    * @property {Cors[]} [cors=[]] Specify the CORS configuration to use.
-   * @property {CreateBucketRequest['customPlacementConfig']} [customPlacementConfig={}] Specify the bucket's regions for dual-region buckets.
+   * @property {CustomPlacementConfig} [customPlacementConfig={}] Specify the bucket's regions for dual-region buckets.
    *     For more information, see {@link https://cloud.google.com/storage/docs/locations| Bucket Locations}.
    * @property {boolean} [dra=false] Specify the storage class as Durable Reduced
    *     Availability.
