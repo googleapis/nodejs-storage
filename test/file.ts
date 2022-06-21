@@ -92,6 +92,7 @@ const fakePromisify = {
 
     promisified = true;
     assert.deepStrictEqual(options.exclude, [
+      'uri',
       'publicUrl',
       'request',
       'save',
@@ -468,6 +469,16 @@ describe('File', () => {
 
         assert.strictEqual(file.userProject, USER_PROJECT);
       });
+    });
+  });
+
+  describe('uri', () => {
+    it('should return the appropriate `gs://` URI', () => {
+      const file = new File(BUCKET, FILE_NAME);
+
+      assert(file.uri instanceof URL);
+      assert.equal(file.uri.host, BUCKET.name);
+      assert.equal(file.uri.pathname, `/${FILE_NAME}`);
     });
   });
 
