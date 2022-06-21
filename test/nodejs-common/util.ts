@@ -905,7 +905,7 @@ describe('common/util', () => {
       });
     });
 
-    describe('needs authentication', () => {
+    describe('authentication', () => {
       it('should pass correct args to authorizeRequest', done => {
         const fake = extend(true, authClient, {
           authorizeRequest: async (rOpts: {}) => {
