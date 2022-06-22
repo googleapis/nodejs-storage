@@ -1058,10 +1058,10 @@ class Bucket extends ServiceObject {
    * const bucket = storage.bucket('my-bucket');
    *
    * // `gs://my-bucket`
-   * const href = bucket.uri.href;
+   * const href = bucket.cloudStorageURI.href;
    * ```
    */
-  get uri(): URL {
+  get cloudStorageURI(): URL {
     const uri = new URL('gs://');
 
     uri.host = this.name;
@@ -4170,7 +4170,7 @@ paginator.extend(Bucket, 'getFiles');
  * that a callback is omitted.
  */
 promisifyAll(Bucket, {
-  exclude: ['uri', 'request', 'file', 'notification'],
+  exclude: ['cloudStorageURI', 'request', 'file', 'notification'],
 });
 
 /**

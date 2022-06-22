@@ -113,7 +113,7 @@ const fakePromisify = {
 
     promisified = true;
     assert.deepStrictEqual(options.exclude, [
-      'uri',
+      'cloudStorageURI',
       'request',
       'file',
       'notification',
@@ -444,12 +444,12 @@ describe('Bucket', () => {
     });
   });
 
-  describe('uri', () => {
+  describe('cloudStorageURI', () => {
     it('should return the appropriate `gs://` URI', () => {
       const bucket = new Bucket(STORAGE, BUCKET_NAME);
 
-      assert(bucket.uri instanceof URL);
-      assert.equal(bucket.uri.host, BUCKET_NAME);
+      assert(bucket.cloudStorageURI instanceof URL);
+      assert.equal(bucket.cloudStorageURI.host, BUCKET_NAME);
     });
   });
 

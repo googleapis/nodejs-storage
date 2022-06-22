@@ -894,11 +894,11 @@ class File extends ServiceObject<File> {
    * const file = bucket.file('image.png');
    *
    * // `gs://my-bucket/image.png`
-   * const href = file.uri.href;
+   * const href = file.cloudStorageURI.href;
    * ```
    */
-  get uri(): URL {
-    const uri = this.bucket.uri;
+  get cloudStorageURI(): URL {
+    const uri = this.bucket.cloudStorageURI;
 
     uri.pathname = this.name;
 
@@ -3877,7 +3877,7 @@ class File extends ServiceObject<File> {
  */
 promisifyAll(File, {
   exclude: [
-    'uri',
+    'cloudStorageURI',
     'publicUrl',
     'request',
     'save',
