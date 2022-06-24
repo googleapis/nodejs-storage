@@ -295,16 +295,13 @@ export async function bucketUploadResumableInstancePrecondition(bucket: Bucket) 
   );
 }
 
-export async function bucketUploadResumable(bucket: Bucket) { //TODO
-  if (bucket.instancePreconditionOpts) {
-    bucket.instancePreconditionOpts.ifGenerationMatch = 0;
-  }
+export async function bucketUploadResumable(bucket: Bucket) {
   await bucket.upload(
     path.join(
       __dirname,
       '../../conformance-test/test-data/retryStrategyTestData.json'
     ),
-    {resumable: true}
+    {preconditionOpts: {ifMetagenerationMatch: 2, ifGenerationMatch:0}}
   );
 }
 
@@ -322,17 +319,16 @@ export async function bucketUploadMultipartInstancePrecondition(bucket: Bucket) 
   );
 }
 
-export async function bucketUploadMultipart(bucket: Bucket) { //TODO
+export async function bucketUploadMultipart(bucket: Bucket) {
   if (bucket.instancePreconditionOpts) {
     delete bucket.instancePreconditionOpts.ifMetagenerationMatch;
-    bucket.instancePreconditionOpts.ifGenerationMatch = 0;
   }
   await bucket.upload(
     path.join(
       __dirname,
       '../../conformance-test/test-data/retryStrategyTestData.json'
     ),
-    {resumable: false}
+    {resumable: false, preconditionOpts: {ifGenerationMatch: 0}}
   );
 }
 
@@ -344,8 +340,8 @@ export async function copyInstancePrecondition(_bucket: Bucket, file: File) {
   await file.copy('a-different-file.png');
 }
 
-export async function copy(_bucket: Bucket, file: File) { //TODO
-  await file.copy('a-different-file.png');
+export async function copy(_bucket: Bucket, file: File) {
+  await file.copy('a-different-file.png', {preconditionOpts: {ifGenerationMatch: 0}});
 }
 
 export async function createReadStream(_bucket: Bucket, file: File) {
@@ -362,8 +358,8 @@ export async function createResumableUploadInstancePrecondition(_bucket: Bucket,
   await file.createResumableUpload();
 }
 
-export async function createResumableUpload(_bucket: Bucket, file: File) { //TODO
-  await file.createResumableUpload();
+export async function createResumableUpload(_bucket: Bucket, file: File) {
+  await file.createResumableUpload({preconditionOpts: {ifGenerationMatch: 0}});
 }
 
 export async function fileDeleteInstancePrecondition(_bucket: Bucket, file: File) {
@@ -414,16 +410,16 @@ export async function moveInstancePrecondition(_bucket: Bucket, file: File) {
   await file.move('new-file');
 }
 
-export async function move(_bucket: Bucket, file: File) { //TODO
-  await file.move('new-file');
+export async function move(_bucket: Bucket, file: File) {
+  await file.move('new-file', {preconditionOpts: {ifGenerationMatch: 0}});
 }
 
 export async function renameInstancePrecondition(_bucket: Bucket, file: File) {
   await file.rename('new-name');
 }
 
-export async function rename(_bucket: Bucket, file: File) { //TODO
-  await file.rename('new-name');
+export async function rename(_bucket: Bucket, file: File) {
+  await file.rename('new-name', {preconditionOpts: {ifGenerationMatch: 0}});
 }
 
 export async function rotateEncryptionKeyInstancePrecondition(_bucket: Bucket, file: File) {
@@ -448,16 +444,22 @@ export async function saveResumableInstancePrecondition(_bucket: Bucket, file: F
   await file.save('testdata', {resumable: true});
 }
 
-export async function saveResumable(_bucket: Bucket, file: File) { //TODO
-  await file.save('testdata', {resumable: true});
+export async function saveResumable(_bucket: Bucket, file: File) {
+  await file.save('testdata', {resumable: true, preconditionOpts: {
+    ifGenerationMatch: file.metadata.generation,
+    ifMetagenerationMatch: file.metadata.metageneration
+  }});
 }
 
 export async function saveMultipartInstancePrecondition(_bucket: Bucket, file: File) {
   await file.save('testdata', {resumable: false});
 }
 
-export async function saveMultipart(_bucket: Bucket, file: File) { //TODO
-  await file.save('testdata', {resumable: false});
+export async function saveMultipart(_bucket: Bucket, file: File) {
+  await file.save('testdata', {resumable: false, preconditionOpts: {
+    ifGenerationMatch: file.metadata.generation,
+    ifMetagenerationMatch: file.metadata.metageneration
+  }});
 }
 
 export async function setMetadataInstancePrecondition(_bucket: Bucket, file: File) {
