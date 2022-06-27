@@ -77,7 +77,10 @@ interface CreateNotificationQuery {
 interface MetadataOptions {
   predefinedAcl: string;
   userProject?: string;
-}
+  ifGenerationMatch?: number;
+  ifGenerationNotMatch?: number;
+  ifMetagenerationMatch?: number;
+  ifMetagenerationNotMatch?: number;}
 
 export type GetFilesResponse = [File[], {}, Metadata];
 export interface GetFilesCallback {
@@ -288,6 +291,7 @@ export interface MakeBucketPrivateOptions {
   force?: boolean;
   metadata?: Metadata;
   userProject?: string;
+  preconditionOpts?: PreconditionOptions
 }
 
 interface MakeBucketPrivateRequest extends MakeBucketPrivateOptions {
@@ -3079,9 +3083,25 @@ class Bucket extends ServiceObject {
       query.userProject = options.userProject;
     }
 
+    if (options.preconditionOpts?.ifGenerationMatch) {
+      query.ifGenerationMatch = options.preconditionOpts.ifGenerationMatch;
+    }
+
+    if (options.preconditionOpts?.ifGenerationNotMatch) {
+      query.ifGenerationNotMatch = options.preconditionOpts.ifGenerationNotMatch;
+    }
+
+    if (options.preconditionOpts?.ifMetagenerationMatch) {
+      query.ifMetagenerationMatch = options.preconditionOpts.ifMetagenerationMatch;
+    }
+
+    if (options.preconditionOpts?.ifMetagenerationNotMatch) {
+      query.ifMetagenerationNotMatch = options.preconditionOpts.ifMetagenerationNotMatch;
+    }
+
     this.disableAutoRetryConditionallyIdempotent_(
       this.methods.setMetadata,
-      AvailableServiceObjectMethods.setMetadata
+      AvailableServiceObjectMethods.setMetadata, options.preconditionOpts
     );
 
     // You aren't allowed to set both predefinedAcl & acl properties on a bucket
@@ -4138,11 +4158,12 @@ class Bucket extends ServiceObject {
   disableAutoRetryConditionallyIdempotent_(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     coreOpts: any,
-    methodType: AvailableServiceObjectMethods
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    methodType: AvailableServiceObjectMethods, localPreconditionOptions?: PreconditionOptions
   ): void {
     if (
-      typeof coreOpts === 'object' &&
-      coreOpts?.reqOpts?.qs?.ifMetagenerationMatch === undefined &&
+      (typeof coreOpts === 'object' &&
+      coreOpts?.reqOpts?.qs?.ifMetagenerationMatch === undefined && localPreconditionOptions?.ifMetagenerationMatch === undefined) &&
       (methodType === AvailableServiceObjectMethods.setMetadata ||
         methodType === AvailableServiceObjectMethods.delete) &&
       this.storage.retryOptions.idempotencyStrategy ===

@@ -202,8 +202,8 @@ export async function bucketMakePrivateInstancePrecondition(bucket: Bucket) {
   await bucket.makePrivate();
 }
 
-export async function bucketMakePrivate(bucket: Bucket) { //TODO
-  await bucket.makePrivate();
+export async function bucketMakePrivate(bucket: Bucket) {
+  await bucket.makePrivate({preconditionOpts: {ifMetagenerationMatch: 2}});
 }
 
 export async function bucketMakePublic(bucket: Bucket) {
