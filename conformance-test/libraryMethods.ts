@@ -148,9 +148,12 @@ export async function enableLoggingInstancePrecondition(bucket: Bucket) {
   await bucket.enableLogging(config);
 }
 
-export async function enableLogging(bucket: Bucket) { //TODO
+export async function enableLogging(bucket: Bucket) {
   const config = {
     prefix: 'log',
+    preconditionOpts: {
+      ifMetagenerationMatch: 2
+    }
   };
   await bucket.enableLogging(config);
 }

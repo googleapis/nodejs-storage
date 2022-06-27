@@ -64,6 +64,7 @@ import {
 } from './signer';
 import {Readable} from 'stream';
 import {CRC32CValidatorGenerator} from './crc32c';
+import { options } from 'yargs';
 
 interface SourceObject {
   name: string;
@@ -115,6 +116,7 @@ export interface LifecycleRule {
 export interface EnableLoggingOptions {
   bucket?: string | Bucket;
   prefix: string;
+  preconditionOpts?: PreconditionOptions
 }
 
 export interface GetFilesOptions {
@@ -2208,14 +2210,15 @@ class Bucket extends ServiceObject {
         await this.iam.setPolicy(policy);
         this.disableAutoRetryConditionallyIdempotent_(
           this.methods.setMetadata,
-          AvailableServiceObjectMethods.setMetadata
+          AvailableServiceObjectMethods.setMetadata,
+          config.preconditionOpts
         );
         [setMetadataResponse] = await this.setMetadata({
           logging: {
             logBucket,
             logObjectPrefix: config.prefix,
-          },
-        });
+          }
+        }, config.preconditionOpts);
       } catch (e) {
         callback!(e as Error);
         return;
