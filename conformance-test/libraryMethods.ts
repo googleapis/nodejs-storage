@@ -536,20 +536,7 @@ export async function getMetadataHMAC(
   await hmacKey.getMetadata();
 }
 
-export async function setMetadataHMACInstancePrecondition(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  hmacKey: HmacKey
-) {
-  const metadata = {
-    state: 'INACTIVE',
-  };
-  await hmacKey.setMetadata(metadata);
-}
-
-export async function setMetadataHMAC( //TODO
+export async function setMetadataHMAC(
   _bucket: Bucket,
   file: File,
   _notification: Notification,
@@ -570,19 +557,7 @@ export async function iamGetPolicy(bucket: Bucket) {
   await bucket.iam.getPolicy({requestedPolicyVersion: 1});
 }
 
-export async function iamSetPolicyInstancePrecondition(bucket: Bucket) {
-  const testPolicy = {
-    bindings: [
-      {
-        role: 'roles/storage.admin',
-        members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com'],
-      },
-    ],
-  };
-  await bucket.iam.setPolicy(testPolicy);
-}
-
-export async function iamSetPolicy(bucket: Bucket) { //TODO
+export async function iamSetPolicy(bucket: Bucket) {
   const testPolicy = {
     bindings: [
       {
