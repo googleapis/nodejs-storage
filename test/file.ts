@@ -55,6 +55,7 @@ import {
 } from '../src/file';
 import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
 import {formatAsUTCISO} from '../src/util';
+import {timeStamp} from 'console';
 
 class HTTPError extends Error {
   code: number;
