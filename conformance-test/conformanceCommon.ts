@@ -92,7 +92,7 @@ export function executeScenario(testCase: RetryTestCase) {
               instructionSet.instructions,
               jsonMethod?.name.toString()
             );
-            if (storageMethodString.includes("InstancePrecondition")) {
+            if (storageMethodString.includes('InstancePrecondition')) {
               bucket = await createBucketForTest(
                 storage,
                 testCase.preconditionProvided,
@@ -103,8 +103,7 @@ export function executeScenario(testCase: RetryTestCase) {
                 storageMethodString,
                 bucket
               );
-            }
-            else {
+            } else {
               bucket = await createBucketForTest(
                 storage,
                 false,

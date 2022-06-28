@@ -64,7 +64,7 @@ import {
 } from './signer';
 import {Readable} from 'stream';
 import {CRC32CValidatorGenerator} from './crc32c';
-import { options } from 'yargs';
+import {options} from 'yargs';
 
 interface SourceObject {
   name: string;
@@ -81,7 +81,8 @@ interface MetadataOptions {
   ifGenerationMatch?: number;
   ifGenerationNotMatch?: number;
   ifMetagenerationMatch?: number;
-  ifMetagenerationNotMatch?: number;}
+  ifMetagenerationNotMatch?: number;
+}
 
 export type GetFilesResponse = [File[], {}, Metadata];
 export interface GetFilesCallback {
@@ -116,7 +117,7 @@ export interface LifecycleRule {
 export interface EnableLoggingOptions {
   bucket?: string | Bucket;
   prefix: string;
-  preconditionOpts?: PreconditionOptions
+  preconditionOpts?: PreconditionOptions;
 }
 
 export interface GetFilesOptions {
@@ -293,7 +294,7 @@ export interface MakeBucketPrivateOptions {
   force?: boolean;
   metadata?: Metadata;
   userProject?: string;
-  preconditionOpts?: PreconditionOptions
+  preconditionOpts?: PreconditionOptions;
 }
 
 interface MakeBucketPrivateRequest extends MakeBucketPrivateOptions {
@@ -2213,12 +2214,15 @@ class Bucket extends ServiceObject {
           AvailableServiceObjectMethods.setMetadata,
           config.preconditionOpts
         );
-        [setMetadataResponse] = await this.setMetadata({
-          logging: {
-            logBucket,
-            logObjectPrefix: config.prefix,
-          }
-        }, config.preconditionOpts);
+        [setMetadataResponse] = await this.setMetadata(
+          {
+            logging: {
+              logBucket,
+              logObjectPrefix: config.prefix,
+            },
+          },
+          config.preconditionOpts
+        );
       } catch (e) {
         callback!(e as Error);
         return;
@@ -3091,20 +3095,24 @@ class Bucket extends ServiceObject {
     }
 
     if (options.preconditionOpts?.ifGenerationNotMatch) {
-      query.ifGenerationNotMatch = options.preconditionOpts.ifGenerationNotMatch;
+      query.ifGenerationNotMatch =
+        options.preconditionOpts.ifGenerationNotMatch;
     }
 
     if (options.preconditionOpts?.ifMetagenerationMatch) {
-      query.ifMetagenerationMatch = options.preconditionOpts.ifMetagenerationMatch;
+      query.ifMetagenerationMatch =
+        options.preconditionOpts.ifMetagenerationMatch;
     }
 
     if (options.preconditionOpts?.ifMetagenerationNotMatch) {
-      query.ifMetagenerationNotMatch = options.preconditionOpts.ifMetagenerationNotMatch;
+      query.ifMetagenerationNotMatch =
+        options.preconditionOpts.ifMetagenerationNotMatch;
     }
 
     this.disableAutoRetryConditionallyIdempotent_(
       this.methods.setMetadata,
-      AvailableServiceObjectMethods.setMetadata, options.preconditionOpts
+      AvailableServiceObjectMethods.setMetadata,
+      options.preconditionOpts
     );
 
     // You aren't allowed to set both predefinedAcl & acl properties on a bucket
@@ -4162,11 +4170,13 @@ class Bucket extends ServiceObject {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     coreOpts: any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    methodType: AvailableServiceObjectMethods, localPreconditionOptions?: PreconditionOptions
+    methodType: AvailableServiceObjectMethods,
+    localPreconditionOptions?: PreconditionOptions
   ): void {
     if (
-      (typeof coreOpts === 'object' &&
-      coreOpts?.reqOpts?.qs?.ifMetagenerationMatch === undefined && localPreconditionOptions?.ifMetagenerationMatch === undefined) &&
+      typeof coreOpts === 'object' &&
+      coreOpts?.reqOpts?.qs?.ifMetagenerationMatch === undefined &&
+      localPreconditionOptions?.ifMetagenerationMatch === undefined &&
       (methodType === AvailableServiceObjectMethods.setMetadata ||
         methodType === AvailableServiceObjectMethods.delete) &&
       this.storage.retryOptions.idempotencyStrategy ===
