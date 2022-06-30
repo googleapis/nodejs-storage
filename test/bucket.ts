@@ -42,7 +42,6 @@ import {
   GetBucketMetadataCallback,
   GetFilesOptions,
   MakeAllFilesPublicPrivateOptions,
-  SetBucketMetadataCallback,
   SetBucketMetadataResponse,
   GetBucketSignedUrlConfig,
   AvailableServiceObjectMethods,
