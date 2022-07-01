@@ -3643,7 +3643,7 @@ describe('File', () => {
       const apiResponse = {};
 
       file.setMetadata = () => {
-        return Promise.resolve(apiResponse);
+        return Promise.resolve([apiResponse]);
       };
 
       file.makePrivate((err: Error, apiResponse_: {}) => {

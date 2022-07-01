@@ -1302,7 +1302,7 @@ class Bucket extends ServiceObject {
 
     if (options.append === false) {
       this.setMetadata({lifecycle: {rule: newLifecycleRules}})
-        .then(resp => callback!(null, resp))
+        .then(resp => callback!(null, ...resp))
         .catch(callback!)
         .finally(() => {
           this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -1327,7 +1327,7 @@ class Bucket extends ServiceObject {
           rule: currentLifecycleRules.concat(newLifecycleRules),
         },
       })
-        .then(resp => callback!(null, resp))
+        .then(resp => callback!(null, ...resp))
         .catch(callback!)
         .finally(() => {
           this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -2113,7 +2113,7 @@ class Bucket extends ServiceObject {
         requesterPays: false,
       },
     })
-      .then(resp => cb(null, resp))
+      .then(resp => cb(null, ...resp))
       .catch(cb)
       .finally(() => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -2295,7 +2295,7 @@ class Bucket extends ServiceObject {
         requesterPays: true,
       },
     })
-      .then(resp => cb(null, resp))
+      .then(resp => cb(null, ...resp))
       .catch(cb)
       .finally(() => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -3307,7 +3307,7 @@ class Bucket extends ServiceObject {
     this.setMetadata({
       retentionPolicy: null,
     })
-      .then(resp => cb(null, resp))
+      .then(resp => cb(null, ...resp))
       .catch(cb)
       .finally(() => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -3417,7 +3417,7 @@ class Bucket extends ServiceObject {
       AvailableServiceObjectMethods.setMetadata
     );
     this.setMetadata({labels}, options)
-      .then(resp => callback!(null, resp))
+      .then(resp => callback!(null, ...resp))
       .catch(callback!)
       .finally(() => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -3480,7 +3480,7 @@ class Bucket extends ServiceObject {
         retentionPeriod: duration,
       },
     })
-      .then(resp => cb(null, resp))
+      .then(resp => cb(null, ...resp))
       .catch(cb)
       .finally(() => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -3552,7 +3552,7 @@ class Bucket extends ServiceObject {
     this.setMetadata({
       cors: corsConfiguration,
     })
-      .then(resp => cb(null, resp))
+      .then(resp => cb(null, ...resp))
       .catch(cb)
       .finally(() => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;

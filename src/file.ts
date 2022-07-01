@@ -3019,7 +3019,7 @@ class File extends ServiceObject<File> {
     const metadata = extend({}, options.metadata, {acl: null});
 
     this.setMetadata(metadata, query)
-      .then(resp => callback!(null, resp))
+      .then(resp => callback!(null, ...resp))
       .catch(callback!)
       .finally(() => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
