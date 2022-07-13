@@ -4,6 +4,20 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [6.2.3](https://github.com/googleapis/nodejs-storage/compare/v6.2.2...v6.2.3) (2022-07-13)
+
+
+### Bug Fixes
+
+* force setMetadata calls to use promise version, invoke callbacks manually ([#2000](https://github.com/googleapis/nodejs-storage/issues/2000)) ([f488647](https://github.com/googleapis/nodejs-storage/commit/f488647d5ac8ccfdb479d7ea24a377d10573b8c4))
+
+## [6.2.2](https://github.com/googleapis/nodejs-storage/compare/v6.2.1...v6.2.2) (2022-06-29)
+
+
+### Bug Fixes
+
+* correctly handle an empty file in download function ([#1995](https://github.com/googleapis/nodejs-storage/issues/1995)) ([f1a5a0b](https://github.com/googleapis/nodejs-storage/commit/f1a5a0bd121b84c3d56a9eddbd31593089634574))
+
 ## [6.2.1](https://github.com/googleapis/nodejs-storage/compare/v6.2.0...v6.2.1) (2022-06-27)
 
 

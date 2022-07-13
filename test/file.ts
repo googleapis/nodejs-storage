@@ -2571,6 +2571,28 @@ describe('File', () => {
         });
       });
 
+      it('empty file should be processed correctly', done => {
+        tmp.setGracefulCleanup();
+        tmp.file(async (err, tmpFilePath) => {
+          assert.ifError(err);
+
+          fileReadStream.on('resume', () => {
+            setImmediate(() => {
+              fileReadStream.emit('end');
+            });
+          });
+
+          file.download({destination: tmpFilePath}, (err: Error) => {
+            assert.ifError(err);
+            fs.readFile(tmpFilePath, (err, tmpFileContents) => {
+              assert.ifError(err);
+              assert.strictEqual('', tmpFileContents.toString());
+              done();
+            });
+          });
+        });
+      });
+
       it('file contents should remain unchanged if file nonexistent', done => {
         tmp.setGracefulCleanup();
         tmp.file(async (err, tmpFilePath) => {
@@ -3620,28 +3642,12 @@ describe('File', () => {
     it('should execute callback with API response', done => {
       const apiResponse = {};
 
-      file.setMetadata = (metadata: {}, query: {}, callback: Function) => {
-        callback(null, apiResponse);
+      file.setMetadata = () => {
+        return Promise.resolve([apiResponse]);
       };
 
       file.makePrivate((err: Error, apiResponse_: {}) => {
         assert.ifError(err);
-        assert.strictEqual(apiResponse_, apiResponse);
-
-        done();
-      });
-    });
-
-    it('should execute callback with error & API response', done => {
-      const error = new Error('Error.');
-      const apiResponse = {};
-
-      file.setMetadata = (metadata: {}, query: {}, callback: Function) => {
-        callback(error, apiResponse);
-      };
-
-      file.makePrivate((err: Error, apiResponse_: {}) => {
-        assert.strictEqual(err, error);
         assert.strictEqual(apiResponse_, apiResponse);
 
         done();
