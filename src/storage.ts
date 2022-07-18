@@ -481,6 +481,8 @@ export class Storage extends Service {
    * @callback Crc32cGeneratorToStringCallback
    * A method returning the CRC32C as a base64-encoded string.
    *
+   * @returns {string}
+   *
    * @example
    * Hashing the string 'data' should return 'rth90Q=='
    *
@@ -493,6 +495,9 @@ export class Storage extends Service {
   /**
    * @callback Crc32cGeneratorValidateCallback
    * A method validating a base64-encoded CRC32C string.
+   *
+   * @param {string} [value] base64-encoded CRC32C string to validate
+   * @returns {boolean}
    *
    * @example
    * Should return `true` if the value matches, `false` otherwise
@@ -507,6 +512,9 @@ export class Storage extends Service {
   /**
    * @callback Crc32cGeneratorUpdateCallback
    * A method for passing `Buffer`s for CRC32C generation.
+   *
+   * @param {Buffer} [data] data to update CRC32C value with
+   * @returns {undefined}
    *
    * @example
    * Hashing buffers from 'some ' and 'text\n'
@@ -581,7 +589,7 @@ export class Storage extends Service {
    * @property {object[]} [interceptors_] Array of custom request interceptors to be returned in the order they were assigned.
    * @property {string} [apiEndpoint = storage.google.com] The API endpoint of the service used to make requests.
    * @property {boolean} [useAuthWithCustomEndpoint = false] Controls whether or not to use authentication when using a custom endpoint.
-   * @property {Crc32cGeneratorCallback} [callback] A function that generates a CRC32C Validator. A defaults to `CRC32C`
+   * @property {Crc32cGeneratorCallback} [callback] A function that generates a CRC32C Validator. Defaults to {@link CRC32C}
    */
   /**
    * Constructs the Storage client.
