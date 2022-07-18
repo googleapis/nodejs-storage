@@ -278,13 +278,11 @@ export enum ActionToHTTPMethod {
 }
 
 /**
- * @const {string}
  * @private
  */
 export const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
 
 /**
- * @const {RegExp}
  * @private
  */
 const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
