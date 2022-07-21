@@ -99,10 +99,19 @@ interface Versioning {
   enabled: boolean;
 }
 
+/**
+ * Custom placement configuration.
+ * Initially used for dual-region buckets.
+ **/
+export interface CustomPlacementConfig {
+  dataLocations?: string[];
+}
+
 export interface CreateBucketRequest {
   archive?: boolean;
   coldline?: boolean;
   cors?: Cors[];
+  customPlacementConfig?: CustomPlacementConfig;
   dra?: boolean;
   location?: string;
   multiRegional?: boolean;
@@ -478,6 +487,68 @@ export class Storage extends Service {
   retryOptions: RetryOptions;
 
   /**
+   * @callback Crc32cGeneratorToStringCallback
+   * A method returning the CRC32C as a base64-encoded string.
+   *
+   * @returns {string}
+   *
+   * @example
+   * Hashing the string 'data' should return 'rth90Q=='
+   *
+   * ```js
+   * const buffer = Buffer.from('data');
+   * crc32c.update(buffer);
+   * crc32c.toString(); // 'rth90Q=='
+   * ```
+   **/
+  /**
+   * @callback Crc32cGeneratorValidateCallback
+   * A method validating a base64-encoded CRC32C string.
+   *
+   * @param {string} [value] base64-encoded CRC32C string to validate
+   * @returns {boolean}
+   *
+   * @example
+   * Should return `true` if the value matches, `false` otherwise
+   *
+   * ```js
+   * const buffer = Buffer.from('data');
+   * crc32c.update(buffer);
+   * crc32c.validate('DkjKuA=='); // false
+   * crc32c.validate('rth90Q=='); // true
+   * ```
+   **/
+  /**
+   * @callback Crc32cGeneratorUpdateCallback
+   * A method for passing `Buffer`s for CRC32C generation.
+   *
+   * @param {Buffer} [data] data to update CRC32C value with
+   * @returns {undefined}
+   *
+   * @example
+   * Hashing buffers from 'some ' and 'text\n'
+   *
+   * ```js
+   * const buffer1 = Buffer.from('some ');
+   * crc32c.update(buffer1);
+   *
+   * const buffer2 = Buffer.from('text\n');
+   * crc32c.update(buffer2);
+   *
+   * crc32c.toString(); // 'DkjKuA=='
+   * ```
+   **/
+  /**
+   * @typedef {object} CRC32CValidator
+   * @property {Crc32cGeneratorToStringCallback}
+   * @property {Crc32cGeneratorValidateCallback}
+   * @property {Crc32cGeneratorUpdateCallback}
+   */
+  /**
+   * @callback Crc32cGeneratorCallback
+   * @returns {CRC32CValidator}
+   */
+  /**
    * @typedef {object} StorageOptions
    * @property {string} [projectId] The project ID from the Google Developer's
    *     Console, e.g. 'grape-spaceship-123'. We will also check the environment
@@ -527,6 +598,7 @@ export class Storage extends Service {
    * @property {object[]} [interceptors_] Array of custom request interceptors to be returned in the order they were assigned.
    * @property {string} [apiEndpoint = storage.google.com] The API endpoint of the service used to make requests.
    * @property {boolean} [useAuthWithCustomEndpoint = false] Controls whether or not to use authentication when using a custom endpoint.
+   * @property {Crc32cGeneratorCallback} [callback] A function that generates a CRC32C Validator. Defaults to {@link CRC32C}
    */
   /**
    * Constructs the Storage client.
@@ -728,10 +800,12 @@ export class Storage extends Service {
    * @property {boolean} [archive=false] Specify the storage class as Archive.
    * @property {boolean} [coldline=false] Specify the storage class as Coldline.
    * @property {Cors[]} [cors=[]] Specify the CORS configuration to use.
+   * @property {CustomPlacementConfig} [customPlacementConfig={}] Specify the bucket's regions for dual-region buckets.
+   *     For more information, see {@link https://cloud.google.com/storage/docs/locations| Bucket Locations}.
    * @property {boolean} [dra=false] Specify the storage class as Durable Reduced
    *     Availability.
-   * @property {string} [location] Specify the bucket's location(s). If specifying
-   *     a dual-region, can be specified as a string `"US-CENTRAL1+US-WEST1"`.
+   * @property {string} [location] Specify the bucket's location. If specifying
+   *     a dual-region, the `customPlacementConfig` property should be set in conjunction.
    *     For more information, see {@link https://cloud.google.com/storage/docs/locations| Bucket Locations}.
    * @property {boolean} [multiRegional=false] Specify the storage class as
    *     Multi-Regional.
@@ -845,8 +919,9 @@ export class Storage extends Service {
       metadata = metadataOrCallback as CreateBucketRequest;
     }
 
-    const body = Object.assign({}, metadata, {name}) as {} as {
-      [index: string]: string | {};
+    const body: CreateBucketRequest & {[index: string]: string | {}} = {
+      ...metadata,
+      name,
     };
 
     const storageClasses = {
@@ -857,9 +932,12 @@ export class Storage extends Service {
       nearline: 'NEARLINE',
       regional: 'REGIONAL',
       standard: 'STANDARD',
-    } as {[index: string]: string};
+    } as const;
+    const storageClassKeys = Object.keys(
+      storageClasses
+    ) as (keyof typeof storageClasses)[];
 
-    Object.keys(storageClasses).forEach(storageClass => {
+    for (const storageClass of storageClassKeys) {
       if (body[storageClass]) {
         if (metadata.storageClass && metadata.storageClass !== storageClass) {
           throw new Error(
@@ -869,7 +947,7 @@ export class Storage extends Service {
         body.storageClass = storageClasses[storageClass];
         delete body[storageClass];
       }
-    });
+    }
 
     if (body.requesterPays) {
       body.billing = {
