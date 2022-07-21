@@ -65,7 +65,6 @@ import {
 import {Readable} from 'stream';
 import {CRC32CValidatorGenerator} from './crc32c';
 import {URL} from 'url';
-import { SetMetadataOptions } from './nodejs-common/service-object';
 
 interface SourceObject {
   name: string;

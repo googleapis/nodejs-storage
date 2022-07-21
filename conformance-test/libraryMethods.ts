@@ -15,11 +15,6 @@
 import {Bucket, File, Notification, Storage, HmacKey} from '../src';
 import * as path from 'path';
 import {ApiError} from '../src/nodejs-common';
-import { options } from 'yargs';
-
-const METAGENERATION_PRECONDITION = {
-  ifMetagenerationMatch: 2,
-};
 
 /////////////////////////////////////////////////
 //////////////////// BUCKET /////////////////////
@@ -760,8 +755,5 @@ export async function getServiceAccount(
   storage: Storage
 ) {
   await storage.getServiceAccount();
-}
-function preconditionOpts(arg0: () => void, preconditionOpts: any, arg2: { ifMetagenerationMatch: number; }) {
-  throw new Error('Function not implemented.');
 }
 

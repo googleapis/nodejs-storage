@@ -873,8 +873,6 @@ export class Util {
       totalTimeout: config.retryOptions?.totalTimeout,
     } as {} as retryRequest.Options;
 
-    console.log(options)
-
     if (typeof reqOpts.maxRetries === 'number') {
       options.retries = reqOpts.maxRetries;
     }
