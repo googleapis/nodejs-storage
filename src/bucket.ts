@@ -65,6 +65,7 @@ import {
 import {Readable} from 'stream';
 import {CRC32CValidatorGenerator} from './crc32c';
 import {URL} from 'url';
+import { SetMetadataOptions } from './nodejs-common/service-object';
 
 interface SourceObject {
   name: string;
@@ -106,6 +107,7 @@ interface WatchAllOptions {
 
 export interface AddLifecycleRuleOptions {
   append?: boolean;
+  preconditionOpts?: PreconditionOptions
 }
 
 export interface LifecycleRule {
@@ -201,6 +203,10 @@ export interface DeleteFilesCallback {
 export type DeleteLabelsResponse = [Metadata];
 
 export type DeleteLabelsCallback = SetLabelsCallback;
+
+export interface DisableRequesterPaysOptions {
+  preconditionOpts?: PreconditionOptions
+}
 
 export type DisableRequesterPaysResponse = [Metadata];
 
@@ -1367,11 +1373,16 @@ class Bucket extends ServiceObject {
 
     this.disableAutoRetryConditionallyIdempotent_(
       this.methods.setMetadata,
-      AvailableServiceObjectMethods.setMetadata
+      AvailableServiceObjectMethods.setMetadata,
+      options.preconditionOpts
     );
 
     if (options.append === false) {
-      this.setMetadata({lifecycle: {rule: newLifecycleRules}})
+      this.setMetadata({
+        lifecycle: {
+          rule: newLifecycleRules,
+        },
+      }, options?.preconditionOpts) //TODO: pass precondition options properly
         .then(resp => callback!(null, ...resp))
         .catch(callback!)
         .finally(() => {
@@ -1395,8 +1406,8 @@ class Bucket extends ServiceObject {
       this.setMetadata({
         lifecycle: {
           rule: currentLifecycleRules.concat(newLifecycleRules),
-        },
-      })
+        }
+        })
         .then(resp => callback!(null, ...resp))
         .catch(callback!)
         .finally(() => {
@@ -2123,6 +2134,9 @@ class Bucket extends ServiceObject {
 
   disableRequesterPays(): Promise<DisableRequesterPaysResponse>;
   disableRequesterPays(callback: DisableRequesterPaysCallback): void;
+  disableRequesterPays(
+    callback: DisableRequesterPaysCallback, options: DisableRequesterPaysOptions, 
+    ): Promise<DisableRequesterPaysResponse> | void;
   /**
    * @typedef {array} DisableRequesterPaysResponse
    * @property {object} 0 The full API response.
@@ -2170,19 +2184,20 @@ class Bucket extends ServiceObject {
    * Example of disabling requester pays:
    */
   disableRequesterPays(
-    callback?: DisableRequesterPaysCallback
-  ): Promise<DisableRequesterPaysResponse> | void {
+    callback?: DisableRequesterPaysCallback, options?: DisableRequesterPaysOptions, 
+    ): Promise<DisableRequesterPaysResponse> | void {
     const cb = callback || util.noop;
     this.disableAutoRetryConditionallyIdempotent_(
       this.methods.setMetadata,
-      AvailableServiceObjectMethods.setMetadata
+      AvailableServiceObjectMethods.setMetadata,
+      options?.preconditionOpts
     );
 
     this.setMetadata({
       billing: {
         requesterPays: false,
       },
-    })
+    }, options?.preconditionOpts)
       .then(resp => cb(null, ...resp))
       .catch(cb)
       .finally(() => {

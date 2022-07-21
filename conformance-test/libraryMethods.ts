@@ -15,6 +15,7 @@
 import {Bucket, File, Notification, Storage, HmacKey} from '../src';
 import * as path from 'path';
 import {ApiError} from '../src/nodejs-common';
+import { options } from 'yargs';
 
 const METAGENERATION_PRECONDITION = {
   ifMetagenerationMatch: 2,
@@ -39,6 +40,11 @@ export async function addLifecycleRule(bucket: Bucket) {
     action: 'delete',
     condition: {
       age: 365 * 3, // Specified in days.
+    },
+  },
+  {
+    preconditionOpts: {
+      ifMetagenerationMatch: 2,
     },
   });
 }
@@ -142,7 +148,11 @@ export async function disableRequesterPaysInstancePrecondition(bucket: Bucket) {
 
 export async function disableRequesterPays(bucket: Bucket) {
   //TODO -- no options
-  await bucket.disableRequesterPays();
+  bucket.disableRequesterPays(() => {}, {
+    preconditionOpts: {
+      ifMetagenerationMatch: 2,
+    }
+  });
 }
 
 export async function enableLoggingInstancePrecondition(bucket: Bucket) {
@@ -751,3 +761,7 @@ export async function getServiceAccount(
 ) {
   await storage.getServiceAccount();
 }
+function preconditionOpts(arg0: () => void, preconditionOpts: any, arg2: { ifMetagenerationMatch: number; }) {
+  throw new Error('Function not implemented.');
+}
+
