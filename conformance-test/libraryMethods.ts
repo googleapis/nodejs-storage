@@ -45,58 +45,30 @@ export async function addLifecycleRule(bucket: Bucket) {
 }
 
 export async function combineInstancePrecondition(bucket: Bucket) {
-  bucket = new Bucket(bucket.storage, bucket.name, {
-    preconditionOpts: {
-      ifMetagenerationMatch: 1,
-    },
-  });
   const file1 = bucket.file('file1.txt');
   const file2 = bucket.file('file2.txt');
   await file1.save('file1 contents');
   await file2.save('file2 contents');
-  const f1WithPrecondition = new File(file1.bucket, file1.name, {
+  const sources = [file1, file2];
+  const allFiles = bucket.file('all-files.txt', {
     preconditionOpts: {
-      ifGenerationMatch: file1.metadata.generation,
-    },
+      ifGenerationMatch: 0,
+    }
   });
-  const f2WithPrecondition = new File(file2.bucket, file2.name, {
-    preconditionOpts: {
-      ifGenerationMatch: file2.metadata.generation,
-    },
-  });
-  const sources = [f1WithPrecondition, f2WithPrecondition];
-  const allFiles = bucket.file('all-files.txt');
-  // If we are using a precondition we must make sure the file exists and the metageneration matches that provided as a query parameter
-  await allFiles.save('allfiles contents');
   await bucket.combine(sources, allFiles);
 }
 
 export async function combine(bucket: Bucket) {
-  //TODO
-  bucket = new Bucket(bucket.storage, bucket.name, {
-    preconditionOpts: {
-      ifMetagenerationMatch: 1,
-    },
-  });
   const file1 = bucket.file('file1.txt');
   const file2 = bucket.file('file2.txt');
   await file1.save('file1 contents');
   await file2.save('file2 contents');
-  const f1WithPrecondition = new File(file1.bucket, file1.name, {
-    preconditionOpts: {
-      ifGenerationMatch: file1.metadata.generation,
-    },
-  });
-  const f2WithPrecondition = new File(file2.bucket, file2.name, {
-    preconditionOpts: {
-      ifGenerationMatch: file2.metadata.generation,
-    },
-  });
-  const sources = [f1WithPrecondition, f2WithPrecondition];
+  const sources = [file1, file2];
   const allFiles = bucket.file('all-files.txt');
-  // If we are using a precondition we must make sure the file exists and the metageneration matches that provided as a query parameter
   await allFiles.save('allfiles contents');
-  await bucket.combine(sources, allFiles);
+  await bucket.combine(sources, allFiles, {
+      ifGenerationMatch: allFiles.metadata.generation,
+  });
 }
 
 export async function create(bucket: Bucket) {

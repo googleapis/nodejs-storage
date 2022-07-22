@@ -138,6 +138,7 @@ export interface GetFilesOptions {
 export interface CombineOptions extends PreconditionOptions {
   kmsKeyName?: string;
   userProject?: string;
+  // TODO (breaking change): instead of extending precondition options, define it as preconditionOpts
 }
 
 export interface CombineCallback {
@@ -1543,19 +1544,20 @@ class Bucket extends ServiceObject {
     }
 
     let maxRetries = this.storage.retryOptions.maxRetries;
-    (sources as File[]).forEach(source => {
-      if (
-        (source?.instancePreconditionOpts?.ifGenerationMatch === undefined &&
-          this.storage.retryOptions.idempotencyStrategy ===
-            IdempotencyStrategy.RetryConditional) ||
+    if (
+      (destinationFile?.instancePreconditionOpts?.ifGenerationMatch === undefined &&
+        options.ifGenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
-          IdempotencyStrategy.RetryNever
-      ) {
-        maxRetries = 0;
-      }
-    });
+          IdempotencyStrategy.RetryConditional) ||
+      this.storage.retryOptions.idempotencyStrategy ===
+        IdempotencyStrategy.RetryNever
+    ) {
+      maxRetries = 0;
+    }
 
-    Object.assign(options, this.instancePreconditionOpts, options);
+    if (options.ifGenerationMatch === undefined){
+      Object.assign(options, destinationFile.instancePreconditionOpts, options);
+    }
 
     // Make the request from the destination File object.
     destinationFile.request(
@@ -1567,22 +1569,7 @@ class Bucket extends ServiceObject {
           destination: {
             contentType: destinationFile.metadata.contentType,
           },
-          sourceObjects: (sources as File[]).map(source => {
-            const sourceObject = {
-              name: source.name,
-            } as SourceObject;
-
-            if (
-              source?.metadata?.generation ||
-              source?.instancePreconditionOpts?.ifGenerationMatch
-            ) {
-              sourceObject.generation =
-                source?.metadata?.generation ||
-                source?.instancePreconditionOpts?.ifGenerationMatch;
-            }
-
-            return sourceObject;
-          }),
+          sourceObjects: sources
         },
         qs: options,
       },
