@@ -420,10 +420,6 @@ export async function move(_bucket: Bucket, file: File) {
   await file.move('new-file', {preconditionOpts: {ifGenerationMatch: 0}});
 }
 
-export async function renameInstancePrecondition(_bucket: Bucket, file: File) {
-  await file.rename('new-name');
-}
-
 export async function rename(_bucket: Bucket, file: File) {
   await file.rename('new-name', {preconditionOpts: {ifGenerationMatch: 0}});
 }
