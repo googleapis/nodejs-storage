@@ -853,42 +853,6 @@ describe('Bucket', () => {
       bucket.combine(sources, destination, options, assert.ifError);
     });
 
-    it('should respect constructor precondition options', done => {
-      bucket = new Bucket(STORAGE, BUCKET_NAME, {
-        preconditionOpts: {
-          ifGenerationMatch: 301,
-          ifGenerationNotMatch: 302,
-          ifMetagenerationMatch: 303,
-          ifMetagenerationNotMatch: 304,
-        },
-      });
-      const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
-      const destination = bucket.file('destination.txt');
-
-      const options = {};
-      destination.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(
-          reqOpts.qs.ifGenerationMatch,
-          bucket.instancePreconditionOpts.ifGenerationMatch
-        );
-        assert.strictEqual(
-          reqOpts.qs.ifGenerationNotMatch,
-          bucket.instancePreconditionOpts.ifGenerationNotMatch
-        );
-        assert.strictEqual(
-          reqOpts.qs.ifMetagenerationMatch,
-          bucket.instancePreconditionOpts.ifMetagenerationMatch
-        );
-        assert.strictEqual(
-          reqOpts.qs.ifMetagenerationNotMatch,
-          bucket.instancePreconditionOpts.ifMetagenerationNotMatch
-        );
-        done();
-      };
-
-      bucket.combine(sources, destination, options, assert.ifError);
-    });
-
     it('should execute the callback', done => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');

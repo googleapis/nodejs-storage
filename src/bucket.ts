@@ -68,7 +68,7 @@ import {URL} from 'url';
 
 interface SourceObject {
   name: string;
-  generation?: number;
+  generation?: number; 
 }
 
 interface CreateNotificationQuery {
@@ -1573,7 +1573,17 @@ class Bucket extends ServiceObject {
           destination: {
             contentType: destinationFile.metadata.contentType,
           },
-          sourceObjects: sources,
+          sourceObjects: (sources as File[]).map(source => {
+            const sourceObject = {
+              name: source.name,
+            } as SourceObject;
+
+            if (source.metadata && source.metadata.generation) {
+              sourceObject.generation = source.metadata.generation;
+            }
+
+            return sourceObject;
+          }),
         },
         qs: options,
       },
