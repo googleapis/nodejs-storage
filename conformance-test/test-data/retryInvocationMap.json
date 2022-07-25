@@ -60,8 +60,6 @@
         "fileMakePublic"
     ],
     "storage.objects.rewrite": [
-        "copyInstancePrecondition",
-        "moveInstancePrecondition",
         "renameInstancePrecondition",
         "rotateEncryptionKeyInstancePrecondition",
         "setStorageClassInstancePrecondition",

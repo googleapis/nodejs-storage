@@ -334,13 +334,12 @@ export async function bucketUploadMultipart(bucket: Bucket) {
 //////////////////// FILE /////////////////////
 /////////////////////////////////////////////////
 
-export async function copyInstancePrecondition(_bucket: Bucket, file: File) {
-  await file.copy('a-different-file.png');
-}
-
-export async function copy(_bucket: Bucket, file: File) {
+export async function copy(bucket: Bucket, file: File) {
+  const newFile = new File(bucket, 'a-different-file.png');
+  await newFile.save('a-different-file.png');
+  
   await file.copy('a-different-file.png', {
-    preconditionOpts: {ifGenerationMatch: 0},
+    preconditionOpts: {ifGenerationMatch: newFile.metadata.generation},
   });
 }
 
@@ -415,10 +414,6 @@ export async function fileMakePrivate(_bucket: Bucket, file: File) {
 
 export async function fileMakePublic(_bucket: Bucket, file: File) {
   await file.makePublic();
-}
-
-export async function moveInstancePrecondition(_bucket: Bucket, file: File) {
-  await file.move('new-file');
 }
 
 export async function move(_bucket: Bucket, file: File) {

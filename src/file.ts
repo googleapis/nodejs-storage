@@ -1226,6 +1226,19 @@ class File extends ServiceObject<File> {
       }
     }
 
+    if (
+      !this.shouldRetryBasedOnPreconditionAndIdempotencyStrat(
+        options?.preconditionOpts
+      )
+    ) {
+      this.storage.retryOptions.autoRetry = false;
+    }
+
+    if (options.preconditionOpts?.ifGenerationMatch != undefined) {
+      query.ifGenerationMatch = options.preconditionOpts?.ifGenerationMatch;
+      delete options.preconditionOpts;
+    }
+
     this.request(
       {
         method: 'POST',
@@ -1237,6 +1250,7 @@ class File extends ServiceObject<File> {
         headers,
       },
       (err, resp) => {
+        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
         if (err) {
           callback!(err, null, resp);
           return;
