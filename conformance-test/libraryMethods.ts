@@ -425,12 +425,12 @@ export async function rename(_bucket: Bucket, file: File) {
 }
 
 export async function rotateEncryptionKey(_bucket: Bucket, file: File) {
-  //TODO
   const crypto = require('crypto');
   const buffer = crypto.randomBytes(32);
   const newKey = buffer.toString('base64');
   await file.rotateEncryptionKey({
     encryptionKey: Buffer.from(newKey, 'base64'),
+    preconditionOpts: {ifGenerationMatch: file.metadata.generation}
   });
 }
 

@@ -264,6 +264,7 @@ export type RotateEncryptionKeyOptions = string | Buffer | EncryptionKeyOptions;
 export interface EncryptionKeyOptions {
   encryptionKey?: string | Buffer;
   kmsKeyName?: string;
+  preconditionOpts?: PreconditionOptions
 }
 
 export type RotateEncryptionKeyCallback = CopyCallback;
@@ -3547,7 +3548,8 @@ class File extends ServiceObject<File> {
     }
 
     const newFile = this.bucket.file(this.id!, options);
-    this.copy(newFile, callback!);
+    const copyOptions = options.preconditionOpts?.ifGenerationMatch !== undefined ? {preconditionOpts: options.preconditionOpts} : {}
+    this.copy(newFile, copyOptions, callback!);
   }
 
   save(data: string | Buffer, options?: SaveOptions): Promise<void>;
