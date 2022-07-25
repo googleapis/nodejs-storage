@@ -424,18 +424,6 @@ export async function rename(_bucket: Bucket, file: File) {
   await file.rename('new-name', {preconditionOpts: {ifGenerationMatch: 0}});
 }
 
-export async function rotateEncryptionKeyInstancePrecondition(
-  _bucket: Bucket,
-  file: File
-) {
-  const crypto = require('crypto');
-  const buffer = crypto.randomBytes(32);
-  const newKey = buffer.toString('base64');
-  await file.rotateEncryptionKey({
-    encryptionKey: Buffer.from(newKey, 'base64'),
-  });
-}
-
 export async function rotateEncryptionKey(_bucket: Bucket, file: File) {
   //TODO
   const crypto = require('crypto');
@@ -504,16 +492,6 @@ export async function setMetadata(_bucket: Bucket, file: File) {
     },
   };
   await file.setMetadata(metadata);
-}
-
-export async function setStorageClassInstancePrecondition(
-  _bucket: Bucket,
-  file: File
-) {
-  const result = await file.setStorageClass('nearline');
-  if (!result) {
-    throw Error();
-  }
 }
 
 export async function setStorageClass(_bucket: Bucket, file: File) {
