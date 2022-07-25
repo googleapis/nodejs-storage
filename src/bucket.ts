@@ -106,7 +106,7 @@ interface WatchAllOptions {
 
 export interface AddLifecycleRuleOptions {
   append?: boolean;
-  preconditionOpts?: PreconditionOptions
+  preconditionOpts?: PreconditionOptions;
 }
 
 export interface LifecycleRule {
@@ -205,7 +205,7 @@ export type DeleteLabelsResponse = [Metadata];
 export type DeleteLabelsCallback = SetLabelsCallback;
 
 export interface DisableRequesterPaysOptions {
-  preconditionOpts?: PreconditionOptions
+  preconditionOpts?: PreconditionOptions;
 }
 
 export type DisableRequesterPaysResponse = [Metadata];
@@ -1378,11 +1378,14 @@ class Bucket extends ServiceObject {
     );
 
     if (options.append === false) {
-      this.setMetadata({
-        lifecycle: {
-          rule: newLifecycleRules,
+      this.setMetadata(
+        {
+          lifecycle: {
+            rule: newLifecycleRules,
+          },
         },
-      }, options?.preconditionOpts) //TODO: pass precondition options properly
+        options?.preconditionOpts
+      ) //TODO: pass precondition options properly
         .then(resp => callback!(null, ...resp))
         .catch(callback!)
         .finally(() => {
@@ -1406,8 +1409,8 @@ class Bucket extends ServiceObject {
       this.setMetadata({
         lifecycle: {
           rule: currentLifecycleRules.concat(newLifecycleRules),
-        }
-        })
+        },
+      })
         .then(resp => callback!(null, ...resp))
         .catch(callback!)
         .finally(() => {
@@ -1545,7 +1548,8 @@ class Bucket extends ServiceObject {
 
     let maxRetries = this.storage.retryOptions.maxRetries;
     if (
-      (destinationFile?.instancePreconditionOpts?.ifGenerationMatch === undefined &&
+      (destinationFile?.instancePreconditionOpts?.ifGenerationMatch ===
+        undefined &&
         options.ifGenerationMatch === undefined &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
@@ -1555,7 +1559,7 @@ class Bucket extends ServiceObject {
       maxRetries = 0;
     }
 
-    if (options.ifGenerationMatch === undefined){
+    if (options.ifGenerationMatch === undefined) {
       Object.assign(options, destinationFile.instancePreconditionOpts, options);
     }
 
@@ -1569,7 +1573,7 @@ class Bucket extends ServiceObject {
           destination: {
             contentType: destinationFile.metadata.contentType,
           },
-          sourceObjects: sources
+          sourceObjects: sources,
         },
         qs: options,
       },
@@ -2121,8 +2125,9 @@ class Bucket extends ServiceObject {
   disableRequesterPays(): Promise<DisableRequesterPaysResponse>;
   disableRequesterPays(callback: DisableRequesterPaysCallback): void;
   disableRequesterPays(
-    callback: DisableRequesterPaysCallback, options: DisableRequesterPaysOptions, 
-    ): Promise<DisableRequesterPaysResponse> | void;
+    callback: DisableRequesterPaysCallback,
+    options: DisableRequesterPaysOptions
+  ): Promise<DisableRequesterPaysResponse> | void;
   /**
    * @typedef {array} DisableRequesterPaysResponse
    * @property {object} 0 The full API response.
@@ -2170,8 +2175,9 @@ class Bucket extends ServiceObject {
    * Example of disabling requester pays:
    */
   disableRequesterPays(
-    callback?: DisableRequesterPaysCallback, options?: DisableRequesterPaysOptions, 
-    ): Promise<DisableRequesterPaysResponse> | void {
+    callback?: DisableRequesterPaysCallback,
+    options?: DisableRequesterPaysOptions
+  ): Promise<DisableRequesterPaysResponse> | void {
     const cb = callback || util.noop;
     this.disableAutoRetryConditionallyIdempotent_(
       this.methods.setMetadata,
@@ -2179,11 +2185,14 @@ class Bucket extends ServiceObject {
       options?.preconditionOpts
     );
 
-    this.setMetadata({
-      billing: {
-        requesterPays: false,
+    this.setMetadata(
+      {
+        billing: {
+          requesterPays: false,
+        },
       },
-    }, options?.preconditionOpts)
+      options?.preconditionOpts
+    )
       .then(resp => cb(null, ...resp))
       .catch(cb)
       .finally(() => {

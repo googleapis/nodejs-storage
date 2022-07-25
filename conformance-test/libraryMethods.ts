@@ -31,17 +31,19 @@ export async function addLifecycleRuleInstancePrecondition(bucket: Bucket) {
 
 export async function addLifecycleRule(bucket: Bucket) {
   //TODO
-  await bucket.addLifecycleRule({
-    action: 'delete',
-    condition: {
-      age: 365 * 3, // Specified in days.
+  await bucket.addLifecycleRule(
+    {
+      action: 'delete',
+      condition: {
+        age: 365 * 3, // Specified in days.
+      },
     },
-  },
-  {
-    preconditionOpts: {
-      ifMetagenerationMatch: 2,
-    },
-  });
+    {
+      preconditionOpts: {
+        ifMetagenerationMatch: 2,
+      },
+    }
+  );
 }
 
 export async function combineInstancePrecondition(bucket: Bucket) {
@@ -53,7 +55,7 @@ export async function combineInstancePrecondition(bucket: Bucket) {
   const allFiles = bucket.file('all-files.txt', {
     preconditionOpts: {
       ifGenerationMatch: 0,
-    }
+    },
   });
   await bucket.combine(sources, allFiles);
 }
@@ -67,7 +69,7 @@ export async function combine(bucket: Bucket) {
   const allFiles = bucket.file('all-files.txt');
   await allFiles.save('allfiles contents');
   await bucket.combine(sources, allFiles, {
-      ifGenerationMatch: allFiles.metadata.generation,
+    ifGenerationMatch: allFiles.metadata.generation,
   });
 }
 
@@ -118,7 +120,7 @@ export async function disableRequesterPays(bucket: Bucket) {
   bucket.disableRequesterPays(() => {}, {
     preconditionOpts: {
       ifMetagenerationMatch: 2,
-    }
+    },
   });
 }
 
@@ -337,7 +339,7 @@ export async function bucketUploadMultipart(bucket: Bucket) {
 export async function copy(bucket: Bucket, file: File) {
   const newFile = new File(bucket, 'a-different-file.png');
   await newFile.save('a-different-file.png');
-  
+
   await file.copy('a-different-file.png', {
     preconditionOpts: {ifGenerationMatch: newFile.metadata.generation},
   });
@@ -430,7 +432,7 @@ export async function rotateEncryptionKey(_bucket: Bucket, file: File) {
   const newKey = buffer.toString('base64');
   await file.rotateEncryptionKey({
     encryptionKey: Buffer.from(newKey, 'base64'),
-    preconditionOpts: {ifGenerationMatch: file.metadata.generation}
+    preconditionOpts: {ifGenerationMatch: file.metadata.generation},
   });
 }
 
@@ -497,8 +499,8 @@ export async function setMetadata(_bucket: Bucket, file: File) {
 export async function setStorageClass(_bucket: Bucket, file: File) {
   const result = await file.setStorageClass('nearline', {
     preconditionOpts: {
-      ifGenerationMatch: file.metadata.generation
-    }
+      ifGenerationMatch: file.metadata.generation,
+    },
   });
   if (!result) {
     throw Error();
@@ -700,4 +702,3 @@ export async function getServiceAccount(
 ) {
   await storage.getServiceAccount();
 }
-
