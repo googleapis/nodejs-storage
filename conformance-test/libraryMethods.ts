@@ -495,8 +495,11 @@ export async function setMetadata(_bucket: Bucket, file: File) {
 }
 
 export async function setStorageClass(_bucket: Bucket, file: File) {
-  //TODO
-  const result = await file.setStorageClass('nearline');
+  const result = await file.setStorageClass('nearline', {
+    preconditionOpts: {
+      ifGenerationMatch: file.metadata.generation
+    }
+  });
   if (!result) {
     throw Error();
   }
