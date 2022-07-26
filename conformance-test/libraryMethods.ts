@@ -30,7 +30,7 @@ export async function addLifecycleRuleInstancePrecondition(bucket: Bucket) {
 }
 
 export async function addLifecycleRule(bucket: Bucket) {
-  //TODO
+  //TODO -- swallowing options into function[anonymous]
   await bucket.addLifecycleRule(
     {
       action: 'delete',
@@ -99,7 +99,9 @@ export async function deleteFilesInstancePrecondition(bucket: Bucket) {
 
 export async function deleteFiles(bucket: Bucket) {
   //TODO
-  await bucket.deleteFiles();
+  await bucket.deleteFiles({
+    ifMetagenerationMatch: 2
+  });
 }
 
 export async function deleteLabelsInstancePrecondition(bucket: Bucket) {
@@ -108,8 +110,10 @@ export async function deleteLabelsInstancePrecondition(bucket: Bucket) {
 
 export async function deleteLabels(bucket: Bucket) {
   //TODO: not retrying for some reason
-  bucket.deleteLabels({
-    ifMetagenerationMatch: 2
+  await bucket.deleteLabels({
+    preconditionOpts: {
+      ifMetagenerationMatch: 2
+    }
   });
 }
 
@@ -118,8 +122,8 @@ export async function disableRequesterPaysInstancePrecondition(bucket: Bucket) {
 }
 
 export async function disableRequesterPays(bucket: Bucket) {
-  //TODO -- no options
-  bucket.disableRequesterPays(() => {}, {
+  //TODO: not retrying for some reason
+  await bucket.disableRequesterPays(() => {}, {
     preconditionOpts: {
       ifMetagenerationMatch: 2,
     },
@@ -148,7 +152,12 @@ export async function enableRequesterPaysInstancePrecondition(bucket: Bucket) {
 }
 
 export async function enableRequesterPays(bucket: Bucket) {
-  await bucket.enableRequesterPays(); //TODO
+  // TODO -- the promise isnt resolving and test is timing out
+  await bucket.enableRequesterPays({
+    preconditionOpts: {
+      ifMetagenerationMatch: 2
+    }
+  });
 }
 
 export async function bucketExists(bucket: Bucket) {
@@ -205,8 +214,12 @@ export async function removeRetentionPeriodInstancePrecondition(
 }
 
 export async function removeRetentionPeriod(bucket: Bucket) {
-  //TODO
-  await bucket.removeRetentionPeriod();
+  //TODO -- the promise isnt resolving and test is timing out
+  await bucket.removeRetentionPeriod({
+    preconditionOpts: {
+      ifMetagenerationMatch: 2
+    }
+  });
 }
 
 export async function setCorsConfigurationInstancePrecondition(bucket: Bucket) {
