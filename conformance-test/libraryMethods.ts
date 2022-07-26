@@ -105,11 +105,10 @@ export async function deleteFiles(bucket: Bucket) {
 }
 
 export async function deleteLabelsInstancePrecondition(bucket: Bucket) {
-  await bucket.deleteLabels();
+  bucket.deleteLabels(() => {});
 }
 
 export async function deleteLabels(bucket: Bucket) {
-  //TODO: not retrying for some reason
   await bucket.deleteLabels({
     preconditionOpts: {
       ifMetagenerationMatch: 2
@@ -123,7 +122,7 @@ export async function disableRequesterPaysInstancePrecondition(bucket: Bucket) {
 
 export async function disableRequesterPays(bucket: Bucket) {
   //TODO: not retrying for some reason
-  await bucket.disableRequesterPays(() => {}, {
+  bucket.disableRequesterPays(() => {}, {
     preconditionOpts: {
       ifMetagenerationMatch: 2,
     },
@@ -152,7 +151,7 @@ export async function enableRequesterPaysInstancePrecondition(bucket: Bucket) {
 }
 
 export async function enableRequesterPays(bucket: Bucket) {
-  // TODO -- the promise isnt resolving and test is timing out
+  //TODO -- swallowing options into function[anonymous]
   await bucket.enableRequesterPays({
     preconditionOpts: {
       ifMetagenerationMatch: 2
@@ -214,8 +213,8 @@ export async function removeRetentionPeriodInstancePrecondition(
 }
 
 export async function removeRetentionPeriod(bucket: Bucket) {
-  //TODO -- the promise isnt resolving and test is timing out
-  await bucket.removeRetentionPeriod({
+  //TODO -- not retrying
+  bucket.removeRetentionPeriod(() => {}, {
     preconditionOpts: {
       ifMetagenerationMatch: 2
     }

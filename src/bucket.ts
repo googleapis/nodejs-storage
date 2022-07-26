@@ -2162,7 +2162,7 @@ class Bucket extends ServiceObject {
   disableRequesterPays(
     callback: DisableRequesterPaysCallback,
     options: DisableRequesterPaysOptions
-  ): Promise<DisableRequesterPaysResponse> | void;
+  ): void;
   /**
    * @typedef {array} DisableRequesterPaysResponse
    * @property {object} 0 The full API response.
@@ -2421,16 +2421,16 @@ class Bucket extends ServiceObject {
       options.preconditionOpts
     );
 
+    const setMetadataOptions = options.preconditionOpts;
     this.setMetadata({
       billing: {
         requesterPays: true,
       },
-      options
+      setMetadataOptions
     })
       .then(resp => cb(null, ...resp))
       .catch(cb)
       .finally(() => {
-        console.log("in the finally")
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
       });
   }
@@ -3427,7 +3427,7 @@ class Bucket extends ServiceObject {
 
   removeRetentionPeriod(): Promise<SetBucketMetadataResponse>;
   removeRetentionPeriod(callback: SetBucketMetadataCallback): void;
-  removeRetentionPeriod(options: SetBucketMetadataOptions):  Promise<SetBucketMetadataResponse>
+  removeRetentionPeriod(callback: SetBucketMetadataCallback, options: SetBucketMetadataOptions): void;
   /**
    * Remove an already-existing retention policy from this bucket, if it is not
    * locked.
@@ -3451,23 +3451,21 @@ class Bucket extends ServiceObject {
    * ```
    */
   removeRetentionPeriod(
-    optionsOrCallback?: SetBucketMetadataOptions | SetBucketMetadataCallback
+    callback?: SetBucketMetadataCallback,
+    options?: SetBucketMetadataOptions
   ): Promise<SetBucketMetadataResponse> | void {
-
-    const options =
-      typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
-    const cb =
-      typeof optionsOrCallback === 'function' ? optionsOrCallback : util.noop;
+    
+    const cb = callback || util.noop;
 
     this.disableAutoRetryConditionallyIdempotent_(
       this.methods.setMetadata,
       AvailableServiceObjectMethods.setMetadata,
-      options.preconditionOpts
+      options?.preconditionOpts
     );
-    
+
     this.setMetadata({
       retentionPolicy: null,
-    }, options.preconditionOpts)
+    }, options?.preconditionOpts)
       .then(resp => cb(null, ...resp))
       .catch(cb)
       .finally(() => {
