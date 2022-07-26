@@ -138,7 +138,6 @@ export interface GetFilesOptions {
 export interface CombineOptions extends PreconditionOptions {
   kmsKeyName?: string;
   userProject?: string;
-  // TODO (breaking change): instead of extending precondition options, define it as preconditionOpts
 }
 
 export interface CombineCallback {
@@ -203,6 +202,7 @@ export interface DeleteFilesCallback {
 export type DeleteLabelsResponse = [Metadata];
 
 export type DeleteLabelsCallback = SetLabelsCallback;
+export type DeleteLabelsOptions = PreconditionOptions;
 
 export interface DisableRequesterPaysOptions {
   preconditionOpts?: PreconditionOptions;
@@ -344,7 +344,7 @@ export interface Labels {
   [key: string]: string;
 }
 
-export interface SetLabelsOptions {
+export interface SetLabelsOptions extends PreconditionOptions{
   userProject?: string;
 }
 
@@ -2048,8 +2048,8 @@ class Bucket extends ServiceObject {
   }
 
   deleteLabels(labels?: string | string[]): Promise<DeleteLabelsResponse>;
-  deleteLabels(callback: DeleteLabelsCallback): void;
-  deleteLabels(labels: string | string[], callback: DeleteLabelsCallback): void;
+  deleteLabels(optionsOrCallback: DeleteLabelsCallback | DeleteLabelsOptions ): void;
+  deleteLabels(labels: string | string[], optionsOrCallback: DeleteLabelsCallback | DeleteLabelsOptions): void;
   /**
    * @typedef {array} DeleteLabelsResponse
    * @property {object} 0 The full API response.
@@ -2064,7 +2064,8 @@ class Bucket extends ServiceObject {
    *
    * @param {string|string[]} [labels] The labels to delete. If no labels are
    *     provided, all of the labels are removed.
-   * @param {DeleteLabelsCallback} [callback] Callback function.
+   * @param {DeleteLabelsCallback | DeleteLabelsOptions} [optionsOrCallback] 
+   * Callback function or precondition options.
    * @returns {Promise<DeleteLabelsResponse>}
    *
    * @example
@@ -2100,14 +2101,25 @@ class Bucket extends ServiceObject {
    * ```
    */
   deleteLabels(
-    labelsOrCallback?: string | string[] | DeleteLabelsCallback,
-    callback?: DeleteLabelsCallback
+    labelsOrCallbackOrOptions?: string | string[] | DeleteLabelsCallback | DeleteLabelsOptions,
+    optionsOrCallback?: DeleteLabelsCallback | DeleteLabelsOptions,
   ): Promise<DeleteLabelsResponse> | void {
     let labels = new Array<string>();
-    if (typeof labelsOrCallback === 'function') {
-      callback = labelsOrCallback;
-    } else if (labelsOrCallback) {
-      labels = arrify(labelsOrCallback);
+    let options: DeleteLabelsOptions = {};
+    let callback: DeleteLabelsCallback;
+
+    if (typeof labelsOrCallbackOrOptions === 'function') {
+      callback = labelsOrCallbackOrOptions;
+    } else if (typeof labelsOrCallbackOrOptions === 'string' || Array.isArray(labelsOrCallbackOrOptions)){
+      labels = arrify(labelsOrCallbackOrOptions);
+    } else if (labelsOrCallbackOrOptions) {
+      options = labelsOrCallbackOrOptions;
+    }
+
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
     }
 
     const deleteLabels = (labels: string[]) => {
@@ -2116,7 +2128,12 @@ class Bucket extends ServiceObject {
         return nullLabelMap;
       }, {});
 
-      this.setLabels(nullLabelMap, callback!);
+      if (options?.ifMetagenerationMatch !== undefined) {
+        this.setLabels(nullLabelMap, options, callback!);
+      }
+      else {
+        this.setLabels(nullLabelMap, callback!);
+      }
     };
 
     if (labels.length === 0) {
@@ -3528,8 +3545,9 @@ class Bucket extends ServiceObject {
 
     this.disableAutoRetryConditionallyIdempotent_(
       this.methods.setMetadata,
-      AvailableServiceObjectMethods.setMetadata
+      AvailableServiceObjectMethods.setMetadata, options
     );
+
     this.setMetadata({labels}, options)
       .then(resp => callback!(null, ...resp))
       .catch(callback!)

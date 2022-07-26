@@ -107,8 +107,10 @@ export async function deleteLabelsInstancePrecondition(bucket: Bucket) {
 }
 
 export async function deleteLabels(bucket: Bucket) {
-  //TODO -- no options to modify
-  await bucket.deleteLabels();
+  //TODO: not retrying for some reason
+  bucket.deleteLabels({
+    ifMetagenerationMatch: 2
+  });
 }
 
 export async function disableRequesterPaysInstancePrecondition(bucket: Bucket) {
@@ -227,12 +229,13 @@ export async function setLabelsInstancePrecondition(bucket: Bucket) {
 }
 
 export async function setLabels(bucket: Bucket) {
-  //TODO
   const labels = {
     labelone: 'labelonevalue',
     labeltwo: 'labeltwovalue',
   };
-  await bucket.setLabels(labels);
+  await bucket.setLabels(labels, {
+    ifMetagenerationMatch: 2
+  });
 }
 
 export async function bucketSetMetadataInstancePrecondition(bucket: Bucket) {
