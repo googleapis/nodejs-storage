@@ -227,9 +227,13 @@ export async function setCorsConfigurationInstancePrecondition(bucket: Bucket) {
 }
 
 export async function setCorsConfiguration(bucket: Bucket) {
-  //TODO
+  //TODO -- not retrying
   const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
-  await bucket.setCorsConfiguration(corsConfiguration);
+  bucket.setCorsConfiguration(corsConfiguration, () => {}, {
+    preconditionOpts: {
+      ifMetagenerationMatch: 2
+    }
+  });
 }
 
 export async function setLabelsInstancePrecondition(bucket: Bucket) {

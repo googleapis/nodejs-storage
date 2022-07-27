@@ -3654,6 +3654,11 @@ class Bucket extends ServiceObject {
     corsConfiguration: Cors[],
     callback: SetBucketMetadataCallback
   ): void;
+  setCorsConfiguration(
+    corsConfiguration: Cors[],
+    callback: SetBucketMetadataCallback,
+    options: SetBucketMetadataOptions
+  ): void;
   /**
    *
    * @typedef {object} Cors
@@ -3681,6 +3686,7 @@ class Bucket extends ServiceObject {
    * @param {string[]} [corsConfiguration.responseHeader] A header allowed for cross origin
    *     resource sharing with this bucket.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
+   * @param {SetBucketMetadataOptions} [options] Options, including precondition options.
    * @returns {Promise<SetBucketMetadataResponse>}
    *
    * @example
@@ -3701,17 +3707,19 @@ class Bucket extends ServiceObject {
    */
   setCorsConfiguration(
     corsConfiguration: Cors[],
-    callback?: SetBucketMetadataCallback
+    callback?: SetBucketMetadataCallback,
+    options?: SetBucketMetadataOptions
   ): Promise<SetBucketMetadataResponse> | void {
     const cb = callback || util.noop;
     this.disableAutoRetryConditionallyIdempotent_(
       this.methods.setMetadata,
-      AvailableServiceObjectMethods.setMetadata
+      AvailableServiceObjectMethods.setMetadata,
+      options?.preconditionOpts
     );
 
     this.setMetadata({
       cors: corsConfiguration,
-    })
+    }, options?.preconditionOpts)
       .then(resp => cb(null, ...resp))
       .catch(cb)
       .finally(() => {
