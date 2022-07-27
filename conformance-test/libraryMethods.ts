@@ -518,7 +518,9 @@ export async function setMetadata(_bucket: Bucket, file: File) {
       properties: 'go here',
     },
   };
-  await file.setMetadata(metadata);
+  await file.setMetadata(metadata, {
+    ifGenerationMatch: file.metadata.generation
+  });
 }
 
 export async function setStorageClass(_bucket: Bucket, file: File) {
