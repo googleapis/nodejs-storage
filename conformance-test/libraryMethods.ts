@@ -98,7 +98,7 @@ export async function deleteFilesInstancePrecondition(bucket: Bucket) {
 }
 
 export async function deleteFiles(bucket: Bucket) {
-  //TODO
+  //TODO -- how to pass preconditions on the file?
   await bucket.deleteFiles({
     ifMetagenerationMatch: 2
   });
@@ -272,7 +272,9 @@ export async function bucketSetMetadata(bucket: Bucket) {
       notFoundPage: 'http://example.com/404.html',
     },
   };
-  await bucket.setMetadata(metadata);
+  await bucket.setMetadata(metadata, {
+    ifMetagenerationMatch: 2
+  });
 }
 
 export async function setRetentionPeriodInstancePrecondition(bucket: Bucket) {
