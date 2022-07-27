@@ -18,7 +18,9 @@ import {
   GetConfig,
   Interceptor,
   Metadata,
+  MetadataCallback,
   ServiceObject,
+  SetMetadataResponse,
   util,
 } from './nodejs-common';
 import {promisifyAll} from '@google-cloud/promisify';
@@ -71,6 +73,7 @@ import {HashStreamValidator} from './hash-stream-validator';
 import {URL} from 'url';
 
 import retry = require('async-retry');
+import {SetMetadataOptions} from './nodejs-common/service-object';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -3069,22 +3072,12 @@ class File extends ServiceObject<File> {
       query.userProject = options.userProject;
     }
 
-    this.disableAutoRetryConditionallyIdempotent_(
-      this.methods.setMetadata,
-      AvailableServiceObjectMethods.setMetadata
-    );
-
     // You aren't allowed to set both predefinedAcl & acl properties on a file,
     // so acl must explicitly be nullified, destroying all previous acls on the
     // file.
     const metadata = extend({}, options.metadata, {acl: null});
 
-    this.setMetadata(metadata, query)
-      .then(resp => callback!(null, ...resp))
-      .catch(callback!)
-      .finally(() => {
-        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-      });
+    this.setMetadata(metadata, query, callback!);
   }
 
   makePublic(): Promise<MakeFilePublicResponse>;
@@ -3660,6 +3653,43 @@ class File extends ServiceObject<File> {
         .catch(callback);
     }
   }
+
+  setMetadata(
+    metadata: Metadata,
+    options?: SetMetadataOptions
+  ): Promise<SetMetadataResponse>;
+  setMetadata(metadata: Metadata, callback: MetadataCallback): void;
+  setMetadata(
+    metadata: Metadata,
+    options: SetMetadataOptions,
+    callback: MetadataCallback
+  ): void;
+  setMetadata(
+    metadata: Metadata,
+    optionsOrCallback: SetMetadataOptions | MetadataCallback,
+    cb?: MetadataCallback
+  ): Promise<SetMetadataResponse> | void {
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      AvailableServiceObjectMethods.setMetadata
+    );
+
+    const options =
+      typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    cb =
+      typeof optionsOrCallback === 'function'
+        ? (optionsOrCallback as MetadataCallback)
+        : cb;
+
+    super
+      .setMetadata(metadata, options)
+      .then(resp => cb!(null, ...resp))
+      .catch(cb!)
+      .finally(() => {
+        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
+      });
+  }
+
   setStorageClass(
     storageClass: string,
     options?: SetStorageClassOptions
