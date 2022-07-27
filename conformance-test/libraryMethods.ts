@@ -397,7 +397,6 @@ export async function fileDeleteInstancePrecondition(
 }
 
 export async function fileDelete(_bucket: Bucket, file: File) {
-  //TODO
   await file.delete({
     ifGenerationMatch: file.metadata.generation
   });
@@ -513,7 +512,6 @@ export async function setMetadataInstancePrecondition(
 }
 
 export async function setMetadata(_bucket: Bucket, file: File) {
-  //TODO
   const metadata = {
     contentType: 'application/x-font-ttf',
     metadata: {
