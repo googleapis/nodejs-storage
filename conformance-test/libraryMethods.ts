@@ -432,8 +432,11 @@ export async function fileMakePrivateInstancePrecondition(
 }
 
 export async function fileMakePrivate(_bucket: Bucket, file: File) {
-  //TODO
-  await file.makePrivate();
+  await file.makePrivate({
+    preconditionOpts: {
+      ifGenerationMatch: file.metadata.generation
+    }
+  });
 }
 
 export async function fileMakePublic(_bucket: Bucket, file: File) {

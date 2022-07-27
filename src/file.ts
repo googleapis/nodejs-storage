@@ -225,6 +225,7 @@ export interface MakeFilePrivateOptions {
   metadata?: Metadata;
   strict?: boolean;
   userProject?: string;
+  preconditionOpts?: PreconditionOptions
 }
 
 export type MakeFilePrivateResponse = [Metadata];
@@ -3083,6 +3084,11 @@ class File extends ServiceObject<File> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
+    if (options.preconditionOpts?.ifGenerationMatch != undefined) {
+      query.ifGenerationMatch = options.preconditionOpts?.ifGenerationMatch;
+      delete options.preconditionOpts;
+    }
+
     if (options.userProject) {
       query.userProject = options.userProject;
     }
@@ -3688,11 +3694,6 @@ class File extends ServiceObject<File> {
     optionsOrCallback: SetMetadataOptions | MetadataCallback,
     cb?: MetadataCallback
   ): Promise<SetMetadataResponse> | void {
-    this.disableAutoRetryConditionallyIdempotent_(
-      this.methods.setMetadata,
-      AvailableServiceObjectMethods.setMetadata
-    );
-
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb =
@@ -3700,6 +3701,12 @@ class File extends ServiceObject<File> {
         ? (optionsOrCallback as MetadataCallback)
         : cb;
 
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      AvailableServiceObjectMethods.setMetadata,
+      options
+    );
+    
     super
       .setMetadata(metadata, options)
       .then(resp => cb!(null, ...resp))
@@ -3973,11 +3980,13 @@ class File extends ServiceObject<File> {
   disableAutoRetryConditionallyIdempotent_(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     coreOpts: any,
-    methodType: AvailableServiceObjectMethods
+    methodType: AvailableServiceObjectMethods,
+    localPreconditionOptions?: PreconditionOptions
   ): void {
     if (
       (typeof coreOpts === 'object' &&
         coreOpts?.reqOpts?.qs?.ifGenerationMatch === undefined &&
+        localPreconditionOptions?.ifGenerationMatch === undefined &&
         methodType === AvailableServiceObjectMethods.setMetadata &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
