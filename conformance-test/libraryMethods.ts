@@ -293,8 +293,11 @@ export async function bucketSetStorageClassInstancePrecondition(
 }
 
 export async function bucketSetStorageClass(bucket: Bucket) {
-  //TODO
-  await bucket.setStorageClass('nearline');
+  await bucket.setStorageClass('nearline', {
+    preconditionOpts: {
+      ifMetagenerationMatch: 2
+    }
+  });
 }
 
 export async function bucketUploadResumableInstancePrecondition(

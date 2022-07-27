@@ -365,6 +365,7 @@ export interface SetLabelsCallback {
 
 export interface SetBucketStorageClassOptions {
   userProject?: string;
+  preconditionOpts?: PreconditionOptions
 }
 
 export interface SetBucketStorageClassCallback {
@@ -3774,7 +3775,7 @@ class Bucket extends ServiceObject {
       })
       .toUpperCase();
 
-    this.setMetadata({storageClass}, options, callback!);
+    this.setMetadata({storageClass}, options.preconditionOpts as SetMetadataOptions, callback!);
   }
 
   /**
