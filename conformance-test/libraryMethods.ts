@@ -265,7 +265,6 @@ export async function bucketSetMetadataInstancePrecondition(bucket: Bucket) {
 }
 
 export async function bucketSetMetadata(bucket: Bucket) {
-  //TODO
   const metadata = {
     website: {
       mainPageSuffix: 'http://example.com',
@@ -399,7 +398,9 @@ export async function fileDeleteInstancePrecondition(
 
 export async function fileDelete(_bucket: Bucket, file: File) {
   //TODO
-  await file.delete();
+  await file.delete({
+    ifGenerationMatch: file.metadata.generation
+  });
 }
 
 export async function download(_bucket: Bucket, file: File) {
