@@ -3551,8 +3551,6 @@ class Bucket extends ServiceObject {
       AvailableServiceObjectMethods.setMetadata, options
     );
 
-    console.log(options);
-
     super
       .setMetadata(metadata, options)
       .then(resp => cb!(null, ...resp))
