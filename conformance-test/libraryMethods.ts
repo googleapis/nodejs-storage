@@ -281,7 +281,7 @@ export async function setRetentionPeriodInstancePrecondition(bucket: Bucket) {
 }
 
 export async function setRetentionPeriod(bucket: Bucket) {
-  //TODO
+  //TODO - not retrying when there's a callback
   const DURATION_SECONDS = 15780000; // 6 months.
   await bucket.setRetentionPeriod(DURATION_SECONDS);
 }

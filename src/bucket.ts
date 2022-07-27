@@ -3563,6 +3563,11 @@ class Bucket extends ServiceObject {
     duration: number,
     callback: SetBucketMetadataCallback
   ): void;
+  setRetentionPeriod(
+    duration: number,
+    callback: SetBucketMetadataCallback,
+    options: SetBucketMetadataOptions
+  ): void;
   /**
    * Lock all objects contained in the bucket, based on their creation time. Any
    * attempt to overwrite or delete objects younger than the retention period
@@ -3578,6 +3583,7 @@ class Bucket extends ServiceObject {
    * @param {*} duration In seconds, the minimum retention time for all objects
    *     contained in this bucket.
    * @param {SetBucketMetadataCallback} [callback] Callback function.
+   * @param {SetBucketMetadataCallback} [options] Options, including precondition options.
    * @returns {Promise<SetBucketMetadataResponse>}
    *
    * @example
@@ -3602,7 +3608,8 @@ class Bucket extends ServiceObject {
    */
   setRetentionPeriod(
     duration: number,
-    callback?: SetBucketMetadataCallback
+    callback?: SetBucketMetadataCallback,
+    options?: SetBucketMetadataOptions
   ): Promise<SetBucketMetadataResponse> | void {
     const cb = callback || util.noop;
     this.setMetadata(
@@ -3611,7 +3618,7 @@ class Bucket extends ServiceObject {
           retentionPeriod: duration,
         },
       },
-      {},
+      options?.preconditionOpts as SetBucketMetadataOptions,
       cb
     );
   }
