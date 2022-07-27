@@ -1396,7 +1396,7 @@ describe('Bucket', () => {
         optionsOrCallback: {},
         callback: Function
       ) => {
-        assert.strictEqual(callback, util.noop);
+        assert.strictEqual(callback, undefined);
         done();
       };
 
@@ -1610,7 +1610,7 @@ describe('Bucket', () => {
         optionsOrCallback: {},
         callback: Function
       ) => {
-        assert.equal(util.noop, callback);
+        assert.equal(callback, undefined);
         done();
       };
 

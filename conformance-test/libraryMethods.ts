@@ -30,7 +30,6 @@ export async function addLifecycleRuleInstancePrecondition(bucket: Bucket) {
 }
 
 export async function addLifecycleRule(bucket: Bucket) {
-  //TODO -- swallowing options into function[anonymous]
   await bucket.addLifecycleRule(
     {
       action: 'delete',
@@ -39,9 +38,7 @@ export async function addLifecycleRule(bucket: Bucket) {
       },
     },
     {
-      preconditionOpts: {
         ifMetagenerationMatch: 2,
-      },
     }
   );
 }
@@ -110,9 +107,7 @@ export async function deleteLabelsInstancePrecondition(bucket: Bucket) {
 
 export async function deleteLabels(bucket: Bucket) {
   await bucket.deleteLabels({
-    preconditionOpts: {
       ifMetagenerationMatch: 2
-    }
   });
 }
 
@@ -121,11 +116,8 @@ export async function disableRequesterPaysInstancePrecondition(bucket: Bucket) {
 }
 
 export async function disableRequesterPays(bucket: Bucket) {
-  //TODO: not retrying for some reason
-  bucket.disableRequesterPays(() => {}, {
-    preconditionOpts: {
+  await bucket.disableRequesterPays({
       ifMetagenerationMatch: 2,
-    },
   });
 }
 
@@ -139,9 +131,7 @@ export async function enableLoggingInstancePrecondition(bucket: Bucket) {
 export async function enableLogging(bucket: Bucket) {
   const config = {
     prefix: 'log',
-    preconditionOpts: {
       ifMetagenerationMatch: 2,
-    },
   };
   await bucket.enableLogging(config);
 }
@@ -151,11 +141,8 @@ export async function enableRequesterPaysInstancePrecondition(bucket: Bucket) {
 }
 
 export async function enableRequesterPays(bucket: Bucket) {
-  //TODO -- swallowing options into function[anonymous]
   await bucket.enableRequesterPays({
-    preconditionOpts: {
       ifMetagenerationMatch: 2
-    }
   });
 }
 
@@ -213,11 +200,8 @@ export async function removeRetentionPeriodInstancePrecondition(
 }
 
 export async function removeRetentionPeriod(bucket: Bucket) {
-  //TODO -- not retrying
-  bucket.removeRetentionPeriod(() => {}, {
-    preconditionOpts: {
+  await bucket.removeRetentionPeriod({
       ifMetagenerationMatch: 2
-    }
   });
 }
 
@@ -227,12 +211,9 @@ export async function setCorsConfigurationInstancePrecondition(bucket: Bucket) {
 }
 
 export async function setCorsConfiguration(bucket: Bucket) {
-  //TODO -- not retrying
   const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
-  bucket.setCorsConfiguration(corsConfiguration, () => {}, {
-    preconditionOpts: {
+  await bucket.setCorsConfiguration(corsConfiguration, {
       ifMetagenerationMatch: 2
-    }
   });
 }
 
@@ -282,9 +263,10 @@ export async function setRetentionPeriodInstancePrecondition(bucket: Bucket) {
 }
 
 export async function setRetentionPeriod(bucket: Bucket) {
-  //TODO - not retrying when there's a callback
   const DURATION_SECONDS = 15780000; // 6 months.
-  await bucket.setRetentionPeriod(DURATION_SECONDS);
+  await bucket.setRetentionPeriod(DURATION_SECONDS, {
+      ifMetagenerationMatch: 2
+  });
 }
 
 export async function bucketSetStorageClassInstancePrecondition(
@@ -295,10 +277,8 @@ export async function bucketSetStorageClassInstancePrecondition(
 
 export async function bucketSetStorageClass(bucket: Bucket) {
   await bucket.setStorageClass('nearline', {
-    preconditionOpts: {
       ifMetagenerationMatch: 2
-    }
-  });
+    });
 }
 
 export async function bucketUploadResumableInstancePrecondition(

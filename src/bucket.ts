@@ -107,9 +107,8 @@ interface WatchAllOptions {
   versions?: boolean;
 }
 
-export interface AddLifecycleRuleOptions {
+export interface AddLifecycleRuleOptions extends PreconditionOptions {
   append?: boolean;
-  preconditionOpts?: PreconditionOptions;
 }
 
 export interface LifecycleRule {
@@ -118,10 +117,9 @@ export interface LifecycleRule {
   storageClass?: string;
 }
 
-export interface EnableLoggingOptions {
+export interface EnableLoggingOptions extends PreconditionOptions {
   bucket?: string | Bucket;
   prefix: string;
-  preconditionOpts?: PreconditionOptions;
 }
 
 export interface GetFilesOptions {
@@ -205,13 +203,10 @@ export interface DeleteFilesCallback {
 export type DeleteLabelsResponse = [Metadata];
 
 export type DeleteLabelsCallback = SetLabelsCallback;
-export interface DeleteLabelsOptions {
-  preconditionOpts?: PreconditionOptions
-}
 
-export interface DisableRequesterPaysOptions {
-  preconditionOpts?: PreconditionOptions;
-}
+export type DeleteLabelsOptions = PreconditionOptions;
+
+export type DisableRequesterPaysOptions = PreconditionOptions;
 
 export type DisableRequesterPaysResponse = [Metadata];
 
@@ -225,9 +220,7 @@ export interface EnableRequesterPaysCallback {
   (err?: Error | null, apiResponse?: Metadata): void;
 }
 
-export interface EnableRequesterPaysOptions {
-  preconditionOpts?: PreconditionOptions;
-}
+export type EnableRequesterPaysOptions = PreconditionOptions;
 export interface BucketExistsOptions extends GetConfig {
   userProject?: string;
 }
@@ -332,9 +325,8 @@ export interface MakeBucketPublicCallback {
 
 export type MakeBucketPublicResponse = [File[]];
 
-export interface SetBucketMetadataOptions {
+export interface SetBucketMetadataOptions extends PreconditionOptions {
   userProject?: string;
-  preconditionOpts?: PreconditionOptions
 }
 
 export type SetBucketMetadataResponse = [Metadata];
@@ -363,9 +355,8 @@ export interface SetLabelsCallback {
   (err?: Error | null, metadata?: Metadata): void;
 }
 
-export interface SetBucketStorageClassOptions {
+export interface SetBucketStorageClassOptions extends PreconditionOptions {
   userProject?: string;
-  preconditionOpts?: PreconditionOptions
 }
 
 export interface SetBucketStorageClassCallback {
@@ -1384,7 +1375,7 @@ class Bucket extends ServiceObject {
     if (options.append === false) {
       this.setMetadata(
         {lifecycle: {rule: newLifecycleRules}},
-        options?.preconditionOpts as SetMetadataOptions,
+        options,
         callback!
       );
       return;
@@ -2125,8 +2116,8 @@ class Bucket extends ServiceObject {
         return nullLabelMap;
       }, {});
 
-      if (options?.preconditionOpts?.ifMetagenerationMatch !== undefined) {
-        this.setLabels(nullLabelMap, options.preconditionOpts, callback!);
+      if (options?.ifMetagenerationMatch !== undefined) {
+        this.setLabels(nullLabelMap, options, callback!);
       }
       else {
         this.setLabels(nullLabelMap, callback!);
@@ -2146,11 +2137,11 @@ class Bucket extends ServiceObject {
     }
   }
 
-  disableRequesterPays(): Promise<DisableRequesterPaysResponse>;
+  disableRequesterPays(options?: DisableRequesterPaysOptions): Promise<DisableRequesterPaysResponse>;
   disableRequesterPays(callback: DisableRequesterPaysCallback): void;
   disableRequesterPays(
-    callback: DisableRequesterPaysCallback,
-    options: DisableRequesterPaysOptions
+    options: DisableRequesterPaysOptions,
+    callback: DisableRequesterPaysCallback
   ): void;
   /**
    * @typedef {array} DisableRequesterPaysResponse
@@ -2199,10 +2190,16 @@ class Bucket extends ServiceObject {
    * Example of disabling requester pays:
    */
   disableRequesterPays(
-    callback?: DisableRequesterPaysCallback,
-    options?: DisableRequesterPaysOptions
+    optionsOrCallback?: DisableRequesterPaysOptions | DisableRequesterPaysCallback,
+    callback?: DisableRequesterPaysCallback
   ): Promise<DisableRequesterPaysResponse> | void {
-    const cb = callback || util.noop;
+
+    let options: DisableRequesterPaysOptions = {}
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = optionsOrCallback;
+    }
 
     this.setMetadata(
       {
@@ -2210,8 +2207,8 @@ class Bucket extends ServiceObject {
           requesterPays: false,
         },
       },
-      options?.preconditionOpts as SetMetadataOptions,
-      cb!
+      options,
+      callback!
     );
   }
 
@@ -2311,7 +2308,7 @@ class Bucket extends ServiceObject {
               logObjectPrefix: config.prefix,
             },
           },
-          config.preconditionOpts as SetMetadataOptions,
+          config,
           callback!
         );
       } catch (e) {
@@ -2321,9 +2318,10 @@ class Bucket extends ServiceObject {
     })();
   }
 
-  enableRequesterPays(): Promise<EnableRequesterPaysResponse>;
+  enableRequesterPays(options?: EnableRequesterPaysOptions): Promise<EnableRequesterPaysResponse>;
   enableRequesterPays(callback: EnableRequesterPaysCallback): void;
-  enableRequesterPays(options: EnableRequesterPaysOptions): Promise<EnableRequesterPaysResponse>;
+  enableRequesterPays(options: EnableRequesterPaysOptions, callback: EnableRequesterPaysCallback): void;
+
   /**
    * @typedef {array} EnableRequesterPaysResponse
    * @property {object} 0 The full API response.
@@ -2374,10 +2372,10 @@ class Bucket extends ServiceObject {
    * Example of enabling requester pays:
    */
   enableRequesterPays(
-    optionsOrCallback?: EnableRequesterPaysCallback | EnableRequesterPaysOptions
+    optionsOrCallback?: EnableRequesterPaysCallback | EnableRequesterPaysOptions,
+    cb?: EnableRequesterPaysCallback
   ): Promise<EnableRequesterPaysResponse> | void {
 
-    let cb: EnableRequesterPaysCallback = util.noop;
     let options: EnableRequesterPaysOptions = {};
     if (typeof optionsOrCallback === 'function') {
       cb = optionsOrCallback;
@@ -2391,8 +2389,8 @@ class Bucket extends ServiceObject {
           requesterPays: true,
         },
       },
-      options.preconditionOpts as SetMetadataOptions,
-      cb
+      options,
+      cb!
     );
   }
 
@@ -3382,9 +3380,9 @@ class Bucket extends ServiceObject {
     return new Notification(this, id);
   }
 
-  removeRetentionPeriod(): Promise<SetBucketMetadataResponse>;
+  removeRetentionPeriod(options?: SetBucketMetadataOptions): Promise<SetBucketMetadataResponse>;
   removeRetentionPeriod(callback: SetBucketMetadataCallback): void;
-  removeRetentionPeriod(callback: SetBucketMetadataCallback, options: SetBucketMetadataOptions): void;
+  removeRetentionPeriod(options: SetBucketMetadataOptions, callback: SetBucketMetadataCallback): void;
   /**
    * Remove an already-existing retention policy from this bucket, if it is not
    * locked.
@@ -3408,17 +3406,20 @@ class Bucket extends ServiceObject {
    * ```
    */
   removeRetentionPeriod(
-    callback?: SetBucketMetadataCallback,
-    options?: SetBucketMetadataOptions
+    optionsOrCallback?: SetBucketMetadataOptions | SetBucketMetadataCallback,
+    callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
-    
-    const cb = callback || util.noop;
+    const options =
+      typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+      typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
+
     this.setMetadata(
       {
         retentionPolicy: null,
       },
-      options?.preconditionOpts as SetMetadataOptions,
-      cb
+      options,
+      callback!
     );
   }
 
@@ -3550,6 +3551,8 @@ class Bucket extends ServiceObject {
       AvailableServiceObjectMethods.setMetadata, options
     );
 
+    console.log(options);
+
     super
       .setMetadata(metadata, options)
       .then(resp => cb!(null, ...resp))
@@ -3559,15 +3562,16 @@ class Bucket extends ServiceObject {
       });
   }
 
-  setRetentionPeriod(duration: number): Promise<SetBucketMetadataResponse>;
+  setRetentionPeriod(duration: number,
+    options?: SetBucketMetadataOptions): Promise<SetBucketMetadataResponse>;
   setRetentionPeriod(
     duration: number,
     callback: SetBucketMetadataCallback
   ): void;
   setRetentionPeriod(
     duration: number,
-    callback: SetBucketMetadataCallback,
-    options: SetBucketMetadataOptions
+    options: SetBucketMetadataOptions,
+    callback: SetBucketMetadataCallback
   ): void;
   /**
    * Lock all objects contained in the bucket, based on their creation time. Any
@@ -3609,23 +3613,27 @@ class Bucket extends ServiceObject {
    */
   setRetentionPeriod(
     duration: number,
-    callback?: SetBucketMetadataCallback,
-    options?: SetBucketMetadataOptions
+    optionsOrCallback?: SetBucketMetadataOptions | SetBucketMetadataCallback,
+    callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
-    const cb = callback || util.noop;
+    const options =
+      typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+      typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
     this.setMetadata(
       {
         retentionPolicy: {
           retentionPeriod: duration,
         },
       },
-      options?.preconditionOpts as SetBucketMetadataOptions,
-      cb
+      options,
+      callback!
     );
   }
 
   setCorsConfiguration(
-    corsConfiguration: Cors[]
+    corsConfiguration: Cors[],
+    options?: SetBucketMetadataOptions
   ): Promise<SetBucketMetadataResponse>;
   setCorsConfiguration(
     corsConfiguration: Cors[],
@@ -3633,8 +3641,8 @@ class Bucket extends ServiceObject {
   ): void;
   setCorsConfiguration(
     corsConfiguration: Cors[],
-    callback: SetBucketMetadataCallback,
-    options: SetBucketMetadataOptions
+    options: SetBucketMetadataOptions,
+    callback: SetBucketMetadataCallback
   ): void;
   /**
    *
@@ -3684,16 +3692,19 @@ class Bucket extends ServiceObject {
    */
   setCorsConfiguration(
     corsConfiguration: Cors[],
-    callback?: SetBucketMetadataCallback,
-    options?: SetBucketMetadataOptions
+    optionsOrCallback?: SetBucketMetadataOptions | SetBucketMetadataCallback,
+    callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
-    const cb = callback || util.noop;
+    const options =
+      typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    callback =
+      typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
     this.setMetadata(
       {
         cors: corsConfiguration,
       },
-      options?.preconditionOpts as SetMetadataOptions,
-      cb
+      options,
+      callback!
     );
   }
 
@@ -3775,7 +3786,7 @@ class Bucket extends ServiceObject {
       })
       .toUpperCase();
 
-    this.setMetadata({storageClass}, options.preconditionOpts as SetMetadataOptions, callback!);
+    this.setMetadata({storageClass}, options, callback!);
   }
 
   /**
