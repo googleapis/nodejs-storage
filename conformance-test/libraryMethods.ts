@@ -739,18 +739,6 @@ export async function iamGetPolicy(options: ConformanceTestOptions) {
   await options.bucket!.iam.getPolicy({requestedPolicyVersion: 1});
 }
 
-export async function iamSetPolicy(options: ConformanceTestOptions) {
-  const testPolicy = {
-    bindings: [
-      {
-        role: 'roles/storage.admin',
-        members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com'],
-      },
-    ],
-  };
-  await options.bucket!.iam.setPolicy(testPolicy);
-}
-
 export async function iamTestPermissions(options: ConformanceTestOptions) {
   const permissionToTest = 'storage.buckets.delete';
   await options.bucket!.iam.testPermissions(permissionToTest);

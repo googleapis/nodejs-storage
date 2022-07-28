@@ -22,6 +22,7 @@ import arrify = require('arrify');
 
 import {Bucket} from './bucket';
 import {normalize} from './util';
+import { PreconditionOptions } from './storage';
 
 export interface GetPolicyOptions {
   userProject?: string;
@@ -45,7 +46,7 @@ export interface GetPolicyCallback {
  * @param {string} [userProject] The ID of the project which will be
  *     billed for the request.
  */
-export interface SetPolicyOptions {
+export interface SetPolicyOptions extends PreconditionOptions {
   userProject?: string;
 }
 
@@ -344,10 +345,12 @@ class Iam {
       SetPolicyCallback
     >(optionsOrCallback, callback);
 
+    let maxRetries = 0; // We don't support ETag
     this.request_(
       {
         method: 'PUT',
         uri: '/iam',
+        maxRetries,
         json: Object.assign(
           {
             resourceId: this.resourceId_,
@@ -357,7 +360,7 @@ class Iam {
         qs: options,
       },
       cb
-    );
+    )
   }
 
   testPermissions(

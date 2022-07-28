@@ -850,7 +850,10 @@ export class Util {
     }
 
     let maxRetryValue = MAX_RETRY_DEFAULT;
-    if (config.maxRetries) {
+    if (reqOpts.maxRetries) {
+      maxRetryValue = reqOpts.maxRetries
+    }
+    else if (config.maxRetries) {
       maxRetryValue = config.maxRetries;
     } else if (config.retryOptions?.maxRetries) {
       maxRetryValue = config.retryOptions.maxRetries;
