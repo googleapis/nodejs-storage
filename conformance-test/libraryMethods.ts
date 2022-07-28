@@ -472,7 +472,6 @@ export async function saveMultipart(_bucket: Bucket, file: File) {
     resumable: false,
     preconditionOpts: {
       ifGenerationMatch: file.metadata.generation,
-      ifMetagenerationMatch: file.metadata.metageneration,
     },
   });
 }
