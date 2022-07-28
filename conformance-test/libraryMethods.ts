@@ -38,7 +38,7 @@ export async function addLifecycleRule(bucket: Bucket) {
       },
     },
     {
-        ifMetagenerationMatch: 2,
+      ifMetagenerationMatch: 2,
     }
   );
 }
@@ -97,7 +97,7 @@ export async function deleteFilesInstancePrecondition(bucket: Bucket) {
 export async function deleteFiles(bucket: Bucket) {
   //TODO -- how to pass preconditions on the file?
   await bucket.deleteFiles({
-    ifMetagenerationMatch: 2
+    ifMetagenerationMatch: 2,
   });
 }
 
@@ -107,7 +107,7 @@ export async function deleteLabelsInstancePrecondition(bucket: Bucket) {
 
 export async function deleteLabels(bucket: Bucket) {
   await bucket.deleteLabels({
-      ifMetagenerationMatch: 2
+    ifMetagenerationMatch: 2,
   });
 }
 
@@ -117,7 +117,7 @@ export async function disableRequesterPaysInstancePrecondition(bucket: Bucket) {
 
 export async function disableRequesterPays(bucket: Bucket) {
   await bucket.disableRequesterPays({
-      ifMetagenerationMatch: 2,
+    ifMetagenerationMatch: 2,
   });
 }
 
@@ -131,7 +131,7 @@ export async function enableLoggingInstancePrecondition(bucket: Bucket) {
 export async function enableLogging(bucket: Bucket) {
   const config = {
     prefix: 'log',
-      ifMetagenerationMatch: 2,
+    ifMetagenerationMatch: 2,
   };
   await bucket.enableLogging(config);
 }
@@ -142,7 +142,7 @@ export async function enableRequesterPaysInstancePrecondition(bucket: Bucket) {
 
 export async function enableRequesterPays(bucket: Bucket) {
   await bucket.enableRequesterPays({
-      ifMetagenerationMatch: 2
+    ifMetagenerationMatch: 2,
   });
 }
 
@@ -201,7 +201,7 @@ export async function removeRetentionPeriodInstancePrecondition(
 
 export async function removeRetentionPeriod(bucket: Bucket) {
   await bucket.removeRetentionPeriod({
-      ifMetagenerationMatch: 2
+    ifMetagenerationMatch: 2,
   });
 }
 
@@ -213,7 +213,7 @@ export async function setCorsConfigurationInstancePrecondition(bucket: Bucket) {
 export async function setCorsConfiguration(bucket: Bucket) {
   const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
   await bucket.setCorsConfiguration(corsConfiguration, {
-      ifMetagenerationMatch: 2
+    ifMetagenerationMatch: 2,
   });
 }
 
@@ -231,7 +231,7 @@ export async function setLabels(bucket: Bucket) {
     labeltwo: 'labeltwovalue',
   };
   await bucket.setLabels(labels, {
-    ifMetagenerationMatch: 2
+    ifMetagenerationMatch: 2,
   });
 }
 
@@ -253,7 +253,7 @@ export async function bucketSetMetadata(bucket: Bucket) {
     },
   };
   await bucket.setMetadata(metadata, {
-    ifMetagenerationMatch: 2
+    ifMetagenerationMatch: 2,
   });
 }
 
@@ -265,7 +265,7 @@ export async function setRetentionPeriodInstancePrecondition(bucket: Bucket) {
 export async function setRetentionPeriod(bucket: Bucket) {
   const DURATION_SECONDS = 15780000; // 6 months.
   await bucket.setRetentionPeriod(DURATION_SECONDS, {
-      ifMetagenerationMatch: 2
+    ifMetagenerationMatch: 2,
   });
 }
 
@@ -277,8 +277,8 @@ export async function bucketSetStorageClassInstancePrecondition(
 
 export async function bucketSetStorageClass(bucket: Bucket) {
   await bucket.setStorageClass('nearline', {
-      ifMetagenerationMatch: 2
-    });
+    ifMetagenerationMatch: 2,
+  });
 }
 
 export async function bucketUploadResumableInstancePrecondition(
@@ -378,7 +378,7 @@ export async function fileDeleteInstancePrecondition(
 
 export async function fileDelete(_bucket: Bucket, file: File) {
   await file.delete({
-    ifGenerationMatch: file.metadata.generation
+    ifGenerationMatch: file.metadata.generation,
   });
 }
 
@@ -416,8 +416,8 @@ export async function fileMakePrivateInstancePrecondition(
 export async function fileMakePrivate(_bucket: Bucket, file: File) {
   await file.makePrivate({
     preconditionOpts: {
-      ifGenerationMatch: file.metadata.generation
-    }
+      ifGenerationMatch: file.metadata.generation,
+    },
   });
 }
 
@@ -499,7 +499,7 @@ export async function setMetadata(_bucket: Bucket, file: File) {
     },
   };
   await file.setMetadata(metadata, {
-    ifGenerationMatch: file.metadata.generation
+    ifGenerationMatch: file.metadata.generation,
   });
 }
 

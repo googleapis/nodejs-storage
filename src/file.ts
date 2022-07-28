@@ -225,7 +225,7 @@ export interface MakeFilePrivateOptions {
   metadata?: Metadata;
   strict?: boolean;
   userProject?: string;
-  preconditionOpts?: PreconditionOptions
+  preconditionOpts?: PreconditionOptions;
 }
 
 export type MakeFilePrivateResponse = [Metadata];
@@ -1239,7 +1239,7 @@ class File extends ServiceObject<File> {
       this.storage.retryOptions.autoRetry = false;
     }
 
-    if (options.preconditionOpts?.ifGenerationMatch != undefined) {
+    if (options.preconditionOpts?.ifGenerationMatch !== undefined) {
       query.ifGenerationMatch = options.preconditionOpts?.ifGenerationMatch;
       delete options.preconditionOpts;
     }
@@ -3084,7 +3084,7 @@ class File extends ServiceObject<File> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 
-    if (options.preconditionOpts?.ifGenerationMatch != undefined) {
+    if (options.preconditionOpts?.ifGenerationMatch !== undefined) {
       query.ifGenerationMatch = options.preconditionOpts?.ifGenerationMatch;
       delete options.preconditionOpts;
     }
@@ -3706,7 +3706,7 @@ class File extends ServiceObject<File> {
       AvailableServiceObjectMethods.setMetadata,
       options
     );
-    
+
     super
       .setMetadata(metadata, options)
       .then(resp => cb!(null, ...resp))

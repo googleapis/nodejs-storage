@@ -71,7 +71,7 @@ import {SetMetadataOptions} from './nodejs-common/service-object';
 
 interface SourceObject {
   name: string;
-  generation?: number; 
+  generation?: number;
 }
 
 interface CreateNotificationQuery {
@@ -345,7 +345,7 @@ export interface Labels {
   [key: string]: string;
 }
 
-export interface SetLabelsOptions extends PreconditionOptions{
+export interface SetLabelsOptions extends PreconditionOptions {
   userProject?: string;
 }
 
@@ -2034,11 +2034,18 @@ class Bucket extends ServiceObject {
   }
 
   deleteLabels(labels?: string | string[]): Promise<DeleteLabelsResponse>;
-  deleteLabels(options: DeleteLabelsOptions ): Promise<DeleteLabelsResponse>;
+  deleteLabels(options: DeleteLabelsOptions): Promise<DeleteLabelsResponse>;
   deleteLabels(callback: DeleteLabelsCallback): void;
-  deleteLabels(labels: string | string[], options: DeleteLabelsOptions):  Promise<DeleteLabelsResponse>;
+  deleteLabels(
+    labels: string | string[],
+    options: DeleteLabelsOptions
+  ): Promise<DeleteLabelsResponse>;
   deleteLabels(labels: string | string[], callback: DeleteLabelsCallback): void;
-  deleteLabels(labels: string | string[], options: DeleteLabelsOptions, callback: DeleteLabelsCallback): void;
+  deleteLabels(
+    labels: string | string[],
+    options: DeleteLabelsOptions,
+    callback: DeleteLabelsCallback
+  ): void;
   /**
    * @typedef {array} DeleteLabelsResponse
    * @property {object} 0 The full API response.
@@ -2053,7 +2060,7 @@ class Bucket extends ServiceObject {
    *
    * @param {string|string[]} [labels] The labels to delete. If no labels are
    *     provided, all of the labels are removed.
-   * @param {DeleteLabelsCallback | DeleteLabelsOptions} [optionsOrCallback] 
+   * @param {DeleteLabelsCallback | DeleteLabelsOptions} [optionsOrCallback]
    * Callback function or precondition options.
    * @returns {Promise<DeleteLabelsResponse>}
    *
@@ -2090,7 +2097,11 @@ class Bucket extends ServiceObject {
    * ```
    */
   deleteLabels(
-    labelsOrCallbackOrOptions?: string | string[] | DeleteLabelsCallback | DeleteLabelsOptions,
+    labelsOrCallbackOrOptions?:
+      | string
+      | string[]
+      | DeleteLabelsCallback
+      | DeleteLabelsOptions,
     optionsOrCallback?: DeleteLabelsCallback | DeleteLabelsOptions,
     callback?: DeleteLabelsCallback
   ): Promise<DeleteLabelsResponse> | void {
@@ -2099,7 +2110,10 @@ class Bucket extends ServiceObject {
 
     if (typeof labelsOrCallbackOrOptions === 'function') {
       callback = labelsOrCallbackOrOptions;
-    } else if (typeof labelsOrCallbackOrOptions === 'string' || Array.isArray(labelsOrCallbackOrOptions)){
+    } else if (
+      typeof labelsOrCallbackOrOptions === 'string' ||
+      Array.isArray(labelsOrCallbackOrOptions)
+    ) {
       labels = arrify(labelsOrCallbackOrOptions);
     } else if (labelsOrCallbackOrOptions) {
       options = labelsOrCallbackOrOptions;
@@ -2119,8 +2133,7 @@ class Bucket extends ServiceObject {
 
       if (options?.ifMetagenerationMatch !== undefined) {
         this.setLabels(nullLabelMap, options, callback!);
-      }
-      else {
+      } else {
         this.setLabels(nullLabelMap, callback!);
       }
     };
@@ -2138,7 +2151,9 @@ class Bucket extends ServiceObject {
     }
   }
 
-  disableRequesterPays(options?: DisableRequesterPaysOptions): Promise<DisableRequesterPaysResponse>;
+  disableRequesterPays(
+    options?: DisableRequesterPaysOptions
+  ): Promise<DisableRequesterPaysResponse>;
   disableRequesterPays(callback: DisableRequesterPaysCallback): void;
   disableRequesterPays(
     options: DisableRequesterPaysOptions,
@@ -2191,11 +2206,12 @@ class Bucket extends ServiceObject {
    * Example of disabling requester pays:
    */
   disableRequesterPays(
-    optionsOrCallback?: DisableRequesterPaysOptions | DisableRequesterPaysCallback,
+    optionsOrCallback?:
+      | DisableRequesterPaysOptions
+      | DisableRequesterPaysCallback,
     callback?: DisableRequesterPaysCallback
   ): Promise<DisableRequesterPaysResponse> | void {
-
-    let options: DisableRequesterPaysOptions = {}
+    let options: DisableRequesterPaysOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
     } else if (optionsOrCallback) {
@@ -2319,9 +2335,14 @@ class Bucket extends ServiceObject {
     })();
   }
 
-  enableRequesterPays(options?: EnableRequesterPaysOptions): Promise<EnableRequesterPaysResponse>;
+  enableRequesterPays(
+    options?: EnableRequesterPaysOptions
+  ): Promise<EnableRequesterPaysResponse>;
   enableRequesterPays(callback: EnableRequesterPaysCallback): void;
-  enableRequesterPays(options: EnableRequesterPaysOptions, callback: EnableRequesterPaysCallback): void;
+  enableRequesterPays(
+    options: EnableRequesterPaysOptions,
+    callback: EnableRequesterPaysCallback
+  ): void;
 
   /**
    * @typedef {array} EnableRequesterPaysResponse
@@ -2344,7 +2365,7 @@ class Bucket extends ServiceObject {
    * bucket owner, to have the requesting user assume the charges for the access
    * to your bucket and its contents.
    *
-   * @param {EnableRequesterPaysCallback | EnableRequesterPaysOptions} [optionsOrCallback] 
+   * @param {EnableRequesterPaysCallback | EnableRequesterPaysOptions} [optionsOrCallback]
    * Callback function or precondition options.
    * @returns {Promise<EnableRequesterPaysResponse>}
    *
@@ -2373,10 +2394,11 @@ class Bucket extends ServiceObject {
    * Example of enabling requester pays:
    */
   enableRequesterPays(
-    optionsOrCallback?: EnableRequesterPaysCallback | EnableRequesterPaysOptions,
+    optionsOrCallback?:
+      | EnableRequesterPaysCallback
+      | EnableRequesterPaysOptions,
     cb?: EnableRequesterPaysCallback
   ): Promise<EnableRequesterPaysResponse> | void {
-
     let options: EnableRequesterPaysOptions = {};
     if (typeof optionsOrCallback === 'function') {
       cb = optionsOrCallback;
@@ -3381,9 +3403,14 @@ class Bucket extends ServiceObject {
     return new Notification(this, id);
   }
 
-  removeRetentionPeriod(options?: SetBucketMetadataOptions): Promise<SetBucketMetadataResponse>;
+  removeRetentionPeriod(
+    options?: SetBucketMetadataOptions
+  ): Promise<SetBucketMetadataResponse>;
   removeRetentionPeriod(callback: SetBucketMetadataCallback): void;
-  removeRetentionPeriod(options: SetBucketMetadataOptions, callback: SetBucketMetadataCallback): void;
+  removeRetentionPeriod(
+    options: SetBucketMetadataOptions,
+    callback: SetBucketMetadataCallback
+  ): void;
   /**
    * Remove an already-existing retention policy from this bucket, if it is not
    * locked.
@@ -3549,7 +3576,8 @@ class Bucket extends ServiceObject {
 
     this.disableAutoRetryConditionallyIdempotent_(
       this.methods.setMetadata,
-      AvailableServiceObjectMethods.setMetadata, options
+      AvailableServiceObjectMethods.setMetadata,
+      options
     );
 
     super
@@ -3561,8 +3589,10 @@ class Bucket extends ServiceObject {
       });
   }
 
-  setRetentionPeriod(duration: number,
-    options?: SetBucketMetadataOptions): Promise<SetBucketMetadataResponse>;
+  setRetentionPeriod(
+    duration: number,
+    options?: SetBucketMetadataOptions
+  ): Promise<SetBucketMetadataResponse>;
   setRetentionPeriod(
     duration: number,
     callback: SetBucketMetadataCallback

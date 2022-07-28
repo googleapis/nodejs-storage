@@ -114,7 +114,7 @@ export interface CreateCallback<T> {
 }
 
 export type DeleteOptions = {
-  ignoreNotFound?: boolean
+  ignoreNotFound?: boolean;
   ifGenerationMatch?: number;
   ifGenerationNotMatch?: number;
   ifMetagenerationMatch?: number;
@@ -288,8 +288,6 @@ class ServiceObject<T = any> extends EventEmitter {
     const ignoreNotFound = options.ignoreNotFound!;
     delete options.ignoreNotFound;
 
-
-    
     const methodConfig =
       (typeof this.methods.delete === 'object' && this.methods.delete) || {};
 

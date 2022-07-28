@@ -4170,9 +4170,13 @@ describe('File', () => {
         return newFile;
       };
 
-      file.copy = (destination: string, options: object, callback: Function) => {
+      file.copy = (
+        destination: string,
+        options: object,
+        callback: Function
+      ) => {
         assert.strictEqual(destination, newFile);
-        assert.deepStrictEqual(options, {})
+        assert.deepStrictEqual(options, {});
         callback(); // done()
       };
 
