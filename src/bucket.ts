@@ -1945,6 +1945,9 @@ class Bucket extends ServiceObject {
    * breaks the loop and will execute the provided callback with it. Specify
    * `{ force: true }` to suppress the errors until all files have had a chance
    * to be processed.
+   * 
+   * File preconditions cannot be passed to this function. It will not retry unless
+   * the idempotency strategy is set to retry always.
    *
    * The `query` object passed as the first argument will also be passed to
    * {@link Bucket#getFiles}.
@@ -2060,8 +2063,8 @@ class Bucket extends ServiceObject {
    *
    * @param {string|string[]} [labels] The labels to delete. If no labels are
    *     provided, all of the labels are removed.
-   * @param {DeleteLabelsCallback | DeleteLabelsOptions} [optionsOrCallback]
-   * Callback function or precondition options.
+   * @param {DeleteLabelsCallback} [callback] Callback function.
+   * @param {DeleteLabelsOptions} [options] Options, including precondition options
    * @returns {Promise<DeleteLabelsResponse>}
    *
    * @example
@@ -2179,6 +2182,7 @@ class Bucket extends ServiceObject {
    * Disable `requesterPays` functionality from this bucket.
    *
    * @param {DisableRequesterPaysCallback} [callback] Callback function.
+   * @param {DisableRequesterPaysOptions} [options] Options, including precondition options
    * @returns {Promise<DisableRequesterPaysCallback>}
    *
    * @example
@@ -3416,6 +3420,7 @@ class Bucket extends ServiceObject {
    * locked.
    *
    * @param {SetBucketMetadataCallback} [callback] Callback function.
+   * @param {SetBucketMetadataOptions} [options] Options, including precondition options
    * @returns {Promise<SetBucketMetadataResponse>}
    *
    * @example

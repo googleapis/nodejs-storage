@@ -90,16 +90,8 @@ export async function deleteBucket(bucket: Bucket) {
   await bucket.delete();
 }
 
-export async function deleteFilesInstancePrecondition(bucket: Bucket) {
-  await bucket.deleteFiles();
-}
-
-export async function deleteFiles(bucket: Bucket) {
-  //TODO -- how to pass preconditions on the file?
-  await bucket.deleteFiles({
-    ifMetagenerationMatch: 2,
-  });
-}
+// Note: bucket.deleteFiles is missing from these tests
+// Preconditions cannot be implemented with current setup.
 
 export async function deleteLabelsInstancePrecondition(bucket: Bucket) {
   await bucket.deleteLabels();

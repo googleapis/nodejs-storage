@@ -79,9 +79,7 @@
         "createResumableUpload"
     ],
     "storage.objects.delete": [
-        "deleteFilesInstancePrecondition",
         "fileDeleteInstancePrecondition",
-        "deleteFiles",
         "fileDelete"
     ],
     "storage.objects.get": [
