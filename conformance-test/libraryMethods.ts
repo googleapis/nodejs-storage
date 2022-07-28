@@ -102,7 +102,7 @@ export async function deleteFiles(bucket: Bucket) {
 }
 
 export async function deleteLabelsInstancePrecondition(bucket: Bucket) {
-  bucket.deleteLabels(() => {});
+  await bucket.deleteLabels();
 }
 
 export async function deleteLabels(bucket: Bucket) {
