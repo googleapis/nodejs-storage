@@ -2038,6 +2038,7 @@ class Bucket extends ServiceObject {
   deleteLabels(callback: DeleteLabelsCallback): void;
   deleteLabels(labels: string | string[], options: DeleteLabelsOptions):  Promise<DeleteLabelsResponse>;
   deleteLabels(labels: string | string[], callback: DeleteLabelsCallback): void;
+  deleteLabels(labels: string | string[], options: DeleteLabelsOptions, callback: DeleteLabelsCallback): void;
   /**
    * @typedef {array} DeleteLabelsResponse
    * @property {object} 0 The full API response.
@@ -2091,10 +2092,10 @@ class Bucket extends ServiceObject {
   deleteLabels(
     labelsOrCallbackOrOptions?: string | string[] | DeleteLabelsCallback | DeleteLabelsOptions,
     optionsOrCallback?: DeleteLabelsCallback | DeleteLabelsOptions,
+    callback?: DeleteLabelsCallback
   ): Promise<DeleteLabelsResponse> | void {
     let labels = new Array<string>();
     let options: DeleteLabelsOptions = {};
-    let callback: DeleteLabelsCallback;
 
     if (typeof labelsOrCallbackOrOptions === 'function') {
       callback = labelsOrCallbackOrOptions;
