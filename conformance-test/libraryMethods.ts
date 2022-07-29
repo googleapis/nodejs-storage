@@ -680,7 +680,7 @@ export async function deleteHMAC(options: ConformanceTestOptions) {
   const metadata = {
     state: 'INACTIVE',
   };
-  options.hmacKey!.setMetadata(metadata);
+  await options.hmacKey!.setMetadata(metadata);
   await options.hmacKey!.delete();
 }
 
