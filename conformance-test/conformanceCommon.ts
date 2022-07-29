@@ -134,20 +134,18 @@ export function executeScenario(testCase: RetryTestCase) {
           });
 
           it(`${instructionNumber}`, async () => {
-            let methodParameters : libraryMethods.ConformanceTestOptions = {
+            const methodParameters: libraryMethods.ConformanceTestOptions = {
               bucket: bucket,
               file: file,
               notification: notification,
               storage: storage,
               hmacKey: hmacKey,
-            }
+            };
             if (testCase.preconditionProvided) {
-                methodParameters.preconditionRequired = true;
+              methodParameters.preconditionRequired = true;
             }
             if (testCase.expectSuccess) {
-              assert.ifError(
-                await storageMethodObject(methodParameters)
-              );
+              assert.ifError(await storageMethodObject(methodParameters));
             } else {
               await assert.rejects(async () => {
                 await storageMethodObject(methodParameters);

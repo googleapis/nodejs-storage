@@ -22,7 +22,7 @@ import arrify = require('arrify');
 
 import {Bucket} from './bucket';
 import {normalize} from './util';
-import { PreconditionOptions } from './storage';
+import {PreconditionOptions} from './storage';
 
 export interface GetPolicyOptions {
   userProject?: string;
@@ -345,7 +345,7 @@ class Iam {
       SetPolicyCallback
     >(optionsOrCallback, callback);
 
-    let maxRetries = 0; // We don't support ETag
+    const maxRetries = 0; // We don't support ETag
     this.request_(
       {
         method: 'PUT',
@@ -360,7 +360,7 @@ class Iam {
         qs: options,
       },
       cb
-    )
+    );
   }
 
   testPermissions(

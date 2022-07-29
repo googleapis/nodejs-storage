@@ -25,17 +25,17 @@ const TIME_TO_WAIT_FOR_CONTAINER_READY = 10000;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function mochaGlobalSetup(this: any) {
   // Increase the timeout for this before block so that the docker images have time to download and run.
-  this.suite._timeout = TIMEOUT_FOR_DOCKER_OPS;
-  await getTestBenchDockerImage();
-  await runTestBenchDockerImage();
-  await new Promise(resolve =>
-    setTimeout(resolve, TIME_TO_WAIT_FOR_CONTAINER_READY)
-  );
+  // this.suite._timeout = TIMEOUT_FOR_DOCKER_OPS;
+  // await getTestBenchDockerImage();
+  // await runTestBenchDockerImage();
+  // await new Promise(resolve =>
+  //   setTimeout(resolve, TIME_TO_WAIT_FOR_CONTAINER_READY)
+  // );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function mochaGlobalTeardown(this: any) {
   // Increase the timeout for this block so that docker has time to stop the container.
-  this.suite._timeout = TIMEOUT_FOR_DOCKER_OPS;
-  await stopTestBenchDockerImage();
+  // this.suite._timeout = TIMEOUT_FOR_DOCKER_OPS;
+  // await stopTestBenchDockerImage();
 }

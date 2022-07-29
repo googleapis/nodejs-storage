@@ -15,7 +15,6 @@
 import {Bucket, File, Notification, Storage, HmacKey} from '../src';
 import * as path from 'path';
 import {ApiError} from '../src/nodejs-common';
-import { option } from 'yargs';
 
 export interface ConformanceTestOptions {
   bucket?: Bucket;
@@ -54,16 +53,13 @@ export async function addLifecycleRule(options: ConformanceTestOptions) {
         ifMetagenerationMatch: 2,
       }
     );
-  }
-  else {
-    await options.bucket!.addLifecycleRule(
-      {
-        action: 'delete',
-        condition: {
-          age: 365 * 3, // Specified in days.
-        },
-      }
-    );
+  } else {
+    await options.bucket!.addLifecycleRule({
+      action: 'delete',
+      condition: {
+        age: 365 * 3, // Specified in days.
+      },
+    });
   }
 }
 
@@ -82,8 +78,7 @@ export async function combineInstancePrecondition(
         ifGenerationMatch: 0,
       },
     });
-  }
-  else {
+  } else {
     allFiles = options.bucket!.file('all-files.txt');
   }
 
@@ -102,8 +97,7 @@ export async function combine(options: ConformanceTestOptions) {
     await options.bucket!.combine(sources, allFiles, {
       ifGenerationMatch: allFiles.metadata.generation,
     });
-  }
-  else {
+  } else {
     await options.bucket!.combine(sources, allFiles);
   }
 }
@@ -142,8 +136,7 @@ export async function deleteLabels(options: ConformanceTestOptions) {
     await options.bucket!.deleteLabels({
       ifMetagenerationMatch: 2,
     });
-  }
-  else {
+  } else {
     await options.bucket!.deleteLabels();
   }
 }
@@ -159,8 +152,7 @@ export async function disableRequesterPays(options: ConformanceTestOptions) {
     await options.bucket!.disableRequesterPays({
       ifMetagenerationMatch: 2,
     });
-  }
-  else {
+  } else {
     await options.bucket!.disableRequesterPays();
   }
 }
@@ -181,8 +173,7 @@ export async function enableLogging(options: ConformanceTestOptions) {
       prefix: 'log',
       ifMetagenerationMatch: 2,
     };
-  }
-  else {
+  } else {
     config = {
       prefix: 'log',
     };
@@ -201,8 +192,7 @@ export async function enableRequesterPays(options: ConformanceTestOptions) {
     await options.bucket!.enableRequesterPays({
       ifMetagenerationMatch: 2,
     });
-  }
-  else {
+  } else {
     await options.bucket!.enableRequesterPays();
   }
 }
@@ -253,8 +243,7 @@ export async function bucketMakePrivate(options: ConformanceTestOptions) {
     await options.bucket!.makePrivate({
       preconditionOpts: {ifMetagenerationMatch: 2},
     });
-  }
-  else {
+  } else {
     await options.bucket!.makePrivate();
   }
 }
@@ -274,8 +263,7 @@ export async function removeRetentionPeriod(options: ConformanceTestOptions) {
     await options.bucket!.removeRetentionPeriod({
       ifMetagenerationMatch: 2,
     });
-  }
-  else {
+  } else {
     await options.bucket!.removeRetentionPeriod();
   }
 }
@@ -293,8 +281,7 @@ export async function setCorsConfiguration(options: ConformanceTestOptions) {
     await options.bucket!.setCorsConfiguration(corsConfiguration, {
       ifMetagenerationMatch: 2,
     });
-  }
-  else {
+  } else {
     await options.bucket!.setCorsConfiguration(corsConfiguration);
   }
 }
@@ -318,11 +305,9 @@ export async function setLabels(options: ConformanceTestOptions) {
     await options.bucket!.setLabels(labels, {
       ifMetagenerationMatch: 2,
     });
-  }
-  else {
+  } else {
     await options.bucket!.setLabels(labels);
   }
-
 }
 
 export async function bucketSetMetadataInstancePrecondition(
@@ -348,8 +333,7 @@ export async function bucketSetMetadata(options: ConformanceTestOptions) {
     await options.bucket!.setMetadata(metadata, {
       ifMetagenerationMatch: 2,
     });
-  }
-  else {
+  } else {
     await options.bucket!.setMetadata(metadata);
   }
 }
@@ -367,8 +351,7 @@ export async function setRetentionPeriod(options: ConformanceTestOptions) {
     await options.bucket!.setRetentionPeriod(DURATION_SECONDS, {
       ifMetagenerationMatch: 2,
     });
-  }
-  else {
+  } else {
     await options.bucket!.setRetentionPeriod(DURATION_SECONDS);
   }
 }
@@ -384,8 +367,7 @@ export async function bucketSetStorageClass(options: ConformanceTestOptions) {
     await options.bucket!.setStorageClass('nearline', {
       ifMetagenerationMatch: 2,
     });
-  }
-  else {
+  } else {
     await options.bucket!.setStorageClass('nearline');
   }
 }
@@ -414,8 +396,7 @@ export async function bucketUploadResumable(options: ConformanceTestOptions) {
       ),
       {preconditionOpts: {ifMetagenerationMatch: 2, ifGenerationMatch: 0}}
     );
-  }
-  else {
+  } else {
     await options.bucket!.upload(
       path.join(
         __dirname,
@@ -454,8 +435,7 @@ export async function bucketUploadMultipart(options: ConformanceTestOptions) {
       ),
       {resumable: false, preconditionOpts: {ifGenerationMatch: 0}}
     );
-  }
-  else {
+  } else {
     await options.bucket!.upload(
       path.join(
         __dirname,
@@ -478,8 +458,7 @@ export async function copy(options: ConformanceTestOptions) {
     await options.file!.copy('a-different-file.png', {
       preconditionOpts: {ifGenerationMatch: newFile.metadata.generation},
     });
-  }
-  else {
+  } else {
     await options.file!.copy('a-different-file.png');
   }
 }
@@ -505,11 +484,9 @@ export async function createResumableUpload(options: ConformanceTestOptions) {
     await options.file!.createResumableUpload({
       preconditionOpts: {ifGenerationMatch: 0},
     });
-  }
-  else {
+  } else {
     await options.file!.createResumableUpload();
   }
-
 }
 
 export async function fileDeleteInstancePrecondition(
@@ -523,8 +500,7 @@ export async function fileDelete(options: ConformanceTestOptions) {
     await options.file!.delete({
       ifGenerationMatch: options.file!.metadata.generation,
     });
-  }
-  else {
+  } else {
     await options.file!.delete();
   }
 }
@@ -566,8 +542,7 @@ export async function fileMakePrivate(options: ConformanceTestOptions) {
         ifGenerationMatch: options.file!.metadata.generation,
       },
     });
-  }
-  else {
+  } else {
     await options.file!.makePrivate();
   }
 }
@@ -581,11 +556,9 @@ export async function move(options: ConformanceTestOptions) {
     await options.file!.move('new-file', {
       preconditionOpts: {ifGenerationMatch: 0},
     });
-  }
-  else {
+  } else {
     await options.file!.move('new-file');
   }
-
 }
 
 export async function rename(options: ConformanceTestOptions) {
@@ -593,8 +566,7 @@ export async function rename(options: ConformanceTestOptions) {
     await options.file!.rename('new-name', {
       preconditionOpts: {ifGenerationMatch: 0},
     });
-  }
-  else {
+  } else {
     await options.file!.rename('new-name');
   }
 }
@@ -608,10 +580,10 @@ export async function rotateEncryptionKey(options: ConformanceTestOptions) {
       encryptionKey: Buffer.from(newKey, 'base64'),
       preconditionOpts: {ifGenerationMatch: options.file!.metadata.generation},
     });
-  }
-  else {
+  } else {
     await options.file!.rotateEncryptionKey({
-      encryptionKey: Buffer.from(newKey, 'base64')});
+      encryptionKey: Buffer.from(newKey, 'base64'),
+    });
   }
 }
 
@@ -630,8 +602,7 @@ export async function saveResumable(options: ConformanceTestOptions) {
         ifMetagenerationMatch: options.file!.metadata.metageneration,
       },
     });
-  }
-  else {
+  } else {
     await options.file!.save('testdata', {
       resumable: true,
     });
@@ -652,8 +623,7 @@ export async function saveMultipart(options: ConformanceTestOptions) {
         ifGenerationMatch: options.file!.metadata.generation,
       },
     });
-  }
-  else {
+  } else {
     await options.file!.save('testdata', {
       resumable: false,
     });
@@ -685,22 +655,20 @@ export async function setMetadata(options: ConformanceTestOptions) {
     await options.file!.setMetadata(metadata, {
       ifGenerationMatch: options.file!.metadata.generation,
     });
-  }
-  else {
+  } else {
     await options.file!.setMetadata(metadata);
   }
 }
 
 export async function setStorageClass(options: ConformanceTestOptions) {
   if (options.preconditionRequired) {
-    const result = await options.file!.setStorageClass('nearline', {
+    await options.file!.setStorageClass('nearline', {
       preconditionOpts: {
         ifGenerationMatch: options.file!.metadata.generation,
       },
     });
-  }
-  else {
-    const result = await options.file!.setStorageClass('nearline');
+  } else {
+    await options.file!.setStorageClass('nearline');
   }
 }
 

@@ -1945,7 +1945,7 @@ class Bucket extends ServiceObject {
    * breaks the loop and will execute the provided callback with it. Specify
    * `{ force: true }` to suppress the errors until all files have had a chance
    * to be processed.
-   * 
+   *
    * File preconditions cannot be passed to this function. It will not retry unless
    * the idempotency strategy is set to retry always.
    *
