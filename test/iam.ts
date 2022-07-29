@@ -17,7 +17,7 @@ import * as assert from 'assert';
 import {describe, it, before, beforeEach} from 'mocha';
 import * as proxyquire from 'proxyquire';
 import {IAMExceptionMessages} from '../src/iam';
-import { IdempotencyStrategy } from '../src';
+import {IdempotencyStrategy} from '../src';
 
 describe('storage/iam', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,9 +52,9 @@ describe('storage/iam', () => {
       storage: {
         retryOptions: {
           idempotencyStrategy: IdempotencyStrategy.RetryConditional,
-          maxRetries: 3
-        }
-      }
+          maxRetries: 3,
+        },
+      },
     };
 
     iam = new Iam(BUCKET_INSTANCE);
