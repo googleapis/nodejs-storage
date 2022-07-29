@@ -22,7 +22,7 @@ import arrify = require('arrify');
 
 import {Bucket} from './bucket';
 import {normalize} from './util';
-import {PreconditionOptions} from './storage';
+import {IdempotencyStrategy, PreconditionOptions} from './storage';
 
 export interface GetPolicyOptions {
   userProject?: string;
@@ -149,10 +149,12 @@ class Iam {
     callback: BodyResponseCallback
   ) => void;
   private resourceId_: string;
+  private bucket_: Bucket;
 
   constructor(bucket: Bucket) {
     this.request_ = bucket.request.bind(bucket);
     this.resourceId_ = 'buckets/' + bucket.getId();
+    this.bucket_ = bucket;
   }
 
   getPolicy(options?: GetPolicyOptions): Promise<GetPolicyResponse>;
@@ -345,7 +347,14 @@ class Iam {
       SetPolicyCallback
     >(optionsOrCallback, callback);
 
-    const maxRetries = 0; // We don't support ETag
+    let maxRetries = this.bucket_.storage.retryOptions.maxRetries;
+    // ETag preconditions are not currently supported. Retries should be disabled if the idempotency strategy is not set to RetryAlways
+    if (
+      this.bucket_.storage.retryOptions.idempotencyStrategy !==
+      IdempotencyStrategy.RetryAlways
+    ) {
+      maxRetries = 0;
+    }
     this.request_(
       {
         method: 'PUT',
