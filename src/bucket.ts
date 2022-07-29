@@ -1512,6 +1512,12 @@ class Bucket extends ServiceObject {
       options = optionsOrCallback;
     }
 
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.setMetadata,
+      AvailableServiceObjectMethods.setMetadata,
+      options
+    );
+
     const convertToFile = (file: string | File): File => {
       if (file instanceof File) {
         return file;
@@ -1574,6 +1580,7 @@ class Bucket extends ServiceObject {
         qs: options,
       },
       (err, resp) => {
+        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
         if (err) {
           callback!(err, null, resp);
           return;
