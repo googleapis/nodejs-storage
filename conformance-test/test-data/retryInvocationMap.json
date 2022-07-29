@@ -127,7 +127,6 @@
         "getMetadataHMAC"
     ],
     "storage.hmacKey.update": [
-        "setMetadataHMAC"
     ],
     "storage.hmacKey.create": [
         "createHMACKey"
