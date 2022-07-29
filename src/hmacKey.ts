@@ -20,7 +20,7 @@ import {
   SetMetadataResponse,
 } from './nodejs-common';
 import {SetMetadataOptions} from './nodejs-common/service-object';
-import {Storage} from './storage';
+import {IdempotencyStrategy, Storage} from './storage';
 import {promisifyAll} from '@google-cloud/promisify';
 
 export interface HmacKeyOptions {
@@ -384,8 +384,13 @@ export class HmacKey extends ServiceObject<HmacKeyMetadata | undefined> {
     optionsOrCallback: SetMetadataOptions | MetadataCallback,
     cb?: MetadataCallback
   ): Promise<SetMetadataResponse> | void {
-    // ETag preconditions are not currently supported so retries should be disabled
-    this.storage.retryOptions.autoRetry = false;
+    // ETag preconditions are not currently supported. Retries should be disabled if the idempotency strategy is not set to RetryAlways
+    if (
+      this.storage.retryOptions.idempotencyStrategy !==
+      IdempotencyStrategy.RetryAlways
+    ) {
+      this.storage.retryOptions.autoRetry = false;
+    }
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb =
