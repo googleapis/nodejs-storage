@@ -1513,8 +1513,8 @@ class Bucket extends ServiceObject {
     }
 
     this.disableAutoRetryConditionallyIdempotent_(
-      this.methods.setMetadata,
-      AvailableServiceObjectMethods.setMetadata,
+      this.methods.setMetadata, // Not relevant but param is required
+      AvailableServiceObjectMethods.setMetadata, // Same as above
       options
     );
 
