@@ -73,7 +73,12 @@ import {HashStreamValidator} from './hash-stream-validator';
 import {URL} from 'url';
 
 import retry = require('async-retry');
-import {SetMetadataOptions} from './nodejs-common/service-object';
+import {
+  DeleteCallback,
+  DeleteOptions,
+  SetMetadataOptions,
+} from './nodejs-common/service-object';
+import * as r from 'teeny-request';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -2035,6 +2040,39 @@ class File extends ServiceObject<File> {
     return stream as Writable;
   }
 
+  /**
+   * Delete the object.
+   *
+   * @param {function=} callback - The callback function.
+   * @param {?error} callback.err - An error returned while making this request.
+   * @param {object} callback.apiResponse - The full API response.
+   */
+  delete(options?: DeleteOptions): Promise<[r.Response]>;
+  delete(options: DeleteOptions, callback: DeleteCallback): void;
+  delete(callback: DeleteCallback): void;
+  delete(
+    optionsOrCallback?: DeleteOptions | DeleteCallback,
+    cb?: DeleteCallback
+  ): Promise<[r.Response]> | void {
+    const options =
+      typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
+    cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : cb;
+
+    this.disableAutoRetryConditionallyIdempotent_(
+      this.methods.delete,
+      AvailableServiceObjectMethods.delete,
+      options
+    );
+
+    super
+      .delete(options)
+      .then(resp => cb!(null, ...resp))
+      .catch(cb!)
+      .finally(() => {
+        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
+      });
+  }
+
   download(options?: DownloadOptions): Promise<DownloadResponse>;
   download(options: DownloadOptions, callback: DownloadCallback): void;
   download(callback: DownloadCallback): void;
@@ -3987,7 +4025,8 @@ class File extends ServiceObject<File> {
       (typeof coreOpts === 'object' &&
         coreOpts?.reqOpts?.qs?.ifGenerationMatch === undefined &&
         localPreconditionOptions?.ifGenerationMatch === undefined &&
-        methodType === AvailableServiceObjectMethods.setMetadata &&
+        (methodType === AvailableServiceObjectMethods.setMetadata ||
+          methodType === AvailableServiceObjectMethods.delete) &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
