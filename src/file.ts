@@ -4025,7 +4025,8 @@ class File extends ServiceObject<File> {
       (typeof coreOpts === 'object' &&
         coreOpts?.reqOpts?.qs?.ifGenerationMatch === undefined &&
         localPreconditionOptions?.ifGenerationMatch === undefined &&
-        methodType === AvailableServiceObjectMethods.setMetadata &&
+        (methodType === AvailableServiceObjectMethods.setMetadata ||
+          methodType === AvailableServiceObjectMethods.delete) &&
         this.storage.retryOptions.idempotencyStrategy ===
           IdempotencyStrategy.RetryConditional) ||
       this.storage.retryOptions.idempotencyStrategy ===
