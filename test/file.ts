@@ -3827,13 +3827,13 @@ describe('File', () => {
       });
     });
 
-    it('should correctly send a HEAD request', done => {
+    it('should correctly send a GET request', done => {
       fakeUtil.makeRequest = function (
         reqOpts: DecorateRequestOptions,
         config: object,
         callback: BodyResponseCallback
       ) {
-        assert.strictEqual(reqOpts.method, 'HEAD');
+        assert.strictEqual(reqOpts.method, 'GET');
         callback(null);
       };
       file.isPublic((err: ApiError) => {
