@@ -147,9 +147,7 @@ export function executeScenario(testCase: RetryTestCase) {
             if (testCase.expectSuccess) {
               assert.ifError(await storageMethodObject(methodParameters));
             } else {
-              await assert.rejects(async () => {
-                await storageMethodObject(methodParameters);
-              });
+              await assert.rejects(storageMethodObject(methodParameters));
             }
             const testBenchResult = await getTestBenchRetryTest(
               creationResult.id

@@ -875,6 +875,7 @@ export class Util {
 
     if (typeof reqOpts.maxRetries === 'number') {
       options.retries = reqOpts.maxRetries;
+      options.noResponseRetries = reqOpts.maxRetries;
     }
 
     if (!config.stream) {
