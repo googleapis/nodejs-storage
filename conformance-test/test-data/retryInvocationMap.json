@@ -67,7 +67,11 @@
         "setStorageClass"
     ],
     "storage.objects.insert": [
-        "bucketUploadResumableInstancePrecondition"
+        "bucketUploadResumable",
+        "saveResumable",
+        "bucketUploadMultipart",
+        "saveMultipart",
+        "createResumableUpload"
     ],
     "storage.objects.delete": [
         "fileDeleteInstancePrecondition",
