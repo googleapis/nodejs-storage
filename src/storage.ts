@@ -271,12 +271,10 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
 
   if (err) {
     if ([408, 429, 500, 502, 503, 504].indexOf(err.code!) !== -1) {
-      console.log("error code is number")
       return true;
     }
 
     if (typeof err.code === 'string') {
-      console.log("hit string case")
       const reason = (err.code as string).toLowerCase();
       if (isConnectionProblem(reason)) {
         return true;
@@ -284,7 +282,6 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
     }
 
     if (err.errors) {
-      console.log("e.errors")
       for (const e of err.errors) {
         const reason = e?.reason?.toString().toLowerCase();
         if (isConnectionProblem(reason)) {
