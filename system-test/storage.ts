@@ -367,10 +367,12 @@ describe('storage', () => {
         try {
           await bucket.makePublic();
           await bucket.makePrivate();
-          await bucket.acl.get({entity: 'allUsers'});
+          assert.rejects(bucket.acl.get({entity: 'allUsers'}), err => {
+            assert.strictEqual((err as ApiError).code, 404);
+            assert.strictEqual((err as ApiError).errors![0].reason, 'notFound');
+          });
         } catch (err) {
-          assert.strictEqual((err as ApiError).code, 404);
-          assert.strictEqual((err as ApiError).errors![0].reason, 'notFound');
+          assert.ifError(err);
         }
       });
 
