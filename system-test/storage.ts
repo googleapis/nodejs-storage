@@ -363,22 +363,15 @@ describe('storage', () => {
         ]);
       });
 
-      it('should make a bucket private', done => {
-        bucket.makePublic(err => {
-          assert.ifError(err);
-          bucket.makePrivate(err => {
-            assert.ifError(err);
-            bucket.acl.get({entity: 'allUsers'}, (err, aclObject) => {
-              assert.strictEqual((err as ApiError).code, 404);
-              assert.strictEqual(
-                (err as ApiError).errors![0].reason,
-                'notFound'
-              );
-              assert.strictEqual(aclObject, null);
-              done();
-            });
-          });
-        });
+      it('should make a bucket private', async () => {
+        try {
+          await bucket.makePublic();
+          await bucket.makePrivate();
+          await bucket.acl.get({entity: 'allUsers'});
+        } catch (err) {
+          assert.strictEqual((err as ApiError).code, 404);
+          assert.strictEqual((err as ApiError).errors![0].reason, 'notFound');
+        }
       });
 
       it('should make files private', async () => {
