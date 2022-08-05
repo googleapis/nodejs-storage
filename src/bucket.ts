@@ -2321,6 +2321,13 @@ class Bucket extends ServiceObject {
       ? (config.bucket as Bucket).id || config.bucket
       : this.id;
 
+    const options: PreconditionOptions = {};
+    if (config?.ifMetagenerationMatch) {
+      options.ifMetagenerationMatch = config.ifMetagenerationMatch;
+    }
+    if (config?.ifMetagenerationNotMatch) {
+      options.ifMetagenerationNotMatch = config.ifMetagenerationNotMatch;
+    }
     (async () => {
       try {
         const [policy] = await this.iam.getPolicy();
@@ -2336,7 +2343,7 @@ class Bucket extends ServiceObject {
               logObjectPrefix: config.prefix,
             },
           },
-          config,
+          options,
           callback!
         );
       } catch (e) {
