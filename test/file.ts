@@ -1916,8 +1916,10 @@ describe('File', () => {
       const uploadStream = new PassThrough();
 
       file.startResumableUpload_ = (dup: duplexify.Duplexify) => {
-        dup.setWritable(uploadStream);
-        uploadStream.emit('error', error);
+        process.nextTick(() => {
+          dup.setWritable(uploadStream);
+          uploadStream.emit('error', error);
+        });
       };
 
       const writable = file.createWriteStream();
