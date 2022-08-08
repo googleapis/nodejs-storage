@@ -107,6 +107,7 @@
         "iamGetPolicy"
     ],
     "storage.buckets.setIamPolicy": [
+        "iamSetPolicy"
     ],
     "storage.buckets.testIamPermission": [
         "iamTestPermissions"

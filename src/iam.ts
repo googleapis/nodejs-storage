@@ -345,7 +345,11 @@ class Iam {
       SetPolicyCallback
     >(optionsOrCallback, callback);
 
-    const maxRetries = 0; // We don't support ETag
+    let maxRetries; 
+    if (policy.etag === undefined) {
+      maxRetries = 0;
+    }
+    
     this.request_(
       {
         method: 'PUT',

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Bucket, File, Notification, Storage, HmacKey} from '../src';
+import {Bucket, File, Notification, Storage, HmacKey, Policy} from '../src';
 import * as path from 'path';
 import {ApiError} from '../src/nodejs-common';
 
@@ -705,6 +705,22 @@ export async function setMetadataHMAC(options: ConformanceTestOptions) {
 
 export async function iamGetPolicy(options: ConformanceTestOptions) {
   await options.bucket!.iam.getPolicy({requestedPolicyVersion: 1});
+}
+
+export async function iamSetPolicy(options: ConformanceTestOptions) {
+  let testPolicy : Policy = {
+    bindings: [
+      {
+        role: 'roles/storage.admin',
+        members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com'],
+      },
+    ],
+  };
+  if (options.preconditionRequired) {
+    const currentPolicy = await options.bucket!.iam.getPolicy();
+    testPolicy.etag = currentPolicy[0].etag;
+  }
+  await options.bucket!.iam.setPolicy(testPolicy);
 }
 
 export async function iamTestPermissions(options: ConformanceTestOptions) {
