@@ -22,7 +22,6 @@ import arrify = require('arrify');
 
 import {Bucket} from './bucket';
 import {normalize} from './util';
-import {PreconditionOptions} from './storage';
 
 export interface GetPolicyOptions {
   userProject?: string;
