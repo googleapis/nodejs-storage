@@ -46,7 +46,7 @@ export interface GetPolicyCallback {
  * @param {string} [userProject] The ID of the project which will be
  *     billed for the request.
  */
-export interface SetPolicyOptions extends PreconditionOptions {
+export interface SetPolicyOptions {
   userProject?: string;
 }
 
