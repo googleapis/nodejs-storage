@@ -344,11 +344,11 @@ class Iam {
       SetPolicyCallback
     >(optionsOrCallback, callback);
 
-    let maxRetries; 
+    let maxRetries;
     if (policy.etag === undefined) {
       maxRetries = 0;
     }
-    
+
     this.request_(
       {
         method: 'PUT',

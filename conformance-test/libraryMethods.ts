@@ -708,7 +708,7 @@ export async function iamGetPolicy(options: ConformanceTestOptions) {
 }
 
 export async function iamSetPolicy(options: ConformanceTestOptions) {
-  let testPolicy : Policy = {
+  const testPolicy: Policy = {
     bindings: [
       {
         role: 'roles/storage.admin',
