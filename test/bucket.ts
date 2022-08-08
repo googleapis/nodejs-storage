@@ -1407,8 +1407,8 @@ describe('Bucket', () => {
       bucket.setMetadata = () => {
         Promise.resolve().then(() => {
           assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+          done();
         });
-        done();
       };
       bucket.disableRequesterPays();
     });
