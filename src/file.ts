@@ -1535,9 +1535,10 @@ class File extends ServiceObject<File> {
           throughStream.end();
           return;
         }
-        
+
         // Did the server decompress object before serving it back to us?
-        const serverDecompressed = headers['x-goog-stored-content-encoding'] == "gzip" && !isCompressed;
+        const serverDecompressed =
+          headers['x-goog-stored-content-encoding'] == 'gzip' && !isCompressed;
 
         if (serverDecompressed) {
           try {
