@@ -33,7 +33,9 @@ objects to users via direct download.
   * [Configure Retries](#configure-retries)
   * [Copy File](#copy-file)
   * [Copy Old Version Of File.](#copy-old-version-of-file.)
+  * [Create a Dual-Region Bucket](#create-a-dual-region-bucket)
   * [Create Bucket With Storage Class and Location.](#create-bucket-with-storage-class-and-location.)
+  * [Create Bucket With Turbo Replication](#create-bucket-with-turbo-replication)
   * [Create New Bucket](#create-new-bucket)
   * [Create Notification](#create-notification)
   * [Delete Bucket](#delete-bucket)
@@ -45,9 +47,11 @@ objects to users via direct download.
   * [Disable Default Event Based Hold](#disable-default-event-based-hold)
   * [Disable Requester Pays](#disable-requester-pays)
   * [Disable Uniform Bucket Level Access](#disable-uniform-bucket-level-access)
+  * [Download Byte Range](#download-byte-range)
   * [Download Encrypted File](#download-encrypted-file)
   * [Download File](#download-file)
   * [Download File Using Requester Pays](#download-file-using-requester-pays)
+  * [Download Into Memory](#download-into-memory)
   * [Storage Download Public File.](#storage-download-public-file.)
   * [Enable Bucket Lifecycle Management](#enable-bucket-lifecycle-management)
   * [Storage Enable Bucket Versioning.](#storage-enable-bucket-versioning.)
@@ -66,6 +70,7 @@ objects to users via direct download.
   * [Get Metadata](#get-metadata)
   * [Get Metadata Notifications](#get-metadata-notifications)
   * [Get Public Access Prevention](#get-public-access-prevention)
+  * [Get RPO](#get-rpo)
   * [Get Requester Pays Status](#get-requester-pays-status)
   * [Get Retention Policy](#get-retention-policy)
   * [Storage Get Service Account.](#storage-get-service-account.)
@@ -104,10 +109,12 @@ objects to users via direct download.
   * [Remove Retention Policy](#remove-retention-policy)
   * [Rename File](#rename-file)
   * [Rotate Encryption Key](#rotate-encryption-key)
+  * [Set Client Endpoint](#set-client-endpoint)
   * [Set Event Based Hold](#set-event-based-hold)
   * [Set Public Access Prevention Enforced](#set-public-access-prevention-enforced)
   * [Set Public Access Prevention Inherited](#set-public-access-prevention-inherited)
-  * [Set Public Access Prevention Unspecified](#set-public-access-prevention-unspecified)
+  * [Set RPO Async Turbo](#set-rpo-async-turbo)
+  * [Set RPO Default](#set-rpo-default)
   * [Set Retention Policy](#set-retention-policy)
   * [Set Temporary Hold](#set-temporary-hold)
   * [Stream File Download](#stream-file-download)
@@ -116,6 +123,9 @@ objects to users via direct download.
   * [Upload Encrypted File](#upload-encrypted-file)
   * [Upload File](#upload-file)
   * [Upload File With Kms Key](#upload-file-with-kms-key)
+  * [Upload From Memory](#upload-from-memory)
+  * [Upload Without Authentication](#upload-without-authentication)
+  * [Upload Without Authentication Signed Url](#upload-without-authentication-signed-url)
   * [View Bucket Iam Members](#view-bucket-iam-members)
 
 ## Before you begin
@@ -404,6 +414,25 @@ __Usage:__
 
 
 
+### Create a Dual-Region Bucket
+
+Create a Dual-Region Bucket with provided location and regions.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithDualRegion.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithDualRegion.js,samples/README.md)
+
+__Usage:__
+
+
+`node createBucketWithDualRegion.js <BUCKET_NAME> <LOCATION> <REGION1> <REGION2>`
+
+
+-----
+
+
+
+
 ### Create Bucket With Storage Class and Location.
 
 Create Bucket With Storage Class and Location.
@@ -416,6 +445,23 @@ __Usage:__
 
 
 `node createBucketWithStorageClassAndLocation.js <BUCKET_NAME> <CLASS_NAME> <LOCATION>`
+
+
+-----
+
+
+
+
+### Create Bucket With Turbo Replication
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithTurboReplication.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithTurboReplication.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/createBucketWithTurboReplication.js`
 
 
 -----
@@ -614,6 +660,23 @@ __Usage:__
 
 
 
+### Download Byte Range
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/downloadByteRange.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/downloadByteRange.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/downloadByteRange.js`
+
+
+-----
+
+
+
+
 ### Download Encrypted File
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/downloadEncryptedFile.js).
@@ -658,6 +721,23 @@ __Usage:__
 
 
 `node samples/downloadFileUsingRequesterPays.js`
+
+
+-----
+
+
+
+
+### Download Into Memory
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/downloadIntoMemory.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/downloadIntoMemory.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/downloadIntoMemory.js`
 
 
 -----
@@ -972,6 +1052,23 @@ __Usage:__
 
 
 `node samples/getPublicAccessPrevention.js`
+
+
+-----
+
+
+
+
+### Get RPO
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getRPO.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getRPO.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/getRPO.js`
 
 
 -----
@@ -1649,6 +1746,23 @@ __Usage:__
 
 
 
+### Set Client Endpoint
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setClientEndpoint.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setClientEndpoint.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/setClientEndpoint.js`
+
+
+-----
+
+
+
+
 ### Set Event Based Hold
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setEventBasedHold.js).
@@ -1700,16 +1814,33 @@ __Usage:__
 
 
 
-### Set Public Access Prevention Unspecified
+### Set RPO Async Turbo
 
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setPublicAccessPreventionUnspecified.js).
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setRPOAsyncTurbo.js).
 
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setPublicAccessPreventionUnspecified.js,samples/README.md)
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setRPOAsyncTurbo.js,samples/README.md)
 
 __Usage:__
 
 
-`node samples/setPublicAccessPreventionUnspecified.js`
+`node samples/setRPOAsyncTurbo.js`
+
+
+-----
+
+
+
+
+### Set RPO Default
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setRPODefault.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setRPODefault.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/setRPODefault.js`
 
 
 -----
@@ -1848,6 +1979,57 @@ __Usage:__
 
 
 `node samples/uploadFileWithKmsKey.js`
+
+
+-----
+
+
+
+
+### Upload From Memory
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadFromMemory.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadFromMemory.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/uploadFromMemory.js`
+
+
+-----
+
+
+
+
+### Upload Without Authentication
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadWithoutAuthentication.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadWithoutAuthentication.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/uploadWithoutAuthentication.js`
+
+
+-----
+
+
+
+
+### Upload Without Authentication Signed Url
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadWithoutAuthenticationSignedUrl.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadWithoutAuthenticationSignedUrl.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/uploadWithoutAuthenticationSignedUrl.js`
 
 
 -----

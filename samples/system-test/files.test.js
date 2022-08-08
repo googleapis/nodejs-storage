@@ -30,7 +30,9 @@ const storage = new Storage();
 const cwd = path.join(__dirname, '..');
 const bucketName = generateName();
 const bucket = storage.bucket(bucketName);
+const fileContents = 'these-are-my-contents';
 const fileName = 'test.txt';
+const memoryFileName = 'testmemory.txt';
 const movedFileName = 'test2.txt';
 const copiedFileName = 'test3.txt';
 const renamedFileName = 'test4.txt';
@@ -39,6 +41,8 @@ const kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US;
 const filePath = path.join(cwd, 'resources', fileName);
 const folderPath = path.join(cwd, 'resources');
 const downloadFilePath = path.join(cwd, 'downloaded.txt');
+const startByte = 0;
+const endByte = 20;
 
 const fileContent = fs.readFileSync(filePath, 'utf-8');
 
@@ -60,6 +64,38 @@ describe('file', () => {
       `node uploadFile.js ${bucketName} ${filePath} ${fileName}`
     );
     assert.match(output, new RegExp(`${filePath} uploaded to ${bucketName}`));
+    const [exists] = await bucket.file(fileName).exists();
+    assert.strictEqual(exists, true);
+  });
+
+  it('should upload a file from memory', async () => {
+    const output = execSync(
+      `node uploadFromMemory.js ${bucketName} ${fileContents} ${memoryFileName}`
+    );
+    assert.match(
+      output,
+      new RegExp(
+        `${memoryFileName} with contents ${fileContents} uploaded to ${bucketName}.`
+      )
+    );
+    const [exists] = await bucket.file(memoryFileName).exists();
+    assert.strictEqual(exists, true);
+  });
+
+  it('should upload a file without authentication', async () => {
+    const output = execSync(
+      `node uploadWithoutAuthentication.js ${bucketName} ${fileContents} ${fileName}`
+    );
+    assert.match(output, new RegExp(`${fileName} uploaded to ${bucketName}`));
+    const [exists] = await bucket.file(fileName).exists();
+    assert.strictEqual(exists, true);
+  });
+
+  it('should upload a file without authentication using signed url strategy', async () => {
+    const output = execSync(
+      `node uploadWithoutAuthenticationSignedUrl.js ${bucketName} ${fileContents} ${fileName}`
+    );
+    assert.match(output, new RegExp(`${fileName} uploaded to ${bucketName}`));
     const [exists] = await bucket.file(fileName).exists();
     assert.strictEqual(exists, true);
   });
@@ -143,6 +179,18 @@ describe('file', () => {
     fs.statSync(downloadFilePath);
   });
 
+  it('should download a file into memory', () => {
+    const output = execSync(
+      `node downloadIntoMemory.js ${bucketName} ${memoryFileName}`
+    );
+    assert.match(
+      output,
+      new RegExp(
+        `Contents of gs://${bucketName}/${memoryFileName} are ${fileContents}.`
+      )
+    );
+  });
+
   it('should download a file using a stream', () => {
     const output = execSync(
       `node streamFileDownload.js ${bucketName} ${fileName} ${downloadFilePath}`
@@ -151,6 +199,19 @@ describe('file', () => {
       output,
       new RegExp(
         `gs://${bucketName}/${fileName} downloaded to ${downloadFilePath}.`
+      )
+    );
+    fs.statSync(downloadFilePath);
+  });
+
+  it('should download a file using a given byte range', () => {
+    const output = execSync(
+      `node downloadByteRange.js ${bucketName} ${fileName} ${startByte} ${endByte} ${downloadFilePath}`
+    );
+    assert.match(
+      output,
+      new RegExp(
+        `gs://${bucketName}/${fileName} downloaded to ${downloadFilePath} from byte ${startByte} to byte ${endByte}.`
       )
     );
     fs.statSync(downloadFilePath);

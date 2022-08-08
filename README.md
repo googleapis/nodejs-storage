@@ -4,9 +4,8 @@
 
 # [Google Cloud Storage: Node.js Client](https://github.com/googleapis/nodejs-storage)
 
-[![release level](https://img.shields.io/badge/release%20level-general%20availability%20%28GA%29-brightgreen.svg?style=flat)](https://cloud.google.com/terms/launch-stages)
+[![release level](https://img.shields.io/badge/release%20level-stable-brightgreen.svg?style=flat)](https://cloud.google.com/terms/launch-stages)
 [![npm version](https://img.shields.io/npm/v/@google-cloud/storage.svg)](https://www.npmjs.org/package/@google-cloud/storage)
-[![codecov](https://img.shields.io/codecov/c/github/googleapis/nodejs-storage/main.svg?style=flat)](https://codecov.io/gh/googleapis/nodejs-storage)
 
 
 
@@ -115,7 +114,9 @@ Samples are in the [`samples/`](https://github.com/googleapis/nodejs-storage/tre
 | Configure Retries | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/configureRetries.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/configureRetries.js,samples/README.md) |
 | Copy File | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/copyFile.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/copyFile.js,samples/README.md) |
 | Copy Old Version Of File. | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/copyOldVersionOfFile.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/copyOldVersionOfFile.js,samples/README.md) |
+| Create a Dual-Region Bucket | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithDualRegion.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithDualRegion.js,samples/README.md) |
 | Create Bucket With Storage Class and Location. | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithStorageClassAndLocation.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithStorageClassAndLocation.js,samples/README.md) |
+| Create Bucket With Turbo Replication | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithTurboReplication.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithTurboReplication.js,samples/README.md) |
 | Create New Bucket | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createNewBucket.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createNewBucket.js,samples/README.md) |
 | Create Notification | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createNotification.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createNotification.js,samples/README.md) |
 | Delete Bucket | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/deleteBucket.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/deleteBucket.js,samples/README.md) |
@@ -127,9 +128,11 @@ Samples are in the [`samples/`](https://github.com/googleapis/nodejs-storage/tre
 | Disable Default Event Based Hold | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/disableDefaultEventBasedHold.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/disableDefaultEventBasedHold.js,samples/README.md) |
 | Disable Requester Pays | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/disableRequesterPays.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/disableRequesterPays.js,samples/README.md) |
 | Disable Uniform Bucket Level Access | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/disableUniformBucketLevelAccess.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/disableUniformBucketLevelAccess.js,samples/README.md) |
+| Download Byte Range | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/downloadByteRange.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/downloadByteRange.js,samples/README.md) |
 | Download Encrypted File | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/downloadEncryptedFile.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/downloadEncryptedFile.js,samples/README.md) |
 | Download File | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/downloadFile.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/downloadFile.js,samples/README.md) |
 | Download File Using Requester Pays | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/downloadFileUsingRequesterPays.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/downloadFileUsingRequesterPays.js,samples/README.md) |
+| Download Into Memory | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/downloadIntoMemory.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/downloadIntoMemory.js,samples/README.md) |
 | Storage Download Public File. | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/downloadPublicFile.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/downloadPublicFile.js,samples/README.md) |
 | Enable Bucket Lifecycle Management | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/enableBucketLifecycleManagement.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/enableBucketLifecycleManagement.js,samples/README.md) |
 | Storage Enable Bucket Versioning. | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/enableBucketVersioning.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/enableBucketVersioning.js,samples/README.md) |
@@ -148,6 +151,7 @@ Samples are in the [`samples/`](https://github.com/googleapis/nodejs-storage/tre
 | Get Metadata | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getMetadata.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getMetadata.js,samples/README.md) |
 | Get Metadata Notifications | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getMetadataNotifications.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getMetadataNotifications.js,samples/README.md) |
 | Get Public Access Prevention | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getPublicAccessPrevention.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getPublicAccessPrevention.js,samples/README.md) |
+| Get RPO | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getRPO.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getRPO.js,samples/README.md) |
 | Get Requester Pays Status | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getRequesterPaysStatus.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getRequesterPaysStatus.js,samples/README.md) |
 | Get Retention Policy | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getRetentionPolicy.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getRetentionPolicy.js,samples/README.md) |
 | Storage Get Service Account. | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getServiceAccount.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getServiceAccount.js,samples/README.md) |
@@ -186,10 +190,12 @@ Samples are in the [`samples/`](https://github.com/googleapis/nodejs-storage/tre
 | Remove Retention Policy | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/removeRetentionPolicy.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/removeRetentionPolicy.js,samples/README.md) |
 | Rename File | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/renameFile.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/renameFile.js,samples/README.md) |
 | Rotate Encryption Key | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/rotateEncryptionKey.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/rotateEncryptionKey.js,samples/README.md) |
+| Set Client Endpoint | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setClientEndpoint.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setClientEndpoint.js,samples/README.md) |
 | Set Event Based Hold | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setEventBasedHold.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setEventBasedHold.js,samples/README.md) |
 | Set Public Access Prevention Enforced | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setPublicAccessPreventionEnforced.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setPublicAccessPreventionEnforced.js,samples/README.md) |
 | Set Public Access Prevention Inherited | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setPublicAccessPreventionInherited.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setPublicAccessPreventionInherited.js,samples/README.md) |
-| Set Public Access Prevention Unspecified | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setPublicAccessPreventionUnspecified.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setPublicAccessPreventionUnspecified.js,samples/README.md) |
+| Set RPO Async Turbo | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setRPOAsyncTurbo.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setRPOAsyncTurbo.js,samples/README.md) |
+| Set RPO Default | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setRPODefault.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setRPODefault.js,samples/README.md) |
 | Set Retention Policy | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setRetentionPolicy.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setRetentionPolicy.js,samples/README.md) |
 | Set Temporary Hold | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setTemporaryHold.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setTemporaryHold.js,samples/README.md) |
 | Stream File Download | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/streamFileDownload.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/streamFileDownload.js,samples/README.md) |
@@ -198,6 +204,9 @@ Samples are in the [`samples/`](https://github.com/googleapis/nodejs-storage/tre
 | Upload Encrypted File | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadEncryptedFile.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadEncryptedFile.js,samples/README.md) |
 | Upload File | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadFile.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadFile.js,samples/README.md) |
 | Upload File With Kms Key | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadFileWithKmsKey.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadFileWithKmsKey.js,samples/README.md) |
+| Upload From Memory | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadFromMemory.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadFromMemory.js,samples/README.md) |
+| Upload Without Authentication | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadWithoutAuthentication.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadWithoutAuthentication.js,samples/README.md) |
+| Upload Without Authentication Signed Url | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadWithoutAuthenticationSignedUrl.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadWithoutAuthenticationSignedUrl.js,samples/README.md) |
 | View Bucket Iam Members | [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/viewBucketIamMembers.js) | [![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/viewBucketIamMembers.js,samples/README.md) |
 
 
@@ -210,32 +219,33 @@ also contains samples.
 Our client libraries follow the [Node.js release schedule](https://nodejs.org/en/about/releases/).
 Libraries are compatible with all current _active_ and _maintenance_ versions of
 Node.js.
+If you are using an end-of-life version of Node.js, we recommend that you update
+as soon as possible to an actively supported LTS version.
+
+Google's client libraries support legacy versions of Node.js runtimes on a
+best-efforts basis with the following warnings:
+
+* Legacy versions are not tested in continuous integration.
+* Some security patches and features cannot be backported.
+* Dependencies cannot be kept up-to-date.
 
 Client libraries targeting some end-of-life versions of Node.js are available, and
-can be installed via npm [dist-tags](https://docs.npmjs.com/cli/dist-tag).
+can be installed through npm [dist-tags](https://docs.npmjs.com/cli/dist-tag).
 The dist-tags follow the naming convention `legacy-(version)`.
-
-_Legacy Node.js versions are supported as a best effort:_
-
-* Legacy versions will not be tested in continuous integration.
-* Some security patches may not be able to be backported.
-* Dependencies will not be kept up-to-date, and features will not be backported.
-
-#### Legacy tags available
-
-* `legacy-8`: install client libraries from this dist-tag for versions
-  compatible with Node.js 8.
+For example, `npm install @google-cloud/storage@legacy-8` installs client libraries
+for versions compatible with Node.js 8.
 
 ## Versioning
 
 This library follows [Semantic Versioning](http://semver.org/).
 
 
-This library is considered to be **General Availability (GA)**. This means it
-is stable; the code surface will not change in backwards-incompatible ways
+
+This library is considered to be **stable**. The code surface will not change in backwards-incompatible ways
 unless absolutely necessary (e.g. because of critical security issues) or with
-an extensive deprecation period. Issues and requests against **GA** libraries
+an extensive deprecation period. Issues and requests against **stable** libraries
 are addressed with the highest priority.
+
 
 
 

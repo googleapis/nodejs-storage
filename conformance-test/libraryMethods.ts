@@ -14,19 +14,13 @@
 
 import {Bucket, File, Notification, Storage, HmacKey} from '../src';
 import * as path from 'path';
-import {ApiError} from '@google-cloud/common';
+import {ApiError} from '../src/nodejs-common';
 
 /////////////////////////////////////////////////
 //////////////////// BUCKET /////////////////////
 /////////////////////////////////////////////////
 
-export async function addLifecycleRule(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function addLifecycleRule(bucket: Bucket) {
   await bucket.addLifecycleRule({
     action: 'delete',
     condition: {
@@ -35,13 +29,12 @@ export async function addLifecycleRule(
   });
 }
 
-export async function combine(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function combine(bucket: Bucket) {
+  bucket = new Bucket(bucket.storage, bucket.name, {
+    preconditionOpts: {
+      ifMetagenerationMatch: 1,
+    },
+  });
   const file1 = bucket.file('file1.txt');
   const file2 = bucket.file('file2.txt');
   await file1.save('file1 contents');
@@ -58,120 +51,63 @@ export async function combine(
   });
   const sources = [f1WithPrecondition, f2WithPrecondition];
   const allFiles = bucket.file('all-files.txt');
+  // If we are using a precondition we must make sure the file exists and the metageneration matches that provided as a query parameter
+  await allFiles.save('allfiles contents');
   await bucket.combine(sources, allFiles);
 }
 
-export async function create(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function create(bucket: Bucket) {
+  const [bucketExists] = await bucket.exists();
+  if (bucketExists) {
+    await bucket.deleteFiles();
+    await bucket.delete({
+      ignoreNotFound: true,
+    });
+  }
   await bucket.create();
 }
 
-export async function createNotification(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function createNotification(bucket: Bucket) {
   await bucket.createNotification('my-topic');
 }
 
-export async function deleteBucket(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function deleteBucket(bucket: Bucket) {
   await bucket.deleteFiles();
   await bucket.delete();
 }
 
-export async function deleteFiles(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function deleteFiles(bucket: Bucket) {
   await bucket.deleteFiles();
 }
 
-export async function deleteLabels(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function deleteLabels(bucket: Bucket) {
   await bucket.deleteLabels();
 }
 
-export async function disableRequesterPays(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function disableRequesterPays(bucket: Bucket) {
   await bucket.disableRequesterPays();
 }
 
-export async function enableLogging(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function enableLogging(bucket: Bucket) {
   const config = {
     prefix: 'log',
   };
   await bucket.enableLogging(config);
 }
 
-export async function enableRequesterPays(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function enableRequesterPays(bucket: Bucket) {
   await bucket.enableRequesterPays();
 }
 
-export async function bucketExists(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function bucketExists(bucket: Bucket) {
   await bucket.exists();
 }
 
-export async function bucketGet(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function bucketGet(bucket: Bucket) {
   await bucket.get();
 }
 
-export async function getFilesStream(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function getFilesStream(bucket: Bucket) {
   return new Promise((resolve, reject) => {
     bucket
       .getFilesStream()
@@ -181,95 +117,41 @@ export async function getFilesStream(
   });
 }
 
-export async function getLabels(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function getLabels(bucket: Bucket) {
   await bucket.getLabels();
 }
 
-export async function bucketGetMetadata(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function bucketGetMetadata(bucket: Bucket) {
   await bucket.getMetadata();
 }
 
-export async function getNotifications(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function getNotifications(bucket: Bucket) {
   await bucket.getNotifications();
 }
 
-export async function lock(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function lock(bucket: Bucket) {
   const metageneration = 0;
   await bucket.lock(metageneration);
 }
 
-export async function bucketMakePrivate(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function bucketMakePrivate(bucket: Bucket) {
   await bucket.makePrivate();
 }
 
-export async function bucketMakePublic(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function bucketMakePublic(bucket: Bucket) {
   await bucket.makePublic();
 }
 
-export async function removeRetentionPeriod(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function removeRetentionPeriod(bucket: Bucket) {
   await bucket.removeRetentionPeriod();
 }
 
-export async function setCorsConfiguration(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function setCorsConfiguration(bucket: Bucket) {
   const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
   await bucket.setCorsConfiguration(corsConfiguration);
 }
 
-export async function setLabels(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function setLabels(bucket: Bucket) {
   const labels = {
     labelone: 'labelonevalue',
     labeltwo: 'labeltwovalue',
@@ -277,13 +159,7 @@ export async function setLabels(
   await bucket.setLabels(labels);
 }
 
-export async function bucketSetMetadata(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function bucketSetMetadata(bucket: Bucket) {
   const metadata = {
     website: {
       mainPageSuffix: 'http://example.com',
@@ -293,34 +169,19 @@ export async function bucketSetMetadata(
   await bucket.setMetadata(metadata);
 }
 
-export async function setRetentionPeriod(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function setRetentionPeriod(bucket: Bucket) {
   const DURATION_SECONDS = 15780000; // 6 months.
   await bucket.setRetentionPeriod(DURATION_SECONDS);
 }
 
-export async function bucketSetStorageClass(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function bucketSetStorageClass(bucket: Bucket) {
   await bucket.setStorageClass('nearline');
 }
 
-export async function bucketUploadResumable(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function bucketUploadResumable(bucket: Bucket) {
+  if (bucket.instancePreconditionOpts) {
+    bucket.instancePreconditionOpts.ifGenerationMatch = 0;
+  }
   await bucket.upload(
     path.join(
       __dirname,
@@ -330,13 +191,11 @@ export async function bucketUploadResumable(
   );
 }
 
-export async function bucketUploadMultipart(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function bucketUploadMultipart(bucket: Bucket) {
+  if (bucket.instancePreconditionOpts) {
+    delete bucket.instancePreconditionOpts.ifMetagenerationMatch;
+    bucket.instancePreconditionOpts.ifGenerationMatch = 0;
+  }
   await bucket.upload(
     path.join(
       __dirname,
@@ -350,23 +209,11 @@ export async function bucketUploadMultipart(
 //////////////////// FILE /////////////////////
 /////////////////////////////////////////////////
 
-export async function copy(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function copy(_bucket: Bucket, file: File) {
   await file.copy('a-different-file.png');
 }
 
-export async function createReadStream(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function createReadStream(_bucket: Bucket, file: File) {
   return new Promise((resolve, reject) => {
     file
       .createReadStream()
@@ -376,133 +223,55 @@ export async function createReadStream(
   });
 }
 
-export async function createResumableUpload(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function createResumableUpload(_bucket: Bucket, file: File) {
   await file.createResumableUpload();
 }
 
-export async function fileDelete(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function fileDelete(_bucket: Bucket, file: File) {
   await file.delete();
 }
 
-export async function download(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function download(_bucket: Bucket, file: File) {
   await file.download();
 }
 
-export async function exists(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function exists(_bucket: Bucket, file: File) {
   await file.exists();
 }
 
-export async function get(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function get(_bucket: Bucket, file: File) {
   await file.get();
 }
 
-export async function getExpirationDate(
-  bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function getExpirationDate(bucket: Bucket, file: File) {
   await file.getExpirationDate();
 }
 
-export async function getMetadata(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function getMetadata(_bucket: Bucket, file: File) {
   await file.getMetadata();
 }
 
-export async function isPublic(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function isPublic(_bucket: Bucket, file: File) {
   await file.isPublic();
 }
 
-export async function fileMakePrivate(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function fileMakePrivate(_bucket: Bucket, file: File) {
   await file.makePrivate();
 }
 
-export async function fileMakePublic(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function fileMakePublic(_bucket: Bucket, file: File) {
   await file.makePublic();
 }
 
-export async function move(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function move(_bucket: Bucket, file: File) {
   await file.move('new-file');
 }
 
-export async function rename(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function rename(_bucket: Bucket, file: File) {
   await file.rename('new-name');
 }
 
-export async function rotateEncryptionKey(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function rotateEncryptionKey(_bucket: Bucket, file: File) {
   const crypto = require('crypto');
   const buffer = crypto.randomBytes(32);
   const newKey = buffer.toString('base64');
@@ -511,33 +280,15 @@ export async function rotateEncryptionKey(
   });
 }
 
-export async function saveResumable(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function saveResumable(_bucket: Bucket, file: File) {
   await file.save('testdata', {resumable: true});
 }
 
-export async function saveMultipart(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function saveMultipart(_bucket: Bucket, file: File) {
   await file.save('testdata', {resumable: false});
 }
 
-export async function setMetadata(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function setMetadata(_bucket: Bucket, file: File) {
   const metadata = {
     contentType: 'application/x-font-ttf',
     metadata: {
@@ -548,13 +299,7 @@ export async function setMetadata(
   await file.setMetadata(metadata);
 }
 
-export async function setStorageClass(
-  _bucket: Bucket,
-  file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function setStorageClass(_bucket: Bucket, file: File) {
   const result = await file.setStorageClass('nearline');
   if (!result) {
     throw Error();
@@ -616,23 +361,11 @@ export async function setMetadataHMAC(
 ////////////////////// IAM //////////////////////
 /////////////////////////////////////////////////
 
-export async function iamGetPolicy(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function iamGetPolicy(bucket: Bucket) {
   await bucket.iam.getPolicy({requestedPolicyVersion: 1});
 }
 
-export async function iamSetPolicy(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function iamSetPolicy(bucket: Bucket) {
   const testPolicy = {
     bindings: [
       {
@@ -644,13 +377,7 @@ export async function iamSetPolicy(
   await bucket.iam.setPolicy(testPolicy);
 }
 
-export async function iamTestPermissions(
-  bucket: Bucket,
-  _file: File,
-  _notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
-) {
+export async function iamTestPermissions(bucket: Bucket) {
   const permissionToTest = 'storage.buckets.delete';
   await bucket.iam.testPermissions(permissionToTest);
 }
@@ -662,9 +389,7 @@ export async function iamTestPermissions(
 export async function notificationDelete(
   _bucket: Bucket,
   _file: File,
-  notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
+  notification: Notification
 ) {
   await notification.delete();
 }
@@ -672,9 +397,7 @@ export async function notificationDelete(
 export async function notificationCreate(
   _bucket: Bucket,
   _file: File,
-  notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
+  notification: Notification
 ) {
   await notification.create();
 }
@@ -682,9 +405,7 @@ export async function notificationCreate(
 export async function notificationExists(
   _bucket: Bucket,
   _file: File,
-  notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
+  notification: Notification
 ) {
   await notification.exists();
 }
@@ -692,9 +413,7 @@ export async function notificationExists(
 export async function notificationGet(
   _bucket: Bucket,
   _file: File,
-  notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
+  notification: Notification
 ) {
   await notification.get();
 }
@@ -702,9 +421,7 @@ export async function notificationGet(
 export async function notificationGetMetadata(
   _bucket: Bucket,
   _file: File,
-  notification: Notification,
-  _storage: Storage,
-  _hmacKey: HmacKey
+  notification: Notification
 ) {
   await notification.getMetadata();
 }
@@ -717,9 +434,13 @@ export async function createBucket(
   _bucket: Bucket,
   _file: File,
   _notification: Notification,
-  storage: Storage,
-  _hmacKey: HmacKey
+  storage: Storage
 ) {
+  const bucket = storage.bucket('test-creating-bucket');
+  const [exists] = await bucket.exists();
+  if (exists) {
+    bucket.delete();
+  }
   await storage.createBucket('test-creating-bucket');
 }
 
@@ -727,8 +448,7 @@ export async function createHMACKey(
   _bucket: Bucket,
   _file: File,
   _notification: Notification,
-  storage: Storage,
-  _hmacKey: HmacKey
+  storage: Storage
 ) {
   const serviceAccountEmail = 'my-service-account@appspot.gserviceaccount.com';
   await storage.createHmacKey(serviceAccountEmail);
@@ -738,8 +458,7 @@ export async function getBuckets(
   _bucket: Bucket,
   _file: File,
   _notification: Notification,
-  storage: Storage,
-  _hmacKey: HmacKey
+  storage: Storage
 ) {
   await storage.getBuckets();
 }
@@ -748,8 +467,7 @@ export async function getBucketsStream(
   _bucket: Bucket,
   _file: File,
   _notification: Notification,
-  storage: Storage,
-  _hmacKey: HmacKey
+  storage: Storage
 ) {
   return new Promise((resolve, reject) => {
     storage
@@ -764,8 +482,7 @@ export function getHMACKeyStream(
   _bucket: Bucket,
   _file: File,
   _notification: Notification,
-  storage: Storage,
-  _hmacKey: HmacKey
+  storage: Storage
 ) {
   return new Promise((resolve, reject) => {
     storage
@@ -780,8 +497,7 @@ export async function getServiceAccount(
   _bucket: Bucket,
   _file: File,
   _notification: Notification,
-  storage: Storage,
-  _hmacKey: HmacKey
+  storage: Storage
 ) {
   await storage.getServiceAccount();
 }

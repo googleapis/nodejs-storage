@@ -103,3 +103,66 @@ export function unicodeJSONStringify(obj: object) {
       '\\u' + ('0000' + char.charCodeAt(0).toString(16)).slice(-4)
   );
 }
+
+/**
+ * Converts the given objects keys to snake_case
+ * @param {object} obj object to convert keys to snake case.
+ * @returns {object} object with keys converted to snake case.
+ */
+export function convertObjKeysToSnakeCase(obj: object): object {
+  if (obj instanceof Date || obj instanceof RegExp) {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(convertObjKeysToSnakeCase);
+  }
+  if (obj instanceof Object) {
+    return Object.keys(obj).reduce((acc, cur) => {
+      const s =
+        cur[0].toLocaleLowerCase() +
+        cur.slice(1).replace(/([A-Z]+)/g, (match, p1) => {
+          return `_${p1.toLowerCase()}`;
+        });
+
+      acc[s] = convertObjKeysToSnakeCase(obj[cur as keyof Object]);
+      return acc;
+    }, Object());
+  }
+
+  return obj;
+}
+
+/**
+ * Formats the provided date object as a UTC ISO string.
+ * @param {Date} dateTimeToFormat date object to be formatted.
+ * @param {boolean} includeTime flag to include hours, minutes, seconds in output.
+ * @param {string} dateDelimiter delimiter between date components.
+ * @param {string} timeDelimiter delimiter between time components.
+ * @returns {string} UTC ISO format of provided date obect.
+ */
+export function formatAsUTCISO(
+  dateTimeToFormat: Date,
+  includeTime = false,
+  dateDelimiter = '',
+  timeDelimiter = ''
+): string {
+  const year = dateTimeToFormat.getUTCFullYear();
+  const month = dateTimeToFormat.getUTCMonth() + 1;
+  const day = dateTimeToFormat.getUTCDate();
+  const hour = dateTimeToFormat.getUTCHours();
+  const minute = dateTimeToFormat.getUTCMinutes();
+  const second = dateTimeToFormat.getUTCSeconds();
+
+  let resultString = `${year.toString().padStart(4, '0')}${dateDelimiter}${month
+    .toString()
+    .padStart(2, '0')}${dateDelimiter}${day.toString().padStart(2, '0')}`;
+  if (includeTime) {
+    resultString = `${resultString}T${hour
+      .toString()
+      .padStart(2, '0')}${timeDelimiter}${minute
+      .toString()
+      .padStart(2, '0')}${timeDelimiter}${second.toString().padStart(2, '0')}Z`;
+  }
+
+  return resultString;
+}

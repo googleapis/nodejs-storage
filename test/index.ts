@@ -19,18 +19,22 @@ import {
   Service,
   ServiceConfig,
   util,
-} from '@google-cloud/common';
+} from '../src/nodejs-common';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import arrify = require('arrify');
 import * as assert from 'assert';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
 import * as proxyquire from 'proxyquire';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import {Bucket} from '../src';
+import {Bucket, CRC32C_DEFAULT_VALIDATOR_GENERATOR} from '../src';
 import {GetFilesOptions} from '../src/bucket';
 import sinon = require('sinon');
 import {HmacKey} from '../src/hmacKey';
-import {HmacKeyResourceResponse, PROTOCOL_REGEX} from '../src/storage';
+import {
+  HmacKeyResourceResponse,
+  PROTOCOL_REGEX,
+  StorageExceptionMessages,
+} from '../src/storage';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hmacKeyModule = require('../src/hmacKey');
@@ -96,7 +100,7 @@ describe('Storage', () => {
     Storage = proxyquire('../src/storage', {
       '@google-cloud/promisify': fakePromisify,
       '@google-cloud/paginator': fakePaginator,
-      '@google-cloud/common': {
+      './nodejs-common': {
         Service: FakeService,
       },
       './channel.js': {Channel: FakeChannel},
@@ -184,16 +188,6 @@ describe('Storage', () => {
       assert.strictEqual(calledWith.useAuthWithCustomEndpoint, true);
     });
 
-    it('should propagate autoRetry', () => {
-      const autoRetry = false;
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        autoRetry,
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.autoRetry, autoRetry);
-    });
-
     it('should propagate autoRetry in retryOptions', () => {
       const autoRetry = false;
       const storage = new Storage({
@@ -202,17 +196,6 @@ describe('Storage', () => {
       });
       const calledWith = storage.calledWith_[0];
       assert.strictEqual(calledWith.retryOptions.autoRetry, autoRetry);
-    });
-
-    it('should throw if autoRetry is defined twice', () => {
-      const autoRetry = 10;
-      assert.throws(() => {
-        new Storage({
-          projectId: PROJECT_ID,
-          retryOptions: {autoRetry},
-          autoRetry,
-        });
-      }, /autoRetry is deprecated. Use retryOptions.autoRetry instead\./);
     });
 
     it('should propagate retryDelayMultiplier', () => {
@@ -274,16 +257,6 @@ describe('Storage', () => {
       );
     });
 
-    it('should propagate maxRetries', () => {
-      const maxRetries = 10;
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        maxRetries,
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.maxRetries, maxRetries);
-    });
-
     it('should propagate maxRetries in retryOptions', () => {
       const maxRetries = 1;
       const storage = new Storage({
@@ -292,17 +265,6 @@ describe('Storage', () => {
       });
       const calledWith = storage.calledWith_[0];
       assert.strictEqual(calledWith.retryOptions.maxRetries, maxRetries);
-    });
-
-    it('should throw if maxRetries is defined twice', () => {
-      const maxRetries = 10;
-      assert.throws(() => {
-        new Storage({
-          projectId: PROJECT_ID,
-          retryOptions: {maxRetries},
-          maxRetries,
-        });
-      }, /maxRetries is deprecated. Use retryOptions.maxRetries instead\./);
     });
 
     it('should set retryFunction', () => {
@@ -436,6 +398,20 @@ describe('Storage', () => {
       assert.strictEqual(calledWith.apiEndpoint, 'https://some.fake.endpoint');
     });
 
+    it('should accept a `crc32cGenerator`', () => {
+      const crc32cGenerator = () => {};
+
+      const storage = new Storage({crc32cGenerator});
+      assert.strictEqual(storage.crc32cGenerator, crc32cGenerator);
+    });
+
+    it('should use `CRC32C_DEFAULT_VALIDATOR_GENERATOR` by default', () => {
+      assert.strictEqual(
+        storage.crc32cGenerator,
+        CRC32C_DEFAULT_VALIDATOR_GENERATOR
+      );
+    });
+
     describe('STORAGE_EMULATOR_HOST', () => {
       // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
       const EMULATOR_HOST = 'https://internal.benchmark.com/path';
@@ -501,8 +477,8 @@ describe('Storage', () => {
   describe('bucket', () => {
     it('should throw if no name was provided', () => {
       assert.throws(() => {
-        storage.bucket();
-      }, /A bucket name is needed to use Cloud Storage\./);
+        storage.bucket(), StorageExceptionMessages.BUCKET_NAME_REQUIRED;
+      });
     });
 
     it('should accept a string for a name', () => {
@@ -549,8 +525,8 @@ describe('Storage', () => {
 
     it('should throw if accessId is not provided', () => {
       assert.throws(() => {
-        storage.hmacKey();
-      }, /An access ID is needed to create an HmacKey object./);
+        storage.hmacKey(), StorageExceptionMessages.HMAC_ACCESS_ID;
+      });
     });
 
     it('should pass options object to HmacKey constructor', () => {
@@ -616,20 +592,18 @@ describe('Storage', () => {
     });
 
     it('should throw without a serviceAccountEmail', () => {
-      assert.throws(
-        () => storage.createHmacKey(),
-        /The first argument must be a service account email to create an HMAC key\./
-      );
+      assert.throws(() => {
+        storage.createHmacKey(), StorageExceptionMessages.HMAC_SERVICE_ACCOUNT;
+      });
     });
 
     it('should throw when first argument is not a string', () => {
-      assert.throws(
-        () =>
-          storage.createHmacKey({
-            userProject: 'my-project',
-          }),
-        /The first argument must be a service account email to create an HMAC key\./
-      );
+      assert.throws(() => {
+        storage.createHmacKey({
+          userProject: 'my-project',
+        }),
+          StorageExceptionMessages.HMAC_SERVICE_ACCOUNT;
+      });
     });
 
     it('should make request with method options as query parameter', async () => {
@@ -771,8 +745,9 @@ describe('Storage', () => {
 
     it('should throw if no name is provided', () => {
       assert.throws(() => {
-        storage.createBucket();
-      }, /A name is required to create a bucket\./);
+        storage.createBucket(),
+          StorageExceptionMessages.BUCKET_NAME_REQUIRED_CREATE;
+      });
     });
 
     it('should honor the userProject option', done => {
@@ -869,6 +844,20 @@ describe('Storage', () => {
           done
         );
       });
+    });
+
+    it('should allow setting rpo', done => {
+      const location = 'NAM4';
+      const rpo = 'ASYNC_TURBO';
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        assert.strictEqual(reqOpts.json.location, location);
+        assert.strictEqual(reqOpts.json.rpo, rpo);
+        callback();
+      };
+      storage.createBucket(BUCKET_NAME, {location, rpo}, done);
     });
 
     it('should throw when `storageClass` is set to different value than provided storageClass name', () => {

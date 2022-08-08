@@ -2,7 +2,220 @@
 
 [npm history][1]
 
-[1]: https://www.npmjs.com/package/nodejs-storage?activeTab=versions
+[1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
+
+## [6.3.0](https://github.com/googleapis/nodejs-storage/compare/v6.2.3...v6.3.0) (2022-08-01)
+
+
+### Features
+
+* custom dual regions refactor implementation ([#2012](https://github.com/googleapis/nodejs-storage/issues/2012)) ([9a614fb](https://github.com/googleapis/nodejs-storage/commit/9a614fb2b624f8234fa9d40f352dae177b2b0374))
+
+## [6.2.3](https://github.com/googleapis/nodejs-storage/compare/v6.2.2...v6.2.3) (2022-07-13)
+
+
+### Bug Fixes
+
+* force setMetadata calls to use promise version, invoke callbacks manually ([#2000](https://github.com/googleapis/nodejs-storage/issues/2000)) ([f488647](https://github.com/googleapis/nodejs-storage/commit/f488647d5ac8ccfdb479d7ea24a377d10573b8c4))
+
+## [6.2.2](https://github.com/googleapis/nodejs-storage/compare/v6.2.1...v6.2.2) (2022-06-29)
+
+
+### Bug Fixes
+
+* correctly handle an empty file in download function ([#1995](https://github.com/googleapis/nodejs-storage/issues/1995)) ([f1a5a0b](https://github.com/googleapis/nodejs-storage/commit/f1a5a0bd121b84c3d56a9eddbd31593089634574))
+
+## [6.2.1](https://github.com/googleapis/nodejs-storage/compare/v6.2.0...v6.2.1) (2022-06-27)
+
+
+### Bug Fixes
+
+* explicitly import URL so that .d.ts file is correctly generated ([#1992](https://github.com/googleapis/nodejs-storage/issues/1992)) ([a968f50](https://github.com/googleapis/nodejs-storage/commit/a968f508e7c98e160b658ffc3ab568997548172f))
+
+## [6.2.0](https://github.com/googleapis/nodejs-storage/compare/v6.1.0...v6.2.0) (2022-06-22)
+
+
+### Features
+
+* Convenient `gs://` URI retrieval ([#1987](https://github.com/googleapis/nodejs-storage/issues/1987)) ([58fad6d](https://github.com/googleapis/nodejs-storage/commit/58fad6d9a3bd92966306e98fd7dedd3992995cb7))
+
+
+### Bug Fixes
+
+* **deps:** update dependency @google-cloud/projectify to v3 ([#1986](https://github.com/googleapis/nodejs-storage/issues/1986)) ([71a61ec](https://github.com/googleapis/nodejs-storage/commit/71a61ec4ef2436bc091f390af14a02b6920b2b87))
+* **deps:** update dependency @google-cloud/pubsub to v3 ([#1972](https://github.com/googleapis/nodejs-storage/issues/1972)) ([004b97e](https://github.com/googleapis/nodejs-storage/commit/004b97ec0ae866997c84ee2327db87e59f510f00))
+* Requests Respect `config.projectIdRequired` === `false` ([#1988](https://github.com/googleapis/nodejs-storage/issues/1988)) ([8813369](https://github.com/googleapis/nodejs-storage/commit/881336944be37e15c45b12973064245adc519860))
+
+## [6.1.0](https://github.com/googleapis/nodejs-storage/compare/v6.0.1...v6.1.0) (2022-06-08)
+
+
+### Features
+
+* support OLM Prefix/Suffix ([#1847](https://github.com/googleapis/nodejs-storage/issues/1847)) ([c22984c](https://github.com/googleapis/nodejs-storage/commit/c22984caa8e8ae09a61d308876b2b3d97503777b))
+
+### [6.0.1](https://github.com/googleapis/nodejs-storage/compare/v6.0.0...v6.0.1) (2022-05-25)
+
+
+### Bug Fixes
+
+* capture and throw on non-existent files ([#1969](https://github.com/googleapis/nodejs-storage/issues/1969)) ([52d81c0](https://github.com/googleapis/nodejs-storage/commit/52d81c026f30aef0902ea7173dfa6da2e7f97d50))
+
+## [6.0.0](https://github.com/googleapis/nodejs-storage/compare/v5.20.5...v6.0.0) (2022-05-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* update TypeScript
+* remove deprecated fields
+* remove configstore
+* align resumable upload behavior
+* utilize internalized CRC32C utilities
+* drop node 10 support
+
+### Build System
+
+* drop node 10 support ([77fa8d9](https://github.com/googleapis/nodejs-storage/commit/77fa8d9f95afbc830b57188ce0d2dfac46476d0b))
+
+
+### Code Refactoring
+
+* align resumable upload behavior ([77fa8d9](https://github.com/googleapis/nodejs-storage/commit/77fa8d9f95afbc830b57188ce0d2dfac46476d0b))
+* remove configstore ([77fa8d9](https://github.com/googleapis/nodejs-storage/commit/77fa8d9f95afbc830b57188ce0d2dfac46476d0b))
+* remove deprecated fields ([77fa8d9](https://github.com/googleapis/nodejs-storage/commit/77fa8d9f95afbc830b57188ce0d2dfac46476d0b))
+* utilize internalized CRC32C utilities ([77fa8d9](https://github.com/googleapis/nodejs-storage/commit/77fa8d9f95afbc830b57188ce0d2dfac46476d0b))
+
+
+### deps
+
+* update TypeScript ([77fa8d9](https://github.com/googleapis/nodejs-storage/commit/77fa8d9f95afbc830b57188ce0d2dfac46476d0b))
+
+### [5.20.5](https://github.com/googleapis/nodejs-storage/compare/v5.20.4...v5.20.5) (2022-05-19)
+
+
+### Bug Fixes
+
+* **chore:** move uuid package to dependencies ([#1952](https://github.com/googleapis/nodejs-storage/issues/1952)) ([0ff5aa3](https://github.com/googleapis/nodejs-storage/commit/0ff5aa3e9ff8b4dcc536b9494e44b9a2fb217727))
+
+### [5.20.4](https://github.com/googleapis/nodejs-storage/compare/v5.20.3...v5.20.4) (2022-05-18)
+
+
+### Bug Fixes
+
+* revert native typescript mocha tests ([#1947](https://github.com/googleapis/nodejs-storage/issues/1947)) ([1d0ea7d](https://github.com/googleapis/nodejs-storage/commit/1d0ea7d2281a049bc99c6bd810dd24ffc83c6a09))
+* support empty object uploads for resumable upload ([#1949](https://github.com/googleapis/nodejs-storage/issues/1949)) ([da6016e](https://github.com/googleapis/nodejs-storage/commit/da6016e20b681d6a75ed1a5459cfd333b58c70a9))
+
+### [5.20.3](https://github.com/googleapis/nodejs-storage/compare/v5.20.2...v5.20.3) (2022-05-17)
+
+
+### Bug Fixes
+
+* move retrieval of package.json to utility function ([#1941](https://github.com/googleapis/nodejs-storage/issues/1941)) ([ac5cbdf](https://github.com/googleapis/nodejs-storage/commit/ac5cbdf0d3c363e7dab43e9002b01a0dae877642))
+
+### [5.20.2](https://github.com/googleapis/nodejs-storage/compare/v5.20.1...v5.20.2) (2022-05-17)
+
+
+### Bug Fixes
+
+* use path.join and __dirname for require package.json ([#1936](https://github.com/googleapis/nodejs-storage/issues/1936)) ([b868762](https://github.com/googleapis/nodejs-storage/commit/b86876201ec7d4ce58ae5c1d9635dad82a1fdc4b))
+
+### [5.20.1](https://github.com/googleapis/nodejs-storage/compare/v5.20.0...v5.20.1) (2022-05-16)
+
+
+### Bug Fixes
+
+* do not use import on package.json ([#1932](https://github.com/googleapis/nodejs-storage/issues/1932)) ([d0f0494](https://github.com/googleapis/nodejs-storage/commit/d0f04941f1cabf7c153f7e5abb91c358f12ef83e))
+
+## [5.20.0](https://github.com/googleapis/nodejs-storage/compare/v5.19.4...v5.20.0) (2022-05-16)
+
+
+### Features
+
+* add x-goog-api-client headers for retry metrics ([#1920](https://github.com/googleapis/nodejs-storage/issues/1920)) ([0c7e4f6](https://github.com/googleapis/nodejs-storage/commit/0c7e4f6ade4cee1715e14b3cd9abf2aa2a56c0b9))
+
+### [5.19.4](https://github.com/googleapis/nodejs-storage/compare/v5.19.3...v5.19.4) (2022-04-28)
+
+
+### Bug Fixes
+
+* don't modify passed in options ([#1895](https://github.com/googleapis/nodejs-storage/issues/1895)) ([cd80ca3](https://github.com/googleapis/nodejs-storage/commit/cd80ca318a2b10379b8b166a59f3943b97576475))
+
+### [5.19.3](https://github.com/googleapis/nodejs-storage/compare/v5.19.2...v5.19.3) (2022-04-20)
+
+
+### Bug Fixes
+
+* export idempotencystrategy and preconditionoptions from index ([#1880](https://github.com/googleapis/nodejs-storage/issues/1880)) ([8aafe04](https://github.com/googleapis/nodejs-storage/commit/8aafe0453a8e2dc41f848dd5165d3e86d6a160ed))
+
+### [5.19.2](https://github.com/googleapis/nodejs-storage/compare/v5.19.1...v5.19.2) (2022-04-14)
+
+
+### Bug Fixes
+
+* deleting, getting, and getting metadata for notifications ([#1872](https://github.com/googleapis/nodejs-storage/issues/1872)) ([451570e](https://github.com/googleapis/nodejs-storage/commit/451570e6038a1b91b5723db9b941cd916fd76348))
+
+### [5.19.1](https://github.com/googleapis/nodejs-storage/compare/v5.19.0...v5.19.1) (2022-04-08)
+
+
+### Bug Fixes
+
+* prevent retrying 200 response ([#1857](https://github.com/googleapis/nodejs-storage/issues/1857)) ([638a47b](https://github.com/googleapis/nodejs-storage/commit/638a47b4e7ecc6e94b3b11d1ccc7c52afdeaafe1))
+
+## [5.19.0](https://github.com/googleapis/nodejs-storage/compare/v5.18.3...v5.19.0) (2022-04-06)
+
+
+### Features
+
+* Dual Region Support ([#1814](https://github.com/googleapis/nodejs-storage/issues/1814)) ([caf7ee5](https://github.com/googleapis/nodejs-storage/commit/caf7ee561fd640b0daea92c7837c47e66070c30c))
+
+### [5.18.3](https://github.com/googleapis/nodejs-storage/compare/v5.18.2...v5.18.3) (2022-03-28)
+
+
+### Bug Fixes
+
+* encode name portion when calling publicUrl function ([#1828](https://github.com/googleapis/nodejs-storage/issues/1828)) ([5522b35](https://github.com/googleapis/nodejs-storage/commit/5522b35e83857421a00e71c4e93ba6ae0ffccb90))
+* fixed typo ([#1803](https://github.com/googleapis/nodejs-storage/issues/1803)) ([be70dae](https://github.com/googleapis/nodejs-storage/commit/be70dae33751ddc3e0ae5a55b5cdbf2002a42932))
+
+### [5.18.2](https://github.com/googleapis/nodejs-storage/compare/v5.18.1...v5.18.2) (2022-02-16)
+
+
+### Bug Fixes
+
+* resumable uploads should respect autoRetry & multipart uploads should correctly use preconditions ([#1779](https://github.com/googleapis/nodejs-storage/issues/1779)) ([1e72586](https://github.com/googleapis/nodejs-storage/commit/1e725867dce8f78070435b96b65f97f2253c0e80))
+
+### [5.18.1](https://github.com/googleapis/nodejs-storage/compare/v5.18.0...v5.18.1) (2022-01-26)
+
+
+### Bug Fixes
+
+* **gcs-resumable-upload:** Stop Duplicate Response Handlers on Retries ([#1764](https://github.com/googleapis/nodejs-storage/issues/1764)) ([fe44871](https://github.com/googleapis/nodejs-storage/commit/fe4487187aa405e7d7f8e0bec485bbddb76ea050))
+
+## [5.18.0](https://github.com/googleapis/nodejs-storage/compare/v5.17.0...v5.18.0) (2022-01-18)
+
+
+### Features
+
+* Expose `chunkSize` param for `CreateResumableUploadOptions` ([#1754](https://github.com/googleapis/nodejs-storage/issues/1754)) ([3acfd5b](https://github.com/googleapis/nodejs-storage/commit/3acfd5b2412d046c471d8d707023e034dc1a167a))
+
+## [5.17.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.16.1...v5.17.0) (2022-01-10)
+
+
+### Features
+
+* add support for rpo (turbo replication) metadata field when cre… ([#1648](https://www.github.com/googleapis/nodejs-storage/issues/1648)) ([291e6ef](https://www.github.com/googleapis/nodejs-storage/commit/291e6ef48efcfca55b4a7dca8868a57c0eeec89b))
+
+
+### Bug Fixes
+
+* remove compodoc dev dependency ([#1745](https://www.github.com/googleapis/nodejs-storage/issues/1745)) ([809bf11](https://www.github.com/googleapis/nodejs-storage/commit/809bf11b8a2a2203db82aec38b6a6023a805bd62))
+
+### [5.16.1](https://www.github.com/googleapis/nodejs-storage/compare/v5.16.0...v5.16.1) (2021-11-29)
+
+
+### Bug Fixes
+
+* change properties with function value to methods ([#1715](https://www.github.com/googleapis/nodejs-storage/issues/1715)) ([c365254](https://www.github.com/googleapis/nodejs-storage/commit/c36525402da8e748971473b1cdd2423e8fd953e1))
+* revert skip validation ([#1718](https://www.github.com/googleapis/nodejs-storage/issues/1718)) ([0c75e33](https://www.github.com/googleapis/nodejs-storage/commit/0c75e33eb0291aa7dfc704c86733f4c0dc78d322))
+* stop File.download from truncating output file on failure ([#1720](https://www.github.com/googleapis/nodejs-storage/issues/1720)) ([d77979b](https://www.github.com/googleapis/nodejs-storage/commit/d77979b1003dbb89cd9d4725330de50b1f8d9262))
 
 ## [5.16.0](https://www.github.com/googleapis/nodejs-storage/compare/v5.15.5...v5.16.0) (2021-11-09)
 

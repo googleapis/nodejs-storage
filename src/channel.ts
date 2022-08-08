@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Metadata, ServiceObject, util} from '@google-cloud/common';
+import {Metadata, ServiceObject, util} from './nodejs-common';
 import {promisifyAll} from '@google-cloud/promisify';
 
 import {Storage} from './storage';
@@ -56,11 +56,8 @@ class Channel extends ServiceObject {
 
     super(config);
 
-    // TODO: remove type cast to any once ServiceObject's type declaration has
-    // been fixed. https://github.com/googleapis/nodejs-common/issues/176
-    const metadata = this.metadata;
-    metadata.id = id;
-    metadata.resourceId = resourceId;
+    this.metadata.id = id;
+    this.metadata.resourceId = resourceId;
   }
 
   stop(): Promise<Metadata>;

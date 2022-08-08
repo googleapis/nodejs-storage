@@ -18,7 +18,7 @@ import {
   ServiceObject,
   ServiceObjectConfig,
   util,
-} from '@google-cloud/common';
+} from '../src/nodejs-common';
 import arrify = require('arrify');
 import * as assert from 'assert';
 import * as extend from 'extend';
@@ -29,10 +29,8 @@ import pLimit = require('p-limit');
 import * as path from 'path';
 import * as proxyquire from 'proxyquire';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const snakeize = require('snakeize');
 import * as stream from 'stream';
-import {Bucket, Channel, Notification} from '../src';
+import {Bucket, Channel, Notification, CRC32C} from '../src';
 import {
   CreateWriteStreamOptions,
   File,
@@ -44,16 +42,17 @@ import {
   GetBucketMetadataCallback,
   GetFilesOptions,
   MakeAllFilesPublicPrivateOptions,
-  SetBucketMetadataCallback,
   SetBucketMetadataResponse,
   GetBucketSignedUrlConfig,
   AvailableServiceObjectMethods,
+  BucketExceptionMessages,
 } from '../src/bucket';
 import {AddAclOptions} from '../src/acl';
 import {Policy} from '../src/iam';
 import sinon = require('sinon');
 import {Transform} from 'stream';
-import {IdempotencyStrategy} from '../src/storage';
+import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
+import {convertObjKeysToSnakeCase} from '../src/util';
 
 class FakeFile {
   calledWith_: IArguments;
@@ -113,6 +112,7 @@ const fakePromisify = {
 
     promisified = true;
     assert.deepStrictEqual(options.exclude, [
+      'cloudStorageURI',
       'request',
       'file',
       'notification',
@@ -197,6 +197,7 @@ describe('Bucket', () => {
       },
       idempotencyStrategy: IdempotencyStrategy.RetryConditional,
     },
+    crc32cGenerator: () => new CRC32C(),
   };
   const BUCKET_NAME = 'test-bucket';
 
@@ -206,7 +207,7 @@ describe('Bucket', () => {
       'p-limit': fakePLimit,
       '@google-cloud/promisify': fakePromisify,
       '@google-cloud/paginator': fakePaginator,
-      '@google-cloud/common': {
+      './nodejs-common': {
         ServiceObject: FakeServiceObject,
         util: fakeUtil,
       },
@@ -429,6 +430,26 @@ describe('Bucket', () => {
 
       assert.strictEqual(bucket.userProject, fakeUserProject);
     });
+
+    it('should accept a `crc32cGenerator`', () => {
+      const crc32cGenerator = () => {};
+
+      const bucket = new Bucket(STORAGE, 'bucket-name', {crc32cGenerator});
+      assert.strictEqual(bucket.crc32cGenerator, crc32cGenerator);
+    });
+
+    it("should use storage's `crc32cGenerator` by default", () => {
+      assert.strictEqual(bucket.crc32cGenerator, STORAGE.crc32cGenerator);
+    });
+  });
+
+  describe('cloudStorageURI', () => {
+    it('should return the appropriate `gs://` URI', () => {
+      const bucket = new Bucket(STORAGE, BUCKET_NAME);
+
+      assert(bucket.cloudStorageURI instanceof URL);
+      assert.equal(bucket.cloudStorageURI.host, BUCKET_NAME);
+    });
   });
 
   describe('addLifecycleRule', () => {
@@ -601,24 +622,6 @@ describe('Bucket', () => {
       bucket.addLifecycleRule(newRule, assert.ifError);
     });
 
-    it('should pass callback to setMetadata', done => {
-      const rule = {
-        action: {
-          type: 'type',
-        },
-        condition: {},
-      };
-
-      bucket.setMetadata = (
-        metadata: Metadata,
-        callback: SetBucketMetadataCallback
-      ) => {
-        callback(); // done()
-      };
-
-      bucket.addLifecycleRule(rule, done);
-    });
-
     it('should pass error from getMetadata to callback', done => {
       const error = new Error('from getMetadata');
       const rule = {
@@ -650,10 +653,10 @@ describe('Bucket', () => {
 
       bucket.setMetadata = () => {
         assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+        return Promise.resolve();
       };
 
       bucket.addLifecycleRule(rule, assert.ifError);
-      assert.strictEqual(bucket.storage.retryOptions.autoRetry, true);
       done();
     });
   });
@@ -661,18 +664,19 @@ describe('Bucket', () => {
   describe('combine', () => {
     it('should throw if invalid sources are provided', () => {
       assert.throws(() => {
-        bucket.combine();
-      }, /You must provide at least one source file\./);
+        bucket.combine(), BucketExceptionMessages.PROVIDE_SOURCE_FILE;
+      });
 
       assert.throws(() => {
-        bucket.combine([]);
-      }, /You must provide at least one source file\./);
+        bucket.combine([]), BucketExceptionMessages.PROVIDE_SOURCE_FILE;
+      });
     });
 
     it('should throw if a destination is not provided', () => {
       assert.throws(() => {
-        bucket.combine(['1', '2']);
-      }, /A destination file must be specified\./);
+        bucket.combine(['1', '2']),
+          BucketExceptionMessages.DESTINATION_FILE_NOT_SPECIFIED;
+      });
     });
 
     it('should accept string or file input for sources', done => {
@@ -964,8 +968,8 @@ describe('Bucket', () => {
 
     it('should throw if an ID is not provided', () => {
       assert.throws(() => {
-        bucket.createChannel();
-      }, /An ID is required to create a channel\./);
+        bucket.createChannel(), BucketExceptionMessages.CHANNEL_ID_REQUIRED;
+      });
     });
 
     it('should throw if an address is not provided', () => {
@@ -1096,8 +1100,9 @@ describe('Bucket', () => {
 
     it('should throw an error if a valid topic is not provided', () => {
       assert.throws(() => {
-        bucket.createNotification();
-      }, /A valid topic name is required\./);
+        bucket.createNotification(),
+          BucketExceptionMessages.TOPIC_NAME_REQUIRED;
+      });
     });
 
     it('should make the correct request', done => {
@@ -1106,7 +1111,7 @@ describe('Bucket', () => {
       const expectedTopic = PUBSUB_SERVICE_PATH + topic;
       const expectedJson = Object.assign(
         {topic: expectedTopic},
-        snakeize(options)
+        convertObjKeysToSnakeCase(options)
       );
 
       bucket.request = (reqOpts: DecorateRequestOptions) => {
@@ -1422,13 +1427,13 @@ describe('Bucket', () => {
 
   describe('disableRequesterPays', () => {
     it('should call setMetadata correctly', done => {
-      bucket.setMetadata = (metadata: {}, callback: Function) => {
+      bucket.setMetadata = (metadata: {}) => {
         assert.deepStrictEqual(metadata, {
           billing: {
             requesterPays: false,
           },
         });
-        callback(); // done()
+        return Promise.resolve([]);
       };
 
       bucket.disableRequesterPays(done);
@@ -1436,7 +1441,7 @@ describe('Bucket', () => {
 
     it('should not require a callback', done => {
       bucket.setMetadata = (metadata: {}, callback: Function) => {
-        assert.doesNotThrow(() => callback());
+        assert.strictEqual(callback, undefined);
         done();
       };
 
@@ -1465,14 +1470,16 @@ describe('Bucket', () => {
 
     it('should throw if a config object is not provided', () => {
       assert.throws(() => {
-        bucket.enableLogging();
-      }, /A configuration object with a prefix is required\./);
+        bucket.enableLogging(),
+          BucketExceptionMessages.CONFIGURATION_OBJECT_PREFIX_REQUIRED;
+      });
     });
 
     it('should throw if config is a function', () => {
       assert.throws(() => {
-        bucket.enableLogging(assert.ifError);
-      }, /A configuration object with a prefix is required\./);
+        bucket.enableLogging(assert.ifError),
+          BucketExceptionMessages.CONFIGURATION_OBJECT_PREFIX_REQUIRED;
+      });
     });
 
     it('should throw if a prefix is not provided', () => {
@@ -1482,8 +1489,9 @@ describe('Bucket', () => {
             bucket: 'bucket-name',
           },
           assert.ifError
-        );
-      }, /A configuration object with a prefix is required\./);
+        ),
+          BucketExceptionMessages.CONFIGURATION_OBJECT_PREFIX_REQUIRED;
+      });
     });
 
     it('should add IAM permissions', done => {
@@ -1625,13 +1633,13 @@ describe('Bucket', () => {
 
   describe('enableRequesterPays', () => {
     it('should call setMetadata correctly', done => {
-      bucket.setMetadata = (metadata: {}, callback: Function) => {
+      bucket.setMetadata = (metadata: {}) => {
         assert.deepStrictEqual(metadata, {
           billing: {
             requesterPays: true,
           },
         });
-        callback(); // done()
+        return Promise.resolve([]);
       };
 
       bucket.enableRequesterPays(done);
@@ -1639,7 +1647,7 @@ describe('Bucket', () => {
 
     it('should not require a callback', done => {
       bucket.setMetadata = (metadata: {}, callback: Function) => {
-        assert.doesNotThrow(() => callback());
+        assert.equal(undefined, callback);
         done();
       };
 
@@ -1667,8 +1675,8 @@ describe('Bucket', () => {
 
     it('should throw if no name is provided', () => {
       assert.throws(() => {
-        bucket.file();
-      }, /A file name must be specified\./);
+        bucket.file(), BucketExceptionMessages.SPECIFY_FILE_NAME;
+      });
     });
 
     it('should return a File object', () => {
@@ -1706,27 +1714,6 @@ describe('Bucket', () => {
         done();
       };
       bucket.getFiles({maxResults: 5, pageToken: token}, util.noop);
-    });
-
-    it('should allow setting a directory', done => {
-      //Note: Directory is deprecated.
-      const directory = 'directory-name';
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.prefix, `${directory}/`);
-        assert.strictEqual(reqOpts.qs.directory, undefined);
-        done();
-      };
-      bucket.getFiles({directory}, assert.ifError);
-    });
-
-    it('should strip excess slashes from a directory', done => {
-      //Note: Directory is deprecated.
-      const directory = 'directory-name///';
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.prefix, 'directory-name/');
-        done();
-      };
-      bucket.getFiles({directory}, assert.ifError);
     });
 
     it('should return nextQuery if more results exist', () => {
@@ -2089,15 +2076,20 @@ describe('Bucket', () => {
       SIGNED_URL_CONFIG.action = null as any;
 
       assert.throws(() => {
-        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {});
-      }, /The action is not provided or invalid./);
+        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
+          ExceptionMessages.INVALID_ACTION;
+      });
     });
 
     it('should error if action is undefined', () => {
-      delete SIGNED_URL_CONFIG.action;
+      const urlConfig = {
+        ...SIGNED_URL_CONFIG,
+      } as Partial<GetBucketSignedUrlConfig>;
+      delete urlConfig.action;
       assert.throws(() => {
-        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {});
-      }, /The action is not provided or invalid./);
+        bucket.getSignedUrl(urlConfig, () => {}),
+          ExceptionMessages.INVALID_ACTION;
+      });
     });
 
     it('should error for an invalid action', () => {
@@ -2105,18 +2097,18 @@ describe('Bucket', () => {
       SIGNED_URL_CONFIG.action = 'watch' as any;
 
       assert.throws(() => {
-        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {});
-      }, /The action is not provided or invalid./);
+        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
+          ExceptionMessages.INVALID_ACTION;
+      });
     });
   });
 
   describe('lock', () => {
     it('should throw if a metageneration is not provided', () => {
-      const expectedError = new RegExp('A metageneration must be provided.');
-
       assert.throws(() => {
-        bucket.lock(assert.ifError);
-      }, expectedError);
+        bucket.lock(assert.ifError),
+          BucketExceptionMessages.METAGENERATION_NOT_PROVIDED;
+      });
     });
 
     it('should make the correct request', done => {
@@ -2315,8 +2307,8 @@ describe('Bucket', () => {
   describe('notification', () => {
     it('should throw an error if an id is not provided', () => {
       assert.throws(() => {
-        bucket.notification();
-      }, /You must supply a notification ID\./);
+        bucket.notification(), BucketExceptionMessages.SUPPLY_NOTIFICATION_ID;
+      });
     });
 
     it('should return a Notification object', () => {
@@ -2331,21 +2323,21 @@ describe('Bucket', () => {
 
   describe('removeRetentionPeriod', () => {
     it('should call setMetadata correctly', done => {
-      bucket.setMetadata = (metadata: {}, callback: Function) => {
+      bucket.setMetadata = (metadata: {}) => {
         assert.deepStrictEqual(metadata, {
           retentionPolicy: null,
         });
 
-        callback(); // done()
+        return Promise.resolve([]);
       };
 
       bucket.removeRetentionPeriod(done);
     });
 
     it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
-      bucket.setMetadata = (metadata: {}, callback: Function) => {
+      bucket.setMetadata = () => {
         assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
-        callback();
+        return Promise.resolve([]);
       };
 
       bucket.removeRetentionPeriod(done);
@@ -2427,13 +2419,9 @@ describe('Bucket', () => {
   describe('setLabels', () => {
     it('should correctly call setMetadata', done => {
       const labels = {};
-      bucket.setMetadata = (
-        metadata: Metadata,
-        options: {},
-        callback: Function
-      ) => {
+      bucket.setMetadata = (metadata: Metadata) => {
         assert.strictEqual(metadata.labels, labels);
-        callback(); // done()
+        return Promise.resolve([]);
       };
       bucket.setLabels(labels, done);
     });
@@ -2449,9 +2437,9 @@ describe('Bucket', () => {
     });
 
     it('should disable autoRetry when isMetagenerationMatch is undefined', done => {
-      bucket.setMetadata = (metadata: {}, options: {}, callback: Function) => {
+      bucket.setMetadata = () => {
         assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
-        callback();
+        return Promise.resolve([]);
       };
       bucket.setLabels({}, done);
     });
@@ -2461,14 +2449,14 @@ describe('Bucket', () => {
     it('should call setMetadata correctly', done => {
       const duration = 90000;
 
-      bucket.setMetadata = (metadata: {}, callback: Function) => {
+      bucket.setMetadata = (metadata: {}) => {
         assert.deepStrictEqual(metadata, {
           retentionPolicy: {
             retentionPeriod: duration,
           },
         });
 
-        callback(); // done()
+        return Promise.resolve([]);
       };
 
       bucket.setRetentionPeriod(duration, done);
@@ -2477,9 +2465,9 @@ describe('Bucket', () => {
     it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
       const duration = 90000;
 
-      bucket.setMetadata = (metadata: {}, callback: Function) => {
+      bucket.setMetadata = () => {
         assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
-        callback();
+        return Promise.resolve([]);
       };
 
       bucket.setRetentionPeriod(duration, done);
@@ -2490,12 +2478,12 @@ describe('Bucket', () => {
     it('should call setMetadata correctly', done => {
       const corsConfiguration = [{maxAgeSeconds: 3600}];
 
-      bucket.setMetadata = (metadata: {}, callback: Function) => {
+      bucket.setMetadata = (metadata: {}) => {
         assert.deepStrictEqual(metadata, {
           cors: corsConfiguration,
         });
 
-        callback(); // done()
+        return Promise.resolve([]);
       };
 
       bucket.setCorsConfiguration(corsConfiguration, done);
@@ -2504,9 +2492,9 @@ describe('Bucket', () => {
     it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
       const corsConfiguration = [{maxAgeSeconds: 3600}];
 
-      bucket.setMetadata = (metadata: {}, callback: Function) => {
+      bucket.setMetadata = () => {
         assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
-        callback();
+        return Promise.resolve([]);
       };
 
       bucket.setCorsConfiguration(corsConfiguration, done);
@@ -2536,7 +2524,7 @@ describe('Bucket', () => {
       bucket.setStorageClass('hyphenated-class', OPTIONS, CALLBACK);
     });
 
-    it('should call setMetdata correctly', done => {
+    it('should call setMetdata correctly', () => {
       bucket.setMetadata = (
         metadata: Metadata,
         options: {},
@@ -2544,21 +2532,17 @@ describe('Bucket', () => {
       ) => {
         assert.deepStrictEqual(metadata, {storageClass: STORAGE_CLASS});
         assert.strictEqual(options, OPTIONS);
-        assert.strictEqual(callback, CALLBACK);
-        done();
+        assert.strictEqual(callback, undefined);
+        return Promise.resolve([]);
       };
 
       bucket.setStorageClass(STORAGE_CLASS, OPTIONS, CALLBACK);
     });
 
     it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
-      bucket.setMetadata = (
-        metadata: Metadata,
-        options: {},
-        callback: Function
-      ) => {
+      bucket.setMetadata = () => {
         assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
-        callback();
+        return Promise.resolve([]);
       };
 
       bucket.setStorageClass(STORAGE_CLASS, OPTIONS, done);
@@ -2601,6 +2585,11 @@ describe('Bucket', () => {
   describe('upload', () => {
     const basename = 'testfile.json';
     const filepath = path.join(__dirname, '../../test/testdata/' + basename);
+    const nonExistentFilePath = path.join(
+      __dirname,
+      '../../test/testdata/',
+      'non-existent-file'
+    );
     const metadata = {
       metadata: {
         a: 'b',
@@ -2748,48 +2737,14 @@ describe('Bucket', () => {
         };
       });
 
-      it('should force a resumable upload', done => {
+      it('should respect setting a resumable upload to false', done => {
         const fakeFile = new FakeFile(bucket, 'file-name');
-        const options = {destination: fakeFile, resumable: true};
+        const options = {destination: fakeFile, resumable: false};
         fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
           const ws = new stream.Writable();
           ws.write = () => true;
           setImmediate(() => {
             assert.strictEqual(options_.resumable, options.resumable);
-            done();
-          });
-          return ws;
-        };
-        bucket.upload(filepath, options, assert.ifError);
-      });
-
-      it('should not pass resumable option to createWriteStream when file size is greater than minimum resumable threshold', done => {
-        const fakeFile = new FakeFile(bucket, 'file-name');
-        const options = {destination: fakeFile};
-        fsStatOverride = (path: string, callback: Function) => {
-          // Set size greater than threshold
-          callback(null, {size: 5000001});
-        };
-        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
-          const ws = new stream.Writable();
-          ws.write = () => true;
-          setImmediate(() => {
-            assert.strictEqual(typeof options_.resumable, 'undefined');
-            done();
-          });
-          return ws;
-        };
-        bucket.upload(filepath, options, assert.ifError);
-      });
-
-      it('should prevent resumable when file size is less than minimum resumable threshold', done => {
-        const fakeFile = new FakeFile(bucket, 'file-name');
-        const options = {destination: fakeFile};
-        fakeFile.createWriteStream = (options_: CreateWriteStreamOptions) => {
-          const ws = new stream.Writable();
-          ws.write = () => true;
-          setImmediate(() => {
-            assert.strictEqual(options_.resumable, false);
             done();
           });
           return ws;
@@ -3062,6 +3017,14 @@ describe('Bucket', () => {
           done();
         }
       );
+    });
+
+    it('should capture and throw on non-existent files', done => {
+      bucket.upload(nonExistentFilePath, (err: Error) => {
+        assert(err);
+        assert(err.message.includes('ENOENT'));
+        done();
+      });
     });
   });
 

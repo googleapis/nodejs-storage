@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import * as assert from 'assert';
-import * as dateFormat from 'date-and-time';
 import * as crypto from 'crypto';
 import * as sinon from 'sinon';
 import {describe, it, beforeEach, afterEach} from 'mocha';
@@ -27,8 +26,21 @@ import {
   PATH_STYLED_HOST,
   GetSignedUrlConfigInternal,
   Query,
+  SignerExceptionMessages,
 } from '../src/signer';
-import {encodeURI, qsStringify} from '../src/util';
+import {encodeURI, formatAsUTCISO, qsStringify} from '../src/util';
+import {ExceptionMessages} from '../src/storage';
+import {OutgoingHttpHeaders} from 'http';
+
+interface SignedUrlArgs {
+  bucket: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  contentMd5?: string;
+  contentType?: string;
+  extensionHeaders?: OutgoingHttpHeaders;
+  expiration?: number;
+  file: string;
+}
 
 describe('signer', () => {
   const BUCKET_NAME = 'bucket-name';
@@ -118,7 +130,7 @@ describe('signer', () => {
 
           await signer.getSignedUrl(CONFIG);
           assert(v2.calledOnce);
-          const v2arg = v2.getCall(0).args[0];
+          const v2arg = v2.getCall(0).args[0] as SignedUrlArgs;
           assert.strictEqual(v2arg.bucket, bucket.name);
           assert.strictEqual(v2arg.method, CONFIG.method);
           assert.strictEqual(v2arg.contentMd5, CONFIG.contentMd5);
@@ -146,7 +158,7 @@ describe('signer', () => {
 
           await signer.getSignedUrl(CONFIG);
           assert(v4.calledOnce);
-          const v4arg = v4.getCall(0).args[0];
+          const v4arg = v4.getCall(0).args[0] as SignedUrlArgs;
           assert.strictEqual(v4arg.bucket, bucket.name);
           assert.strictEqual(v4arg.method, CONFIG.method);
           assert.strictEqual(v4arg.contentMd5, CONFIG.contentMd5);
@@ -185,11 +197,7 @@ describe('signer', () => {
             expires: expiresNumber,
           });
           const blobToSign = authClientSign.getCall(0).args[0];
-          assert(
-            blobToSign.includes(
-              dateFormat.format(accessibleAt, 'YYYYMMDD[T]HHmmss[Z]', true)
-            )
-          );
+          assert(blobToSign.includes(formatAsUTCISO(accessibleAt, true)));
         });
 
         it('should throw if an expiration date from the before accessibleAt date is given', () => {
@@ -202,17 +210,14 @@ describe('signer', () => {
               method: 'GET',
               accessibleAt,
               expires,
-            });
-          }, /An expiration date cannot be before accessible date\./);
+            }),
+              SignerExceptionMessages.EXPIRATION_BEFORE_ACCESSIBLE_DATE;
+          });
         });
 
         describe('checkInputTypes', () => {
           const query = {
-            'X-Goog-Date': dateFormat.format(
-              new Date(accessibleAtNumber),
-              'YYYYMMDD[T]HHmmss[Z]',
-              true
-            ),
+            'X-Goog-Date': formatAsUTCISO(new Date(accessibleAtNumber), true),
           };
 
           it('should accept Date objects', async () => {
@@ -257,8 +262,9 @@ describe('signer', () => {
                 method: 'GET',
                 accessibleAt,
                 expires: expiresNumber,
-              });
-            }, /The accessible at date provided was invalid\./);
+              }),
+                SignerExceptionMessages.ACCESSIBLE_DATE_INVALID;
+            });
           });
         });
       });
@@ -278,7 +284,10 @@ describe('signer', () => {
           assert(parseExpires.calledOnceWith(CONFIG.expires));
           const expiresInSeconds = parseExpires.getCall(0).lastArg;
 
-          assert(v2.getCall(0).args[0].expiration, expiresInSeconds);
+          assert(
+            (v2.getCall(0).args[0] as SignedUrlArgs).expiration,
+            expiresInSeconds
+          );
         });
       });
 
@@ -374,7 +383,7 @@ describe('signer', () => {
           .resolves({});
 
         await signer.getSignedUrl(CONFIG);
-        const v2arg = v2.getCall(0).args[0];
+        const v2arg = v2.getCall(0).args[0] as SignedUrlArgs;
         assert.strictEqual(v2arg.file, encoded);
         assert(signedUrl.includes(encoded));
       });
@@ -657,10 +666,10 @@ describe('signer', () => {
             ...CONFIG,
           };
 
-          assert.throws(
-            () => signer['getSignedUrlV4'](CONFIG),
-            /The header X-Goog-Content-SHA256 must be a hexadecimal string./
-          );
+          assert.throws(() => {
+            signer['getSignedUrlV4'](CONFIG),
+              SignerExceptionMessages.X_GOOG_CONTENT_SHA256;
+          });
         });
       });
 
@@ -684,7 +693,7 @@ describe('signer', () => {
           const query = (await signer['getSignedUrlV4'](CONFIG)) as Query;
           const arg = getCanonicalQueryParams.getCall(0).args[0];
 
-          const datestamp = dateFormat.format(NOW, 'YYYYMMDD', true);
+          const datestamp = formatAsUTCISO(NOW);
           const credentialScope = `${datestamp}/auto/storage/goog4_request`;
           const EXPECTED_CREDENTIAL = `${CLIENT_EMAIL}/${credentialScope}`;
 
@@ -693,7 +702,7 @@ describe('signer', () => {
         });
 
         it('should populate X-Goog-Date', async () => {
-          const dateISO = dateFormat.format(NOW, 'YYYYMMDD[T]HHmmss[Z]', true);
+          const dateISO = formatAsUTCISO(NOW, true);
 
           const query = (await signer['getSignedUrlV4'](CONFIG)) as Query;
           const arg = getCanonicalQueryParams.getCall(0).args[0];
@@ -783,9 +792,9 @@ describe('signer', () => {
       });
 
       it('should compose blobToSign', async () => {
-        const datestamp = dateFormat.format(NOW, 'YYYYMMDD', true);
+        const datestamp = formatAsUTCISO(NOW);
         const credentialScope = `${datestamp}/auto/storage/goog4_request`;
-        const dateISO = dateFormat.format(NOW, 'YYYYMMDD[T]HHmmss[Z]', true);
+        const dateISO = formatAsUTCISO(NOW, true);
 
         const authClientSign = sinon
           .stub(authClient, 'sign')
@@ -967,13 +976,13 @@ describe('signer', () => {
 
       it('throws invalid date', () => {
         assert.throws(() => signer.parseExpires('2019-31-12T25:60:60Z'), {
-          message: 'The expiration date provided was invalid.',
+          message: ExceptionMessages.EXPIRATION_DATE_INVALID,
         });
       });
 
       it('throws if expiration is in the past', () => {
         assert.throws(() => signer.parseExpires(NOW.valueOf() - 1, NOW), {
-          message: 'An expiration date cannot be in the past.',
+          message: ExceptionMessages.EXPIRATION_DATE_PAST,
         });
       });
 

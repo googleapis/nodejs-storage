@@ -16,7 +16,7 @@ import {
   BodyResponseCallback,
   DecorateRequestOptions,
   Metadata,
-} from '@google-cloud/common';
+} from './nodejs-common';
 import {promisifyAll} from '@google-cloud/promisify';
 import arrify = require('arrify');
 
@@ -117,6 +117,11 @@ export interface TestIamPermissionsOptions {
 interface GetPolicyRequest {
   userProject?: string;
   optionsRequestedPolicyVersion?: number;
+}
+
+export enum IAMExceptionMessages {
+  POLICY_OBJECT_REQUIRED = 'A policy object is required.',
+  PERMISSIONS_REQUIRED = 'Permissions are required.',
 }
 
 /**
@@ -283,7 +288,7 @@ class Iam {
    * @throws {Error} If no policy is provided.
    *
    * @param {Policy} policy The policy.
-   * @param {SetPolicyOptions} [options] Configuration opbject.
+   * @param {SetPolicyOptions} [options] Configuration options.
    * @param {SetPolicyCallback} callback Callback function.
    * @returns {Promise<SetPolicyResponse>}
    *
@@ -331,7 +336,7 @@ class Iam {
     callback?: SetPolicyCallback
   ): Promise<SetPolicyResponse> | void {
     if (policy === null || typeof policy !== 'object') {
-      throw new Error('A policy object is required.');
+      throw new Error(IAMExceptionMessages.POLICY_OBJECT_REQUIRED);
     }
 
     const {options, callback: cb} = normalize<
@@ -429,7 +434,7 @@ class Iam {
     callback?: TestIamPermissionsCallback
   ): Promise<TestIamPermissionsResponse> | void {
     if (!Array.isArray(permissions) && typeof permissions !== 'string') {
-      throw new Error('Permissions are required.');
+      throw new Error(IAMExceptionMessages.PERMISSIONS_REQUIRED);
     }
 
     const {options, callback: cb} = normalize<

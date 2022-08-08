@@ -7,8 +7,10 @@
   },
   "include": [
     "src/*.ts",
-    "test/*.ts",
+    "test/**/*.ts",
     "system-test/*.ts",
-    "conformance-test/*.ts"
+    "conformance-test/*.ts",
+    "conformance-test/scenarios/*.ts",
+    "internal-tooling/*.ts"
   ]
 }

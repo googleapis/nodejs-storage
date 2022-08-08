@@ -40,7 +40,7 @@ function main(
 
   // The name of a location
   // See this documentation for other valid locations:
-  // http://g.co/cloud/storage/docs/bucket-locations#location-mr
+  // http://g.co/cloud/storage/docs/locations#location-mr
   // const location = 'ASIA';
 
   // Imports the Google Cloud client library

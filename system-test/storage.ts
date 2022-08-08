@@ -23,67 +23,20 @@ import {promisify} from 'util';
 import * as path from 'path';
 import * as tmp from 'tmp';
 import * as uuid from 'uuid';
-import {util, ApiError, Metadata} from '@google-cloud/common';
+import {ApiError, Metadata} from '../src/nodejs-common';
 import {
   Storage,
   Bucket,
   File,
   AccessControlObject,
   Notification,
-  GetNotificationOptions,
   DeleteBucketCallback,
-  CreateNotificationOptions,
-  BucketExistsOptions,
-  BucketExistsCallback,
-  GetBucketOptions,
-  GetBucketCallback,
-  GetNotificationsCallback,
-  MakeBucketPrivateOptions,
-  MakeBucketPrivateCallback,
-  SetBucketMetadataOptions,
-  SetBucketMetadataCallback,
-  SaveCallback,
-  DownloadOptions,
-  DownloadCallback,
-  FileExistsOptions,
-  FileExistsCallback,
-  CreateReadStreamOptions,
-  CreateResumableUploadOptions,
-  GetFileOptions,
   GetFileCallback,
-  SetStorageClassOptions,
-  SetStorageClassCallback,
-  UploadOptions,
-  UploadCallback,
-  CopyOptions,
-  CopyCallback,
-  GetFileMetadataOptions,
-  GetFileMetadataCallback,
-  MakeFilePrivateOptions,
-  MakeFilePrivateCallback,
-  SetFileMetadataOptions,
-  SetFileMetadataCallback,
-  AddAclOptions,
-  AddAclCallback,
-  UpdateAclCallback,
-  UpdateAclOptions,
-  GetAclOptions,
-  GetAclCallback,
-  RemoveAclOptions,
-  RemoveAclCallback,
-  GetPolicyOptions,
-  GetPolicyCallback,
-  SetPolicyCallback,
-  TestIamPermissionsOptions,
-  TestIamPermissionsCallback,
-  GetNotificationCallback,
-  GetNotificationMetadataOptions,
-  GetNotificationMetadataCallback,
-  DeleteNotificationOptions,
-  DeleteNotificationCallback,
+  CRC32C,
 } from '../src';
 import * as nock from 'nock';
 import {Transform} from 'stream';
+import {gzipSync} from 'zlib';
 
 interface ErrorCallbackFunction {
   (err: Error | null): void;
@@ -92,9 +45,20 @@ import {PubSub} from '@google-cloud/pubsub';
 import {LifecycleRule} from '../src/bucket';
 import {IdempotencyStrategy} from '../src/storage';
 
+class HTTPError extends Error {
+  code: number;
+  constructor(message: string, code: number) {
+    super(message);
+    this.code = code;
+  }
+}
+
 // When set to true, skips all tests that is not compatible for
 // running inside VPCSC.
 const RUNNING_IN_VPCSC = !!process.env['GOOGLE_CLOUD_TESTS_IN_VPCSC'];
+
+const UNIFORM_ACCESS_TIMEOUT = 60 * 1000; // 60s see: https://cloud.google.com/storage/docs/consistency#eventually_consistent_operations
+const UNIFORM_ACCESS_WAIT_TIME = 5 * 1000; // 5s
 
 // block all attempts to chat with the metadata server (kokoro runs on GCE)
 nock('http://metadata.google.internal')
@@ -132,11 +96,8 @@ describe('storage', () => {
     html: {
       path: path.join(__dirname, '../../system-test/data/long-html-file.html'),
     },
-    gzip: {
-      path: path.join(
-        __dirname,
-        '../../system-test/data/long-html-file.html.gz'
-      ),
+    empty: {
+      path: path.join(__dirname, '../../system-test/data/empty-file.txt'),
     },
   };
 
@@ -249,7 +210,9 @@ describe('storage', () => {
             /Could not load the default credentials/,
             /does not have storage\.objects\.create access/,
           ];
-          assert(allowedErrorMessages.some(msg => msg.test(e.message)));
+          assert(
+            allowedErrorMessages.some(msg => msg.test((e as Error).message))
+          );
         }
       });
     });
@@ -948,6 +911,79 @@ describe('storage', () => {
     });
   });
 
+  describe('turbo replication', () => {
+    let bucket: Bucket;
+
+    const RPO_ASYNC_TURBO = 'ASYNC_TURBO';
+    const RPO_DEFAULT = 'DEFAULT';
+
+    const createBucket = () => {
+      bucket = storage.bucket(generateName());
+      return bucket.create({location: 'NAM4'});
+    };
+
+    const setTurboReplication = (
+      bucket: Bucket,
+      turboReplicationConfiguration: string
+    ) => {
+      return bucket.setMetadata({
+        rpo: turboReplicationConfiguration,
+      });
+    };
+
+    beforeEach(createBucket);
+
+    it("sets bucket's RPO to ASYNC_TURBO", async () => {
+      await setTurboReplication(bucket, RPO_ASYNC_TURBO);
+      const [bucketMetadata] = await bucket.getMetadata();
+      return assert.strictEqual(bucketMetadata.rpo, RPO_ASYNC_TURBO);
+    });
+
+    it("sets a bucket's RPO to DEFAULT", async () => {
+      await setTurboReplication(bucket, RPO_DEFAULT);
+      const [bucketMetadata] = await bucket.getMetadata();
+      return assert.strictEqual(bucketMetadata.rpo, RPO_DEFAULT);
+    });
+  });
+
+  describe('dual-region', () => {
+    let bucket: Bucket;
+
+    const LOCATION = 'US';
+    const REGION1 = 'US-EAST1';
+    const REGION2 = 'US-WEST1';
+
+    beforeEach(() => {
+      bucket = storage.bucket(generateName());
+    });
+
+    it('creates a dual-region bucket', async () => {
+      await bucket.create({
+        location: LOCATION,
+        customPlacementConfig: {
+          dataLocations: [REGION1, REGION2],
+        },
+      });
+
+      const [exists] = await bucket.exists();
+      assert.strictEqual(exists, true);
+
+      const [bucketMetadata] = await bucket.getMetadata();
+
+      assert.strictEqual(bucketMetadata.location, LOCATION);
+
+      assert(bucketMetadata.customPlacementConfig);
+      assert(Array.isArray(bucketMetadata.customPlacementConfig.dataLocations));
+
+      const dataLocations = bucketMetadata.customPlacementConfig.dataLocations;
+
+      assert(dataLocations.includes(REGION1));
+      assert(dataLocations.includes(REGION2));
+
+      assert.strictEqual(bucketMetadata.locationType, 'dual-region');
+    });
+  });
+
   describe('uniform bucket-level access', () => {
     let bucket: Bucket;
 
@@ -961,21 +997,22 @@ describe('storage', () => {
       return bucket.create();
     };
 
-    const setUniformBucketLevelAccess = (bucket: Bucket, enabled: boolean) =>
-      bucket.setMetadata({
+    const setUniformBucketLevelAccess = (bucket: Bucket, enabled: boolean) => {
+      return bucket.setMetadata({
         iamConfiguration: {
           uniformBucketLevelAccess: {
             enabled,
           },
         },
       });
+    };
 
     describe('files', () => {
       before(createBucket);
 
       it('can be written to the bucket by project owner w/o configuration', async () => {
         await setUniformBucketLevelAccess(bucket, true);
-        const file = bucket.file('file');
+        const file = bucket.file(`file-${uuid.v4()}`);
         return assert.doesNotReject(() => file.save('data'));
       });
     });
@@ -992,23 +1029,39 @@ describe('storage', () => {
         await createBucket();
         await setUniformBucketLevelAccess(bucket, true);
 
-        file = bucket.file('file');
-        await file.save('data');
+        file = bucket.file(`file-${uuid.v4()}`);
+        await file.save('data', {resumable: false});
       });
 
-      it('should fail to get file ACL', () => {
-        return assert.rejects(
-          () => file.acl.get(),
-          validateUniformBucketLevelAccessEnabledError
-        );
-      });
+      it('should fail to get file ACL', async () => {
+        // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
+        for (;;) {
+          try {
+            await file.acl.get();
+            await new Promise(res => setTimeout(res, UNIFORM_ACCESS_WAIT_TIME));
+          } catch (err) {
+            assert(
+              validateUniformBucketLevelAccessEnabledError(err as ApiError)
+            );
+            break;
+          }
+        }
+      }).timeout(UNIFORM_ACCESS_TIMEOUT);
 
-      it('should fail to update file ACL', () => {
-        return assert.rejects(
-          () => file.acl.update(customAcl),
-          validateUniformBucketLevelAccessEnabledError
-        );
-      });
+      it('should fail to update file ACL', async () => {
+        // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
+        for (;;) {
+          try {
+            await file.acl.update(customAcl);
+            await new Promise(res => setTimeout(res, UNIFORM_ACCESS_WAIT_TIME));
+          } catch (err) {
+            assert(
+              validateUniformBucketLevelAccessEnabledError(err as ApiError)
+            );
+            break;
+          }
+        }
+      }).timeout(UNIFORM_ACCESS_TIMEOUT);
     });
 
     describe('preserves bucket/file ACL over uniform bucket-level access on/off', () => {
@@ -1021,13 +1074,21 @@ describe('storage', () => {
         await setUniformBucketLevelAccess(bucket, true);
         await setUniformBucketLevelAccess(bucket, false);
 
-        const [aclAfter] = await bucket.acl.default.get();
-        assert.deepStrictEqual(aclAfter, aclBefore);
-      });
+        // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
+        for (;;) {
+          try {
+            const [aclAfter] = await bucket.acl.default.get();
+            assert.deepStrictEqual(aclAfter, aclBefore);
+            break;
+          } catch {
+            await new Promise(res => setTimeout(res, UNIFORM_ACCESS_WAIT_TIME));
+          }
+        }
+      }).timeout(UNIFORM_ACCESS_TIMEOUT);
 
       it('should preserve file ACL', async () => {
-        const file = bucket.file('file');
-        await file.save('data');
+        const file = bucket.file(`file-${uuid.v4()}`);
+        await file.save('data', {resumable: false});
 
         await file.acl.update(customAcl);
         const [aclBefore] = await file.acl.get();
@@ -1035,9 +1096,17 @@ describe('storage', () => {
         await setUniformBucketLevelAccess(bucket, true);
         await setUniformBucketLevelAccess(bucket, false);
 
-        const [aclAfter] = await file.acl.get();
-        assert.deepStrictEqual(aclAfter, aclBefore);
-      });
+        // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
+        for (;;) {
+          try {
+            const [aclAfter] = await file.acl.get();
+            assert.deepStrictEqual(aclAfter, aclBefore);
+            break;
+          } catch {
+            await new Promise(res => setTimeout(res, UNIFORM_ACCESS_WAIT_TIME));
+          }
+        }
+      }).timeout(UNIFORM_ACCESS_TIMEOUT);
     });
   });
 
@@ -1343,6 +1412,44 @@ describe('storage', () => {
       assert.strictEqual(
         bucket.metadata.lifecycle.rule.length,
         numExistingRules + 2
+      );
+    });
+
+    it('should add a prefix rule', async () => {
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          matchesPrefix: [TESTS_PREFIX],
+        },
+      });
+
+      assert(
+        bucket.metadata.lifecycle.rule.some(
+          (rule: LifecycleRule) =>
+            typeof rule.action === 'object' &&
+            rule.action.type === 'Delete' &&
+            typeof rule.condition.matchesPrefix === 'object' &&
+            (rule.condition.matchesPrefix as string[]).length === 1 &&
+            Array.isArray(rule.condition.matchesPrefix)
+        )
+      );
+    });
+
+    it('should add a suffix rule', async () => {
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          matchesSuffix: [TESTS_PREFIX, 'test_suffix'],
+        },
+      });
+
+      assert(
+        bucket.metadata.lifecycle.rule.some(
+          (rule: LifecycleRule) =>
+            typeof rule.action === 'object' &&
+            rule.action.type === 'Delete' &&
+            Array.isArray(rule.condition.matchesPrefix)
+        )
       );
     });
 
@@ -1871,16 +1978,51 @@ describe('storage', () => {
           file = bucketNonAllowList.file(file.name);
         });
 
-        function doubleTest(testFunction: Function) {
-          const failureMessage =
-            'Bucket is requester pays bucket but no user project provided.';
+        /**
+         * A type for requester pays functions. The `options` parameter
+         *
+         * Using `typeof USER_PROJECT_OPTIONS` ensures the function should
+         * support requester pays options, otherwise will fail early at build-
+         * time rather than runtime.
+         */
+        type requesterPaysFunction<
+          T = {} | typeof USER_PROJECT_OPTIONS,
+          R = {} | void
+        > = (options: T) => Promise<R>;
 
-          return (done: Function) => {
-            testFunction({}, (err: Error) => {
-              assert(err.message.indexOf(failureMessage) > -1);
-              testFunction(USER_PROJECT_OPTIONS, done);
-            });
-          };
+        /**
+         * Accepts a function and runs 2 tests - a test where the requester pays
+         * option is absent and another where it is present:
+         * - The missing requester pays test will assert the expected error
+         * - The added request pays test will return the function's result
+         *
+         * @param testFunction The function/method to test.
+         * @returns The result of the successful request pays operation.
+         */
+        async function requesterPaysDoubleTest<F extends requesterPaysFunction>(
+          testFunction: F
+        ): Promise<ReturnType<F>> {
+          const failureMessage =
+            'Bucket is a requester pays bucket but no user project provided.';
+
+          let expectedError: unknown = null;
+
+          try {
+            // Should raise an error on requester pays bucket
+            await testFunction({});
+          } catch (e) {
+            expectedError = e;
+          }
+
+          assert(expectedError instanceof Error);
+          assert(
+            expectedError.message.includes(failureMessage),
+            `Expected '${expectedError.message}' to include '${failureMessage}'`
+          );
+
+          // Validate the desired functionality
+          const results = await testFunction(USER_PROJECT_OPTIONS);
+          return results;
         }
 
         it('bucket#combine', async () => {
@@ -1908,414 +2050,257 @@ describe('storage', () => {
           }
         });
 
-        it(
-          'bucket#createNotification',
-          doubleTest(
-            (
-              options: CreateNotificationOptions,
-              done: ErrorCallbackFunction
-            ) => {
-              bucketNonAllowList.createNotification(
-                topicName,
-                options,
-                (err, _notification) => {
-                  notification = _notification!;
-                  done(err);
-                }
-              );
-            }
-          )
-        );
+        it('bucket#createNotification', async () => {
+          const [notif] = await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.createNotification(topicName, options);
+          });
 
-        it(
-          'bucket#exists',
-          doubleTest(
-            (options: BucketExistsOptions, done: BucketExistsCallback) => {
-              bucketNonAllowList.exists(options, done);
-            }
-          )
-        );
+          notification = notif;
+        });
 
-        it(
-          'bucket#get',
-          doubleTest((options: GetBucketOptions, done: GetBucketCallback) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            bucketNonAllowList.get(options, done as any);
-          })
-        );
+        it('bucket#exists', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.exists(options);
+          });
+        });
 
-        it(
-          'bucket#getMetadata',
-          doubleTest((options: GetBucketOptions, done: GetBucketCallback) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            bucketNonAllowList.get(options, done as any);
-          })
-        );
+        it('bucket#get', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.get(options);
+          });
+        });
 
-        it(
-          'bucket#getNotifications',
-          doubleTest(
-            (
-              options: GetNotificationOptions,
-              done: GetNotificationsCallback
-            ) => {
-              bucketNonAllowList.getNotifications(options, done);
-            }
-          )
-        );
+        it('bucket#getMetadata', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.getMetadata(options);
+          });
+        });
 
-        it(
-          'bucket#makePrivate',
-          doubleTest(
-            (
-              options: MakeBucketPrivateOptions,
-              done: MakeBucketPrivateCallback
-            ) => {
-              bucketNonAllowList.makePrivate(options, done);
-            }
-          )
-        );
+        it('bucket#getNotifications', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.getNotifications(options);
+          });
+        });
 
-        it(
-          'bucket#setMetadata',
-          doubleTest(
-            (
-              options: SetBucketMetadataOptions,
-              done: SetBucketMetadataCallback
-            ) => {
-              bucketNonAllowList.setMetadata(
-                {newMetadata: true},
-                options,
-                done
-              );
-            }
-          )
-        );
+        it('bucket#makePrivate', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.makePrivate(options);
+          });
+        });
 
-        it(
-          'bucket#setStorageClass',
-          doubleTest(
-            (
-              options: SetStorageClassOptions,
-              done: SetStorageClassCallback
-            ) => {
-              bucketNonAllowList.setStorageClass(
-                'multi-regional',
-                options,
-                done
-              );
-            }
-          )
-        );
+        it('bucket#setMetadata', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.setMetadata({newMetadata: true}, options);
+          });
+        });
 
-        it(
-          'bucket#upload',
-          doubleTest((options: UploadOptions, done: UploadCallback) => {
-            bucketNonAllowList.upload(FILES.big.path, options, done);
-          })
-        );
+        it('bucket#setStorageClass', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.setStorageClass(
+              'multi-regional',
+              options
+            );
+          });
+        });
 
-        it(
-          'file#copy',
-          doubleTest((options: CopyOptions, done: CopyCallback) => {
-            file.copy('new-file.txt', options, done);
-          })
-        );
+        it('bucket#upload', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.upload(FILES.big.path, options);
+          });
+        });
 
-        it(
-          'file#createReadStream',
-          doubleTest(
-            (options: CreateReadStreamOptions, done: (err: Error) => void) => {
-              file
+        it('file#copy', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return file.copy('new-file.txt', options);
+          });
+        });
+
+        it('file#createReadStream', async () => {
+          await requesterPaysDoubleTest(async options => {
+            await new Promise((resolve, reject) => {
+              return file
                 .createReadStream(options)
-                .on('error', done)
-                .on('end', done)
-                .on('data', util.noop);
-            }
-          )
-        );
-
-        it(
-          'file#createResumableUpload',
-          doubleTest(
-            (
-              options: CreateResumableUploadOptions,
-              done: (err: Error) => void
-            ) => {
-              file.createResumableUpload(options, (err, uri) => {
-                if (err) {
-                  done(err);
-                  return;
-                }
-
-                file
-                  .createWriteStream({uri})
-                  .on('error', done)
-                  .on('finish', done)
-                  .end('Test data');
-              });
-            }
-          )
-        );
-
-        it(
-          'file#download',
-          doubleTest((options: DownloadOptions, done: DownloadCallback) => {
-            file.download(options, done);
-          })
-        );
-
-        it(
-          'file#exists',
-          doubleTest((options: FileExistsOptions, done: FileExistsCallback) => {
-            file.exists(options, done);
-          })
-        );
-
-        it(
-          'file#get',
-          doubleTest((options: GetFileOptions, done: GetFileCallback) => {
-            file.get(options, (err: ApiError | null) => {
-              done(err);
+                .on('error', reject)
+                .on('end', resolve)
+                .on('data', () => {});
             });
-          })
-        );
+          });
+        });
 
-        it(
-          'file#getMetadata',
-          doubleTest(
-            (
-              options: GetFileMetadataOptions,
-              done: GetFileMetadataCallback
-            ) => {
-              file.getMetadata(options, done);
-            }
-          )
-        );
+        it('file#createResumableUpload', async () => {
+          await requesterPaysDoubleTest(async options => {
+            const [uri] = await file.createResumableUpload(options);
 
-        it(
-          'file#makePrivate',
-          doubleTest(
-            (
-              options: MakeFilePrivateOptions,
-              done: MakeFilePrivateCallback
-            ) => {
-              file.makePrivate(options, done);
-            }
-          )
-        );
+            await new Promise((resolve, reject) => {
+              return file
+                .createWriteStream({uri})
+                .on('error', reject)
+                .on('finish', resolve)
+                .end('Test data');
+            });
+          });
+        });
 
-        it(
-          'file#move',
-          doubleTest((options: GetFileOptions, done: SaveCallback) => {
+        it('file#download', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return file.download(options);
+          });
+        });
+
+        it('file#exists', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return file.exists(options);
+          });
+        });
+
+        it('file#get', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return file.get(options);
+          });
+        });
+
+        it('file#getMetadata', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return file.getMetadata(options);
+          });
+        });
+
+        it('file#makePrivate', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return file.makePrivate(options);
+          });
+        });
+
+        it('file#move', async () => {
+          await requesterPaysDoubleTest(async options => {
             const newFile = bucketNonAllowList.file(generateName());
 
-            file.move(newFile, options, err => {
-              if (err) {
-                done(err);
-                return;
-              }
+            await file.move(newFile, options);
 
-              // Re-create the file. The tests need it.
-              file.save('newcontent', options, done);
-            });
-          })
-        );
+            // Re-create the file. The tests need it.
+            await file.save('newcontent', options);
+          });
+        });
 
-        it(
-          'file#rename',
-          doubleTest((options: GetFileOptions, done: SaveCallback) => {
+        it('file#rename', async () => {
+          await requesterPaysDoubleTest(async options => {
             const newFile = bucketNonAllowList.file(generateName());
 
-            file.rename(newFile, options, err => {
-              if (err) {
-                done(err);
-                return;
-              }
+            await file.rename(newFile, options);
 
-              // Re-create the file. The tests need it.
-              file.save('newcontent', options, done);
+            // Re-create the file. The tests need it.
+            await file.save('newcontent', options);
+          });
+        });
+
+        it('file#setMetadata', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return file.setMetadata({newMetadata: true}, options);
+          });
+        });
+
+        it('file#setStorageClass', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return file.setStorageClass('multi-regional', options);
+          });
+        });
+
+        it('acl#add', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.acl.add({
+              entity: USER_ACCOUNT,
+              role: storage.acl.OWNER_ROLE,
+              ...options,
             });
-          })
-        );
+          });
+        });
 
-        it(
-          'file#setMetadata',
-          doubleTest(
-            (
-              options: SetFileMetadataOptions,
-              done: SetFileMetadataCallback
-            ) => {
-              file.setMetadata({newMetadata: true}, options, done);
-            }
-          )
-        );
-
-        it(
-          'file#setStorageClass',
-          doubleTest(
-            (
-              options: SetStorageClassOptions,
-              done: SetStorageClassCallback
-            ) => {
-              file.setStorageClass('multi-regional', options, done);
-            }
-          )
-        );
-
-        it(
-          'acl#add',
-          doubleTest((options: AddAclOptions, done: AddAclCallback) => {
-            options = Object.assign(
-              {
-                entity: USER_ACCOUNT,
-                role: storage.acl.OWNER_ROLE,
-              },
-              options
-            );
-
-            bucketNonAllowList.acl.add(options, done);
-          })
-        );
-
-        it(
-          'acl#update',
-          doubleTest((options: UpdateAclOptions, done: UpdateAclCallback) => {
-            options = Object.assign(
-              {
-                entity: USER_ACCOUNT,
-                role: storage.acl.WRITER_ROLE,
-              },
-              options
-            );
-
-            bucketNonAllowList.acl.update(options, done);
-          })
-        );
-
-        it(
-          'acl#get',
-          doubleTest((options: GetAclOptions, done: GetAclCallback) => {
-            options = Object.assign(
-              {
-                entity: USER_ACCOUNT,
-              },
-              options
-            );
-
-            bucketNonAllowList.acl.get(options, done);
-          })
-        );
-
-        it(
-          'acl#delete',
-          doubleTest((options: RemoveAclOptions, done: RemoveAclCallback) => {
-            options = Object.assign(
-              {
-                entity: USER_ACCOUNT,
-              },
-              options
-            );
-
-            bucketNonAllowList.acl.delete(options, done);
-          })
-        );
-
-        it(
-          'iam#getPolicy',
-          doubleTest((options: GetPolicyOptions, done: GetPolicyCallback) => {
-            bucketNonAllowList.iam.getPolicy(options, done);
-          })
-        );
-
-        it(
-          'iam#setPolicy',
-          doubleTest((options: GetPolicyOptions, done: SetPolicyCallback) => {
-            bucket.iam.getPolicy((err, policy) => {
-              if (err) {
-                done(err);
-                return;
-              }
-
-              policy!.bindings.push({
-                role: 'roles/storage.objectViewer',
-                members: ['allUsers'],
-              });
-
-              bucketNonAllowList.iam.setPolicy(policy!, options, done);
+        it('acl#update', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.acl.update({
+              entity: USER_ACCOUNT,
+              role: storage.acl.WRITER_ROLE,
+              ...options,
             });
-          })
-        );
+          });
+        });
 
-        it(
-          'iam#testPermissions',
-          doubleTest(
-            (
-              options: TestIamPermissionsOptions,
-              done: TestIamPermissionsCallback
-            ) => {
-              const tests = ['storage.buckets.delete'];
-              bucketNonAllowList.iam.testPermissions(tests, options, done);
-            }
-          )
-        );
+        it('acl#get', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.acl.get({
+              entity: USER_ACCOUNT,
+              ...options,
+            });
+          });
+        });
 
-        it(
-          'notification#get',
-          doubleTest(
-            (
-              options: GetNotificationOptions,
-              done: GetNotificationCallback
-            ) => {
-              if (!notification) {
-                throw new Error('Notification was not successfully created.');
-              }
+        it('acl#delete', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.acl.delete({
+              entity: USER_ACCOUNT,
+              ...options,
+            });
+          });
+        });
 
-              notification.get(options, done);
-            }
-          )
-        );
+        it('iam#getPolicy', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return bucketNonAllowList.iam.getPolicy(options);
+          });
+        });
 
-        it(
-          'notification#getMetadata',
-          doubleTest(
-            (
-              options: GetNotificationMetadataOptions,
-              done: GetNotificationMetadataCallback
-            ) => {
-              if (!notification) {
-                throw new Error('Notification was not successfully created.');
-              }
-              notification.getMetadata(options, done);
-            }
-          )
-        );
+        it('iam#setPolicy', async () => {
+          await requesterPaysDoubleTest(async options => {
+            const [policy] = await bucket.iam.getPolicy();
 
-        it(
-          'notification#delete',
-          doubleTest(
-            (
-              options: DeleteNotificationOptions,
-              done: DeleteNotificationCallback
-            ) => {
-              if (!notification) {
-                throw new Error('Notification was not successfully created.');
-              }
-              notification.delete(options, done);
-            }
-          )
-        );
+            policy.bindings.push({
+              role: 'roles/storage.objectViewer',
+              members: ['allUsers'],
+            });
+
+            return bucketNonAllowList.iam.setPolicy(policy, options);
+          });
+        });
+
+        it('iam#testPermissions', async () => {
+          await requesterPaysDoubleTest(async options => {
+            const tests = ['storage.buckets.delete'];
+
+            return bucketNonAllowList.iam.testPermissions(tests, options);
+          });
+        });
+
+        it('notification#get', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return notification.get(options);
+          });
+        });
+
+        it('notification#getMetadata', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return notification.getMetadata(options);
+          });
+        });
+
+        it('notification#delete', async () => {
+          await requesterPaysDoubleTest(async options => {
+            return notification.delete(options);
+          });
+        });
       });
     });
   });
 
   describe('write, read, and remove files', () => {
+    const FILE_DOWNLOAD_START_BYTE = 0;
+    const FILE_DOWNLOAD_END_BYTE = 20;
+
     before(async () => {
       function setHash(filesKey: string) {
         const file = FILES[filesKey];
         const hash = crypto.createHash('md5');
 
-        return new Promise(resolve =>
+        return new Promise<void>(resolve =>
           fs
             .createReadStream(file.path)
             .on('data', hash.update.bind(hash))
@@ -2442,6 +2427,39 @@ describe('storage', () => {
       });
     });
 
+    it('should download an empty file', done => {
+      const fileContents = fs.readFileSync(FILES.empty.path);
+      bucket.upload(
+        FILES.empty.path,
+        (err: Error | null, file?: File | null) => {
+          assert.ifError(err);
+          file!.download((err, remoteContents) => {
+            assert.ifError(err);
+            assert.strictEqual(String(fileContents), String(remoteContents));
+            done();
+          });
+        }
+      );
+    });
+
+    it('should download the specified bytes of a file', done => {
+      const fileContents = fs.readFileSync(FILES.big.path);
+      bucket.upload(FILES.big.path, (err: Error | null, file?: File | null) => {
+        assert.ifError(err);
+        file!.download(
+          {start: FILE_DOWNLOAD_START_BYTE, end: FILE_DOWNLOAD_END_BYTE},
+          (err, remoteContents) => {
+            assert.ifError(err);
+            assert.strictEqual(
+              String(fileContents).slice(0, 20),
+              String(remoteContents)
+            );
+            done();
+          }
+        );
+      });
+    });
+
     it('should handle non-network errors', done => {
       const file = bucket.file('hi.jpg');
       file.download(err => {
@@ -2465,7 +2483,7 @@ describe('storage', () => {
       });
     });
 
-    it('should upload a gzipped file and download it', done => {
+    it('should upload a gzipped file and download it', async () => {
       const options = {
         metadata: {
           contentEncoding: 'gzip',
@@ -2473,33 +2491,29 @@ describe('storage', () => {
         },
       };
 
-      const expectedContents = fs
-        .readFileSync(FILES.html.path, 'utf-8')
-        // eslint-disable-next-line no-control-regex
-        .replace(new RegExp('\r\n', 'g'), '\n');
+      const expectedContents = fs.readFileSync(FILES.html.path, 'utf-8');
 
-      bucket.upload(FILES.gzip.path, options, (err, file) => {
-        assert.ifError(err);
+      // Prepare temporary gzip file for upload
+      tmp.setGracefulCleanup();
+      const {name: tmpGzFilePath} = tmp.fileSync({postfix: '.gz'});
+      fs.writeFileSync(tmpGzFilePath, gzipSync(expectedContents));
 
-        // Sometimes this file is not found immediately; include some
-        // retry to attempt to make the test less flaky.
-        let attempt = 0;
-        const downloadCallback = (err: Error | null, contents: {}) => {
-          // If we got an error, gracefully retry a few times.
-          if (err) {
-            attempt += 1;
-            if (attempt >= 5) {
-              return assert.ifError(err);
-            }
-            return file!.download(downloadCallback);
-          }
-
-          // Ensure the contents match.
-          assert.strictEqual(contents.toString(), expectedContents);
-          file!.delete(done);
-        };
-        file!.download(downloadCallback);
+      const file: File = await new Promise((resolve, reject) => {
+        bucket.upload(tmpGzFilePath, options, (err, file) => {
+          if (err || !file) return reject(err);
+          resolve(file);
+        });
       });
+
+      const contents: Buffer = await new Promise((resolve, reject) => {
+        return file.download((error, content) => {
+          if (error) return reject(error);
+          resolve(content);
+        });
+      });
+
+      assert.strictEqual(contents.toString(), expectedContents);
+      await file.delete();
     });
 
     describe('simple write', () => {
@@ -2550,7 +2564,6 @@ describe('storage', () => {
         fs.stat(FILES.big.path, (err, metadata) => {
           assert.ifError(err);
 
-          // Use a random name to force an empty ConfigStore cache.
           const file = bucket.file(generateName());
           const fileSize = metadata.size;
           upload({interrupt: true}, err => {
@@ -3339,31 +3352,6 @@ describe('storage', () => {
         });
     });
 
-    it('should get files from a directory', done => {
-      //Note: Directory is deprecated.
-      bucket.getFiles({directory: DIRECTORY_NAME}, (err, files) => {
-        assert.ifError(err);
-        assert.strictEqual(files!.length, 3);
-        done();
-      });
-    });
-
-    it('should get files from a directory as a stream', done => {
-      //Note: Directory is deprecated.
-      let numFilesEmitted = 0;
-
-      bucket
-        .getFilesStream({directory: DIRECTORY_NAME})
-        .on('error', done)
-        .on('data', () => {
-          numFilesEmitted++;
-        })
-        .on('end', () => {
-          assert.strictEqual(numFilesEmitted, 3);
-          done();
-        });
-    });
-
     it('should paginate the list', done => {
       const query = {
         maxResults: NEW_FILES.length - 1,
@@ -3921,6 +3909,36 @@ describe('storage', () => {
     });
   });
 
+  describe('CRC32C', () => {
+    const KNOWN_INPUT_TO_CRC32C = {
+      /** empty string (i.e. nothing to 'update') */
+      '': 'AAAAAA==',
+      /** known case #1 - validated from actual GCS object upload + metadata retrieval */
+      data: 'rth90Q==',
+      /** known case #2 - validated from actual GCS object upload + metadata retrieval */
+      'some text\n': 'DkjKuA==',
+      /** arbitrary large string */
+      ['a'.repeat(2 ** 16)]: 'TpXtPw==',
+    } as const;
+
+    it('should generate the appropriate hashes', async () => {
+      const file = bucket.file('crc32c-test-file');
+
+      for (const [input, expected] of Object.entries(KNOWN_INPUT_TO_CRC32C)) {
+        const buffer = Buffer.from(input);
+        const crc32c = new CRC32C();
+
+        await file.save(buffer);
+        crc32c.update(buffer);
+
+        const [metadata] = await file.getMetadata();
+
+        assert.equal(metadata.crc32c, expected);
+        assert(crc32c.validate(metadata.crc32c));
+      }
+    });
+  });
+
   async function deleteBucketAsync(bucket: Bucket, options?: {}) {
     // After files are deleted, eventual consistency may require a bit of a
     // delay to ensure that the bucket recognizes that the files don't exist
@@ -4026,7 +4044,8 @@ describe('storage', () => {
         return false;
       }
     } catch (error) {
-      if (error.code === 404) {
+      const err = error as HTTPError;
+      if (err.code === 404) {
         return false;
       } else {
         throw error;
