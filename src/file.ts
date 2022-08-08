@@ -1535,8 +1535,11 @@ class File extends ServiceObject<File> {
           throughStream.end();
           return;
         }
+        
+        // Did the server decompress object before serving it back to us?
+        const serverDecompressed = headers['x-goog-stored-content-encoding'] == "gzip" && !isCompressed;
 
-        if (!isCompressed) {
+        if (serverDecompressed) {
           try {
             await this.getMetadata({userProject: options.userProject});
           } catch (e) {
