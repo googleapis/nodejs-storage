@@ -2683,9 +2683,9 @@ describe('storage', () => {
           file.save(FILE_CONTENTS, {resumable: false}, done);
         });
 
-        it('should have set kmsKeyName on created file', done => {
-          file.getMetadata((err: ApiError | null, metadata: Metadata) => {
-            assert.ifError(err);
+        it('should have set kmsKeyName on created file', async () => {
+          try {
+            const [metadata] = await file.getMetadata();
 
             // Strip the project ID, as it could be the placeholder locally, but
             // the real value upstream.
@@ -2700,37 +2700,33 @@ describe('storage', () => {
             expectedKmsKeyName = `${expectedKmsKeyName}/cryptoKeyVersions/1`;
 
             assert.strictEqual(actualKmsKeyName, expectedKmsKeyName);
-
-            done();
-          });
+          } catch (e) {
+            assert.ifError(e);
+          }
         });
 
-        it('should set kmsKeyName on resumable uploaded file', done => {
-          const file = bucket.file('resumable-file', {kmsKeyName});
+        it('should set kmsKeyName on resumable uploaded file', async () => {
+          try {
+            const file = bucket.file('resumable-file', {kmsKeyName});
+            await file.save(FILE_CONTENTS, {resumable: true});
+            const [metadata] = await file.getMetadata();
 
-          file.save(FILE_CONTENTS, {resumable: true}, err => {
-            assert.ifError(err);
+            // Strip the project ID, as it could be the placeholder locally,
+            // but the real value upstream.
+            const projectIdRegExp = /^.+\/locations/;
+            const actualKmsKeyName = metadata.kmsKeyName.replace(
+              projectIdRegExp,
+              ''
+            );
+            let expectedKmsKeyName = kmsKeyName.replace(projectIdRegExp, '');
 
-            file.getMetadata((err: ApiError | null, metadata: Metadata) => {
-              assert.ifError(err);
+            // Upstream attaches a version.
+            expectedKmsKeyName = `${expectedKmsKeyName}/cryptoKeyVersions/1`;
 
-              // Strip the project ID, as it could be the placeholder locally,
-              // but the real value upstream.
-              const projectIdRegExp = /^.+\/locations/;
-              const actualKmsKeyName = metadata.kmsKeyName.replace(
-                projectIdRegExp,
-                ''
-              );
-              let expectedKmsKeyName = kmsKeyName.replace(projectIdRegExp, '');
-
-              // Upstream attaches a version.
-              expectedKmsKeyName = `${expectedKmsKeyName}/cryptoKeyVersions/1`;
-
-              assert.strictEqual(actualKmsKeyName, expectedKmsKeyName);
-
-              done();
-            });
-          });
+            assert.strictEqual(actualKmsKeyName, expectedKmsKeyName);
+          } catch (e) {
+            assert.ifError(e);
+          }
         });
 
         it('should rotate encryption keys', async () => {
@@ -2743,24 +2739,17 @@ describe('storage', () => {
           assert.strictEqual(contents.toString(), FILE_CONTENTS);
         });
 
-        it('should convert CSEK to KMS key', done => {
-          const encryptionKey = crypto.randomBytes(32);
-
-          const file = bucket.file('encrypted-file', {encryptionKey});
-
-          file.save(FILE_CONTENTS, {resumable: false}, err => {
-            assert.ifError(err);
-
-            file.rotateEncryptionKey({kmsKeyName}, err => {
-              assert.ifError(err);
-
-              file.download((err, contents) => {
-                assert.ifError(err);
-                assert.strictEqual(contents.toString(), 'secret data');
-                done();
-              });
-            });
-          });
+        it('should convert CSEK to KMS key', async () => {
+          try {
+            const encryptionKey = crypto.randomBytes(32);
+            const file = bucket.file('encrypted-file', {encryptionKey});
+            await file.save(FILE_CONTENTS, {resumable: false});
+            await file.rotateEncryptionKey({kmsKeyName});
+            const [contents] = await file.download();
+            assert.strictEqual(contents.toString(), 'secret data');
+          } catch (e) {
+            assert.ifError(e);
+          }
         });
       });
 
@@ -2786,10 +2775,9 @@ describe('storage', () => {
           );
         });
 
-        it('should have set defaultKmsKeyName on created bucket', done => {
-          bucket.getMetadata((err: ApiError | null, metadata: Metadata) => {
-            assert.ifError(err);
-
+        it('should have set defaultKmsKeyName on created bucket', async () => {
+          try {
+            const [metadata] = await bucket.getMetadata();
             // Strip the project ID, as it could be the placeholder locally, but
             // the real value upstream.
             const projectIdRegExp = /^.+\/locations/;
@@ -2799,11 +2787,10 @@ describe('storage', () => {
                 ''
               );
             const expectedKmsKeyName = kmsKeyName.replace(projectIdRegExp, '');
-
             assert.strictEqual(actualKmsKeyName, expectedKmsKeyName);
-
-            done();
-          });
+          } catch (e) {
+            assert.ifError(e);
+          }
         });
 
         it('should update the defaultKmsKeyName', async () => {
@@ -2818,37 +2805,31 @@ describe('storage', () => {
           });
         });
 
-        it('should insert an object that inherits the kms key name', done => {
-          const file = bucket.file('kms-encrypted-file');
-
-          bucket.getMetadata((err: ApiError | null, metadata: Metadata) => {
-            assert.ifError(err);
-
+        it('should insert an object that inherits the kms key name', async () => {
+          try {
+            const file = bucket.file('kms-encrypted-file');
+            const [metadata] = await bucket.getMetadata();
             const defaultKmsKeyName = metadata.encryption.defaultKmsKeyName;
+            await file.save(FILE_CONTENTS, {resumable: false});
 
-            file.save(FILE_CONTENTS, {resumable: false}, err => {
-              assert.ifError(err);
+            // Strip the project ID, as it could be the placeholder locally,
+            // but the real value upstream.
+            const projectIdRegExp = /^.+\/locations/;
+            const actualKmsKeyName = file.metadata.kmsKeyName.replace(
+              projectIdRegExp,
+              ''
+            );
+            let expectedKmsKeyName = defaultKmsKeyName.replace(
+              projectIdRegExp,
+              ''
+            );
 
-              // Strip the project ID, as it could be the placeholder locally,
-              // but the real value upstream.
-              const projectIdRegExp = /^.+\/locations/;
-              const actualKmsKeyName = file.metadata.kmsKeyName.replace(
-                projectIdRegExp,
-                ''
-              );
-              let expectedKmsKeyName = defaultKmsKeyName.replace(
-                projectIdRegExp,
-                ''
-              );
-
-              // Upstream attaches a version.
-              expectedKmsKeyName = `${expectedKmsKeyName}/cryptoKeyVersions/1`;
-
-              assert.strictEqual(actualKmsKeyName, expectedKmsKeyName);
-
-              done();
-            });
-          });
+            // Upstream attaches a version.
+            expectedKmsKeyName = `${expectedKmsKeyName}/cryptoKeyVersions/1`;
+            assert.strictEqual(actualKmsKeyName, expectedKmsKeyName);
+          } catch (e) {
+            assert.ifError(e);
+          }
         });
       });
     });
@@ -2927,32 +2908,21 @@ describe('storage', () => {
       await file.delete();
     });
 
-    it('should copy to another bucket given a gs:// URL', done => {
-      const opts = {destination: 'CloudLogo'};
-      bucket.upload(FILES.logo.path, opts, (err, file) => {
-        assert.ifError(err);
-
+    it('should copy to another bucket given a gs:// URL', async () => {
+      try {
+        const opts = {destination: 'CloudLogo'};
+        const [file] = await bucket.upload(FILES.logo.path, opts);
         const otherBucket = storage.bucket(generateName());
-        otherBucket.create((err: Error) => {
-          assert.ifError(err);
-
-          const destPath = 'gs://' + otherBucket.name + '/CloudLogoCopy';
-          file!.copy(destPath, err => {
-            assert.ifError(err);
-
-            otherBucket.getFiles((err, files) => {
-              assert.ifError(err);
-
-              assert.strictEqual(files!.length, 1);
-              const newFile = files![0];
-
-              assert.strictEqual(newFile.name, 'CloudLogoCopy');
-
-              done();
-            });
-          });
-        });
-      });
+        await otherBucket.create();
+        const destPath = 'gs://' + otherBucket.name + '/CloudLogoCopy';
+        await file!.copy(destPath);
+        const [files] = await otherBucket.getFiles();
+        assert.strictEqual(files!.length, 1);
+        const newFile = files![0];
+        assert.strictEqual(newFile.name, 'CloudLogoCopy');
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
     it('should allow changing the storage class', async () => {
@@ -3219,12 +3189,13 @@ describe('storage', () => {
       await Promise.all(NEW_FILES.map(file => deleteFileAsync(file)));
     });
 
-    it('should get files', done => {
-      bucket.getFiles((err, files) => {
-        assert.ifError(err);
+    it('should get files', async () => {
+      try {
+        const [files] = await bucket.getFiles();
         assert.strictEqual(files!.length, NEW_FILES.length);
-        done();
-      });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
     it('should get files as a stream', done => {
@@ -3242,21 +3213,22 @@ describe('storage', () => {
         });
     });
 
-    it('should paginate the list', done => {
-      const query = {
-        maxResults: NEW_FILES.length - 1,
-      };
+    it('should paginate the list', async () => {
+      try {
+        const query = {
+          maxResults: NEW_FILES.length - 1,
+        };
 
-      bucket.getFiles(query, (err, files, nextQuery) => {
-        assert.ifError(err);
+        const [files, nextQuery] = await bucket.getFiles(query);
+
         assert.strictEqual(files!.length, NEW_FILES.length - 1);
         assert(nextQuery);
-        bucket.getFiles(nextQuery!, (err, files) => {
-          assert.ifError(err);
-          assert.strictEqual(files!.length, 1);
-          done();
-        });
-      });
+        const [nextFiles] = await bucket.getFiles(nextQuery);
+
+        assert.strictEqual(nextFiles!.length, 1);
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
   });
 
@@ -3332,37 +3304,21 @@ describe('storage', () => {
       );
     });
 
-    it('should overwrite file, then get older version', done => {
-      const versionedFile = bucketWithVersioning.file(generateName());
-
-      versionedFile.save('a', err => {
-        assert.ifError(err);
-
-        versionedFile.getMetadata(
-          (err: ApiError | null, metadata: Metadata) => {
-            assert.ifError(err);
-
-            const initialGeneration = metadata.generation;
-
-            versionedFile.save('b', err => {
-              assert.ifError(err);
-
-              const firstGenFile = bucketWithVersioning.file(
-                versionedFile.name,
-                {
-                  generation: initialGeneration,
-                }
-              );
-
-              firstGenFile.download((err, contents) => {
-                assert.ifError(err);
-                assert.strictEqual(contents.toString(), 'a');
-                done();
-              });
-            });
-          }
-        );
-      });
+    it('should overwrite file, then get older version', async () => {
+      try {
+        const versionedFile = bucketWithVersioning.file(generateName());
+        await versionedFile.save('a');
+        const [metadata] = await versionedFile.getMetadata();
+        const initialGeneration = metadata.generation;
+        await versionedFile.save('b');
+        const firstGenFile = bucketWithVersioning.file(versionedFile.name, {
+          generation: initialGeneration,
+        });
+        const [contents] = await firstGenFile.download();
+        assert.strictEqual(contents.toString(), 'a');
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
     it('should get all files scoped to their version', async () => {
@@ -3717,46 +3673,50 @@ describe('storage', () => {
       );
     });
 
-    it('should get an existing notification', done => {
-      notification.get(err => {
-        assert.ifError(err);
+    it('should get an existing notification', async () => {
+      try {
+        await notification.get();
         assert(Object.keys(notification.metadata).length > 0);
-        done();
-      });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
-    it('should get a notifications metadata', done => {
-      notification.getMetadata((err: ApiError | null, metadata: Metadata) => {
-        assert.ifError(err);
+    it('should get a notifications metadata', async () => {
+      try {
+        const [metadata] = await notification.getMetadata();
         assert(metadata !== null && typeof metadata === 'object');
-        done();
-      });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
-    it('should tell us if a notification exists', done => {
-      notification.exists((err: ApiError | null, exists: boolean) => {
-        assert.ifError(err);
+    it('should tell us if a notification exists', async () => {
+      try {
+        const [exists] = await notification.exists();
         assert(exists);
-        done();
-      });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
-    it('should tell us if a notification does not exist', done => {
-      const notification = bucket.notification('123');
-
-      notification.exists((err: ApiError | null, exists: boolean) => {
-        assert.ifError(err);
+    it('should tell us if a notification does not exist', async () => {
+      try {
+        const notification = bucket.notification('123');
+        const [exists] = await notification.exists();
         assert.strictEqual(exists, false);
-        done();
-      });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
-    it('should get a list of notifications', done => {
-      bucket.getNotifications((err, notifications) => {
-        assert.ifError(err);
+    it('should get a list of notifications', async () => {
+      try {
+        const [notifications] = await bucket.getNotifications();
         assert.strictEqual(notifications!.length, 1);
-        done();
-      });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
     it('should emit events to a subscription', done => {
