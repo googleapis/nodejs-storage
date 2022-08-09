@@ -329,8 +329,12 @@ describe('storage', () => {
       });
 
       it('should make a bucket private', async () => {
-        assert.doesNotReject(bucket.makePublic());
-        assert.doesNotReject(bucket.makePrivate());
+        try {
+          await bucket.makePublic();
+          await bucket.makePrivate();
+        } catch (e) {
+          assert.ifError(e);
+        }
         const validateMakeBucketPrivateRejects = (err: ApiError) => {
           assert.strictEqual(err.code, 404);
           assert.strictEqual((err as ApiError).errors![0].reason, 'notFound');
@@ -452,30 +456,28 @@ describe('storage', () => {
           return true;
         };
         assert.doesNotReject(file.makePublic());
-        assert.rejects(file.makePrivate(), validateMakeFilePrivateRejects);
+        assert.doesNotReject(file.makePrivate());
+        assert.rejects(
+          file.acl.get({entity: 'allUsers'}),
+          validateMakeFilePrivateRejects
+        );
       });
 
-      it('should set custom encryption during the upload', done => {
+      it('should set custom encryption during the upload', async () => {
         const key = '12345678901234567890123456789012';
-        bucket.upload(
-          FILES.big.path,
-          {
+        try {
+          const [file] = await bucket.upload(FILES.big.path, {
             encryptionKey: key,
             resumable: false,
-          },
-          (err, file) => {
-            assert.ifError(err);
-
-            file!.getMetadata((err: ApiError | null, metadata: Metadata) => {
-              assert.ifError(err);
-              assert.strictEqual(
-                metadata.customerEncryption.encryptionAlgorithm,
-                'AES256'
-              );
-              done();
-            });
-          }
-        );
+          });
+          const [metadata] = await file.getMetadata();
+          assert.strictEqual(
+            metadata.customerEncryption.encryptionAlgorithm,
+            'AES256'
+          );
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
       it('should set custom encryption in a resumable upload', done => {
