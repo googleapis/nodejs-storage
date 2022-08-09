@@ -273,7 +273,7 @@ describe('storage', () => {
             (accessControlGet as AccessControlObject).role,
             storage.acl.OWNER_ROLE
           );
-          bucket.acl.delete(opts);
+          await bucket.acl.delete(opts);
         } catch (e) {
           assert.ifError(e);
         }
@@ -329,19 +329,13 @@ describe('storage', () => {
       });
 
       it('should make a bucket private', async () => {
-        try {
-          await bucket.makePublic();
-          await bucket.makePrivate();
-        } catch (e) {
-          assert.ifError(e);
-        }
-
+        assert.doesNotReject(bucket.makePublic());
+        assert.doesNotReject(bucket.makePrivate());
         const validateMakeBucketPrivateRejects = (err: ApiError) => {
           assert.strictEqual(err.code, 404);
           assert.strictEqual((err as ApiError).errors![0].reason, 'notFound');
           return true;
         };
-
         await assert.rejects(
           bucket.acl.get({entity: 'allUsers'}),
           validateMakeBucketPrivateRejects
@@ -386,7 +380,7 @@ describe('storage', () => {
 
       it('should get access controls', async () => {
         try {
-          const accessControls = file.acl.get();
+          const [accessControls] = await file.acl.get();
           assert(Array.isArray(accessControls));
         } catch (e) {
           assert.ifError(e);
@@ -398,89 +392,67 @@ describe('storage', () => {
         assert.strictEqual(typeof (file as any).default, 'undefined');
       });
 
-      it('should grant an account access', done => {
-        file.acl.add(
-          {
+      it('should grant an account access', async () => {
+        try {
+          const [accessControl] = await file.acl.add({
             entity: USER_ACCOUNT,
             role: storage.acl.OWNER_ROLE,
-          },
-          (err, accessControl) => {
-            assert.ifError(err);
-            assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
-
-            file.acl.get({entity: USER_ACCOUNT}, (err, accessControl) => {
-              assert.ifError(err);
-              assert.strictEqual(
-                (accessControl as AccessControlObject).role,
-                storage.acl.OWNER_ROLE
-              );
-
-              file.acl.delete({entity: USER_ACCOUNT}, done);
-            });
-          }
-        );
+          });
+          assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
+          const [accessControlGet] = await file.acl.get({entity: USER_ACCOUNT});
+          assert.strictEqual(
+            (accessControlGet as AccessControlObject).role,
+            storage.acl.OWNER_ROLE
+          );
+          await file.acl.delete({entity: USER_ACCOUNT});
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should update an account', done => {
-        file.acl.add(
-          {
+      it('should update an account', async () => {
+        try {
+          const [accessControl] = await file.acl.add({
             entity: USER_ACCOUNT,
             role: storage.acl.OWNER_ROLE,
-          },
-          (err, accessControl) => {
-            assert.ifError(err);
-            assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
-
-            file.acl.update(
-              {
-                entity: USER_ACCOUNT,
-                role: storage.acl.READER_ROLE,
-              },
-              (err, accessControl) => {
-                assert.ifError(err);
-
-                assert.strictEqual(
-                  accessControl!.role,
-                  storage.acl.READER_ROLE
-                );
-
-                file.acl.delete({entity: USER_ACCOUNT}, done);
-              }
-            );
-          }
-        );
+          });
+          assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
+          const [accessControlUpdate] = await file.acl.update({
+            entity: USER_ACCOUNT,
+            role: storage.acl.READER_ROLE,
+          });
+          assert.strictEqual(
+            accessControlUpdate!.role,
+            storage.acl.READER_ROLE
+          );
+          await file.acl.delete({entity: USER_ACCOUNT});
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should make a file public', done => {
-        file.makePublic(err => {
-          assert.ifError(err);
-          file.acl.get({entity: 'allUsers'}, (err, aclObject) => {
-            assert.ifError(err);
-            assert.deepStrictEqual(aclObject, {
-              entity: 'allUsers',
-              role: 'READER',
-            });
-            file.acl.delete({entity: 'allUsers'}, done);
+      it('should make a file public', async () => {
+        try {
+          await file.makePublic();
+          const [aclObject] = await file.acl.get({entity: 'allUsers'});
+          assert.deepStrictEqual(aclObject, {
+            entity: 'allUsers',
+            role: 'READER',
           });
-        });
+          await file.acl.delete({entity: 'allUsers'});
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should make a file private', done => {
-        file.makePublic(err => {
-          assert.ifError(err);
-          file.makePrivate(err => {
-            assert.ifError(err);
-            file.acl.get(
-              {entity: 'allUsers'},
-              (err: ApiError | null, aclObject) => {
-                assert.strictEqual(err!.code, 404);
-                assert.strictEqual(err!.errors![0].reason, 'notFound');
-                assert.strictEqual(aclObject, null);
-                done();
-              }
-            );
-          });
-        });
+      it('should make a file private', async () => {
+        const validateMakeFilePrivateRejects = (err: ApiError) => {
+          assert.strictEqual(err.code, 404);
+          assert.strictEqual(err!.errors![0].reason, 'notFound');
+          return true;
+        };
+        assert.doesNotReject(file.makePublic());
+        assert.rejects(file.makePrivate(), validateMakeFilePrivateRejects);
       });
 
       it('should set custom encryption during the upload', done => {
