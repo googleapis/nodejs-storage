@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as querystring from 'querystring';
-import {PassThrough, TransformCallback} from 'stream';
+import {PassThrough} from 'stream';
 
 export function normalize<T = {}, U = Function>(
   optionsOrCallback?: T | U,
