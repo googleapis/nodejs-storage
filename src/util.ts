@@ -206,6 +206,6 @@ export class PassThroughShim extends PassThrough {
       this.emit('writing');
       this.shouldEmitWriting = false;
     }
-    super._final(callback);
+    callback(null);
   }
 }
