@@ -220,12 +220,15 @@ describe('storage', () => {
 
   describe('acls', () => {
     describe('buckets', () => {
-      it('should get access controls', done => {
-        bucket.acl.get((err, accessControls) => {
-          assert.ifError(err);
+      it('should get access controls', async () => {
+        try {
+          const accessControls = await bucket.acl.get();
+          console.log(accessControls);
           assert(Array.isArray(accessControls));
-          done();
-        });
+        }
+        catch (e) {
+          assert.ifError(e);
+        }
       });
 
       it('should add entity to default access controls', done => {
@@ -332,18 +335,19 @@ describe('storage', () => {
         );
       });
 
-      it('should make a bucket public', done => {
-        bucket.makePublic(err => {
-          assert.ifError(err);
-          bucket.acl.get({entity: 'allUsers'}, (err, aclObject) => {
-            assert.ifError(err);
-            assert.deepStrictEqual(aclObject, {
-              entity: 'allUsers',
-              role: 'READER',
-            });
-            bucket.acl.delete({entity: 'allUsers'}, done);
+      it('should make a bucket public', async () => {
+        try {
+          await bucket.makePublic();
+          const [aclObject] = await bucket.acl.get({entity: 'allUsers'});
+          assert.deepStrictEqual(aclObject, {
+            entity: 'allUsers',
+            role: 'READER',
           });
-        });
+          await bucket.acl.delete({entity: 'allUsers'});
+        }
+        catch (e) {
+          assert.ifError(e);
+        }
       });
 
       it('should make files public', async () => {
@@ -363,22 +367,30 @@ describe('storage', () => {
         ]);
       });
 
-      it('should make a bucket private', done => {
-        bucket.makePublic(err => {
-          assert.ifError(err);
-          bucket.makePrivate(err => {
-            assert.ifError(err);
-            bucket.acl.get({entity: 'allUsers'}, (err, aclObject) => {
-              assert.strictEqual((err as ApiError).code, 404);
-              assert.strictEqual(
-                (err as ApiError).errors![0].reason,
-                'notFound'
-              );
-              assert.strictEqual(aclObject, null);
-              done();
-            });
-          });
-        });
+      it('should make a bucket private', async () => {
+        try {
+          await bucket.makePublic();
+          await bucket.makePrivate();
+        }
+        catch (e) {
+          assert.ifError(e);
+        }
+
+        const validateMakeBucketPrivateRejects = (
+          err: ApiError
+        ) => {
+          assert.strictEqual(err.code, 404);
+          assert.strictEqual(
+            (err as ApiError).errors![0].reason,
+            'notFound'
+          );
+          return true;
+        };
+
+        await assert.rejects(
+          bucket.acl.get({entity: 'allUsers'}),
+          validateMakeBucketPrivateRejects
+        );
       });
 
       it('should make files private', async () => {
@@ -417,13 +429,14 @@ describe('storage', () => {
         file.delete(done);
       });
 
-      it('should get access controls', done => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        file.acl.get(done as any, (err, accessControls) => {
-          assert.ifError(err);
+      it('should get access controls', async () => {
+        try {
+          const accessControls = file.acl.get();
           assert(Array.isArray(accessControls));
-          done();
-        });
+        }
+        catch (e) {
+          assert.ifError(e);
+        }
       });
 
       it('should not expose default api', () => {
