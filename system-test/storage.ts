@@ -1253,33 +1253,25 @@ describe('storage', () => {
   });
 
   describe('bucket object lifecycle management', () => {
-    it('should add a rule', done => {
-      bucket.addLifecycleRule(
-        {
-          action: 'delete',
-          condition: {
-            age: 30,
-            isLive: true,
-          },
+    it('should add a rule', async () => {
+      await bucket.addLifecycleRule({
+        action: 'delete',
+        condition: {
+          age: 30,
+          isLive: true,
         },
-        err => {
-          assert.ifError(err);
+      });
+      const rules = [].slice.call(bucket.metadata.lifecycle.rule);
 
-          const rules = [].slice.call(bucket.metadata.lifecycle.rule);
-
-          assert.deepStrictEqual(rules.pop(), {
-            action: {
-              type: 'Delete',
-            },
-            condition: {
-              age: 30,
-              isLive: true,
-            },
-          });
-
-          done();
-        }
-      );
+      assert.deepStrictEqual(rules.pop(), {
+        action: {
+          type: 'Delete',
+        },
+        condition: {
+          age: 30,
+          isLive: true,
+        },
+      });
     });
 
     it('should append a new rule', async () => {
@@ -1346,31 +1338,26 @@ describe('storage', () => {
       );
     });
 
-    it('should convert a rule with createdBefore to a date in string', done => {
-      bucket.addLifecycleRule(
-        {
+    it('should convert a rule with createdBefore to a date in string', async () => {
+      try {
+        await bucket.addLifecycleRule({
           action: 'delete',
           condition: {
             createdBefore: new Date('2018'),
           },
-        },
-        err => {
-          assert.ifError(err);
-
-          const rules = [].slice.call(bucket.metadata.lifecycle.rule);
-
-          assert.deepStrictEqual(rules.pop(), {
-            action: {
-              type: 'Delete',
-            },
-            condition: {
-              createdBefore: '2018-01-01',
-            },
-          });
-
-          done();
-        }
-      );
+        });
+        const rules = [].slice.call(bucket.metadata.lifecycle.rule);
+        assert.deepStrictEqual(rules.pop(), {
+          action: {
+            type: 'Delete',
+          },
+          condition: {
+            createdBefore: '2018-01-01',
+          },
+        });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
     it('should add a noncurrent time rule', async () => {
@@ -1417,17 +1404,16 @@ describe('storage', () => {
       );
     });
 
-    it('should remove all existing rules', done => {
-      bucket.setMetadata(
-        {
+    it('should remove all existing rules', async () => {
+      try {
+        await bucket.setMetadata({
           lifecycle: null,
-        },
-        (err: ApiError) => {
-          assert.ifError(err);
-          assert.strictEqual(bucket.metadata.lifecycle, undefined);
-          done();
-        }
-      );
+        });
+
+        assert.strictEqual(bucket.metadata.lifecycle, undefined);
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
   });
 
