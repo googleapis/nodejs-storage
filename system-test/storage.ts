@@ -2293,72 +2293,65 @@ describe('storage', () => {
       assert.strictEqual(String(fileContents), String(remoteContents));
     });
 
-    it('should download a file to memory', done => {
-      const fileContents = fs.readFileSync(FILES.big.path);
-      bucket.upload(FILES.big.path, (err: Error | null, file?: File | null) => {
-        assert.ifError(err);
-        file!.download((err, remoteContents) => {
-          assert.ifError(err);
-          assert.strictEqual(String(fileContents), String(remoteContents));
-          done();
+    it('should download a file to memory', async () => {
+      try {
+        const fileContents = fs.readFileSync(FILES.big.path);
+        const [file] = await bucket.upload(FILES.big.path);
+        const [remoteContents] = await file.download();
+        assert.strictEqual(String(fileContents), String(remoteContents));
+      } catch (e) {
+        assert.ifError(e);
+      }
+    });
+
+    it('should download an empty file', async () => {
+      try {
+        const fileContents = fs.readFileSync(FILES.empty.path);
+        const [file] = await bucket.upload(FILES.empty.path);
+        const [remoteContents] = await file.download();
+        assert.strictEqual(String(fileContents), String(remoteContents));
+      } catch (e) {
+        assert.ifError(e);
+      }
+    });
+
+    it('should download the specified bytes of a file', async () => {
+      try {
+        const fileContents = fs.readFileSync(FILES.big.path);
+        const [file] = await bucket.upload(FILES.big.path);
+        const [remoteContents] = await file!.download({
+          start: FILE_DOWNLOAD_START_BYTE,
+          end: FILE_DOWNLOAD_END_BYTE,
         });
-      });
-    });
-
-    it('should download an empty file', done => {
-      const fileContents = fs.readFileSync(FILES.empty.path);
-      bucket.upload(
-        FILES.empty.path,
-        (err: Error | null, file?: File | null) => {
-          assert.ifError(err);
-          file!.download((err, remoteContents) => {
-            assert.ifError(err);
-            assert.strictEqual(String(fileContents), String(remoteContents));
-            done();
-          });
-        }
-      );
-    });
-
-    it('should download the specified bytes of a file', done => {
-      const fileContents = fs.readFileSync(FILES.big.path);
-      bucket.upload(FILES.big.path, (err: Error | null, file?: File | null) => {
-        assert.ifError(err);
-        file!.download(
-          {start: FILE_DOWNLOAD_START_BYTE, end: FILE_DOWNLOAD_END_BYTE},
-          (err, remoteContents) => {
-            assert.ifError(err);
-            assert.strictEqual(
-              String(fileContents).slice(0, 20),
-              String(remoteContents)
-            );
-            done();
-          }
+        assert.strictEqual(
+          String(fileContents).slice(0, 20),
+          String(remoteContents)
         );
-      });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
-    it('should handle non-network errors', done => {
+    it('should handle non-network errors', async () => {
       const file = bucket.file('hi.jpg');
-      file.download(err => {
+      assert.rejects(file.download(), (err: ApiError) => {
         assert.strictEqual((err as ApiError).code, 404);
-        done();
       });
     });
 
-    it('should gzip a file on the fly and download it', done => {
+    it('should gzip a file on the fly and download it', async () => {
       const options = {
         gzip: true,
       };
       const expectedContents = fs.readFileSync(FILES.html.path, 'utf-8');
-      bucket.upload(FILES.html.path, options, (err, file) => {
-        assert.ifError(err);
-        file!.download((err, contents) => {
-          assert.ifError(err);
-          assert.strictEqual(contents.toString(), expectedContents);
-          file!.delete(done);
-        });
-      });
+      try {
+        const [file] = await bucket.upload(FILES.html.path, options);
+        const [contents] = await file.download();
+        assert.strictEqual(contents.toString(), expectedContents);
+        await file.delete();
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
     it('should upload a gzipped file and download it', async () => {
@@ -2447,22 +2440,22 @@ describe('storage', () => {
           });
       });
 
-      it('should write metadata', done => {
+      it('should write metadata', async () => {
         const options = {
           metadata: {contentType: 'image/png'},
           resumable: false,
         };
-        bucket.upload(FILES.logo.path, options, (err, file) => {
-          assert.ifError(err);
-          file!.getMetadata((err: ApiError | null, metadata: Metadata) => {
-            assert.ifError(err);
-            assert.strictEqual(
-              metadata.contentType,
-              options.metadata.contentType
-            );
-            file!.delete(done);
-          });
-        });
+        try {
+          const [file] = await bucket.upload(FILES.logo.path, options);
+          const [metadata] = await file.getMetadata();
+          assert.strictEqual(
+            metadata.contentType,
+            options.metadata.contentType
+          );
+          await file.delete();
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
       it('should resume an upload after an interruption', done => {
@@ -2557,31 +2550,26 @@ describe('storage', () => {
         file.save('secret data', {resumable: false}, done);
       });
 
-      it('should not get the hashes from the unencrypted file', done => {
-        unencryptedFile.getMetadata(
-          (err: ApiError | null, metadata: Metadata) => {
-            assert.ifError(err);
-            assert.strictEqual(metadata.crc32c, undefined);
-            done();
-          }
-        );
+      it('should not get the hashes from the unencrypted file', async () => {
+        try {
+          const [metadata] = await unencryptedFile.getMetadata();
+          assert.strictEqual(metadata.crc32c, undefined);
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should get the hashes from the encrypted file', done => {
-        file.getMetadata((err: ApiError | null, metadata: Metadata) => {
-          assert.ifError(err);
+      it('should get the hashes from the encrypted file', async () => {
+        try {
+          const [metadata] = await file.getMetadata();
           assert.notStrictEqual(metadata.crc32c, undefined);
-          done();
-        });
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should not download from the unencrypted file', done => {
-        unencryptedFile.download(err => {
-          if (!err) {
-            done(new Error('Expected an error.'));
-            return;
-          }
-
+      it('should not download from the unencrypted file', async () => {
+        assert.rejects(unencryptedFile.download(), (err: ApiError) => {
           assert(
             err!.message.indexOf(
               [
@@ -2590,29 +2578,27 @@ describe('storage', () => {
               ].join(' ')
             ) > -1
           );
-          done();
         });
       });
 
-      it('should download from the encrytped file', done => {
-        file.download((err, contents) => {
-          assert.ifError(err);
+      it('should download from the encrytped file', async () => {
+        try {
+          const [contents] = await file.download();
           assert.strictEqual(contents.toString(), 'secret data');
-          done();
-        });
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should rotate encryption keys', done => {
+      it('should rotate encryption keys', async () => {
         const newEncryptionKey = crypto.randomBytes(32);
-
-        file.rotateEncryptionKey(newEncryptionKey, err => {
-          assert.ifError(err);
-          file.download((err, contents) => {
-            assert.ifError(err);
-            assert.strictEqual(contents.toString(), 'secret data');
-            done();
-          });
-        });
+        try {
+          await file.rotateEncryptionKey(newEncryptionKey);
+          const [contents] = await file.download();
+          assert.strictEqual(contents.toString(), 'secret data');
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
     });
 
@@ -3014,14 +3000,13 @@ describe('storage', () => {
   });
 
   describe('channels', () => {
-    it('should stop a channel', done => {
+    it('should stop a channel', async () => {
       // We can't actually create a channel. But we can test to see that we're
       // reaching the right endpoint with the API request.
       const channel = storage.channel('id', 'resource-id');
-      channel.stop(err => {
+      assert.rejects(channel.stop(), (err: ApiError) => {
         assert.strictEqual((err as ApiError).code, 404);
         assert.strictEqual(err!.message.indexOf("Channel 'id' not found"), 0);
-        done();
       });
     });
   });
