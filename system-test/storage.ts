@@ -572,9 +572,9 @@ describe('storage', () => {
         return bucket.create();
       });
 
-      it('should get a policy', done => {
-        bucket.iam.getPolicy((err, policy) => {
-          assert.ifError(err);
+      it('should get a policy', async () => {
+        try {
+          const [policy] = await bucket.iam.getPolicy();
           assert.deepStrictEqual(policy!.bindings, [
             {
               members: [
@@ -588,33 +588,28 @@ describe('storage', () => {
               role: 'roles/storage.legacyBucketReader',
             },
           ]);
-
-          done();
-        });
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should set a policy', done => {
-        bucket.iam.getPolicy((err, policy) => {
-          assert.ifError(err);
+      it('should set a policy', async () => {
+        try {
+          const [policy] = await bucket.iam.getPolicy();
           policy!.bindings.push({
             role: 'roles/storage.legacyBucketReader',
             members: ['allUsers'],
           });
-
-          bucket.iam.setPolicy(policy!, (err, newPolicy) => {
-            assert.ifError(err);
-
-            const legacyBucketReaderBinding = newPolicy!.bindings.filter(
-              binding => {
-                return binding.role === 'roles/storage.legacyBucketReader';
-              }
-            )[0];
-
-            assert(legacyBucketReaderBinding.members.includes('allUsers'));
-
-            done();
-          });
-        });
+          const [newPolicy] = await bucket.iam.setPolicy(policy);
+          const legacyBucketReaderBinding = newPolicy!.bindings.filter(
+            binding => {
+              return binding.role === 'roles/storage.legacyBucketReader';
+            }
+          )[0];
+          assert(legacyBucketReaderBinding.members.includes('allUsers'));
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
       it('should get-modify-set a conditional policy', async () => {
@@ -652,22 +647,22 @@ describe('storage', () => {
         assert.deepStrictEqual(newPolicy.bindings, policy.bindings);
       });
 
-      it('should test the iam permissions', done => {
+      it('should test the iam permissions', async () => {
         const testPermissions = [
           'storage.buckets.get',
           'storage.buckets.getIamPolicy',
         ];
-
-        bucket.iam.testPermissions(testPermissions, (err, permissions) => {
-          assert.ifError(err);
-
+        try {
+          const [permissions] = await bucket.iam.testPermissions(
+            testPermissions
+          );
           assert.deepStrictEqual(permissions, {
             'storage.buckets.get': true,
             'storage.buckets.getIamPolicy': true,
           });
-
-          done();
-        });
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
     });
   });
@@ -1095,15 +1090,16 @@ describe('storage', () => {
       );
     });
 
-    it('should get buckets', done => {
-      storage.getBuckets((err, buckets) => {
+    it('should get buckets', async () => {
+      try {
+        const [buckets] = await storage.getBuckets();
         const createdBuckets = buckets.filter(bucket => {
           return bucketsToCreate.indexOf(bucket.name) > -1;
         });
-
         assert.strictEqual(createdBuckets.length, bucketsToCreate.length);
-        done();
-      });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
     it('should get buckets as a stream', done => {
@@ -1123,7 +1119,7 @@ describe('storage', () => {
   });
 
   describe('bucket metadata', () => {
-    it('should allow setting metadata on a bucket', done => {
+    it('should allow setting metadata on a bucket', async () => {
       const metadata = {
         website: {
           mainPageSuffix: 'http://fakeuri',
@@ -1131,11 +1127,12 @@ describe('storage', () => {
         },
       };
 
-      bucket.setMetadata(metadata, (err: ApiError | null, meta: Metadata) => {
-        assert.ifError(err);
+      try {
+        const [meta] = await bucket.setMetadata(metadata);
         assert.deepStrictEqual(meta.website, metadata.website);
-        done();
-      });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
     it('should allow changing the storage class', async () => {
@@ -1198,81 +1195,59 @@ describe('storage', () => {
         bucket.deleteLabels(done);
       });
 
-      it('should set labels', done => {
-        bucket.setLabels(LABELS, err => {
-          assert.ifError(err);
-
-          bucket.getLabels((err, labels) => {
-            assert.ifError(err);
-            assert.deepStrictEqual(labels, LABELS);
-            done();
-          });
-        });
+      it('should set labels', async () => {
+        try {
+          await bucket.setLabels(LABELS);
+          const [labels] = await bucket.getLabels();
+          assert.deepStrictEqual(labels, LABELS);
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should update labels', done => {
+      it('should update labels', async () => {
         const newLabels = {
           siblinglabel: 'labelvalue',
         };
 
-        bucket.setLabels(LABELS, err => {
-          assert.ifError(err);
-
-          bucket.setLabels(newLabels, err => {
-            assert.ifError(err);
-
-            bucket.getLabels((err, labels) => {
-              assert.ifError(err);
-              assert.deepStrictEqual(
-                labels,
-                Object.assign({}, LABELS, newLabels)
-              );
-              done();
-            });
-          });
-        });
+        try {
+          await bucket.setLabels(LABELS);
+          await bucket.setLabels(newLabels);
+          const [labels] = await bucket.getLabels();
+          assert.deepStrictEqual(labels, Object.assign({}, LABELS, newLabels));
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should delete a single label', done => {
+      it('should delete a single label', async () => {
         if (Object.keys(LABELS).length <= 1) {
-          done(new Error('Maintainer Error: `LABELS` needs 2 labels.'));
-          return;
+          throw new Error('Maintainer Error: `LABELS` needs 2 labels.');
         }
 
         const labelKeyToDelete = Object.keys(LABELS)[0];
 
-        bucket.setLabels(LABELS, err => {
-          assert.ifError(err);
+        try {
+          await bucket.setLabels(LABELS);
+          await bucket.deleteLabels(labelKeyToDelete);
+          const [labels] = await bucket.getLabels();
+          const expectedLabels = Object.assign({}, LABELS);
+          delete (expectedLabels as {[index: string]: {}})[labelKeyToDelete];
 
-          bucket.deleteLabels(labelKeyToDelete, err => {
-            assert.ifError(err);
-
-            bucket.getLabels((err, labels) => {
-              assert.ifError(err);
-
-              const expectedLabels = Object.assign({}, LABELS);
-              delete (expectedLabels as {[index: string]: {}})[
-                labelKeyToDelete
-              ];
-
-              assert.deepStrictEqual(labels, expectedLabels);
-
-              done();
-            });
-          });
-        });
+          assert.deepStrictEqual(labels, expectedLabels);
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should delete all labels', done => {
-        bucket.deleteLabels(err => {
-          assert.ifError(err);
-
-          bucket.getLabels((err, labels) => {
-            assert.ifError(err);
-            assert.deepStrictEqual(labels, {});
-            done();
-          });
-        });
+      it('should delete all labels', async () => {
+        try {
+          await bucket.deleteLabels();
+          const [labels] = await bucket.getLabels();
+          assert.deepStrictEqual(labels, {});
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
     });
   });
