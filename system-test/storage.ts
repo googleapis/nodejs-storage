@@ -223,115 +223,78 @@ describe('storage', () => {
       it('should get access controls', async () => {
         try {
           const accessControls = await bucket.acl.get();
-          console.log(accessControls);
           assert(Array.isArray(accessControls));
         } catch (e) {
           assert.ifError(e);
         }
       });
 
-      it('should add entity to default access controls', done => {
-        bucket.acl.default.add(
-          {
+      it('should add entity to default access controls', async () => {
+        try {
+          const [accessControl] = await bucket.acl.default.add({
             entity: USER_ACCOUNT,
             role: storage.acl.OWNER_ROLE,
-          },
-          (err, accessControl) => {
-            assert.ifError(err);
-            assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
+          });
+          assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
 
-            bucket.acl.default.get(
-              {
-                entity: USER_ACCOUNT,
-              },
-              (err, accessControl) => {
-                assert.ifError(err);
-                assert.strictEqual(
-                  (accessControl as AccessControlObject)!.role,
-                  storage.acl.OWNER_ROLE
-                );
-
-                bucket.acl.default.update(
-                  {
-                    entity: USER_ACCOUNT,
-                    role: storage.acl.READER_ROLE,
-                  },
-                  (err, accessControl) => {
-                    assert.ifError(err);
-                    assert.strictEqual(
-                      (accessControl as AccessControlObject).role,
-                      storage.acl.READER_ROLE
-                    );
-
-                    bucket.acl.default.delete({entity: USER_ACCOUNT}, done);
-                  }
-                );
-              }
-            );
-          }
-        );
+          const [updatedAccessControl] = await bucket.acl.default.update({
+            entity: USER_ACCOUNT,
+            role: storage.acl.READER_ROLE,
+          });
+          assert.strictEqual(
+            updatedAccessControl.role,
+            storage.acl.READER_ROLE
+          );
+          await bucket.acl.default.delete({entity: USER_ACCOUNT});
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should get default access controls', done => {
-        bucket.acl.default.get((err, accessControls) => {
-          assert.ifError(err);
+      it('should get default access controls', async () => {
+        try {
+          const accessControls = await bucket.acl.default.get();
           assert(Array.isArray(accessControls));
-          done();
-        });
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should grant an account access', done => {
-        bucket.acl.add(
-          {
+      it('should grant an account access', async () => {
+        try {
+          const [accessControl] = await bucket.acl.add({
             entity: USER_ACCOUNT,
             role: storage.acl.OWNER_ROLE,
-          },
-          (err, accessControl) => {
-            assert.ifError(err);
-            assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
-
-            const opts = {entity: USER_ACCOUNT};
-
-            bucket.acl.get(opts, (err, accessControl) => {
-              assert.ifError(err);
-              assert.strictEqual(
-                (accessControl as AccessControlObject).role,
-                storage.acl.OWNER_ROLE
-              );
-
-              bucket.acl.delete(opts, done);
-            });
-          }
-        );
+          });
+          assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
+          const opts = {entity: USER_ACCOUNT};
+          const [accessControlGet] = await bucket.acl.get(opts);
+          assert.strictEqual(
+            (accessControlGet as AccessControlObject).role,
+            storage.acl.OWNER_ROLE
+          );
+          bucket.acl.delete(opts);
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should update an account', done => {
-        bucket.acl.add(
-          {
+      it('should update an account', async () => {
+        try {
+          const [accessControl] = await bucket.acl.add({
             entity: USER_ACCOUNT,
             role: storage.acl.OWNER_ROLE,
-          },
-          (err, accessControl) => {
-            assert.ifError(err);
-            assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
-
-            bucket.acl.update(
-              {
-                entity: USER_ACCOUNT,
-                role: storage.acl.WRITER_ROLE,
-              },
-              (err, accessControl) => {
-                assert.ifError(err);
-                assert.strictEqual(
-                  accessControl!.role,
-                  storage.acl.WRITER_ROLE
-                );
-
-                bucket.acl.delete({entity: USER_ACCOUNT}, done);
-              }
-            );
-          }
-        );
+          });
+          assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
+          const [updatedAcl] = await bucket.acl.update({
+            entity: USER_ACCOUNT,
+            role: storage.acl.WRITER_ROLE,
+          });
+          assert.strictEqual(updatedAcl!.role, storage.acl.WRITER_ROLE);
+          await bucket.acl.delete({entity: USER_ACCOUNT});
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
       it('should make a bucket public', async () => {
