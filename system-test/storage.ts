@@ -1644,13 +1644,11 @@ describe('storage', () => {
         return deleteFilesAsync();
       });
 
-      it('should block an overwrite request', done => {
+      it('should block an overwrite request', async () => {
         createFile((err, file) => {
           assert.ifError(err);
-
-          file!.save('new data', err => {
-            assert.strictEqual((err as ApiError).code, 403);
-            done();
+          assert.rejects(file!.save('new data'), (err: ApiError) => {
+            assert.strictEqual(err.code, 403);
           });
         });
       });
@@ -1714,12 +1712,13 @@ describe('storage', () => {
       bucket.delete(done);
     });
 
-    it('should have enabled requesterPays functionality', done => {
-      bucket.getMetadata((err: ApiError | null, metadata: Metadata) => {
-        assert.ifError(err);
+    it('should have enabled requesterPays functionality', async () => {
+      try {
+        const [metadata] = await bucket.getMetadata();
         assert.strictEqual(metadata.billing.requesterPays, true);
-        done();
-      });
+      } catch (e) {
+        assert.ifError(e);
+      }
     });
 
     // These tests will verify that the requesterPays functionality works from
