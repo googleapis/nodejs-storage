@@ -480,94 +480,71 @@ describe('storage', () => {
         }
       });
 
-      it('should set custom encryption in a resumable upload', done => {
+      it('should set custom encryption in a resumable upload', async () => {
         const key = crypto.randomBytes(32);
-
-        bucket.upload(
-          FILES.big.path,
-          {
+        try {
+          const [file] = await bucket.upload(FILES.big.path, {
             encryptionKey: key,
             resumable: true,
-          },
-          (err, file) => {
-            assert.ifError(err);
-
-            file!.getMetadata((err: ApiError | null, metadata: Metadata) => {
-              assert.ifError(err);
-              assert.strictEqual(
-                metadata.customerEncryption.encryptionAlgorithm,
-                'AES256'
-              );
-              done();
-            });
-          }
-        );
+          });
+          const [metadata] = await file.getMetadata();
+          assert.strictEqual(
+            metadata.customerEncryption.encryptionAlgorithm,
+            'AES256'
+          );
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should make a file public during the upload', done => {
-        bucket.upload(
-          FILES.big.path,
-          {
+      it('should make a file public during the upload', async () => {
+        try {
+          const [file] = await bucket.upload(FILES.big.path, {
             resumable: false,
             public: true,
-          },
-          (err, file) => {
-            assert.ifError(err);
+          });
 
-            file!.acl.get({entity: 'allUsers'}, (err, aclObject) => {
-              assert.ifError(err);
-              assert.deepStrictEqual(aclObject, {
-                entity: 'allUsers',
-                role: 'READER',
-              });
-              done();
-            });
-          }
-        );
+          const [aclObject] = await file.acl.get({entity: 'allUsers'});
+          assert.deepStrictEqual(aclObject, {
+            entity: 'allUsers',
+            role: 'READER',
+          });
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should make a file public from a resumable upload', done => {
-        bucket.upload(
-          FILES.big.path,
-          {
+      it('should make a file public from a resumable upload', async () => {
+        try {
+          const [file] = await bucket.upload(FILES.big.path, {
             resumable: true,
             public: true,
-          },
-          (err, file) => {
-            assert.ifError(err);
-
-            file!.acl.get({entity: 'allUsers'}, (err, aclObject) => {
-              assert.ifError(err);
-              assert.deepStrictEqual(aclObject, {
-                entity: 'allUsers',
-                role: 'READER',
-              });
-              done();
-            });
-          }
-        );
+          });
+          const [aclObject] = await file.acl.get({entity: 'allUsers'});
+          assert.deepStrictEqual(aclObject, {
+            entity: 'allUsers',
+            role: 'READER',
+          });
+        } catch (e) {
+          assert.ifError(e);
+        }
       });
 
-      it('should make a file private from a resumable upload', done => {
-        bucket.upload(
-          FILES.big.path,
-          {
+      it('should make a file private from a resumable upload', async () => {
+        const validateMakeFilePrivateRejects = (err: ApiError) => {
+          assert.strictEqual((err as ApiError)!.code, 404);
+          assert.strictEqual((err as ApiError).errors![0].reason, 'notFound');
+          return true;
+        };
+        assert.doesNotReject(
+          bucket.upload(FILES.big.path, {
             resumable: true,
             private: true,
-          },
-          (err, file) => {
-            assert.ifError(err);
-
-            file!.acl.get({entity: 'allUsers'}, (err, aclObject) => {
-              assert.strictEqual((err as ApiError)!.code, 404);
-              assert.strictEqual(
-                (err as ApiError).errors![0].reason,
-                'notFound'
-              );
-              assert.strictEqual(aclObject, null);
-              done();
-            });
-          }
+          })
+        );
+        assert.rejects(
+          file.acl.get({entity: 'allUsers'}),
+          validateMakeFilePrivateRejects
         );
       });
     });
