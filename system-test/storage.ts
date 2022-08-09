@@ -225,8 +225,7 @@ describe('storage', () => {
           const accessControls = await bucket.acl.get();
           console.log(accessControls);
           assert(Array.isArray(accessControls));
-        }
-        catch (e) {
+        } catch (e) {
           assert.ifError(e);
         }
       });
@@ -344,8 +343,7 @@ describe('storage', () => {
             role: 'READER',
           });
           await bucket.acl.delete({entity: 'allUsers'});
-        }
-        catch (e) {
+        } catch (e) {
           assert.ifError(e);
         }
       });
@@ -371,19 +369,13 @@ describe('storage', () => {
         try {
           await bucket.makePublic();
           await bucket.makePrivate();
-        }
-        catch (e) {
+        } catch (e) {
           assert.ifError(e);
         }
 
-        const validateMakeBucketPrivateRejects = (
-          err: ApiError
-        ) => {
+        const validateMakeBucketPrivateRejects = (err: ApiError) => {
           assert.strictEqual(err.code, 404);
-          assert.strictEqual(
-            (err as ApiError).errors![0].reason,
-            'notFound'
-          );
+          assert.strictEqual((err as ApiError).errors![0].reason, 'notFound');
           return true;
         };
 
@@ -433,8 +425,7 @@ describe('storage', () => {
         try {
           const accessControls = file.acl.get();
           assert(Array.isArray(accessControls));
-        }
-        catch (e) {
+        } catch (e) {
           assert.ifError(e);
         }
       });
