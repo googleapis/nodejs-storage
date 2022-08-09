@@ -1540,21 +1540,12 @@ class File extends ServiceObject<File> {
         const serverDecompressed =
           headers['x-goog-stored-content-encoding'] === 'gzip' && !isCompressed;
 
-        if (serverDecompressed) {
-          try {
-            await this.getMetadata({userProject: options.userProject});
-          } catch (e) {
-            throughStream.destroy(e as Error);
-            return;
-          }
-        }
-
         // If we're doing validation, assume the worst-- a data integrity
         // mismatch. If not, these tests won't be performed, and we can assume
         // the best.
         let failed = crc32c || md5;
 
-        if (validateStream) {
+        if (validateStream && !serverDecompressed) {
           if (crc32c && hashes.crc32c) {
             failed = !validateStream.test('crc32c', hashes.crc32c);
           }

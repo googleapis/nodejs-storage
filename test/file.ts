@@ -1395,6 +1395,19 @@ describe('File', () => {
         };
       }
 
+      describe('server decompression', () => {
+        it('should skip validation if file was stored compressed', done => {
+          file.metadata.crc32c = '.invalid.';
+          file.metadata.contentEncoding = 'gzip';
+
+          file
+            .createReadStream({validation: 'crc32c'})
+            .on('error', done)
+            .on('end', done)
+            .resume();
+        });
+      });
+
       it('should emit errors from the validation stream', done => {
         const expectedError = new Error('test error');
 
@@ -1426,41 +1439,6 @@ describe('File', () => {
           })
           .on('end', () => {
             done(new Error('Should not have been called.'));
-          })
-          .resume();
-      });
-
-      it('should pass the userProject to getMetadata', done => {
-        const fakeOptions = {
-          userProject: 'grapce-spaceship-123',
-        };
-
-        file.getMetadata = (options: GetFileMetadataOptions) => {
-          assert.strictEqual(options.userProject, fakeOptions.userProject);
-          setImmediate(done);
-          return Promise.resolve({
-            crc32c: CRC32C_HASH,
-          });
-        };
-
-        file.requestStream = getFakeSuccessfulRequest(DATA);
-
-        file.createReadStream(fakeOptions).on('error', done).resume();
-      });
-
-      it('should destroy stream from failed metadata fetch', done => {
-        const error = new Error('Error.');
-        file.getMetadata = () => {
-          return Promise.reject(error);
-        };
-
-        file.requestStream = getFakeSuccessfulRequest(DATA);
-
-        file
-          .createReadStream()
-          .on('error', (err: Error) => {
-            assert.strictEqual(err, error);
-            done();
           })
           .resume();
       });
