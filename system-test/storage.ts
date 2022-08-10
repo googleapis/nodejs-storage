@@ -1473,12 +1473,9 @@ describe('storage', () => {
         assert.strictEqual(FILE.metadata.temporaryHold, false);
       });
 
-      it('should get an expiration date', done => {
-        FILE.getExpirationDate((err, expirationDate) => {
-          assert.ifError(err);
-          assert(expirationDate instanceof Date);
-          done();
-        });
+      it('should get an expiration date', async () => {
+        const [expirationDate] = await FILE.getExpirationDate();
+        assert(expirationDate instanceof Date);
       });
     });
 
@@ -2280,16 +2277,12 @@ describe('storage', () => {
     });
 
     describe('simple write', () => {
-      it('should save arbitrary data', done => {
+      it('should save arbitrary data', async () => {
         const file = bucket.file('TestFile');
         const data = 'hello';
-        file!.save(data, err => {
-          assert.ifError(err);
-          file!.download((err, contents) => {
-            assert.strictEqual(contents.toString(), data);
-            done();
-          });
-        });
+        await file!.save(data);
+        const [contents] = await file!.download();
+        assert.strictEqual(contents.toString(), data);
       });
     });
 
