@@ -41,7 +41,6 @@ import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   File,
   FileOptions,
-  GetFileMetadataOptions,
   PolicyDocument,
   SetFileMetadataOptions,
   GetSignedUrlConfig,
