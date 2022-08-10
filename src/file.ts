@@ -1569,7 +1569,7 @@ class File extends ServiceObject<File> {
         // the best.
         let failed = crc32c || md5;
 
-        // We must check if the server decompressed the data on serve because hash 
+        // We must check if the server decompressed the data on serve because hash
         // validation is not possible in this case.
         if (validateStream && !serverDecompressed) {
           if (crc32c && hashes.crc32c) {
