@@ -1505,8 +1505,6 @@ class File extends ServiceObject<File> {
           (headers['x-goog-stored-content-encoding'] === 'gzip' && isCompressed)
           || headers['x-goog-stored-content-encoding'] === 'identity';
 
-        console.log(safeToValidate);
-
         const throughStreams: Writable[] = [];
 
         if (shouldRunValidation) {
