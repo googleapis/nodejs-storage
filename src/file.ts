@@ -1392,6 +1392,7 @@ class File extends ServiceObject<File> {
     let isCompressed = true;
     let crc32c = true;
     let md5 = false;
+    let safeToValidate = true;
 
     if (typeof options.validation === 'string') {
       const value = options.validation.toLowerCase().trim();
@@ -1494,7 +1495,18 @@ class File extends ServiceObject<File> {
         rawResponseStream.on('error', onComplete);
 
         const headers = rawResponseStream.toJSON().headers;
+        console.log(headers);
         isCompressed = headers['content-encoding'] === 'gzip';
+        
+        // The object is safe to validate if:
+        // 1. It was stored gzip and returned to us gzip OR
+        // 2. It was never stored as gzip
+        safeToValidate =
+          (headers['x-goog-stored-content-encoding'] === 'gzip' && isCompressed)
+          || headers['x-goog-stored-content-encoding'] === 'identity';
+
+        console.log(safeToValidate);
+
         const throughStreams: Writable[] = [];
 
         if (shouldRunValidation) {
@@ -1560,20 +1572,12 @@ class File extends ServiceObject<File> {
           return;
         }
 
-        // The object is safe to validate if:
-        // 1. It was stored gzip and returned to us gzip OR
-        // 2. It was never stored as gzip
-        const safeToValidate =
-          (headers['x-goog-stored-content-encoding'] === 'gzip' && isCompressed)
-          || headers['x-goog-stored-content-encoding'] === 'identity';
-
         // If we're doing validation, assume the worst-- a data integrity
         // mismatch. If not, these tests won't be performed, and we can assume
         // the best.
-        let failed = crc32c || md5;
-
         // We must check if the server decompressed the data on serve because hash
         // validation is not possible in this case.
+        let failed = (crc32c || md5) && safeToValidate;
         if (validateStream && safeToValidate) {
           if (crc32c && hashes.crc32c) {
             failed = !validateStream.test('crc32c', hashes.crc32c);
