@@ -1564,8 +1564,9 @@ class File extends ServiceObject<File> {
         // 1. It was stored gzip and returned to us gzip OR
         // 2. It was never stored as gzip
         const safeToValidate =
-          (headers['x-goog-stored-content-encoding'] === 'gzip' && isCompressed)
-          || headers['x-goog-stored-content-encoding'] === 'identity';
+          (headers['x-goog-stored-content-encoding'] === 'gzip' &&
+            isCompressed) ||
+          headers['x-goog-stored-content-encoding'] === 'identity';
 
         // If we're doing validation, assume the worst-- a data integrity
         // mismatch. If not, these tests won't be performed, and we can assume
