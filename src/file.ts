@@ -1560,9 +1560,12 @@ class File extends ServiceObject<File> {
           return;
         }
 
-        // Did the server decompress object before serving it back to us?
-        const serverDecompressed =
-          headers['x-goog-stored-content-encoding'] === 'gzip' && !isCompressed;
+        // The object is safe to validate if:
+        // 1. It was stored gzip and returned to us gzip OR
+        // 2. It was never stored as gzip
+        const safeToValidate =
+          (headers['x-goog-stored-content-encoding'] === 'gzip' && isCompressed)
+          || headers['x-goog-stored-content-encoding'] === 'identity';
 
         // If we're doing validation, assume the worst-- a data integrity
         // mismatch. If not, these tests won't be performed, and we can assume
@@ -1571,7 +1574,7 @@ class File extends ServiceObject<File> {
 
         // We must check if the server decompressed the data on serve because hash
         // validation is not possible in this case.
-        if (validateStream && !serverDecompressed) {
+        if (validateStream && safeToValidate) {
           if (crc32c && hashes.crc32c) {
             failed = !validateStream.test('crc32c', hashes.crc32c);
           }
