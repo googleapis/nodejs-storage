@@ -1497,13 +1497,14 @@ class File extends ServiceObject<File> {
         const headers = rawResponseStream.toJSON().headers;
         console.log(headers);
         isCompressed = headers['content-encoding'] === 'gzip';
-        
+
         // The object is safe to validate if:
         // 1. It was stored gzip and returned to us gzip OR
         // 2. It was never stored as gzip
         safeToValidate =
-          (headers['x-goog-stored-content-encoding'] === 'gzip' && isCompressed)
-          || headers['x-goog-stored-content-encoding'] === 'identity';
+          (headers['x-goog-stored-content-encoding'] === 'gzip' &&
+            isCompressed) ||
+          headers['x-goog-stored-content-encoding'] === 'identity';
 
         const throughStreams: Writable[] = [];
 
