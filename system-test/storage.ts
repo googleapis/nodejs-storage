@@ -1575,7 +1575,6 @@ describe('storage', () => {
       async function isRequesterPaysEnabled(): Promise<boolean> {
         const [metadata] = await bucket.getMetadata();
         const billing = metadata.billing || {};
-        console.log(billing);
         return !!billing && billing.requesterPays === true;
       }
 
@@ -1593,12 +1592,12 @@ describe('storage', () => {
         assert.strictEqual(isEnabled, true);
       });
 
-      it.only('should disable requesterPays', async () => {
+      it('should disable requesterPays', async () => {
         await bucket.enableRequesterPays();
-        const isEnabled = await isRequesterPaysEnabled();
+        let isEnabled = await isRequesterPaysEnabled();
         assert.strictEqual(isEnabled, true);
         await bucket.disableRequesterPays();
-        await isRequesterPaysEnabled();
+        isEnabled = await isRequesterPaysEnabled();
         assert.strictEqual(isEnabled, false);
       });
 
