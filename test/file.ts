@@ -1372,7 +1372,7 @@ describe('File', () => {
               return {
                 headers: {
                   'x-goog-hash': `crc32c=${responseCRC32C},md5=${responseMD5}`,
-                  'x-goog-stored-content-encoding': 'identity'
+                  'x-goog-stored-content-encoding': 'identity',
                 },
               };
             },
