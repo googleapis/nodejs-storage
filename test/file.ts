@@ -16,6 +16,8 @@ import {
   ApiError,
   BodyResponseCallback,
   DecorateRequestOptions,
+  Metadata,
+  MetadataCallback,
   ServiceObject,
   ServiceObjectConfig,
   util,
@@ -55,6 +57,7 @@ import {
 } from '../src/file';
 import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
 import {formatAsUTCISO} from '../src/util';
+import {SetMetadataOptions} from '../src/nodejs-common/service-object';
 
 class HTTPError extends Error {
   code: number;
@@ -3607,8 +3610,12 @@ describe('File', () => {
     it('should execute callback with API response', done => {
       const apiResponse = {};
 
-      file.setMetadata = () => {
-        return Promise.resolve([apiResponse]);
+      file.setMetadata = (
+        metadata: Metadata,
+        optionsOrCallback: SetMetadataOptions | MetadataCallback,
+        cb: MetadataCallback
+      ) => {
+        Promise.resolve([apiResponse]).then(resp => cb(null, ...resp));
       };
 
       file.makePrivate((err: Error, apiResponse_: {}) => {
@@ -3665,16 +3672,6 @@ describe('File', () => {
       };
 
       file.makePrivate(options, assert.ifError);
-    });
-
-    it('should disable autoRetry when ifMetagenerationMatch is undefined', done => {
-      file.setMetadata = () => {
-        assert.strictEqual(file.storage.retryOptions.autoRetry, false);
-        done();
-      };
-
-      file.makePrivate({}, assert.ifError);
-      assert.strictEqual(file.storage.retryOptions.autoRetry, true);
     });
   });
 
@@ -3795,13 +3792,13 @@ describe('File', () => {
       });
     });
 
-    it('should correctly send a HEAD request', done => {
+    it('should correctly send a GET request', done => {
       fakeUtil.makeRequest = function (
         reqOpts: DecorateRequestOptions,
         config: object,
         callback: BodyResponseCallback
       ) {
-        assert.strictEqual(reqOpts.method, 'HEAD');
+        assert.strictEqual(reqOpts.method, 'GET');
         callback(null);
       };
       file.isPublic((err: ApiError) => {
@@ -4138,8 +4135,13 @@ describe('File', () => {
         return newFile;
       };
 
-      file.copy = (destination: string, callback: Function) => {
+      file.copy = (
+        destination: string,
+        options: object,
+        callback: Function
+      ) => {
         assert.strictEqual(destination, newFile);
+        assert.deepStrictEqual(options, {});
         callback(); // done()
       };
 
