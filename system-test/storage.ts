@@ -481,7 +481,7 @@ describe('storage', () => {
     let PROJECT_ID: string;
 
     before(async () => {
-      [PROJECT_ID] = await storage.authClient.getProjectId();
+      PROJECT_ID = await storage.authClient.getProjectId();
     });
 
     describe('buckets', () => {
@@ -1575,6 +1575,7 @@ describe('storage', () => {
       async function isRequesterPaysEnabled(): Promise<boolean> {
         const [metadata] = await bucket.getMetadata();
         const billing = metadata.billing || {};
+        console.log(billing);
         return !!billing && billing.requesterPays === true;
       }
 
@@ -1592,7 +1593,7 @@ describe('storage', () => {
         assert.strictEqual(isEnabled, true);
       });
 
-      it('should disable requesterPays', async () => {
+      it.only('should disable requesterPays', async () => {
         await bucket.enableRequesterPays();
         const isEnabled = await isRequesterPaysEnabled();
         assert.strictEqual(isEnabled, true);
