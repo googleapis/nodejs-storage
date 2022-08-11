@@ -2210,6 +2210,7 @@ describe('File', () => {
 
       file.startSimpleUpload_ = (stream: duplexify.Duplexify) => {
         stream.setWritable(new PassThrough());
+        stream.emit('metadata');
 
         stream.on('finish', () => {
           streamFinishedCalled = true;
@@ -2232,6 +2233,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = (stream: duplexify.Duplexify) => {
           stream.setWritable(new PassThrough());
+          stream.emit('metadata');
 
           stream.on('finish', () => {
             file.metadata = fakeMetadata.crc32c;
@@ -2248,6 +2250,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = (stream: duplexify.Duplexify) => {
           stream.setWritable(new PassThrough());
+          stream.emit('metadata');
 
           stream.on('finish', () => {
             file.metadata = fakeMetadata.crc32c;
@@ -2270,6 +2273,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = (stream: duplexify.Duplexify) => {
           stream.setWritable(new PassThrough());
+          stream.emit('metadata');
 
           stream.on('finish', () => {
             file.metadata = fakeMetadata.md5;
@@ -2287,6 +2291,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = (stream: duplexify.Duplexify) => {
           stream.setWritable(new PassThrough());
+          stream.emit('metadata');
 
           stream.on('finish', () => {
             file.metadata = fakeMetadata.md5;
@@ -2309,6 +2314,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = (stream: duplexify.Duplexify) => {
           stream.setWritable(new PassThrough());
+          stream.emit('metadata');
 
           stream.on('finish', () => {
             file.metadata = {md5Hash: 'bad-hash'};
@@ -2331,6 +2337,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = (stream: duplexify.Duplexify) => {
           stream.setWritable(new PassThrough());
+          stream.emit('metadata');
 
           stream.on('finish', () => {
             file.metadata = {md5Hash: 'bad-hash'};
@@ -2349,6 +2356,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = (stream: duplexify.Duplexify) => {
           stream.setWritable(new PassThrough());
+          stream.emit('metadata');
 
           stream.on('finish', () => {
             file.metadata = {md5Hash: 'bad-hash'};
@@ -2371,6 +2379,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = (stream: duplexify.Duplexify) => {
           stream.setWritable(new PassThrough());
+          stream.emit('metadata');
 
           stream.on('finish', () => {
             file.metadata = {crc32c: 'not-md5'};
@@ -2393,6 +2402,7 @@ describe('File', () => {
 
         file.startResumableUpload_ = (stream: duplexify.Duplexify) => {
           stream.setWritable(new PassThrough());
+          stream.emit('metadata');
 
           stream.on('finish', () => {
             file.metadata = {md5Hash: 'bad-hash'};
