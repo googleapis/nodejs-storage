@@ -77,7 +77,6 @@ import {
   SetMetadataOptions,
 } from './nodejs-common/service-object';
 import * as r from 'teeny-request';
-import {ReadableStream} from 'stream/web';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -4024,7 +4023,7 @@ class File extends ServiceObject<File> {
    *
    * @param hashCalculatingStream
    * @param verify
-   * @returns
+   * @returns {boolean} Returns `true` if valid, throws with error otherwise
    */
   async #validateIntegrity(
     hashCalculatingStream: HashStreamValidator,
