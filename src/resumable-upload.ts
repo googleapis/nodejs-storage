@@ -30,7 +30,8 @@ import * as uuid from 'uuid';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
-const RESUMABLE_COMPLETE_STATUS_CODE = 200;
+const RESUMABLE_OK_STATUS_CODE = 200;
+const RESUMABLE_CREATED_STATUS_CODE = 201;
 const DEFAULT_API_ENDPOINT_REGEX = /.*\.googleapis\.com/;
 const packageJson = require('../../package.json');
 
@@ -832,7 +833,10 @@ export class Upload extends Writable {
         }
       }
       // If we receive a 200 back from the server it indicates that the upload has been completed
-      if (resp.status === RESUMABLE_COMPLETE_STATUS_CODE) {
+      if (
+        resp.status === RESUMABLE_OK_STATUS_CODE ||
+        resp.status === RESUMABLE_CREATED_STATUS_CODE
+      ) {
         this.offset = this.numBytesWritten;
         return;
       }
