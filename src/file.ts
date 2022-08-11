@@ -1983,12 +1983,16 @@ class File extends ServiceObject<File> {
     });
 
     const fileWriteStream = duplexify();
+    let fileWriteStreamMetadataReceived = false;
 
     // Handing off emitted events to users
     emitStream.on('reading', () => writeStream.emit('reading'));
     emitStream.on('writing', () => writeStream.emit('writing'));
     fileWriteStream.on('progress', evt => writeStream.emit('progress', evt));
     fileWriteStream.on('response', resp => writeStream.emit('response', resp));
+    fileWriteStream.once('metadata', () => {
+      fileWriteStreamMetadataReceived = true;
+    });
 
     writeStream.on('writing', () => {
       if (options.resumable === false) {
@@ -2002,11 +2006,25 @@ class File extends ServiceObject<File> {
           return pipelineCallback(e);
         }
 
+        // We want to make sure we've received the metadata from the server in order
+        // to properly validate the object's integrity. Depending on the type of upload,
+        // the stream could close before the response is returned.
+        if (!fileWriteStreamMetadataReceived) {
+          try {
+            await new Promise((resolve, reject) => {
+              fileWriteStream.once('metadata', resolve);
+              fileWriteStream.once('error', reject);
+            });
+          } catch (e) {
+            return pipelineCallback(e as Error);
+          }
+        }
+
         try {
           await this.#validateIntegrity(hashCalculatingStream, {crc32c, md5});
           pipelineCallback();
-        } catch (err) {
-          pipelineCallback(err as Error);
+        } catch (e) {
+          pipelineCallback(e as Error);
         }
       });
     });
@@ -3901,6 +3919,7 @@ class File extends ServiceObject<File> {
       })
       .on('metadata', metadata => {
         this.metadata = metadata;
+        dup.emit('metadata');
       })
       .on('finish', () => {
         dup.emit('complete');
@@ -3980,6 +3999,7 @@ class File extends ServiceObject<File> {
           }
 
           this.metadata = body;
+          dup.emit('metadata', body);
           dup.emit('response', resp);
           dup.emit('complete');
         });

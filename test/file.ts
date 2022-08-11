@@ -2260,7 +2260,6 @@ describe('File', () => {
         writable.end();
 
         writable.on('error', (err: ApiError) => {
-          console.log(err, 'FILE_NO_UPLOAD');
           assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
           done();
         });
