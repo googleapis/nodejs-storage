@@ -79,6 +79,8 @@
         "createResumableUpload"
     ],
     "storage.resumable.upload": [
+        "bucketUploadResumableInstancePrecondition",
+        "saveResumableInstancePrecondition",
         "bucketUploadResumable",
         "saveResumable"
     ],
