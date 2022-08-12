@@ -49,11 +49,22 @@ function main(
   const storage = new Storage();
 
   async function copyFile() {
+    const copyDestination = storage.bucket(destBucketName).file(destFileName);
+    
+    // Optional: set a generation-match precondition to avoid potential race
+    // conditions and data corruptions. The request to upload is aborted if the
+    // object's generation number does not match your precondition.
+    // For a destination object that does not yet exist, set the ifGenerationMatch precondition
+    // to 0
+    const copyOptions = {
+      ifGenerationMatch: copyDestination.metadata.generation
+    }
+
     // Copies the file to the other bucket
     await storage
       .bucket(srcBucketName)
       .file(srcFilename)
-      .copy(storage.bucket(destBucketName).file(destFileName));
+      .copy(copyDestination, copyOptions);
 
     console.log(
       `gs://${srcBucketName}/${srcFilename} copied to gs://${destBucketName}/${destFileName}`
