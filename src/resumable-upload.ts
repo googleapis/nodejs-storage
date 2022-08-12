@@ -553,7 +553,7 @@ export class Upload extends Writable {
       data: metadata,
       headers: {
         'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId.uri}`,
-        ...headers
+        ...headers,
       },
     };
 
