@@ -112,7 +112,7 @@ describe('resumable-upload', () => {
       userProject: USER_PROJECT,
       authConfig: {keyFile},
       apiEndpoint: API_ENDPOINT,
-      retryOptions: RETRY_OPTIONS,
+      retryOptions: {...RETRY_OPTIONS},
     });
   });
 
