@@ -262,6 +262,9 @@ const IDEMPOTENCY_STRATEGY_DEFAULT = IdempotencyStrategy.RetryConditional;
  */
 export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
   const isConnectionProblem = (reason: string | undefined) => {
+    if (reason?.includes('epipe')) {
+      console.log('GOT AN EPIPE PROBLEM');
+    }
     return (
       (reason && reason.includes('eai_again')) || //DNS lookup error
       reason === 'econnreset' ||
