@@ -1954,7 +1954,7 @@ class File extends ServiceObject<File> {
      * A callback for determining when the underlying pipeline is complete.
      * It's possible the pipeline callback could error before the write stream
      * calls `final` so by default this will destroy the write stream unless the
-     * write stream sets this callback via it's `final` handler.
+     * write stream sets this callback via its `final` handler.
      * @param error An optional error
      */
     let pipelineCallback: (error?: Error | null) => void = error => {
