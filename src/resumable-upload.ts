@@ -745,8 +745,6 @@ export class Upload extends Writable {
     } catch (e) {
       const err = e as ApiError;
 
-      console.dir({where: 'a', err});
-
       if (this.retryOptions.retryableErrorFn!(err)) {
         this.attemptDelayedRetry({
           status: NaN,
@@ -845,8 +843,6 @@ export class Upload extends Writable {
       this.offset = 0;
     } catch (e) {
       const err = e as ApiError;
-
-      console.dir({where: 'b', err});
 
       if (this.retryOptions.retryableErrorFn!(err)) {
         this.attemptDelayedRetry({

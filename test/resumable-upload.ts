@@ -1028,6 +1028,22 @@ describe('resumable-upload', () => {
       up.startUploading();
     });
 
+    it('should retry retryable errors the stream if the request failed', done => {
+      const error = new Error('Error.');
+
+      // mock as retryable
+      up.retryOptions.retryableErrorFn = () => true;
+
+      up.on('error', done);
+      up.attemptDelayedRetry = () => done();
+
+      up.makeRequestStream = async () => {
+        throw error;
+      };
+
+      up.startUploading();
+    });
+
     describe('request preparation', () => {
       // a convenient handle for getting the request options
       let reqOpts: GaxiosOptions;
@@ -1383,6 +1399,22 @@ describe('resumable-upload', () => {
       };
       await up.getAndSetOffset();
       assert.strictEqual(up.offset, 0);
+    });
+
+    it('should retry retryable errors the stream if the request failed', done => {
+      const error = new Error('Error.');
+
+      // mock as retryable
+      up.retryOptions.retryableErrorFn = () => true;
+
+      up.on('error', done);
+      up.attemptDelayedRetry = () => done();
+
+      up.makeRequest = async () => {
+        throw error;
+      };
+
+      up.getAndSetOffset();
     });
   });
 
