@@ -388,6 +388,7 @@ export async function bucketUploadResumableInstancePrecondition(
   createTestFileFromBuffer(FILE_SIZE_BYTES, filePath);
   if (options.bucket!.instancePreconditionOpts) {
     options.bucket!.instancePreconditionOpts.ifGenerationMatch = 0;
+    delete options.bucket!.instancePreconditionOpts.ifMetagenerationMatch;
   }
   await options.bucket!.upload(filePath, {
     resumable: true,
@@ -405,7 +406,7 @@ export async function bucketUploadResumable(options: ConformanceTestOptions) {
       resumable: true,
       chunkSize: CHUNK_SIZE_BYTES,
       metadata: {contentLength: FILE_SIZE_BYTES},
-      preconditionOpts: {ifMetagenerationMatch: 2, ifGenerationMatch: 0},
+      preconditionOpts: {ifGenerationMatch: 0},
     });
   } else {
     await options.bucket!.upload(filePath, {

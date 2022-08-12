@@ -30,8 +30,6 @@ import * as uuid from 'uuid';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
-const RESUMABLE_OK_STATUS_CODE = 200;
-const RESUMABLE_CREATED_STATUS_CODE = 201;
 const DEFAULT_API_ENDPOINT_REGEX = /.*\.googleapis\.com/;
 const packageJson = require('../../package.json');
 
@@ -555,6 +553,7 @@ export class Upload extends Writable {
       data: metadata,
       headers: {
         'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId.uri}`,
+        ...headers
       },
     };
 
@@ -832,14 +831,14 @@ export class Upload extends Writable {
           return;
         }
       }
-      // If we receive a 200 back from the server it indicates that the upload has been completed
-      if (
-        resp.status === RESUMABLE_OK_STATUS_CODE ||
-        resp.status === RESUMABLE_CREATED_STATUS_CODE
-      ) {
-        this.offset = this.numBytesWritten;
-        return;
-      }
+      // // If we receive a 200 back from the server it indicates that the upload has been completed
+      // if (
+      //   resp.status === RESUMABLE_OK_STATUS_CODE ||
+      //   resp.status === RESUMABLE_CREATED_STATUS_CODE
+      // ) {
+      //   this.offset = this.numBytesWritten;
+      //   return;
+      // }
       this.offset = 0;
     } catch (e) {
       const err = e as GaxiosError;
