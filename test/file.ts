@@ -1399,16 +1399,77 @@ describe('File', () => {
       }
 
       describe('server decompression', () => {
-        it('should skip validation if file was stored compressed', done => {
+        it('should skip validation if file was stored compressed and served decompressed', done => {
           file.metadata.crc32c = '.invalid.';
           file.metadata.contentEncoding = 'gzip';
 
+          handleRespOverride = (
+            err: Error,
+            res: {},
+            body: {},
+            callback: Function
+          ) => {
+            const rawResponseStream = new PassThrough();
+            Object.assign(rawResponseStream, {
+              toJSON() {
+                return {
+                  headers: {
+                    'x-goog-hash': `crc32c=${responseCRC32C},md5=${responseMD5}`,
+                    'x-goog-stored-content-encoding': 'gzip',
+                  },
+                };
+              },
+            });
+            callback(null, null, rawResponseStream);
+            setImmediate(() => {
+              rawResponseStream.end(DATA);
+            });
+          };
+
           file
             .createReadStream({validation: 'crc32c'})
-            .on('error', done)
             .on('end', done)
             .resume();
         });
+      });
+
+      it('should perform validation if file was stored compressed and served compressed', done => {
+        file.metadata.crc32c = '.invalid.';
+        file.metadata.contentEncoding = 'gzip';
+        handleRespOverride = (
+          err: Error,
+          res: {},
+          body: {},
+          callback: Function
+        ) => {
+          const rawResponseStream = new PassThrough();
+          Object.assign(rawResponseStream, {
+            toJSON() {
+              return {
+                headers: {
+                  'x-goog-hash': `crc32c=${responseCRC32C},md5=${responseMD5}`,
+                  'x-goog-stored-content-encoding': 'gzip',
+                  'content-encoding': 'gzip',
+                },
+              };
+            },
+          });
+          callback(null, null, rawResponseStream);
+          setImmediate(() => {
+            rawResponseStream.end(DATA);
+          });
+        };
+
+        const expectedError = new Error('test error');
+        setFileValidationToError(expectedError);
+
+        file
+          .createReadStream({validation: 'crc32c'})
+          .on('error', (err: Error) => {
+            assert(err === expectedError);
+            done();
+          })
+          .resume();
       });
 
       it('should emit errors from the validation stream', done => {
