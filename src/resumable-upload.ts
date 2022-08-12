@@ -553,7 +553,7 @@ export class Upload extends Writable {
       data: metadata,
       headers: {
         'x-goog-api-client': `gl-node/${process.versions.node} gccl/${packageJson.version} gccl-invocation-id/${this.currentInvocationId.uri}`,
-        ...headers
+        ...headers,
       },
     };
 
@@ -831,14 +831,6 @@ export class Upload extends Writable {
           return;
         }
       }
-      // // If we receive a 200 back from the server it indicates that the upload has been completed
-      // if (
-      //   resp.status === RESUMABLE_OK_STATUS_CODE ||
-      //   resp.status === RESUMABLE_CREATED_STATUS_CODE
-      // ) {
-      //   this.offset = this.numBytesWritten;
-      //   return;
-      // }
       this.offset = 0;
     } catch (e) {
       const err = e as GaxiosError;
