@@ -2001,32 +2001,38 @@ class File extends ServiceObject<File> {
         this.startResumableUpload_(fileWriteStream, options);
       }
 
-      pipeline(emitStream, hashCalculatingStream, fileWriteStream, async e => {
-        if (e) {
-          return pipelineCallback(e);
-        }
+      pipeline(
+        emitStream,
+        gzip ? zlib.createGzip() : new PassThrough(),
+        hashCalculatingStream,
+        fileWriteStream,
+        async e => {
+          if (e) {
+            return pipelineCallback(e);
+          }
 
-        // We want to make sure we've received the metadata from the server in order
-        // to properly validate the object's integrity. Depending on the type of upload,
-        // the stream could close before the response is returned.
-        if (!fileWriteStreamMetadataReceived) {
+          // We want to make sure we've received the metadata from the server in order
+          // to properly validate the object's integrity. Depending on the type of upload,
+          // the stream could close before the response is returned.
+          if (!fileWriteStreamMetadataReceived) {
+            try {
+              await new Promise((resolve, reject) => {
+                fileWriteStream.once('metadata', resolve);
+                fileWriteStream.once('error', reject);
+              });
+            } catch (e) {
+              return pipelineCallback(e as Error);
+            }
+          }
+
           try {
-            await new Promise((resolve, reject) => {
-              fileWriteStream.once('metadata', resolve);
-              fileWriteStream.once('error', reject);
-            });
+            await this.#validateIntegrity(hashCalculatingStream, {crc32c, md5});
+            pipelineCallback();
           } catch (e) {
-            return pipelineCallback(e as Error);
+            pipelineCallback(e as Error);
           }
         }
-
-        try {
-          await this.#validateIntegrity(hashCalculatingStream, {crc32c, md5});
-          pipelineCallback();
-        } catch (e) {
-          pipelineCallback(e as Error);
-        }
-      });
+      );
     });
 
     return writeStream;
