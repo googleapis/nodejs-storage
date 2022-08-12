@@ -1028,7 +1028,7 @@ describe('resumable-upload', () => {
       up.startUploading();
     });
 
-    it('should retry retryable errors the stream if the request failed', done => {
+    it('should retry retryable errors if the request failed', done => {
       const error = new Error('Error.');
 
       // mock as retryable
@@ -1401,7 +1401,7 @@ describe('resumable-upload', () => {
       assert.strictEqual(up.offset, 0);
     });
 
-    it('should retry retryable errors the stream if the request failed', done => {
+    it('should retry retryable errors if the request failed', done => {
       const error = new Error('Error.');
 
       // mock as retryable
