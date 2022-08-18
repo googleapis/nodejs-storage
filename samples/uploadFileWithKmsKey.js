@@ -23,8 +23,7 @@
 function main(
   bucketName = 'my-bucket',
   filePath = 'test.txt',
-  kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US,
-  generationMatchPrecondition = 0
+  kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US
 ) {
   // [START storage_upload_with_kms_key]
   /**
@@ -46,19 +45,9 @@ function main(
   const storage = new Storage();
 
   async function uploadFileWithKmsKey() {
-    const options = {
+    await storage.bucket(bucketName).upload(filePath, {
       kmsKeyName,
-      // Optional:
-      // Set a generation-match precondition to avoid potential race conditions
-      // and data corruptions. The request to upload is aborted if the object's
-      // generation number does not match your precondition. For a destination
-      // object that does not yet exist, set the ifGenerationMatch precondition to 0
-      // If the destination object already exists in your bucket, set instead a
-      // generation-match precondition using its generation number.
-      preconditionOpts: {ifGenerationMatch: generationMatchPrecondition},
-    };
-
-    await storage.bucket(bucketName).upload(filePath, options);
+    });
 
     console.log(`${filePath} uploaded to ${bucketName} using ${kmsKeyName}.`);
   }
