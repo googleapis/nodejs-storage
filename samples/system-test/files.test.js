@@ -62,7 +62,7 @@ describe('file', () => {
 
   it('should upload a file', async () => {
     const output = execSync(
-      `node uploadFile.js ${bucketName} ${filePath} ${fileName}`
+      `node uploadFile.js ${bucketName} ${filePath} ${fileName} ${doesNotExistPrecondition}`
     );
     assert.match(output, new RegExp(`${filePath} uploaded to ${bucketName}`));
     const [exists] = await bucket.file(fileName).exists();
@@ -85,7 +85,7 @@ describe('file', () => {
 
   it('should upload a file without authentication', async () => {
     const output = execSync(
-      `node uploadWithoutAuthentication.js ${bucketName} ${fileContents} ${fileName}`
+      `node uploadWithoutAuthentication.js ${bucketName} ${fileContents} ${fileName} ${doesNotExistPrecondition}`
     );
     assert.match(output, new RegExp(`${fileName} uploaded to ${bucketName}`));
     const [exists] = await bucket.file(fileName).exists();
@@ -111,8 +111,9 @@ describe('file', () => {
   });
 
   it('should upload a file with a kms key', async () => {
+    const [metadata] = await bucket.file(fileName).getMetadata();
     const output = execSync(
-      `node uploadFileWithKmsKey.js ${bucketName} ${filePath} ${kmsKeyName}`
+      `node uploadFileWithKmsKey.js ${bucketName} ${filePath} ${kmsKeyName} ${metadata.generation}`
     );
     assert.include(
       output,

@@ -742,9 +742,18 @@ export class Upload extends Writable {
         responseReceived = true;
         this.responseHandler(resp);
       }
-    } catch (err) {
-      const e = err as Error;
-      this.destroy(e);
+    } catch (e) {
+      const err = e as ApiError;
+
+      if (this.retryOptions.retryableErrorFn!(err)) {
+        this.attemptDelayedRetry({
+          status: NaN,
+          data: err,
+        });
+        return;
+      }
+
+      this.destroy(err);
     }
   }
 
@@ -833,7 +842,16 @@ export class Upload extends Writable {
       }
       this.offset = 0;
     } catch (e) {
-      const err = e as GaxiosError;
+      const err = e as ApiError;
+
+      if (this.retryOptions.retryableErrorFn!(err)) {
+        this.attemptDelayedRetry({
+          status: NaN,
+          data: err,
+        });
+        return;
+      }
+
       this.destroy(err);
     }
   }
@@ -899,25 +917,6 @@ export class Upload extends Writable {
     return successfulRequest ? res : null;
   }
 
-  private restart() {
-    if (this.numBytesWritten) {
-      const message =
-        'Attempting to restart an upload after unrecoverable bytes have been written from upstream. Stopping as this could result in data loss. Initiate a new upload to continue.';
-
-      this.emit('error', new RangeError(message));
-      return;
-    }
-
-    this.lastChunkSent = Buffer.alloc(0);
-    this.createURI(err => {
-      if (err) {
-        return this.destroy(err);
-      }
-      this.startUploading();
-      return;
-    });
-  }
-
   /**
    * @return {bool} is the request good?
    */
@@ -941,7 +940,7 @@ export class Upload extends Writable {
   /**
    * @param resp GaxiosResponse object from previous attempt
    */
-  private attemptDelayedRetry(resp: GaxiosResponse) {
+  private attemptDelayedRetry(resp: Pick<GaxiosResponse, 'data' | 'status'>) {
     if (this.numRetries < this.retryOptions.maxRetries!) {
       if (
         resp.status === NOT_FOUND_STATUS_CODE &&
