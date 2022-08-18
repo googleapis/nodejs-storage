@@ -62,7 +62,7 @@ function main(
       // object's generation number does not match your precondition.
       preconditionOpts: {
         ifGenerationMatch: generationMatchPrecondition,
-      }
+      },
     };
     await storage
       .bucket(bucketName)
@@ -70,7 +70,7 @@ function main(
         encryptionKey: Buffer.from(oldKey, 'base64'),
       })
       .rotateEncryptionKey({
-        rotateEncryptionKeyOptions
+        rotateEncryptionKeyOptions,
       });
 
     console.log('Encryption key rotated successfully');

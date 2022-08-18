@@ -50,7 +50,6 @@ function main(
   const storage = new Storage();
 
   async function changeFileCSEKToCMEK() {
-
     const rotateEncryptionKeyOptions = {
       kmsKeyName,
       // Optional: set a generation-match precondition to avoid potential race
@@ -58,10 +57,10 @@ function main(
       // object's generation number does not match your precondition.
       preconditionOpts: {
         ifGenerationMatch: generationMatchPrecondition,
-      }
+      },
     };
 
-    console.log(rotateEncryptionKeyOptions)
+    console.log(rotateEncryptionKeyOptions);
 
     await storage
       .bucket(bucketName)
