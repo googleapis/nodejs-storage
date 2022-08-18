@@ -34,7 +34,6 @@ const kmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_US;
 const fileName = 'test.txt';
 const filePath = path.join(__dirname, '../resources', fileName);
 const downloadFilePath = path.join(__dirname, '../resources/downloaded.txt');
-const doesNotExistPrecondition = 0;
 
 const key = crypto.randomBytes(32).toString('base64');
 
@@ -57,7 +56,7 @@ it('should generate a key', () => {
 
 it('should upload a file', async () => {
   const output = execSync(
-    `node uploadEncryptedFile.js ${bucketName} ${filePath} ${fileName} ${key} ${doesNotExistPrecondition}`
+    `node uploadEncryptedFile.js ${bucketName} ${filePath} ${fileName} ${key}`
   );
   assert.match(
     output,

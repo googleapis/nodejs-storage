@@ -261,12 +261,11 @@ const IDEMPOTENCY_STRATEGY_DEFAULT = IdempotencyStrategy.RetryConditional;
  * @return {boolean} True if the API request should be retried, false otherwise.
  */
 export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
-  const isConnectionProblem = (reason: string) => {
+  const isConnectionProblem = (reason: string | undefined) => {
     return (
-      reason.includes('eai_again') || // DNS lookup error
+      (reason && reason.includes('eai_again')) || //DNS lookup error
       reason === 'econnreset' ||
-      reason === 'unexpected connection closure' ||
-      reason === 'epipe'
+      reason === 'unexpected connection closure'
     );
   };
 
@@ -285,7 +284,7 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
     if (err.errors) {
       for (const e of err.errors) {
         const reason = e?.reason?.toString().toLowerCase();
-        if (reason && isConnectionProblem(reason)) {
+        if (isConnectionProblem(reason)) {
           return true;
         }
       }

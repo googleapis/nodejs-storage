@@ -71,9 +71,7 @@ describe('storage', () => {
   const RETENTION_DURATION_SECONDS = 10;
 
   const storage = new Storage({
-    retryOptions: {
-      idempotencyStrategy: IdempotencyStrategy.RetryAlways,
-    },
+    retryOptions: {idempotencyStrategy: IdempotencyStrategy.RetryAlways},
   });
   const bucket = storage.bucket(generateName());
 
@@ -154,10 +152,7 @@ describe('storage', () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const {Storage} = require('../src');
       storageWithoutAuth = new Storage({
-        retryOptions: {
-          idempotencyStrategy: IdempotencyStrategy.RetryAlways,
-          retryDelayMultiplier: 3,
-        },
+        retryOptions: {idempotencyStrategy: IdempotencyStrategy.RetryAlways},
       });
     });
 
@@ -224,12 +219,6 @@ describe('storage', () => {
 
   describe('acls', () => {
     describe('buckets', () => {
-      // Some bucket update operations have a rate limit.
-      // Introduce a delay between tests to avoid getting an error.
-      beforeEach(done => {
-        setTimeout(done, 1000);
-      });
-
       it('should get access controls', async () => {
         const accessControls = await bucket.acl.get();
         assert(Array.isArray(accessControls));
