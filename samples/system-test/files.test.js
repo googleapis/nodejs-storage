@@ -421,14 +421,16 @@ describe('file', () => {
     assert.include(output, `Name: ${copiedFileName}`);
   });
 
-  it('should set metadata for a file', () => {
+  it('should set metadata for a file', async () => {
+    const [metadata] = await bucket.file(copiedFileName).getMetadata();
+
     // used in sample
     const userMetadata = {
       description: 'file description...',
       modified: '1900-01-01',
     };
     const output = execSync(
-      `node fileSetMetadata.js ${bucketName} ${copiedFileName}`
+      `node fileSetMetadata.js ${bucketName} ${copiedFileName} ${metadata.generation} `
     );
 
     assert.match(
