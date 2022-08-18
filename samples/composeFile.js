@@ -24,7 +24,7 @@ function main(
   firstFileName = 'file-one.txt',
   secondFileName = 'file-two.txt',
   destinationFileName = 'file-one-two.txt',
-  generationMatchPrecondition = 0
+  destinationGenerationMatchPrecondition = 0
 ) {
   // [START storage_compose_file]
   /**
@@ -60,7 +60,7 @@ function main(
     // If the destination object already exists in your bucket, set instead a
     // generation-match precondition using its generation number.
     const combineOptions = {
-      ifGenerationMatch: generationMatchPrecondition,
+      ifGenerationMatch: destinationGenerationMatchPrecondition,
     };
     await bucket.combine(sources, destinationFileName, combineOptions);
 

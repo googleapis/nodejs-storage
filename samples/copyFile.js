@@ -25,7 +25,7 @@ function main(
   srcFilename = 'test2.txt',
   destBucketName = 'my-bucket',
   destFileName = 'test3.txt',
-  generationMatchPrecondition = 0
+  destinationGenerationMatchPrecondition = 0
 ) {
   // [START storage_copy_file]
   /**
@@ -61,7 +61,7 @@ function main(
     // generation-match precondition using its generation number.
     const copyOptions = {
       preconditionOpts: {
-        ifGenerationMatch: generationMatchPrecondition,
+        ifGenerationMatch: destinationGenerationMatchPrecondition,
       },
     };
 
