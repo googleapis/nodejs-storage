@@ -77,11 +77,14 @@ it('should download a file', () => {
   fs.statSync(downloadFilePath);
 });
 
-it('should rotate keys', () => {
+it('should rotate keys', async () => {
   const newKey = crypto.randomBytes(32).toString('base64');
+  const [metadata] = await storage.bucket(bucketName).file(fileName).getMetadata();
   const output = execSync(
-    `node rotateEncryptionKey.js ${bucketName} ${fileName} ${key} ${newKey}`
+    `node rotateEncryptionKey.js ${bucketName} ${fileName} ${key} ${newKey} ${metadata.generation}`
   );
+  console.log(output);
+  console.log("sameena above")
   assert.include(output, 'Encryption key rotated successfully');
 });
 
@@ -90,9 +93,10 @@ it('should convert CSEK to KMS key', async () => {
   const file = bucket.file(encryptedFileName, {
     encryptionKey: Buffer.from(key, 'base64'),
   });
+  const [metadata] = await storage.bucket(bucketName).file(fileName).getMetadata();
   await file.save('secret data', {resumable: false});
   const output = execSync(
-    `node changeFileCSEKToCMEK.js ${bucketName} ${encryptedFileName} ${key} ${kmsKeyName}`
+    `node changeFileCSEKToCMEK.js ${bucketName} ${encryptedFileName} ${key} ${kmsKeyName} ${metadata.generation}`
   );
   assert.include(
     output,
