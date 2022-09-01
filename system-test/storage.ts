@@ -2099,27 +2099,6 @@ describe('storage', () => {
       });
     });
 
-    it('should read an entire file if range `start:0` is provided', done => {
-      bucket.upload(FILES.big.path, (err: Error | null, file?: File | null) => {
-        assert.ifError(err);
-
-        const fileSize = file!.metadata.size;
-        const byteRange = {start: 0};
-
-        let sizeStreamed = 0;
-        file!
-          .createReadStream(byteRange)
-          .on('data', (chunk: Buffer) => {
-            sizeStreamed += chunk.byteLength;
-          })
-          .on('error', done)
-          .on('end', () => {
-            assert.strictEqual(sizeStreamed, fileSize);
-            file!.delete(done);
-          });
-      });
-    });
-
     it('should support readable[Symbol.asyncIterator]()', async () => {
       const fileContents = fs.readFileSync(FILES.big.path);
 
@@ -2138,6 +2117,14 @@ describe('storage', () => {
       const [file] = await bucket.upload(FILES.big.path);
       const [remoteContents] = await file.download();
       assert.strictEqual(String(fileContents), String(remoteContents));
+    });
+
+    it('should download an entire file if range `start:0` is provided', async () => {
+      const fileContents = fs.readFileSync(FILES.big.path);
+      const [file] = await bucket.upload(FILES.big.path);
+      const [result] = await file.download({start: 0});
+
+      assert.strictEqual(result.toString(), fileContents.toString());
     });
 
     it('should download an empty file', async () => {
