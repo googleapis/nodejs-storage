@@ -2099,6 +2099,27 @@ describe('storage', () => {
       });
     });
 
+    it('should read an entire file if range `start:0` is provided', done => {
+      bucket.upload(FILES.big.path, (err: Error | null, file?: File | null) => {
+        assert.ifError(err);
+
+        const fileSize = file!.metadata.size;
+        const byteRange = {start: 0};
+
+        let sizeStreamed = 0;
+        file!
+          .createReadStream(byteRange)
+          .on('data', (chunk: Buffer) => {
+            sizeStreamed += chunk.byteLength;
+          })
+          .on('error', done)
+          .on('end', () => {
+            assert.strictEqual(sizeStreamed, fileSize);
+            file!.delete(done);
+          });
+      });
+    });
+
     it('should support readable[Symbol.asyncIterator]()', async () => {
       const fileContents = fs.readFileSync(FILES.big.path);
 
