@@ -1719,7 +1719,7 @@ describe('storage', () => {
 
           // Validate the desired functionality
           const results = await testFunction(USER_PROJECT_OPTIONS);
-          return results;
+          return results as ReturnType<F>;
         }
 
         it('bucket#combine', async () => {
