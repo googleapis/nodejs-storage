@@ -1186,8 +1186,8 @@ class Bucket extends ServiceObject {
    * By default, an Object Lifecycle Management rule provided to this method
    * will be included to the existing policy. To replace all existing rules,
    * supply the `options` argument, setting `append` to `false`.
-   * 
-   * To add multiple rules, pass a list to the `rule` parameter. Calling this 
+   *
+   * To add multiple rules, pass a list to the `rule` parameter. Calling this
    * function multiple times asynchronously does not guarantee that all rules
    * are added correctly.
    *

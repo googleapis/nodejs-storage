@@ -632,17 +632,17 @@ describe('Bucket', () => {
 
       const newRules = [
         {
-        action: {
-          type: 'type',
-        },
-        condition: {},
+          action: {
+            type: 'type',
+          },
+          condition: {},
         },
         {
           action: {
             type: 'type2',
           },
           condition: {},
-        }
+        },
       ];
 
       bucket.getMetadata = (callback: GetBucketMetadataCallback) => {
@@ -654,7 +654,7 @@ describe('Bucket', () => {
         assert.deepStrictEqual(metadata.lifecycle.rule, [
           existingRule,
           newRules[0],
-          newRules[1]
+          newRules[1],
         ]);
         done();
       };
