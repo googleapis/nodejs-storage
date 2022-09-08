@@ -1148,16 +1148,16 @@ class Bucket extends ServiceObject {
   }
 
   addLifecycleRule(
-    rule: LifecycleRule | [LifecycleRule],
+    rule: LifecycleRule | LifecycleRule[],
     options?: AddLifecycleRuleOptions
   ): Promise<SetBucketMetadataResponse>;
   addLifecycleRule(
-    rule: LifecycleRule | [LifecycleRule],
+    rule: LifecycleRule | LifecycleRule[],
     options: AddLifecycleRuleOptions,
     callback: SetBucketMetadataCallback
   ): void;
   addLifecycleRule(
-    rule: LifecycleRule | [LifecycleRule],
+    rule: LifecycleRule | LifecycleRule[],
     callback: SetBucketMetadataCallback
   ): void;
   /**
@@ -1194,7 +1194,7 @@ class Bucket extends ServiceObject {
    * See {@link https://cloud.google.com/storage/docs/lifecycle| Object Lifecycle Management}
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch| Buckets: patch API Documentation}
    *
-   * @param {LifecycleRule|[LifecycleRule]} rule The new lifecycle rule or rules to be added to objects
+   * @param {LifecycleRule|LifecycleRule[]} rule The new lifecycle rule or rules to be added to objects
    *     in this bucket.
    * @param {string|object} rule.action The action to be taken upon matching of
    *     all the conditions 'delete', 'setStorageClass', or 'AbortIncompleteMultipartUpload'.
@@ -1329,7 +1329,7 @@ class Bucket extends ServiceObject {
    * ```
    */
   addLifecycleRule(
-    rule: LifecycleRule | [LifecycleRule],
+    rule: LifecycleRule | LifecycleRule[],
     optionsOrCallback?: AddLifecycleRuleOptions | SetBucketMetadataCallback,
     callback?: SetBucketMetadataCallback
   ): Promise<SetBucketMetadataResponse> | void {
