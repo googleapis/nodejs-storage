@@ -1343,11 +1343,9 @@ class Bucket extends ServiceObject {
 
     options = options || {};
 
-    if (!Array.isArray(rule)) {
-      rule = arrify(rule);
-    }
+    const rules = Array.isArray(rule) ? rule : [rule];
 
-    const newLifecycleRules = rule.map(rule => {
+    const newLifecycleRules = rules.map(rule => {
       if (typeof rule.action === 'object') {
         // This is a raw-formatted rule object, the way the API expects.
         // Just pass it through as-is.
