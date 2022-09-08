@@ -1194,7 +1194,7 @@ class Bucket extends ServiceObject {
    * See {@link https://cloud.google.com/storage/docs/lifecycle| Object Lifecycle Management}
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/patch| Buckets: patch API Documentation}
    *
-   * @param {LifecycleRule | [LifecycleRule]} rule The new lifecycle rule or rules to be added to objects
+   * @param {LifecycleRule|[LifecycleRule]} rule The new lifecycle rule or rules to be added to objects
    *     in this bucket.
    * @param {string|object} rule.action The action to be taken upon matching of
    *     all the conditions 'delete', 'setStorageClass', or 'AbortIncompleteMultipartUpload'.
