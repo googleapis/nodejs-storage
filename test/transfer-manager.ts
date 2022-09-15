@@ -37,7 +37,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as stream from 'stream';
 import * as extend from 'extend';
-import * as fs from 'fs/promises';
+import {promises as fs} from 'fs';
 
 const fakeUtil = Object.assign({}, util);
 fakeUtil.noop = util.noop;

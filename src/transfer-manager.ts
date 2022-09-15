@@ -25,7 +25,7 @@ import * as pLimit from 'p-limit';
 import {Metadata} from './nodejs-common';
 import * as path from 'path';
 import * as extend from 'extend';
-import * as fs from 'fs/promises';
+import {promises as fs} from 'fs';
 
 const DEFAULT_PARALLEL_UPLOAD_LIMIT = 2;
 const DEFAULT_PARALLEL_DOWNLOAD_LIMIT = 2;
