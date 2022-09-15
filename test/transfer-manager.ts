@@ -1,0 +1,319 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  Metadata,
+  ServiceObject,
+  ServiceObjectConfig,
+  util,
+} from '../src/nodejs-common';
+import * as pLimit from 'p-limit';
+import * as proxyquire from 'proxyquire';
+import {
+  Bucket,
+  CRC32C,
+  CreateWriteStreamOptions,
+  DownloadOptions,
+  File,
+  FileOptions,
+  IdempotencyStrategy,
+  UploadOptions,
+} from '../src';
+import * as assert from 'assert';
+import * as path from 'path';
+import * as stream from 'stream';
+import * as extend from 'extend';
+import * as fs from 'fs/promises';
+
+const fakeUtil = Object.assign({}, util);
+fakeUtil.noop = util.noop;
+
+class FakeServiceObject extends ServiceObject {
+  calledWith_: IArguments;
+  constructor(config: ServiceObjectConfig) {
+    super(config);
+    // eslint-disable-next-line prefer-rest-params
+    this.calledWith_ = arguments;
+  }
+}
+
+class FakeAcl {
+  calledWith_: Array<{}>;
+  constructor(...args: Array<{}>) {
+    this.calledWith_ = args;
+  }
+}
+
+class FakeFile {
+  calledWith_: IArguments;
+  bucket: Bucket;
+  name: string;
+  options: FileOptions;
+  metadata: {};
+  createWriteStream: Function;
+  isSameFile = () => false;
+  constructor(bucket: Bucket, name: string, options?: FileOptions) {
+    // eslint-disable-next-line prefer-rest-params
+    this.calledWith_ = arguments;
+    this.bucket = bucket;
+    this.name = name;
+    this.options = options || {};
+    this.metadata = {};
+
+    this.createWriteStream = (options: CreateWriteStreamOptions) => {
+      this.metadata = options.metadata;
+      const ws = new stream.Writable();
+      ws.write = () => {
+        ws.emit('complete');
+        ws.end();
+        return true;
+      };
+      return ws;
+    };
+  }
+}
+
+class HTTPError extends Error {
+  code: number;
+  constructor(message: string, code: number) {
+    super(message);
+    this.code = code;
+  }
+}
+
+let pLimitOverride: Function | null;
+const fakePLimit = (limit: number) => (pLimitOverride || pLimit)(limit);
+const fakeFs = extend(true, {}, fs, {
+  open: () => {
+    return {
+      close: () => {},
+      write: (buffer: Buffer) => {
+        return Promise.resolve({buffer});
+      },
+    };
+  },
+});
+
+describe('Transfer Manager', () => {
+  let TransferManager: any;
+  let transferManager: any;
+  let Bucket: any;
+  let bucket: any;
+  let File: any;
+
+  const STORAGE: any = {
+    createBucket: util.noop,
+    retryOptions: {
+      autoRetry: true,
+      maxRetries: 3,
+      retryDelayMultipier: 2,
+      totalTimeout: 600,
+      maxRetryDelay: 60,
+      retryableErrorFn: (err: HTTPError) => {
+        return err.code === 500;
+      },
+      idempotencyStrategy: IdempotencyStrategy.RetryConditional,
+    },
+    crc32cGenerator: () => new CRC32C(),
+  };
+  const BUCKET_NAME = 'test-bucket';
+
+  before(() => {
+    Bucket = proxyquire('../src/bucket.js', {
+      'p-limit': fakePLimit,
+      './nodejs-common': {
+        ServiceObject: FakeServiceObject,
+        util: fakeUtil,
+      },
+      './acl.js': {Acl: FakeAcl},
+      './file.js': {File: FakeFile},
+    }).Bucket;
+
+    File = proxyquire('../src/file.js', {
+      './nodejs-common': {
+        ServiceObject: FakeServiceObject,
+        util: fakeUtil,
+      },
+    }).File;
+
+    TransferManager = proxyquire('../src/transfer-manager.js', {
+      'p-limit': fakePLimit,
+      './nodejs-common': {
+        ServiceObject: FakeServiceObject,
+        util: fakeUtil,
+      },
+      './acl.js': {Acl: FakeAcl},
+      './file.js': {File: FakeFile},
+      'fs/promises': fakeFs,
+    }).TransferManager;
+  });
+
+  beforeEach(() => {
+    bucket = new Bucket(STORAGE, BUCKET_NAME);
+    transferManager = new TransferManager(bucket);
+  });
+
+  describe('instantiation', () => {
+    it('should correctly set the bucket', () => {
+      assert.strictEqual(transferManager.bucket, bucket);
+    });
+  });
+
+  describe('uploadMulti', () => {
+    it('calls upload with the provided file paths', async () => {
+      const paths = ['/a/b/c', '/d/e/f', '/h/i/j'];
+      let count = 0;
+
+      bucket.upload = (path: string) => {
+        count++;
+        assert(paths.includes(path));
+      };
+
+      await transferManager.uploadMulti(paths);
+      assert.strictEqual(count, paths.length);
+    });
+
+    it('sets ifGenerationMatch to 0 if skipIfExists is set', async () => {
+      const paths = ['/a/b/c'];
+
+      bucket.upload = (_path: string, options: UploadOptions) => {
+        assert.strictEqual(options.preconditionOpts?.ifGenerationMatch, 0);
+      };
+
+      await transferManager.uploadMulti(paths, {skipIfExists: true});
+    });
+
+    it('sets destination to prefix + filename when prefix is supplied', async () => {
+      const paths = ['/a/b/foo/bar.txt'];
+      const expectedDestination = 'hello/world/bar.txt';
+
+      bucket.upload = (_path: string, options: UploadOptions) => {
+        assert.strictEqual(options.destination, expectedDestination);
+      };
+
+      await transferManager.uploadMulti(paths, {prefix: 'hello/world'});
+    });
+
+    it('invokes the callback if one is provided', done => {
+      const basename = 'testfile.json';
+      const paths = [path.join(__dirname, '../../test/testdata/' + basename)];
+
+      transferManager.uploadMulti(
+        paths,
+        (err: Error | null, files?: File[], metadata?: Metadata[]) => {
+          assert.ifError(err);
+          assert(files);
+          assert(metadata);
+          assert.strictEqual(files[0].name, basename);
+          done();
+        }
+      );
+    });
+
+    it('returns a promise with the uploaded file if there is no callback', async () => {
+      const basename = 'testfile.json';
+      const paths = [path.join(__dirname, '../../test/testdata/' + basename)];
+      const result = await transferManager.uploadMulti(paths);
+      assert.strictEqual(result[0][0].name, basename);
+    });
+  });
+
+  describe('downloadMulti', () => {
+    it('calls download for each provided file', async () => {
+      let count = 0;
+      const download = () => {
+        count++;
+      };
+      const firstFile = new File(bucket, 'first.txt');
+      firstFile.download = download;
+      const secondFile = new File(bucket, 'second.txt');
+      secondFile.download = download;
+
+      const files = [firstFile, secondFile];
+      await transferManager.downloadMulti(files);
+      assert.strictEqual(count, 2);
+    });
+
+    it('sets the destination correctly when provided a prefix', async () => {
+      const prefix = 'test-prefix';
+      const filename = 'first.txt';
+      const expectedDestination = `${prefix}/${filename}`;
+      const download = (options: DownloadOptions) => {
+        assert.strictEqual(options.destination, expectedDestination);
+      };
+
+      const file = new File(bucket, filename);
+      file.download = download;
+      await transferManager.downloadMulti([file], {prefix});
+    });
+
+    it('sets the destination correctly when provided a strip prefix', async () => {
+      const stripPrefix = 'should-be-removed/';
+      const filename = 'should-be-removed/first.txt';
+      const expectedDestination = 'first.txt';
+      const download = (options: DownloadOptions) => {
+        assert.strictEqual(options.destination, expectedDestination);
+      };
+
+      const file = new File(bucket, filename);
+      file.download = download;
+      await transferManager.downloadMulti([file], {stripPrefix});
+    });
+
+    it('invokes the callback if one if provided', done => {
+      const file = new File(bucket, 'first.txt');
+      file.download = () => {
+        return Promise.resolve(Buffer.alloc(100));
+      };
+      transferManager.downloadMulti(
+        [file],
+        (err: Error | null, contents: Buffer[]) => {
+          assert.strictEqual(err, null);
+          assert.strictEqual(contents.length, 100);
+          done();
+        }
+      );
+    });
+  });
+
+  describe('downloadLargeFile', () => {
+    let file: any;
+
+    beforeEach(() => {
+      file = new File(bucket, 'some-large-file');
+      file.get = () => {
+        return [
+          {
+            metadata: {
+              size: 1024,
+            },
+          },
+        ];
+      };
+    });
+
+    it('should download a single chunk if file size is below threshold', async () => {
+      let downloadCallCount = 0;
+      file.download = () => {
+        downloadCallCount++;
+        return Promise.resolve([Buffer.alloc(100)]);
+      };
+
+      await transferManager.downloadLargeFile(file);
+      assert.strictEqual(downloadCallCount, 1);
+    });
+
+    it('invokes the callback if one is provided', done => {
+      file.download = () => {
+        return Promise.resolve([Buffer.alloc(100)]);
+      };
+
+      transferManager.downloadLargeFile(
+        file,
+        (err: Error, contents: Buffer) => {
+          assert.equal(err, null);
+          assert.strictEqual(contents.length, 100);
+          done();
+        }
+      );
+    });
+  });
+});
