@@ -25,7 +25,7 @@ import * as pLimit from 'p-limit';
 import {Metadata} from './nodejs-common';
 import * as path from 'path';
 import * as extend from 'extend';
-import {promises as fs} from 'fs';
+import {promises as fsp} from 'fs';
 
 const DEFAULT_PARALLEL_UPLOAD_LIMIT = 2;
 const DEFAULT_PARALLEL_DOWNLOAD_LIMIT = 2;
@@ -249,7 +249,7 @@ export class TransferManager {
     }
 
     let start = 0;
-    const fileToWrite = await fs.open(path.basename(file.name), 'w+');
+    const fileToWrite = await fsp.open(path.basename(file.name), 'w+');
     while (start < size) {
       const chunkStart = start;
       let chunkEnd = start + chunkSize - 1;

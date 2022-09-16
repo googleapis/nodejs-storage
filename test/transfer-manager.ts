@@ -37,7 +37,7 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as stream from 'stream';
 import * as extend from 'extend';
-import {promises as fs} from 'fs';
+import * as fs from 'fs';
 
 const fakeUtil = Object.assign({}, util);
 fakeUtil.noop = util.noop;
@@ -98,11 +98,15 @@ class HTTPError extends Error {
 let pLimitOverride: Function | null;
 const fakePLimit = (limit: number) => (pLimitOverride || pLimit)(limit);
 const fakeFs = extend(true, {}, fs, {
-  open: () => {
+  get promises() {
     return {
-      close: () => {},
-      write: (buffer: Buffer) => {
-        return Promise.resolve({buffer});
+      open: () => {
+        return {
+          close: () => {},
+          write: (buffer: Buffer) => {
+            return Promise.resolve({buffer});
+          },
+        };
       },
     };
   },
@@ -158,7 +162,8 @@ describe('Transfer Manager', () => {
       },
       './acl.js': {Acl: FakeAcl},
       './file.js': {File: FakeFile},
-      'fs/promises': fakeFs,
+      fs: fakeFs,
+      fsp: fakeFs,
     }).TransferManager;
   });
 
@@ -199,7 +204,7 @@ describe('Transfer Manager', () => {
 
     it('sets destination to prefix + filename when prefix is supplied', async () => {
       const paths = ['/a/b/foo/bar.txt'];
-      const expectedDestination = 'hello/world/bar.txt';
+      const expectedDestination = path.normalize('hello/world/bar.txt');
 
       bucket.upload = (_path: string, options: UploadOptions) => {
         assert.strictEqual(options.destination, expectedDestination);
@@ -251,7 +256,7 @@ describe('Transfer Manager', () => {
     it('sets the destination correctly when provided a prefix', async () => {
       const prefix = 'test-prefix';
       const filename = 'first.txt';
-      const expectedDestination = `${prefix}/${filename}`;
+      const expectedDestination = path.normalize(`${prefix}/${filename}`);
       const download = (options: DownloadOptions) => {
         assert.strictEqual(options.destination, expectedDestination);
       };
