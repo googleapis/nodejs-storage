@@ -60,6 +60,14 @@ export interface DownloadMultiCallback {
   (err: Error | null, contents?: Buffer[]): void;
 }
 
+/**
+ * Create a TransferManager object to perform parallel transfer operations on a Cloud Storage bucket.
+ *
+ * @class
+ * @hideconstructor
+ *
+ * @param {Bucket} bucket A {@link Bucket} instance
+ */
 export class TransferManager {
   bucket: Bucket;
   constructor(bucket: Bucket) {
@@ -79,6 +87,60 @@ export class TransferManager {
     options: UploadMultiOptions,
     callback: UploadMultiCallback
   ): Promise<void>;
+  /**
+   * @typedef {object} UploadMultiOptions
+   * @property {number} [concurrencyLimit] The number of concurrently executing promises
+   * to use when uploading the files.
+   * @property {boolean} [skipIfExists] Do not upload the file if it already exists in
+   * the bucket. This will set the precondition ifGenerationMatch = 0.
+   * @property {string} [prefix] A prefix to append to all of the uploaded files.
+   * @property {object} [passthroughOptions] {@link UploadOptions} Options to be passed through
+   * to each individual upload operation.
+   */
+  /**
+   * @typedef {array} UploadResponse
+   * @property {object} The uploaded {@link File}
+   * @property {object} The uploaded {@link Metadata}
+   */
+  /**
+   * @callback UploadMultiCallback
+   * @param {?Error} err Rewuest error if any
+   * @param {array} files Array of uploaded {@link File}.
+   * @param {array} metadata Array of uploaded {@link Metadata}
+   */
+  /**
+   * Upload multiple files in parallel to the bucket. This is a convenience method
+   * that utilizes {@link Bucket#upload} to perform the upload.
+   *
+   * @param {array} [filePaths] An array of fully qualified paths to the files.
+   * you wish to upload to the bucket
+   * @param {UploadMultiOptions} [options] Configuration options.
+   * @param {UploadMultiCallback} [callback] Callback function.
+   * @returns {Promise<UploadResponse[] | void>}
+   *
+   * @example
+   * ```
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const bucket = storage.bucket('my-bucket');
+   * const transferManager = new TransferManager(bucket);
+   *
+   * //-
+   * // Upload multiple files.
+   * //-
+   * transferManager.uploadMulti(['/local/path/file1.txt, 'local/path/file2.txt'], function(err, files, metadata) {
+   *  // Your bucket now contains:
+   * // - "file1.txt" (with the contents of '/local/path/file1.txt')
+   * // - "file2.txt" (with the contents of '/local/path/file2.txt')
+   * // `files` is an array of instances of File objects that refers to the new files.
+   * });
+   *
+   * //-
+   * // If the callback if omitted, we will return a Promise.
+   * //-
+   * const response = transferManager.uploadMulti(['/local/path/file1.txt, 'local/path/file2.txt']);
+   * ```
+   */
   async uploadMulti(
     filePaths: string[],
     optionsOrCallback?: UploadMultiOptions | UploadMultiCallback,
