@@ -112,7 +112,7 @@ describe('resumable-upload', () => {
       userProject: USER_PROJECT,
       authConfig: {keyFile},
       apiEndpoint: API_ENDPOINT,
-      retryOptions: RETRY_OPTIONS,
+      retryOptions: {...RETRY_OPTIONS},
     });
   });
 
@@ -1028,6 +1028,22 @@ describe('resumable-upload', () => {
       up.startUploading();
     });
 
+    it('should retry retryable errors if the request failed', done => {
+      const error = new Error('Error.');
+
+      // mock as retryable
+      up.retryOptions.retryableErrorFn = () => true;
+
+      up.on('error', done);
+      up.attemptDelayedRetry = () => done();
+
+      up.makeRequestStream = async () => {
+        throw error;
+      };
+
+      up.startUploading();
+    });
+
     describe('request preparation', () => {
       // a convenient handle for getting the request options
       let reqOpts: GaxiosOptions;
@@ -1384,6 +1400,22 @@ describe('resumable-upload', () => {
       await up.getAndSetOffset();
       assert.strictEqual(up.offset, 0);
     });
+
+    it('should retry retryable errors if the request failed', done => {
+      const error = new Error('Error.');
+
+      // mock as retryable
+      up.retryOptions.retryableErrorFn = () => true;
+
+      up.on('error', done);
+      up.attemptDelayedRetry = () => done();
+
+      up.makeRequest = async () => {
+        throw error;
+      };
+
+      up.getAndSetOffset();
+    });
   });
 
   describe('#makeRequest', () => {
@@ -1676,61 +1708,6 @@ describe('resumable-upload', () => {
 
       const stream = await up.makeRequestStream(REQ_OPTS);
       assert.strictEqual(stream, null);
-    });
-  });
-
-  describe('#restart', () => {
-    beforeEach(() => {
-      up.createURI = () => {};
-    });
-
-    it('should throw if `numBytesWritten` is not 0', done => {
-      up.numBytesWritten = 8;
-
-      up.on('error', (error: Error) => {
-        assert(error instanceof RangeError);
-        assert(
-          /Attempting to restart an upload after unrecoverable bytes have been written/.test(
-            error.message
-          )
-        );
-        done();
-      });
-
-      up.restart();
-    });
-
-    describe('starting a new upload', () => {
-      it('should create a new URI', done => {
-        up.createURI = () => {
-          done();
-        };
-
-        up.restart();
-      });
-
-      it('should destroy stream if it cannot create a URI', done => {
-        const error = new Error(':(');
-
-        up.createURI = (callback: Function) => {
-          callback(error);
-        };
-
-        up.destroy = (err: Error) => {
-          assert.strictEqual(err, error);
-          done();
-        };
-
-        up.restart();
-      });
-
-      it('should start uploading', done => {
-        up.createURI = (callback: Function) => {
-          up.startUploading = done;
-          callback();
-        };
-        up.restart();
-      });
     });
   });
 

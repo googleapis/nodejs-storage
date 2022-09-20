@@ -71,7 +71,9 @@ describe('storage', () => {
   const RETENTION_DURATION_SECONDS = 10;
 
   const storage = new Storage({
-    retryOptions: {idempotencyStrategy: IdempotencyStrategy.RetryAlways},
+    retryOptions: {
+      idempotencyStrategy: IdempotencyStrategy.RetryAlways,
+    },
   });
   const bucket = storage.bucket(generateName());
 
@@ -152,7 +154,10 @@ describe('storage', () => {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
       const {Storage} = require('../src');
       storageWithoutAuth = new Storage({
-        retryOptions: {idempotencyStrategy: IdempotencyStrategy.RetryAlways},
+        retryOptions: {
+          idempotencyStrategy: IdempotencyStrategy.RetryAlways,
+          retryDelayMultiplier: 3,
+        },
       });
     });
 
@@ -219,6 +224,12 @@ describe('storage', () => {
 
   describe('acls', () => {
     describe('buckets', () => {
+      // Some bucket update operations have a rate limit.
+      // Introduce a delay between tests to avoid getting an error.
+      beforeEach(done => {
+        setTimeout(done, 1000);
+      });
+
       it('should get access controls', async () => {
         const accessControls = await bucket.acl.get();
         assert(Array.isArray(accessControls));
@@ -1708,7 +1719,7 @@ describe('storage', () => {
 
           // Validate the desired functionality
           const results = await testFunction(USER_PROJECT_OPTIONS);
-          return results;
+          return results as ReturnType<F>;
         }
 
         it('bucket#combine', async () => {
@@ -2106,6 +2117,14 @@ describe('storage', () => {
       const [file] = await bucket.upload(FILES.big.path);
       const [remoteContents] = await file.download();
       assert.strictEqual(String(fileContents), String(remoteContents));
+    });
+
+    it('should download an entire file if range `start:0` is provided', async () => {
+      const fileContents = fs.readFileSync(FILES.big.path);
+      const [file] = await bucket.upload(FILES.big.path);
+      const [result] = await file.download({start: 0});
+
+      assert.strictEqual(result.toString(), fileContents.toString());
     });
 
     it('should download an empty file', async () => {

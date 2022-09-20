@@ -1418,9 +1418,7 @@ class File extends ServiceObject<File> {
     // Authenticate the request, then pipe the remote API request to the stream
     // returned to the user.
     const makeRequest = () => {
-      const query = {
-        alt: 'media',
-      } as FileQuery;
+      const query: FileQuery = {alt: 'media'};
 
       if (this.generation) {
         query.generation = this.generation;
@@ -1461,8 +1459,7 @@ class File extends ServiceObject<File> {
         })
         .on('response', res => {
           throughStream.emit('response', res);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          util.handleResp(null, res, null, onResponse as any);
+          util.handleResp(null, res, null, onResponse);
         })
         .resume();
 
@@ -1535,7 +1532,7 @@ class File extends ServiceObject<File> {
         const handoffStream = new PassThrough({
           final: async cb => {
             // Preserving `onComplete`'s ability to
-            // close `throughStream` before pipeline
+            // destroy `throughStream` before pipeline
             // attempts to.
             await onComplete(null);
             cb();
@@ -1568,7 +1565,6 @@ class File extends ServiceObject<File> {
         }
 
         if (rangeRequest || !shouldRunValidation) {
-          throughStream.end();
           return;
         }
 
@@ -1603,14 +1599,14 @@ class File extends ServiceObject<File> {
 
           throughStream.destroy(mismatchError);
         } else {
-          throughStream.end();
+          return;
         }
       };
     };
 
     throughStream.on('reading', makeRequest);
 
-    return throughStream as Readable;
+    return throughStream;
   }
 
   createResumableUpload(

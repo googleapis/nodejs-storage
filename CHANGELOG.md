@@ -4,6 +4,29 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [6.5.0](https://github.com/googleapis/nodejs-storage/compare/v6.4.2...v6.5.0) (2022-09-15)
+
+
+### Features
+
+* Add multiple lifecycle rules ([#2062](https://github.com/googleapis/nodejs-storage/issues/2062)) ([fbe2deb](https://github.com/googleapis/nodejs-storage/commit/fbe2deb72bd98db54a03cf228a360a871ba1915b))
+
+## [6.4.2](https://github.com/googleapis/nodejs-storage/compare/v6.4.1...v6.4.2) (2022-09-01)
+
+
+### Bug Fixes
+
+* remove pip install statements ([#1546](https://github.com/googleapis/nodejs-storage/issues/1546)) ([#2049](https://github.com/googleapis/nodejs-storage/issues/2049)) ([c90ba0f](https://github.com/googleapis/nodejs-storage/commit/c90ba0feecca9d39de3c52f12cc9423b7a2d4d47))
+* truncated `createReadStream` through early `end` event ([#2056](https://github.com/googleapis/nodejs-storage/issues/2056)) ([a4716a4](https://github.com/googleapis/nodejs-storage/commit/a4716a4ed1053560f2692647c8a90131763c1e72))
+
+## [6.4.1](https://github.com/googleapis/nodejs-storage/compare/v6.4.0...v6.4.1) (2022-08-12)
+
+
+### Bug Fixes
+
+* Remove `pumpify` ([#2029](https://github.com/googleapis/nodejs-storage/issues/2029)) ([edc1d64](https://github.com/googleapis/nodejs-storage/commit/edc1d64069a6038c301c3b775f116fbf69b10b28))
+* Retry `EPIPE` Connection Errors + Attempt Retries in Resumable Upload Connection Errors ([#2040](https://github.com/googleapis/nodejs-storage/issues/2040)) ([ba35321](https://github.com/googleapis/nodejs-storage/commit/ba35321c3fef9a1874ff8fbea43885e2e7746b4f))
+
 ## [6.4.0](https://github.com/googleapis/nodejs-storage/compare/v6.3.0...v6.4.0) (2022-08-10)
 
 
