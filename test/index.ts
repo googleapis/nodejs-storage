@@ -437,13 +437,13 @@ describe('Storage', () => {
         delete process.env.STORAGE_EMULATOR_HOST;
       });
 
-      it('should set baseUrl to env var STORAGE_EMULATOR_HOST', () => {
+      it('should set baseUrl to env var STORAGE_EMULATOR_HOST plus standard path', () => {
         const storage = new Storage({
           projectId: PROJECT_ID,
         });
 
         const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST + '/storage/v1');
         assert.strictEqual(
           calledWith.apiEndpoint,
           'https://internal.benchmark.com/path'
@@ -457,7 +457,7 @@ describe('Storage', () => {
         });
 
         const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST + '/storage/v1');
         assert.strictEqual(calledWith.apiEndpoint, 'https://some.api.com');
       });
 
@@ -470,7 +470,7 @@ describe('Storage', () => {
         });
 
         const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST + '/storage/v1');
         assert.strictEqual(
           calledWith.apiEndpoint,
           'https://internal.benchmark.com/path'
