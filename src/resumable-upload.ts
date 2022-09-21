@@ -665,21 +665,23 @@ export class Upload extends Writable {
 
     let expectedUploadSize: number | undefined = undefined;
 
-    // Set `expectedUploadSize` to `contentLength` if available
+    // Set `expectedUploadSize` to `contentLength - this.numBytesWritten`, if available
     if (typeof this.contentLength === 'number') {
       expectedUploadSize = this.contentLength - this.numBytesWritten;
+    }
 
-      // `expectedUploadSize` should be no more than the `chunkSize`.
-      // It's possible this is the last chunk request for a multiple
-      // chunk upload, thus smaller than the chunk size.
-      if (this.chunkSize) {
-        expectedUploadSize = Math.min(this.chunkSize, expectedUploadSize);
-      }
+    // `expectedUploadSize` should be no more than the `chunkSize`.
+    // It's possible this is the last chunk request for a multiple
+    // chunk upload, thus smaller than the chunk size.
+    if (this.chunkSize) {
+      expectedUploadSize = expectedUploadSize
+        ? Math.min(this.chunkSize, expectedUploadSize)
+        : this.chunkSize;
     }
 
     // A queue for the upstream data
     const upstreamQueue = this.upstreamIterator(
-      expectedUploadSize ?? this.chunkSize ?? undefined,
+      expectedUploadSize,
       multiChunkMode // multi-chunk mode should return 1 chunk per request
     );
 
@@ -716,10 +718,20 @@ export class Upload extends Writable {
     };
 
     // If using multiple chunk upload, set appropriate header
-    if (multiChunkMode && expectedUploadSize) {
-      // The '-1' is because the ending byte is inclusive in the request.
-      const endingByte = expectedUploadSize + this.numBytesWritten - 1;
-      headers['Content-Length'] = expectedUploadSize;
+    if (multiChunkMode) {
+      // We need to know how much data is available upstream to set the `Content-Range` header.
+      const result = await this.upstreamIterator(
+        expectedUploadSize,
+        true
+      ).next();
+
+      const bytesToUpload = result.value!.chunk.byteLength;
+      // Important: put the data back in the queue for the actual upload
+      this.unshiftChunkBuffer(result.value!.chunk);
+
+      // `- 1` as the ending byte is inclusive in the request.
+      const endingByte = bytesToUpload + this.numBytesWritten - 1;
+      headers['Content-Length'] = bytesToUpload;
       headers[
         'Content-Range'
       ] = `bytes ${this.offset}-${endingByte}/${this.contentLength}`;
@@ -796,11 +808,13 @@ export class Upload extends Writable {
       // continue uploading next chunk
       this.continueUploading();
     } else if (!this.isSuccessfulResponse(resp.status)) {
-      const err: ApiError = {
-        code: resp.status,
-        name: 'Upload failed',
-        message: 'Upload failed',
-      };
+      const err: ApiError = new Error('Upload failed');
+      err.code = resp.status;
+      err.name = 'Upload failed';
+      if (resp?.data) {
+        err.errors = [resp?.data];
+      }
+
       this.destroy(err);
     } else {
       // remove the last chunk sent to free memory
