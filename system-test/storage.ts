@@ -32,6 +32,7 @@ import {
   Notification,
   DeleteBucketCallback,
   CRC32C,
+  UploadOptions,
 } from '../src';
 import * as nock from 'nock';
 import {Transform} from 'stream';
@@ -2706,47 +2707,39 @@ describe('storage', () => {
               .on('error', reject);
           });
         });
-
-        it('should support uploads where `contentLength < chunkSize`', async () => {
-          const file = bucket.file(generateName());
-
-          const contentLength = fileSize;
-          // off by +1 to ensure `contentLength < chunkSize`
-          const chunkSize = fileSize + 1;
-
+        async function uploadAndVerify(
+          file: File,
+          options: Omit<UploadOptions, 'destination'>
+        ) {
           await bucket.upload(filePath, {
             destination: file,
-            chunkSize,
-            metadata: {
-              contentLength,
-            },
+            ...options,
           });
 
           const [metadata] = await file.getMetadata();
 
           // assert we uploaded the expected data
           assert.equal(metadata.crc32c, crc32c);
+        }
+
+        it('should support uploads where `contentLength < chunkSize`', async () => {
+          const file = bucket.file(generateName());
+
+          const metadata = {contentLength: fileSize};
+          // off by +1 to ensure `contentLength < chunkSize`
+          const chunkSize = fileSize + 1;
+
+          await uploadAndVerify(file, {chunkSize, metadata});
         });
 
         it('should support uploads where `contentLength % chunkSize != 0`', async () => {
           const file = bucket.file(generateName());
 
-          const contentLength = fileSize;
+          const metadata = {contentLength: fileSize};
           // off by -1 to ensure `contentLength % chunkSize != 0`
           const chunkSize = fileSize - 1;
 
-          await bucket.upload(filePath, {
-            destination: file,
-            chunkSize,
-            metadata: {
-              contentLength,
-            },
-          });
-
-          const [metadata] = await file.getMetadata();
-
-          // assert we uploaded the expected data
-          assert.equal(metadata.crc32c, crc32c);
+          await uploadAndVerify(file, {chunkSize, metadata});
         });
 
         it('should support uploads where `fileSize % chunkSize != 0` && `!contentLength`', async () => {
@@ -2754,15 +2747,7 @@ describe('storage', () => {
           // off by +1 to ensure `contentLength % chunkSize != 0`
           const chunkSize = fileSize + 1;
 
-          await bucket.upload(filePath, {
-            destination: file,
-            chunkSize,
-          });
-
-          const [metadata] = await file.getMetadata();
-
-          // assert we uploaded the expected data
-          assert.equal(metadata.crc32c, crc32c);
+          await uploadAndVerify(file, {chunkSize});
         });
 
         it('should support uploads where `fileSize < chunkSize && `!contentLength`', async () => {
@@ -2770,15 +2755,7 @@ describe('storage', () => {
           // off by `* 2 +1` to ensure `fileSize < chunkSize`
           const chunkSize = fileSize * 2 + 1;
 
-          await bucket.upload(filePath, {
-            destination: file,
-            chunkSize,
-          });
-
-          const [metadata] = await file.getMetadata();
-
-          // assert we uploaded the expected data
-          assert.equal(metadata.crc32c, crc32c);
+          await uploadAndVerify(file, {chunkSize});
         });
 
         it('should support uploads where `fileSize > chunkSize && `!contentLength`', async () => {
@@ -2786,15 +2763,7 @@ describe('storage', () => {
           // off by -1 to ensure `fileSize > chunkSize`
           const chunkSize = fileSize - 1;
 
-          await bucket.upload(filePath, {
-            destination: file,
-            chunkSize,
-          });
-
-          const [metadata] = await file.getMetadata();
-
-          // assert we uploaded the expected data
-          assert.equal(metadata.crc32c, crc32c);
+          await uploadAndVerify(file, {chunkSize});
         });
       });
     });
