@@ -668,20 +668,18 @@ export class Upload extends Writable {
     // Set `expectedUploadSize` to `contentLength` if available
     if (typeof this.contentLength === 'number') {
       expectedUploadSize = this.contentLength - this.numBytesWritten;
-    }
 
-    // `expectedUploadSize` should be no more than the `chunkSize`.
-    // It's possible this is the last chunk request for a multiple
-    // chunk upload, thus smaller than the chunk size.
-    if (this.chunkSize) {
-      expectedUploadSize = expectedUploadSize
-        ? Math.min(this.chunkSize, expectedUploadSize)
-        : this.chunkSize;
+      // `expectedUploadSize` should be no more than the `chunkSize`.
+      // It's possible this is the last chunk request for a multiple
+      // chunk upload, thus smaller than the chunk size.
+      if (this.chunkSize) {
+        expectedUploadSize = Math.min(this.chunkSize, expectedUploadSize);
+      }
     }
 
     // A queue for the upstream data
     const upstreamQueue = this.upstreamIterator(
-      expectedUploadSize,
+      expectedUploadSize ?? this.chunkSize ?? undefined,
       multiChunkMode // multi-chunk mode should return 1 chunk per request
     );
 

@@ -1159,13 +1159,8 @@ describe('resumable-upload', () => {
 
           await up.startUploading();
 
-          const endByte = OFFSET + CHUNK_SIZE - 1;
           assert(reqOpts.headers);
-          assert.equal(reqOpts.headers['Content-Length'], CHUNK_SIZE);
-          assert.equal(
-            reqOpts.headers['Content-Range'],
-            `bytes ${OFFSET}-${endByte}/*`
-          );
+          assert.equal(reqOpts.headers['Content-Range'], `bytes ${OFFSET}-*/*`);
           assert.ok(
             X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
           );
