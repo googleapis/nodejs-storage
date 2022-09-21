@@ -2744,7 +2744,7 @@ describe('storage', () => {
 
         it('should support uploads where `fileSize % chunkSize != 0` && `!contentLength`', async () => {
           const file = bucket.file(generateName());
-          // off by +1 to ensure `contentLength % chunkSize != 0`
+          // off by +1 to ensure `fileSize % chunkSize != 0`
           const chunkSize = fileSize + 1;
 
           await uploadAndVerify(file, {chunkSize});
