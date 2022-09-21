@@ -2688,6 +2688,118 @@ describe('storage', () => {
     });
   });
 
+  describe('resumable upload', () => {
+    describe('multi-chunk upload', () => {
+      describe('upload configurations', () => {
+        const filePath: string = FILES.logo.path;
+        const fileSize = fs.statSync(filePath).size;
+        let crc32c: string;
+
+        before(async () => {
+          // get a CRC32C value from the file
+          crc32c = await new Promise((resolve, reject) => {
+            const crc32c = new CRC32C();
+
+            fs.createReadStream(filePath)
+              .on('data', (d: Buffer) => crc32c.update(d))
+              .on('end', () => resolve(crc32c.toString()))
+              .on('error', reject);
+          });
+        });
+
+        it('should support uploads where `contentLength < chunkSize`', async () => {
+          const file = bucket.file(generateName());
+
+          const contentLength = fileSize;
+          // off by +1 to ensure `contentLength < chunkSize`
+          const chunkSize = fileSize + 1;
+
+          await bucket.upload(filePath, {
+            destination: file,
+            chunkSize,
+            metadata: {
+              contentLength,
+            },
+          });
+
+          const [metadata] = await file.getMetadata();
+
+          // assert we uploaded the expected data
+          assert.equal(metadata.crc32c, crc32c);
+        });
+
+        it('should support uploads where `contentLength % chunkSize != 0`', async () => {
+          const file = bucket.file(generateName());
+
+          const contentLength = fileSize;
+          // off by -1 to ensure `contentLength % chunkSize != 0`
+          const chunkSize = fileSize - 1;
+
+          await bucket.upload(filePath, {
+            destination: file,
+            chunkSize,
+            metadata: {
+              contentLength,
+            },
+          });
+
+          const [metadata] = await file.getMetadata();
+
+          // assert we uploaded the expected data
+          assert.equal(metadata.crc32c, crc32c);
+        });
+
+        it('should support uploads where `fileSize % chunkSize != 0` && `!contentLength`', async () => {
+          const file = bucket.file(generateName());
+          // off by +1 to ensure `contentLength % chunkSize != 0`
+          const chunkSize = fileSize + 1;
+
+          await bucket.upload(filePath, {
+            destination: file,
+            chunkSize,
+          });
+
+          const [metadata] = await file.getMetadata();
+
+          // assert we uploaded the expected data
+          assert.equal(metadata.crc32c, crc32c);
+        });
+
+        it('should support uploads where `fileSize < chunkSize && `!contentLength`', async () => {
+          const file = bucket.file(generateName());
+          // off by `* 2 +1` to ensure `fileSize < chunkSize`
+          const chunkSize = fileSize * 2 + 1;
+
+          await bucket.upload(filePath, {
+            destination: file,
+            chunkSize,
+          });
+
+          const [metadata] = await file.getMetadata();
+
+          // assert we uploaded the expected data
+          assert.equal(metadata.crc32c, crc32c);
+        });
+
+        it('should support uploads where `fileSize > chunkSize && `!contentLength`', async () => {
+          const file = bucket.file(generateName());
+          // off by -1 to ensure `fileSize > chunkSize`
+          const chunkSize = fileSize - 1;
+
+          await bucket.upload(filePath, {
+            destination: file,
+            chunkSize,
+          });
+
+          const [metadata] = await file.getMetadata();
+
+          // assert we uploaded the expected data
+          assert.equal(metadata.crc32c, crc32c);
+        });
+      });
+    });
+  });
+
   describe('bucket upload with progress', () => {
     it('show bytes sent with resumable upload', async () => {
       const fileSize = fs.statSync(FILES.big.path).size;
