@@ -2692,7 +2692,7 @@ describe('storage', () => {
   describe('resumable upload', () => {
     describe('multi-chunk upload', () => {
       describe('upload configurations', () => {
-        const filePath: string = FILES.logo.path;
+        const filePath: string = FILES.big.path;
         const fileSize = fs.statSync(filePath).size;
         let crc32c: string;
 
