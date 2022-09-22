@@ -2707,6 +2707,7 @@ describe('storage', () => {
               .on('error', reject);
           });
         });
+
         async function uploadAndVerify(
           file: File,
           options: Omit<UploadOptions, 'destination'>

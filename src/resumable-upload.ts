@@ -733,21 +733,23 @@ export class Upload extends Writable {
       // Important: put the data back in the queue for the actual upload iterator
       this.unshiftChunkBuffer(value!.chunk);
 
-      let contentLength = this.contentLength;
+      let totalObjectSize = this.contentLength;
 
       if (typeof this.contentLength !== 'number' && isLastChunkOfUpload) {
         // Let's let the server know this is the last chunk since
         // we didn't know the content-length beforehand.
-        contentLength = bytesToUpload + this.numBytesWritten;
+        totalObjectSize = bytesToUpload + this.numBytesWritten;
       }
 
       // `- 1` as the ending byte is inclusive in the request.
       const endingByte = bytesToUpload + this.numBytesWritten - 1;
 
+      // `Content-Length` for multiple chunk uploads is the size of the chunk,
+      // not the overall object
       headers['Content-Length'] = bytesToUpload;
       headers[
         'Content-Range'
-      ] = `bytes ${this.offset}-${endingByte}/${contentLength}`;
+      ] = `bytes ${this.offset}-${endingByte}/${totalObjectSize}`;
     } else {
       headers['Content-Range'] = `bytes ${this.offset}-*/${this.contentLength}`;
     }
