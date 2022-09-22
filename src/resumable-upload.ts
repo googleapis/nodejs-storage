@@ -725,9 +725,8 @@ export class Upload extends Writable {
 
       const bytesToUpload = value!.chunk.byteLength;
 
-      // Important: we want to know if the upstream has ended and we shouldn't expect any more
-      // before unshifting data back into the queue. This way we will know if this is the last
-      // request or not.
+      // Important: we want to know if the upstream has ended and the queue is empty before
+      // unshifting data back into the queue. This way we will know if this is the last request or not.
       const isLastChunkOfUpload = !(await this.waitForNextChunk());
 
       // Important: put the data back in the queue for the actual upload iterator
