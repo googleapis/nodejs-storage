@@ -720,21 +720,34 @@ export class Upload extends Writable {
     // If using multiple chunk upload, set appropriate header
     if (multiChunkMode) {
       // We need to know how much data is available upstream to set the `Content-Range` header.
-      const result = await this.upstreamIterator(
-        expectedUploadSize,
-        true
-      ).next();
+      const oneChunkIterator = this.upstreamIterator(expectedUploadSize, true);
+      const {value} = await oneChunkIterator.next();
 
-      const bytesToUpload = result.value!.chunk.byteLength;
-      // Important: put the data back in the queue for the actual upload
-      this.unshiftChunkBuffer(result.value!.chunk);
+      const bytesToUpload = value!.chunk.byteLength;
+
+      // Important: we want to know if the upstream has ended and we shouldn't expect any more
+      // before unshifting data back into the queue. This way we will know if this is the last
+      // request or not.
+      const isLastChunkOfUpload = !(await this.waitForNextChunk());
+
+      // Important: put the data back in the queue for the actual upload iterator
+      this.unshiftChunkBuffer(value!.chunk);
+
+      let contentLength = this.contentLength;
+
+      if (typeof this.contentLength !== 'number' && isLastChunkOfUpload) {
+        // Let's let the server know this is the last chunk since
+        // we didn't know the content-length beforehand.
+        contentLength = bytesToUpload + this.numBytesWritten;
+      }
 
       // `- 1` as the ending byte is inclusive in the request.
       const endingByte = bytesToUpload + this.numBytesWritten - 1;
+
       headers['Content-Length'] = bytesToUpload;
       headers[
         'Content-Range'
-      ] = `bytes ${this.offset}-${endingByte}/${this.contentLength}`;
+      ] = `bytes ${this.offset}-${endingByte}/${contentLength}`;
     } else {
       headers['Content-Range'] = `bytes ${this.offset}-*/${this.contentLength}`;
     }
