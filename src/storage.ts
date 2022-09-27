@@ -107,8 +107,13 @@ export interface CustomPlacementConfig {
   dataLocations?: string[];
 }
 
+export interface AutoclassConfig {
+  enabled?: boolean
+}
+
 export interface CreateBucketRequest {
   archive?: boolean;
+  autoclass?: AutoclassConfig;
   coldline?: boolean;
   cors?: Cors[];
   customPlacementConfig?: CustomPlacementConfig;
