@@ -1057,20 +1057,20 @@ describe('storage', () => {
     it('should allow enabling & disabling autoclass', async () => {
       const [bucket] = await storage.createBucket(generateName(), {
         autoclass: {
-          enabled: true
-        }
+          enabled: true,
+        },
       });
       let [metadata] = await bucket.getMetadata();
       const timestampEnabled = metadata.autoclass.toggleTime;
       assert.strictEqual(metadata.autoclass.enabled, true);
       [metadata] = await bucket.setMetadata({
         autoclass: {
-          enabled: false
-        }
+          enabled: false,
+        },
       });
       const timestampDisabled = metadata.autoclass.toggleTime;
       assert.strictEqual(metadata.autoclass.enabled, false);
-      assert.strictEqual(timestampDisabled > timestampEnabled, true)
+      assert.strictEqual(timestampDisabled > timestampEnabled, true);
     });
 
     describe('locationType', () => {

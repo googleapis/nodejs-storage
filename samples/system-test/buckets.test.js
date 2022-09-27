@@ -79,18 +79,20 @@ it('should get bucket metadata', async () => {
 it('should disable autoclass', async () => {
   await storage.createBucket(bucketNameAutoclass, {
     autoclass: {
-      enabled: true
-    }
+      enabled: true,
+    },
   });
-  const output = execSync(`node setAutoclass.js ${bucketNameAutoclass} ${false}`);
+  const output = execSync(
+    `node setAutoclass.js ${bucketNameAutoclass} ${false}`
+  );
   console.log(output);
-  assert.include(output, "Autoclass");
+  assert.include(output, 'Autoclass');
 });
 
 it('should get autoclass', async () => {
   const output = execSync(`node getAutoclass.js ${bucketNameAutoclass}`);
   console.log(output);
-  assert.include(output, "Autoclass enabled is set to false");
+  assert.include(output, 'Autoclass enabled is set to false');
 });
 
 it('should set a buckets default KMS key', async () => {

@@ -108,7 +108,7 @@ export interface CustomPlacementConfig {
 }
 
 export interface AutoclassConfig {
-  enabled?: boolean
+  enabled?: boolean;
 }
 
 export interface CreateBucketRequest {
