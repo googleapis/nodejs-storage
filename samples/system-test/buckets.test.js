@@ -85,13 +85,11 @@ it('should disable autoclass', async () => {
   const output = execSync(
     `node setAutoclass.js ${bucketNameAutoclass} ${false}`
   );
-  console.log(output);
   assert.include(output, 'Autoclass');
 });
 
 it('should get autoclass', async () => {
   const output = execSync(`node getAutoclass.js ${bucketNameAutoclass}`);
-  console.log(output);
   assert.include(output, 'Autoclass enabled is set to false');
 });
 
