@@ -447,7 +447,9 @@ class Iam {
       TestIamPermissionsCallback
     >(optionsOrCallback, callback);
 
-    const permissionsArray = Array.isArray(permissions) ? permissions : [permissions];;
+    const permissionsArray = Array.isArray(permissions)
+      ? permissions
+      : [permissions];
 
     const req = Object.assign(
       {

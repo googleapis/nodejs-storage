@@ -102,7 +102,9 @@ export class Service {
     this.baseUrl = config.baseUrl;
     this.apiEndpoint = config.apiEndpoint;
     this.timeout = options.timeout;
-    this.globalInterceptors = Array.isArray(options.interceptors_) ? options.interceptors_ : [];
+    this.globalInterceptors = Array.isArray(options.interceptors_)
+      ? options.interceptors_
+      : [];
     this.interceptors = [];
     this.packageJson = config.packageJson;
     this.projectId = options.projectId || DEFAULT_PROJECT_ID_TOKEN;
@@ -222,7 +224,9 @@ export class Service {
       .replace(/\/:/g, ':');
 
     const requestInterceptors = this.getRequestInterceptors();
-    const interceptorArray = Array.isArray(reqOpts.interceptors_) ? reqOpts.interceptors_ : [];
+    const interceptorArray = Array.isArray(reqOpts.interceptors_)
+      ? reqOpts.interceptors_
+      : [];
     interceptorArray.forEach(interceptor => {
       if (typeof interceptor.request === 'function') {
         requestInterceptors.push(interceptor.request);

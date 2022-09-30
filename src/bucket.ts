@@ -1394,7 +1394,11 @@ class Bucket extends ServiceObject {
         return;
       }
 
-      const currentLifecycleRules = Array.isArray(metadata.lifecycle && metadata.lifecycle.rule) ? metadata.lifecycle && metadata.lifecycle.rule : []; 
+      const currentLifecycleRules = Array.isArray(
+        metadata.lifecycle && metadata.lifecycle.rule
+      )
+        ? metadata.lifecycle && metadata.lifecycle.rule
+        : [];
 
       this.setMetadata(
         {
@@ -2124,8 +2128,8 @@ class Bucket extends ServiceObject {
     if (typeof labelsOrCallbackOrOptions === 'function') {
       callback = labelsOrCallbackOrOptions;
     } else if (typeof labelsOrCallbackOrOptions === 'string') {
-      labels = [labelsOrCallbackOrOptions]
-    } else if (Array.isArray(labelsOrCallbackOrOptions) ) {
+      labels = [labelsOrCallbackOrOptions];
+    } else if (Array.isArray(labelsOrCallbackOrOptions)) {
       labels = labelsOrCallbackOrOptions;
     } else if (labelsOrCallbackOrOptions) {
       options = labelsOrCallbackOrOptions;
@@ -2871,13 +2875,11 @@ class Bucket extends ServiceObject {
           return;
         }
         const itemsArray = resp.items ? resp.items : [];
-        const notifications = itemsArray.map(
-          (notification: Metadata) => {
-            const notificationInstance = this.notification(notification.id);
-            notificationInstance.metadata = notification;
-            return notificationInstance;
-          }
-        );
+        const notifications = itemsArray.map((notification: Metadata) => {
+          const notificationInstance = this.notification(notification.id);
+          notificationInstance.metadata = notification;
+          return notificationInstance;
+        });
 
         callback!(null, notifications, resp);
       }

@@ -130,7 +130,7 @@ const fakePaginator = {
       if (Class.name !== 'Bucket') {
         return;
       }
-      methods = Array.isArray(methods) ? methods : [methods]; 
+      methods = Array.isArray(methods) ? methods : [methods];
       assert.strictEqual(Class.name, 'Bucket');
       assert.deepStrictEqual(methods, ['getFiles']);
       extended = true;

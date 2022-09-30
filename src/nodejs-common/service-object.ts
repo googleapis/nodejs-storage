@@ -572,7 +572,9 @@ class ServiceObject<T = any> extends EventEmitter {
       })
       .join('/');
 
-    const childInterceptors = Array.isArray(reqOpts.interceptors_) ? reqOpts.interceptors_ : [];
+    const childInterceptors = Array.isArray(reqOpts.interceptors_)
+      ? reqOpts.interceptors_
+      : [];
     const localInterceptors = [].slice.call(this.interceptors);
 
     reqOpts.interceptors_ = childInterceptors.concat(localInterceptors);
