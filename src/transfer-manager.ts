@@ -98,15 +98,10 @@ export class TransferManager {
    * to each individual upload operation.
    */
   /**
-   * @typedef {array} UploadResponse
-   * @property {object} The uploaded {@link File}
-   * @property {object} The uploaded {@link Metadata}
-   */
-  /**
    * @callback UploadMultiCallback
-   * @param {?Error} err Rewuest error if any
-   * @param {array} files Array of uploaded {@link File}.
-   * @param {array} metadata Array of uploaded {@link Metadata}
+   * @param {?Error} [err] Request error, if any.
+   * @param {array} [files] Array of uploaded {@link File}.
+   * @param {array} [metadata] Array of uploaded {@link Metadata}
    */
   /**
    * Upload multiple files in parallel to the bucket. This is a convenience method
@@ -126,19 +121,19 @@ export class TransferManager {
    * const transferManager = new TransferManager(bucket);
    *
    * //-
-   * // Upload multiple files.
+   * // Upload multiple files in parallel.
    * //-
    * transferManager.uploadMulti(['/local/path/file1.txt, 'local/path/file2.txt'], function(err, files, metadata) {
-   *  // Your bucket now contains:
+   * // Your bucket now contains:
    * // - "file1.txt" (with the contents of '/local/path/file1.txt')
    * // - "file2.txt" (with the contents of '/local/path/file2.txt')
    * // `files` is an array of instances of File objects that refers to the new files.
    * });
    *
    * //-
-   * // If the callback if omitted, we will return a Promise.
+   * // If the callback is omitted, we will return a promise.
    * //-
-   * const response = transferManager.uploadMulti(['/local/path/file1.txt, 'local/path/file2.txt']);
+   * const response = await transferManager.uploadMulti(['/local/path/file1.txt, 'local/path/file2.txt']);
    * ```
    */
   async uploadMulti(
@@ -217,6 +212,51 @@ export class TransferManager {
     options: DownloadMultiOptions,
     callback: DownloadMultiCallback
   ): Promise<void>;
+  /**
+   * @typedef {object} DownloadMultiOptions
+   * @property {number} [concurrencyLimit] The number of concurrently executing promises
+   * to use when downloading the files.
+   * @property {string} [prefix] A prefix to append to all of the downloaded files.
+   * @property {string} [stripPrefix] A prefix to remove from all of the downloaded files.
+   * @property {object} [passthroughOptions] {@link DownloadOptions} Options to be passed through
+   * to each individual download operation.
+   */
+  /**
+   * @callback DownloadMultiCallback
+   * @param {?Error} [err] Request error, if any.
+   * @param {array} [contents] Contents of the downloaded files.
+   */
+  /**
+   * Download multiple files in parallel to the local filesystem. This is a convenience method
+   * that utilizes {@link File#download} to perform the download.
+   *
+   * @param {array} [files] An array of file objects you wish to download.
+   * @param {DownloadMultiOptions} [options] Configuration options.
+   * @param {DownloadMultiCallback} {callback} Callback function.
+   * @returns {Promise<DownloadResponse[] | void>}
+   *
+   * @example
+   * ```
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const bucket = storage.bucket('my-bucket');
+   * const transferManager = new TransferManager(bucket);
+   *
+   * //-
+   * // Download multiple files in parallel.
+   * //-
+   * transferManager.downloadMulti([bucket.file('file1.txt'), bucket.file('file2.txt')], function(err, contents){
+   * // Your local directory now contains:
+   * // - "file1.txt" (with the contents from my-bucket.file1.txt)
+   * // - "file2.txt" (with the contents from my-bucket.file2.txt)
+   * // `contents` is an array containing the file data for each downloaded file.
+   * });
+   *
+   * //-
+   * // If the callback is omitted, we will return a promise.
+   * //-
+   * const response = await transferManager.downloadMulti(bucket.File('file1.txt'), bucket.File('file2.txt')]);
+   */
   async downloadMulti(
     files: File[],
     optionsOrCallback?: DownloadMultiOptions | DownloadMultiCallback,
@@ -284,6 +324,41 @@ export class TransferManager {
     options: LargeFileDownloadOptions,
     callback: DownloadCallback
   ): Promise<void>;
+  /**
+   * @typedef {object} LargeFileDownloadOptions
+   * @property {number} [concurrencyLimit] The number of concurrently executing promises
+   * to use when downloading the file.
+   * @property {number} [chunkSizeBytes] The size in bytes of each chunk to be downloaded.
+   */
+  /**
+   * Download a large file in chunks utilizing parallel download operations. This is a convenience method
+   * that utilizes {@link File#download} to perform the download.
+   *
+   * @param {object} [file] {@link File} to download.
+   * @param {LargeFileDownloadOptions} [options] Configuration options.
+   * @param {DownloadCallback} [callbac] Callback function.
+   * @returns {Promise<DownloadResponse | void>}
+   *
+   * @example
+   * ```
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const bucket = storage.bucket('my-bucket');
+   * const transferManager = new TransferManager(bucket);
+   *
+   * //-
+   * // Download a large file in chunks utilizing parallel operations.
+   * //-
+   * transferManager.downloadLargeFile(bucket.file('large-file.txt'), function(err, contents) {
+   * // Your local directory now contains:
+   * // - "large-file.txt" (with the contents from my-bucket.large-file.txt)
+   * });
+   *
+   * //-
+   * // If the callback is omitted, we will return a promise.
+   * //-
+   * const response = await transferManager.downloadLargeFile(bucket.file('large-file.txt');
+   */
   async downloadLargeFile(
     file: File,
     optionsOrCallback?: LargeFileDownloadOptions | DownloadCallback,
