@@ -666,7 +666,7 @@ export class Storage extends Service {
     options = Object.assign({}, options, {apiEndpoint});
 
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
-    const baseUrl = (EMULATOR_HOST || options.apiEndpoint) + '/storage/v1';
+    const baseUrl = new URL('/storage/v1', EMULATOR_HOST || options.apiEndpoint).href;
 
     const config = {
       apiEndpoint: options.apiEndpoint!,
