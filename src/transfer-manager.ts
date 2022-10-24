@@ -108,7 +108,7 @@ export class TransferManager {
    * that utilizes {@link Bucket#upload} to perform the upload.
    *
    * @param {array} [filePaths] An array of fully qualified paths to the files.
-   * you wish to upload to the bucket
+   * to be uploaded to the bucket
    * @param {UploadMultiOptions} [options] Configuration options.
    * @param {UploadMultiCallback} [callback] Callback function.
    * @returns {Promise<UploadResponse[] | void>}
@@ -230,7 +230,7 @@ export class TransferManager {
    * Download multiple files in parallel to the local filesystem. This is a convenience method
    * that utilizes {@link File#download} to perform the download.
    *
-   * @param {array} [files] An array of file objects you wish to download.
+   * @param {array} [files] An array of file objects to be downloaded.
    * @param {DownloadMultiOptions} [options] Configuration options.
    * @param {DownloadMultiCallback} {callback} Callback function.
    * @returns {Promise<DownloadResponse[] | void>}
