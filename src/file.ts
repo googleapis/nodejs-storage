@@ -1534,9 +1534,11 @@ class File extends ServiceObject<File> {
             // Preserving `onComplete`'s ability to
             // destroy `throughStream` before pipeline
             // attempts to.
-            onComplete(null).then(() => {
-              cb();
-            });
+            onComplete(null)
+              .then(() => {
+                cb();
+              })
+              .catch(cb);
           },
         });
 
