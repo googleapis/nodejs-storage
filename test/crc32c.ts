@@ -509,7 +509,11 @@ describe('CRC32C', () => {
       });
 
       after(async () => {
-        await fs.promises.rm(tempFilePath, {force: true});
+        try {
+          await fs.promises.unlink(tempFilePath);
+        } catch (e) {
+          // errors are fine
+        }
       });
 
       it('should generate a valid `crc32c` via a file path', async () => {
