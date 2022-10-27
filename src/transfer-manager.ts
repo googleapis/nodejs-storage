@@ -67,6 +67,7 @@ export interface DownloadMultiCallback {
  * @hideconstructor
  *
  * @param {Bucket} bucket A {@link Bucket} instance
+ * @experimental
  */
 export class TransferManager {
   bucket: Bucket;
@@ -96,12 +97,14 @@ export class TransferManager {
    * @property {string} [prefix] A prefix to append to all of the uploaded files.
    * @property {object} [passthroughOptions] {@link UploadOptions} Options to be passed through
    * to each individual upload operation.
+   * @experimental
    */
   /**
    * @callback UploadMultiCallback
    * @param {?Error} [err] Request error, if any.
    * @param {array} [files] Array of uploaded {@link File}.
    * @param {array} [metadata] Array of uploaded {@link Metadata}
+   * @experimental
    */
   /**
    * Upload multiple files in parallel to the bucket. This is a convenience method
@@ -135,6 +138,7 @@ export class TransferManager {
    * //-
    * const response = await transferManager.uploadMulti(['/local/path/file1.txt, 'local/path/file2.txt']);
    * ```
+   * @experimental
    */
   async uploadMulti(
     filePaths: string[],
@@ -220,11 +224,13 @@ export class TransferManager {
    * @property {string} [stripPrefix] A prefix to remove from all of the downloaded files.
    * @property {object} [passthroughOptions] {@link DownloadOptions} Options to be passed through
    * to each individual download operation.
+   * @experimental
    */
   /**
    * @callback DownloadMultiCallback
    * @param {?Error} [err] Request error, if any.
    * @param {array} [contents] Contents of the downloaded files.
+   * @experimental
    */
   /**
    * Download multiple files in parallel to the local filesystem. This is a convenience method
@@ -256,6 +262,7 @@ export class TransferManager {
    * // If the callback is omitted, we will return a promise.
    * //-
    * const response = await transferManager.downloadMulti(bucket.File('file1.txt'), bucket.File('file2.txt')]);
+   * @experimental
    */
   async downloadMulti(
     files: File[],
@@ -329,6 +336,7 @@ export class TransferManager {
    * @property {number} [concurrencyLimit] The number of concurrently executing promises
    * to use when downloading the file.
    * @property {number} [chunkSizeBytes] The size in bytes of each chunk to be downloaded.
+   * @experimental
    */
   /**
    * Download a large file in chunks utilizing parallel download operations. This is a convenience method
@@ -358,6 +366,7 @@ export class TransferManager {
    * // If the callback is omitted, we will return a promise.
    * //-
    * const response = await transferManager.downloadLargeFile(bucket.file('large-file.txt');
+   * @experimental
    */
   async downloadLargeFile(
     file: File,
