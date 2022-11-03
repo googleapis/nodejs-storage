@@ -82,7 +82,7 @@ export function generateRandomFile(
  * Creates a random directory structure consisting of subdirectories and random files.
  *
  * @param {number} maxObjects the total number of subdirectories and files to generate.
- * @param {string} baseName The starting directory under which everything else is added. File names will have this value prepended.
+ * @param {string} baseName the starting directory under which everything else is added. File names will have this value prepended.
  * @param {number} fileSizeLowerBoundBytes minimum size of file to generate.
  * @param {number} fileSizeUpperBoundBytes maximum size of file to generate.
  */
