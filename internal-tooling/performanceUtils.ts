@@ -40,12 +40,14 @@ export function randomInteger(minInclusive: number, maxInclusive: number) {
 }
 
 /**
- * Creates a random file name by appending a UUID to the TEST_NAME_STRING.
+ * Creates a random file name by appending a UUID to the baseName.
+ *
+ * @param {string} baseName the base file name. A random uuid will be appended to this value.
  *
  * @returns {string} random file name that was generated.
  */
-export function generateRandomFileName(testName: string): string {
-  return `${testName}.${uuid.v4()}`;
+export function generateRandomFileName(baseName: string): string {
+  return `${baseName}.${uuid.v4()}`;
 }
 
 /**
@@ -80,17 +82,17 @@ export function generateRandomFile(
  * Creates a random directory structure consisting of subdirectories and random files.
  *
  * @param {number} maxObjects the total number of subdirectories and files to generate.
- * @param {string} testName the test name.
+ * @param {string} baseName The starting directory under which everything else is added. File names will have this value prepended.
  * @param {number} fileSizeLowerBoundBytes minimum size of file to generate.
  * @param {number} fileSizeUpperBoundBytes maximum size of file to generate.
  */
 export function generateRandomDirectoryStructure(
   maxObjects: number,
-  testName: string,
+  baseName: string,
   fileSizeLowerBoundBytes: number = DEFAULT_SMALL_FILE_SIZE_BYTES,
   fileSizeUpperBoundBytes: number = DEFAULT_LARGE_FILE_SIZE_BYTES
 ) {
-  let curPath = testName;
+  let curPath = baseName;
   for (let i = 0; i < maxObjects; i++) {
     const dirOrFile = randomInteger(0, 1);
     if (dirOrFile === CREATE_DIRECTORY) {
@@ -98,7 +100,7 @@ export function generateRandomDirectoryStructure(
       mkdirSync(curPath, {recursive: true});
     } else {
       generateRandomFile(
-        generateRandomFileName(testName),
+        generateRandomFileName(baseName),
         fileSizeLowerBoundBytes,
         fileSizeUpperBoundBytes,
         curPath
