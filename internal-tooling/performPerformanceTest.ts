@@ -15,22 +15,25 @@
  */
 
 import yargs from 'yargs';
-import * as uuid from 'uuid';
-import {execSync} from 'child_process';
 import {unlinkSync} from 'fs';
 import {Storage} from '../src';
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
 import path = require('path');
+import {
+  BLOCK_SIZE_IN_BYTES,
+  DEFAULT_LARGE_FILE_SIZE_BYTES,
+  DEFAULT_SMALL_FILE_SIZE_BYTES,
+  generateRandomFile,
+  generateRandomFileName,
+  randomInteger,
+} from './performanceUtils';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
 const DEFAULT_NUMBER_OF_READS = 3;
 const DEFAULT_BUCKET_NAME = 'nodejs-perf-metrics';
-const DEFAULT_SMALL_FILE_SIZE_BYTES = 5120;
-const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e9;
-const BLOCK_SIZE_IN_BYTES = 1024;
 const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
 
 export interface TestResult {
@@ -45,20 +48,6 @@ export interface TestResult {
   cpuTimeUs: number;
   status: '[OK]';
 }
-
-/**
- * Create a uniformly distributed random integer beween the inclusive min and max provided.
- *
- * @param {number} minInclusive lower bound (inclusive) of the range of random integer to return.
- * @param {number} maxInclusive upper bound (inclusive) of the range of random integer to return.
- * @returns {number} returns a random integer between minInclusive and maxInclusive
- */
-const randomInteger = (minInclusive: number, maxInclusive: number) => {
-  // Utilizing Math.random will generate uniformly distributed random numbers.
-  return (
-    Math.floor(Math.random() * (maxInclusive - minInclusive + 1)) + minInclusive
-  );
-};
 
 const argv = yargs(process.argv.slice(2))
   .options({
@@ -85,8 +74,8 @@ async function main() {
  */
 async function performWriteReadTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
-  const fileName = generateRandomFileName();
-  const sizeInBytes = generateRandomFile(fileName);
+  const fileName = generateRandomFileName(TEST_NAME_STRING);
+  const sizeInBytes = generateRandomFile(fileName, argv.small, argv.large);
   const checkType = randomInteger(0, 2);
 
   const stg = new Storage({
@@ -159,7 +148,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       status: '[OK]',
     };
 
-    const destinationFileName = generateRandomFileName();
+    const destinationFileName = generateRandomFileName(TEST_NAME_STRING);
     const destination = path.join(__dirname, destinationFileName);
     if (checkType === 0) {
       start = performance.now();
@@ -184,31 +173,6 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   cleanupFile(fileName);
 
   return results;
-}
-
-/**
- * Creates a file with a size between the small (default 5120 bytes) and large (2.147e9 bytes) parameters.
- * The file is filled with random data.
- *
- * @param {string} fileName name of the file to generate.
- * @returns {number} the size of the file generated.
- */
-function generateRandomFile(fileName: string) {
-  const fileSizeBytes = randomInteger(argv.small, argv.large);
-  const numberNeeded = Math.ceil(fileSizeBytes / BLOCK_SIZE_IN_BYTES);
-  const cmd = `dd if=/dev/urandom of=${__dirname}/${fileName} bs=${BLOCK_SIZE_IN_BYTES} count=${numberNeeded} status=none iflag=fullblock`;
-  execSync(cmd);
-
-  return fileSizeBytes;
-}
-
-/**
- * Creates a random file name by appending a UUID to the TEST_NAME_STRING.
- *
- * @returns {string} random file name that was generated.
- */
-function generateRandomFileName(): string {
-  return `${TEST_NAME_STRING}.${uuid.v4()}`;
 }
 
 /**
