@@ -18,7 +18,7 @@ import {appendFile} from 'fs/promises';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {Worker} from 'worker_threads';
 import yargs = require('yargs');
-import {TestResult} from './performPerformanceTest';
+import {TestResult} from './performanceUtils';
 import {existsSync} from 'fs';
 import {writeFile} from 'fs/promises';
 
@@ -32,6 +32,9 @@ export const enum TRANSFER_MANAGER_TEST_TYPES {
   UPLOAD_MULTIPLE_OBJECTS = 'upload',
   DOWNLOAD_MULTIPLE_OBJECTS = 'download',
   LARGE_FILE_DOWNLOAD = 'large',
+  APPLICATION_LARGE_FILE_DOWNLOAD = 'application-large',
+  APPLICATION_UPLOAD_MULTIPLE_OBJECTS = 'application-upload',
+  APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS = 'application-download'
 }
 
 const argv = yargs(process.argv.slice(2))
@@ -45,6 +48,9 @@ const argv = yargs(process.argv.slice(2))
         TRANSFER_MANAGER_TEST_TYPES.UPLOAD_MULTIPLE_OBJECTS,
         TRANSFER_MANAGER_TEST_TYPES.DOWNLOAD_MULTIPLE_OBJECTS,
         TRANSFER_MANAGER_TEST_TYPES.LARGE_FILE_DOWNLOAD,
+        TRANSFER_MANAGER_TEST_TYPES.APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS,
+        TRANSFER_MANAGER_TEST_TYPES.APPLICATION_LARGE_FILE_DOWNLOAD,
+        TRANSFER_MANAGER_TEST_TYPES.APPLICATION_UPLOAD_MULTIPLE_OBJECTS
       ],
       default: TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE,
     },
@@ -93,6 +99,13 @@ function createWorker() {
   ) {
     testPath = `${__dirname}/performTransferManagerTest.js`;
   }
+  else if (
+    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.APPLICATION_UPLOAD_MULTIPLE_OBJECTS ||
+    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.APPLICATION_LARGE_FILE_DOWNLOAD ||
+    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS
+  ) {
+    testPath = `${__dirname}/performApplicationPerformanceTest.js`;
+  }
 
   const w = new Worker(testPath, {
     argv: process.argv.slice(2),
@@ -105,8 +118,9 @@ function createWorker() {
       createWorker();
     }
   });
-  w.on('error', () => {
+  w.on('error', (e) => {
     console.log('An error occurred.');
+    console.log(e);
   });
 }
 

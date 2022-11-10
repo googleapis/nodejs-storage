@@ -23,6 +23,20 @@ export const BLOCK_SIZE_IN_BYTES = 1024;
 export const DEFAULT_SMALL_FILE_SIZE_BYTES = 5120;
 export const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e9;
 
+export interface TestResult {
+  op: string;
+  objectSize: number;
+  appBufferSize: number;
+  libBufferSize: number;
+  crc32Enabled: boolean;
+  md5Enabled: boolean;
+  apiName: 'JSON' | 'XML';
+  elapsedTimeUs: number;
+  cpuTimeUs: number;
+  status: '[OK]';
+}
+
+
 /**
  * Create a uniformly distributed random integer beween the inclusive min and max provided.
  *
