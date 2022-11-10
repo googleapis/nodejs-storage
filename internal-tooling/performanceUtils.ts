@@ -120,7 +120,7 @@ export function generateRandomDirectoryStructure(
   maxObjects: number,
   baseName: string,
   fileSizeLowerBoundBytes: number = DEFAULT_SMALL_FILE_SIZE_BYTES,
-  fileSizeUpperBoundBytes: number = DEFAULT_LARGE_FILE_SIZE_BYTES
+  fileSizeUpperBoundBytes: number = DEFAULT_SMALL_FILE_SIZE_BYTES
 ): string[] {
   let curPath = baseName;
   mkdirSync(curPath);
