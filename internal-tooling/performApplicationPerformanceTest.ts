@@ -15,28 +15,39 @@
  */
 
 import yargs from 'yargs';
-import {unlinkSync} from 'fs';
-import {Storage} from '../src';
+import * as uuid from 'uuid';
+import {execSync} from 'child_process';
+import {unlinkSync, opendirSync} from 'fs';
+import {Bucket, DownloadOptions, DownloadResponse, File, Storage} from '../src';
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
 import path = require('path');
-import {
-  BLOCK_SIZE_IN_BYTES,
-  cleanupFile,
-  DEFAULT_LARGE_FILE_SIZE_BYTES,
-  DEFAULT_SMALL_FILE_SIZE_BYTES,
-  generateRandomFile,
-  generateRandomFileName,
-  randomInteger,
-  TestResult
-} from './performanceUtils';
+import { generateRandomDirectoryStructure, generateRandomFileName, TestResult } from './performanceUtils';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
 const DEFAULT_NUMBER_OF_READS = 3;
-const DEFAULT_BUCKET_NAME = 'nodejs-perf-metrics';
+const DEFAULT_BUCKET_NAME = 'nodejs-perf-metrics-shaffeeullah';
+const DEFAULT_SMALL_FILE_SIZE_BYTES = 5120;
+const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e9;
+const BLOCK_SIZE_IN_BYTES = 1024;
 const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
+
+
+/**
+ * Create a uniformly distributed random integer beween the inclusive min and max provided.
+ *
+ * @param {number} minInclusive lower bound (inclusive) of the range of random integer to return.
+ * @param {number} maxInclusive upper bound (inclusive) of the range of random integer to return.
+ * @returns {number} returns a random integer between minInclusive and maxInclusive
+ */
+const randomInteger = (minInclusive: number, maxInclusive: number) => {
+  // Utilizing Math.random will generate uniformly distributed random numbers.
+  return (
+    Math.floor(Math.random() * (maxInclusive - minInclusive + 1)) + minInclusive
+  );
+};
 
 const argv = yargs(process.argv.slice(2))
   .options({
@@ -56,15 +67,48 @@ async function main() {
   parentPort?.postMessage(results);
 }
 
+async function uploadInParallel(bucket: Bucket, directory: string, validation: Object) {
+
+  const promises = [];
+  let openedDir = opendirSync(directory);  
+  console.log("\nPath of the directory:", openedDir.path);
+  console.log("Files Present in directory:");
+  let filesLeft = true;
+  while (filesLeft) {
+    // Read a file as fs.Dirent object
+    let fileDirent = openedDir.readSync();
+    
+    // If readSync() does not return null
+    // print its filename
+    if (fileDirent != null) {
+      console.log("Name:", fileDirent.name);
+      promises.push(bucket.upload(`${directory}/${fileDirent!.name}`, validation))
+    }
+    // If the readSync() returns null
+    // stop the loop
+    else filesLeft = false;
+  }
+  await Promise.all(promises).catch(console.error);
+}
+
+async function downloadInParallel(bucket: Bucket, options: DownloadOptions) {
+  const promises: Promise<DownloadResponse> [] = [];
+  const [files] = await bucket.getFiles();
+  files.forEach(file => {
+    promises.push(file.download(options));
+  });
+  await Promise.all(promises).catch(console.error);
+}
+
 /**
  * Performs an iteration of the Write 1 / Read 3 performance measuring test.
  *
- * @returns {Promise<TestResult[]>} Promise that resolves to an array of test results for the iteration.
+ * @returns {Promise<TestResult[]} Promise that resolves to an array of test results for the iteration.
  */
 async function performWriteReadTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
-  const fileName = generateRandomFileName(TEST_NAME_STRING);
-  const sizeInBytes = generateRandomFile(fileName, argv.small, argv.large);
+  const directory = TEST_NAME_STRING;//"/node-test-files"
+  generateRandomDirectoryStructure(10, directory);
   const checkType = randomInteger(0, 2);
 
   const stg = new Storage({
@@ -82,7 +126,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
 
     const iterationResult: TestResult = {
       op: 'WRITE',
-      objectSize: sizeInBytes,
+      objectSize: BLOCK_SIZE_IN_BYTES, //note this is wrong
       appBufferSize: BLOCK_SIZE_IN_BYTES,
       libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
       crc32Enabled: false,
@@ -99,19 +143,21 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       },
     });
 
+    await bucket.deleteFiles();
+
     if (checkType === 0) {
       start = performance.now();
-      await bucket.upload(`${__dirname}/${fileName}`, {validation: false});
+      await uploadInParallel(bucket, `${directory}`, {validation: false});
       end = performance.now();
     } else if (checkType === 1) {
       iterationResult.crc32Enabled = true;
       start = performance.now();
-      await bucket.upload(`${__dirname}/${fileName}`, {validation: 'crc32c'});
+      await uploadInParallel(bucket, `${directory}`, {validation: 'crc32c'});
       end = performance.now();
     } else {
       iterationResult.md5Enabled = true;
       start = performance.now();
-      await bucket.upload(`${__dirname}/${fileName}`, {validation: 'md5'});
+      await uploadInParallel(bucket, `${directory}`, {validation: 'md5'});
       end = performance.now();
     }
 
@@ -123,10 +169,9 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   for (let j = 0; j < DEFAULT_NUMBER_OF_READS; j++) {
     let start = 0;
     let end = 0;
-    const file = bucket.file(`${fileName}`);
     const iterationResult: TestResult = {
       op: `READ[${j}]`,
-      objectSize: sizeInBytes,
+      objectSize: 0, //this is wrong
       appBufferSize: BLOCK_SIZE_IN_BYTES,
       libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
       crc32Enabled: false,
@@ -137,30 +182,26 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       status: '[OK]',
     };
 
-    const destinationFileName = generateRandomFileName(TEST_NAME_STRING);
+    const destinationFileName = "TODO"
     const destination = path.join(__dirname, destinationFileName);
     if (checkType === 0) {
       start = performance.now();
-      await file.download({validation: false, destination});
+      await downloadInParallel(bucket, {validation: false, destination});
       end = performance.now();
     } else if (checkType === 1) {
       iterationResult.crc32Enabled = true;
       start = performance.now();
-      await file.download({validation: 'crc32c', destination});
+      await downloadInParallel(bucket, {validation: 'crc32c', destination});
       end = performance.now();
     } else {
       iterationResult.md5Enabled = true;
       start = performance.now();
-      await file.download({validation: 'md5', destination});
+      await downloadInParallel(bucket, {validation: 'md5', destination});
       end = performance.now();
     }
-    cleanupFile(destinationFileName);
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);
   }
-
-  cleanupFile(fileName);
-
   return results;
 }
 
