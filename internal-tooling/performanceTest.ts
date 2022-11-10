@@ -27,11 +27,27 @@ const DEFAULT_THREADS = 1;
 const CSV_HEADERS =
   'Op,ObjectSize,AppBufferSize,LibBufferSize,Crc32cEnabled,MD5Enabled,ApiName,ElapsedTimeUs,CpuTimeUs,Status\n';
 const START_TIME = Date.now();
+export const enum TRANSFER_MANAGER_TEST_TYPES {
+  WRITE_ONE_READ_THREE = 'w1r3',
+  UPLOAD_MULTIPLE_OBJECTS = 'upload',
+  DOWNLOAD_MULTIPLE_OBJECTS = 'download',
+  LARGE_FILE_DOWNLOAD = 'large',
+}
 
 const argv = yargs(process.argv.slice(2))
   .options({
     iterations: {type: 'number', default: DEFAULT_ITERATIONS},
     numthreads: {type: 'number', default: DEFAULT_THREADS},
+    testtype: {
+      type: 'string',
+      choices: [
+        TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE,
+        TRANSFER_MANAGER_TEST_TYPES.UPLOAD_MULTIPLE_OBJECTS,
+        TRANSFER_MANAGER_TEST_TYPES.DOWNLOAD_MULTIPLE_OBJECTS,
+        TRANSFER_MANAGER_TEST_TYPES.LARGE_FILE_DOWNLOAD,
+      ],
+      default: TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE,
+    },
   })
   .parseSync();
 
@@ -51,6 +67,9 @@ function main() {
     );
     numThreads = iterationsRemaining;
   }
+  if (argv.testtype !== TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE) {
+    numThreads = 1;
+  }
   for (let i = 0; i < numThreads; i++) {
     createWorker();
   }
@@ -65,9 +84,20 @@ function createWorker() {
   console.log(
     `Starting new iteration. Current iterations remaining: ${iterationsRemaining}`
   );
-  const w = new Worker(__dirname + '/performPerformanceTest.js', {
+  let testPath = '';
+  if (argv.testtype === TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE) {
+    testPath = `${__dirname}/performPerformanceTest.js`;
+  } else if (
+    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.UPLOAD_MULTIPLE_OBJECTS ||
+    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.LARGE_FILE_DOWNLOAD
+  ) {
+    testPath = `${__dirname}/performTransferManagerTest.js`;
+  }
+
+  const w = new Worker(testPath, {
     argv: process.argv.slice(2),
   });
+
   w.on('message', data => {
     console.log('Successfully completed iteration.');
     appendResultToCSV(data);

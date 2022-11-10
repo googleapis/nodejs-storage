@@ -171,15 +171,22 @@ export class TransferManager {
     const promises = [];
 
     for (const filePath of filePaths) {
+      const stat = await fsp.lstat(filePath);
+      if (stat.isDirectory()) {
+        continue;
+      }
       const baseFileName = path.basename(filePath);
       const passThroughOptionsCopy = extend(
         true,
         {},
         options.passthroughOptions
       );
+      passThroughOptionsCopy.destination = filePath;
+      //console.log(passThroughOptionsCopy.destination);
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.join(
           options.prefix,
+          passThroughOptionsCopy.destination?.toString() || '',
           baseFileName
         );
       }

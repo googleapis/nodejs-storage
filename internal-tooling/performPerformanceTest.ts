@@ -23,6 +23,7 @@ import {parentPort} from 'worker_threads';
 import path = require('path');
 import {
   BLOCK_SIZE_IN_BYTES,
+  cleanupFile,
   DEFAULT_LARGE_FILE_SIZE_BYTES,
   DEFAULT_SMALL_FILE_SIZE_BYTES,
   generateRandomFile,
@@ -70,7 +71,7 @@ async function main() {
 /**
  * Performs an iteration of the Write 1 / Read 3 performance measuring test.
  *
- * @returns {Promise<TestResult[]} Promise that resolves to an array of test results for the iteration.
+ * @returns {Promise<TestResult[]>} Promise that resolves to an array of test results for the iteration.
  */
 async function performWriteReadTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
@@ -173,15 +174,6 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   cleanupFile(fileName);
 
   return results;
-}
-
-/**
- * Deletes the file specified by the fileName parameter.
- *
- * @param {string} fileName name of the file to delete.
- */
-function cleanupFile(fileName: string) {
-  unlinkSync(`${__dirname}/${fileName}`);
 }
 
 main();

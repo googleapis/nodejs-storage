@@ -256,9 +256,4 @@ export {
   StorageOptions,
 } from './storage';
 export {GetSignedUrlCallback, GetSignedUrlResponse} from './signer';
-export {
-  TransferManager,
-  UploadMultiOptions,
-  UploadMultiCallback,
-  LargeFileDownloadOptions,
-} from './transfer-manager';
+export * from './transfer-manager';

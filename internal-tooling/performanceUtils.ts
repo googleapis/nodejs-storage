@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-import {execSync} from 'child_process';
-import {mkdirSync} from 'fs';
+import {execFileSync} from 'child_process';
+import {mkdirSync, mkdtempSync, unlinkSync} from 'fs';
 import path = require('path');
 import * as uuid from 'uuid';
 
 export const BLOCK_SIZE_IN_BYTES = 1024;
 export const DEFAULT_SMALL_FILE_SIZE_BYTES = 5120;
 export const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e9;
-
-const CREATE_DIRECTORY = 1;
 
 /**
  * Create a uniformly distributed random integer beween the inclusive min and max provided.
@@ -37,6 +35,15 @@ export function randomInteger(minInclusive: number, maxInclusive: number) {
   return (
     Math.floor(Math.random() * (maxInclusive - minInclusive + 1)) + minInclusive
   );
+}
+
+/**
+ * Return a random boolean
+ *
+ * @returns {boolean} a random boolean value
+ */
+export function randomBoolean() {
+  return !!randomInteger(0, 1);
 }
 
 /**
@@ -65,15 +72,22 @@ export function generateRandomFile(
   fileName: string,
   fileSizeLowerBoundBytes: number = DEFAULT_SMALL_FILE_SIZE_BYTES,
   fileSizeUpperBoundBytes: number = DEFAULT_LARGE_FILE_SIZE_BYTES,
-  currentDirectory: string = __dirname
+  currentDirectory: string = mkdtempSync(uuid.v4())
 ) {
   const fileSizeBytes = randomInteger(
     fileSizeLowerBoundBytes,
     fileSizeUpperBoundBytes
   );
   const numberNeeded = Math.ceil(fileSizeBytes / BLOCK_SIZE_IN_BYTES);
-  const cmd = `dd if=/dev/urandom of=${currentDirectory}/${fileName} bs=${BLOCK_SIZE_IN_BYTES} count=${numberNeeded} status=none iflag=fullblock`;
-  execSync(cmd);
+  const args = [
+    'if=/dev/urandom',
+    `of=${currentDirectory}/${fileName}`,
+    `bs=${BLOCK_SIZE_IN_BYTES}`,
+    `count=${numberNeeded}`,
+    'status=none',
+    'iflag=fullblock',
+  ];
+  execFileSync('dd', args);
 
   return fileSizeBytes;
 }
@@ -85,26 +99,44 @@ export function generateRandomFile(
  * @param {string} baseName the starting directory under which everything else is added. File names will have this value prepended.
  * @param {number} fileSizeLowerBoundBytes minimum size of file to generate.
  * @param {number} fileSizeUpperBoundBytes maximum size of file to generate.
+ *
+ * @returns {array} an array of all the generated paths
  */
 export function generateRandomDirectoryStructure(
   maxObjects: number,
   baseName: string,
   fileSizeLowerBoundBytes: number = DEFAULT_SMALL_FILE_SIZE_BYTES,
   fileSizeUpperBoundBytes: number = DEFAULT_LARGE_FILE_SIZE_BYTES
-) {
+): string[] {
   let curPath = baseName;
+  mkdirSync(curPath);
+  const generatedPaths: string[] = [];
+
   for (let i = 0; i < maxObjects; i++) {
-    const dirOrFile = randomInteger(0, 1);
-    if (dirOrFile === CREATE_DIRECTORY) {
+    if (randomBoolean()) {
       curPath = path.join(curPath, uuid.v4());
       mkdirSync(curPath, {recursive: true});
+      generatedPaths.push(curPath);
     } else {
+      const randomName = generateRandomFileName(baseName);
       generateRandomFile(
-        generateRandomFileName(baseName),
+        randomName,
         fileSizeLowerBoundBytes,
         fileSizeUpperBoundBytes,
         curPath
       );
+      generatedPaths.push(path.join(curPath, randomName));
     }
   }
+
+  return generatedPaths;
+}
+
+/**
+ * Deletes the file specified by the fileName parameter.
+ *
+ * @param {string} fileName name of the file to delete.
+ */
+export function cleanupFile(fileName: string) {
+  unlinkSync(`${__dirname}/${fileName}`);
 }
