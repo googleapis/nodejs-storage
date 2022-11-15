@@ -108,6 +108,13 @@ const fakeFs = extend(true, {}, fs, {
           },
         };
       },
+      lstat: () => {
+        return {
+          isDirectory: () => {
+            return false;
+          },
+        };
+      },
     };
   },
 });
@@ -204,7 +211,7 @@ describe('Transfer Manager', () => {
 
     it('sets destination to prefix + filename when prefix is supplied', async () => {
       const paths = ['/a/b/foo/bar.txt'];
-      const expectedDestination = path.normalize('hello/world/bar.txt');
+      const expectedDestination = path.normalize('hello/world/a/b/foo/bar.txt');
 
       bucket.upload = (_path: string, options: UploadOptions) => {
         assert.strictEqual(options.destination, expectedDestination);
@@ -214,8 +221,7 @@ describe('Transfer Manager', () => {
     });
 
     it('invokes the callback if one is provided', done => {
-      const basename = 'testfile.json';
-      const paths = [path.join(__dirname, '../../test/testdata/' + basename)];
+      const paths = [path.join(__dirname, '../../test/testdata/testfile.json')];
 
       transferManager.uploadMulti(
         paths,
@@ -223,17 +229,16 @@ describe('Transfer Manager', () => {
           assert.ifError(err);
           assert(files);
           assert(metadata);
-          assert.strictEqual(files[0].name, basename);
+          assert.strictEqual(files[0].name, paths[0]);
           done();
         }
       );
     });
 
     it('returns a promise with the uploaded file if there is no callback', async () => {
-      const basename = 'testfile.json';
-      const paths = [path.join(__dirname, '../../test/testdata/' + basename)];
+      const paths = [path.join(__dirname, '../../test/testdata/testfile.json')];
       const result = await transferManager.uploadMulti(paths);
-      assert.strictEqual(result[0][0].name, basename);
+      assert.strictEqual(result[0][0].name, paths[0]);
     });
   });
 
