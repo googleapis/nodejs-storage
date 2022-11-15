@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-import {execFileSync} from 'child_process';
+import {execSync} from 'child_process';
 import {mkdirSync, mkdtempSync, unlinkSync} from 'fs';
 import path = require('path');
-import * as uuid from 'uuid';
 
 export const BLOCK_SIZE_IN_BYTES = 1024;
 export const DEFAULT_SMALL_FILE_SIZE_BYTES = 5120;
 export const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e9;
+export const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
+export const DEFAULT_DIRECTORY_PROBABILITY = 0.5;
 
 export interface TestResult {
   op: string;
@@ -36,6 +37,10 @@ export interface TestResult {
   status: '[OK]';
 }
 
+export interface RandomDirectoryCreationInformation {
+  paths: string[];
+  totalSizeInBytes: number;
+}
 
 /**
  * Create a uniformly distributed random integer beween the inclusive min and max provided.
@@ -52,12 +57,23 @@ export function randomInteger(minInclusive: number, maxInclusive: number) {
 }
 
 /**
- * Return a random boolean
+ * Returns a boolean value with the provided probability
  *
- * @returns {boolean} a random boolean value
+ * @param {number} trueProbablity the probability the value will be true
+ *
+ * @returns {boolean} a boolean value with the probablity provided.
  */
-export function randomBoolean() {
-  return !!randomInteger(0, 1);
+export function weightedRandomBoolean(trueProbablity: number): boolean {
+  return Math.random() <= trueProbablity ? true : false;
+}
+
+/**
+ * Return a string of 6 random characters
+ *
+ * @returns {string} a random string value with length of 6
+ */
+export function randomString(): string {
+  return Math.random().toString(36).slice(-6);
 }
 
 /**
@@ -68,7 +84,7 @@ export function randomBoolean() {
  * @returns {string} random file name that was generated.
  */
 export function generateRandomFileName(baseName: string): string {
-  return `${baseName}.${uuid.v4()}`;
+  return `${baseName}.${randomString()}`;
 }
 
 /**
@@ -86,22 +102,16 @@ export function generateRandomFile(
   fileName: string,
   fileSizeLowerBoundBytes: number = DEFAULT_SMALL_FILE_SIZE_BYTES,
   fileSizeUpperBoundBytes: number = DEFAULT_LARGE_FILE_SIZE_BYTES,
-  currentDirectory: string = mkdtempSync(uuid.v4())
-) {
+  currentDirectory: string = mkdtempSync(randomString())
+): number {
   const fileSizeBytes = randomInteger(
     fileSizeLowerBoundBytes,
     fileSizeUpperBoundBytes
   );
-  const numberNeeded = Math.ceil(fileSizeBytes / BLOCK_SIZE_IN_BYTES);
-  const args = [
-    'if=/dev/urandom',
-    `of=${currentDirectory}/${fileName}`,
-    `bs=${BLOCK_SIZE_IN_BYTES}`,
-    `count=${numberNeeded}`,
-    'status=none',
-    'iflag=fullblock',
-  ];
-  execFileSync('dd', args);
+
+  execSync(
+    `head --bytes=${fileSizeBytes} /dev/urandom > ${currentDirectory}/${fileName}`
+  );
 
   return fileSizeBytes;
 }
@@ -120,30 +130,34 @@ export function generateRandomDirectoryStructure(
   maxObjects: number,
   baseName: string,
   fileSizeLowerBoundBytes: number = DEFAULT_SMALL_FILE_SIZE_BYTES,
-  fileSizeUpperBoundBytes: number = DEFAULT_LARGE_FILE_SIZE_BYTES
-): string[] {
+  fileSizeUpperBoundBytes: number = DEFAULT_LARGE_FILE_SIZE_BYTES,
+  directoryProbability: number = DEFAULT_DIRECTORY_PROBABILITY
+): RandomDirectoryCreationInformation {
   let curPath = baseName;
-  mkdirSync(curPath);
-  const generatedPaths: string[] = [];
+  const creationInfo: RandomDirectoryCreationInformation = {
+    paths: [],
+    totalSizeInBytes: 0,
+  };
 
+  mkdirSync(curPath);
   for (let i = 0; i < maxObjects; i++) {
-    if (randomBoolean()) {
-      curPath = path.join(curPath, uuid.v4());
+    if (weightedRandomBoolean(directoryProbability)) {
+      curPath = path.join(curPath, randomString());
       mkdirSync(curPath, {recursive: true});
-      generatedPaths.push(curPath);
+      creationInfo.paths.push(curPath);
     } else {
-      const randomName = generateRandomFileName(baseName);
-      generateRandomFile(
+      const randomName = randomString();
+      creationInfo.totalSizeInBytes += generateRandomFile(
         randomName,
         fileSizeLowerBoundBytes,
         fileSizeUpperBoundBytes,
         curPath
       );
-      generatedPaths.push(path.join(curPath, randomName));
+      creationInfo.paths.push(path.join(curPath, randomName));
     }
   }
 
-  return generatedPaths;
+  return creationInfo;
 }
 
 /**
@@ -151,6 +165,9 @@ export function generateRandomDirectoryStructure(
  *
  * @param {string} fileName name of the file to delete.
  */
-export function cleanupFile(fileName: string) {
-  unlinkSync(`${__dirname}/${fileName}`);
+export function cleanupFile(
+  fileName: string,
+  directoryName: string = __dirname
+): void {
+  unlinkSync(`${directoryName}/${fileName}`);
 }

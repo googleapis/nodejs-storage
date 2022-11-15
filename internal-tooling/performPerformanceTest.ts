@@ -15,7 +15,6 @@
  */
 
 import yargs from 'yargs';
-import {unlinkSync} from 'fs';
 import {Storage} from '../src';
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
@@ -28,15 +27,15 @@ import {
   DEFAULT_SMALL_FILE_SIZE_BYTES,
   generateRandomFile,
   generateRandomFileName,
+  NODE_DEFAULT_HIGHWATER_MARK_BYTES,
   randomInteger,
-  TestResult
+  TestResult,
 } from './performanceUtils';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
 const DEFAULT_NUMBER_OF_READS = 3;
 const DEFAULT_BUCKET_NAME = 'nodejs-perf-metrics';
-const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
 
 const argv = yargs(process.argv.slice(2))
   .options({

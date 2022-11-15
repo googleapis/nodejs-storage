@@ -20,23 +20,25 @@ import yargs from 'yargs';
 import {Bucket, Storage, TransferManager} from '../src';
 import {TRANSFER_MANAGER_TEST_TYPES} from './performanceTest';
 import {
+  BLOCK_SIZE_IN_BYTES,
   cleanupFile,
   DEFAULT_LARGE_FILE_SIZE_BYTES,
   DEFAULT_SMALL_FILE_SIZE_BYTES,
   generateRandomDirectoryStructure,
   generateRandomFile,
   generateRandomFileName,
+  NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+  TestResult,
 } from './performanceUtils';
+import {performance} from 'perf_hooks';
+import {rmSync} from 'fs';
 
-const TEST_NAME_STRING = 'transfer-manager-perf-metrics';
+const TEST_NAME_STRING = 'tm-perf-metrics';
 const DEFAULT_BUCKET_NAME = 'nodejs-transfer-manager-perf-metrics';
 const DEFAULT_NUMBER_OF_PROMISES = 2;
 const DEFAULT_NUMBER_OF_OBJECTS = 1000;
 const DEFAULT_CHUNK_SIZE_BYTES = 16 * 1024 * 1024;
-
-export interface TransferManagerTestResult {
-  numberOfObjects: number;
-}
+const DIRECTORY_PROBABILITY = 0.1;
 
 let stg: Storage;
 let bucket: Bucket;
@@ -54,32 +56,44 @@ const argv = yargs(process.argv.slice(2))
     testtype: {
       type: 'string',
       choices: [
-        TRANSFER_MANAGER_TEST_TYPES.UPLOAD_MULTIPLE_OBJECTS,
-        TRANSFER_MANAGER_TEST_TYPES.DOWNLOAD_MULTIPLE_OBJECTS,
-        TRANSFER_MANAGER_TEST_TYPES.LARGE_FILE_DOWNLOAD,
+        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MULTIPLE_OBJECTS,
+        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MULTIPLE_OBJECTS,
+        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_LARGE_FILE_DOWNLOAD,
       ],
     },
   })
   .parseSync();
 
 async function main() {
-  let results: TransferManagerTestResult[] = [];
+  let result: TestResult = {
+    op: '',
+    objectSize: 0,
+    appBufferSize: 0,
+    libBufferSize: 0,
+    crc32Enabled: false,
+    md5Enabled: false,
+    apiName: 'JSON',
+    elapsedTimeUs: 0,
+    cpuTimeUs: 0,
+    status: '[OK]',
+  };
   await performTestSetup();
 
   switch (argv.testtype) {
-    case TRANSFER_MANAGER_TEST_TYPES.UPLOAD_MULTIPLE_OBJECTS:
-      results = await performUploadMultipleObjectsTest();
+    case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MULTIPLE_OBJECTS:
+      result = await performUploadMultipleObjectsTest();
       break;
-    case TRANSFER_MANAGER_TEST_TYPES.DOWNLOAD_MULTIPLE_OBJECTS:
-      results = await performDownloadMultipleObjectsTest();
+    case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MULTIPLE_OBJECTS:
+      result = await performDownloadMultipleObjectsTest();
       break;
-    case TRANSFER_MANAGER_TEST_TYPES.LARGE_FILE_DOWNLOAD:
-      results = await performDownloadLargeFileTest();
+    case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_LARGE_FILE_DOWNLOAD:
+      result = await performDownloadLargeFileTest();
       break;
     default:
       break;
   }
-  parentPort?.postMessage(results);
+  parentPort?.postMessage(result);
+  await performTestCleanup();
 }
 
 async function performTestSetup() {
@@ -91,54 +105,119 @@ async function performTestSetup() {
   tm = new TransferManager(bucket);
 }
 
-async function performUploadMultipleObjectsTest(): Promise<
-  TransferManagerTestResult[]
-> {
-  const results: TransferManagerTestResult[] = [];
-  const paths = generateRandomDirectoryStructure(
+async function performTestCleanup() {
+  await bucket.deleteFiles();
+}
+
+async function performUploadMultipleObjectsTest(): Promise<TestResult> {
+  const result: TestResult = {
+    op: 'WRITE',
+    objectSize: 0,
+    appBufferSize: BLOCK_SIZE_IN_BYTES,
+    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32Enabled: false,
+    md5Enabled: false,
+    apiName: 'JSON',
+    elapsedTimeUs: 0,
+    cpuTimeUs: -1,
+    status: '[OK]',
+  };
+  const creationInfo = generateRandomDirectoryStructure(
     argv.numobjects,
     TEST_NAME_STRING,
     argv.small,
-    argv.large
+    argv.large,
+    DIRECTORY_PROBABILITY
   );
-  const uploadResults = await tm.uploadMulti(paths, {
+  result.objectSize = creationInfo.totalSizeInBytes;
+  const start = performance.now();
+  await tm.uploadMulti(creationInfo.paths, {
     concurrencyLimit: argv.numpromises,
   });
+  const end = performance.now();
 
-  return results;
+  result.elapsedTimeUs = Math.round((end - start) * 1000);
+  rmSync(TEST_NAME_STRING, {recursive: true, force: true});
+
+  return result;
 }
 
-async function performDownloadMultipleObjectsTest(): Promise<
-  TransferManagerTestResult[]
-> {
-  const results: TransferManagerTestResult[] = [];
+async function performDownloadMultipleObjectsTest(): Promise<TestResult> {
+  const result: TestResult = {
+    op: 'READ',
+    objectSize: 0,
+    appBufferSize: BLOCK_SIZE_IN_BYTES,
+    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32Enabled: false,
+    md5Enabled: false,
+    apiName: 'JSON',
+    elapsedTimeUs: 0,
+    cpuTimeUs: -1,
+    status: '[OK]',
+  };
 
-  return results;
+  const creationInfo = generateRandomDirectoryStructure(
+    argv.numobjects,
+    TEST_NAME_STRING,
+    argv.small,
+    argv.large,
+    DIRECTORY_PROBABILITY
+  );
+  result.objectSize = creationInfo.totalSizeInBytes;
+  await tm.uploadMulti(creationInfo.paths, {
+    concurrencyLimit: argv.numpromises,
+  });
+  rmSync(TEST_NAME_STRING, {recursive: true, force: true});
+  const getFilesResult = await bucket.getFiles();
+  const start = performance.now();
+  await tm.downloadMulti(getFilesResult[0], {
+    concurrencyLimit: argv.numpromises,
+    prefix: __dirname,
+  });
+  const end = performance.now();
+
+  result.elapsedTimeUs = Math.round((end - start) * 1000);
+  //rmSync(TEST_NAME_STRING, {recursive: true, force: true});
+
+  return result;
 }
 
-async function performDownloadLargeFileTest(): Promise<
-  TransferManagerTestResult[]
-> {
-  const results: TransferManagerTestResult[] = [];
-  try {
-    const fileName = generateRandomFileName(TEST_NAME_STRING);
-    generateRandomFile(fileName, argv.small, argv.large, __dirname);
-    const file = bucket.file(`${fileName}`);
+async function performDownloadLargeFileTest(): Promise<TestResult> {
+  const fileName = generateRandomFileName(TEST_NAME_STRING);
+  const sizeInBytes = generateRandomFile(
+    fileName,
+    argv.small,
+    argv.large,
+    __dirname
+  );
+  const result: TestResult = {
+    op: 'READ',
+    objectSize: sizeInBytes,
+    appBufferSize: BLOCK_SIZE_IN_BYTES,
+    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32Enabled: false,
+    md5Enabled: false,
+    apiName: 'JSON',
+    elapsedTimeUs: 0,
+    cpuTimeUs: -1,
+    status: '[OK]',
+  };
+  const file = bucket.file(`${fileName}`);
 
-    await bucket.upload(`${__dirname}/${fileName}`);
-    cleanupFile(fileName);
-    const start = performance.now();
-    await tm.downloadLargeFile(file, {
-      concurrencyLimit: argv.numpromises,
-      chunkSizeBytes: argv.chunksize,
-    });
-    const end = performance.now();
-    console.log(Math.round((end - start) * 1000));
-  } catch (e) {
-    console.error(e);
-  }
+  await bucket.upload(`${__dirname}/${fileName}`);
+  cleanupFile(fileName);
+  const start = performance.now();
+  await tm.downloadLargeFile(file, {
+    concurrencyLimit: argv.numpromises,
+    chunkSizeBytes: argv.chunksize,
+    path: `${__dirname}`,
+  });
+  const end = performance.now();
 
-  return results;
+  result.elapsedTimeUs = Math.round((end - start) * 1000);
+  cleanupFile(fileName);
+
+  return result;
 }
 
 main();
