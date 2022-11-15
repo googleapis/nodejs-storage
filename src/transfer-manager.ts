@@ -37,7 +37,7 @@ export interface UploadMultiOptions {
   concurrencyLimit?: number;
   skipIfExists?: boolean;
   prefix?: string;
-  passthroughOptions?: UploadOptions;
+  passthroughOptions?: Omit<UploadOptions, 'destination'>;
 }
 
 export interface DownloadMultiOptions {
@@ -50,6 +50,7 @@ export interface DownloadMultiOptions {
 export interface LargeFileDownloadOptions {
   concurrencyLimit?: number;
   chunkSizeBytes?: number;
+  path?: string;
 }
 
 export interface UploadMultiCallback {
@@ -175,19 +176,16 @@ export class TransferManager {
       if (stat.isDirectory()) {
         continue;
       }
-      const baseFileName = path.basename(filePath);
-      const passThroughOptionsCopy = extend(
+      const passThroughOptionsCopy: UploadOptions = extend(
         true,
         {},
         options.passthroughOptions
       );
       passThroughOptionsCopy.destination = filePath;
-      //console.log(passThroughOptionsCopy.destination);
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.join(
           options.prefix,
-          passThroughOptionsCopy.destination?.toString() || '',
-          baseFileName
+          passThroughOptionsCopy.destination
         );
       }
       promises.push(
@@ -402,7 +400,11 @@ export class TransferManager {
     }
 
     let start = 0;
-    const fileToWrite = await fsp.open(path.basename(file.name), 'w+');
+    const filePath = path.join(
+      options.path || __dirname,
+      path.basename(file.name)
+    );
+    const fileToWrite = await fsp.open(filePath, 'w+');
     while (start < size) {
       const chunkStart = start;
       let chunkEnd = start + chunkSize - 1;

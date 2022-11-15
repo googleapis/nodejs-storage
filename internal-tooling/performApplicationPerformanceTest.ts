@@ -16,13 +16,18 @@
 
 import yargs from 'yargs';
 import {promises as fsp} from 'fs';
-import {Bucket, DownloadOptions, DownloadResponse, Storage, UploadOptions} from '../src';
+import {
+  Bucket,
+  DownloadOptions,
+  DownloadResponse,
+  Storage,
+  UploadOptions,
+} from '../src';
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
-import { generateRandomDirectoryStructure, TestResult } from './performanceUtils';
-import { TransferManagerTestResult } from './performTransferManagerTest';
-import { TRANSFER_MANAGER_TEST_TYPES } from './performanceTest';
+import {generateRandomDirectoryStructure, TestResult} from './performanceUtils';
+import {TRANSFER_MANAGER_TEST_TYPES} from './performanceTest';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
@@ -96,23 +101,26 @@ async function performTestSetup() {
   }
 }
 
-
-async function uploadInParallel(bucket: Bucket, paths: string[], options: UploadOptions) {
+async function uploadInParallel(
+  bucket: Bucket,
+  paths: string[],
+  options: UploadOptions
+) {
   const promises = [];
   for (const index in paths) {
     const path = paths[index];
     const stat = await fsp.lstat(path);
-    if (stat.isDirectory()){
-      continue
+    if (stat.isDirectory()) {
+      continue;
     }
     options.destination = path;
-    promises.push(bucket.upload(path, options))
+    promises.push(bucket.upload(path, options));
   }
   await Promise.all(promises).catch(console.error);
 }
 
 async function downloadInParallel(bucket: Bucket, options: DownloadOptions) {
-  const promises: Promise<DownloadResponse> [] = [];
+  const promises: Promise<DownloadResponse>[] = [];
   const [files] = await bucket.getFiles();
   files.forEach(file => {
     promises.push(file.download(options));
@@ -157,17 +165,17 @@ async function performWriteTest(): Promise<TestResult[]> {
 
     if (checkType === 0) {
       start = performance.now();
-      await uploadInParallel(bucket, directories, {validation: false});
+      await uploadInParallel(bucket, directories.paths, {validation: false});
       end = performance.now();
     } else if (checkType === 1) {
       iterationResult.crc32Enabled = true;
       start = performance.now();
-      await uploadInParallel(bucket, directories, {validation: 'crc32c'});
+      await uploadInParallel(bucket, directories.paths, {validation: 'crc32c'});
       end = performance.now();
     } else {
       iterationResult.md5Enabled = true;
       start = performance.now();
-      await uploadInParallel(bucket, directories, {validation: 'md5'});
+      await uploadInParallel(bucket, directories.paths, {validation: 'md5'});
       end = performance.now();
     }
 
@@ -182,7 +190,7 @@ async function performWriteTest(): Promise<TestResult[]> {
  *
  * @returns {Promise<TestResult[]>} Promise that resolves to an array of test results for the iteration.
  */
- async function performReadTest(): Promise<TestResult[]> {
+async function performReadTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
   bucket = stg.bucket(argv.bucket);
   for (let j = 0; j < DEFAULT_NUMBER_OF_READS; j++) {

@@ -29,12 +29,12 @@ const CSV_HEADERS =
 const START_TIME = Date.now();
 export const enum TRANSFER_MANAGER_TEST_TYPES {
   WRITE_ONE_READ_THREE = 'w1r3',
-  UPLOAD_MULTIPLE_OBJECTS = 'upload',
-  DOWNLOAD_MULTIPLE_OBJECTS = 'download',
-  LARGE_FILE_DOWNLOAD = 'large',
+  TRANSFER_MANAGER_UPLOAD_MULTIPLE_OBJECTS = 'tm-upload',
+  TRANSFER_MANAGER_DOWNLOAD_MULTIPLE_OBJECTS = 'tm-download',
+  TRANSFER_MANAGER_LARGE_FILE_DOWNLOAD = 'tm-large',
   APPLICATION_LARGE_FILE_DOWNLOAD = 'application-large',
   APPLICATION_UPLOAD_MULTIPLE_OBJECTS = 'application-upload',
-  APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS = 'application-download'
+  APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS = 'application-download',
 }
 
 const argv = yargs(process.argv.slice(2))
@@ -45,12 +45,12 @@ const argv = yargs(process.argv.slice(2))
       type: 'string',
       choices: [
         TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE,
-        TRANSFER_MANAGER_TEST_TYPES.UPLOAD_MULTIPLE_OBJECTS,
-        TRANSFER_MANAGER_TEST_TYPES.DOWNLOAD_MULTIPLE_OBJECTS,
-        TRANSFER_MANAGER_TEST_TYPES.LARGE_FILE_DOWNLOAD,
+        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MULTIPLE_OBJECTS,
+        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MULTIPLE_OBJECTS,
+        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_LARGE_FILE_DOWNLOAD,
         TRANSFER_MANAGER_TEST_TYPES.APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS,
         TRANSFER_MANAGER_TEST_TYPES.APPLICATION_LARGE_FILE_DOWNLOAD,
-        TRANSFER_MANAGER_TEST_TYPES.APPLICATION_UPLOAD_MULTIPLE_OBJECTS
+        TRANSFER_MANAGER_TEST_TYPES.APPLICATION_UPLOAD_MULTIPLE_OBJECTS,
       ],
       default: TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE,
     },
@@ -94,15 +94,21 @@ function createWorker() {
   if (argv.testtype === TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE) {
     testPath = `${__dirname}/performPerformanceTest.js`;
   } else if (
-    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.UPLOAD_MULTIPLE_OBJECTS ||
-    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.LARGE_FILE_DOWNLOAD
+    argv.testtype ===
+      TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MULTIPLE_OBJECTS ||
+    argv.testtype ===
+      TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_LARGE_FILE_DOWNLOAD ||
+    argv.testtype ===
+      TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MULTIPLE_OBJECTS
   ) {
     testPath = `${__dirname}/performTransferManagerTest.js`;
-  }
-  else if (
-    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.APPLICATION_UPLOAD_MULTIPLE_OBJECTS ||
-    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.APPLICATION_LARGE_FILE_DOWNLOAD ||
-    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS
+  } else if (
+    argv.testtype ===
+      TRANSFER_MANAGER_TEST_TYPES.APPLICATION_UPLOAD_MULTIPLE_OBJECTS ||
+    argv.testtype ===
+      TRANSFER_MANAGER_TEST_TYPES.APPLICATION_LARGE_FILE_DOWNLOAD ||
+    argv.testtype ===
+      TRANSFER_MANAGER_TEST_TYPES.APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS
   ) {
     testPath = `${__dirname}/performApplicationPerformanceTest.js`;
   }
@@ -118,7 +124,7 @@ function createWorker() {
       createWorker();
     }
   });
-  w.on('error', (e) => {
+  w.on('error', e => {
     console.log('An error occurred.');
     console.log(e);
   });
@@ -129,13 +135,16 @@ function createWorker() {
  *
  * @param {TestResult[]} results
  */
-async function appendResultToCSV(results: TestResult[]) {
+async function appendResultToCSV(results: TestResult[] | TestResult) {
   const fileName = `nodejs-perf-metrics-${START_TIME}-${argv.iterations}.csv`;
+  const resultsToAppend: TestResult[] = Array.isArray(results)
+    ? results
+    : [results];
 
   if (!existsSync(fileName)) {
     await writeFile(fileName, CSV_HEADERS);
   }
-  const csv = results.map(result => Object.values(result));
+  const csv = resultsToAppend.map(result => Object.values(result));
   const csvString = csv.join('\n');
   await appendFile(fileName, `${csvString}\n`);
 }
