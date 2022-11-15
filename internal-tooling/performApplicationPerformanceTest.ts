@@ -15,13 +15,14 @@
  */
 
 import yargs from 'yargs';
-import {opendirSync, promises as fsp} from 'fs';
-import {Bucket, DownloadOptions, DownloadResponse, Storage} from '../src';
+import {promises as fsp} from 'fs';
+import {Bucket, DownloadOptions, DownloadResponse, Storage, UploadOptions} from '../src';
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
-import path = require('path');
 import { generateRandomDirectoryStructure, TestResult } from './performanceUtils';
+import { TransferManagerTestResult } from './performTransferManagerTest';
+import { TRANSFER_MANAGER_TEST_TYPES } from './performanceTest';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
@@ -32,6 +33,8 @@ const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e9;
 const BLOCK_SIZE_IN_BYTES = 1024;
 const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
 
+let stg: Storage;
+let bucket: Bucket;
 
 /**
  * Create a uniformly distributed random integer beween the inclusive min and max provided.
@@ -47,6 +50,8 @@ const randomInteger = (minInclusive: number, maxInclusive: number) => {
   );
 };
 
+const checkType = randomInteger(0, 2);
+
 const argv = yargs(process.argv.slice(2))
   .options({
     bucket: {type: 'string', default: DEFAULT_BUCKET_NAME},
@@ -61,40 +66,47 @@ const argv = yargs(process.argv.slice(2))
  * to the parent thread.
  */
 async function main() {
-  const results = await performWriteReadTest();
+  let results: TestResult[] = [];
+  await performTestSetup();
+
+  switch (argv.testtype) {
+    case TRANSFER_MANAGER_TEST_TYPES.APPLICATION_UPLOAD_MULTIPLE_OBJECTS:
+      results = await performWriteTest();
+      break;
+    case TRANSFER_MANAGER_TEST_TYPES.APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS:
+      results = await performReadTest();
+      break;
+    // case TRANSFER_MANAGER_TEST_TYPES.APPLICATION_LARGE_FILE_DOWNLOAD:
+    //   results = await performLargeReadTest();
+    //   break;
+    default:
+      break;
+  }
   parentPort?.postMessage(results);
 }
 
-async function uploadInParallel(bucket: Bucket, paths: string[], validation: Object) {
+async function performTestSetup() {
+  stg = new Storage({
+    projectId: argv.projectid,
+  });
+
+  bucket = stg.bucket(argv.bucket);
+  if (!(await bucket.exists())[0]) {
+    await bucket.create();
+  }
+}
+
+
+async function uploadInParallel(bucket: Bucket, paths: string[], options: UploadOptions) {
   const promises = [];
-  console.log(paths)
   for (const index in paths) {
-    console.log(index)
     const path = paths[index];
     const stat = await fsp.lstat(path);
     if (stat.isDirectory()){
       continue
     }
-    promises.push(bucket.upload(path, validation))
-
-    // let openedDir = opendirSync(directory);  
-    // console.log("\nPath of the directory:", openedDir.path);
-    // console.log("Files Present in directory:");
-    // let filesLeft = true;
-    // while (filesLeft) {
-    //   // Read a file as fs.Dirent object
-    //   let fileDirent = openedDir.readSync();
-      
-    //   // If readSync() does not return null
-    //   // print its filename
-    //   if (fileDirent != null) {
-    //     console.log("Name:", fileDirent.name);
-    //     promises.push(bucket.upload(`${directory}/${fileDirent!.name}`, validation))
-    //   }
-    //   // If the readSync() returns null
-    //   // stop the loop
-    //   else filesLeft = false;
-    // }
+    options.destination = path;
+    promises.push(bucket.upload(path, options))
   }
   await Promise.all(promises).catch(console.error);
 }
@@ -109,24 +121,14 @@ async function downloadInParallel(bucket: Bucket, options: DownloadOptions) {
 }
 
 /**
- * Performs an iteration of the Write 1 / Read 3 performance measuring test.
+ * Performs an iteration of the Write multiple objects test.
  *
  * @returns {Promise<TestResult[]} Promise that resolves to an array of test results for the iteration.
  */
-async function performWriteReadTest(): Promise<TestResult[]> {
+async function performWriteTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
   const directory = TEST_NAME_STRING;
   const directories = generateRandomDirectoryStructure(10, directory);
-  const checkType = randomInteger(0, 2);
-
-  const stg = new Storage({
-    projectId: argv.projectid,
-  });
-
-  let bucket = stg.bucket(argv.bucket);
-  if (!(await bucket.exists())[0]) {
-    await bucket.create();
-  }
 
   for (let j = 0; j < DEFAULT_NUMBER_OF_WRITES; j++) {
     let start = 0;
@@ -172,7 +174,16 @@ async function performWriteReadTest(): Promise<TestResult[]> {
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);
   }
+  return results;
+}
 
+/**
+ * Performs an iteration of the read multiple objects test.
+ *
+ * @returns {Promise<TestResult[]>} Promise that resolves to an array of test results for the iteration.
+ */
+ async function performReadTest(): Promise<TestResult[]> {
+  const results: TestResult[] = [];
   bucket = stg.bucket(argv.bucket);
   for (let j = 0; j < DEFAULT_NUMBER_OF_READS; j++) {
     let start = 0;
@@ -192,17 +203,17 @@ async function performWriteReadTest(): Promise<TestResult[]> {
 
     if (checkType === 0) {
       start = performance.now();
-      await downloadInParallel(bucket, {validation: false, destination: directory});
+      await downloadInParallel(bucket, {validation: false});
       end = performance.now();
     } else if (checkType === 1) {
       iterationResult.crc32Enabled = true;
       start = performance.now();
-      await downloadInParallel(bucket, {validation: 'crc32c', destination: directory});
+      await downloadInParallel(bucket, {validation: 'crc32c'});
       end = performance.now();
     } else {
       iterationResult.md5Enabled = true;
       start = performance.now();
-      await downloadInParallel(bucket, {validation: 'md5', destination: directory});
+      await downloadInParallel(bucket, {validation: 'md5'});
       end = performance.now();
     }
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
