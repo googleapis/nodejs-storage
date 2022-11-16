@@ -30,6 +30,7 @@ import {
   generateRandomFileName,
   getValidationType,
   NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+  DEFAULT_NUMBER_OF_OBJECTS,
   performanceTestSetup,
   TestResult,
 } from './performanceUtils';
@@ -39,7 +40,6 @@ import {rmSync} from 'fs';
 const TEST_NAME_STRING = 'tm-perf-metrics';
 const DEFAULT_BUCKET_NAME = 'nodejs-transfer-manager-perf-metrics';
 const DEFAULT_NUMBER_OF_PROMISES = 2;
-const DEFAULT_NUMBER_OF_OBJECTS = 1000;
 const DEFAULT_CHUNK_SIZE_BYTES = 16 * 1024 * 1024;
 const DIRECTORY_PROBABILITY = 0.1;
 
@@ -120,18 +120,6 @@ async function performTestCleanup() {
  * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
  */
 async function performUploadMultipleObjectsTest(): Promise<TestResult> {
-  const result: TestResult = {
-    op: 'WRITE',
-    objectSize: 0,
-    appBufferSize: BLOCK_SIZE_IN_BYTES,
-    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-    crc32Enabled: checkType === 'crc32c',
-    md5Enabled: checkType === 'md5',
-    apiName: 'JSON',
-    elapsedTimeUs: 0,
-    cpuTimeUs: -1,
-    status: '[OK]',
-  };
   const creationInfo = generateRandomDirectoryStructure(
     argv.numobjects,
     TEST_NAME_STRING,
@@ -139,7 +127,7 @@ async function performUploadMultipleObjectsTest(): Promise<TestResult> {
     argv.large,
     DIRECTORY_PROBABILITY
   );
-  result.objectSize = creationInfo.totalSizeInBytes;
+
   const start = performance.now();
   await transferManager.uploadMulti(creationInfo.paths, {
     concurrencyLimit: argv.numpromises,
@@ -149,8 +137,20 @@ async function performUploadMultipleObjectsTest(): Promise<TestResult> {
   });
   const end = performance.now();
 
-  result.elapsedTimeUs = Math.round((end - start) * 1000);
   rmSync(TEST_NAME_STRING, {recursive: true, force: true});
+
+  const result: TestResult = {
+    op: 'WRITE',
+    objectSize: creationInfo.totalSizeInBytes,
+    appBufferSize: BLOCK_SIZE_IN_BYTES,
+    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32Enabled: checkType === 'crc32c',
+    md5Enabled: checkType === 'md5',
+    apiName: 'JSON',
+    elapsedTimeUs: Math.round((end - start) * 1000),
+    cpuTimeUs: -1,
+    status: '[OK]',
+  };
 
   return result;
 }
@@ -161,19 +161,6 @@ async function performUploadMultipleObjectsTest(): Promise<TestResult> {
  * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
  */
 async function performDownloadMultipleObjectsTest(): Promise<TestResult> {
-  const result: TestResult = {
-    op: 'READ',
-    objectSize: 0,
-    appBufferSize: BLOCK_SIZE_IN_BYTES,
-    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-    crc32Enabled: checkType === 'crc32c',
-    md5Enabled: checkType === 'md5',
-    apiName: 'JSON',
-    elapsedTimeUs: 0,
-    cpuTimeUs: -1,
-    status: '[OK]',
-  };
-
   const creationInfo = generateRandomDirectoryStructure(
     argv.numobjects,
     TEST_NAME_STRING,
@@ -181,7 +168,7 @@ async function performDownloadMultipleObjectsTest(): Promise<TestResult> {
     argv.large,
     DIRECTORY_PROBABILITY
   );
-  result.objectSize = creationInfo.totalSizeInBytes;
+
   await transferManager.uploadMulti(creationInfo.paths, {
     concurrencyLimit: argv.numpromises,
     passthroughOptions: {
@@ -198,9 +185,20 @@ async function performDownloadMultipleObjectsTest(): Promise<TestResult> {
   });
   const end = performance.now();
 
-  result.elapsedTimeUs = Math.round((end - start) * 1000);
   rmSync(TEST_NAME_STRING, {recursive: true, force: true});
 
+  const result: TestResult = {
+    op: 'READ',
+    objectSize: creationInfo.totalSizeInBytes,
+    appBufferSize: BLOCK_SIZE_IN_BYTES,
+    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32Enabled: checkType === 'crc32c',
+    md5Enabled: checkType === 'md5',
+    apiName: 'JSON',
+    elapsedTimeUs: Math.round((end - start) * 1000),
+    cpuTimeUs: -1,
+    status: '[OK]',
+  };
   return result;
 }
 
@@ -217,18 +215,6 @@ async function performDownloadLargeFileTest(): Promise<TestResult> {
     argv.large,
     __dirname
   );
-  const result: TestResult = {
-    op: 'READ',
-    objectSize: sizeInBytes,
-    appBufferSize: BLOCK_SIZE_IN_BYTES,
-    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-    crc32Enabled: false,
-    md5Enabled: false,
-    apiName: 'JSON',
-    elapsedTimeUs: 0,
-    cpuTimeUs: -1,
-    status: '[OK]',
-  };
   const file = bucket.file(`${fileName}`);
 
   await bucket.upload(`${__dirname}/${fileName}`);
@@ -241,8 +227,20 @@ async function performDownloadLargeFileTest(): Promise<TestResult> {
   });
   const end = performance.now();
 
-  result.elapsedTimeUs = Math.round((end - start) * 1000);
   cleanupFile(fileName);
+
+  const result: TestResult = {
+    op: 'READ',
+    objectSize: sizeInBytes,
+    appBufferSize: BLOCK_SIZE_IN_BYTES,
+    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32Enabled: false,
+    md5Enabled: false,
+    apiName: 'JSON',
+    elapsedTimeUs: Math.round((end - start) * 1000),
+    cpuTimeUs: -1,
+    status: '[OK]',
+  };
 
   return result;
 }
