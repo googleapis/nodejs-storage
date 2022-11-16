@@ -164,7 +164,6 @@ async function performWriteTest(): Promise<TestResult> {
  * @returns {Promise<TestResult>} Promise that resolves to an array of test results for the iteration.
  */
 async function performReadTest(): Promise<TestResult> {
-  bucket = stg.bucket(argv.bucket);
   await bucket.deleteFiles(); // start clean
   const creationInfo = generateRandomDirectoryStructure(
     argv.numobjects,
