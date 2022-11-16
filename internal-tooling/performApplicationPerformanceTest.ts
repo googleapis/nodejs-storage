@@ -54,7 +54,7 @@ const argv = yargs(process.argv.slice(2))
     small: {type: 'number', default: DEFAULT_SMALL_FILE_SIZE_BYTES},
     large: {type: 'number', default: DEFAULT_LARGE_FILE_SIZE_BYTES},
     projectid: {type: 'string', default: DEFAULT_PROJECT_ID},
-    numobjects: {type: 'number', default: DEFAULT_NUMBER_OF_OBJECTS}
+    numobjects: {type: 'number', default: DEFAULT_NUMBER_OF_OBJECTS},
   })
   .parseSync();
 
@@ -75,9 +75,6 @@ async function main() {
     cpuTimeUs: 0,
     status: '[OK]',
   };
-
-  console.log("SAMEENA")
-  console.log(argv.numobjects);
 
   ({bucket} = await performanceTestSetup(argv.projectid, argv.bucket));
 
@@ -139,68 +136,5 @@ async function performWriteTest(): Promise<TestResult> {
     argv.large
   );
 
-  bucket = stg.bucket(argv.bucket, {
-    preconditionOpts: {
-      ifGenerationMatch: 0,
-    },
-  });
-  let start = performance.now();
-  await uploadInParallel(bucket, creationInfo.paths, {validation: checkType});
-  let end = performance.now();
-
-  await bucket.deleteFiles(); //cleanup files
-
-  const result: TestResult = {
-    op: 'WRITE',
-    objectSize: creationInfo.totalSizeInBytes,
-    appBufferSize: BLOCK_SIZE_IN_BYTES,
-    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-    crc32Enabled: checkType === 'crc32c',
-    md5Enabled: checkType === 'md5',
-    apiName: 'JSON',
-    elapsedTimeUs: Math.round((end - start) * 1000),
-    cpuTimeUs: -1,
-    status: '[OK]',
-  };
-  return result;
-}
-
-/**
- * Performs an iteration of the read multiple objects test.
- *
- * @returns {Promise<TestResult>} Promise that resolves to an array of test results for the iteration.
- */
-async function performReadTest(): Promise<TestResult> {
-  bucket = stg.bucket(argv.bucket);
-  await bucket.deleteFiles(); // start clean
-  const creationInfo = generateRandomDirectoryStructure(
-    argv.numobjects,
-    TEST_NAME_STRING,
-    argv.small,
-    argv.large
-  );
-  await uploadInParallel(bucket, creationInfo.paths, {validation: checkType});
-
-  let start = performance.now();
-  await downloadInParallel(bucket, {validation: checkType});
-  let end = performance.now();
-
-  const result: TestResult = {
-    op: 'READ',
-    objectSize: creationInfo.totalSizeInBytes,
-    appBufferSize: BLOCK_SIZE_IN_BYTES,
-    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-    crc32Enabled: checkType === 'crc32c',
-    md5Enabled: checkType === 'md5',
-    apiName: 'JSON',
-    elapsedTimeUs: Math.round((end - start) * 1000),
-    cpuTimeUs: -1,
-    status: '[OK]',
-  };
-
-  rmSync(TEST_NAME_STRING, {recursive: true, force: true});
-  await bucket.deleteFiles(); //cleanup
-  return result;
-}
-
-main();
+  const start = performance.now();
+  await uploadInParallel(bucket, creationInfo.paths, {validatio
