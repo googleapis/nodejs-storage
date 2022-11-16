@@ -137,4 +137,63 @@ async function performWriteTest(): Promise<TestResult> {
   );
 
   const start = performance.now();
-  await uploadInParallel(bucket, creationInfo.paths, {validatio
+  await uploadInParallel(bucket, creationInfo.paths, {validation: checkType});
+  const end = performance.now();
+
+  await bucket.deleteFiles(); //cleanup files
+  rmSync(TEST_NAME_STRING, {recursive: true, force: true});
+
+  const result: TestResult = {
+    op: 'WRITE',
+    objectSize: creationInfo.totalSizeInBytes,
+    appBufferSize: BLOCK_SIZE_IN_BYTES,
+    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32Enabled: checkType === 'crc32c',
+    md5Enabled: checkType === 'md5',
+    apiName: 'JSON',
+    elapsedTimeUs: Math.round((end - start) * 1000),
+    cpuTimeUs: -1,
+    status: '[OK]',
+  };
+  return result;
+}
+
+/**
+ * Performs an iteration of the read multiple objects test.
+ *
+ * @returns {Promise<TestResult>} Promise that resolves to an array of test results for the iteration.
+ */
+async function performReadTest(): Promise<TestResult> {
+  bucket = stg.bucket(argv.bucket);
+  await bucket.deleteFiles(); // start clean
+  const creationInfo = generateRandomDirectoryStructure(
+    argv.numobjects,
+    TEST_NAME_STRING,
+    argv.small,
+    argv.large
+  );
+  await uploadInParallel(bucket, creationInfo.paths, {validation: checkType});
+
+  const start = performance.now();
+  await downloadInParallel(bucket, {validation: checkType});
+  const end = performance.now();
+
+  const result: TestResult = {
+    op: 'READ',
+    objectSize: creationInfo.totalSizeInBytes,
+    appBufferSize: BLOCK_SIZE_IN_BYTES,
+    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32Enabled: checkType === 'crc32c',
+    md5Enabled: checkType === 'md5',
+    apiName: 'JSON',
+    elapsedTimeUs: Math.round((end - start) * 1000),
+    cpuTimeUs: -1,
+    status: '[OK]',
+  };
+
+  rmSync(TEST_NAME_STRING, {recursive: true, force: true});
+  await bucket.deleteFiles(); //cleanup
+  return result;
+}
+
+main();
