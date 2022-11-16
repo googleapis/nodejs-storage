@@ -43,7 +43,6 @@ import {TRANSFER_MANAGER_TEST_TYPES} from './performanceTest';
 const TEST_NAME_STRING = 'nodejs-perf-metrics-application';
 const DEFAULT_BUCKET_NAME = 'nodejs-perf-metrics-shaffeeullah';
 
-let stg: Storage;
 let bucket: Bucket;
 
 const checkType = getValidationType();
