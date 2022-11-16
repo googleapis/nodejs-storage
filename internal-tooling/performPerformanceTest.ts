@@ -15,7 +15,6 @@
  */
 
 import yargs from 'yargs';
-import {Storage} from '../src';
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
@@ -24,25 +23,31 @@ import {
   BLOCK_SIZE_IN_BYTES,
   cleanupFile,
   DEFAULT_LARGE_FILE_SIZE_BYTES,
+  DEFAULT_PROJECT_ID,
   DEFAULT_SMALL_FILE_SIZE_BYTES,
   generateRandomFile,
   generateRandomFileName,
+  getValidationType,
   NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-  randomInteger,
+  performanceTestSetup,
   TestResult,
 } from './performanceUtils';
+import {Bucket} from '../src';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
 const DEFAULT_NUMBER_OF_READS = 3;
 const DEFAULT_BUCKET_NAME = 'nodejs-perf-metrics';
 
+let bucket: Bucket;
+const checkType = getValidationType();
+
 const argv = yargs(process.argv.slice(2))
   .options({
     bucket: {type: 'string', default: DEFAULT_BUCKET_NAME},
     small: {type: 'number', default: DEFAULT_SMALL_FILE_SIZE_BYTES},
     large: {type: 'number', default: DEFAULT_LARGE_FILE_SIZE_BYTES},
-    projectid: {type: 'string'},
+    projectid: {type: 'string', default: DEFAULT_PROJECT_ID},
   })
   .parseSync();
 
@@ -64,16 +69,8 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
   const fileName = generateRandomFileName(TEST_NAME_STRING);
   const sizeInBytes = generateRandomFile(fileName, argv.small, argv.large);
-  const checkType = randomInteger(0, 2);
 
-  const stg = new Storage({
-    projectId: argv.projectid,
-  });
-
-  let bucket = stg.bucket(argv.bucket);
-  if (!(await bucket.exists())[0]) {
-    await bucket.create();
-  }
+  ({bucket} = await performanceTestSetup(argv.projectid, argv.bucket));
 
   for (let j = 0; j < DEFAULT_NUMBER_OF_WRITES; j++) {
     let start = 0;
@@ -84,41 +81,22 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       objectSize: sizeInBytes,
       appBufferSize: BLOCK_SIZE_IN_BYTES,
       libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-      crc32Enabled: false,
-      md5Enabled: false,
+      crc32Enabled: checkType === 'crc32c',
+      md5Enabled: checkType === 'md5',
       apiName: 'JSON',
       elapsedTimeUs: 0,
       cpuTimeUs: -1,
       status: '[OK]',
     };
 
-    bucket = stg.bucket(argv.bucket, {
-      preconditionOpts: {
-        ifGenerationMatch: 0,
-      },
-    });
-
-    if (checkType === 0) {
-      start = performance.now();
-      await bucket.upload(`${__dirname}/${fileName}`, {validation: false});
-      end = performance.now();
-    } else if (checkType === 1) {
-      iterationResult.crc32Enabled = true;
-      start = performance.now();
-      await bucket.upload(`${__dirname}/${fileName}`, {validation: 'crc32c'});
-      end = performance.now();
-    } else {
-      iterationResult.md5Enabled = true;
-      start = performance.now();
-      await bucket.upload(`${__dirname}/${fileName}`, {validation: 'md5'});
-      end = performance.now();
-    }
+    start = performance.now();
+    await bucket.upload(`${__dirname}/${fileName}`, {validation: checkType});
+    end = performance.now();
 
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);
   }
 
-  bucket = stg.bucket(argv.bucket);
   for (let j = 0; j < DEFAULT_NUMBER_OF_READS; j++) {
     let start = 0;
     let end = 0;
@@ -128,8 +106,8 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       objectSize: sizeInBytes,
       appBufferSize: BLOCK_SIZE_IN_BYTES,
       libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-      crc32Enabled: false,
-      md5Enabled: false,
+      crc32Enabled: checkType === 'crc32c',
+      md5Enabled: checkType === 'md5',
       apiName: 'JSON',
       elapsedTimeUs: 0,
       cpuTimeUs: -1,
@@ -138,21 +116,11 @@ async function performWriteReadTest(): Promise<TestResult[]> {
 
     const destinationFileName = generateRandomFileName(TEST_NAME_STRING);
     const destination = path.join(__dirname, destinationFileName);
-    if (checkType === 0) {
-      start = performance.now();
-      await file.download({validation: false, destination});
-      end = performance.now();
-    } else if (checkType === 1) {
-      iterationResult.crc32Enabled = true;
-      start = performance.now();
-      await file.download({validation: 'crc32c', destination});
-      end = performance.now();
-    } else {
-      iterationResult.md5Enabled = true;
-      start = performance.now();
-      await file.download({validation: 'md5', destination});
-      end = performance.now();
-    }
+
+    start = performance.now();
+    await file.download({validation: checkType, destination});
+    end = performance.now();
+
     cleanupFile(destinationFileName);
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);

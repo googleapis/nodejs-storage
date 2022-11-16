@@ -17,12 +17,14 @@
 import {execSync} from 'child_process';
 import {mkdirSync, mkdtempSync, unlinkSync} from 'fs';
 import path = require('path');
+import {Bucket, Storage, TransferManager} from '../src';
 
 export const BLOCK_SIZE_IN_BYTES = 1024;
 export const DEFAULT_SMALL_FILE_SIZE_BYTES = 5120;
 export const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e9;
 export const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
 export const DEFAULT_DIRECTORY_PROBABILITY = 0.5;
+export const DEFAULT_PROJECT_ID = 'GCS_NODE_PERFORMANCE_METRICS';
 
 export interface TestResult {
   op: string;
@@ -40,6 +42,12 @@ export interface TestResult {
 export interface RandomDirectoryCreationInformation {
   paths: string[];
   totalSizeInBytes: number;
+}
+
+export interface PerformanceTestSetupResults {
+  storage: Storage;
+  bucket: Bucket;
+  transferManager: TransferManager;
 }
 
 /**
@@ -170,4 +178,48 @@ export function cleanupFile(
   directoryName: string = __dirname
 ): void {
   unlinkSync(`${directoryName}/${fileName}`);
+}
+
+/**
+ * Creates the necessary structures for performing a performance test.
+ *
+ * @param {string} projectId the project ID to use.
+ * @param {string} bucketName the name of the bucket to use.
+ * @returns {object} object containing the created storage, bucket, and transfer manager instance.
+ */
+export async function performanceTestSetup(
+  projectId: string,
+  bucketName: string
+): Promise<PerformanceTestSetupResults> {
+  const storage = new Storage({projectId});
+  const bucket = storage.bucket(bucketName, {
+    preconditionOpts: {
+      ifGenerationMatch: 0,
+    },
+  });
+  if (!(await bucket.exists())[0]) {
+    await bucket.create();
+  }
+  const transferManager = new TransferManager(bucket);
+  return {
+    storage,
+    bucket,
+    transferManager,
+  };
+}
+
+/**
+ * Randomly returns the type of validation check to run on upload / download
+ *
+ * @returns {string | boolean | undefined} the type of validation to run (crc32c, md5, or none).
+ */
+export function getValidationType(): 'md5' | 'crc32c' | boolean | undefined {
+  const checkType = randomInteger(0, 2);
+  if (checkType === 0) {
+    return false;
+  } else if (checkType === 1) {
+    return 'crc32c';
+  } else {
+    return 'md5';
+  }
 }

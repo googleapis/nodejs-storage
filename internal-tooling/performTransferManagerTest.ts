@@ -17,17 +17,20 @@
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
 import yargs from 'yargs';
-import {Bucket, Storage, TransferManager} from '../src';
+import {Bucket, TransferManager} from '../src';
 import {TRANSFER_MANAGER_TEST_TYPES} from './performanceTest';
 import {
   BLOCK_SIZE_IN_BYTES,
   cleanupFile,
   DEFAULT_LARGE_FILE_SIZE_BYTES,
+  DEFAULT_PROJECT_ID,
   DEFAULT_SMALL_FILE_SIZE_BYTES,
   generateRandomDirectoryStructure,
   generateRandomFile,
   generateRandomFileName,
+  getValidationType,
   NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+  performanceTestSetup,
   TestResult,
 } from './performanceUtils';
 import {performance} from 'perf_hooks';
@@ -40,9 +43,9 @@ const DEFAULT_NUMBER_OF_OBJECTS = 1000;
 const DEFAULT_CHUNK_SIZE_BYTES = 16 * 1024 * 1024;
 const DIRECTORY_PROBABILITY = 0.1;
 
-let stg: Storage;
 let bucket: Bucket;
-let tm: TransferManager;
+let transferManager: TransferManager;
+const checkType = getValidationType();
 
 const argv = yargs(process.argv.slice(2))
   .options({
@@ -52,7 +55,7 @@ const argv = yargs(process.argv.slice(2))
     numpromises: {type: 'number', default: DEFAULT_NUMBER_OF_PROMISES},
     numobjects: {type: 'number', default: DEFAULT_NUMBER_OF_OBJECTS},
     chunksize: {type: 'number', default: DEFAULT_CHUNK_SIZE_BYTES},
-    projectid: {type: 'string'},
+    projectid: {type: 'string', default: DEFAULT_PROJECT_ID},
     testtype: {
       type: 'string',
       choices: [
@@ -64,6 +67,10 @@ const argv = yargs(process.argv.slice(2))
   })
   .parseSync();
 
+/**
+ * Main entry point. This function performs a test iteration and posts the message back
+ * to the parent thread.
+ */
 async function main() {
   let result: TestResult = {
     op: '',
@@ -77,7 +84,11 @@ async function main() {
     cpuTimeUs: 0,
     status: '[OK]',
   };
-  await performTestSetup();
+
+  ({bucket, transferManager} = await performanceTestSetup(
+    argv.projectid,
+    argv.bucket
+  ));
 
   switch (argv.testtype) {
     case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MULTIPLE_OBJECTS:
@@ -96,27 +107,26 @@ async function main() {
   await performTestCleanup();
 }
 
-async function performTestSetup() {
-  stg = new Storage({projectId: argv.projectid});
-  bucket = stg.bucket(argv.bucket);
-  if (!(await bucket.exists())[0]) {
-    await bucket.create();
-  }
-  tm = new TransferManager(bucket);
-}
-
+/**
+ * Cleans up after a test is complete by removing all files from the bucket
+ */
 async function performTestCleanup() {
   await bucket.deleteFiles();
 }
 
+/**
+ * Performs a test where multiple objects are uploaded in parallel to a bucket.
+ *
+ * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
+ */
 async function performUploadMultipleObjectsTest(): Promise<TestResult> {
   const result: TestResult = {
     op: 'WRITE',
     objectSize: 0,
     appBufferSize: BLOCK_SIZE_IN_BYTES,
     libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-    crc32Enabled: false,
-    md5Enabled: false,
+    crc32Enabled: checkType === 'crc32c',
+    md5Enabled: checkType === 'md5',
     apiName: 'JSON',
     elapsedTimeUs: 0,
     cpuTimeUs: -1,
@@ -131,8 +141,11 @@ async function performUploadMultipleObjectsTest(): Promise<TestResult> {
   );
   result.objectSize = creationInfo.totalSizeInBytes;
   const start = performance.now();
-  await tm.uploadMulti(creationInfo.paths, {
+  await transferManager.uploadMulti(creationInfo.paths, {
     concurrencyLimit: argv.numpromises,
+    passthroughOptions: {
+      validation: checkType,
+    },
   });
   const end = performance.now();
 
@@ -142,14 +155,19 @@ async function performUploadMultipleObjectsTest(): Promise<TestResult> {
   return result;
 }
 
+/**
+ * Performs a test where multiple objects are downloaded in parallel from a bucket.
+ *
+ * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
+ */
 async function performDownloadMultipleObjectsTest(): Promise<TestResult> {
   const result: TestResult = {
     op: 'READ',
     objectSize: 0,
     appBufferSize: BLOCK_SIZE_IN_BYTES,
     libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-    crc32Enabled: false,
-    md5Enabled: false,
+    crc32Enabled: checkType === 'crc32c',
+    md5Enabled: checkType === 'md5',
     apiName: 'JSON',
     elapsedTimeUs: 0,
     cpuTimeUs: -1,
@@ -164,24 +182,33 @@ async function performDownloadMultipleObjectsTest(): Promise<TestResult> {
     DIRECTORY_PROBABILITY
   );
   result.objectSize = creationInfo.totalSizeInBytes;
-  await tm.uploadMulti(creationInfo.paths, {
+  await transferManager.uploadMulti(creationInfo.paths, {
     concurrencyLimit: argv.numpromises,
+    passthroughOptions: {
+      validation: checkType,
+    },
   });
-  rmSync(TEST_NAME_STRING, {recursive: true, force: true});
   const getFilesResult = await bucket.getFiles();
   const start = performance.now();
-  await tm.downloadMulti(getFilesResult[0], {
+  await transferManager.downloadMulti(getFilesResult[0], {
     concurrencyLimit: argv.numpromises,
-    prefix: __dirname,
+    passthroughOptions: {
+      validation: checkType,
+    },
   });
   const end = performance.now();
 
   result.elapsedTimeUs = Math.round((end - start) * 1000);
-  //rmSync(TEST_NAME_STRING, {recursive: true, force: true});
+  rmSync(TEST_NAME_STRING, {recursive: true, force: true});
 
   return result;
 }
 
+/**
+ * Performs a test where a large file is downloaded as chunks in parallel.
+ *
+ * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
+ */
 async function performDownloadLargeFileTest(): Promise<TestResult> {
   const fileName = generateRandomFileName(TEST_NAME_STRING);
   const sizeInBytes = generateRandomFile(
@@ -207,7 +234,7 @@ async function performDownloadLargeFileTest(): Promise<TestResult> {
   await bucket.upload(`${__dirname}/${fileName}`);
   cleanupFile(fileName);
   const start = performance.now();
-  await tm.downloadLargeFile(file, {
+  await transferManager.downloadLargeFile(file, {
     concurrencyLimit: argv.numpromises,
     chunkSizeBytes: argv.chunksize,
     path: `${__dirname}`,

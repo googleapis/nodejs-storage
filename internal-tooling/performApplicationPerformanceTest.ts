@@ -26,7 +26,13 @@ import {
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
-import {generateRandomDirectoryStructure, TestResult} from './performanceUtils';
+import {
+  DEFAULT_PROJECT_ID,
+  generateRandomDirectoryStructure,
+  getValidationType,
+  performanceTestSetup,
+  TestResult,
+} from './performanceUtils';
 import {TRANSFER_MANAGER_TEST_TYPES} from './performanceTest';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
@@ -41,28 +47,14 @@ const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
 let stg: Storage;
 let bucket: Bucket;
 
-/**
- * Create a uniformly distributed random integer beween the inclusive min and max provided.
- *
- * @param {number} minInclusive lower bound (inclusive) of the range of random integer to return.
- * @param {number} maxInclusive upper bound (inclusive) of the range of random integer to return.
- * @returns {number} returns a random integer between minInclusive and maxInclusive
- */
-const randomInteger = (minInclusive: number, maxInclusive: number) => {
-  // Utilizing Math.random will generate uniformly distributed random numbers.
-  return (
-    Math.floor(Math.random() * (maxInclusive - minInclusive + 1)) + minInclusive
-  );
-};
-
-const checkType = randomInteger(0, 2);
+const checkType = getValidationType();
 
 const argv = yargs(process.argv.slice(2))
   .options({
     bucket: {type: 'string', default: DEFAULT_BUCKET_NAME},
     small: {type: 'number', default: DEFAULT_SMALL_FILE_SIZE_BYTES},
     large: {type: 'number', default: DEFAULT_LARGE_FILE_SIZE_BYTES},
-    projectid: {type: 'string'},
+    projectid: {type: 'string', default: DEFAULT_PROJECT_ID},
   })
   .parseSync();
 
@@ -72,7 +64,7 @@ const argv = yargs(process.argv.slice(2))
  */
 async function main() {
   let results: TestResult[] = [];
-  await performTestSetup();
+  ({bucket} = await performanceTestSetup(argv.projectid, argv.bucket));
 
   switch (argv.testtype) {
     case TRANSFER_MANAGER_TEST_TYPES.APPLICATION_UPLOAD_MULTIPLE_OBJECTS:
@@ -88,17 +80,6 @@ async function main() {
       break;
   }
   parentPort?.postMessage(results);
-}
-
-async function performTestSetup() {
-  stg = new Storage({
-    projectId: argv.projectid,
-  });
-
-  bucket = stg.bucket(argv.bucket);
-  if (!(await bucket.exists())[0]) {
-    await bucket.create();
-  }
 }
 
 async function uploadInParallel(
@@ -131,7 +112,7 @@ async function downloadInParallel(bucket: Bucket, options: DownloadOptions) {
 /**
  * Performs an iteration of the Write multiple objects test.
  *
- * @returns {Promise<TestResult[]} Promise that resolves to an array of test results for the iteration.
+ * @returns {Promise<TestResult[]>} Promise that resolves to an array of test results for the iteration.
  */
 async function performWriteTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
@@ -162,22 +143,9 @@ async function performWriteTest(): Promise<TestResult[]> {
     });
 
     await bucket.deleteFiles(); //cleanup anything old
-
-    if (checkType === 0) {
-      start = performance.now();
-      await uploadInParallel(bucket, directories.paths, {validation: false});
-      end = performance.now();
-    } else if (checkType === 1) {
-      iterationResult.crc32Enabled = true;
-      start = performance.now();
-      await uploadInParallel(bucket, directories.paths, {validation: 'crc32c'});
-      end = performance.now();
-    } else {
-      iterationResult.md5Enabled = true;
-      start = performance.now();
-      await uploadInParallel(bucket, directories.paths, {validation: 'md5'});
-      end = performance.now();
-    }
+    start = performance.now();
+    await uploadInParallel(bucket, directories.paths, {validation: checkType});
+    end = performance.now();
 
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);
@@ -209,21 +177,10 @@ async function performReadTest(): Promise<TestResult[]> {
       status: '[OK]',
     };
 
-    if (checkType === 0) {
-      start = performance.now();
-      await downloadInParallel(bucket, {validation: false});
-      end = performance.now();
-    } else if (checkType === 1) {
-      iterationResult.crc32Enabled = true;
-      start = performance.now();
-      await downloadInParallel(bucket, {validation: 'crc32c'});
-      end = performance.now();
-    } else {
-      iterationResult.md5Enabled = true;
-      start = performance.now();
-      await downloadInParallel(bucket, {validation: 'md5'});
-      end = performance.now();
-    }
+    start = performance.now();
+    await downloadInParallel(bucket, {validation: checkType});
+    end = performance.now();
+
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);
   }
