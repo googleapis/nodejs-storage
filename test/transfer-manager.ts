@@ -15,12 +15,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  Metadata,
-  ServiceObject,
-  ServiceObjectConfig,
-  util,
-} from '../src/nodejs-common';
+import {ServiceObject, ServiceObjectConfig, util} from '../src/nodejs-common';
 import * as pLimit from 'p-limit';
 import * as proxyquire from 'proxyquire';
 import {
@@ -28,7 +23,6 @@ import {
   CRC32C,
   CreateWriteStreamOptions,
   DownloadOptions,
-  File,
   FileOptions,
   IdempotencyStrategy,
   UploadOptions,
@@ -220,21 +214,6 @@ describe('Transfer Manager', () => {
       await transferManager.uploadManyFiles(paths, {prefix: 'hello/world'});
     });
 
-    it('invokes the callback if one is provided', done => {
-      const paths = [path.join(__dirname, '../../test/testdata/testfile.json')];
-
-      transferManager.uploadManyFiles(
-        paths,
-        (err: Error | null, files?: File[], metadata?: Metadata[]) => {
-          assert.ifError(err);
-          assert(files);
-          assert(metadata);
-          assert.strictEqual(files[0].name, paths[0]);
-          done();
-        }
-      );
-    });
-
     it('returns a promise with the uploaded file if there is no callback', async () => {
       const paths = [path.join(__dirname, '../../test/testdata/testfile.json')];
       const result = await transferManager.uploadManyFiles(paths);
@@ -283,21 +262,6 @@ describe('Transfer Manager', () => {
       file.download = download;
       await transferManager.downloadManyFiles([file], {stripPrefix});
     });
-
-    it('invokes the callback if one if provided', done => {
-      const file = new File(bucket, 'first.txt');
-      file.download = () => {
-        return Promise.resolve(Buffer.alloc(100));
-      };
-      transferManager.downloadManyFiles(
-        [file],
-        (err: Error | null, contents: Buffer[]) => {
-          assert.strictEqual(err, null);
-          assert.strictEqual(contents.length, 100);
-          done();
-        }
-      );
-    });
   });
 
   describe('downloadFileInChunks', () => {
@@ -325,21 +289,6 @@ describe('Transfer Manager', () => {
 
       await transferManager.downloadFileInChunks(file);
       assert.strictEqual(downloadCallCount, 1);
-    });
-
-    it('invokes the callback if one is provided', done => {
-      file.download = () => {
-        return Promise.resolve([Buffer.alloc(100)]);
-      };
-
-      transferManager.downloadFileInChunks(
-        file,
-        (err: Error, contents: Buffer) => {
-          assert.equal(err, null);
-          assert.strictEqual(contents.length, 100);
-          done();
-        }
-      );
     });
   });
 });
