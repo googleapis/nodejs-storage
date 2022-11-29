@@ -21,10 +21,30 @@ import * as path from 'path';
 import * as extend from 'extend';
 import {promises as fsp} from 'fs';
 
+/**
+ * Default number of concurrently executing promises to use when calling uploadManyFiles.
+ * @experimental
+ */
 const DEFAULT_PARALLEL_UPLOAD_LIMIT = 2;
+/**
+ * Default number of concurrently executing promises to use when calling downloadManyFiles.
+ * @experimental
+ */
 const DEFAULT_PARALLEL_DOWNLOAD_LIMIT = 2;
+/**
+ * Default number of concurrently executing promises to use when calling downloadFileInChunks.
+ * @experimental
+ */
 const DEFAULT_PARALLEL_CHUNKED_DOWNLOAD_LIMIT = 2;
+/**
+ * The minimum size threshold in bytes at which to apply a chunked download strategy when calling downloadFileInChunks.
+ * @experimental
+ */
 const DOWNLOAD_IN_CHUNKS_FILE_SIZE_THRESHOLD = 256 * 1024 * 1024;
+/**
+ * The chunk size in bytes to use when calling downloadFileInChunks.
+ * @experimental
+ */
 const DOWNLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE = 10 * 1024 * 1024;
 const EMPTY_REGEX = '(?:)';
 export interface UploadManyFilesOptions {
@@ -94,8 +114,8 @@ export class TransferManager {
    * //-
    * const response = await transferManager.uploadManyFiles(['/local/path/file1.txt, 'local/path/file2.txt']);
    * // Your bucket now contains:
-   * // - "file1.txt" (with the contents of '/local/path/file1.txt')
-   * // - "file2.txt" (with the contents of '/local/path/file2.txt')
+   * // - "local/path/file1.txt" (with the contents of '/local/path/file1.txt')
+   * // - "local/path/file2.txt" (with the contents of '/local/path/file2.txt')
    * ```
    * @experimental
    */
