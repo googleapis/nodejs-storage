@@ -33,31 +33,31 @@ const DEFAULT_PARALLEL_LARGE_FILE_DOWNLOAD_LIMIT = 2;
 const LARGE_FILE_SIZE_THRESHOLD = 256 * 1024 * 1024;
 const LARGE_FILE_DEFAULT_CHUNK_SIZE = 10 * 1024 * 1024;
 const EMPTY_REGEX = '(?:)';
-export interface UploadMultiOptions {
+export interface UploadManyFilesOptions {
   concurrencyLimit?: number;
   skipIfExists?: boolean;
   prefix?: string;
   passthroughOptions?: Omit<UploadOptions, 'destination'>;
 }
 
-export interface DownloadMultiOptions {
+export interface DownloadManyFilesOptions {
   concurrencyLimit?: number;
   prefix?: string;
   stripPrefix?: string;
   passthroughOptions?: DownloadOptions;
 }
 
-export interface LargeFileDownloadOptions {
+export interface DownloadFileInChunksOptions {
   concurrencyLimit?: number;
   chunkSizeBytes?: number;
-  path?: string;
+  destination?: string;
 }
 
-export interface UploadMultiCallback {
+export interface UploadManyFilesCallback {
   (err: Error | null, files?: File[], metadata?: Metadata[]): void;
 }
 
-export interface DownloadMultiCallback {
+export interface DownloadManyFilesCallback {
   (err: Error | null, contents?: Buffer[]): void;
 }
 
@@ -76,21 +76,21 @@ export class TransferManager {
     this.bucket = bucket;
   }
 
-  async uploadMulti(
+  async uploadManyFiles(
     filePaths: string[],
-    options?: UploadMultiOptions
+    options?: UploadManyFilesOptions
   ): Promise<UploadResponse[]>;
-  async uploadMulti(
+  async uploadManyFiles(
     filePaths: string[],
-    callback: UploadMultiCallback
+    callback: UploadManyFilesCallback
   ): Promise<void>;
-  async uploadMulti(
+  async uploadManyFiles(
     filePaths: string[],
-    options: UploadMultiOptions,
-    callback: UploadMultiCallback
+    options: UploadManyFilesOptions,
+    callback: UploadManyFilesCallback
   ): Promise<void>;
   /**
-   * @typedef {object} UploadMultiOptions
+   * @typedef {object} UploadManyFilesOptions
    * @property {number} [concurrencyLimit] The number of concurrently executing promises
    * to use when uploading the files.
    * @property {boolean} [skipIfExists] Do not upload the file if it already exists in
@@ -101,7 +101,7 @@ export class TransferManager {
    * @experimental
    */
   /**
-   * @callback UploadMultiCallback
+   * @callback UploadManyFilesCallback
    * @param {?Error} [err] Request error, if any.
    * @param {array} [files] Array of uploaded {@link File}.
    * @param {array} [metadata] Array of uploaded {@link Metadata}
@@ -113,8 +113,8 @@ export class TransferManager {
    *
    * @param {array} [filePaths] An array of fully qualified paths to the files.
    * to be uploaded to the bucket
-   * @param {UploadMultiOptions} [options] Configuration options.
-   * @param {UploadMultiCallback} [callback] Callback function.
+   * @param {UploadManyFilesOptions} [options] Configuration options.
+   * @param {UploadManyFilesCallback} [callback] Callback function.
    * @returns {Promise<UploadResponse[] | void>}
    *
    * @example
@@ -127,7 +127,7 @@ export class TransferManager {
    * //-
    * // Upload multiple files in parallel.
    * //-
-   * transferManager.uploadMulti(['/local/path/file1.txt, 'local/path/file2.txt'], function(err, files, metadata) {
+   * transferManager.uploadManyFiles(['/local/path/file1.txt, 'local/path/file2.txt'], function(err, files, metadata) {
    * // Your bucket now contains:
    * // - "file1.txt" (with the contents of '/local/path/file1.txt')
    * // - "file2.txt" (with the contents of '/local/path/file2.txt')
@@ -137,16 +137,16 @@ export class TransferManager {
    * //-
    * // If the callback is omitted, we will return a promise.
    * //-
-   * const response = await transferManager.uploadMulti(['/local/path/file1.txt, 'local/path/file2.txt']);
+   * const response = await transferManager.uploadManyFiles(['/local/path/file1.txt, 'local/path/file2.txt']);
    * ```
    * @experimental
    */
-  async uploadMulti(
+  async uploadManyFiles(
     filePaths: string[],
-    optionsOrCallback?: UploadMultiOptions | UploadMultiCallback,
-    callback?: UploadMultiCallback
+    optionsOrCallback?: UploadManyFilesOptions | UploadManyFilesCallback,
+    callback?: UploadManyFilesCallback
   ): Promise<void | UploadResponse[]> {
-    let options: UploadMultiOptions = {};
+    let options: UploadManyFilesOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
     } else if (optionsOrCallback) {
@@ -208,21 +208,21 @@ export class TransferManager {
     return Promise.all(promises);
   }
 
-  async downloadMulti(
+  async downloadManyFiles(
     files: File[],
-    options?: DownloadMultiOptions
+    options?: DownloadManyFilesOptions
   ): Promise<DownloadResponse[]>;
-  async downloadMulti(
+  async downloadManyFiles(
     files: File[],
-    callback: DownloadMultiCallback
+    callback: DownloadManyFilesCallback
   ): Promise<void>;
-  async downloadMulti(
+  async downloadManyFiles(
     files: File[],
-    options: DownloadMultiOptions,
-    callback: DownloadMultiCallback
+    options: DownloadManyFilesOptions,
+    callback: DownloadManyFilesCallback
   ): Promise<void>;
   /**
-   * @typedef {object} DownloadMultiOptions
+   * @typedef {object} DownloadManyFilesOptions
    * @property {number} [concurrencyLimit] The number of concurrently executing promises
    * to use when downloading the files.
    * @property {string} [prefix] A prefix to append to all of the downloaded files.
@@ -232,7 +232,7 @@ export class TransferManager {
    * @experimental
    */
   /**
-   * @callback DownloadMultiCallback
+   * @callback DownloadManyFilesCallback
    * @param {?Error} [err] Request error, if any.
    * @param {array} [contents] Contents of the downloaded files.
    * @experimental
@@ -242,8 +242,8 @@ export class TransferManager {
    * that utilizes {@link File#download} to perform the download.
    *
    * @param {array} [files] An array of file objects to be downloaded.
-   * @param {DownloadMultiOptions} [options] Configuration options.
-   * @param {DownloadMultiCallback} {callback} Callback function.
+   * @param {DownloadManyFilesOptions} [options] Configuration options.
+   * @param {DownloadManyFilesCallback} {callback} Callback function.
    * @returns {Promise<DownloadResponse[] | void>}
    *
    * @example
@@ -256,7 +256,7 @@ export class TransferManager {
    * //-
    * // Download multiple files in parallel.
    * //-
-   * transferManager.downloadMulti([bucket.file('file1.txt'), bucket.file('file2.txt')], function(err, contents){
+   * transferManager.downloadManyFiles([bucket.file('file1.txt'), bucket.file('file2.txt')], function(err, contents){
    * // Your local directory now contains:
    * // - "file1.txt" (with the contents from my-bucket.file1.txt)
    * // - "file2.txt" (with the contents from my-bucket.file2.txt)
@@ -266,15 +266,15 @@ export class TransferManager {
    * //-
    * // If the callback is omitted, we will return a promise.
    * //-
-   * const response = await transferManager.downloadMulti(bucket.File('file1.txt'), bucket.File('file2.txt')]);
+   * const response = await transferManager.downloadManyFiles(bucket.File('file1.txt'), bucket.File('file2.txt')]);
    * @experimental
    */
-  async downloadMulti(
+  async downloadManyFiles(
     files: File[],
-    optionsOrCallback?: DownloadMultiOptions | DownloadMultiCallback,
-    callback?: DownloadMultiCallback
+    optionsOrCallback?: DownloadManyFilesOptions | DownloadManyFilesCallback,
+    callback?: DownloadManyFilesCallback
   ): Promise<void | DownloadResponse[]> {
-    let options: DownloadMultiOptions = {};
+    let options: DownloadManyFilesOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
     } else if (optionsOrCallback) {
@@ -323,21 +323,21 @@ export class TransferManager {
     return Promise.all(promises);
   }
 
-  async downloadLargeFile(
+  async downloadFileInChunks(
     file: File,
-    options?: LargeFileDownloadOptions
+    options?: DownloadFileInChunksOptions
   ): Promise<DownloadResponse>;
-  async downloadLargeFile(
+  async downloadFileInChunks(
     file: File,
     callback: DownloadCallback
   ): Promise<void>;
-  async downloadLargeFile(
+  async downloadFileInChunks(
     file: File,
-    options: LargeFileDownloadOptions,
+    options: DownloadFileInChunksOptions,
     callback: DownloadCallback
   ): Promise<void>;
   /**
-   * @typedef {object} LargeFileDownloadOptions
+   * @typedef {object} DownloadFileInChunksOptions
    * @property {number} [concurrencyLimit] The number of concurrently executing promises
    * to use when downloading the file.
    * @property {number} [chunkSizeBytes] The size in bytes of each chunk to be downloaded.
@@ -348,7 +348,7 @@ export class TransferManager {
    * that utilizes {@link File#download} to perform the download.
    *
    * @param {object} [file] {@link File} to download.
-   * @param {LargeFileDownloadOptions} [options] Configuration options.
+   * @param {DownloadFileInChunksOptions} [options] Configuration options.
    * @param {DownloadCallback} [callbac] Callback function.
    * @returns {Promise<DownloadResponse | void>}
    *
@@ -373,12 +373,12 @@ export class TransferManager {
    * const response = await transferManager.downloadLargeFile(bucket.file('large-file.txt');
    * @experimental
    */
-  async downloadLargeFile(
+  async downloadFileInChunks(
     file: File,
-    optionsOrCallback?: LargeFileDownloadOptions | DownloadCallback,
+    optionsOrCallback?: DownloadFileInChunksOptions | DownloadCallback,
     callback?: DownloadCallback
   ): Promise<void | DownloadResponse> {
-    let options: LargeFileDownloadOptions = {};
+    let options: DownloadFileInChunksOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
     } else if (optionsOrCallback) {
@@ -400,10 +400,7 @@ export class TransferManager {
     }
 
     let start = 0;
-    const filePath = path.join(
-      options.path || __dirname,
-      path.basename(file.name)
-    );
+    const filePath = options.destination || path.basename(file.name);
     const fileToWrite = await fsp.open(filePath, 'w+');
     while (start < size) {
       const chunkStart = start;

@@ -185,7 +185,7 @@ describe('Transfer Manager', () => {
     });
   });
 
-  describe('uploadMulti', () => {
+  describe('uploadManyFiles', () => {
     it('calls upload with the provided file paths', async () => {
       const paths = ['/a/b/c', '/d/e/f', '/h/i/j'];
       let count = 0;
@@ -195,7 +195,7 @@ describe('Transfer Manager', () => {
         assert(paths.includes(path));
       };
 
-      await transferManager.uploadMulti(paths);
+      await transferManager.uploadManyFiles(paths);
       assert.strictEqual(count, paths.length);
     });
 
@@ -206,7 +206,7 @@ describe('Transfer Manager', () => {
         assert.strictEqual(options.preconditionOpts?.ifGenerationMatch, 0);
       };
 
-      await transferManager.uploadMulti(paths, {skipIfExists: true});
+      await transferManager.uploadManyFiles(paths, {skipIfExists: true});
     });
 
     it('sets destination to prefix + filename when prefix is supplied', async () => {
@@ -217,13 +217,13 @@ describe('Transfer Manager', () => {
         assert.strictEqual(options.destination, expectedDestination);
       };
 
-      await transferManager.uploadMulti(paths, {prefix: 'hello/world'});
+      await transferManager.uploadManyFiles(paths, {prefix: 'hello/world'});
     });
 
     it('invokes the callback if one is provided', done => {
       const paths = [path.join(__dirname, '../../test/testdata/testfile.json')];
 
-      transferManager.uploadMulti(
+      transferManager.uploadManyFiles(
         paths,
         (err: Error | null, files?: File[], metadata?: Metadata[]) => {
           assert.ifError(err);
@@ -237,12 +237,12 @@ describe('Transfer Manager', () => {
 
     it('returns a promise with the uploaded file if there is no callback', async () => {
       const paths = [path.join(__dirname, '../../test/testdata/testfile.json')];
-      const result = await transferManager.uploadMulti(paths);
+      const result = await transferManager.uploadManyFiles(paths);
       assert.strictEqual(result[0][0].name, paths[0]);
     });
   });
 
-  describe('downloadMulti', () => {
+  describe('downloadManyFiles', () => {
     it('calls download for each provided file', async () => {
       let count = 0;
       const download = () => {
@@ -254,7 +254,7 @@ describe('Transfer Manager', () => {
       secondFile.download = download;
 
       const files = [firstFile, secondFile];
-      await transferManager.downloadMulti(files);
+      await transferManager.downloadManyFiles(files);
       assert.strictEqual(count, 2);
     });
 
@@ -268,7 +268,7 @@ describe('Transfer Manager', () => {
 
       const file = new File(bucket, filename);
       file.download = download;
-      await transferManager.downloadMulti([file], {prefix});
+      await transferManager.downloadManyFiles([file], {prefix});
     });
 
     it('sets the destination correctly when provided a strip prefix', async () => {
@@ -281,7 +281,7 @@ describe('Transfer Manager', () => {
 
       const file = new File(bucket, filename);
       file.download = download;
-      await transferManager.downloadMulti([file], {stripPrefix});
+      await transferManager.downloadManyFiles([file], {stripPrefix});
     });
 
     it('invokes the callback if one if provided', done => {
@@ -289,7 +289,7 @@ describe('Transfer Manager', () => {
       file.download = () => {
         return Promise.resolve(Buffer.alloc(100));
       };
-      transferManager.downloadMulti(
+      transferManager.downloadManyFiles(
         [file],
         (err: Error | null, contents: Buffer[]) => {
           assert.strictEqual(err, null);
@@ -300,7 +300,7 @@ describe('Transfer Manager', () => {
     });
   });
 
-  describe('downloadLargeFile', () => {
+  describe('downloadFileInChunks', () => {
     let file: any;
 
     beforeEach(() => {
@@ -323,7 +323,7 @@ describe('Transfer Manager', () => {
         return Promise.resolve([Buffer.alloc(100)]);
       };
 
-      await transferManager.downloadLargeFile(file);
+      await transferManager.downloadFileInChunks(file);
       assert.strictEqual(downloadCallCount, 1);
     });
 
@@ -332,7 +332,7 @@ describe('Transfer Manager', () => {
         return Promise.resolve([Buffer.alloc(100)]);
       };
 
-      transferManager.downloadLargeFile(
+      transferManager.downloadFileInChunks(
         file,
         (err: Error, contents: Buffer) => {
           assert.equal(err, null);
