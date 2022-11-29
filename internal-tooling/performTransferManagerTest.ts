@@ -36,6 +36,7 @@ import {
 } from './performanceUtils';
 import {performance} from 'perf_hooks';
 import {rmSync} from 'fs';
+import * as path from 'path';
 
 const TEST_NAME_STRING = 'tm-perf-metrics';
 const DEFAULT_BUCKET_NAME = 'nodejs-transfer-manager-perf-metrics';
@@ -178,6 +179,7 @@ async function performDownloadMultipleObjectsTest(): Promise<TestResult> {
   const getFilesResult = await bucket.getFiles();
   const start = performance.now();
   await transferManager.downloadMulti(getFilesResult[0], {
+    prefix: path.join(__dirname, '..', '..'),
     concurrencyLimit: argv.numpromises,
     passthroughOptions: {
       validation: checkType,

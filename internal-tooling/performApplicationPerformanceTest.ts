@@ -16,13 +16,7 @@
 
 import yargs from 'yargs';
 import {promises as fsp, rmSync} from 'fs';
-import {
-  Bucket,
-  DownloadOptions,
-  DownloadResponse,
-  Storage,
-  UploadOptions,
-} from '../src';
+import {Bucket, DownloadOptions, DownloadResponse, UploadOptions} from '../src';
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
@@ -43,7 +37,6 @@ import {TRANSFER_MANAGER_TEST_TYPES} from './performanceTest';
 const TEST_NAME_STRING = 'nodejs-perf-metrics-application';
 const DEFAULT_BUCKET_NAME = 'nodejs-perf-metrics-shaffeeullah';
 
-let stg: Storage;
 let bucket: Bucket;
 
 const checkType = getValidationType();
