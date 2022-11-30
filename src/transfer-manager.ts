@@ -180,7 +180,7 @@ export class TransferManager {
    * Download multiple files in parallel to the local filesystem. This is a convenience method
    * that utilizes {@link File#download} to perform the download.
    *
-   * @param {array | string} [filesOrFolder] An array of file name strings or file objects to be downloaded. If 
+   * @param {array | string} [filesOrFolder] An array of file name strings or file objects to be downloaded. If
    * a string is provided this will be treated as a GCS prefix and all files with that prefix will be downloaded.
    * @param {DownloadManyFilesOptions} [options] Configuration options.
    * @returns {Promise<DownloadResponse[]>}
@@ -204,7 +204,7 @@ export class TransferManager {
    * // - "file1.txt" (with the contents from my-bucket.file1.txt)
    * // - "file2.txt" (with the contents from my-bucket.file2.txt)
    * const response = await transferManager.downloadManyFiles('test-folder');
-   * // All files with GCS prefix of 'test-folder' have been downloaded. 
+   * // All files with GCS prefix of 'test-folder' have been downloaded.
    * ```
    * @experimental
    */
