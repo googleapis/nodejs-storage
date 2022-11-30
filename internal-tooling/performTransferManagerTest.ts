@@ -176,9 +176,8 @@ async function performDownloadManyFilesTest(): Promise<TestResult> {
       validation: checkType,
     },
   });
-  const getFilesResult = await bucket.getFiles();
   const start = performance.now();
-  await transferManager.downloadManyFiles(getFilesResult[0], {
+  await transferManager.downloadManyFiles(TEST_NAME_STRING, {
     prefix: path.join(__dirname, '..', '..'),
     concurrencyLimit: argv.numpromises,
     passthroughOptions: {

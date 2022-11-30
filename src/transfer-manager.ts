@@ -180,7 +180,8 @@ export class TransferManager {
    * Download multiple files in parallel to the local filesystem. This is a convenience method
    * that utilizes {@link File#download} to perform the download.
    *
-   * @param {array} [files] An array of file objects to be downloaded.
+   * @param {array | string} [filesOrFolder] An array of file name strings or file objects to be downloaded. If 
+   * a string is provided this will be treated as a GCS prefix and all files with that prefix will be downloaded.
    * @param {DownloadManyFilesOptions} [options] Configuration options.
    * @returns {Promise<DownloadResponse[]>}
    *
@@ -194,21 +195,42 @@ export class TransferManager {
    * //-
    * // Download multiple files in parallel.
    * //-
-   * const response = await transferManager.downloadManyFiles(bucket.File('file1.txt'), bucket.File('file2.txt')]);
+   * const response = await transferManager.downloadManyFiles(['file1.txt', 'file2.txt']);
    * // The following files have been downloaded:
    * // - "file1.txt" (with the contents from my-bucket.file1.txt)
    * // - "file2.txt" (with the contents from my-bucket.file2.txt)
+   * const response = await transferManager.downloadManyFiles([bucket.File('file1.txt'), bucket.File('file2.txt')]);
+   * // The following files have been downloaded:
+   * // - "file1.txt" (with the contents from my-bucket.file1.txt)
+   * // - "file2.txt" (with the contents from my-bucket.file2.txt)
+   * const response = await transferManager.downloadManyFiles('test-folder');
+   * // All files with GCS prefix of 'test-folder' have been downloaded. 
    * ```
    * @experimental
    */
   async downloadManyFiles(
-    files: File[],
+    filesOrFolder: File[] | string[] | string,
     options: DownloadManyFilesOptions = {}
   ): Promise<void | DownloadResponse[]> {
     const limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_DOWNLOAD_LIMIT
     );
     const promises = [];
+    let files: File[] = [];
+
+    if (!Array.isArray(filesOrFolder)) {
+      const directoryFiles = await this.bucket.getFiles({
+        prefix: filesOrFolder,
+      });
+      files = directoryFiles[0];
+    } else {
+      files = filesOrFolder.map(curFile => {
+        if (typeof curFile === 'string') {
+          return this.bucket.file(curFile);
+        }
+        return curFile;
+      });
+    }
 
     const stripRegexString = options.stripPrefix
       ? `^${options.stripPrefix}`
