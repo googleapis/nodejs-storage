@@ -270,7 +270,7 @@ export class TransferManager {
    * Download a large file in chunks utilizing parallel download operations. This is a convenience method
    * that utilizes {@link File#download} to perform the download.
    *
-   * @param {object} [file] {@link File} to download.
+   * @param {object} [file | string] {@link File} to download.
    * @param {DownloadFileInChunksOptions} [options] Configuration options.
    * @returns {Promise<DownloadResponse>}
    *
@@ -291,7 +291,7 @@ export class TransferManager {
    * @experimental
    */
   async downloadFileInChunks(
-    file: File,
+    fileOrName: File | string,
     options: DownloadFileInChunksOptions = {}
   ): Promise<void | DownloadResponse> {
     let chunkSize =
@@ -300,6 +300,10 @@ export class TransferManager {
       options.concurrencyLimit || DEFAULT_PARALLEL_CHUNKED_DOWNLOAD_LIMIT
     );
     const promises = [];
+    const file: File =
+      typeof fileOrName === 'string'
+        ? this.bucket.file(fileOrName)
+        : fileOrName;
 
     const fileInfo = await file.get();
     const size = parseInt(fileInfo[0].metadata.size);
