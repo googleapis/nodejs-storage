@@ -16,13 +16,7 @@
 
 import yargs from 'yargs';
 import {promises as fsp, rmSync} from 'fs';
-import {
-  Bucket,
-  DownloadOptions,
-  DownloadResponse,
-  Storage,
-  UploadOptions,
-} from '../src';
+import {Bucket, DownloadOptions, DownloadResponse, UploadOptions} from '../src';
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';

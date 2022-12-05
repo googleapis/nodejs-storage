@@ -36,6 +36,7 @@ import {
 } from './performanceUtils';
 import {performance} from 'perf_hooks';
 import {rmSync} from 'fs';
+import * as path from 'path';
 
 const TEST_NAME_STRING = 'tm-perf-metrics';
 const DEFAULT_BUCKET_NAME = 'nodejs-transfer-manager-perf-metrics';
@@ -92,13 +93,13 @@ async function main() {
 
   switch (argv.testtype) {
     case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MULTIPLE_OBJECTS:
-      result = await performUploadMultipleObjectsTest();
+      result = await performUploadManyFilesTest();
       break;
     case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MULTIPLE_OBJECTS:
-      result = await performDownloadMultipleObjectsTest();
+      result = await performDownloadManyFilesTest();
       break;
     case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_LARGE_FILE_DOWNLOAD:
-      result = await performDownloadLargeFileTest();
+      result = await performDownloadFileInChunksTest();
       break;
     default:
       break;
@@ -119,7 +120,7 @@ async function performTestCleanup() {
  *
  * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
  */
-async function performUploadMultipleObjectsTest(): Promise<TestResult> {
+async function performUploadManyFilesTest(): Promise<TestResult> {
   const creationInfo = generateRandomDirectoryStructure(
     argv.numobjects,
     TEST_NAME_STRING,
@@ -129,7 +130,7 @@ async function performUploadMultipleObjectsTest(): Promise<TestResult> {
   );
 
   const start = performance.now();
-  await transferManager.uploadMulti(creationInfo.paths, {
+  await transferManager.uploadManyFiles(creationInfo.paths, {
     concurrencyLimit: argv.numpromises,
     passthroughOptions: {
       validation: checkType,
@@ -160,7 +161,7 @@ async function performUploadMultipleObjectsTest(): Promise<TestResult> {
  *
  * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
  */
-async function performDownloadMultipleObjectsTest(): Promise<TestResult> {
+async function performDownloadManyFilesTest(): Promise<TestResult> {
   const creationInfo = generateRandomDirectoryStructure(
     argv.numobjects,
     TEST_NAME_STRING,
@@ -169,15 +170,15 @@ async function performDownloadMultipleObjectsTest(): Promise<TestResult> {
     DIRECTORY_PROBABILITY
   );
 
-  await transferManager.uploadMulti(creationInfo.paths, {
+  await transferManager.uploadManyFiles(creationInfo.paths, {
     concurrencyLimit: argv.numpromises,
     passthroughOptions: {
       validation: checkType,
     },
   });
-  const getFilesResult = await bucket.getFiles();
   const start = performance.now();
-  await transferManager.downloadMulti(getFilesResult[0], {
+  await transferManager.downloadManyFiles(TEST_NAME_STRING, {
+    prefix: path.join(__dirname, '..', '..'),
     concurrencyLimit: argv.numpromises,
     passthroughOptions: {
       validation: checkType,
@@ -207,7 +208,7 @@ async function performDownloadMultipleObjectsTest(): Promise<TestResult> {
  *
  * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
  */
-async function performDownloadLargeFileTest(): Promise<TestResult> {
+async function performDownloadFileInChunksTest(): Promise<TestResult> {
   const fileName = generateRandomFileName(TEST_NAME_STRING);
   const sizeInBytes = generateRandomFile(
     fileName,
@@ -220,10 +221,10 @@ async function performDownloadLargeFileTest(): Promise<TestResult> {
   await bucket.upload(`${__dirname}/${fileName}`);
   cleanupFile(fileName);
   const start = performance.now();
-  await transferManager.downloadLargeFile(file, {
+  await transferManager.downloadFileInChunks(file, {
     concurrencyLimit: argv.numpromises,
     chunkSizeBytes: argv.chunksize,
-    path: `${__dirname}`,
+    destination: path.join(__dirname, fileName),
   });
   const end = performance.now();
 
