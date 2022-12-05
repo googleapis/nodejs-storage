@@ -290,5 +290,19 @@ describe('Transfer Manager', () => {
       await transferManager.downloadFileInChunks(file);
       assert.strictEqual(downloadCallCount, 1);
     });
+
+    it('should call fromFile when validation is set to crc32c', async () => {
+      let callCount = 0;
+      file.download = () => {
+        return Promise.resolve([Buffer.alloc(0)]);
+      };
+      CRC32C.fromFile = () => {
+        callCount++;
+        return Promise.resolve(new CRC32C(0));
+      };
+
+      await transferManager.downloadFileInChunks(file, {validation: 'crc32c'});
+      assert.strictEqual(callCount, 1);
+    });
   });
 });
