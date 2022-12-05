@@ -349,6 +349,9 @@ export class TransferManager {
         })
         .catch(e => {
           reject(e);
+        })
+        .finally(() => {
+          fileToWrite.close();
         });
     });
   }
