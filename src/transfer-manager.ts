@@ -20,6 +20,7 @@ import * as pLimit from 'p-limit';
 import * as path from 'path';
 import * as extend from 'extend';
 import {promises as fsp} from 'fs';
+import {CRC32C} from './crc32c';
 
 /**
  * Default number of concurrently executing promises to use when calling uploadManyFiles.
@@ -65,6 +66,7 @@ export interface DownloadFileInChunksOptions {
   concurrencyLimit?: number;
   chunkSizeBytes?: number;
   destination?: string;
+  validation?: 'crc32c' | false;
 }
 
 /**
@@ -264,6 +266,7 @@ export class TransferManager {
    * @property {number} [concurrencyLimit] The number of concurrently executing promises
    * to use when downloading the file.
    * @property {number} [chunkSizeBytes] The size in bytes of each chunk to be downloaded.
+   * @property {string | boolean} [validation] Whether or not to perform a CRC32C validation check when download is complete.
    * @experimental
    */
   /**
@@ -299,7 +302,7 @@ export class TransferManager {
     let limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_CHUNKED_DOWNLOAD_LIMIT
     );
-    const promises = [];
+    const promises: Promise<{bytesWritten: number; buffer: Buffer}>[] = [];
     const file: File =
       typeof fileOrName === 'string'
         ? this.bucket.file(fileOrName)
@@ -331,12 +334,25 @@ export class TransferManager {
       start += chunkSize;
     }
 
-    return Promise.all(promises)
-      .then(results => {
-        return results.map(result => result.buffer) as DownloadResponse;
-      })
-      .finally(async () => {
-        await fileToWrite.close();
-      });
+    return new Promise((resolve, reject) => {
+      let results: DownloadResponse;
+      Promise.all(promises)
+        .then(data => {
+          results = data.map(result => result.buffer) as DownloadResponse;
+          if (options.validation === 'crc32c') {
+            return CRC32C.fromFile(filePath);
+          }
+          return;
+        })
+        .then(() => {
+          resolve(results);
+        })
+        .catch(e => {
+          reject(e);
+        })
+        .finally(() => {
+          fileToWrite.close();
+        });
+    });
   }
 }

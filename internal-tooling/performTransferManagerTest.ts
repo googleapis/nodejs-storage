@@ -60,9 +60,9 @@ const argv = yargs(process.argv.slice(2))
     testtype: {
       type: 'string',
       choices: [
-        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MULTIPLE_OBJECTS,
-        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MULTIPLE_OBJECTS,
-        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_LARGE_FILE_DOWNLOAD,
+        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MANY_FILES,
+        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MANY_FILES,
+        TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD,
       ],
     },
   })
@@ -92,13 +92,13 @@ async function main() {
   ));
 
   switch (argv.testtype) {
-    case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MULTIPLE_OBJECTS:
+    case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MANY_FILES:
       result = await performUploadManyFilesTest();
       break;
-    case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MULTIPLE_OBJECTS:
+    case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MANY_FILES:
       result = await performDownloadManyFilesTest();
       break;
-    case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_LARGE_FILE_DOWNLOAD:
+    case TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD:
       result = await performDownloadFileInChunksTest();
       break;
     default:
@@ -225,6 +225,7 @@ async function performDownloadFileInChunksTest(): Promise<TestResult> {
     concurrencyLimit: argv.numpromises,
     chunkSizeBytes: argv.chunksize,
     destination: path.join(__dirname, fileName),
+    validation: checkType === 'crc32c' ? checkType : false,
   });
   const end = performance.now();
 
@@ -235,7 +236,7 @@ async function performDownloadFileInChunksTest(): Promise<TestResult> {
     objectSize: sizeInBytes,
     appBufferSize: BLOCK_SIZE_IN_BYTES,
     libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-    crc32Enabled: false,
+    crc32Enabled: checkType === 'crc32c',
     md5Enabled: false,
     apiName: 'JSON',
     elapsedTimeUs: Math.round((end - start) * 1000),
