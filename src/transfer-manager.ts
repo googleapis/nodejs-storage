@@ -19,7 +19,7 @@ import {DownloadOptions, DownloadResponse, File} from './file';
 import * as pLimit from 'p-limit';
 import * as path from 'path';
 import * as extend from 'extend';
-import {Dirent, promises as fsp} from 'fs';
+import {promises as fsp} from 'fs';
 import {CRC32C} from './crc32c';
 
 /**
@@ -147,11 +147,13 @@ export class TransferManager {
     const promises = [];
     let allPaths: string[] = [];
     if (!Array.isArray(filePathsOrDirectory)) {
-      for await(const curPath of this.getPathsFromDirectory(filePathsOrDirectory)) {
+      for await (const curPath of this.getPathsFromDirectory(
+        filePathsOrDirectory
+      )) {
         allPaths.push(curPath);
       }
     } else {
-      allPaths = filePathsOrDirectory
+      allPaths = filePathsOrDirectory;
     }
 
     for (const filePath of allPaths) {
@@ -367,12 +369,16 @@ export class TransferManager {
     });
   }
 
-  private async* getPathsFromDirectory(directory: string): AsyncGenerator<string> {
-    const filesAndSubdirectories = await fsp.readdir(directory, {withFileTypes: true});
+  private async *getPathsFromDirectory(
+    directory: string
+  ): AsyncGenerator<string> {
+    const filesAndSubdirectories = await fsp.readdir(directory, {
+      withFileTypes: true,
+    });
     for (const curFileOrDirectory of filesAndSubdirectories) {
       const fullPath = path.join(directory, curFileOrDirectory.name);
-      curFileOrDirectory.isDirectory() 
-        ? yield* this.getPathsFromDirectory(fullPath) 
+      curFileOrDirectory.isDirectory()
+        ? yield* this.getPathsFromDirectory(fullPath)
         : yield fullPath;
     }
   }
