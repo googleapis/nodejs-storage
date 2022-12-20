@@ -102,19 +102,24 @@ const storage = new Storage({keyFilename: 'key.json'});
 ```
 
 You can also initialize the `Storage` constructor with credentials by
-providing it the parsed JSON object if you store it something like an
+providing it the parsed JSON object if you store it with something like an
 environment variable or secrets storage, as demonstrated in the following
 code snippets.
 
 Load the JSON contents from a file on disk:
 
 ```javascript
-const storage =  new Storage({
-  credentials: require('key.json')
+
+const serviceAccountKey = require('key.json');
+
+const storage = new Storage({
+  credentials: serviceAccountKey
 });
 ```
 
-Load the JSON contents from an environment variable:
+However, if you try to load the JSON contents from an environment variable
+that you stored the contents into by stringifying the JSON object then it
+will prove problematic. Consider the following code snippet:
 
 ```javascript
 const storageCreds = process.env.GOOGLE_CLOUD_KEY_FILE;
@@ -125,17 +130,36 @@ const storage = new Storage({
 });
 ```
 
-To first get the contents of the JSON key file into
-a variable it needs to be converted into a string:
+This won't work well and will result in errors when the constructor is
+instantiated: `error:1E08010C:DECODER routines::unsupported`. This error
+happens due to serializing and unserializing string contents that
+includes `\n` into environment variables.
+
+To properly save the contents of the service account key we can use 
+Base64 encoding of the stringified JSON object. 
+
+First, encode the contents of the service account key file to receive
+the Base64 representation of it:
+
 
 ```javascript
-const keyfileString = JSON.stringify(require('key.json'));
+const serviceAccountJSON = require('key.json');
+const serviceAccountBuffer = Buffer.from(JSON.stringify(serviceAccountJSON), 'utf-8');
+const serviceAccountBase64Encoded = serviceAccountBuffer.toString('base64');
 ```
 
-and then make the contents of `keyfileString` available
-in environment variables, or paste it into an environment
-configuraiton file such as `.env` if you use a library
-like [dotenv](https://snyk.io/advisor/npm-package/dotenv)
+The string contents of `serviceAccountBase64Encoded` can be set as an environment
+variable and then decoded when using it with the SDK as follows:
+
+```javascript
+const serviceAccountBase64Encoded = process.env.GCLOUD_SERVICE_ACCOUNT_KEY;
+const serviceAccountBuffer = Buffer.from(JSON.stringify(serviceAccountBase64Encoded), 'base64');
+const serviceAccountJSON = JSON.parse(serviceAccountBuffer.toString('utf-8');
+
+const storage = new Storage({
+  credentials: serviceAccountJSON
+});
+```
 
 Note, you can also specify the credentials directly during
 the `Storage` constructor initialization process, such as:
