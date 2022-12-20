@@ -91,7 +91,71 @@ createBucket().catch(console.error);
 
 ```
 
+### Initializing credentials 
 
+One way to initiailize credentials for the `Storage` constructor is by
+providing a path to a JSON file with the credentials, such as a service
+account key generated from the Google Cloud console, as follows:
+
+```javascript
+const storage = new Storage({keyFilename: 'key.json'});
+```
+
+You can also initialize the `Storage` constructor with credentials by
+providing it the parsed JSON object if you store it something like an
+environment variable or secrets storage, as demonstrated in the following
+code snippets.
+
+Load the JSON contents from a file on disk:
+
+```javascript
+const storage =  new Storage({
+  credentials: require('key.json')
+});
+```
+
+Load the JSON contents from an environment variable:
+
+```javascript
+const storageCreds = process.env.GOOGLE_CLOUD_KEY_FILE;
+const storageCredsJSON = JSON.parse(storageCreds);
+
+const storage = new Storage({
+  credentials: storageCredsJSON
+});
+```
+
+To first get the contents of the JSON key file into
+a variable it needs to be converted into a string:
+
+```javascript
+const keyfileString = JSON.stringify(require('key.json'));
+```
+
+and then make the contents of `keyfileString` available
+in environment variables, or paste it into an environment
+configuraiton file such as `.env` if you use a library
+like [dotenv](https://snyk.io/advisor/npm-package/dotenv)
+
+Note, you can also specify the credentials directly during
+the `Storage` constructor initialization process, such as:
+
+```javascript
+new Storage({
+  credentials: {
+      type: 'service_account',
+      project_id: 'xxxxxxx',
+      private_key_id: 'xxxx',
+      private_key:'-----BEGIN PRIVATE KEY-----xxxxxxx\n-----END PRIVATE KEY-----\n',
+      client_email: 'xxxx',
+      client_id: 'xxx',
+      auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+      token_uri: 'https://oauth2.googleapis.com/token',
+      auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
+      client_x509_cert_url: 'xxx',
+    }
+});
+```
 
 ## Samples
 
