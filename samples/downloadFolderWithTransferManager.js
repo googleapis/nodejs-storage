@@ -28,7 +28,7 @@ function main(bucketName = 'my-bucket', folderName = 'my-folder') {
   // The ID of your GCS bucket
   // const bucketName = 'your-unique-bucket-name';
 
-  // The ID of the GCS folder to download
+  // The ID of the GCS folder to download. The folder will be downloaded to the local path of the executing code.
   // const folderName = 'your-folder-name';
 
   // Imports the Google Cloud client library
