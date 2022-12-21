@@ -16,8 +16,8 @@
  */
 
 // sample-metadata:
-//   title: Upload Folder With Transfer Manager
-//   description: Uploads a folder in parallel utilizing transfer manager.
+//   title: Upload Directory With Transfer Manager
+//   description: Uploads a directory in parallel utilizing transfer manager.
 //   usage: node uploadFolderWithTransferManager.js <BUCKET_NAME> <DIRECTORY_NAME>
 
 function main(bucketName = 'my-bucket', directoryName = 'my-directory') {
@@ -37,7 +37,7 @@ function main(bucketName = 'my-bucket', directoryName = 'my-directory') {
   // Creates a client
   const storage = new Storage();
 
-  // Creates a transfer manager instance
+  // Creates a transfer manager client
   const transferManager = new TransferManager(storage.bucket(bucketName));
 
   async function uploadDirectoryWithTransferManager() {
