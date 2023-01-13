@@ -42,7 +42,7 @@ function main(
 
   async function setFileMetadata() {
     // Optional: set a generation-match precondition to avoid potential race
-    // conditions and data corruptions. The request to upload is aborted if the
+    // conditions and data corruptions. The request to set metadata is aborted if the
     // object's generation number does not match your precondition.
     const options = {
       ifGenerationMatch: generationMatchPrecondition,
