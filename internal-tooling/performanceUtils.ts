@@ -26,6 +26,7 @@ export const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
 export const DEFAULT_DIRECTORY_PROBABILITY = 0.1;
 export const DEFAULT_PROJECT_ID = 'GCS_NODE_PERFORMANCE_METRICS';
 export const DEFAULT_NUMBER_OF_OBJECTS = 1000;
+const SSB_SIZE_THRESHOLD_BYTES = 1048576;
 
 export interface TestResult {
   op: string;
@@ -223,4 +224,59 @@ export function getValidationType(): 'md5' | 'crc32c' | boolean | undefined {
   } else {
     return 'md5';
   }
+}
+
+/**
+ * Converts the supplied test results from javascript objects to storage shared benchmarking format.
+ *
+ * @param {TestResult[]} results array of test iteration results.
+ * @param {string} workload the workload identifier if running under SSB
+ *
+ * @returns {AsyncGenerator<string>} a string containing the results of the conversion.
+ */
+export async function* convertToSSBFormat(
+  results: TestResult[],
+  bucketName: string
+): AsyncGenerator<string> {
+  for (const curResult of results) {
+    const throughput =
+      curResult.objectSize >= SSB_SIZE_THRESHOLD_BYTES
+        ? curResult.objectSize /
+          1024 /
+          1024 /
+          (curResult.elapsedTimeUs / 1000000)
+        : curResult.objectSize / 1024 / (curResult.elapsedTimeUs / 1000000);
+    yield `throughput{timestamp=${new Date()},\
+    library="nodejs-storage",\
+    api="${curResult.apiName}",\
+    op="${curResult.op}",\
+    object_size="${curResult.objectSize}",\
+    transfer_offset="0",\
+    transfer_size="${curResult.objectSize}",\
+    app_buffer_size="${curResult.appBufferSize}",\
+    crc32c_enabled="${curResult.crc32Enabled}",\
+    md5_enabled="${curResult.md5Enabled}",\
+    elapsed_time_us="${curResult.elapsedTimeUs}",\
+    cpu_time_us="${curResult.cpuTimeUs}",\
+    elapsedmicroseconds="${curResult.elapsedTimeUs}",\
+    peer="",\
+    bucket_name=${bucketName},\
+    object_name="",\
+    generation="",\
+    upload_id="",\
+    retry_count="",\
+    status_code=""} ${throughput}`;
+  }
+}
+
+/**
+ * Converts the supplied test results from javascript objects to CSV format.
+ *
+ * @param {TestResult[]} results array of test iteration results.
+ *
+ * @returns {string} a string containnig the the CSV results of the conversion.
+ */
+export function convertToCSVFormat(results: TestResult[]): string {
+  const csv = results.map(result => Object.values(result));
+  return csv.join('\n');
 }
