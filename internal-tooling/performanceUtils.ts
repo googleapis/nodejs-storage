@@ -227,14 +227,14 @@ export function getValidationType(): 'md5' | 'crc32c' | boolean | undefined {
 }
 
 /**
- * Converts the supplied test results from javascript objects to storage shared benchmarking format.
+ * Converts the supplied test results from javascript objects to cloud monitoring format.
  *
  * @param {TestResult[]} results array of test iteration results.
- * @param {string} workload the workload identifier if running under SSB
+ * @param {string} bucket the bucket name used for the test
  *
  * @returns {AsyncGenerator<string>} a string containing the results of the conversion.
  */
-export async function* convertToSSBFormat(
+export async function* convertToCloudMonitoringFormat(
   results: TestResult[],
   bucketName: string
 ): AsyncGenerator<string> {

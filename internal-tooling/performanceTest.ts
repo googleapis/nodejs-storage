@@ -20,7 +20,7 @@ import {Worker} from 'worker_threads';
 import yargs = require('yargs');
 import {
   convertToCSVFormat,
-  convertToSSBFormat,
+  convertToCloudMonitoringFormat,
   TestResult,
 } from './performanceUtils';
 import {existsSync} from 'fs';
@@ -43,7 +43,7 @@ export const enum TRANSFER_MANAGER_TEST_TYPES {
 
 const enum OUTPUT_FORMATS {
   CSV = 'csv',
-  SSB = 'ssb', //Storage shared benchmarking format
+  CLOUD_MONITORING = 'cloudmon',
 }
 
 const argv = yargs(process.argv.slice(2))
@@ -66,7 +66,7 @@ const argv = yargs(process.argv.slice(2))
     },
     format: {
       type: 'string',
-      choices: [OUTPUT_FORMATS.CSV, OUTPUT_FORMATS.SSB],
+      choices: [OUTPUT_FORMATS.CSV, OUTPUT_FORMATS.CLOUD_MONITORING],
       default: OUTPUT_FORMATS.CSV,
     },
     filename: {
@@ -160,7 +160,7 @@ async function recordResult(results: TestResult[] | TestResult) {
   const outputString =
     argv.format === OUTPUT_FORMATS.CSV
       ? convertToCSVFormat(resultsToAppend)
-      : convertToSSBFormat(resultsToAppend, argv.bucket);
+      : convertToCloudMonitoringFormat(resultsToAppend, argv.bucket);
 
   if (
     argv.filename &&
