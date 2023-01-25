@@ -227,12 +227,12 @@ export function getValidationType(): 'md5' | 'crc32c' | boolean | undefined {
 }
 
 /**
- * Converts the supplied test results from javascript objects to cloud monitoring format.
+ * Converts the supplied test results from javascript objects to a cloud monitoring formatted string.
  *
- * @param {TestResult[]} results array of test iteration results.
- * @param {string} bucket the bucket name used for the test
+ * @param {TestResult[]} results An array of test iteration result objects that will be converted to cloud monitoring format.
+ * @param {string} bucket The bucket name used for the test.
  *
- * @returns {AsyncGenerator<string>} a string containing the results of the conversion.
+ * @returns {AsyncGenerator<string>} A string containing the results of the conversion to cloud monitoring format.
  */
 export async function* convertToCloudMonitoringFormat(
   results: TestResult[],
@@ -240,6 +240,7 @@ export async function* convertToCloudMonitoringFormat(
 ): AsyncGenerator<string> {
   for (const curResult of results) {
     const throughput =
+      // If the object size is greater than the defined threshold, report in MiB/s, otherwise report in KiB/s.
       curResult.objectSize >= SSB_SIZE_THRESHOLD_BYTES
         ? curResult.objectSize /
           1024 /
@@ -270,11 +271,11 @@ export async function* convertToCloudMonitoringFormat(
 }
 
 /**
- * Converts the supplied test results from javascript objects to CSV format.
+ * Converts the supplied test results from javascript objects to a CSV formatted string.
  *
- * @param {TestResult[]} results array of test iteration results.
+ * @param {TestResult[]} results An array of test iteration result objects that will be converted to CSV format.
  *
- * @returns {string} a string containnig the the CSV results of the conversion.
+ * @returns {string} A string containnig the the CSV results of the conversion.
  */
 export function convertToCSVFormat(results: TestResult[]): string {
   const csv = results.map(result => Object.values(result));
