@@ -157,10 +157,6 @@ async function recordResult(results: TestResult[] | TestResult) {
   const resultsToAppend: TestResult[] = Array.isArray(results)
     ? results
     : [results];
-  const outputString =
-    argv.format === OUTPUT_FORMATS.CSV
-      ? convertToCSVFormat(resultsToAppend)
-      : convertToCloudMonitoringFormat(resultsToAppend, argv.bucket);
 
   if (
     argv.filename &&
@@ -170,9 +166,23 @@ async function recordResult(results: TestResult[] | TestResult) {
     await writeFile(argv.filename, CSV_HEADERS);
   }
 
-  argv.filename
-    ? await appendFile(argv.filename, `${outputString}\n`)
-    : console.log(outputString);
+  if (argv.format === OUTPUT_FORMATS.CSV) {
+    argv.filename
+      ? await appendFile(
+          argv.filename,
+          `${convertToCSVFormat(resultsToAppend)}\n`
+        )
+      : console.log(convertToCSVFormat(resultsToAppend));
+  } else if (argv.format === OUTPUT_FORMATS.CLOUD_MONITORING) {
+    for await (const outputString of convertToCloudMonitoringFormat(
+      resultsToAppend,
+      argv.bucket
+    )) {
+      argv.filename
+        ? await appendFile(argv.filename, `${outputString}\n`)
+        : console.log(outputString);
+    }
+  }
 }
 
 main();

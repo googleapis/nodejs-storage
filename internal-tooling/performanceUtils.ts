@@ -261,7 +261,7 @@ export async function* convertToCloudMonitoringFormat(
     cpu_time_us="${curResult.cpuTimeUs}",\
     elapsedmicroseconds="${curResult.elapsedTimeUs}",\
     peer="",\
-    bucket_name=${bucketName},\
+    bucket_name="${bucketName}",\
     object_name="",\
     generation="",\
     upload_id="",\
