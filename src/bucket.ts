@@ -780,7 +780,7 @@ class Bucket extends ServiceObject {
        */
       create: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
       /**
@@ -834,7 +834,7 @@ class Bucket extends ServiceObject {
        */
       delete: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
       /**
@@ -879,7 +879,7 @@ class Bucket extends ServiceObject {
        */
       exists: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
       /**
@@ -938,7 +938,7 @@ class Bucket extends ServiceObject {
        */
       get: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
       /**
@@ -994,7 +994,7 @@ class Bucket extends ServiceObject {
        */
       getMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
       /**
@@ -1085,7 +1085,7 @@ class Bucket extends ServiceObject {
        */
       setMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
     };
@@ -1584,7 +1584,7 @@ class Bucket extends ServiceObject {
             return sourceObject;
           }),
         },
-        qs: options,
+        params: options,
       },
       (err, resp) => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -1737,7 +1737,7 @@ class Bucket extends ServiceObject {
           },
           config
         ),
-        qs: options,
+        params: options,
       },
       (err, apiResponse) => {
         if (err) {
@@ -1915,7 +1915,7 @@ class Bucket extends ServiceObject {
         method: 'POST',
         uri: '/notificationConfigs',
         json: convertObjKeysToSnakeCase(body),
-        qs: query,
+        params: query,
         maxRetries: 0, //explicitly set this value since this is a non-idempotent function
       },
       (err, apiResponse) => {
@@ -2678,7 +2678,7 @@ class Bucket extends ServiceObject {
     this.request(
       {
         uri: '/o',
-        qs: query,
+        params: query,
       },
       (err, resp) => {
         if (err) {
@@ -2867,7 +2867,7 @@ class Bucket extends ServiceObject {
     this.request(
       {
         uri: '/notificationConfigs',
-        qs: options,
+        params: options,
       },
       (err, resp) => {
         if (err) {
@@ -3092,7 +3092,7 @@ class Bucket extends ServiceObject {
       {
         method: 'POST',
         uri: '/lockRetentionPolicy',
-        qs: {
+        params: {
           ifMetagenerationMatch: metageneration,
         },
       },
@@ -3492,8 +3492,8 @@ class Bucket extends ServiceObject {
     reqOpts: DecorateRequestOptions,
     callback?: BodyResponseCallback
   ): void | Promise<[ResponseBody, Metadata]> {
-    if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
-      reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
+    if (this.userProject && (!reqOpts.params || !reqOpts.params.userProject)) {
+      reqOpts.params = extend(reqOpts.params, {userProject: this.userProject});
     }
     return super.request(reqOpts, callback!);
   }
@@ -3872,10 +3872,10 @@ class Bucket extends ServiceObject {
       const methodConfig = this.methods[method];
       if (typeof methodConfig === 'object') {
         if (typeof methodConfig.reqOpts === 'object') {
-          extend(methodConfig.reqOpts.qs, {userProject});
+          extend(methodConfig.reqOpts.params, {userProject});
         } else {
           methodConfig.reqOpts = {
-            qs: {userProject},
+            params: {userProject},
           };
         }
       }
@@ -4364,7 +4364,7 @@ class Bucket extends ServiceObject {
   ): void {
     if (
       typeof coreOpts === 'object' &&
-      coreOpts?.reqOpts?.qs?.ifMetagenerationMatch === undefined &&
+      coreOpts?.reqOpts?.params?.ifMetagenerationMatch === undefined &&
       localPreconditionOptions?.ifMetagenerationMatch === undefined &&
       (methodType === AvailableServiceObjectMethods.setMetadata ||
         methodType === AvailableServiceObjectMethods.delete) &&

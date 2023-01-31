@@ -77,6 +77,8 @@ import {
   SetMetadataOptions,
 } from './nodejs-common/service-object';
 import * as r from 'teeny-request';
+import { GaxiosResponse } from 'gaxios';
+import { Gaxios } from 'gaxios';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -671,7 +673,7 @@ class File extends ServiceObject<File> {
        */
       delete: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
       /**
@@ -713,7 +715,7 @@ class File extends ServiceObject<File> {
        */
       exists: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
       /**
@@ -760,7 +762,7 @@ class File extends ServiceObject<File> {
        */
       get: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
       /**
@@ -811,7 +813,7 @@ class File extends ServiceObject<File> {
        */
       getMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
       /**
@@ -904,7 +906,7 @@ class File extends ServiceObject<File> {
        */
       setMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          params: requestQueryObject,
         },
       },
     };
@@ -1253,7 +1255,7 @@ class File extends ServiceObject<File> {
         uri: `/rewriteTo/b/${destBucket.name}/o/${encodeURIComponent(
           newFile.name
         )}`,
-        qs: query,
+        params: query,
         json: options,
         headers,
       },
@@ -1448,7 +1450,7 @@ class File extends ServiceObject<File> {
         forever: false,
         uri: '',
         headers,
-        qs: query,
+        params: query,
       };
 
       const hashes: {crc32c?: string; md5?: string} = {};
@@ -2036,13 +2038,13 @@ class File extends ServiceObject<File> {
    * @param {?error} callback.err - An error returned while making this request.
    * @param {object} callback.apiResponse - The full API response.
    */
-  delete(options?: DeleteOptions): Promise<[r.Response]>;
+  delete(options?: DeleteOptions): Promise<[GaxiosResponse]>;
   delete(options: DeleteOptions, callback: DeleteCallback): void;
   delete(callback: DeleteCallback): void;
   delete(
     optionsOrCallback?: DeleteOptions | DeleteCallback,
     cb?: DeleteCallback
-  ): Promise<[r.Response]> | void {
+  ): Promise<[GaxiosResponse]> | void {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : cb;
@@ -3951,18 +3953,18 @@ class File extends ServiceObject<File> {
     const uri = `${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
 
     const reqOpts: DecorateRequestOptions = {
-      qs: {
+      params: {
         name: this.name,
       },
       uri: uri,
     };
 
     if (this.generation !== undefined) {
-      reqOpts.qs.ifGenerationMatch = this.generation;
+      reqOpts.params.ifGenerationMatch = this.generation;
     }
 
     if (this.kmsKeyName !== undefined) {
-      reqOpts.qs.kmsKeyName = this.kmsKeyName;
+      reqOpts.params.kmsKeyName = this.kmsKeyName;
     }
 
     if (typeof options.timeout === 'number') {
@@ -3970,40 +3972,40 @@ class File extends ServiceObject<File> {
     }
 
     if (options.userProject || this.userProject) {
-      reqOpts.qs.userProject = options.userProject || this.userProject;
+      reqOpts.params.userProject = options.userProject || this.userProject;
     }
 
     if (options.predefinedAcl) {
-      reqOpts.qs.predefinedAcl = options.predefinedAcl;
+      reqOpts.params.predefinedAcl = options.predefinedAcl;
     } else if (options.private) {
-      reqOpts.qs.predefinedAcl = 'private';
+      reqOpts.params.predefinedAcl = 'private';
     } else if (options.public) {
-      reqOpts.qs.predefinedAcl = 'publicRead';
+      reqOpts.params.predefinedAcl = 'publicRead';
     }
 
     Object.assign(
-      reqOpts.qs,
+      reqOpts.params,
       this.instancePreconditionOpts,
       options.preconditionOpts
     );
 
-    util.makeWritableStream(dup, {
-      makeAuthenticatedRequest: (reqOpts: object) => {
-        this.request(reqOpts as DecorateRequestOptions, (err, body, resp) => {
-          if (err) {
-            dup.destroy(err);
-            return;
-          }
+    // util.makeWritableStream(dup, {
+    //   makeAuthenticatedRequest: (reqOpts: object) => {
+    //     this.request(reqOpts as DecorateRequestOptions, (err, body, resp) => {
+    //       if (err) {
+    //         dup.destroy(err);
+    //         return;
+    //       }
 
-          this.metadata = body;
-          dup.emit('metadata', body);
-          dup.emit('response', resp);
-          dup.emit('complete');
-        });
-      },
-      metadata: options.metadata,
-      request: reqOpts,
-    });
+    //       this.metadata = body;
+    //       dup.emit('metadata', body);
+    //       dup.emit('response', resp);
+    //       dup.emit('complete');
+    //     });
+    //   },
+    //   metadata: options.metadata,
+    //   request: reqOpts,
+    // });
   }
 
   disableAutoRetryConditionallyIdempotent_(
@@ -4014,7 +4016,7 @@ class File extends ServiceObject<File> {
   ): void {
     if (
       (typeof coreOpts === 'object' &&
-        coreOpts?.reqOpts?.qs?.ifGenerationMatch === undefined &&
+        coreOpts?.reqOpts?.params?.ifGenerationMatch === undefined &&
         localPreconditionOptions?.ifGenerationMatch === undefined &&
         (methodType === AvailableServiceObjectMethods.setMetadata ||
           methodType === AvailableServiceObjectMethods.delete) &&

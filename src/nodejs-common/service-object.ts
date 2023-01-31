@@ -16,7 +16,7 @@
 import {promisifyAll} from '@google-cloud/promisify';
 import {EventEmitter} from 'events';
 import * as extend from 'extend';
-import * as r from 'teeny-request';
+import { Gaxios, GaxiosOptions, GaxiosResponse } from 'gaxios';
 
 import {StreamRequestOptions} from '.';
 import {
@@ -27,12 +27,12 @@ import {
   util,
 } from './util';
 
-export type RequestResponse = [Metadata, r.Response];
+export type RequestResponse = [Metadata, GaxiosResponse];
 
 export interface ServiceObjectParent {
-  interceptors: Interceptor[];
+  // interceptors: Interceptor[];
   getRequestInterceptors(): Function[];
-  requestStream(reqOpts: DecorateRequestOptions): r.Request;
+  // requestStream(reqOpts: DecorateRequestOptions): r.Request;
   request(
     reqOpts: DecorateRequestOptions,
     callback: BodyResponseCallback
@@ -40,18 +40,18 @@ export interface ServiceObjectParent {
 }
 
 export interface Interceptor {
-  request(opts: r.Options): DecorateRequestOptions;
+  request(opts: GaxiosOptions): DecorateRequestOptions;
 }
 
 export type GetMetadataOptions = object;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Metadata = any;
-export type MetadataResponse = [Metadata, r.Response];
+export type MetadataResponse = [Metadata, GaxiosResponse];
 export type MetadataCallback = (
   err: Error | null,
   metadata?: Metadata,
-  apiResponse?: r.Response
+  apiResponse?: GaxiosResponse
 ) => void;
 
 export type ExistsOptions = object;
@@ -96,11 +96,11 @@ export interface ServiceObjectConfig {
 }
 
 export interface Methods {
-  [methodName: string]: {reqOpts?: r.CoreOptions} | boolean;
+  [methodName: string]: {reqOpts?: GaxiosOptions} | boolean;
 }
 
 export interface InstanceResponseCallback<T> {
-  (err: ApiError | null, instance?: T | null, apiResponse?: r.Response): void;
+  (err: ApiError | null, instance?: T | null, apiResponse?: GaxiosResponse): void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -120,7 +120,7 @@ export type DeleteOptions = {
   ifMetagenerationNotMatch?: number;
 } & object;
 export interface DeleteCallback {
-  (err: Error | null, apiResponse?: r.Response): void;
+  (err: Error | null, apiResponse?: GaxiosResponse): void;
 }
 
 export interface GetConfig {
@@ -130,10 +130,10 @@ export interface GetConfig {
   autoCreate?: boolean;
 }
 type GetOrCreateOptions = GetConfig & CreateOptions;
-export type GetResponse<T> = [T, r.Response];
+export type GetResponse<T> = [T, GaxiosResponse];
 
 export interface ResponseCallback {
-  (err?: Error | null, apiResponse?: r.Response): void;
+  (err?: Error | null, apiResponse?: GaxiosResponse): void;
 }
 
 export type SetMetadataResponse = [Metadata];
@@ -272,13 +272,13 @@ class ServiceObject<T = any> extends EventEmitter {
    * @param {?error} callback.err - An error returned while making this request.
    * @param {object} callback.apiResponse - The full API response.
    */
-  delete(options?: DeleteOptions): Promise<[r.Response]>;
+  delete(options?: DeleteOptions): Promise<[GaxiosResponse]>;
   delete(options: DeleteOptions, callback: DeleteCallback): void;
   delete(callback: DeleteCallback): void;
   delete(
     optionsOrCallback?: DeleteOptions | DeleteCallback,
     cb?: DeleteCallback
-  ): Promise<[r.Response]> | void {
+  ): Promise<[GaxiosResponse]> | void {
     const [options, callback] = util.maybeOptionsOrCallback<
       DeleteOptions,
       DeleteCallback
@@ -385,7 +385,7 @@ class ServiceObject<T = any> extends EventEmitter {
     function onCreate(
       err: ApiError | null,
       instance: T,
-      apiResponse: r.Response
+      apiResponse: GaxiosResponse
     ) {
       if (err) {
         if (err.code === 409) {
@@ -409,10 +409,10 @@ class ServiceObject<T = any> extends EventEmitter {
           self.create(...args);
           return;
         }
-        callback!(err, null, metadata as r.Response);
+        callback!(err, null, metadata as GaxiosResponse);
         return;
       }
-      callback!(null, self as {} as T, metadata as r.Response);
+      callback!(null, self as {} as T, metadata as GaxiosResponse);
     });
   }
 
@@ -456,7 +456,7 @@ class ServiceObject<T = any> extends EventEmitter {
     ServiceObject.prototype.request.call(
       this,
       reqOpts,
-      (err: Error | null, body?: ResponseBody, res?: r.Response) => {
+      (err: Error | null, body?: ResponseBody, res?: GaxiosResponse) => {
         this.metadata = body;
         callback!(err, this.metadata, res);
       }
@@ -526,7 +526,7 @@ class ServiceObject<T = any> extends EventEmitter {
     ServiceObject.prototype.request.call(
       this,
       reqOpts,
-      (err: Error | null, body?: ResponseBody, res?: r.Response) => {
+      (err: Error | null, body?: ResponseBody, res?: GaxiosResponse) => {
         this.metadata = body;
         callback!(err, this.metadata, res);
       }
@@ -542,7 +542,7 @@ class ServiceObject<T = any> extends EventEmitter {
    * @param {string} reqOpts.uri - A URI relative to the baseUrl.
    * @param {function} callback - The callback function passed to `request`.
    */
-  private request_(reqOpts: StreamRequestOptions): r.Request;
+  private request_(reqOpts: StreamRequestOptions): Gaxios.request;
   private request_(
     reqOpts: DecorateRequestOptions,
     callback: BodyResponseCallback
