@@ -532,8 +532,6 @@ export class Util {
           dup.destroy(err);
           return;
         }
-
-        requestDefaults.headers = util._getDefaultHeaders();
         const request = teenyRequest.defaults(requestDefaults);
         request(authenticatedReqOpts!, (err, resp, body) => {
           util.handleResp(err, resp, body, (err, data) => {
@@ -856,7 +854,6 @@ export class Util {
       maxRetryValue = config.retryOptions.maxRetries;
     }
 
-    requestDefaults.headers = this._getDefaultHeaders();
     const options = {
       request: teenyRequest.defaults(requestDefaults),
       retries: autoRetryValue !== false ? maxRetryValue : 0,
@@ -942,8 +939,6 @@ export class Util {
       reqOpts.json = replaceProjectIdToken(reqOpts.json, projectId);
     }
 
-    reqOpts.uri = replaceProjectIdToken(reqOpts.uri, projectId);
-
     return reqOpts;
   }
 
@@ -1005,15 +1000,6 @@ export class Util {
     return typeof optionsOrCallback === 'function'
       ? [{} as T, optionsOrCallback as C]
       : [optionsOrCallback as T, cb as C];
-  }
-
-  _getDefaultHeaders() {
-    return {
-      'User-Agent': util.getUserAgentFromPackageJson(packageJson),
-      'x-goog-api-client': `gl-node/${process.versions.node} gccl/${
-        packageJson.version
-      } gccl-invocation-id/${uuid.v4()}`,
-    };
   }
 }
 
