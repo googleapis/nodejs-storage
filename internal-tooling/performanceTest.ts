@@ -178,7 +178,7 @@ async function recordResult(results: TestResult[] | TestResult) {
           argv.filename,
           `${convertToCSVFormat(resultsToAppend)}\n`
         )
-      : log(convertToCSVFormat(resultsToAppend), true, false);
+      : log(convertToCSVFormat(resultsToAppend), true);
   } else if (argv.format === OUTPUT_FORMATS.CLOUD_MONITORING) {
     for await (const outputString of convertToCloudMonitoringFormat(
       resultsToAppend,
@@ -186,7 +186,7 @@ async function recordResult(results: TestResult[] | TestResult) {
     )) {
       argv.filename
         ? await appendFile(argv.filename, `${outputString}\n`)
-        : log(outputString, true, false);
+        : log(outputString, true);
     }
   }
 }
