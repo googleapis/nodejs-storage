@@ -1536,7 +1536,6 @@ class File extends ServiceObject<File> {
       }
 
       const reqOpts = {
-        forever: false,
         uri: '',
         headers,
         qs: query,
