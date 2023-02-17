@@ -1383,7 +1383,7 @@ class File extends ServiceObject<File> {
       typeof options.start === 'number' || typeof options.end === 'number';
     const tailRequest = options.end! < 0;
 
-    let validateStream: HashStreamValidator = new HashStreamValidator();
+    let validateStream: HashStreamValidator | undefined = undefined;
 
     const throughStream = new PassThroughShim();
     const hashes: {crc32c?: string; md5?: string} = {};
@@ -1490,7 +1490,7 @@ class File extends ServiceObject<File> {
         return;
       }
 
-      if (safeToValidate && shouldRunValidation) {
+      if (safeToValidate && shouldRunValidation && validateStream) {
         transformStreams.push(validateStream);
       }
 
