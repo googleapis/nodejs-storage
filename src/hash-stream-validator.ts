@@ -20,20 +20,23 @@ import {
   CRC32C_DEFAULT_VALIDATOR_GENERATOR,
   CRC32CValidator,
 } from './crc32c';
+import {FileExceptionMessages, RequestError} from './file';
 
 interface HashStreamValidatorOptions {
   crc32c: boolean;
   md5: boolean;
   crc32cGenerator: CRC32CValidatorGenerator;
+  crc32cExpectedValue?: string;
+  md5ExpectedValue?: string;
+  updateHashesOnly?: boolean;
 }
-
 class HashStreamValidator extends Transform {
   readonly crc32cEnabled: boolean;
   readonly md5Enabled: boolean;
+  readonly options: Partial<HashStreamValidatorOptions>;
 
   #crc32cHash?: CRC32CValidator = undefined;
   #md5Hash?: Hash = undefined;
-
   #md5Digest = '';
 
   constructor(options: Partial<HashStreamValidatorOptions> = {}) {
@@ -41,6 +44,7 @@ class HashStreamValidator extends Transform {
 
     this.crc32cEnabled = !!options.crc32c;
     this.md5Enabled = !!options.md5;
+    this.options = options;
 
     if (this.crc32cEnabled) {
       const crc32cGenerator =
@@ -54,12 +58,41 @@ class HashStreamValidator extends Transform {
     }
   }
 
-  _flush(callback: () => void) {
+  _flush(callback: (error?: Error | null | undefined) => void) {
     if (this.#md5Hash) {
       this.#md5Digest = this.#md5Hash.digest('base64');
     }
 
-    callback();
+    if (this.options.updateHashesOnly) {
+      callback();
+      return;
+    }
+
+    // If we're doing validation, assume the worst-- a data integrity
+    // mismatch. If not, these tests won't be performed, and we can assume
+    // the best.
+    // We must check if the server decompressed the data on serve because hash
+    // validation is not possible in this case.
+    let failed = this.crc32cEnabled || this.md5Enabled;
+
+    if (this.crc32cEnabled && this.options.crc32cExpectedValue) {
+      failed = !this.test('crc32c', this.options.crc32cExpectedValue);
+    }
+
+    if (this.md5Enabled && this.options.md5ExpectedValue) {
+      failed = !this.test('md5', this.options.md5ExpectedValue);
+    }
+
+    if (failed) {
+      const mismatchError = new RequestError(
+        FileExceptionMessages.DOWNLOAD_MISMATCH
+      );
+      mismatchError.code = 'CONTENT_DOWNLOAD_MISMATCH';
+
+      callback(mismatchError);
+    } else {
+      callback();
+    }
   }
 
   _transform(
