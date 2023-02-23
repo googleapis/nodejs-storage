@@ -33,12 +33,15 @@ interface HashStreamValidatorOptions {
   crc32cExpected?: string;
   /** Sets the expected MD5 value to verify once all data has been consumed. Also sets the `md5` option to `true` */
   md5Expected?: string;
+  /** Indicates whether or not to run a validation check or only update the hash values */
+  updateHashesOnly?: boolean;
 }
 class HashStreamValidator extends Transform {
   readonly crc32cEnabled: boolean;
   readonly md5Enabled: boolean;
-  readonly crc32cExpected = '';
-  readonly md5Expected = '';
+  readonly crc32cExpected: string | undefined;
+  readonly md5Expected: string | undefined;
+  readonly updateHashesOnly: boolean = false;
 
   #crc32cHash?: CRC32CValidator = undefined;
   #md5Hash?: Hash = undefined;
@@ -49,15 +52,10 @@ class HashStreamValidator extends Transform {
 
     this.crc32cEnabled = !!options.crc32c;
     this.md5Enabled = !!options.md5;
-if (options.crc32cExpected) {
-  this.crc32cEnabled = true;
-  this.crc32cExpected = options.crc32cExpected;
-}
+    this.updateHashesOnly = !!options.updateHashesOnly;
+    this.crc32cExpected = options.crc32cExpected;
+    this.md5Expected = options.md5Expected;
 
-if (options.md5Expected) {
-  this.md5Enabled = true;
-  this.md5Expected = options.md5Expected;
-}
     if (this.crc32cEnabled) {
       const crc32cGenerator =
         options.crc32cGenerator || CRC32C_DEFAULT_VALIDATOR_GENERATOR;
@@ -75,6 +73,10 @@ if (options.md5Expected) {
       this.#md5Digest = this.#md5Hash.digest('base64');
     }
 
+    if (this.updateHashesOnly) {
+      callback();
+      return;
+    }
 
     // If we're doing validation, assume the worst-- a data integrity
     // mismatch. If not, these tests won't be performed, and we can assume
@@ -83,11 +85,11 @@ if (options.md5Expected) {
     // validation is not possible in this case.
     let failed = this.crc32cEnabled || this.md5Enabled;
 
-    if (this.crc32cExpected && !failed) {
+    if (this.crc32cEnabled && this.crc32cExpected) {
       failed = !this.test('crc32c', this.crc32cExpected);
     }
 
-    if (this.md5Expected && !failed) {
+    if (this.md5Enabled && this.md5Expected) {
       failed = !this.test('md5', this.md5Expected);
     }
 
