@@ -1386,7 +1386,6 @@ class File extends ServiceObject<File> {
     let validateStream: HashStreamValidator | undefined = undefined;
 
     const throughStream = new PassThroughShim();
-    const hashes: {crc32c?: string; md5?: string} = {};
 
     let crc32c = true;
     let md5 = false;
