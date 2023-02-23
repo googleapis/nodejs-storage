@@ -1445,7 +1445,8 @@ class File extends ServiceObject<File> {
       }
 
       const headers = rawResponseStream.toJSON().headers;
-      isCompressed = headers['content-encoding'] === 'gzip';
+      const isCompressed = headers['content-encoding'] === 'gzip';
+      const hashes: {crc32c?: string; md5?: string} = {};
 
       // The object is safe to validate if:
       // 1. It was stored gzip and returned to us gzip OR
