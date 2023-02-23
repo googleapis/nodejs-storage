@@ -71,10 +71,6 @@ if (options.md5Expected) {
       this.#md5Digest = this.#md5Hash.digest('base64');
     }
 
-    if (this.options.updateHashesOnly) {
-      callback();
-      return;
-    }
 
     // If we're doing validation, assume the worst-- a data integrity
     // mismatch. If not, these tests won't be performed, and we can assume
