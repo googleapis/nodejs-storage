@@ -1388,7 +1388,6 @@ class File extends ServiceObject<File> {
     const throughStream = new PassThroughShim();
     const hashes: {crc32c?: string; md5?: string} = {};
 
-    let isCompressed = true;
     let crc32c = true;
     let md5 = false;
 
