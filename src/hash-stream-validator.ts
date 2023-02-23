@@ -23,12 +23,16 @@ import {
 import {FileExceptionMessages, RequestError} from './file';
 
 interface HashStreamValidatorOptions {
+  /** Enables CRC32C calculation. To validate a provided value use `crc32cExpected`. */
   crc32c: boolean;
+  /** Enables MD5 calculation. To validate a provided value use `md5Expected`. */
   md5: boolean;
+  /** Set a custom CRC32C generator */
   crc32cGenerator: CRC32CValidatorGenerator;
-  crc32cExpectedValue?: string;
-  md5ExpectedValue?: string;
-  updateHashesOnly?: boolean;
+  /** Sets the expected CRC32C value to verify once all data has been consumed. Also sets the `crc32c` option to `true` */
+  crc32cExpected?: string;
+  /** Sets the expected MD5 value to verify once all data has been consumed. Also sets the `md5` option to `true` */
+  md5Expected?: string;
 }
 class HashStreamValidator extends Transform {
   readonly crc32cEnabled: boolean;
