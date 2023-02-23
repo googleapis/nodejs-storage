@@ -45,7 +45,6 @@ class HashStreamValidator extends Transform {
 
     this.crc32cEnabled = !!options.crc32c;
     this.md5Enabled = !!options.md5;
-    this.options = options;
 if (options.crc32cExpected) {
   this.crc32cEnabled = true;
   this.crc32cExpected = options.crc32cExpected;
