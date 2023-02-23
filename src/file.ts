@@ -1915,7 +1915,6 @@ class File extends ServiceObject<File> {
       crc32c,
       md5,
       crc32cGenerator: this.crc32cGenerator,
-      updateHashesOnly: true,
     });
 
     const fileWriteStream = duplexify();
