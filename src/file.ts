@@ -1472,8 +1472,6 @@ class File extends ServiceObject<File> {
         }
 
         validateStream = new HashStreamValidator({
-          crc32c,
-          md5,
           crc32cGenerator: this.crc32cGenerator,
           crc32cExpectedValue: hashes.crc32c,
           md5ExpectedValue: hashes.md5,
