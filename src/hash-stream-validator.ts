@@ -33,7 +33,8 @@ interface HashStreamValidatorOptions {
 class HashStreamValidator extends Transform {
   readonly crc32cEnabled: boolean;
   readonly md5Enabled: boolean;
-  readonly options: Partial<HashStreamValidatorOptions>;
+  readonly crc32cExpected = '';
+  readonly md5Expected = '';
 
   #crc32cHash?: CRC32CValidator = undefined;
   #md5Hash?: Hash = undefined;
