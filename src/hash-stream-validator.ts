@@ -45,7 +45,15 @@ class HashStreamValidator extends Transform {
     this.crc32cEnabled = !!options.crc32c;
     this.md5Enabled = !!options.md5;
     this.options = options;
+if (options.crc32cExpected) {
+  this.crc32cEnabled = true;
+  this.crc32cExpected = options.crc32cExpected;
+}
 
+if (options.md5Expected) {
+  this.md5Enabled = true;
+  this.md5Expected = options.md5Expected;
+}
     if (this.crc32cEnabled) {
       const crc32cGenerator =
         options.crc32cGenerator || CRC32C_DEFAULT_VALIDATOR_GENERATOR;
