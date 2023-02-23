@@ -83,12 +83,12 @@ if (options.md5Expected) {
     // validation is not possible in this case.
     let failed = this.crc32cEnabled || this.md5Enabled;
 
-    if (this.crc32cEnabled && this.options.crc32cExpectedValue) {
-      failed = !this.test('crc32c', this.options.crc32cExpectedValue);
+    if (this.crc32cExpected && !failed) {
+      failed = !this.test('crc32c', this.crc32cExpected);
     }
 
-    if (this.md5Enabled && this.options.md5ExpectedValue) {
-      failed = !this.test('md5', this.options.md5ExpectedValue);
+    if (this.md5Expected && !failed) {
+      failed = !this.test('md5', this.md5Expected);
     }
 
     if (failed) {
