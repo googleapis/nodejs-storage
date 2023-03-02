@@ -113,7 +113,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
       elapsedTimeUs: 0,
       cpuTimeUs: -1,
       status: '[OK]',
-      chunkSize: sizeInBytes
+      chunkSize: sizeInBytes,
     };
 
     const destinationFileName = generateRandomFileName(TEST_NAME_STRING);

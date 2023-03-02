@@ -201,7 +201,7 @@ async function performDownloadManyFilesTest(): Promise<TestResult> {
     elapsedTimeUs: Math.round((end - start) * 1000),
     cpuTimeUs: -1,
     status: '[OK]',
-    chunkSize: creationInfo.totalSizeInBytes
+    chunkSize: creationInfo.totalSizeInBytes,
   };
   return result;
 }
@@ -245,7 +245,7 @@ async function performDownloadFileInChunksTest(): Promise<TestResult> {
     elapsedTimeUs: Math.round((end - start) * 1000),
     cpuTimeUs: -1,
     status: '[OK]',
-    chunkSize: argv.chunksize
+    chunkSize: argv.chunksize,
   };
 
   return result;
