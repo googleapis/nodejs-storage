@@ -16,7 +16,7 @@
 
 import yargs from 'yargs';
 import {promises as fsp, rmSync} from 'fs';
-import {Bucket, DownloadOptions, DownloadResponse, UploadOptions} from '../src';
+import {Bucket, DownloadOptions, DownloadResponse, UploadOptions, UploadResponse} from '../src';
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
@@ -67,6 +67,7 @@ async function main() {
     elapsedTimeUs: 0,
     cpuTimeUs: 0,
     status: '[OK]',
+    chunkSize: 0,
   };
 
   ({bucket} = await performanceTestSetup(argv.projectid, argv.bucket));
@@ -92,7 +93,7 @@ async function uploadInParallel(
   paths: string[],
   options: UploadOptions
 ) {
-  const promises = [];
+  const promises: Promise<UploadResponse>[] = [];
   for (const index in paths) {
     const path = paths[index];
     const stat = await fsp.lstat(path);
@@ -147,6 +148,7 @@ async function performWriteTest(): Promise<TestResult> {
     elapsedTimeUs: Math.round((end - start) * 1000),
     cpuTimeUs: -1,
     status: '[OK]',
+    chunkSize: creationInfo.totalSizeInBytes,
   };
   return result;
 }
@@ -181,6 +183,7 @@ async function performReadTest(): Promise<TestResult> {
     elapsedTimeUs: Math.round((end - start) * 1000),
     cpuTimeUs: -1,
     status: '[OK]',
+    chunkSize: creationInfo.totalSizeInBytes,
   };
 
   rmSync(TEST_NAME_STRING, {recursive: true, force: true});
