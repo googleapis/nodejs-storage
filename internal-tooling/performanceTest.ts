@@ -34,6 +34,7 @@ const CSV_HEADERS =
   'Op,ObjectSize,AppBufferSize,LibBufferSize,Crc32cEnabled,MD5Enabled,ApiName,ElapsedTimeUs,CpuTimeUs,Status\n';
 export const enum TRANSFER_MANAGER_TEST_TYPES {
   WRITE_ONE_READ_THREE = 'w1r3',
+  RANGED_READ = 'ranged',
   TRANSFER_MANAGER_UPLOAD_MANY_FILES = 'tm-upload',
   TRANSFER_MANAGER_DOWNLOAD_MANY_FILES = 'tm-download',
   TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD = 'tm-chunked',
@@ -56,6 +57,7 @@ const argv = yargs(process.argv.slice(2))
       type: 'string',
       choices: [
         TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE,
+        TRANSFER_MANAGER_TEST_TYPES.RANGED_READ,
         TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MANY_FILES,
         TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MANY_FILES,
         TRANSFER_MANAGER_TEST_TYPES.TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD,
@@ -116,7 +118,10 @@ function createWorker() {
     argv.debug
   );
   let testPath = '';
-  if (argv.testtype === TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE) {
+  if (
+    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE ||
+    argv.testtype === TRANSFER_MANAGER_TEST_TYPES.RANGED_READ
+  ) {
     testPath = `${__dirname}/performPerformanceTest.js`;
   } else if (
     argv.testtype ===
@@ -163,7 +168,6 @@ async function recordResult(results: TestResult[] | TestResult) {
   const resultsToAppend: TestResult[] = Array.isArray(results)
     ? results
     : [results];
-
   if (
     argv.filename &&
     argv.format === OUTPUT_FORMATS.CSV &&

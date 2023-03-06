@@ -248,6 +248,7 @@ async function performDownloadFileInChunksTest(): Promise<TestResult> {
     chunkSize: argv.chunksize,
   };
 
+  rmSync(TEST_NAME_STRING, {recursive: true, force: true});
   return result;
 }
 

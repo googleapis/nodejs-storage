@@ -33,11 +33,15 @@ import {
   TestResult,
 } from './performanceUtils';
 import {Bucket} from '../src';
+import {TRANSFER_MANAGER_TEST_TYPES} from './performanceTest';
+import {rmSync} from 'fs';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
 const DEFAULT_NUMBER_OF_READS = 3;
+const DEFAULT_RANGED_READS = 3;
 const DEFAULT_BUCKET_NAME = 'nodejs-perf-metrics';
+const DEFAULT_CHUNK_SIZE_BYTES = 16 * 1024; //16 KiB
 
 let bucket: Bucket;
 const checkType = getValidationType();
@@ -48,6 +52,14 @@ const argv = yargs(process.argv.slice(2))
     small: {type: 'number', default: DEFAULT_SMALL_FILE_SIZE_BYTES},
     large: {type: 'number', default: DEFAULT_LARGE_FILE_SIZE_BYTES},
     projectid: {type: 'string', default: DEFAULT_PROJECT_ID},
+    testtype: {
+      type: 'string',
+      choices: [
+        TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE,
+        TRANSFER_MANAGER_TEST_TYPES.RANGED_READ,
+      ],
+    },
+    chunksize: {type: 'number', default: DEFAULT_CHUNK_SIZE_BYTES},
   })
   .parseSync();
 
@@ -56,8 +68,81 @@ const argv = yargs(process.argv.slice(2))
  * to the parent thread.
  */
 async function main() {
-  const results = await performWriteReadTest();
+  let results: TestResult[] = [];
+
+  ({bucket} = await performanceTestSetup(argv.projectid, argv.bucket));
+
+  switch (argv.testtype) {
+    case TRANSFER_MANAGER_TEST_TYPES.WRITE_ONE_READ_THREE:
+      results = await performWriteReadTest();
+      break;
+    case TRANSFER_MANAGER_TEST_TYPES.RANGED_READ:
+      results = await performRangedReadTest();
+      break;
+    default:
+      break;
+  }
+
   parentPort?.postMessage(results);
+}
+
+/**
+ * Performs an iteration of a ranged read test. Only the last result will be reported.
+ *
+ * @returns {Promise<TestResult[]>} Promise that resolves to an array of test results for the iteration.
+ */
+async function performRangedReadTest(): Promise<TestResult[]> {
+  const results: TestResult[] = [];
+  const fileName = generateRandomFileName(TEST_NAME_STRING);
+  const sizeInBytes = generateRandomFile(
+    fileName,
+    argv.small,
+    argv.large,
+    __dirname
+  );
+  const file = bucket.file(`${fileName}`);
+  const destinationFileName = generateRandomFileName(TEST_NAME_STRING);
+  const destination = path.join(__dirname, destinationFileName);
+
+  const iterationResult: TestResult = {
+    op: 'READ',
+    objectSize: sizeInBytes,
+    appBufferSize: BLOCK_SIZE_IN_BYTES,
+    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32Enabled: false,
+    md5Enabled: false,
+    apiName: 'JSON',
+    elapsedTimeUs: 0,
+    cpuTimeUs: -1,
+    status: '[OK]',
+    chunkSize: argv.chunksize,
+  };
+
+  await bucket.upload(`${__dirname}/${fileName}`);
+  cleanupFile(fileName);
+
+  for (let i = 0; i < DEFAULT_RANGED_READS; i++) {
+    const start = performance.now();
+    console.log('before dl');
+    console.log(destination);
+    await file.download({
+      start: 0,
+      end: argv.chunksize,
+      destination,
+    });
+    console.log('after dl');
+    const end = performance.now();
+    cleanupFile(destinationFileName);
+    console.log('cleanup');
+    iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
+  }
+
+  console.log('done');
+
+  rmSync(TEST_NAME_STRING, {recursive: true, force: true});
+  await file.delete();
+  results.push(iterationResult);
+  return results;
 }
 
 /**
@@ -69,8 +154,6 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
   const fileName = generateRandomFileName(TEST_NAME_STRING);
   const sizeInBytes = generateRandomFile(fileName, argv.small, argv.large);
-
-  ({bucket} = await performanceTestSetup(argv.projectid, argv.bucket));
 
   for (let j = 0; j < DEFAULT_NUMBER_OF_WRITES; j++) {
     let start = 0;
@@ -128,7 +211,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
     results.push(iterationResult);
   }
 
-  cleanupFile(fileName);
+  rmSync(TEST_NAME_STRING, {recursive: true, force: true});
 
   return results;
 }

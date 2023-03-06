@@ -267,7 +267,7 @@ export async function* convertToCloudMonitoringFormat(
     generation="",\
     upload_id="",\
     retry_count="",\
-    status_code=""} ${throughput}`;
+    status_code="${curResult.status}"} ${throughput}`;
   }
 }
 
