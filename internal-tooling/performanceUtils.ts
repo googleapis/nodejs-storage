@@ -18,15 +18,36 @@ import {execSync} from 'child_process';
 import {mkdirSync, mkdtempSync, unlinkSync} from 'fs';
 import * as path from 'path';
 import {Bucket, Storage, TransferManager} from '../src';
+import * as yargs from 'yargs';
 
 export const BLOCK_SIZE_IN_BYTES = 1024;
-export const DEFAULT_SMALL_FILE_SIZE_BYTES = 5120;
-export const DEFAULT_LARGE_FILE_SIZE_BYTES = 2.147e9;
 export const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
 export const DEFAULT_DIRECTORY_PROBABILITY = 0.1;
-export const DEFAULT_PROJECT_ID = 'GCS_NODE_PERFORMANCE_METRICS';
 export const DEFAULT_NUMBER_OF_OBJECTS = 1000;
+export const enum OUTPUT_FORMATS {
+  CSV = 'cloud-monitoring-csv',
+  CLOUD_MONITORING = 'cloud-monitoring',
+}
+export const enum PERFORMANCE_TEST_TYPES {
+  WRITE_ONE_READ_THREE = 'w1r3',
+  RANGED_READ = 'ranged',
+  TRANSFER_MANAGER_UPLOAD_MANY_FILES = 'tm-upload',
+  TRANSFER_MANAGER_DOWNLOAD_MANY_FILES = 'tm-download',
+  TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD = 'tm-chunked',
+  APPLICATION_LARGE_FILE_DOWNLOAD = 'application-large',
+  APPLICATION_UPLOAD_MULTIPLE_OBJECTS = 'application-upload',
+  APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS = 'application-download',
+}
+const enum APIS {
+  JSON = 'json',
+}
+const DEFAULT_SAMPLES = 8000;
+const DEFAULT_WORKERS = 16;
 const SSB_SIZE_THRESHOLD_BYTES = 1048576;
+const DEFAULT_OBJECT_RANGE_SIZE_BYTES = '1048576..1048576';
+const DEFAULT_RANGE_READ_SIZE_BYTES = 0; //0 means read the full object
+const DEFAULT_MINIMUM_READ_OFFSET_BYTES = 0;
+const DEFAULT_MAXIMUM_READ_OFFSET_BYTES = 0;
 
 export interface TestResult {
   op: string;
@@ -40,7 +61,82 @@ export interface TestResult {
   cpuTimeUs: number;
   status: '[OK]';
   chunkSize: number;
+  workers: number;
 }
+
+export interface Arguments {
+  project?: string;
+  bucket?: string;
+  output_type: OUTPUT_FORMATS;
+  samples: number;
+  workers: number;
+  api: APIS;
+  object_size: string;
+  range_read_size: number;
+  minimum_read_offset: number;
+  maximum_read_offset: number;
+  debug: boolean;
+  file_name: string | undefined;
+  num_objects: number;
+  test_type: PERFORMANCE_TEST_TYPES;
+}
+
+export const performanceTestCommand: yargs.CommandModule<{}, Arguments> = {
+  command: 'performance-test',
+  builder(yargs) {
+    return yargs
+      .option('project', {type: 'string', demand: true})
+      .option('bucket', {type: 'string', demand: true})
+      .option('output_type', {
+        type: 'string',
+        choices: [OUTPUT_FORMATS.CSV, OUTPUT_FORMATS.CLOUD_MONITORING],
+        default: OUTPUT_FORMATS.CLOUD_MONITORING,
+      })
+      .option('samples', {type: 'number', default: DEFAULT_SAMPLES})
+      .option('workers', {type: 'number', default: DEFAULT_WORKERS})
+      .option('api', {
+        type: 'string',
+        choices: [APIS.JSON],
+        default: APIS.JSON,
+      })
+      .option('object_size', {
+        type: 'string',
+        default: DEFAULT_OBJECT_RANGE_SIZE_BYTES,
+      })
+      .option('range_read_size', {
+        type: 'number',
+        default: DEFAULT_RANGE_READ_SIZE_BYTES,
+      })
+      .option('minimum_read_offset', {
+        type: 'number',
+        default: DEFAULT_MINIMUM_READ_OFFSET_BYTES,
+      })
+      .option('maximum_read_offset', {
+        type: 'number',
+        default: DEFAULT_MAXIMUM_READ_OFFSET_BYTES,
+      })
+      .option('debug', {type: 'boolean', default: false})
+      .option('file_name', {type: 'string'})
+      .option('num_objects', {
+        type: 'number',
+        default: DEFAULT_NUMBER_OF_OBJECTS,
+      })
+      .option('test_type', {
+        type: 'string',
+        choices: [
+          PERFORMANCE_TEST_TYPES.WRITE_ONE_READ_THREE,
+          PERFORMANCE_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MANY_FILES,
+          PERFORMANCE_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MANY_FILES,
+          PERFORMANCE_TEST_TYPES.TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD,
+          PERFORMANCE_TEST_TYPES.APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS,
+          PERFORMANCE_TEST_TYPES.APPLICATION_LARGE_FILE_DOWNLOAD,
+          PERFORMANCE_TEST_TYPES.APPLICATION_UPLOAD_MULTIPLE_OBJECTS,
+        ],
+        default: PERFORMANCE_TEST_TYPES.WRITE_ONE_READ_THREE,
+      });
+  },
+  async handler() {},
+};
 
 export interface RandomDirectoryCreationInformation {
   paths: string[];
@@ -111,8 +207,12 @@ export function generateRandomFileName(baseName: string): string {
  */
 export function generateRandomFile(
   fileName: string,
-  fileSizeLowerBoundBytes: number = DEFAULT_SMALL_FILE_SIZE_BYTES,
-  fileSizeUpperBoundBytes: number = DEFAULT_LARGE_FILE_SIZE_BYTES,
+  fileSizeLowerBoundBytes: number = getLowHighFileSize(
+    DEFAULT_OBJECT_RANGE_SIZE_BYTES
+  ).low,
+  fileSizeUpperBoundBytes: number = getLowHighFileSize(
+    DEFAULT_OBJECT_RANGE_SIZE_BYTES
+  ).high,
   currentDirectory: string = mkdtempSync(randomString())
 ): number {
   const fileSizeBytes = randomInteger(
@@ -140,8 +240,12 @@ export function generateRandomFile(
 export function generateRandomDirectoryStructure(
   maxObjects: number,
   baseName: string,
-  fileSizeLowerBoundBytes: number = DEFAULT_SMALL_FILE_SIZE_BYTES,
-  fileSizeUpperBoundBytes: number = DEFAULT_LARGE_FILE_SIZE_BYTES,
+  fileSizeLowerBoundBytes: number = getLowHighFileSize(
+    DEFAULT_OBJECT_RANGE_SIZE_BYTES
+  ).low,
+  fileSizeUpperBoundBytes: number = getLowHighFileSize(
+    DEFAULT_OBJECT_RANGE_SIZE_BYTES
+  ).high,
   directoryProbability: number = DEFAULT_DIRECTORY_PROBABILITY
 ): RandomDirectoryCreationInformation {
   let curPath = baseName;
@@ -267,6 +371,7 @@ export async function* convertToCloudMonitoringFormat(
     generation="",\
     upload_id="",\
     retry_count="",\
+    workers="${curResult.workers}",\
     status_code="${curResult.status}"} ${throughput}`;
   }
 }
@@ -298,4 +403,22 @@ export function log(
   if (shouldLog) {
     isError ? console.error(messageOrError) : console.log(messageOrError);
   }
+}
+
+/**
+ * Converts the provided rangeSize from string format to an object containing the low and high size values.
+ *
+ * @param {string} rangeSize a string in the format low..high.
+ *
+ * @returns {object} An object containing integers low and high.
+ */
+export function getLowHighFileSize(rangeSize: string): {
+  low: number;
+  high: number;
+} {
+  const split = rangeSize.split('..');
+  return {
+    low: parseInt(split[0]),
+    high: parseInt(split[1]),
+  };
 }
