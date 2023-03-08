@@ -124,20 +124,20 @@ async function recordResult(results: TestResult[] | TestResult) {
     : [results];
   if (
     argv.file_name &&
-    argv.format === OUTPUT_FORMATS.CSV &&
+    argv.output_type === OUTPUT_FORMATS.CSV &&
     !existsSync(argv.file_name)
   ) {
     await writeFile(argv.file_name, CSV_HEADERS);
   }
 
-  if (argv.format === OUTPUT_FORMATS.CSV) {
+  if (argv.output_type === OUTPUT_FORMATS.CSV) {
     argv.file_name
       ? await appendFile(
           argv.file_name,
           `${convertToCSVFormat(resultsToAppend)}\n`
         )
       : log(convertToCSVFormat(resultsToAppend), true);
-  } else if (argv.format === OUTPUT_FORMATS.CLOUD_MONITORING) {
+  } else if (argv.output_type === OUTPUT_FORMATS.CLOUD_MONITORING) {
     for await (const outputString of convertToCloudMonitoringFormat(
       resultsToAppend,
       argv.bucket!
