@@ -38,7 +38,7 @@ import {rmSync} from 'fs';
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
 const DEFAULT_NUMBER_OF_READS = 3;
-const DEFAULT_RANGED_READS = 3;
+const DEFAULT_RANGE_READS = 3;
 
 let bucket: Bucket;
 const checkType = getValidationType();
@@ -60,7 +60,7 @@ async function main() {
     case PERFORMANCE_TEST_TYPES.WRITE_ONE_READ_THREE:
       results = await performWriteReadTest();
       break;
-    case PERFORMANCE_TEST_TYPES.RANGED_READ:
+    case PERFORMANCE_TEST_TYPES.RANGE_READ:
       results = await performRangedReadTest();
       break;
     default:
@@ -107,7 +107,7 @@ async function performRangedReadTest(): Promise<TestResult[]> {
   await bucket.upload(`${__dirname}/${fileName}`);
   cleanupFile(fileName);
 
-  for (let i = 0; i < DEFAULT_RANGED_READS; i++) {
+  for (let i = 0; i < DEFAULT_RANGE_READS; i++) {
     const start = performance.now();
     await file.download({
       start: 0,

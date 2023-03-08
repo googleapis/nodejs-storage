@@ -30,7 +30,7 @@ export const enum OUTPUT_FORMATS {
 }
 export const enum PERFORMANCE_TEST_TYPES {
   WRITE_ONE_READ_THREE = 'w1r3',
-  RANGED_READ = 'ranged',
+  RANGE_READ = 'range-read',
   TRANSFER_MANAGER_UPLOAD_MANY_FILES = 'tm-upload',
   TRANSFER_MANAGER_DOWNLOAD_MANY_FILES = 'tm-download',
   TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD = 'tm-chunked',

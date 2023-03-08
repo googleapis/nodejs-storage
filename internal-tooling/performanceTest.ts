@@ -75,7 +75,7 @@ function createWorker() {
   let testPath = '';
   if (
     argv.test_type === PERFORMANCE_TEST_TYPES.WRITE_ONE_READ_THREE ||
-    argv.test_type === PERFORMANCE_TEST_TYPES.RANGED_READ
+    argv.test_type === PERFORMANCE_TEST_TYPES.RANGE_READ
   ) {
     testPath = `${__dirname}/performPerformanceTest.js`;
   } else if (
