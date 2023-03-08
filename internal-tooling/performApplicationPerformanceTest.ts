@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import yargs from 'yargs';
+const yargs = require('yargs');
 import {promises as fsp, rmSync} from 'fs';
 import {
   Bucket,

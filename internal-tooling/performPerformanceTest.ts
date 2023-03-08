@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import yargs from 'yargs';
+const yargs = require('yargs');
 import {performance} from 'perf_hooks';
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';

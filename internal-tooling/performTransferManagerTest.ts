@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+const yargs = require('yargs');
 // eslint-disable-next-line node/no-unsupported-features/node-builtins
 import {parentPort} from 'worker_threads';
-import yargs from 'yargs';
 import {Bucket, TransferManager} from '../src';
 import {
   BLOCK_SIZE_IN_BYTES,
