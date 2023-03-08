@@ -24,23 +24,27 @@ export const BLOCK_SIZE_IN_BYTES = 1024;
 export const NODE_DEFAULT_HIGHWATER_MARK_BYTES = 16384;
 export const DEFAULT_DIRECTORY_PROBABILITY = 0.1;
 export const DEFAULT_NUMBER_OF_OBJECTS = 1000;
-export const enum OUTPUT_FORMATS {
-  CSV = 'cloud-monitoring-csv',
-  CLOUD_MONITORING = 'cloud-monitoring',
-}
-export const enum PERFORMANCE_TEST_TYPES {
-  WRITE_ONE_READ_THREE = 'w1r3',
-  RANGE_READ = 'range-read',
-  TRANSFER_MANAGER_UPLOAD_MANY_FILES = 'tm-upload',
-  TRANSFER_MANAGER_DOWNLOAD_MANY_FILES = 'tm-download',
-  TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD = 'tm-chunked',
-  APPLICATION_LARGE_FILE_DOWNLOAD = 'application-large',
-  APPLICATION_UPLOAD_MULTIPLE_OBJECTS = 'application-upload',
-  APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS = 'application-download',
-}
-const enum APIS {
-  JSON = 'json',
-}
+
+export const OUTPUT_FORMATS = {
+  CSV: 'cloud-monitoring-csv',
+  CLOUD_MONITORING: 'cloud-monitoring',
+} as const;
+
+export const PERFORMANCE_TEST_TYPES = {
+  WRITE_ONE_READ_THREE: 'w1r3',
+  RANGE_READ: 'range-read',
+  TRANSFER_MANAGER_UPLOAD_MANY_FILES: 'tm-upload',
+  TRANSFER_MANAGER_DOWNLOAD_MANY_FILES: 'tm-download',
+  TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD: 'tm-chunked',
+  APPLICATION_LARGE_FILE_DOWNLOAD: 'application-large',
+  APPLICATION_UPLOAD_MULTIPLE_OBJECTS: 'application-upload',
+  APPLICATION_DOWNLOAD_MULTIPLE_OBJECTS: 'application-download',
+} as const;
+
+const APIS = {
+  JSON: 'json',
+} as const;
+
 const DEFAULT_SAMPLES = 8000;
 const DEFAULT_WORKERS = 16;
 const SSB_SIZE_THRESHOLD_BYTES = 1048576;
@@ -67,10 +71,10 @@ export interface TestResult {
 export interface Arguments {
   project?: string;
   bucket?: string;
-  output_type: OUTPUT_FORMATS;
+  output_type: string;
   samples: number;
   workers: number;
-  api: APIS;
+  api: string;
   object_size: string;
   range_read_size: number;
   minimum_read_offset: number;
@@ -78,7 +82,7 @@ export interface Arguments {
   debug: boolean;
   file_name: string | undefined;
   num_objects: number;
-  test_type: PERFORMANCE_TEST_TYPES;
+  test_type: string;
 }
 
 export const performanceTestCommand: yargs.CommandModule<{}, Arguments> = {
