@@ -137,7 +137,8 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   const sizeInBytes = generateRandomFile(
     fileName,
     fileSizeRange.low,
-    fileSizeRange.high
+    fileSizeRange.high,
+    __dirname
   );
 
   for (let j = 0; j < DEFAULT_NUMBER_OF_WRITES; j++) {
