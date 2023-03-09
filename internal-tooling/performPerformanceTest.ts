@@ -134,6 +134,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
   const results: TestResult[] = [];
   const fileSizeRange = getLowHighFileSize(argv.object_size);
   const fileName = generateRandomFileName(TEST_NAME_STRING);
+  const file = bucket.file(`${fileName}`);
   const sizeInBytes = generateRandomFile(
     fileName,
     fileSizeRange.low,
@@ -168,24 +169,24 @@ async function performWriteReadTest(): Promise<TestResult[]> {
     results.push(iterationResult);
   }
 
+  const iterationResult: TestResult = {
+    op: 'READ',
+    objectSize: sizeInBytes,
+    appBufferSize: BLOCK_SIZE_IN_BYTES,
+    libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32Enabled: checkType === 'crc32c',
+    md5Enabled: checkType === 'md5',
+    apiName: 'JSON',
+    elapsedTimeUs: 0,
+    cpuTimeUs: -1,
+    status: '[OK]',
+    chunkSize: sizeInBytes,
+    workers: argv.workers,
+  };
+
   for (let j = 0; j < DEFAULT_NUMBER_OF_READS; j++) {
     let start = 0;
     let end = 0;
-    const file = bucket.file(`${fileName}`);
-    const iterationResult: TestResult = {
-      op: `READ[${j}]`,
-      objectSize: sizeInBytes,
-      appBufferSize: BLOCK_SIZE_IN_BYTES,
-      libBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
-      crc32Enabled: checkType === 'crc32c',
-      md5Enabled: checkType === 'md5',
-      apiName: 'JSON',
-      elapsedTimeUs: 0,
-      cpuTimeUs: -1,
-      status: '[OK]',
-      chunkSize: sizeInBytes,
-      workers: argv.workers,
-    };
 
     const destinationFileName = generateRandomFileName(TEST_NAME_STRING);
     const destination = path.join(__dirname, destinationFileName);
@@ -196,11 +197,11 @@ async function performWriteReadTest(): Promise<TestResult[]> {
 
     cleanupFile(destinationFileName);
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
-    results.push(iterationResult);
   }
 
   rmSync(TEST_NAME_STRING, {recursive: true, force: true});
-
+  await file.delete();
+  results.push(iterationResult);
   return results;
 }
 
