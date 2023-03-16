@@ -33,7 +33,6 @@ import {
   TestResult,
 } from './performanceUtils';
 import {Bucket} from '../src';
-import {rmSync} from 'fs';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
 const DEFAULT_NUMBER_OF_WRITES = 1;
