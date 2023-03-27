@@ -29,7 +29,7 @@ import {
   SignerExceptionMessages,
 } from '../src/signer';
 import {encodeURI, formatAsUTCISO, qsStringify} from '../src/util';
-import {ExceptionMessages} from '../src/storage';
+import {Storage, ExceptionMessages} from '../src/storage';
 import {OutgoingHttpHeaders} from 'http';
 
 interface SignedUrlArgs {
@@ -56,7 +56,7 @@ describe('signer', () => {
     let bucket: BucketI;
     let file: FileI;
 
-    const NOW = new Date('2019-03-18T00:00:00Z');
+    const NOW = new Date('2019-03-18T00:00:00.999Z');
     let fakeTimers: sinon.SinonFakeTimers;
 
     beforeEach(() => (fakeTimers = sinon.useFakeTimers(NOW)));
@@ -554,7 +554,7 @@ describe('signer', () => {
         signer = new URLSigner(authClient, bucket, file);
         CONFIG = {
           method: 'GET',
-          expiration: Math.floor((NOW.valueOf() + 2000) / 1000),
+          expiration: (NOW.valueOf() + 2000) / 1000,
           bucket: bucket.name,
         };
       });
@@ -569,6 +569,52 @@ describe('signer', () => {
           },
           {
             message: `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`,
+          }
+        );
+      });
+
+      it('should not throw with expiration of exactly 7 days', async () => {
+        const file = new Storage({
+          projectId: 'xxxx',
+          credentials: {
+            type: 'service_account',
+            private_key: crypto.generateKeyPairSyn c('rsa', {
+              modulusLength: 512,
+              publicKeyEncoding: {
+                type: 'spki',
+                format: 'pem',
+              },
+              privateKeyEncoding: {
+                type: 'pkcs8',
+                format: 'pem',
+              },
+            }).privateKey,
+            client_email: 'xxxx',
+            client_id: 'xxx',
+          },
+        })
+          .bucket(BUCKET_NAME)
+          .file(FILE_NAME);
+        const ACCESSIBLE_AT = NOW.valueOf();
+        const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
+        const SEVEN_DAYS_IN_MS = SEVEN_DAYS_IN_SECONDS * 1000;
+        await assert.doesNotReject(
+          async () => {
+            await file.getSignedUrl({
+              version: 'v4',
+              action: 'read',
+              accessibleAt: ACCESSIBLE_AT,
+              expires: ACCESSIBLE_AT + SEVEN_DAYS_IN_MS,
+              virtualHostedStyle: true,
+            });
+          },
+          err => {
+            assert(err instanceof Error);
+            assert.strictEqual(
+              err.message,
+              `Max allowed expiration is seven days (${SEVEN_DAYS_IN_SECONDS} seconds).`
+            );
+            return true;
           }
         );
       });
@@ -988,7 +1034,7 @@ describe('signer', () => {
 
       it('returns expiration date in seconds', () => {
         const expires = signer.parseExpires(NOW);
-        assert.strictEqual(expires, Math.round(NOW.valueOf() / 1000));
+        assert.strictEqual(expires, Math.floor(NOW.valueOf() / 1000));
       });
     });
   });
