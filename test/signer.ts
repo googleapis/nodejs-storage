@@ -578,7 +578,7 @@ describe('signer', () => {
           projectId: 'xxxx',
           credentials: {
             type: 'service_account',
-            private_key: crypto.generateKeyPairSyn c('rsa', {
+            private_key: crypto.generateKeyPairSync('rsa', {
               modulusLength: 512,
               publicKeyEncoding: {
                 type: 'spki',
