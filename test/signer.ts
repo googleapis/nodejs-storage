@@ -29,7 +29,7 @@ import {
   SignerExceptionMessages,
 } from '../src/signer';
 import {encodeURI, formatAsUTCISO, qsStringify} from '../src/util';
-import {Storage, ExceptionMessages} from '../src/storage';
+import {ExceptionMessages} from '../src/storage';
 import {OutgoingHttpHeaders} from 'http';
 
 interface SignedUrlArgs {
@@ -574,38 +574,16 @@ describe('signer', () => {
       });
 
       it('should not throw with expiration of exactly 7 days', async () => {
-        const file = new Storage({
-          projectId: 'xxxx',
-          credentials: {
-            type: 'service_account',
-            private_key: crypto.generateKeyPairSync('rsa', {
-              modulusLength: 512,
-              publicKeyEncoding: {
-                type: 'spki',
-                format: 'pem',
-              },
-              privateKeyEncoding: {
-                type: 'pkcs8',
-                format: 'pem',
-              },
-            }).privateKey,
-            client_email: 'xxxx',
-            client_id: 'xxx',
-          },
-        })
-          .bucket(BUCKET_NAME)
-          .file(FILE_NAME);
         const ACCESSIBLE_AT = NOW.valueOf();
         const SEVEN_DAYS_IN_SECONDS = 7 * 24 * 60 * 60;
         const SEVEN_DAYS_IN_MS = SEVEN_DAYS_IN_SECONDS * 1000;
         await assert.doesNotReject(
           async () => {
-            await file.getSignedUrl({
-              version: 'v4',
-              action: 'read',
-              accessibleAt: ACCESSIBLE_AT,
+            await signer.getSignedUrl({
+              method: 'GET',
               expires: ACCESSIBLE_AT + SEVEN_DAYS_IN_MS,
-              virtualHostedStyle: true,
+              accessibleAt: ACCESSIBLE_AT,
+              version: 'v4',
             });
           },
           err => {
