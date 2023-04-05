@@ -170,6 +170,7 @@ async function performWriteReadTest(): Promise<TestResult[]> {
 
     iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
     results.push(iterationResult);
+    cleanupFile(fileName);
   }
 
   const iterationResult: TestResult = {
