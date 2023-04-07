@@ -143,6 +143,10 @@ export interface UploadConfig {
 
   /**
    * The starting byte of the upload stream, for resuming an interrupted upload.
+   *
+   * If the provided stream is resuming from where the initial stream left off, consider
+   * setting `resumeFromOffset: true`.
+   *
    * See
    * https://cloud.google.com/storage/docs/json_api/v1/how-tos/resumable-upload#resume-upload.
    */
@@ -175,6 +179,16 @@ export interface UploadConfig {
    * 'publicRead')
    */
   public?: boolean;
+
+  /**
+   * Determines if the provided stream to upload is a continuation of a previous
+   * upload (e.g. partial/remaining stream) or a restart of a previous upload
+   * (a stream containing the entire object).
+   *
+   * If this is `true` and if the `offset` is not provided, it will be calculated
+   * by checking the `uri`.
+   */
+  resumeFromOffset?: boolean;
 
   /**
    * If you already have a resumable URI from a previously-created resumable
@@ -331,7 +345,11 @@ export class Upload extends Writable {
     const autoRetry = cfg.retryOptions.autoRetry;
     this.uriProvidedManually = !!cfg.uri;
     this.uri = cfg.uri;
-    this.numBytesWritten = 0;
+
+    if (cfg.resumeFromOffset && this.offset) {
+      this.numBytesWritten = this.offset;
+    }
+
     this.numRetries = 0; // counter for number of retries currently executed
     if (!autoRetry) {
       cfg.retryOptions.maxRetries = 0;
@@ -346,7 +364,7 @@ export class Upload extends Writable {
 
     this.once('writing', () => {
       if (this.uri) {
-        this.continueUploading();
+        this.continueUploading(cfg.resumeFromOffset);
       } else {
         this.createURI(err => {
           if (err) {
@@ -623,13 +641,19 @@ export class Upload extends Writable {
     return uri;
   }
 
-  private async continueUploading() {
-    if (typeof this.offset === 'number') {
-      this.startUploading();
-      return;
+  /**
+   *
+   * @param resumeFromOffset if `true`, set `numBytesWritten` to offset
+   * @returns
+   */
+  private async continueUploading(resumeFromOffset = false) {
+    this.offset ?? (await this.getAndSetOffset());
+
+    if (resumeFromOffset) {
+      this.numBytesWritten = this.offset ?? 0;
     }
-    await this.getAndSetOffset();
-    this.startUploading();
+
+    return this.startUploading();
   }
 
   async startUploading() {

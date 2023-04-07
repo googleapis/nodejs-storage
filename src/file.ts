@@ -1882,7 +1882,12 @@ class File extends ServiceObject<File> {
       md5 = options.validation === 'md5';
     } else if (options.validation === false) {
       crc32c = false;
+    } else if (options.offset) {
+      // TODO: check for provided offset
+      // if available,
     }
+
+    // offset
 
     /**
      * A callback for determining when the underlying pipeline is complete.
@@ -1910,13 +1915,6 @@ class File extends ServiceObject<File> {
     });
 
     const emitStream = new PassThroughShim();
-    const hashCalculatingStream = new HashStreamValidator({
-      crc32c,
-      md5,
-      crc32cGenerator: this.crc32cGenerator,
-      updateHashesOnly: true,
-    });
-
     const fileWriteStream = duplexify();
     let fileWriteStreamMetadataReceived = false;
 
@@ -1929,17 +1927,38 @@ class File extends ServiceObject<File> {
       fileWriteStreamMetadataReceived = true;
     });
 
-    writeStream.on('writing', () => {
+    writeStream.on('writing', async () => {
       if (options.resumable === false) {
         this.startSimpleUpload_(fileWriteStream, options);
       } else {
         this.startResumableUpload_(fileWriteStream, options);
       }
 
+      const transformStreams: Transform[] = [];
+      if (gzip) {
+        transformStreams.push(new PassThrough());
+      }
+
+      let hashCalculatingStream: HashStreamValidator | null = null;
+      if (crc32c || md5) {
+        // if offset
+        // - if md5 -> error
+        // - if crc32cResume -> set for init HSV value
+        // - if !crc32cResume -> query for current crc32c for init HSV value
+
+        hashCalculatingStream = new HashStreamValidator({
+          crc32c,
+          md5,
+          crc32cGenerator: this.crc32cGenerator,
+          updateHashesOnly: true,
+        });
+
+        transformStreams.push(hashCalculatingStream);
+      }
+
       pipeline(
         emitStream,
-        gzip ? zlib.createGzip() : new PassThrough(),
-        hashCalculatingStream,
+        ...(transformStreams as [Transform]),
         fileWriteStream,
         async e => {
           if (e) {
@@ -1961,7 +1980,13 @@ class File extends ServiceObject<File> {
           }
 
           try {
-            await this.#validateIntegrity(hashCalculatingStream, {crc32c, md5});
+            if (hashCalculatingStream) {
+              await this.#validateIntegrity(hashCalculatingStream, {
+                crc32c,
+                md5,
+              });
+            }
+
             pipelineCallback();
           } catch (e) {
             pipelineCallback(e as Error);
@@ -2040,7 +2065,7 @@ class File extends ServiceObject<File> {
    * const file = myBucket.file('my-file');
    *
    * //-
-   * // Download a file into memory. The contents will be available as the
+   * // Download a file into memory. The contents will be available fhe
    * second
    * // argument in the demonstration below, `contents`.
    * //-
