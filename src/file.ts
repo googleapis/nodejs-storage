@@ -2065,7 +2065,7 @@ class File extends ServiceObject<File> {
    * const file = myBucket.file('my-file');
    *
    * //-
-   * // Download a file into memory. The contents will be available fhe
+   * // Download a file into memory. The contents will be available as the
    * second
    * // argument in the demonstration below, `contents`.
    * //-
