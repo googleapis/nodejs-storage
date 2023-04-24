@@ -357,6 +357,26 @@ describe('resumable-upload', () => {
       assert.strictEqual(up.chunkSize, 123);
     });
 
+    it('should have a default `writableHighWaterMark`', () => {
+      const up = upload({
+        bucket: BUCKET,
+        file: FILE,
+        retryOptions: RETRY_OPTIONS,
+      });
+
+      assert(up.writableHighWaterMark);
+    });
+
+    it('should accept a `highWaterMark` and set a `writableHighWaterMark`', () => {
+      const up = upload({
+        bucket: BUCKET,
+        file: FILE,
+        retryOptions: RETRY_OPTIONS,
+        highWaterMark: 123,
+      });
+      assert.strictEqual(up.writableHighWaterMark, 123);
+    });
+
     describe('on write', () => {
       let uri = '';
 
@@ -719,10 +739,12 @@ describe('resumable-upload', () => {
   });
 
   describe('#upstreamIterator', () => {
-    it('should yield all data from upstream by default', done => {
+    it('should request up to the highwatermark by default', done => {
       up.upstreamChunkBuffer = Buffer.alloc(1);
+      assert(up.writableHighWaterMark);
+
       up.pullFromChunkBuffer = (limit: number) => {
-        assert.equal(limit, Infinity);
+        assert.equal(limit, up.writableHighWaterMark);
         done();
       };
 
@@ -755,7 +777,7 @@ describe('resumable-upload', () => {
       assert.equal(data.byteLength, 8);
     });
 
-    it('should yield many, arbitrarily sized chunks by default', async () => {
+    it('should yield many, arbitrarily sized chunks', async () => {
       up.waitForNextChunk = () => true;
       up.pullFromChunkBuffer = () => Buffer.from('a');
 
@@ -769,22 +791,6 @@ describe('resumable-upload', () => {
 
       assert.equal(data.toString(), 'a'.repeat(16));
       assert.equal(count, 16);
-    });
-
-    it('should yield one single chunk if `oneChunkMode`', async () => {
-      up.waitForNextChunk = () => true;
-      up.pullFromChunkBuffer = () => Buffer.from('b');
-
-      let data = Buffer.alloc(0);
-      let count = 0;
-
-      for await (const {chunk} of up.upstreamIterator(16, true)) {
-        data = Buffer.concat([data, chunk]);
-        count++;
-      }
-
-      assert.equal(data.toString(), 'b'.repeat(16));
-      assert.equal(count, 1);
     });
   });
 
@@ -2162,7 +2168,7 @@ describe('resumable-upload', () => {
           assert.strictEqual(request.opts.method, 'PUT');
           assert.strictEqual(request.opts.url, uri);
 
-          // We should be writing multiple chunks down the wire
+          // We should be writing multiple buffers down the wire
           assert(request.chunkWritesInRequest > 1);
 
           assert.equal(request.dataReceived, CONTENT_LENGTH);
@@ -2324,8 +2330,9 @@ describe('resumable-upload', () => {
             assert.strictEqual(request.opts.method, 'PUT');
             assert.strictEqual(request.opts.url, uri);
 
-            // We should be writing 1, single chunk down the wire
-            assert.strictEqual(request.chunkWritesInRequest, 1);
+            // We should be writing N buffers down the wire, although
+            // the request is "1 chunk"
+            assert(request.chunkWritesInRequest >= 1);
 
             if (requests.length - i === 1) {
               // The last chunk
@@ -2445,7 +2452,7 @@ describe('resumable-upload', () => {
           assert.strictEqual(request.opts.method, 'PUT');
           assert.strictEqual(request.opts.url, uri);
 
-          // We should be writing multiple chunks down the wire
+          // No data should be written
           assert(request.chunkWritesInRequest === 0);
 
           assert.equal(request.dataReceived, CONTENT_LENGTH);
