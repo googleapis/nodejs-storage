@@ -26,12 +26,14 @@ import {
   FileOptions,
   IdempotencyStrategy,
   UploadOptions,
+  XMLMultiPartUploadHelper,
 } from '../src';
 import * as assert from 'assert';
 import * as path from 'path';
 import * as stream from 'stream';
 import * as extend from 'extend';
 import * as fs from 'fs';
+import * as sinon from 'sinon';
 
 const fakeUtil = Object.assign({}, util);
 fakeUtil.noop = util.noop;
@@ -49,6 +51,12 @@ class FakeAcl {
   calledWith_: Array<{}>;
   constructor(...args: Array<{}>) {
     this.calledWith_ = args;
+  }
+}
+
+class FakeXMLMPUHelper {
+  constructor() {
+    console.log("I WAS CALLED");
   }
 }
 
@@ -92,6 +100,9 @@ class HTTPError extends Error {
 let pLimitOverride: Function | null;
 const fakePLimit = (limit: number) => (pLimitOverride || pLimit)(limit);
 const fakeFs = extend(true, {}, fs, {
+  createReadStream() {
+    console.log('called');
+  },
   get promises() {
     return {
       open: () => {
@@ -303,6 +314,21 @@ describe('Transfer Manager', () => {
 
       await transferManager.downloadFileInChunks(file, {validation: 'crc32c'});
       assert.strictEqual(callCount, 1);
+    });
+  });
+
+  describe('uploadFileInChunks', () => {
+    before(() => {
+      sinon.createSandbox();
+      //sinon.spy(XMLMultiPartUploadHelper, 'prototype');
+    });
+    after(() => {
+      sinon.restore();
+    });
+    it.only('should call createReadStream with a highWaterMark equal to chunkSize', async () => {
+      await transferManager.uploadFileInChunks('/a/b/c.txt', {
+        chunkSize: 32 * 1024 * 1024,
+      });
     });
   });
 });
