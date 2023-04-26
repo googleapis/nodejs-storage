@@ -415,8 +415,9 @@ export class Upload extends Writable {
   }
 
   /**
+   * Prepends the local buffer to write buffer and resets it.
    *
-   * @param keepLastBytes
+   * @param keepLastBytes number of bytes to keep from the end of the local buffer.
    */
   private prependLocalBufferToUpstream(keepLastBytes?: number) {
     // Typically, the upstream write buffers should be smaller than the local
