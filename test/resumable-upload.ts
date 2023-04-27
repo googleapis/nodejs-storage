@@ -467,7 +467,6 @@ describe('resumable-upload', () => {
     it('should handle writes to class', done => {
       up.on('wroteToChunkBuffer', () => {
         assert.equal(up.writeBuffers[0].byteLength, 16);
-        assert.equal(up.bufferEncoding, 'buffer');
         done();
       });
 
@@ -531,12 +530,13 @@ describe('resumable-upload', () => {
       const concat = existing + sample;
 
       up.writeBuffers = [Buffer.from(existing)];
-      assert.equal(up.bufferEncoding, undefined);
 
       up.write(sample, 'utf-8', () => {});
 
+      for (const buf of up.writeBuffers) {
+        assert(Buffer.isBuffer(buf));
+      }
       assert.equal(Buffer.concat(up.writeBuffers), concat);
-      assert.equal(up.bufferEncoding, 'buffer');
     });
 
     it("should callback on 'readFromChunkBuffer'", done => {
@@ -804,7 +804,7 @@ describe('resumable-upload', () => {
 
       let data = Buffer.alloc(0);
 
-      for await (const {chunk} of up.upstreamIterator(8)) {
+      for await (const chunk of up.upstreamIterator(8)) {
         data = Buffer.concat([data, chunk]);
       }
 
@@ -817,7 +817,7 @@ describe('resumable-upload', () => {
 
       let data = Buffer.alloc(0);
 
-      for await (const {chunk} of up.upstreamIterator(16)) {
+      for await (const chunk of up.upstreamIterator(16)) {
         data = Buffer.concat([data, chunk]);
       }
 
@@ -831,7 +831,7 @@ describe('resumable-upload', () => {
       let data = Buffer.alloc(0);
       let count = 0;
 
-      for await (const {chunk} of up.upstreamIterator(16)) {
+      for await (const chunk of up.upstreamIterator(16)) {
         data = Buffer.concat([data, chunk]);
         count++;
       }

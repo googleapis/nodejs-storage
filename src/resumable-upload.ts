@@ -264,7 +264,6 @@ export class Upload extends Writable {
    * A cache of buffers written to this instance, ready for consuming
    */
   private writeBuffers: Buffer[] = [];
-  private bufferEncoding?: BufferEncoding = undefined;
   private numChunksReadInRequest = 0;
   /**
    * An array of buffers used for caching the most recent upload chunk.
@@ -397,7 +396,6 @@ export class Upload extends Writable {
     this.writeBuffers.push(
       typeof chunk === 'string' ? Buffer.from(chunk, encoding) : chunk
     );
-    this.bufferEncoding = encoding;
 
     this.once('readFromChunkBuffer', readCallback);
 
@@ -555,10 +553,7 @@ export class Upload extends Writable {
       // read until end or limit has been reached
       for (const chunk of this.pullFromChunkBuffer(limit)) {
         limit -= chunk.byteLength;
-        yield {
-          chunk,
-          encoding: this.bufferEncoding,
-        };
+        yield chunk;
       }
     }
   }
@@ -745,20 +740,20 @@ export class Upload extends Writable {
 
           if (multiChunkMode) {
             // save ever buffer used in the request in multi-chunk mode
-            this.#addLocalBufferCache(result.value.chunk);
+            this.#addLocalBufferCache(result.value);
           } else {
             this.#resetLocalBuffersCache();
-            this.#addLocalBufferCache(result.value.chunk);
+            this.#addLocalBufferCache(result.value);
           }
 
-          this.numBytesWritten += result.value.chunk.byteLength;
+          this.numBytesWritten += result.value.byteLength;
 
           this.emit('progress', {
             bytesWritten: this.numBytesWritten,
             contentLength: this.contentLength,
           });
 
-          requestStream.push(result.value.chunk, result.value.encoding);
+          requestStream.push(result.value);
         }
 
         if (result.done) {
@@ -775,7 +770,7 @@ export class Upload extends Writable {
     if (multiChunkMode) {
       // We need to know how much data is available upstream to set the `Content-Range` header.
       // https://cloud.google.com/storage/docs/performing-resumable-uploads#chunked-upload
-      for await (const {chunk} of this.upstreamIterator(expectedUploadSize)) {
+      for await (const chunk of this.upstreamIterator(expectedUploadSize)) {
         // This will conveniently track and keep the size of the buffers
         this.#addLocalBufferCache(chunk);
       }
