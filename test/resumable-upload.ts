@@ -645,11 +645,18 @@ describe('resumable-upload', () => {
       assert.equal(up.writeBuffers.length, 0);
     });
 
-    it("should emit 'readFromChunkBuffer' asynchronously", done => {
-      [...up.pullFromChunkBuffer(0)];
+    it("should emit 'readFromChunkBuffer' synchronously on each iterator", () => {
+      up.writeBuffers = [Buffer.from('012345'), Buffer.from('6789')];
 
-      // setting this here proves it's async
-      up.on('readFromChunkBuffer', done);
+      const iter = up.pullFromChunkBuffer(Infinity);
+      let count = 0;
+      let loop = 0;
+
+      up.on('readFromChunkBuffer', () => count++);
+
+      while (!iter.next().done) {
+        assert.equal(count, loop++);
+      }
     });
   });
 

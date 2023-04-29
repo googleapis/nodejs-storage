@@ -484,11 +484,12 @@ export class Upload extends Writable {
       }
 
       yield bufToYield;
-    }
 
-    // notify upstream we've read from the buffer and we're able to consume
-    // more so it can potentially send more data down.
-    process.nextTick(() => this.emit('readFromChunkBuffer'));
+      // Notify upstream we've read from the buffer and we're able to consume
+      // more. It can also potentially send more data down as we're currently
+      // iterating.
+      this.emit('readFromChunkBuffer');
+    }
   }
 
   /**
