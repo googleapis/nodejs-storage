@@ -60,6 +60,8 @@ const RUNNING_IN_VPCSC = !!process.env['GOOGLE_CLOUD_TESTS_IN_VPCSC'];
 const UNIFORM_ACCESS_TIMEOUT = 60 * 1000; // 60s see: https://cloud.google.com/storage/docs/consistency#eventually_consistent_operations
 const UNIFORM_ACCESS_WAIT_TIME = 5 * 1000; // 5s
 
+process.on('warning', e => console.log(e.stack));
+
 // block all attempts to chat with the metadata server (kokoro runs on GCE)
 nock('http://metadata.google.internal')
   .get(() => true)
