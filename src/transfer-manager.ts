@@ -93,21 +93,62 @@ export interface UploadFileInChunksOptions {
   partsMap?: Map<number, string>;
 }
 
-export interface UploadFileInChunksResponse {
-  uploadId: string;
-  partsMap: Map<number, string>;
-  err: Error;
+export interface MultiPartUploadHelper {
+  bucket: Bucket;
+  fileName: string;
+  uploadId?: string;
+  partsMap?: Map<number, string>;
+  initiateUpload(): Promise<void>;
+  uploadPart(partNumber: number, chunk: Buffer): Promise<void>;
+  completeUpload(): Promise<void>;
 }
 
-export class XMLMultiPartUploadHelper {
+export type MultiPartHelperGenerator = (
+  bucket: Bucket,
+  fileName: string,
+  uploadId?: string,
+  partsMap?: Map<number, string>
+) => MultiPartUploadHelper;
+
+const defaultMultPartGenerator: MultiPartHelperGenerator = (
+  bucket,
+  fileName,
+  uploadId,
+  partsMap
+) => {
+  return new XMLMultiPartUploadHelper(bucket, fileName, uploadId, partsMap);
+};
+
+export class MultiPartUploadError extends Error {
+  private uploadId: string;
+  private partsMap: Map<number, string>;
+
+  constructor(
+    message: string,
+    uploadId: string,
+    partsMap: Map<number, string>
+  ) {
+    super(message);
+    this.uploadId = uploadId;
+    this.partsMap = partsMap;
+  }
+}
+/**
+ * Class representing an implementation of MPU in the XML API. This class is not meant for public usage.
+ *
+ * @private
+ * @experimental
+ */
+class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
   public partsMap;
   public uploadId;
+  public bucket;
+  public fileName;
 
   private authClient;
   private xmlParser;
   private xmlBuilder;
   private baseUrl;
-  private bucket;
   private retryOptions;
 
   constructor(
@@ -119,6 +160,7 @@ export class XMLMultiPartUploadHelper {
     this.authClient = bucket.storage.authClient || new GoogleAuth();
     this.uploadId = uploadId || '';
     this.bucket = bucket;
+    this.fileName = fileName;
     // eslint-disable-next-line prettier/prettier
     this.baseUrl = `https://${bucket.name}.${new URL(this.bucket.storage.apiEndpoint).hostname}/${fileName}`;
     this.xmlBuilder = new XMLBuilder({arrayNodeName: 'Part'});
@@ -187,7 +229,7 @@ export class XMLMultiPartUploadHelper {
    *
    * @returns {Promise<void>}
    */
-  async completeUpload() {
+  async completeUpload(): Promise<void> {
     const url = `${this.baseUrl}?uploadId=${this.uploadId}`;
     const sortedMap = new Map(
       [...this.partsMap.entries()].sort((a, b) => a[0] - b[0])
@@ -547,19 +589,14 @@ export class TransferManager {
    * @experimental
    */
   /**
-   * @typedef {object} UploadFileInChunksResponse
-   * @property {Map} [partsMap] A map containing the successfully uploaded parts and their idenfitifiers.
-   * @property {string} [uploadId] The upload id for this multipart upload.
-   * @property {Error} [err] Error containing information on the failure.
-   */
-  /**
    * Upload a large file in chunks utilizing parallel upload opertions. If the upload fails, an uploadId and
    * map containing all the successfully uploaded parts will be returned to the caller. These arguments can be used to
    * resume the upload.
    *
    * @param {string} [filePath] The path of the file to be uploaded
    * @param {UploadFileInChunksOptions} [options] Configuration options.
-   * @returns {Promise<void | UploadFileInChunksResponse>} If successful a promise resolving to void, otherwise a promise resolving to UploadFileInChunksResponse.
+   * @param {MultiPartHelperGenerator} [generator] A function that will return a type that implements the MPU interface. Most users will not need to use this.
+   * @returns {Promise<void>} If successful a promise resolving to void, otherwise a error containing the message, uploadid, and parts map.
    *
    * @example
    * ```
@@ -580,8 +617,9 @@ export class TransferManager {
    */
   async uploadFileInChunks(
     filePath: string,
-    options: UploadFileInChunksOptions = {}
-  ): Promise<void | UploadFileInChunksResponse> {
+    options: UploadFileInChunksOptions = {},
+    generator: MultiPartHelperGenerator = defaultMultPartGenerator
+  ): Promise<void> {
     const chunkSize =
       options.chunkSizeBytes || UPLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE;
     const limit = pLimit(
@@ -592,7 +630,7 @@ export class TransferManager {
       options.concurrencyLimit ||
       DEFAULT_PARALLEL_CHUNKED_UPLOAD_LIMIT;
     const fileName = options.uploadName || path.basename(filePath);
-    const mpuHelper = new XMLMultiPartUploadHelper(
+    const mpuHelper = generator(
       this.bucket,
       fileName,
       options.uploadId,
@@ -600,12 +638,11 @@ export class TransferManager {
     );
     let partNumber = 1;
     let promises = [];
-
     try {
       if (options.uploadId === undefined) {
         await mpuHelper.initiateUpload();
       }
-      const startOrResumptionByte = mpuHelper.partsMap.size * chunkSize;
+      const startOrResumptionByte = mpuHelper.partsMap!.size * chunkSize;
       const readStream = createReadStream(filePath, {
         highWaterMark: chunkSize,
         start: startOrResumptionByte,
@@ -622,11 +659,11 @@ export class TransferManager {
       await Promise.all(promises);
       await mpuHelper.completeUpload();
     } catch (e) {
-      return {
-        uploadId: mpuHelper.uploadId,
-        partsMap: mpuHelper.partsMap,
-        err: e as Error,
-      };
+      throw new MultiPartUploadError(
+        (e as Error).message,
+        mpuHelper.uploadId!,
+        mpuHelper.partsMap!
+      );
     }
   }
 

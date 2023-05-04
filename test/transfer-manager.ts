@@ -25,8 +25,10 @@ import {
   DownloadOptions,
   FileOptions,
   IdempotencyStrategy,
+  MultiPartHelperGenerator,
+  MultiPartUploadError,
+  MultiPartUploadHelper,
   UploadOptions,
-  XMLMultiPartUploadHelper,
 } from '../src';
 import * as assert from 'assert';
 import * as path from 'path';
@@ -51,12 +53,6 @@ class FakeAcl {
   calledWith_: Array<{}>;
   constructor(...args: Array<{}>) {
     this.calledWith_ = args;
-  }
-}
-
-class FakeXMLMPUHelper {
-  constructor() {
-    console.log("I WAS CALLED");
   }
 }
 
@@ -100,8 +96,9 @@ class HTTPError extends Error {
 let pLimitOverride: Function | null;
 const fakePLimit = (limit: number) => (pLimitOverride || pLimit)(limit);
 const fakeFs = extend(true, {}, fs, {
-  createReadStream() {
-    console.log('called');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  createReadStream(path: string, _options: {}): stream.Stream {
+    return new stream.PassThrough();
   },
   get promises() {
     return {
@@ -133,6 +130,7 @@ describe('Transfer Manager', () => {
 
   const STORAGE: any = {
     createBucket: util.noop,
+    apiEndpoint: 'https://test.notvalid.com',
     retryOptions: {
       autoRetry: true,
       maxRetries: 3,
@@ -318,17 +316,136 @@ describe('Transfer Manager', () => {
   });
 
   describe('uploadFileInChunks', () => {
-    before(() => {
-      sinon.createSandbox();
-      //sinon.spy(XMLMultiPartUploadHelper, 'prototype');
+    let mockGeneratorFunction: MultiPartHelperGenerator;
+    let fakeHelper: sinon.SinonStubbedInstance<MultiPartUploadHelper>;
+    let sandbox: sinon.SinonSandbox;
+    let readStreamStub: sinon.SinonStub;
+    const path = '/a/b/c.txt';
+    const pThrough = new stream.PassThrough();
+    class FakeXMLHelper implements MultiPartUploadHelper {
+      bucket: Bucket;
+      fileName: string;
+      uploadId?: string | undefined;
+      partsMap?: Map<number, string> | undefined;
+      constructor(bucket: Bucket, fileName: string) {
+        this.bucket = bucket;
+        this.fileName = fileName;
+      }
+      initiateUpload(): Promise<void> {
+        throw new Error('Method not implemented.');
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      uploadPart(partNumber: number, chunk: Buffer): Promise<void> {
+        throw new Error('Method not implemented.');
+      }
+      completeUpload(): Promise<void> {
+        throw new Error('Method not implemented.');
+      }
+    }
+
+    beforeEach(() => {
+      sandbox = sinon.createSandbox();
+      readStreamStub = sandbox
+        .stub(fakeFs, 'createReadStream')
+        .returns(pThrough);
+      mockGeneratorFunction = (bucket, fileName, uploadId, partsMap) => {
+        fakeHelper = sandbox.createStubInstance(FakeXMLHelper);
+        fakeHelper.uploadId = uploadId || '';
+        fakeHelper.partsMap = partsMap || new Map<number, string>();
+        fakeHelper.initiateUpload.resolves();
+        fakeHelper.uploadPart.resolves();
+        fakeHelper.completeUpload.resolves();
+        return fakeHelper;
+      };
     });
-    after(() => {
-      sinon.restore();
+
+    afterEach(() => {
+      sandbox.restore();
     });
-    it.only('should call createReadStream with a highWaterMark equal to chunkSize', async () => {
-      await transferManager.uploadFileInChunks('/a/b/c.txt', {
-        chunkSize: 32 * 1024 * 1024,
+
+    it('should call initiateUpload, uploadPart, and completeUpload', async () => {
+      process.nextTick(() => {
+        pThrough.push('hello world');
+        pThrough.end();
       });
+      await transferManager.uploadFileInChunks(path, {}, mockGeneratorFunction);
+      assert.strictEqual(fakeHelper.initiateUpload.calledOnce, true);
+      assert.strictEqual(fakeHelper.uploadPart.calledOnce, true);
+      assert.strictEqual(fakeHelper.completeUpload.calledOnce, true);
+    });
+
+    it('should call createReadStream with a highWaterMark equal to chunkSize', async () => {
+      const options = {highWaterMark: 32 * 1024 * 1024, start: 0};
+
+      await transferManager.uploadFileInChunks(
+        path,
+        {
+          chunkSize: 32 * 1024 * 1024,
+        },
+        mockGeneratorFunction
+      );
+
+      assert.strictEqual(readStreamStub.calledOnceWith(path, options), true);
+    });
+
+    it('should set the correct start offset when called with an existing parts map', async () => {
+      const options = {
+        highWaterMark: 32 * 1024 * 1024,
+        start: 64 * 1024 * 1024,
+      };
+
+      await transferManager.uploadFileInChunks(
+        path,
+        {
+          uploadId: '123',
+          partsMap: new Map<number, string>([
+            [1, '123'],
+            [2, '321'],
+          ]),
+          chunkSize: 32 * 1024 * 1024,
+        },
+        mockGeneratorFunction
+      );
+
+      assert.strictEqual(readStreamStub.calledOnceWith(path, options), true);
+    });
+
+    it('should not call initiateUpload if an uploadId is provided', async () => {
+      await transferManager.uploadFileInChunks(
+        path,
+        {
+          uploadId: '123',
+          partsMap: new Map<number, string>([
+            [1, '123'],
+            [2, '321'],
+          ]),
+        },
+        mockGeneratorFunction
+      );
+
+      assert.strictEqual(fakeHelper.uploadId, '123');
+      assert.strictEqual(fakeHelper.initiateUpload.notCalled, true);
+    });
+
+    it('should reject with an error with empty uploadId and partsMap', async () => {
+      const expectedErr = new MultiPartUploadError(
+        'Hello World',
+        '',
+        new Map<number, string>()
+      );
+      mockGeneratorFunction = (bucket, fileName, uploadId, partsMap) => {
+        fakeHelper = sandbox.createStubInstance(FakeXMLHelper);
+        fakeHelper.uploadId = uploadId || '';
+        fakeHelper.partsMap = partsMap || new Map<number, string>();
+        fakeHelper.initiateUpload.rejects(new Error(expectedErr.message));
+        fakeHelper.uploadPart.resolves();
+        fakeHelper.completeUpload.resolves();
+        return fakeHelper;
+      };
+      assert.rejects(
+        transferManager.uploadFileInChunks(path, {}, mockGeneratorFunction),
+        expectedErr
+      );
     });
   });
 });
