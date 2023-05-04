@@ -380,7 +380,7 @@ describe('Transfer Manager', () => {
       await transferManager.uploadFileInChunks(
         path,
         {
-          chunkSize: 32 * 1024 * 1024,
+          chunkSizeBytes: 32 * 1024 * 1024,
         },
         mockGeneratorFunction
       );
@@ -402,7 +402,7 @@ describe('Transfer Manager', () => {
             [1, '123'],
             [2, '321'],
           ]),
-          chunkSize: 32 * 1024 * 1024,
+          chunkSizeBytes: 32 * 1024 * 1024,
         },
         mockGeneratorFunction
       );
