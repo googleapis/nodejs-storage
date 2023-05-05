@@ -25,6 +25,7 @@ import {GoogleAuth} from 'google-auth-library';
 import {XMLParser, XMLBuilder} from 'fast-xml-parser';
 import * as retry from 'async-retry';
 import {ApiError} from './nodejs-common';
+import {GaxiosResponse} from 'gaxios';
 
 /**
  * Default number of concurrently executing promises to use when calling uploadManyFiles.
@@ -100,7 +101,7 @@ export interface MultiPartUploadHelper {
   partsMap?: Map<number, string>;
   initiateUpload(): Promise<void>;
   uploadPart(partNumber: number, chunk: Buffer): Promise<void>;
-  completeUpload(): Promise<void>;
+  completeUpload(): Promise<GaxiosResponse | undefined>;
 }
 
 export type MultiPartHelperGenerator = (
@@ -229,7 +230,7 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
    *
    * @returns {Promise<void>}
    */
-  async completeUpload(): Promise<void> {
+  async completeUpload(): Promise<GaxiosResponse | undefined> {
     const url = `${this.baseUrl}?uploadId=${this.uploadId}`;
     const sortedMap = new Map(
       [...this.partsMap.entries()].sort((a, b) => a[0] - b[0])
@@ -251,8 +252,10 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
         if (res.data && res.data.error) {
           throw res.data.error;
         }
+        return res;
       } catch (e) {
         this.#handleErrorResponse(e as Error, bail);
+        return;
       }
     }, this.retryOptions);
   }
@@ -619,7 +622,7 @@ export class TransferManager {
     filePath: string,
     options: UploadFileInChunksOptions = {},
     generator: MultiPartHelperGenerator = defaultMultPartGenerator
-  ): Promise<void> {
+  ): Promise<GaxiosResponse | undefined> {
     const chunkSize =
       options.chunkSizeBytes || UPLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE;
     const limit = pLimit(
@@ -657,7 +660,7 @@ export class TransferManager {
         );
       }
       await Promise.all(promises);
-      await mpuHelper.completeUpload();
+      return await mpuHelper.completeUpload();
     } catch (e) {
       throw new MultiPartUploadError(
         (e as Error).message,

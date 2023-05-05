@@ -36,6 +36,7 @@ import * as stream from 'stream';
 import * as extend from 'extend';
 import * as fs from 'fs';
 import * as sinon from 'sinon';
+import {GaxiosResponse} from 'gaxios';
 
 const fakeUtil = Object.assign({}, util);
 fakeUtil.noop = util.noop;
@@ -338,7 +339,7 @@ describe('Transfer Manager', () => {
       uploadPart(partNumber: number, chunk: Buffer): Promise<void> {
         throw new Error('Method not implemented.');
       }
-      completeUpload(): Promise<void> {
+      completeUpload(): Promise<GaxiosResponse | undefined> {
         throw new Error('Method not implemented.');
       }
     }
