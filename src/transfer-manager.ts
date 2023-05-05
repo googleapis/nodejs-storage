@@ -650,6 +650,8 @@ export class TransferManager {
         highWaterMark: chunkSize,
         start: startOrResumptionByte,
       });
+      // p-limit only limits the number of running promises. We do not want to hold an entire
+      // large file in memory at once so promises acts a queue that will hold only maxQueueSize in memory.
       for await (const curChunk of readStream) {
         if (promises.length >= maxQueueSize) {
           await Promise.all(promises);
