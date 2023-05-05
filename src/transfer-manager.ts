@@ -111,7 +111,7 @@ export type MultiPartHelperGenerator = (
   partsMap?: Map<number, string>
 ) => MultiPartUploadHelper;
 
-const defaultMultPartGenerator: MultiPartHelperGenerator = (
+const defaultMultiPartGenerator: MultiPartHelperGenerator = (
   bucket,
   fileName,
   uploadId,
@@ -621,7 +621,7 @@ export class TransferManager {
   async uploadFileInChunks(
     filePath: string,
     options: UploadFileInChunksOptions = {},
-    generator: MultiPartHelperGenerator = defaultMultPartGenerator
+    generator: MultiPartHelperGenerator = defaultMultiPartGenerator
   ): Promise<GaxiosResponse | undefined> {
     const chunkSize =
       options.chunkSizeBytes || UPLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE;
