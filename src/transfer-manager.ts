@@ -25,7 +25,8 @@ import {GoogleAuth} from 'google-auth-library';
 import {XMLParser, XMLBuilder} from 'fast-xml-parser';
 import * as retry from 'async-retry';
 import {ApiError} from './nodejs-common';
-import {GaxiosResponse} from 'gaxios';
+import {GaxiosResponse, Headers} from 'gaxios';
+import {createHash} from 'crypto';
 
 /**
  * Default number of concurrently executing promises to use when calling uploadManyFiles.
@@ -92,6 +93,7 @@ export interface UploadFileInChunksOptions {
   maxQueueSize?: number;
   uploadId?: string;
   partsMap?: Map<number, string>;
+  validation?: 'md5' | false;
 }
 
 export interface MultiPartUploadHelper {
@@ -100,7 +102,11 @@ export interface MultiPartUploadHelper {
   uploadId?: string;
   partsMap?: Map<number, string>;
   initiateUpload(): Promise<void>;
-  uploadPart(partNumber: number, chunk: Buffer): Promise<void>;
+  uploadPart(
+    partNumber: number,
+    chunk: Buffer,
+    validation?: 'md5' | false
+  ): Promise<void>;
   completeUpload(): Promise<GaxiosResponse | undefined>;
 }
 
@@ -204,16 +210,32 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
    *
    * @param {number} partNumber the sequence number of this chunk.
    * @param {Buffer} chunk the chunk of data to be uploaded.
+   * @param {string | false} validation whether or not to include the md5 hash in the headers to cause the server
+   * to validate the chunk was not corrupted.
    * @returns {Promise<void>}
    */
-  async uploadPart(partNumber: number, chunk: Buffer): Promise<void> {
+  async uploadPart(
+    partNumber: number,
+    chunk: Buffer,
+    validation?: 'md5' | false
+  ): Promise<void> {
     const url = `${this.baseUrl}?partNumber=${partNumber}&uploadId=${this.uploadId}`;
+    let headers: Headers = {};
+
+    if (validation === 'md5') {
+      const hash = createHash('md5').update(chunk).digest('base64');
+      headers = {
+        'Content-MD5': hash,
+      };
+    }
+
     return retry(async bail => {
       try {
         const res = await this.authClient.request({
           url,
           method: 'PUT',
           body: chunk,
+          headers,
         });
         if (res.data && res.data.error) {
           throw res.data.error;
@@ -658,7 +680,9 @@ export class TransferManager {
           promises = [];
         }
         promises.push(
-          limit(() => mpuHelper.uploadPart(partNumber++, curChunk))
+          limit(() =>
+            mpuHelper.uploadPart(partNumber++, curChunk, options.validation)
+          )
         );
       }
       await Promise.all(promises);
