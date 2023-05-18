@@ -238,6 +238,8 @@ export class TransferManager {
         prefix: filesOrFolder,
       });
       files = directoryFiles[0];
+      // filter out directories
+      files = files.filter(file => !file.name.endsWith('/'));
     } else {
       files = filesOrFolder.map(curFile => {
         if (typeof curFile === 'string') {
@@ -258,13 +260,11 @@ export class TransferManager {
         {},
         options.passthroughOptions
       );
-      if (options.prefix) {
-        passThroughOptionsCopy.destination = path.join(
-          options.prefix || '',
-          passThroughOptionsCopy.destination || '',
-          file.name
-        );
-      }
+      passThroughOptionsCopy.destination = path.join(
+        options.prefix || '',
+        passThroughOptionsCopy.destination || '',
+        file.name
+      );
       if (options.stripPrefix) {
         passThroughOptionsCopy.destination = file.name.replace(regex, '');
       }
