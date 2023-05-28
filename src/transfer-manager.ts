@@ -260,11 +260,14 @@ export class TransferManager {
         {},
         options.passthroughOptions
       );
-      passThroughOptionsCopy.destination = path.join(
-        options.prefix || '',
-        passThroughOptionsCopy.destination || '',
-        file.name
-      );
+
+      if (options.prefix) {
+        passThroughOptionsCopy.destination = path.join(
+          options.prefix || '',
+          passThroughOptionsCopy.destination || '',
+          file.name
+        );
+      }
       if (options.stripPrefix) {
         passThroughOptionsCopy.destination = file.name.replace(regex, '');
       }
