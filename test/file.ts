@@ -35,6 +35,7 @@ import * as resumableUpload from '../src/resumable-upload';
 import * as sinon from 'sinon';
 import * as tmp from 'tmp';
 import * as zlib from 'zlib';
+import * as path from 'path';
 
 import {
   Bucket,
@@ -2675,6 +2676,34 @@ describe('File', () => {
           file.download({destination: tmpFilePath}, (err: Error) => {
             assert.strictEqual(err, error);
             done();
+          });
+        });
+      });
+
+      it('should recursively create directory and write file contents if destination path is nested', done => {
+        tmp.setGracefulCleanup();
+        tmp.dir(async (err, tmpDirPath) => {
+          assert.ifError(err);
+
+          const fileContents = 'nested-abcdefghijklmnopqrstuvwxyz';
+
+          Object.assign(fileReadStream, {
+            _read(this: Readable) {
+              this.push(fileContents);
+              this.push(null);
+            },
+          });
+
+          const nestedPath = path.join(tmpDirPath, 'a', 'b', 'c', 'file.txt');
+
+          file.download({destination: nestedPath}, (err: Error) => {
+            assert.ifError(err);
+            assert(fs.existsSync(nestedPath));
+            fs.readFile(nestedPath, (err, tmpFileContents) => {
+              assert.ifError(err);
+              assert.strictEqual(fileContents, tmpFileContents.toString());
+              done();
+            });
           });
         });
       });
