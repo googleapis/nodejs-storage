@@ -238,8 +238,6 @@ export class TransferManager {
         prefix: filesOrFolder,
       });
       files = directoryFiles[0];
-      // filter out directories
-      files = files.filter(file => !file.name.endsWith('/'));
     } else {
       files = filesOrFolder.map(curFile => {
         if (typeof curFile === 'string') {
@@ -273,7 +271,6 @@ export class TransferManager {
       }
       promises.push(limit(() => file.download(passThroughOptionsCopy)));
     }
-
     return Promise.all(promises);
   }
 

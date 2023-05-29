@@ -2556,6 +2556,12 @@ describe('File', () => {
     });
 
     describe('with destination', () => {
+      const sandbox = sinon.createSandbox();
+
+      afterEach(() => {
+        sandbox.restore();
+      });
+
       it('should write the file to a destination if provided', done => {
         tmp.setGracefulCleanup();
         tmp.file((err, tmpFilePath) => {
@@ -2698,13 +2704,61 @@ describe('File', () => {
 
           file.download({destination: nestedPath}, (err: Error) => {
             assert.ifError(err);
-            assert(fs.existsSync(nestedPath));
+            assert.strictEqual(fs.existsSync(nestedPath), true);
             fs.readFile(nestedPath, (err, tmpFileContents) => {
               assert.ifError(err);
               assert.strictEqual(fileContents, tmpFileContents.toString());
               done();
             });
           });
+        });
+      });
+
+      it('should skip write if asked to write a directory object', done => {
+        // Temporary comment: Option 1: Spy on fs methods
+        const mkdirSync = sandbox.spy(fakeFs, 'mkdirSync');
+        const createWriteStream = sandbox.spy(fakeFs, 'createWriteStream');
+
+        tmp.setGracefulCleanup();
+        tmp.dir(async (err, tmpDirPath) => {
+          assert.ifError(err);
+
+          const fileContents = '';
+
+          Object.assign(fileReadStream, {
+            _read(this: Readable) {
+              this.push(fileContents);
+              this.push(null);
+            },
+          });
+
+          const nestedDir = path.join(tmpDirPath, 'a', 'b', 'c', '/');
+
+          file.download(
+            {destination: nestedDir},
+            (err: Error, buffer: Buffer) => {
+              try {
+                assert.ifError(err);
+
+                // Temporary comment: Option 1: Spy on fs methods
+                assert.strictEqual(createWriteStream.callCount, 0);
+                assert.strictEqual(mkdirSync.callCount, 0);
+
+                // Temporary comment: Option 2: Verify that no folder and/or file were created
+                assert.strictEqual(
+                  fs.existsSync(path.dirname(nestedDir)),
+                  false
+                );
+                assert.strictEqual(fs.existsSync(nestedDir), false);
+
+                // Temporary comment: Not very useful since no user would care about an empty buffer. Could remove.
+                assert.strictEqual(buffer.equals(Buffer.alloc(0)), true);
+                done();
+              } catch (e) {
+                done(e);
+              }
+            }
+          );
         });
       });
     });

@@ -2098,7 +2098,16 @@ class File extends ServiceObject<File> {
 
     const fileStream = this.createReadStream(options);
     let receivedData = false;
-    if (destination) {
+
+    // Skip directory objects as they cannot be written to local filesystem
+    /**
+     * Temporary comment:
+     * Could consider returning an error, but TransferManager will have to handle rejected promises in Promises.all.
+     * Example: Promise.allSettled(promises) or Promise.all(promises.map(p => p.catch(e => e)))
+     */
+    if (destination && destination.endsWith('/')) {
+      callback?.(null, Buffer.alloc(0));
+    } else if (destination) {
       fs.mkdirSync(path.dirname(destination), {recursive: true});
 
       fileStream
