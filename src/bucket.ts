@@ -28,7 +28,6 @@ import {
 } from './nodejs-common';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
-import * as extend from 'extend';
 import * as fs from 'fs';
 import * as http from 'http';
 import * as mime from 'mime-types';
@@ -36,7 +35,7 @@ import * as path from 'path';
 import pLimit = require('p-limit');
 import {promisify} from 'util';
 import retry = require('async-retry');
-import {convertObjKeysToSnakeCase} from './util';
+import {ReadonlyOptions, convertObjKeysToSnakeCase} from './util';
 
 import {Acl} from './acl';
 import {Channel} from './channel';
@@ -3267,7 +3266,7 @@ class Bucket extends ServiceObject {
 
     // You aren't allowed to set both predefinedAcl & acl properties on a bucket
     // so acl must explicitly be nullified.
-    const metadata = extend({}, options.metadata, {acl: null});
+    const metadata = {...(options.metadata || {}), acl: null};
 
     this.setMetadata(metadata, query, err => {
       if (err) {
@@ -3392,12 +3391,12 @@ class Bucket extends ServiceObject {
     optionsOrCallback?: MakeBucketPublicOptions | MakeBucketPublicCallback,
     callback?: MakeBucketPublicCallback
   ): Promise<MakeBucketPublicResponse> | void {
-    const options =
+    const options: ReadonlyOptions<MakeBucketPublicOptions> =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
 
-    const req = extend(true, {public: true}, options);
+    const req = {public: true, ...options};
 
     this.acl
       .add({
@@ -3511,7 +3510,7 @@ class Bucket extends ServiceObject {
     callback?: BodyResponseCallback
   ): void | Promise<[ResponseBody, Metadata]> {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
-      reqOpts.qs = extend(reqOpts.qs, {userProject: this.userProject});
+      reqOpts.qs = {...(reqOpts.qs || {}), userProject: this.userProject};
     }
     return super.request(reqOpts, callback!);
   }
@@ -3890,7 +3889,7 @@ class Bucket extends ServiceObject {
       const methodConfig = this.methods[method];
       if (typeof methodConfig === 'object') {
         if (typeof methodConfig.reqOpts === 'object') {
-          extend(methodConfig.reqOpts.qs, {userProject});
+          Object.assign(methodConfig.reqOpts.qs, {userProject});
         } else {
           methodConfig.reqOpts = {
             qs: {userProject},
@@ -4338,7 +4337,7 @@ class Bucket extends ServiceObject {
     const errors = [] as Error[];
     const updatedFiles = [] as File[];
 
-    const options =
+    const options: ReadonlyOptions<MakeAllFilesPublicPrivateOptions> =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;

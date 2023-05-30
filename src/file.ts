@@ -27,7 +27,6 @@ import {promisifyAll} from '@google-cloud/promisify';
 
 import compressible = require('compressible');
 import * as crypto from 'crypto';
-import * as extend from 'extend';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as resumableUpload from './resumable-upload';
@@ -65,6 +64,7 @@ import {
   unicodeJSONStringify,
   formatAsUTCISO,
   PassThroughShim,
+  ReadonlyOptions,
 } from './util';
 import {CRC32CValidatorGenerator} from './crc32c';
 import {HashStreamValidator} from './hash-stream-validator';
@@ -1154,14 +1154,15 @@ class File extends ServiceObject<File> {
       throw noDestinationError;
     }
 
-    let options: CopyOptions = {};
+    let options: ReadonlyOptions<CopyOptions> = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
     } else if (optionsOrCallback) {
       options = optionsOrCallback;
     }
 
-    options = extend(true, {}, options);
+    const payload = {...options};
+
     callback = callback || util.noop;
 
     let destBucket: Bucket;
@@ -1197,11 +1198,11 @@ class File extends ServiceObject<File> {
     }
     if (options.userProject !== undefined) {
       query.userProject = options.userProject;
-      delete options.userProject;
+      delete payload.userProject;
     }
     if (options.predefinedAcl !== undefined) {
       query.destinationPredefinedAcl = options.predefinedAcl;
-      delete options.predefinedAcl;
+      delete payload.predefinedAcl;
     }
 
     newFile = newFile! || destBucket.file(destName);
@@ -1219,7 +1220,7 @@ class File extends ServiceObject<File> {
       this.setEncryptionKey(newFile.encryptionKey!);
     } else if (options.destinationKmsKeyName !== undefined) {
       query.destinationKmsKeyName = options.destinationKmsKeyName;
-      delete options.destinationKmsKeyName;
+      delete payload.destinationKmsKeyName;
     } else if (newFile.kmsKeyName !== undefined) {
       query.destinationKmsKeyName = newFile.kmsKeyName;
     }
@@ -1245,7 +1246,7 @@ class File extends ServiceObject<File> {
 
     if (options.preconditionOpts?.ifGenerationMatch !== undefined) {
       query.ifGenerationMatch = options.preconditionOpts?.ifGenerationMatch;
-      delete options.preconditionOpts;
+      delete payload.preconditionOpts;
     }
 
     this.request(
@@ -1255,7 +1256,7 @@ class File extends ServiceObject<File> {
           newFile.name
         )}`,
         qs: query,
-        json: options,
+        json: payload,
         headers,
       },
       (err, resp) => {
@@ -1847,8 +1848,16 @@ class File extends ServiceObject<File> {
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
-    options = extend(true, {metadata: {}}, options);
+  createWriteStream(config: CreateWriteStreamOptions = {}): Writable {
+    const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config;
+    const options = {
+      ...userOptions,
+      metadata: {} as CreateWriteStreamOptions['metadata'],
+    };
+
+    if (userOptions.metadata) {
+      Object.assign(options.metadata, {...userOptions.metadata});
+    }
 
     if (options.contentType) {
       options.metadata.contentType = options.contentType;
@@ -3069,7 +3078,8 @@ class File extends ServiceObject<File> {
     // You aren't allowed to set both predefinedAcl & acl properties on a file,
     // so acl must explicitly be nullified, destroying all previous acls on the
     // file.
-    const metadata = extend({}, options.metadata, {acl: null});
+
+    const metadata = {...(options.metadata || {}), acl: null};
 
     this.setMetadata(metadata, query, callback!);
   }
@@ -3755,13 +3765,10 @@ class File extends ServiceObject<File> {
   ): Promise<SetStorageClassResponse> | void {
     callback =
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
-    const options =
+    const options: ReadonlyOptions<SetStorageClassOptions> =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
-    const req = extend<SetStorageClassRequest, SetStorageClassOptions>(
-      true,
-      {},
-      options
-    );
+
+    const req = {...options, storageClass: ''};
 
     // In case we get input like `storageClass`, convert to `storage_class`.
     req.storageClass = storageClass
@@ -3813,15 +3820,17 @@ class File extends ServiceObject<File> {
    */
   startResumableUpload_(
     dup: Duplexify,
-    options: CreateResumableUploadOptions
+    config: CreateResumableUploadOptions
   ): void {
-    options = extend(
-      true,
-      {
-        metadata: {},
-      },
-      options
-    );
+    const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config;
+    const options = {
+      ...userOptions,
+      metadata: {} as CreateWriteStreamOptions['metadata'],
+    };
+
+    if (userOptions.metadata) {
+      Object.assign(options.metadata, {...userOptions.metadata});
+    }
 
     const retryOptions = this.storage.retryOptions;
     if (
@@ -3884,14 +3893,16 @@ class File extends ServiceObject<File> {
    *
    * @private
    */
-  startSimpleUpload_(dup: Duplexify, options?: CreateWriteStreamOptions): void {
-    options = extend(
-      true,
-      {
-        metadata: {},
-      },
-      options
-    );
+  startSimpleUpload_(dup: Duplexify, config?: CreateWriteStreamOptions): void {
+    const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config || {};
+    const options = {
+      ...userOptions,
+      metadata: {} as CreateWriteStreamOptions['metadata'],
+    };
+
+    if (userOptions.metadata) {
+      Object.assign(options.metadata, {...userOptions.metadata});
+    }
 
     const apiEndpoint = this.storage.apiEndpoint;
     const bucketName = this.bucket.name;

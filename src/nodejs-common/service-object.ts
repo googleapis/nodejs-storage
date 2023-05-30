@@ -15,7 +15,6 @@
  */
 import {promisifyAll} from '@google-cloud/promisify';
 import {EventEmitter} from 'events';
-import * as extend from 'extend';
 import * as r from 'teeny-request';
 
 import {StreamRequestOptions} from '.';
@@ -26,6 +25,7 @@ import {
   ResponseBody,
   util,
 } from './util';
+import {ReadonlyOptions} from '../util';
 
 export type RequestResponse = [Metadata, r.Response];
 
@@ -290,17 +290,12 @@ class ServiceObject<T = any> extends EventEmitter {
     const methodConfig =
       (typeof this.methods.delete === 'object' && this.methods.delete) || {};
 
-    const reqOpts = extend(
-      true,
-      {
-        method: 'DELETE',
-        uri: '',
-      },
-      methodConfig.reqOpts,
-      {
-        qs: options,
-      }
-    );
+    const reqOpts = {
+      method: 'DELETE',
+      uri: '',
+      ...methodConfig.reqOpts,
+      qs: {...options} as ReadonlyOptions<DeleteOptions>,
+    };
 
     // The `request` method may have been overridden to hold any special
     // behavior. Ensure we call the original `request` method.
@@ -440,16 +435,11 @@ class ServiceObject<T = any> extends EventEmitter {
       (typeof this.methods.getMetadata === 'object' &&
         this.methods.getMetadata) ||
       {};
-    const reqOpts = extend(
-      true,
-      {
-        uri: '',
-      },
-      methodConfig.reqOpts,
-      {
-        qs: options,
-      }
-    );
+    const reqOpts = {
+      uri: '',
+      ...methodConfig.reqOpts,
+      qs: {...options} as ReadonlyOptions<GetMetadataOptions>,
+    };
 
     // The `request` method may have been overridden to hold any special
     // behavior. Ensure we call the original `request` method.
@@ -507,19 +497,13 @@ class ServiceObject<T = any> extends EventEmitter {
         this.methods.setMetadata) ||
       {};
 
-    const reqOpts = extend(
-      true,
-      {},
-      {
-        method: 'PATCH',
-        uri: '',
-      },
-      methodConfig.reqOpts,
-      {
-        json: metadata,
-        qs: options,
-      }
-    );
+    const reqOpts = {
+      method: 'PATCH',
+      uri: '',
+      ...methodConfig.reqOpts,
+      json: {...metadata} as ReadonlyOptions<Metadata>,
+      qs: {...options} as ReadonlyOptions<SetMetadataOptions>,
+    };
 
     // The `request` method may have been overridden to hold any special
     // behavior. Ensure we call the original `request` method.
@@ -551,7 +535,7 @@ class ServiceObject<T = any> extends EventEmitter {
     reqOpts: DecorateRequestOptions | StreamRequestOptions,
     callback?: BodyResponseCallback
   ): void | r.Request {
-    reqOpts = extend(true, {}, reqOpts);
+    reqOpts = {...reqOpts};
 
     if (this.projectId) {
       reqOpts.projectId = this.projectId;
@@ -612,7 +596,7 @@ class ServiceObject<T = any> extends EventEmitter {
    * @param {string} reqOpts.uri - A URI relative to the baseUrl.
    */
   requestStream(reqOpts: DecorateRequestOptions): r.Request {
-    const opts = extend(true, reqOpts, {shouldReturnStream: true});
+    const opts = {...reqOpts, shouldReturnStream: true};
     return this.request_(opts as StreamRequestOptions);
   }
 }

@@ -18,9 +18,9 @@ import {Bucket, UploadOptions, UploadResponse} from './bucket';
 import {DownloadOptions, DownloadResponse, File} from './file';
 import * as pLimit from 'p-limit';
 import * as path from 'path';
-import * as extend from 'extend';
 import {promises as fsp} from 'fs';
 import {CRC32C} from './crc32c';
+import {ReadonlyOptions} from './util';
 
 /**
  * Default number of concurrently executing promises to use when calling uploadManyFiles.
@@ -161,11 +161,16 @@ export class TransferManager {
       if (stat.isDirectory()) {
         continue;
       }
-      const passThroughOptionsCopy: UploadOptions = extend(
-        true,
-        {},
-        options.passthroughOptions
-      );
+
+      const userPassthroughOptions: ReadonlyOptions<
+        UploadManyFilesOptions['passthroughOptions']
+      > = options.passthroughOptions;
+
+      const passThroughOptionsCopy = {
+        ...userPassthroughOptions,
+        destination: '', /// we want to configure this below
+      };
+
       passThroughOptionsCopy.destination = filePath;
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.join(
@@ -174,7 +179,9 @@ export class TransferManager {
         );
       }
       promises.push(
-        limit(() => this.bucket.upload(filePath, passThroughOptionsCopy))
+        limit(() =>
+          this.bucket.upload(filePath, passThroughOptionsCopy as UploadOptions)
+        )
       );
     }
 
@@ -253,11 +260,15 @@ export class TransferManager {
     const regex = new RegExp(stripRegexString, 'g');
 
     for (const file of files) {
-      const passThroughOptionsCopy = extend(
-        true,
-        {},
-        options.passthroughOptions
-      );
+      const userPassthroughOptions: ReadonlyOptions<
+        DownloadManyFilesOptions['passthroughOptions']
+      > = options.passthroughOptions;
+
+      const passThroughOptionsCopy = {
+        ...userPassthroughOptions,
+        destination: '', /// we want to configure this below
+      };
+
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.join(
           options.prefix || '',
