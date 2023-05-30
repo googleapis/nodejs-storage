@@ -2105,7 +2105,10 @@ class File extends ServiceObject<File> {
      * Could consider returning an error, but TransferManager will have to handle rejected promises in Promises.all.
      * Example: Promise.allSettled(promises) or Promise.all(promises.map(p => p.catch(e => e)))
      */
-    if (destination && destination.endsWith('/')) {
+    if (
+      destination &&
+      (destination.endsWith('/') || destination.endsWith('\\'))
+    ) {
       callback?.(null, Buffer.alloc(0));
     } else if (destination) {
       fs.mkdirSync(path.dirname(destination), {recursive: true});
