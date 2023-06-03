@@ -258,7 +258,6 @@ export class TransferManager {
         {},
         options.passthroughOptions
       );
-
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.join(
           options.prefix || '',
@@ -271,6 +270,7 @@ export class TransferManager {
       }
       promises.push(limit(() => file.download(passThroughOptionsCopy)));
     }
+
     return Promise.all(promises);
   }
 

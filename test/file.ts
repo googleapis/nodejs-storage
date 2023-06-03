@@ -2715,7 +2715,6 @@ describe('File', () => {
       });
 
       it('should skip write if asked to write a directory object', done => {
-        // Temporary comment: Option 1: Spy on fs methods
         const mkdirSync = sandbox.spy(fakeFs, 'mkdirSync');
         const createWriteStream = sandbox.spy(fakeFs, 'createWriteStream');
 
@@ -2739,19 +2738,8 @@ describe('File', () => {
             (err: Error, buffer: Buffer) => {
               try {
                 assert.ifError(err);
-
-                // Temporary comment: Option 1: Spy on fs methods
                 assert.strictEqual(createWriteStream.callCount, 0);
                 assert.strictEqual(mkdirSync.callCount, 0);
-
-                // Temporary comment: Option 2: Verify that no folder and/or file were created
-                assert.strictEqual(
-                  fs.existsSync(path.dirname(nestedDir)),
-                  false
-                );
-                assert.strictEqual(fs.existsSync(nestedDir), false);
-
-                // Temporary comment: Not very useful since no user would care about an empty buffer. Could remove.
                 assert.strictEqual(buffer.equals(Buffer.alloc(0)), true);
                 done();
               } catch (e) {
