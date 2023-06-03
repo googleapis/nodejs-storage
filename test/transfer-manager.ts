@@ -262,6 +262,35 @@ describe('Transfer Manager', () => {
       file.download = download;
       await transferManager.downloadManyFiles([file], {stripPrefix});
     });
+
+    it('sets the destination correctly when provided a passthroughOptions.destination', async () => {
+      const passthroughOptions = {
+        destination: 'test-destination',
+      };
+      const filename = 'first.txt';
+      const expectedDestination = path.normalize(
+        `${passthroughOptions.destination}/${filename}`
+      );
+      const download = (options: DownloadOptions) => {
+        assert.strictEqual(options.destination, expectedDestination);
+      };
+
+      const file = new File(bucket, filename);
+      file.download = download;
+      await transferManager.downloadManyFiles([file], {passthroughOptions});
+    });
+
+    it('does not set the destination when prefix, strip prefix and passthroughOptions.destination are not provided', async () => {
+      const options = {};
+      const filename = 'first.txt';
+      const download = (options: DownloadOptions) => {
+        assert.strictEqual(options.destination, undefined);
+      };
+
+      const file = new File(bucket, filename);
+      file.download = download;
+      await transferManager.downloadManyFiles([file], options);
+    });
   });
 
   describe('downloadFileInChunks', () => {

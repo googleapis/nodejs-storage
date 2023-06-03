@@ -197,7 +197,9 @@ export class TransferManager {
    *
    * @param {array | string} [filesOrFolder] An array of file name strings or file objects to be downloaded. If
    * a string is provided this will be treated as a GCS prefix and all files with that prefix will be downloaded.
-   * @param {DownloadManyFilesOptions} [options] Configuration options.
+   * @param {DownloadManyFilesOptions} [options] Configuration options. Setting options.prefix or options.stripPrefix
+   * or options.passthroughOptions.destination will cause the downloaded files to be written to the file system
+   * instead of being returned as a buffer.
    * @returns {Promise<DownloadResponse[]>}
    *
    * @example
@@ -258,7 +260,7 @@ export class TransferManager {
         {},
         options.passthroughOptions
       );
-      if (options.prefix) {
+      if (options.prefix || passThroughOptionsCopy.destination) {
         passThroughOptionsCopy.destination = path.join(
           options.prefix || '',
           passThroughOptionsCopy.destination || '',
@@ -268,6 +270,7 @@ export class TransferManager {
       if (options.stripPrefix) {
         passThroughOptionsCopy.destination = file.name.replace(regex, '');
       }
+      console.warn(passThroughOptionsCopy);
       promises.push(limit(() => file.download(passThroughOptionsCopy)));
     }
 
