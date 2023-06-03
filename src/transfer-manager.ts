@@ -270,7 +270,6 @@ export class TransferManager {
       if (options.stripPrefix) {
         passThroughOptionsCopy.destination = file.name.replace(regex, '');
       }
-      console.warn(passThroughOptionsCopy);
       promises.push(limit(() => file.download(passThroughOptionsCopy)));
     }
 
