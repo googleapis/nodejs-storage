@@ -394,6 +394,13 @@ describe('ServiceObject', () => {
             serviceObject.methods.delete,
             cachedMethodConfig
           );
+          console.dir(reqOpts_.qs);
+          console.dir({
+            defaultProperty: true,
+            optionalProperty: true,
+            thisPropertyWasOverridden: true,
+          });
+
           assert.deepStrictEqual(reqOpts_.qs, {
             defaultProperty: true,
             optionalProperty: true,

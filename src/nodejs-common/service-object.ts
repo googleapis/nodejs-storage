@@ -294,7 +294,10 @@ class ServiceObject<T = any> extends EventEmitter {
       method: 'DELETE',
       uri: '',
       ...methodConfig.reqOpts,
-      qs: {...options} as ReadonlyOptions<DeleteOptions>,
+      qs: {
+        ...methodConfig.reqOpts?.qs,
+        ...options,
+      } as ReadonlyOptions<DeleteOptions>,
     };
 
     // The `request` method may have been overridden to hold any special
@@ -438,7 +441,10 @@ class ServiceObject<T = any> extends EventEmitter {
     const reqOpts = {
       uri: '',
       ...methodConfig.reqOpts,
-      qs: {...options} as ReadonlyOptions<GetMetadataOptions>,
+      qs: {
+        ...methodConfig.reqOpts?.qs,
+        ...options,
+      } as ReadonlyOptions<GetMetadataOptions>,
     };
 
     // The `request` method may have been overridden to hold any special
@@ -502,7 +508,10 @@ class ServiceObject<T = any> extends EventEmitter {
       uri: '',
       ...methodConfig.reqOpts,
       json: {...metadata} as ReadonlyOptions<Metadata>,
-      qs: {...options} as ReadonlyOptions<SetMetadataOptions>,
+      qs: {
+        ...methodConfig.reqOpts?.qs,
+        ...options,
+      } as ReadonlyOptions<SetMetadataOptions>,
     };
 
     // The `request` method may have been overridden to hold any special

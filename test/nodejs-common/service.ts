@@ -102,7 +102,8 @@ describe('Service', () => {
       makeAuthenticatedRequestFactoryOverride = (
         config: MakeAuthenticatedRequestFactoryConfig
       ) => {
-        const expectedConfig = extend({}, CONFIG, {
+        const expectedConfig = {
+          ...CONFIG,
           authClient: OPTIONS.authClient,
           credentials: OPTIONS.credentials,
           keyFile: OPTIONS.keyFilename,
@@ -110,7 +111,7 @@ describe('Service', () => {
           projectIdRequired: CONFIG.projectIdRequired,
           projectId: OPTIONS.projectId,
           token: OPTIONS.token,
-        });
+        };
 
         assert.deepStrictEqual(config, expectedConfig);
 
@@ -727,7 +728,7 @@ describe('Service', () => {
       const fakeStream = {};
 
       Service.prototype.request_ = async (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts, fakeOpts);
+        assert.deepStrictEqual(reqOpts, {shouldReturnStream: true});
         return fakeStream;
       };
 

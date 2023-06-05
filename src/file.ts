@@ -1852,12 +1852,9 @@ class File extends ServiceObject<File> {
     const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config;
     const options = {
       ...userOptions,
-      metadata: {} as CreateWriteStreamOptions['metadata'],
+      metadata:
+        userOptions?.metadata || ({} as CreateWriteStreamOptions['metadata']),
     };
-
-    if (userOptions.metadata) {
-      Object.assign(options.metadata, {...userOptions.metadata});
-    }
 
     if (options.contentType) {
       options.metadata.contentType = options.contentType;
@@ -3825,12 +3822,8 @@ class File extends ServiceObject<File> {
     const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config;
     const options = {
       ...userOptions,
-      metadata: {} as CreateWriteStreamOptions['metadata'],
+      metadata: userOptions?.metadata || {},
     };
-
-    if (userOptions.metadata) {
-      Object.assign(options.metadata, {...userOptions.metadata});
-    }
 
     const retryOptions = this.storage.retryOptions;
     if (
@@ -3897,12 +3890,8 @@ class File extends ServiceObject<File> {
     const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config || {};
     const options = {
       ...userOptions,
-      metadata: {} as CreateWriteStreamOptions['metadata'],
+      metadata: userOptions?.metadata || {},
     };
-
-    if (userOptions.metadata) {
-      Object.assign(options.metadata, {...userOptions.metadata});
-    }
 
     const apiEndpoint = this.storage.apiEndpoint;
     const bucketName = this.bucket.name;

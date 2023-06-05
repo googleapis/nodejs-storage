@@ -114,7 +114,7 @@ export class Service {
       ...config,
       projectIdRequired: this.projectIdRequired,
       projectId: this.projectId,
-      authClient: options.authClient,
+      authClient: options.authClient || config.authClient,
       credentials: options.credentials,
       keyFile: options.keyFilename,
       email: options.email,
