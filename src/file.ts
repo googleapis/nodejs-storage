@@ -387,10 +387,6 @@ export interface SetStorageClassOptions {
   preconditionOpts?: PreconditionOptions;
 }
 
-interface SetStorageClassRequest extends SetStorageClassOptions {
-  storageClass?: string;
-}
-
 export interface SetStorageClassCallback {
   (err?: Error | null, apiResponse?: Metadata): void;
 }
@@ -1852,8 +1848,9 @@ class File extends ServiceObject<File> {
     const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config;
     const options = {
       ...userOptions,
-      metadata:
-        userOptions?.metadata || ({} as CreateWriteStreamOptions['metadata']),
+      metadata: {
+        ...userOptions?.metadata,
+      } as CreateWriteStreamOptions['metadata'],
     };
 
     if (options.contentType) {
@@ -3076,7 +3073,7 @@ class File extends ServiceObject<File> {
     // so acl must explicitly be nullified, destroying all previous acls on the
     // file.
 
-    const metadata = {...(options.metadata || {}), acl: null};
+    const metadata = {...options.metadata, acl: null};
 
     this.setMetadata(metadata, query, callback!);
   }
@@ -3765,15 +3762,16 @@ class File extends ServiceObject<File> {
     const options: ReadonlyOptions<SetStorageClassOptions> =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
 
-    const req = {...options, storageClass: ''};
-
-    // In case we get input like `storageClass`, convert to `storage_class`.
-    req.storageClass = storageClass
-      .replace(/-/g, '_')
-      .replace(/([a-z])([A-Z])/g, (_, low, up) => {
-        return low + '_' + up;
-      })
-      .toUpperCase();
+    const req = {
+      ...options,
+      // In case we get input like `storageClass`, convert to `storage_class`.
+      storageClass: storageClass
+        .replace(/-/g, '_')
+        .replace(/([a-z])([A-Z])/g, (_, low, up) => {
+          return low + '_' + up;
+        })
+        .toUpperCase(),
+    };
 
     this.copy(this, req, (err, file, apiResponse) => {
       if (err) {
@@ -3822,7 +3820,7 @@ class File extends ServiceObject<File> {
     const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config;
     const options = {
       ...userOptions,
-      metadata: userOptions?.metadata || {},
+      metadata: {...userOptions?.metadata},
     };
 
     const retryOptions = this.storage.retryOptions;
@@ -3890,7 +3888,7 @@ class File extends ServiceObject<File> {
     const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config || {};
     const options = {
       ...userOptions,
-      metadata: userOptions?.metadata || {},
+      metadata: {...userOptions?.metadata},
     };
 
     const apiEndpoint = this.storage.apiEndpoint;

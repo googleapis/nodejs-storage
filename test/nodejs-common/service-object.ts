@@ -394,7 +394,6 @@ describe('ServiceObject', () => {
             serviceObject.methods.delete,
             cachedMethodConfig
           );
-
           assert.deepStrictEqual(reqOpts_.qs, {
             defaultProperty: true,
             optionalProperty: true,
