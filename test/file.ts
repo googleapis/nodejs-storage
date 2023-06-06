@@ -28,7 +28,6 @@ import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
 import * as assert from 'assert';
 import * as crypto from 'crypto';
 import * as duplexify from 'duplexify';
-import * as extend from 'extend';
 import * as fs from 'fs';
 import * as proxyquire from 'proxyquire';
 import * as resumableUpload from '../src/resumable-upload';
@@ -105,20 +104,21 @@ const fakePromisify = {
   },
 };
 
-const fsCached = extend(true, {}, fs);
-const fakeFs = extend(true, {}, fsCached);
+const fsCached = fs;
+const fakeFs = {...fsCached};
 
-const zlibCached = extend(true, {}, zlib);
+const zlibCached = zlib;
 let createGunzipOverride: Function | null;
-const fakeZlib = extend(true, {}, zlib, {
+const fakeZlib = {
+  ...zlib,
   createGunzip(...args: Array<{}>) {
     return (createGunzipOverride || zlibCached.createGunzip)(...args);
   },
-});
+};
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const osCached = extend(true, {}, require('os'));
-const fakeOs = extend(true, {}, osCached);
+const osCached = require('os');
+const fakeOs = {...osCached};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let resumableUploadOverride: any;
@@ -210,8 +210,8 @@ describe('File', () => {
   });
 
   beforeEach(() => {
-    extend(true, fakeFs, fsCached);
-    extend(true, fakeOs, osCached);
+    Object.assign(fakeFs, fsCached);
+    Object.assign(fakeOs, osCached);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     FakeServiceObject.prototype.request = util.noop as any;
 
