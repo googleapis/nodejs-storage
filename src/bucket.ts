@@ -3269,7 +3269,7 @@ class Bucket extends ServiceObject {
 
     // You aren't allowed to set both predefinedAcl & acl properties on a bucket
     // so acl must explicitly be nullified.
-    const metadata = {...(options.metadata || {}), acl: null};
+    const metadata = {...options.metadata, acl: null};
 
     this.setMetadata(metadata, query, err => {
       if (err) {
@@ -3513,7 +3513,7 @@ class Bucket extends ServiceObject {
     callback?: BodyResponseCallback
   ): void | Promise<[ResponseBody, Metadata]> {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
-      reqOpts.qs = {...(reqOpts.qs || {}), userProject: this.userProject};
+      reqOpts.qs = {...reqOpts.qs, userProject: this.userProject};
     }
     return super.request(reqOpts, callback!);
   }

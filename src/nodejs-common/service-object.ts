@@ -507,7 +507,10 @@ class ServiceObject<T = any> extends EventEmitter {
       method: 'PATCH',
       uri: '',
       ...methodConfig.reqOpts,
-      json: {...metadata} as ReadonlyOptions<Metadata>,
+      json: {
+        ...methodConfig.reqOpts?.json,
+        ...metadata,
+      } as ReadonlyOptions<Metadata>,
       qs: {
         ...methodConfig.reqOpts?.qs,
         ...options,

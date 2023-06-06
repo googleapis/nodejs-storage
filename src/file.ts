@@ -1150,14 +1150,14 @@ class File extends ServiceObject<File> {
       throw noDestinationError;
     }
 
-    let options: ReadonlyOptions<CopyOptions> = {};
+    let userOptions: ReadonlyOptions<CopyOptions> = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
     } else if (optionsOrCallback) {
-      options = optionsOrCallback;
+      userOptions = optionsOrCallback;
     }
 
-    const payload = {...options};
+    const options = {...userOptions};
 
     callback = callback || util.noop;
 
@@ -1189,16 +1189,16 @@ class File extends ServiceObject<File> {
     if (this.generation !== undefined) {
       query.sourceGeneration = this.generation;
     }
-    if (options.token !== undefined) {
-      query.rewriteToken = options.token;
+    if (userOptions.token !== undefined) {
+      query.rewriteToken = userOptions.token;
     }
-    if (options.userProject !== undefined) {
-      query.userProject = options.userProject;
-      delete payload.userProject;
+    if (userOptions.userProject !== undefined) {
+      query.userProject = userOptions.userProject;
+      delete options.userProject;
     }
-    if (options.predefinedAcl !== undefined) {
-      query.destinationPredefinedAcl = options.predefinedAcl;
-      delete payload.predefinedAcl;
+    if (userOptions.predefinedAcl !== undefined) {
+      query.destinationPredefinedAcl = userOptions.predefinedAcl;
+      delete options.predefinedAcl;
     }
 
     newFile = newFile! || destBucket.file(destName);
@@ -1214,9 +1214,9 @@ class File extends ServiceObject<File> {
 
     if (newFile.encryptionKey !== undefined) {
       this.setEncryptionKey(newFile.encryptionKey!);
-    } else if (options.destinationKmsKeyName !== undefined) {
-      query.destinationKmsKeyName = options.destinationKmsKeyName;
-      delete payload.destinationKmsKeyName;
+    } else if (userOptions.destinationKmsKeyName !== undefined) {
+      query.destinationKmsKeyName = userOptions.destinationKmsKeyName;
+      delete options.destinationKmsKeyName;
     } else if (newFile.kmsKeyName !== undefined) {
       query.destinationKmsKeyName = newFile.kmsKeyName;
     }
@@ -1234,15 +1234,15 @@ class File extends ServiceObject<File> {
 
     if (
       !this.shouldRetryBasedOnPreconditionAndIdempotencyStrat(
-        options?.preconditionOpts
+        userOptions?.preconditionOpts
       )
     ) {
       this.storage.retryOptions.autoRetry = false;
     }
 
-    if (options.preconditionOpts?.ifGenerationMatch !== undefined) {
-      query.ifGenerationMatch = options.preconditionOpts?.ifGenerationMatch;
-      delete payload.preconditionOpts;
+    if (userOptions.preconditionOpts?.ifGenerationMatch !== undefined) {
+      query.ifGenerationMatch = userOptions.preconditionOpts?.ifGenerationMatch;
+      delete options.preconditionOpts;
     }
 
     this.request(
@@ -1252,7 +1252,7 @@ class File extends ServiceObject<File> {
           newFile.name
         )}`,
         qs: query,
-        json: payload,
+        json: options,
         headers,
       },
       (err, resp) => {
@@ -3072,7 +3072,6 @@ class File extends ServiceObject<File> {
     // You aren't allowed to set both predefinedAcl & acl properties on a file,
     // so acl must explicitly be nullified, destroying all previous acls on the
     // file.
-
     const metadata = {...options.metadata, acl: null};
 
     this.setMetadata(metadata, query, callback!);

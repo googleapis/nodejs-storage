@@ -400,7 +400,7 @@ export class Util {
     callback = callback || util.noop;
 
     const parsedResp = {
-      err: err || undefined,
+      err: err || null,
       ...(resp && util.parseHttpRespMessage(resp)),
       ...(body && util.parseHttpRespBody(body)),
     };
@@ -515,6 +515,10 @@ export class Util {
     const reqOpts = {
       ...defaultReqOpts,
       ...options.request,
+      qs: {
+        ...defaultReqOpts.qs,
+        ...options.request?.qs,
+      },
       multipart: [
         {
           'Content-Type': 'application/json',

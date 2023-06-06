@@ -958,7 +958,12 @@ export class Upload extends Writable {
     const combinedReqOpts = {
       ...this.customRequestOptions,
       ...reqOpts,
+      headers: {
+        ...this.customRequestOptions.headers,
+        ...reqOpts.headers,
+      },
     };
+
     const res = await this.authClient.request<{error?: object}>(
       combinedReqOpts
     );
@@ -983,6 +988,10 @@ export class Upload extends Writable {
     const combinedReqOpts = {
       ...this.customRequestOptions,
       ...reqOpts,
+      headers: {
+        ...this.customRequestOptions.headers,
+        ...reqOpts.headers,
+      },
     };
     const res = await this.authClient.request(combinedReqOpts);
     const successfulRequest = this.onResponse(res);
