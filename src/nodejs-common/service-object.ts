@@ -25,7 +25,6 @@ import {
   ResponseBody,
   util,
 } from './util';
-import {ReadonlyOptions} from '../util';
 
 export type RequestResponse = [Metadata, r.Response];
 
@@ -297,7 +296,7 @@ class ServiceObject<T = any> extends EventEmitter {
       qs: {
         ...methodConfig.reqOpts?.qs,
         ...options,
-      } as ReadonlyOptions<DeleteOptions>,
+      },
     };
 
     // The `request` method may have been overridden to hold any special
@@ -444,7 +443,7 @@ class ServiceObject<T = any> extends EventEmitter {
       qs: {
         ...methodConfig.reqOpts?.qs,
         ...options,
-      } as ReadonlyOptions<GetMetadataOptions>,
+      },
     };
 
     // The `request` method may have been overridden to hold any special
@@ -510,11 +509,11 @@ class ServiceObject<T = any> extends EventEmitter {
       json: {
         ...methodConfig.reqOpts?.json,
         ...metadata,
-      } as ReadonlyOptions<Metadata>,
+      },
       qs: {
         ...methodConfig.reqOpts?.qs,
         ...options,
-      } as ReadonlyOptions<SetMetadataOptions>,
+      },
     };
 
     // The `request` method may have been overridden to hold any special

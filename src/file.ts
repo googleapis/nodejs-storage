@@ -64,7 +64,6 @@ import {
   unicodeJSONStringify,
   formatAsUTCISO,
   PassThroughShim,
-  ReadonlyOptions,
 } from './util';
 import {CRC32CValidatorGenerator} from './crc32c';
 import {HashStreamValidator} from './hash-stream-validator';
@@ -1150,14 +1149,12 @@ class File extends ServiceObject<File> {
       throw noDestinationError;
     }
 
-    let userOptions: ReadonlyOptions<CopyOptions> = {};
+    let options: CopyOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
     } else if (optionsOrCallback) {
-      userOptions = optionsOrCallback;
+      options = {...optionsOrCallback};
     }
-
-    const options = {...userOptions};
 
     callback = callback || util.noop;
 
@@ -1189,15 +1186,15 @@ class File extends ServiceObject<File> {
     if (this.generation !== undefined) {
       query.sourceGeneration = this.generation;
     }
-    if (userOptions.token !== undefined) {
-      query.rewriteToken = userOptions.token;
+    if (options.token !== undefined) {
+      query.rewriteToken = options.token;
     }
-    if (userOptions.userProject !== undefined) {
-      query.userProject = userOptions.userProject;
+    if (options.userProject !== undefined) {
+      query.userProject = options.userProject;
       delete options.userProject;
     }
-    if (userOptions.predefinedAcl !== undefined) {
-      query.destinationPredefinedAcl = userOptions.predefinedAcl;
+    if (options.predefinedAcl !== undefined) {
+      query.destinationPredefinedAcl = options.predefinedAcl;
       delete options.predefinedAcl;
     }
 
@@ -1214,8 +1211,8 @@ class File extends ServiceObject<File> {
 
     if (newFile.encryptionKey !== undefined) {
       this.setEncryptionKey(newFile.encryptionKey!);
-    } else if (userOptions.destinationKmsKeyName !== undefined) {
-      query.destinationKmsKeyName = userOptions.destinationKmsKeyName;
+    } else if (options.destinationKmsKeyName !== undefined) {
+      query.destinationKmsKeyName = options.destinationKmsKeyName;
       delete options.destinationKmsKeyName;
     } else if (newFile.kmsKeyName !== undefined) {
       query.destinationKmsKeyName = newFile.kmsKeyName;
@@ -1234,14 +1231,14 @@ class File extends ServiceObject<File> {
 
     if (
       !this.shouldRetryBasedOnPreconditionAndIdempotencyStrat(
-        userOptions?.preconditionOpts
+        options?.preconditionOpts
       )
     ) {
       this.storage.retryOptions.autoRetry = false;
     }
 
-    if (userOptions.preconditionOpts?.ifGenerationMatch !== undefined) {
-      query.ifGenerationMatch = userOptions.preconditionOpts?.ifGenerationMatch;
+    if (options.preconditionOpts?.ifGenerationMatch !== undefined) {
+      query.ifGenerationMatch = options.preconditionOpts?.ifGenerationMatch;
       delete options.preconditionOpts;
     }
 
@@ -1844,14 +1841,8 @@ class File extends ServiceObject<File> {
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  createWriteStream(config: CreateWriteStreamOptions = {}): Writable {
-    const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config;
-    const options = {
-      ...userOptions,
-      metadata: {
-        ...userOptions?.metadata,
-      } as CreateWriteStreamOptions['metadata'],
-    };
+  createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
+    options.metadata ??= {};
 
     if (options.contentType) {
       options.metadata.contentType = options.contentType;
@@ -3758,7 +3749,7 @@ class File extends ServiceObject<File> {
   ): Promise<SetStorageClassResponse> | void {
     callback =
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
-    const options: ReadonlyOptions<SetStorageClassOptions> =
+    const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
 
     const req = {
@@ -3814,18 +3805,14 @@ class File extends ServiceObject<File> {
    */
   startResumableUpload_(
     dup: Duplexify,
-    config: CreateResumableUploadOptions
+    options: CreateResumableUploadOptions = {}
   ): void {
-    const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config;
-    const options = {
-      ...userOptions,
-      metadata: {...userOptions?.metadata},
-    };
+    options.metadata ??= {};
 
     const retryOptions = this.storage.retryOptions;
     if (
       !this.shouldRetryBasedOnPreconditionAndIdempotencyStrat(
-        options?.preconditionOpts
+        options.preconditionOpts
       )
     ) {
       retryOptions.autoRetry = false;
@@ -3883,12 +3870,11 @@ class File extends ServiceObject<File> {
    *
    * @private
    */
-  startSimpleUpload_(dup: Duplexify, config?: CreateWriteStreamOptions): void {
-    const userOptions: ReadonlyOptions<CreateWriteStreamOptions> = config || {};
-    const options = {
-      ...userOptions,
-      metadata: {...userOptions?.metadata},
-    };
+  startSimpleUpload_(
+    dup: Duplexify,
+    options: CreateWriteStreamOptions = {}
+  ): void {
+    options.metadata ??= {};
 
     const apiEndpoint = this.storage.apiEndpoint;
     const bucketName = this.bucket.name;

@@ -209,12 +209,3 @@ export class PassThroughShim extends PassThrough {
     callback(null);
   }
 }
-
-/**
- * Sets a given type as readonly (deep, recursive).
- *
- * @experimental
- */
-export type ReadonlyOptions<T> = {
-  readonly [K in keyof T]: ReadonlyOptions<T[K]>;
-};

@@ -35,7 +35,7 @@ import * as path from 'path';
 import pLimit = require('p-limit');
 import {promisify} from 'util';
 import retry = require('async-retry');
-import {ReadonlyOptions, convertObjKeysToSnakeCase} from './util';
+import {convertObjKeysToSnakeCase} from './util';
 
 import {Acl} from './acl';
 import {Channel} from './channel';
@@ -3394,7 +3394,7 @@ class Bucket extends ServiceObject {
     optionsOrCallback?: MakeBucketPublicOptions | MakeBucketPublicCallback,
     callback?: MakeBucketPublicCallback
   ): Promise<MakeBucketPublicResponse> | void {
-    const options: ReadonlyOptions<MakeBucketPublicOptions> =
+    const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;
@@ -4340,7 +4340,7 @@ class Bucket extends ServiceObject {
     const errors = [] as Error[];
     const updatedFiles = [] as File[];
 
-    const options: ReadonlyOptions<MakeAllFilesPublicPrivateOptions> =
+    const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
       typeof optionsOrCallback === 'function' ? optionsOrCallback : callback;

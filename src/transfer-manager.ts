@@ -20,7 +20,6 @@ import * as pLimit from 'p-limit';
 import * as path from 'path';
 import {promises as fsp} from 'fs';
 import {CRC32C} from './crc32c';
-import {ReadonlyOptions} from './util';
 
 /**
  * Default number of concurrently executing promises to use when calling uploadManyFiles.
@@ -162,13 +161,8 @@ export class TransferManager {
         continue;
       }
 
-      const userPassthroughOptions: ReadonlyOptions<
-        UploadManyFilesOptions['passthroughOptions']
-      > = options.passthroughOptions;
-
-      const passThroughOptionsCopy = {
-        ...userPassthroughOptions,
-        destination: '', /// we want to configure this below
+      const passThroughOptionsCopy: UploadOptions = {
+        ...options.passthroughOptions,
       };
 
       passThroughOptionsCopy.destination = filePath;
@@ -260,13 +254,8 @@ export class TransferManager {
     const regex = new RegExp(stripRegexString, 'g');
 
     for (const file of files) {
-      const userPassthroughOptions: ReadonlyOptions<
-        DownloadManyFilesOptions['passthroughOptions']
-      > = options.passthroughOptions;
-
       const passThroughOptionsCopy = {
-        ...userPassthroughOptions,
-        destination: '', /// we want to configure this below
+        ...options.passthroughOptions,
       };
 
       if (options.prefix) {
