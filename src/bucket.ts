@@ -3530,20 +3530,24 @@ class Bucket extends ServiceObject {
     callback: SetLabelsCallback
   ): void;
   /**
+   * @deprecated
    * @typedef {array} SetLabelsResponse
    * @property {object} 0 The bucket metadata.
    */
   /**
+   * @deprecated
    * @callback SetLabelsCallback
    * @param {?Error} err Request error, if any.
    * @param {object} metadata The bucket metadata.
    */
   /**
+   * @deprecated
    * @typedef {object} SetLabelsOptions Configuration options for Bucket#setLabels().
    * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
    */
   /**
+   * @deprecated Use setMetadata directly.
    * Set labels on the bucket.
    *
    * This makes an underlying call to {@link Bucket#setMetadata}, which
