@@ -478,55 +478,11 @@ describe('Bucket', () => {
       bucket.addLifecycleRule(rule, assert.ifError);
     });
 
-    it('should properly capitalize rule action', done => {
-      const rule = {
-        action: 'delete',
-        condition: {},
-      };
-
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.lifecycle.rule, [
-          {
-            action: {
-              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
-            },
-            condition: rule.condition,
-          },
-        ]);
-
-        done();
-      };
-
-      bucket.addLifecycleRule(rule, assert.ifError);
-    });
-
-    it('should properly set the storage class', done => {
-      const rule = {
-        action: 'setStorageClass',
-        storageClass: 'storage class',
-        condition: {},
-      };
-
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.lifecycle.rule, [
-          {
-            action: {
-              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
-              storageClass: rule.storageClass,
-            },
-            condition: rule.condition,
-          },
-        ]);
-
-        done();
-      };
-
-      bucket.addLifecycleRule(rule, assert.ifError);
-    });
-
     it('should properly set condition', done => {
       const rule = {
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           age: 30,
         },
@@ -536,7 +492,7 @@ describe('Bucket', () => {
         assert.deepStrictEqual(metadata.lifecycle.rule, [
           {
             action: {
-              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
+              type: 'Delete',
             },
             condition: rule.condition,
           },
@@ -551,7 +507,9 @@ describe('Bucket', () => {
       const date = new Date();
 
       const rule = {
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           createdBefore: date,
         },

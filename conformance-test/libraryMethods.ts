@@ -42,7 +42,9 @@ export async function addLifecycleRuleInstancePrecondition(
   options: ConformanceTestOptions
 ) {
   await options.bucket!.addLifecycleRule({
-    action: 'delete',
+    action: {
+      type: 'Delete',
+    },
     condition: {
       age: 365 * 3, // Specified in days.
     },
@@ -53,7 +55,9 @@ export async function addLifecycleRule(options: ConformanceTestOptions) {
   if (options.preconditionRequired) {
     await options.bucket!.addLifecycleRule(
       {
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           age: 365 * 3, // Specified in days.
         },
@@ -64,7 +68,9 @@ export async function addLifecycleRule(options: ConformanceTestOptions) {
     );
   } else {
     await options.bucket!.addLifecycleRule({
-      action: 'delete',
+      action: {
+        type: 'Delete',
+      },
       condition: {
         age: 365 * 3, // Specified in days.
       },
