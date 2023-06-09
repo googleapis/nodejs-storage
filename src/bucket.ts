@@ -2083,15 +2083,18 @@ class Bucket extends ServiceObject {
     callback: DeleteLabelsCallback
   ): void;
   /**
+   * @deprecated
    * @typedef {array} DeleteLabelsResponse
    * @property {object} 0 The full API response.
    */
   /**
+   * @deprecated
    * @callback DeleteLabelsCallback
    * @param {?Error} err Request error, if any.
    * @param {object} metadata Bucket's metadata.
    */
   /**
+   * @deprecated Use setMetadata directly
    * Delete one or more labels from this bucket.
    *
    * @param {string|string[]} [labels] The labels to delete. If no labels are
@@ -2742,20 +2745,24 @@ class Bucket extends ServiceObject {
   getLabels(callback: GetLabelsCallback): void;
   getLabels(options: GetLabelsOptions, callback: GetLabelsCallback): void;
   /**
+   * @deprecated
    * @typedef {object} GetLabelsOptions Configuration options for Bucket#getLabels().
    * @param {string} [userProject] The ID of the project which will be
    *     billed for the request.
    */
   /**
+   * @deprecated
    * @typedef {array} GetLabelsResponse
    * @property {object} 0 Object of labels currently set on this bucket.
    */
   /**
+   * @deprecated
    * @callback GetLabelsCallback
    * @param {?Error} err Request error, if any.
    * @param {object} labels Object of labels currently set on this bucket.
    */
   /**
+   * @deprecated Use getMetadata directly.
    * Get the labels currently set on this bucket.
    *
    * @param {object} [options] Configuration options.
