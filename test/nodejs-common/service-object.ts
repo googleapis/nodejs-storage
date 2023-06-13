@@ -21,7 +21,6 @@ import {
 } from '@google-cloud/promisify';
 import * as assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
-import * as extend from 'extend';
 import * as proxyquire from 'proxyquire';
 import * as r from 'teeny-request';
 import * as sinon from 'sinon';
@@ -117,7 +116,7 @@ describe('ServiceObject', () => {
 
     it('should localize the methods', () => {
       const methods = {};
-      const config = extend({}, CONFIG, {methods});
+      const config = {...CONFIG, methods};
       const serviceObject = new ServiceObject(config);
       assert.deepStrictEqual(asInternal(serviceObject).methods, methods);
     });
@@ -127,11 +126,12 @@ describe('ServiceObject', () => {
     });
 
     it('should clear out methods that are not asked for', () => {
-      const config = extend({}, CONFIG, {
+      const config = {
+        ...CONFIG,
         methods: {
           create: true,
         },
-      });
+      };
       const serviceObject = new ServiceObject(config);
       assert.strictEqual(typeof serviceObject.create, 'function');
       assert.strictEqual(serviceObject.delete, undefined);
@@ -139,14 +139,14 @@ describe('ServiceObject', () => {
 
     it('should always expose the request method', () => {
       const methods = {};
-      const config = extend({}, CONFIG, {methods});
+      const config = {...CONFIG, methods};
       const serviceObject = new ServiceObject(config);
       assert.strictEqual(typeof serviceObject.request, 'function');
     });
 
     it('should always expose the getRequestInterceptors method', () => {
       const methods = {};
-      const config = extend({}, CONFIG, {methods});
+      const config = {...CONFIG, methods};
       const serviceObject = new ServiceObject(config);
       assert.strictEqual(
         typeof serviceObject.getRequestInterceptors,
@@ -157,9 +157,7 @@ describe('ServiceObject', () => {
 
   describe('create', () => {
     it('should call createMethod', done => {
-      const config = extend({}, CONFIG, {
-        createMethod,
-      });
+      const config = {...CONFIG, createMethod};
       const options = {};
 
       function createMethod(
@@ -177,9 +175,7 @@ describe('ServiceObject', () => {
     });
 
     it('should not require options', done => {
-      const config = extend({}, CONFIG, {
-        createMethod,
-      });
+      const config = {...CONFIG, createMethod};
 
       function createMethod(id: string, options: Function, callback: Function) {
         assert.strictEqual(id, config.id);
@@ -193,9 +189,7 @@ describe('ServiceObject', () => {
     });
 
     it('should update id with metadata id', done => {
-      const config = extend({}, CONFIG, {
-        createMethod,
-      });
+      const config = {...CONFIG, createMethod};
       const options = {};
 
       function createMethod(
@@ -215,7 +209,7 @@ describe('ServiceObject', () => {
     });
 
     it('should pass error to callback', done => {
-      const config = extend({}, CONFIG, {createMethod});
+      const config = {...CONFIG, createMethod};
       const options = {};
       const error = new Error('Error.');
       const apiResponse = {};
@@ -236,9 +230,7 @@ describe('ServiceObject', () => {
     });
 
     it('should return instance and apiResponse to callback', async () => {
-      const config = extend({}, CONFIG, {
-        createMethod,
-      });
+      const config = {...CONFIG, createMethod};
       const options = {};
       const apiResponse = {};
       function createMethod(id: string, options_: {}, callback: Function) {
@@ -252,9 +244,7 @@ describe('ServiceObject', () => {
     });
 
     it('should assign metadata', async () => {
-      const config = extend({}, CONFIG, {
-        createMethod,
-      });
+      const config = {...CONFIG, createMethod};
       const options = {};
       const instance = {
         metadata: {},
@@ -268,9 +258,7 @@ describe('ServiceObject', () => {
     });
 
     it('should execute callback with any amount of arguments', done => {
-      const config = extend({}, CONFIG, {
-        createMethod,
-      });
+      const config = {...CONFIG, createMethod};
       const options = {};
 
       const args = ['a', 'b', 'c', 'd', 'e', 'f'];
@@ -321,7 +309,7 @@ describe('ServiceObject', () => {
         },
       };
 
-      const cachedMethodConfig = extend(true, {}, methodConfig);
+      const cachedMethodConfig = {reqOpts: {...methodConfig.reqOpts}};
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
@@ -385,7 +373,7 @@ describe('ServiceObject', () => {
         },
       };
 
-      const cachedMethodConfig = extend(true, {}, methodConfig);
+      const cachedMethodConfig = {reqOpts: {qs: {...methodConfig.reqOpts.qs}}};
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
@@ -583,7 +571,7 @@ describe('ServiceObject', () => {
 
       it('should pass config to create if it was provided', done => {
         const expectedConfig = {maxResults: 5} as SO.GetConfig;
-        const config = extend({}, AUTO_CREATE_CONFIG, expectedConfig);
+        const config = {...AUTO_CREATE_CONFIG, ...expectedConfig};
 
         sandbox.stub(serviceObject, 'create').callsFake(config_ => {
           assert.deepStrictEqual(config_, expectedConfig);
@@ -672,7 +660,7 @@ describe('ServiceObject', () => {
         },
       };
 
-      const cachedMethodConfig = extend(true, {}, methodConfig);
+      const cachedMethodConfig = {reqOpts: {...methodConfig.reqOpts}};
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
@@ -701,7 +689,7 @@ describe('ServiceObject', () => {
         },
       };
 
-      const cachedMethodConfig = extend(true, {}, methodConfig);
+      const cachedMethodConfig = {reqOpts: {qs: {...methodConfig.reqOpts.qs}}};
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
@@ -891,7 +879,7 @@ describe('ServiceObject', () => {
           method: 'PUT',
         },
       };
-      const cachedMethodConfig = extend(true, {}, methodConfig);
+      const cachedMethodConfig = {reqOpts: {...methodConfig.reqOpts}};
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
@@ -920,7 +908,7 @@ describe('ServiceObject', () => {
           },
         },
       };
-      const cachedMethodConfig = extend(true, {}, methodConfig);
+      const cachedMethodConfig = {reqOpts: {qs: {...methodConfig.reqOpts.qs}}};
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
@@ -1070,9 +1058,7 @@ describe('ServiceObject', () => {
         },
       });
 
-      const child = new ServiceObject(
-        extend({}, CONFIG, {parent})
-      ) as FakeServiceObject;
+      const child = new ServiceObject({...CONFIG, parent}) as FakeServiceObject;
       child.interceptors.push({
         request(reqOpts: DecorateRequestOptions) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1140,7 +1126,7 @@ describe('ServiceObject', () => {
         return fakeObj as r.Request;
       };
 
-      const opts = extend(true, reqOpts, {shouldReturnStream: true});
+      const opts = {...reqOpts, shouldReturnStream: true};
       const res = asInternal(serviceObject).request_(opts);
       assert.strictEqual(res, fakeObj);
     });

@@ -20,7 +20,6 @@ import {
   util,
 } from '../src/nodejs-common';
 import * as assert from 'assert';
-import * as extend from 'extend';
 import * as fs from 'fs';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
 import * as mime from 'mime-types';
@@ -97,11 +96,12 @@ class FakeNotification {
 }
 
 let fsStatOverride: Function | null;
-const fakeFs = extend(true, {}, fs, {
+const fakeFs = {
+  ...fs,
   stat: (filePath: string, callback: Function) => {
     return (fsStatOverride || fs.stat)(filePath, callback);
   },
-});
+};
 
 let pLimitOverride: Function | null;
 const fakePLimit = (limit: number) => (pLimitOverride || pLimit)(limit);
