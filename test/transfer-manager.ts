@@ -33,7 +33,6 @@ import {
 import * as assert from 'assert';
 import * as path from 'path';
 import * as stream from 'stream';
-import * as extend from 'extend';
 import * as fs from 'fs';
 import * as sinon from 'sinon';
 import {GaxiosResponse} from 'gaxios';
@@ -96,11 +95,8 @@ class HTTPError extends Error {
 
 let pLimitOverride: Function | null;
 const fakePLimit = (limit: number) => (pLimitOverride || pLimit)(limit);
-const fakeFs = extend(true, {}, fs, {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  createReadStream(path: string, _options: {}): stream.Stream {
-    return new stream.PassThrough();
-  },
+const fakeFs = {
+  ...fs,
   get promises() {
     return {
       open: () => {
@@ -120,7 +116,7 @@ const fakeFs = extend(true, {}, fs, {
       },
     };
   },
-});
+};
 
 describe('Transfer Manager', () => {
   let TransferManager: any;

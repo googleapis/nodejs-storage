@@ -18,7 +18,6 @@ import {Bucket, UploadOptions, UploadResponse} from './bucket';
 import {DownloadOptions, DownloadResponse, File} from './file';
 import * as pLimit from 'p-limit';
 import * as path from 'path';
-import * as extend from 'extend';
 import {createReadStream, promises as fsp} from 'fs';
 import {CRC32C} from './crc32c';
 import {GoogleAuth} from 'google-auth-library';
@@ -392,11 +391,11 @@ export class TransferManager {
       if (stat.isDirectory()) {
         continue;
       }
-      const passThroughOptionsCopy: UploadOptions = extend(
-        true,
-        {},
-        options.passthroughOptions
-      );
+
+      const passThroughOptionsCopy: UploadOptions = {
+        ...options.passthroughOptions,
+      };
+
       passThroughOptionsCopy.destination = filePath;
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.join(
@@ -405,7 +404,9 @@ export class TransferManager {
         );
       }
       promises.push(
-        limit(() => this.bucket.upload(filePath, passThroughOptionsCopy))
+        limit(() =>
+          this.bucket.upload(filePath, passThroughOptionsCopy as UploadOptions)
+        )
       );
     }
 
@@ -484,11 +485,10 @@ export class TransferManager {
     const regex = new RegExp(stripRegexString, 'g');
 
     for (const file of files) {
-      const passThroughOptionsCopy = extend(
-        true,
-        {},
-        options.passthroughOptions
-      );
+      const passThroughOptionsCopy = {
+        ...options.passthroughOptions,
+      };
+
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.join(
           options.prefix || '',
