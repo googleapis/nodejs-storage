@@ -109,10 +109,28 @@ export interface AddLifecycleRuleOptions extends PreconditionOptions {
   append?: boolean;
 }
 
-export interface LifecycleRule {
-  action: {type: string; storageClass?: string} | string;
-  condition: {[key: string]: boolean | Date | number | string | string[]};
+export interface LifecycleAction {
+  type: 'Delete' | 'SetStorageClass' | 'AbortIncompleteMultipartUpload';
   storageClass?: string;
+}
+
+export interface LifecycleCondition {
+  age?: number;
+  createdBefore?: Date | string;
+  customTimeBefore?: Date | string;
+  daysSinceCustomTime?: number;
+  daysSinceNoncurrentTime?: number;
+  isLive?: boolean;
+  matchesPrefix?: string[];
+  matchesSuffix?: string[];
+  matchesStorageClass?: string[];
+  noncurrentTimeBefore?: Date | string;
+  numNewerVersions?: number;
+}
+
+export interface LifecycleRule {
+  action: LifecycleAction;
+  condition: LifecycleCondition;
 }
 
 export interface EnableLoggingOptions extends PreconditionOptions {
@@ -1343,46 +1361,27 @@ class Bucket extends ServiceObject {
     options = options || {};
 
     const rules = Array.isArray(rule) ? rule : [rule];
-
-    const newLifecycleRules = rules.map(rule => {
-      if (typeof rule.action === 'object') {
-        // This is a raw-formatted rule object, the way the API expects.
-        // Just pass it through as-is.
-        return rule;
+    for (const curRule of rules) {
+      if (curRule.condition.createdBefore instanceof Date) {
+        curRule.condition.createdBefore = curRule.condition.createdBefore
+          .toISOString()
+          .replace(/T.+$/, '');
       }
-
-      const apiFormattedRule = {} as LifecycleRule;
-
-      apiFormattedRule.condition = {};
-      apiFormattedRule.action = {
-        type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
-      };
-
-      if (rule.storageClass) {
-        apiFormattedRule.action.storageClass = rule.storageClass;
+      if (curRule.condition.customTimeBefore instanceof Date) {
+        curRule.condition.customTimeBefore = curRule.condition.customTimeBefore
+          .toISOString()
+          .replace(/T.+$/, '');
       }
-
-      for (const condition in rule.condition) {
-        if (rule.condition[condition] instanceof Date) {
-          apiFormattedRule.condition[condition] = (
-            rule.condition[condition] as Date
-          )
+      if (curRule.condition.noncurrentTimeBefore instanceof Date) {
+        curRule.condition.noncurrentTimeBefore =
+          curRule.condition.noncurrentTimeBefore
             .toISOString()
             .replace(/T.+$/, '');
-        } else {
-          apiFormattedRule.condition[condition] = rule.condition[condition];
-        }
       }
-
-      return apiFormattedRule;
-    });
+    }
 
     if (options.append === false) {
-      this.setMetadata(
-        {lifecycle: {rule: newLifecycleRules}},
-        options,
-        callback!
-      );
+      this.setMetadata({lifecycle: {rule: rules}}, options, callback!);
       return;
     }
 
@@ -1403,7 +1402,7 @@ class Bucket extends ServiceObject {
       this.setMetadata(
         {
           lifecycle: {
-            rule: currentLifecycleRules.concat(newLifecycleRules),
+            rule: currentLifecycleRules.concat(rules),
           },
         },
         options as AddLifecycleRuleOptions,

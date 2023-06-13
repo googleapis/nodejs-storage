@@ -1166,7 +1166,9 @@ describe('storage', () => {
   describe('bucket object lifecycle management', () => {
     it('should add a rule', async () => {
       await bucket.addLifecycleRule({
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           age: 30,
           isLive: true,
@@ -1191,19 +1193,23 @@ describe('storage', () => {
         0;
 
       await bucket.addLifecycleRule({
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           age: 30,
           isLive: true,
         },
       });
       await bucket.addLifecycleRule({
-        action: 'setStorageClass',
+        action: {
+          type: 'SetStorageClass',
+          storageClass: 'coldline',
+        },
         condition: {
           age: 60,
           isLive: true,
         },
-        storageClass: 'coldline',
       });
       assert.strictEqual(
         bucket.metadata.lifecycle.rule.length,
@@ -1213,7 +1219,9 @@ describe('storage', () => {
 
     it('should add a prefix rule', async () => {
       await bucket.addLifecycleRule({
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           matchesPrefix: [TESTS_PREFIX],
         },
@@ -1233,7 +1241,9 @@ describe('storage', () => {
 
     it('should add a suffix rule', async () => {
       await bucket.addLifecycleRule({
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           matchesSuffix: [TESTS_PREFIX, 'test_suffix'],
         },
@@ -1251,7 +1261,9 @@ describe('storage', () => {
 
     it('should convert a rule with createdBefore to a date in string', async () => {
       await bucket.addLifecycleRule({
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           createdBefore: new Date('2018'),
         },
@@ -1271,7 +1283,9 @@ describe('storage', () => {
       const NONCURRENT_TIME_BEFORE = '2020-01-01';
 
       await bucket.addLifecycleRule({
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           noncurrentTimeBefore: new Date(NONCURRENT_TIME_BEFORE),
           daysSinceNoncurrentTime: 100,
@@ -1293,7 +1307,9 @@ describe('storage', () => {
       const CUSTOM_TIME_BEFORE = '2020-01-01';
 
       await bucket.addLifecycleRule({
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           customTimeBefore: new Date(CUSTOM_TIME_BEFORE),
           daysSinceCustomTime: 100,
