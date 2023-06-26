@@ -175,7 +175,7 @@ export function formatAsUTCISO(
 export function getRuntimeTrackingString(): string {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  if (globalThis.Deno) {
+  if (globalThis.Deno && globalThis.Deno.version && globalThis.Deno.version.deno) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     return `gl-deno/${globalThis.Deno.version.deno}`;
