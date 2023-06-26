@@ -173,9 +173,17 @@ export function formatAsUTCISO(
  * @returns {string} metrics tracking string based on the current runtime environment.
  */
 export function getRuntimeTrackingString(): string {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  if (globalThis.Deno && globalThis.Deno.version && globalThis.Deno.version.deno) {
+  if (
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    globalThis.Deno &&
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    globalThis.Deno.version &&
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    globalThis.Deno.version.deno
+  ) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     return `gl-deno/${globalThis.Deno.version.deno}`;
