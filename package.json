@@ -59,7 +59,7 @@
     "duplexify": "^4.0.0",
     "ent": "^2.2.0",
     "extend": "^3.0.2",
-    "gaxios": "^5.0.0",
+    "gaxios": "5.1.0-debug",
     "google-auth-library": "^8.0.1",
     "mime": "^3.0.0",
     "mime-types": "^2.0.8",
