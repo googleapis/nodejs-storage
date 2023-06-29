@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  BodyResponseCallback,
-  DecorateRequestOptions,
-  Metadata,
-} from './nodejs-common';
+import {BodyResponseCallback, DecorateRequestOptions} from './nodejs-common';
 import {promisifyAll} from '@google-cloud/promisify';
 
 export interface AclOptions {
@@ -29,13 +25,13 @@ export interface AclOptions {
 
 export type GetAclResponse = [
   AccessControlObject | AccessControlObject[],
-  Metadata
+  AclMetadata
 ];
 export interface GetAclCallback {
   (
     err: Error | null,
     acl?: AccessControlObject | AccessControlObject[] | null,
-    apiResponse?: Metadata
+    apiResponse?: AclMetadata
   ): void;
 }
 export interface GetAclOptions {
@@ -50,12 +46,12 @@ export interface UpdateAclOptions {
   generation?: number;
   userProject?: string;
 }
-export type UpdateAclResponse = [AccessControlObject, Metadata];
+export type UpdateAclResponse = [AccessControlObject, AclMetadata];
 export interface UpdateAclCallback {
   (
     err: Error | null,
     acl?: AccessControlObject | null,
-    apiResponse?: Metadata
+    apiResponse?: AclMetadata
   ): void;
 }
 
@@ -65,17 +61,17 @@ export interface AddAclOptions {
   generation?: number;
   userProject?: string;
 }
-export type AddAclResponse = [AccessControlObject, Metadata];
+export type AddAclResponse = [AccessControlObject, AclMetadata];
 export interface AddAclCallback {
   (
     err: Error | null,
     acl?: AccessControlObject | null,
-    apiResponse?: Metadata
+    apiResponse?: AclMetadata
   ): void;
 }
-export type RemoveAclResponse = [Metadata];
+export type RemoveAclResponse = [AclMetadata];
 export interface RemoveAclCallback {
-  (err: Error | null, apiResponse?: Metadata): void;
+  (err: Error | null, apiResponse?: AclMetadata): void;
 }
 export interface RemoveAclOptions {
   entity: string;
@@ -92,6 +88,23 @@ export interface AccessControlObject {
   entity: string;
   role: string;
   projectTeam: string;
+}
+
+export interface AclMetadata {
+  bucket?: string;
+  domain?: string;
+  entity?: string;
+  entityId?: string;
+  etag?: string;
+  id?: string;
+  kind?: string;
+  projectTeam?: {
+    projectNumber?: string;
+    team?: 'editors' | 'owners' | 'viewers';
+  };
+  role?: 'OWNER' | 'READER' | 'WRITER';
+  selfLink?: string;
+  [key: string]: unknown;
 }
 
 /**
