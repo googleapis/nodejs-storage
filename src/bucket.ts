@@ -19,13 +19,12 @@ import {
   DeleteCallback,
   ExistsCallback,
   GetConfig,
-  Metadata,
   MetadataCallback,
-  ResponseBody,
   ServiceObject,
   SetMetadataResponse,
   util,
 } from './nodejs-common';
+import {RequestResponse} from './nodejs-common/service-object';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as fs from 'fs';
@@ -37,16 +36,17 @@ import {promisify} from 'util';
 import retry = require('async-retry');
 import {convertObjKeysToSnakeCase} from './util';
 
-import {Acl} from './acl';
+import {Acl, AclMetadata} from './acl';
 import {Channel} from './channel';
 import {
   File,
   FileOptions,
   CreateResumableUploadOptions,
   CreateWriteStreamOptions,
+  FileMetadata,
 } from './file';
 import {Iam} from './iam';
-import {Notification} from './notification';
+import {Notification, NotificationMetadata} from './notification';
 import {
   Storage,
   Cors,
@@ -64,7 +64,7 @@ import {
 import {Readable} from 'stream';
 import {CRC32CValidatorGenerator} from './crc32c';
 import {URL} from 'url';
-import {SetMetadataOptions} from './nodejs-common/service-object';
+import {BaseMetadata, SetMetadataOptions} from './nodejs-common/service-object';
 
 interface SourceObject {
   name: string;
@@ -78,19 +78,19 @@ interface CreateNotificationQuery {
 interface MetadataOptions {
   predefinedAcl: string;
   userProject?: string;
-  ifGenerationMatch?: number;
-  ifGenerationNotMatch?: number;
-  ifMetagenerationMatch?: number;
-  ifMetagenerationNotMatch?: number;
+  ifGenerationMatch?: number | string;
+  ifGenerationNotMatch?: number | string;
+  ifMetagenerationMatch?: number | string;
+  ifMetagenerationNotMatch?: number | string;
 }
 
-export type GetFilesResponse = [File[], {}, Metadata];
+export type GetFilesResponse = [File[], {}, unknown];
 export interface GetFilesCallback {
   (
     err: Error | null,
     files?: File[],
     nextQuery?: {},
-    apiResponse?: Metadata
+    apiResponse?: unknown
   ): void;
 }
 
@@ -111,6 +111,24 @@ export interface AddLifecycleRuleOptions extends PreconditionOptions {
 export interface LifecycleAction {
   type: 'Delete' | 'SetStorageClass' | 'AbortIncompleteMultipartUpload';
   storageClass?: string;
+}
+export interface LifecycleCondition {
+  age?: number;
+  createdBefore?: Date | string;
+  customTimeBefore?: Date | string;
+  daysSinceCustomTime?: number;
+  daysSinceNoncurrentTime?: number;
+  isLive?: boolean;
+  matchesPrefix?: string[];
+  matchesSuffix?: string[];
+  matchesStorageClass?: string[];
+  noncurrentTimeBefore?: Date | string;
+  numNewerVersions?: number;
+}
+
+export interface LifecycleRule {
+  action: LifecycleAction;
+  condition: LifecycleCondition;
 }
 
 export interface LifecycleCondition {
@@ -158,10 +176,10 @@ export interface CombineOptions extends PreconditionOptions {
 }
 
 export interface CombineCallback {
-  (err: Error | null, newFile: File | null, apiResponse: Metadata): void;
+  (err: Error | null, newFile: File | null, apiResponse: unknown): void;
 }
 
-export type CombineResponse = [File, Metadata];
+export type CombineResponse = [File, unknown];
 
 export interface CreateChannelConfig extends WatchAllOptions {
   address: string;
@@ -171,10 +189,10 @@ export interface CreateChannelOptions {
   userProject?: string;
 }
 
-export type CreateChannelResponse = [Channel, Metadata];
+export type CreateChannelResponse = [Channel, unknown];
 
 export interface CreateChannelCallback {
-  (err: Error | null, channel: Channel | null, apiResponse: Metadata): void;
+  (err: Error | null, channel: Channel | null, apiResponse: unknown): void;
 }
 
 export interface CreateNotificationOptions {
@@ -189,21 +207,21 @@ export interface CreateNotificationCallback {
   (
     err: Error | null,
     notification: Notification | null,
-    apiResponse: Metadata
+    apiResponse: unknown
   ): void;
 }
 
-export type CreateNotificationResponse = [Notification, Metadata];
+export type CreateNotificationResponse = [Notification, unknown];
 
 export interface DeleteBucketOptions {
   ignoreNotFound?: boolean;
   userProject?: string;
 }
 
-export type DeleteBucketResponse = [Metadata];
+export type DeleteBucketResponse = [unknown];
 
 export interface DeleteBucketCallback extends DeleteCallback {
-  (err: Error | null, apiResponse: Metadata): void;
+  (err: Error | null, apiResponse: unknown): void;
 }
 
 export interface DeleteFilesOptions
@@ -216,7 +234,7 @@ export interface DeleteFilesCallback {
   (err: Error | Error[] | null, apiResponse?: object): void;
 }
 
-export type DeleteLabelsResponse = [Metadata];
+export type DeleteLabelsResponse = [unknown];
 
 export type DeleteLabelsCallback = SetLabelsCallback;
 
@@ -224,16 +242,16 @@ export type DeleteLabelsOptions = PreconditionOptions;
 
 export type DisableRequesterPaysOptions = PreconditionOptions;
 
-export type DisableRequesterPaysResponse = [Metadata];
+export type DisableRequesterPaysResponse = [unknown];
 
 export interface DisableRequesterPaysCallback {
   (err?: Error | null, apiResponse?: object): void;
 }
 
-export type EnableRequesterPaysResponse = [Metadata];
+export type EnableRequesterPaysResponse = [unknown];
 
 export interface EnableRequesterPaysCallback {
-  (err?: Error | null, apiResponse?: Metadata): void;
+  (err?: Error | null, apiResponse?: unknown): void;
 }
 
 export type EnableRequesterPaysOptions = PreconditionOptions;
@@ -249,29 +267,91 @@ export interface GetBucketOptions extends GetConfig {
   userProject?: string;
 }
 
-export type GetBucketResponse = [Bucket, Metadata];
+export type GetBucketResponse = [Bucket, unknown];
 
 export interface GetBucketCallback {
-  (err: ApiError | null, bucket: Bucket | null, apiResponse: Metadata): void;
+  (err: ApiError | null, bucket: Bucket | null, apiResponse: unknown): void;
 }
 
 export interface GetLabelsOptions {
   userProject?: string;
 }
 
-export type GetLabelsResponse = [Metadata];
+export type GetLabelsResponse = [unknown];
 
 export interface GetLabelsCallback {
   (err: Error | null, labels: object | null): void;
 }
 
-export type GetBucketMetadataResponse = [Metadata, Metadata];
+export interface BucketMetadata extends BaseMetadata {
+  acl?: AclMetadata[];
+  autoclass?: {
+    enabled?: boolean;
+    toggleTime?: string;
+  };
+  billing?: {
+    requesterPays?: boolean;
+  };
+  cors?: Cors[];
+  customPlacementConfig?: {
+    dataLocations?: string[];
+  };
+  defaultEventBasedHold?: boolean;
+  defaultObjectAcl?: AclMetadata[];
+  encryption?: {
+    defaultKmsKeyName?: string;
+  } | null;
+  iamConfiguration?: {
+    publicAccessPrevention?: string;
+    uniformBucketLevelAccess?: {
+      enabled?: boolean;
+      lockedTime?: string;
+    };
+  };
+  labels?: {
+    [key: string]: string;
+  };
+  lifecycle?: {
+    rule?: LifecycleRule[];
+  } | null;
+  location?: string;
+  locationType?: string;
+  logging?: {
+    logBucket?: string;
+    logObjectPrefix?: string;
+  };
+  metageneration?: string;
+  name?: string;
+  owner?: {
+    entity?: string;
+    entityId?: string;
+  };
+  projectNumber?: string | number;
+  retentionPolicy?: {
+    effectiveTime?: string;
+    isLocked?: boolean;
+    retentionPeriod?: string | number;
+  } | null;
+  rpo?: string;
+  storageClass?: string;
+  timeCreated?: string;
+  updated?: string;
+  versioning?: {
+    enabled?: boolean;
+  };
+  website?: {
+    mainPageSuffix?: string;
+    notFoundPage?: string;
+  };
+}
+
+export type GetBucketMetadataResponse = [BucketMetadata, unknown];
 
 export interface GetBucketMetadataCallback {
   (
     err: ApiError | null,
-    metadata: Metadata | null,
-    apiResponse: Metadata
+    metadata: BucketMetadata | null,
+    apiResponse: unknown
   ): void;
 }
 
@@ -306,16 +386,16 @@ export interface GetNotificationsCallback {
   (
     err: Error | null,
     notifications: Notification[] | null,
-    apiResponse: Metadata
+    apiResponse: unknown
   ): void;
 }
 
-export type GetNotificationsResponse = [Notification[], Metadata];
+export type GetNotificationsResponse = [Notification[], unknown];
 
 export interface MakeBucketPrivateOptions {
   includeFiles?: boolean;
   force?: boolean;
-  metadata?: Metadata;
+  metadata?: BucketMetadata;
   userProject?: string;
   preconditionOpts?: PreconditionOptions;
 }
@@ -345,17 +425,17 @@ export interface SetBucketMetadataOptions extends PreconditionOptions {
   userProject?: string;
 }
 
-export type SetBucketMetadataResponse = [Metadata];
+export type SetBucketMetadataResponse = [BucketMetadata];
 
 export interface SetBucketMetadataCallback {
-  (err?: Error | null, metadata?: Metadata): void;
+  (err?: Error | null, metadata?: BucketMetadata): void;
 }
 
 export interface BucketLockCallback {
-  (err?: Error | null, apiResponse?: Metadata): void;
+  (err?: Error | null, apiResponse?: unknown): void;
 }
 
-export type BucketLockResponse = [Metadata];
+export type BucketLockResponse = [unknown];
 
 export interface Labels {
   [key: string]: string;
@@ -365,10 +445,10 @@ export interface SetLabelsOptions extends PreconditionOptions {
   userProject?: string;
 }
 
-export type SetLabelsResponse = [Metadata];
+export type SetLabelsResponse = [unknown];
 
 export interface SetLabelsCallback {
-  (err?: Error | null, metadata?: Metadata): void;
+  (err?: Error | null, metadata?: unknown): void;
 }
 
 export interface SetBucketStorageClassOptions extends PreconditionOptions {
@@ -379,10 +459,10 @@ export interface SetBucketStorageClassCallback {
   (err?: Error | null): void;
 }
 
-export type UploadResponse = [File, Metadata];
+export type UploadResponse = [File, unknown];
 
 export interface UploadCallback {
-  (err: Error | null, file?: File | null, apiResponse?: Metadata): void;
+  (err: Error | null, file?: File | null, apiResponse?: unknown): void;
 }
 
 export interface UploadOptions
@@ -696,8 +776,7 @@ export enum BucketExceptionMessages {
  * const bucket = storage.bucket('albums');
  * ```
  */
-class Bucket extends ServiceObject {
-  metadata: Metadata;
+class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   name: string;
 
   /**
@@ -737,10 +816,10 @@ class Bucket extends ServiceObject {
 
     const requestQueryObject: {
       userProject?: string;
-      ifGenerationMatch?: number;
-      ifGenerationNotMatch?: number;
-      ifMetagenerationMatch?: number;
-      ifMetagenerationNotMatch?: number;
+      ifGenerationMatch?: number | string;
+      ifGenerationNotMatch?: number | string;
+      ifMetagenerationMatch?: number | string;
+      ifMetagenerationNotMatch?: number | string;
     } = {};
 
     if (options?.preconditionOpts?.ifGenerationMatch) {
@@ -1385,23 +1464,19 @@ class Bucket extends ServiceObject {
 
     // The default behavior appends the previously-defined lifecycle rules with
     // the new ones just passed in by the user.
-    this.getMetadata((err: ApiError | null, metadata: Metadata) => {
+    this.getMetadata((err: ApiError | null, metadata: BucketMetadata) => {
       if (err) {
         callback!(err);
         return;
       }
 
-      const currentLifecycleRules = Array.isArray(
-        metadata.lifecycle && metadata.lifecycle.rule
-      )
-        ? metadata.lifecycle && metadata.lifecycle.rule
+      const currentLifecycleRules = Array.isArray(metadata.lifecycle?.rule)
+        ? metadata.lifecycle?.rule
         : [];
 
       this.setMetadata(
         {
-          lifecycle: {
-            rule: currentLifecycleRules.concat(rules),
-          },
+          lifecycle: {rule: currentLifecycleRules!.concat(rules)},
         },
         options as AddLifecycleRuleOptions,
         callback!
@@ -1575,7 +1650,9 @@ class Bucket extends ServiceObject {
             } as SourceObject;
 
             if (source.metadata && source.metadata.generation) {
-              sourceObject.generation = source.metadata.generation;
+              sourceObject.generation = parseInt(
+                source.metadata.generation.toString()
+              );
             }
 
             return sourceObject;
@@ -2337,9 +2414,12 @@ class Bucket extends ServiceObject {
       );
     }
 
-    const logBucket = config.bucket
-      ? (config.bucket as Bucket).id || config.bucket
-      : this.id;
+    let logBucket = this.id;
+    if (config.bucket && config.bucket instanceof Bucket) {
+      logBucket = config.bucket.id;
+    } else if (config.bucket && typeof config.bucket === 'string') {
+      logBucket = config.bucket;
+    }
 
     const options: PreconditionOptions = {};
     if (config?.ifMetagenerationMatch) {
@@ -2704,7 +2784,7 @@ class Bucket extends ServiceObject {
         }
 
         const itemsArray = resp.items ? resp.items : [];
-        const files = itemsArray.map((file: Metadata) => {
+        const files = itemsArray.map((file: FileMetadata) => {
           const options = {} as FileOptions;
 
           if (query.versions) {
@@ -2715,7 +2795,7 @@ class Bucket extends ServiceObject {
             options.kmsKeyName = file.kmsKeyName;
           }
 
-          const fileInstance = this.file(file.name, options);
+          const fileInstance = this.file(file.name!, options);
           fileInstance.metadata = file;
 
           return fileInstance;
@@ -2801,13 +2881,13 @@ class Bucket extends ServiceObject {
 
     this.getMetadata(
       options,
-      (err: ApiError | null, metadata: Metadata | null) => {
+      (err: ApiError | null, metadata: BucketMetadata | undefined) => {
         if (err) {
           callback!(err, null);
           return;
         }
 
-        callback!(null, metadata.labels || {});
+        callback!(null, metadata?.labels || {});
       }
     );
   }
@@ -2895,11 +2975,13 @@ class Bucket extends ServiceObject {
           return;
         }
         const itemsArray = resp.items ? resp.items : [];
-        const notifications = itemsArray.map((notification: Metadata) => {
-          const notificationInstance = this.notification(notification.id);
-          notificationInstance.metadata = notification;
-          return notificationInstance;
-        });
+        const notifications = itemsArray.map(
+          (notification: NotificationMetadata) => {
+            const notificationInstance = this.notification(notification.id!);
+            notificationInstance.metadata = notification;
+            return notificationInstance;
+          }
+        );
 
         callback!(null, notifications, resp);
       }
@@ -3268,7 +3350,7 @@ class Bucket extends ServiceObject {
     // so acl must explicitly be nullified.
     const metadata = {...options.metadata, acl: null};
 
-    this.setMetadata(metadata, query, err => {
+    this.setMetadata(metadata, query, (err: Error | null | undefined) => {
       if (err) {
         callback!(err);
       }
@@ -3492,7 +3574,7 @@ class Bucket extends ServiceObject {
     );
   }
 
-  request(reqOpts: DecorateRequestOptions): Promise<[ResponseBody, Metadata]>;
+  request(reqOpts: DecorateRequestOptions): Promise<RequestResponse>;
   request(
     reqOpts: DecorateRequestOptions,
     callback: BodyResponseCallback
@@ -3508,7 +3590,7 @@ class Bucket extends ServiceObject {
   request(
     reqOpts: DecorateRequestOptions,
     callback?: BodyResponseCallback
-  ): void | Promise<[ResponseBody, Metadata]> {
+  ): void | Promise<RequestResponse> {
     if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
       reqOpts.qs = {...reqOpts.qs, userProject: this.userProject};
     }
@@ -3598,25 +3680,28 @@ class Bucket extends ServiceObject {
   }
 
   setMetadata(
-    metadata: Metadata,
+    metadata: BucketMetadata,
     options?: SetMetadataOptions
-  ): Promise<SetMetadataResponse>;
-  setMetadata(metadata: Metadata, callback: MetadataCallback): void;
+  ): Promise<SetMetadataResponse<BucketMetadata>>;
   setMetadata(
-    metadata: Metadata,
-    options: SetMetadataOptions,
-    callback: MetadataCallback
+    metadata: BucketMetadata,
+    callback: MetadataCallback<BucketMetadata>
   ): void;
   setMetadata(
-    metadata: Metadata,
-    optionsOrCallback: SetMetadataOptions | MetadataCallback,
-    cb?: MetadataCallback
-  ): Promise<SetMetadataResponse> | void {
+    metadata: BucketMetadata,
+    options: SetMetadataOptions,
+    callback: MetadataCallback<BucketMetadata>
+  ): void;
+  setMetadata(
+    metadata: BucketMetadata,
+    optionsOrCallback: SetMetadataOptions | MetadataCallback<BucketMetadata>,
+    cb?: MetadataCallback<BucketMetadata>
+  ): Promise<SetMetadataResponse<BucketMetadata>> | void {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb =
       typeof optionsOrCallback === 'function'
-        ? (optionsOrCallback as MetadataCallback)
+        ? (optionsOrCallback as MetadataCallback<BucketMetadata>)
         : cb;
 
     this.disableAutoRetryConditionallyIdempotent_(
@@ -3697,7 +3782,7 @@ class Bucket extends ServiceObject {
     this.setMetadata(
       {
         retentionPolicy: {
-          retentionPeriod: duration,
+          retentionPeriod: duration.toString(),
         },
       },
       options,

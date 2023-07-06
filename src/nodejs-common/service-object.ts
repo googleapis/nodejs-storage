@@ -26,7 +26,7 @@ import {
   util,
 } from './util';
 
-export type RequestResponse = [Metadata, r.Response];
+export type RequestResponse = [unknown, r.Response];
 
 export interface ServiceObjectParent {
   interceptors: Interceptor[];
@@ -44,12 +44,10 @@ export interface Interceptor {
 
 export type GetMetadataOptions = object;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type Metadata = any;
-export type MetadataResponse = [Metadata, r.Response];
-export type MetadataCallback = (
+export type MetadataResponse<K> = [K, r.Response];
+export type MetadataCallback<K> = (
   err: Error | null,
-  metadata?: Metadata,
+  metadata?: K,
   apiResponse?: r.Response
 ) => void;
 
@@ -113,10 +111,10 @@ export interface CreateCallback<T> {
 
 export type DeleteOptions = {
   ignoreNotFound?: boolean;
-  ifGenerationMatch?: number;
-  ifGenerationNotMatch?: number;
-  ifMetagenerationMatch?: number;
-  ifMetagenerationNotMatch?: number;
+  ifGenerationMatch?: number | string;
+  ifGenerationNotMatch?: number | string;
+  ifMetagenerationMatch?: number | string;
+  ifMetagenerationNotMatch?: number | string;
 } & object;
 export interface DeleteCallback {
   (err: Error | null, apiResponse?: r.Response): void;
@@ -128,15 +126,23 @@ export interface GetConfig {
    */
   autoCreate?: boolean;
 }
-type GetOrCreateOptions = GetConfig & CreateOptions;
+export type GetOrCreateOptions = GetConfig & CreateOptions;
 export type GetResponse<T> = [T, r.Response];
 
 export interface ResponseCallback {
   (err?: Error | null, apiResponse?: r.Response): void;
 }
 
-export type SetMetadataResponse = [Metadata];
+export type SetMetadataResponse<K> = [K];
 export type SetMetadataOptions = object;
+
+export interface BaseMetadata {
+  id?: string;
+  kind?: string;
+  etag?: string;
+  selfLink?: string;
+  [key: string]: unknown;
+}
 
 /**
  * ServiceObject is a base class, meant to be inherited from by a "service
@@ -150,8 +156,8 @@ export type SetMetadataOptions = object;
  * object requires specific behavior.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-class ServiceObject<T = any> extends EventEmitter {
-  metadata: Metadata;
+class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
+  metadata: K;
   baseUrl?: string;
   parent: ServiceObjectParent;
   id?: string;
@@ -180,7 +186,7 @@ class ServiceObject<T = any> extends EventEmitter {
    */
   constructor(config: ServiceObjectConfig) {
     super();
-    this.metadata = {};
+    this.metadata = {} as K;
     this.baseUrl = config.baseUrl;
     this.parent = config.parent; // Parent class.
     this.id = config.id; // Name or ID (e.g. dataset ID, bucket name, etc).
@@ -248,7 +254,7 @@ class ServiceObject<T = any> extends EventEmitter {
     // Wrap the callback to return *this* instance of the object, not the
     // newly-created one.
     // tslint: disable-next-line no-any
-    function onCreate(...args: [Error, ServiceObject<T>]) {
+    function onCreate(...args: [Error, ServiceObject<T, K>]) {
       const [err, instance] = args;
       if (!err) {
         self.metadata = instance.metadata;
@@ -405,10 +411,10 @@ class ServiceObject<T = any> extends EventEmitter {
           self.create(...args);
           return;
         }
-        callback!(err, null, metadata as r.Response);
+        callback!(err, null, metadata as unknown as r.Response);
         return;
       }
-      callback!(null, self as {} as T, metadata as r.Response);
+      callback!(null, self as {} as T, metadata as unknown as r.Response);
     });
   }
 
@@ -420,16 +426,16 @@ class ServiceObject<T = any> extends EventEmitter {
    * @param {object} callback.metadata - The metadata for this object.
    * @param {object} callback.apiResponse - The full API response.
    */
-  getMetadata(options?: GetMetadataOptions): Promise<MetadataResponse>;
-  getMetadata(options: GetMetadataOptions, callback: MetadataCallback): void;
-  getMetadata(callback: MetadataCallback): void;
+  getMetadata(options?: GetMetadataOptions): Promise<MetadataResponse<K>>;
+  getMetadata(options: GetMetadataOptions, callback: MetadataCallback<K>): void;
+  getMetadata(callback: MetadataCallback<K>): void;
   getMetadata(
-    optionsOrCallback: GetMetadataOptions | MetadataCallback,
-    cb?: MetadataCallback
-  ): Promise<MetadataResponse> | void {
+    optionsOrCallback: GetMetadataOptions | MetadataCallback<K>,
+    cb?: MetadataCallback<K>
+  ): Promise<MetadataResponse<K>> | void {
     const [options, callback] = util.maybeOptionsOrCallback<
       GetMetadataOptions,
-      MetadataCallback
+      MetadataCallback<K>
     >(optionsOrCallback, cb);
 
     const methodConfig =
@@ -478,23 +484,23 @@ class ServiceObject<T = any> extends EventEmitter {
    * @param {object} callback.apiResponse - The full API response.
    */
   setMetadata(
-    metadata: Metadata,
+    metadata: K,
     options?: SetMetadataOptions
-  ): Promise<SetMetadataResponse>;
-  setMetadata(metadata: Metadata, callback: MetadataCallback): void;
+  ): Promise<SetMetadataResponse<K>>;
+  setMetadata(metadata: K, callback: MetadataCallback<K>): void;
   setMetadata(
-    metadata: Metadata,
+    metadata: K,
     options: SetMetadataOptions,
-    callback: MetadataCallback
+    callback: MetadataCallback<K>
   ): void;
   setMetadata(
-    metadata: Metadata,
-    optionsOrCallback: SetMetadataOptions | MetadataCallback,
-    cb?: MetadataCallback
-  ): Promise<SetMetadataResponse> | void {
+    metadata: K,
+    optionsOrCallback: SetMetadataOptions | MetadataCallback<K>,
+    cb?: MetadataCallback<K>
+  ): Promise<SetMetadataResponse<K>> | void {
     const [options, callback] = util.maybeOptionsOrCallback<
       SetMetadataOptions,
-      MetadataCallback
+      MetadataCallback<K>
     >(optionsOrCallback, cb);
     const methodConfig =
       (typeof this.methods.setMetadata === 'object' &&
@@ -576,7 +582,6 @@ class ServiceObject<T = any> extends EventEmitter {
     if (reqOpts.shouldReturnStream) {
       return this.parent.requestStream(reqOpts);
     }
-
     this.parent.request(reqOpts, callback!);
   }
 

@@ -15,7 +15,12 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {ServiceObject, ServiceObjectConfig, util} from '../src/nodejs-common';
+import {
+  BaseMetadata,
+  ServiceObject,
+  ServiceObjectConfig,
+  util,
+} from '../src/nodejs-common';
 import * as pLimit from 'p-limit';
 import * as proxyquire from 'proxyquire';
 import {
@@ -31,11 +36,12 @@ import * as assert from 'assert';
 import * as path from 'path';
 import * as stream from 'stream';
 import * as fs from 'fs';
+import {FileMetadata} from '../src/file';
 
 const fakeUtil = Object.assign({}, util);
 fakeUtil.noop = util.noop;
 
-class FakeServiceObject extends ServiceObject {
+class FakeServiceObject extends ServiceObject<FakeServiceObject, BaseMetadata> {
   calledWith_: IArguments;
   constructor(config: ServiceObjectConfig) {
     super(config);
@@ -56,7 +62,7 @@ class FakeFile {
   bucket: Bucket;
   name: string;
   options: FileOptions;
-  metadata: {};
+  metadata: FileMetadata;
   createWriteStream: Function;
   isSameFile = () => false;
   constructor(bucket: Bucket, name: string, options?: FileOptions) {
@@ -68,7 +74,7 @@ class FakeFile {
     this.metadata = {};
 
     this.createWriteStream = (options: CreateWriteStreamOptions) => {
-      this.metadata = options.metadata;
+      this.metadata = options.metadata!;
       const ws = new stream.Writable();
       ws.write = () => {
         ws.emit('complete');

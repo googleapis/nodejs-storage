@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {BodyResponseCallback, DecorateRequestOptions} from './nodejs-common';
+import {
+  BodyResponseCallback,
+  DecorateRequestOptions,
+  BaseMetadata,
+} from './nodejs-common';
 import {promisifyAll} from '@google-cloud/promisify';
 
 export interface AclOptions {
@@ -90,20 +94,18 @@ export interface AccessControlObject {
   projectTeam: string;
 }
 
-export interface AclMetadata {
+export interface AclMetadata extends BaseMetadata {
   bucket?: string;
   domain?: string;
   entity?: string;
   entityId?: string;
-  etag?: string;
-  id?: string;
-  kind?: string;
+  generation?: string;
+  object?: string;
   projectTeam?: {
     projectNumber?: string;
     team?: 'editors' | 'owners' | 'viewers';
   };
-  role?: 'OWNER' | 'READER' | 'WRITER';
-  selfLink?: string;
+  role?: 'OWNER' | 'READER' | 'WRITER' | 'FULL_CONTROL';
   [key: string]: unknown;
 }
 
