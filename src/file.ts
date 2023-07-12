@@ -392,7 +392,7 @@ export interface SetStorageClassCallback {
 }
 
 export interface FileMetadata extends BaseMetadata {
-  acl?: AclMetadata[];
+  acl?: AclMetadata[] | null;
   bucket?: string;
   cacheControl?: string;
   componentCount?: number;

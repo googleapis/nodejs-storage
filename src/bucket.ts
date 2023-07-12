@@ -284,7 +284,7 @@ export interface GetLabelsCallback {
 }
 
 export interface BucketMetadata extends BaseMetadata {
-  acl?: AclMetadata[];
+  acl?: AclMetadata[] | null;
   autoclass?: {
     enabled?: boolean;
     toggleTime?: string;
