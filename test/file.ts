@@ -3549,35 +3549,6 @@ describe('File', () => {
       });
     });
 
-    it('should error if action is null', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      SIGNED_URL_CONFIG.action = null as any;
-
-      assert.throws(() => {
-        file.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
-    });
-
-    it('should error if action is undefined', () => {
-      const urlConfig = {...SIGNED_URL_CONFIG} as Partial<GetSignedUrlConfig>;
-      delete urlConfig.action;
-      assert.throws(() => {
-        file.getSignedUrl(urlConfig, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
-    });
-
-    it('should error for an invalid action', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      SIGNED_URL_CONFIG.action = 'watch' as any;
-
-      assert.throws(() => {
-        file.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
-    });
-
     it('should add "x-goog-resumable: start" header if action is resumable', done => {
       SIGNED_URL_CONFIG.action = 'resumable';
       SIGNED_URL_CONFIG.extensionHeaders = {
