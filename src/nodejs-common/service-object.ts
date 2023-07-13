@@ -304,14 +304,13 @@ class ServiceObject<T = any> extends EventEmitter {
     ServiceObject.prototype.request.call(
       this,
       reqOpts,
-      (err: ApiError | null, ...args) => {
+      (err: ApiError | null, body?: ResponseBody, res?: r.Response) => {
         if (err) {
           if (err.code === 404 && ignoreNotFound) {
             err = null;
           }
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        callback(err, ...(args as any));
+        callback(err, res);
       }
     );
   }
