@@ -58,7 +58,6 @@
     "compressible": "^2.0.12",
     "duplexify": "^4.0.0",
     "ent": "^2.2.0",
-    "extend": "^3.0.2",
     "gaxios": "^5.1.2",
     "google-auth-library": "^8.0.1",
     "mime": "^3.0.0",
