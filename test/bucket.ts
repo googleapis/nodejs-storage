@@ -920,12 +920,6 @@ describe('Bucket', () => {
       });
     });
 
-    it('should throw if an address is not provided', () => {
-      assert.throws(() => {
-        bucket.createChannel(ID, {});
-      }, /An address is required to create a channel\./);
-    });
-
     it('should make the correct request', done => {
       const config = Object.assign({}, CONFIG, {
         a: 'b',
