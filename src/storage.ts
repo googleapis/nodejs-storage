@@ -199,7 +199,6 @@ export interface GetHmacKeysCallback {
 export enum ExceptionMessages {
   EXPIRATION_DATE_INVALID = 'The expiration date provided was invalid.',
   EXPIRATION_DATE_PAST = 'An expiration date cannot be in the past.',
-  INVALID_ACTION = 'The action is not provided or invalid.',
 }
 
 export enum StorageExceptionMessages {
