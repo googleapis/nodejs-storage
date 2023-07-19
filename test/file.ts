@@ -35,6 +35,7 @@ import * as resumableUpload from '../src/resumable-upload';
 import * as sinon from 'sinon';
 import * as tmp from 'tmp';
 import * as zlib from 'zlib';
+import * as path from 'path';
 
 import {
   Bucket,
@@ -2555,6 +2556,12 @@ describe('File', () => {
     });
 
     describe('with destination', () => {
+      const sandbox = sinon.createSandbox();
+
+      afterEach(() => {
+        sandbox.restore();
+      });
+
       it('should write the file to a destination if provided', done => {
         tmp.setGracefulCleanup();
         tmp.file((err, tmpFilePath) => {
@@ -2676,6 +2683,70 @@ describe('File', () => {
             assert.strictEqual(err, error);
             done();
           });
+        });
+      });
+
+      it('should recursively create directory and write file contents if destination path is nested', done => {
+        tmp.setGracefulCleanup();
+        tmp.dir(async (err, tmpDirPath) => {
+          assert.ifError(err);
+
+          const fileContents = 'nested-abcdefghijklmnopqrstuvwxyz';
+
+          Object.assign(fileReadStream, {
+            _read(this: Readable) {
+              this.push(fileContents);
+              this.push(null);
+            },
+          });
+
+          const nestedPath = path.join(tmpDirPath, 'a', 'b', 'c', 'file.txt');
+
+          file.download({destination: nestedPath}, (err: Error) => {
+            assert.ifError(err);
+            assert.strictEqual(fs.existsSync(nestedPath), true);
+            fs.readFile(nestedPath, (err, tmpFileContents) => {
+              assert.ifError(err);
+              assert.strictEqual(fileContents, tmpFileContents.toString());
+              done();
+            });
+          });
+        });
+      });
+
+      it('should skip write if asked to write a directory object', done => {
+        const mkdirSync = sandbox.spy(fakeFs, 'mkdirSync');
+        const createWriteStream = sandbox.spy(fakeFs, 'createWriteStream');
+
+        tmp.setGracefulCleanup();
+        tmp.dir(async (err, tmpDirPath) => {
+          assert.ifError(err);
+
+          const fileContents = '';
+
+          Object.assign(fileReadStream, {
+            _read(this: Readable) {
+              this.push(fileContents);
+              this.push(null);
+            },
+          });
+
+          const nestedDir = path.join(tmpDirPath, 'a', 'b', 'c', '/');
+
+          file.download(
+            {destination: nestedDir},
+            (err: Error, buffer: Buffer) => {
+              try {
+                assert.ifError(err);
+                assert.strictEqual(createWriteStream.callCount, 0);
+                assert.strictEqual(mkdirSync.callCount, 0);
+                assert.strictEqual(buffer.equals(Buffer.alloc(0)), true);
+                done();
+              } catch (e) {
+                done(e);
+              }
+            }
+          );
         });
       });
     });
