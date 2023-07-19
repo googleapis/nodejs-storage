@@ -1109,7 +1109,7 @@ describe('storage', () => {
       });
 
       it('should be available from updating a bucket', async () => {
-        await bucket.setLabels({a: 'b'});
+        await bucket.setMetadata({labels: {a: 'b'}});
         assert(types.includes(bucket.metadata.locationType));
       });
     });
@@ -1121,23 +1121,33 @@ describe('storage', () => {
       };
 
       beforeEach(async () => {
-        await bucket.deleteLabels();
+        const [metadata] = await bucket.getMetadata();
+        const labels: {[index: string]: string | null} = {};
+        if (metadata.labels) {
+          for (const curLabel of Object.keys(metadata.labels)) {
+            labels[curLabel] = null;
+          }
+          await bucket.setMetadata({labels});
+        }
       });
 
       it('should set labels', async () => {
-        await bucket.setLabels(LABELS);
-        const [labels] = await bucket.getLabels();
-        assert.deepStrictEqual(labels, LABELS);
+        await bucket.setMetadata({labels: LABELS});
+        const [metadata] = await bucket.getMetadata();
+        assert.deepStrictEqual(metadata.labels, LABELS);
       });
 
       it('should update labels', async () => {
         const newLabels = {
           siblinglabel: 'labelvalue',
         };
-        await bucket.setLabels(LABELS);
-        await bucket.setLabels(newLabels);
-        const [labels] = await bucket.getLabels();
-        assert.deepStrictEqual(labels, Object.assign({}, LABELS, newLabels));
+        await bucket.setMetadata({labels: LABELS});
+        await bucket.setMetadata({labels: newLabels});
+        const [metadata] = await bucket.getMetadata();
+        assert.deepStrictEqual(
+          metadata.labels,
+          Object.assign({}, LABELS, newLabels)
+        );
       });
 
       it('should delete a single label', async () => {
@@ -1146,19 +1156,29 @@ describe('storage', () => {
         }
 
         const labelKeyToDelete = Object.keys(LABELS)[0];
-        await bucket.setLabels(LABELS);
-        await bucket.deleteLabels(labelKeyToDelete);
-        const [labels] = await bucket.getLabels();
+        await bucket.setMetadata({labels: LABELS});
+        const labelsToDelete = {
+          [labelKeyToDelete]: null,
+        };
+        await bucket.setMetadata({labels: labelsToDelete});
+        const [metadata] = await bucket.getMetadata();
         const expectedLabels = Object.assign({}, LABELS);
         delete (expectedLabels as {[index: string]: {}})[labelKeyToDelete];
 
-        assert.deepStrictEqual(labels, expectedLabels);
+        assert.deepStrictEqual(metadata.labels, expectedLabels);
       });
 
       it('should delete all labels', async () => {
-        await bucket.deleteLabels();
-        const [labels] = await bucket.getLabels();
-        assert.deepStrictEqual(labels, {});
+        let [metadata] = await bucket.getMetadata();
+        if (metadata.labels) {
+          const labels: {[index: string]: string | null} = {};
+          for (const curLabel of Object.keys(metadata.labels)) {
+            labels[curLabel] = null;
+          }
+          await bucket.setMetadata({labels});
+        }
+        [metadata] = await bucket.getMetadata();
+        assert.deepStrictEqual(metadata.labels, undefined);
       });
     });
   });
