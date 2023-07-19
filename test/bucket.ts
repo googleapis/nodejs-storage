@@ -49,7 +49,7 @@ import {AddAclOptions} from '../src/acl';
 import {Policy} from '../src/iam';
 import sinon = require('sinon');
 import {Transform} from 'stream';
-import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
+import {IdempotencyStrategy} from '../src/storage';
 import {convertObjKeysToSnakeCase} from '../src/util';
 
 class FakeFile {
@@ -918,12 +918,6 @@ describe('Bucket', () => {
       assert.throws(() => {
         bucket.createChannel(), BucketExceptionMessages.CHANNEL_ID_REQUIRED;
       });
-    });
-
-    it('should throw if an address is not provided', () => {
-      assert.throws(() => {
-        bucket.createChannel(ID, {});
-      }, /An address is required to create a channel\./);
     });
 
     it('should make the correct request', done => {
@@ -2129,37 +2123,6 @@ describe('Bucket', () => {
           done();
         }
       );
-    });
-
-    it('should error if action is null', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      SIGNED_URL_CONFIG.action = null as any;
-
-      assert.throws(() => {
-        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
-    });
-
-    it('should error if action is undefined', () => {
-      const urlConfig = {
-        ...SIGNED_URL_CONFIG,
-      } as Partial<GetBucketSignedUrlConfig>;
-      delete urlConfig.action;
-      assert.throws(() => {
-        bucket.getSignedUrl(urlConfig, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
-    });
-
-    it('should error for an invalid action', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      SIGNED_URL_CONFIG.action = 'watch' as any;
-
-      assert.throws(() => {
-        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
     });
   });
 

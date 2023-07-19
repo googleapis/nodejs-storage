@@ -53,7 +53,6 @@ import {
   PreconditionOptions,
   IdempotencyStrategy,
   BucketOptions,
-  ExceptionMessages,
 } from './storage';
 import {
   GetSignedUrlResponse,
@@ -413,7 +412,6 @@ export enum BucketExceptionMessages {
   PROVIDE_SOURCE_FILE = 'You must provide at least one source file.',
   DESTINATION_FILE_NOT_SPECIFIED = 'A destination file must be specified.',
   CHANNEL_ID_REQUIRED = 'An ID is required to create a channel.',
-  CHANNEL_ADDRESS_REQUIRED = 'An address is required to create a channel.',
   TOPIC_NAME_REQUIRED = 'A valid topic name is required.',
   CONFIGURATION_OBJECT_PREFIX_REQUIRED = 'A configuration object with a prefix is required.',
   SPECIFY_FILE_NAME = 'A file name must be specified.',
@@ -1712,10 +1710,6 @@ class Bucket extends ServiceObject {
   ): Promise<CreateChannelResponse> | void {
     if (typeof id !== 'string') {
       throw new Error(BucketExceptionMessages.CHANNEL_ID_REQUIRED);
-    }
-
-    if (typeof config.address !== 'string') {
-      throw new Error(BucketExceptionMessages.CHANNEL_ADDRESS_REQUIRED);
     }
 
     let options: CreateChannelOptions = {};
@@ -3041,9 +3035,6 @@ class Bucket extends ServiceObject {
     callback?: GetSignedUrlCallback
   ): void | Promise<GetSignedUrlResponse> {
     const method = BucketActionToHTTPMethod[cfg.action];
-    if (!method) {
-      throw new Error(ExceptionMessages.INVALID_ACTION);
-    }
 
     const signConfig = {
       method,

@@ -2827,9 +2827,6 @@ class File extends ServiceObject<File> {
     callback?: GetSignedUrlCallback
   ): void | Promise<GetSignedUrlResponse> {
     const method = ActionToHTTPMethod[cfg.action];
-    if (!method) {
-      throw new Error(ExceptionMessages.INVALID_ACTION);
-    }
     const extensionHeaders = objectKeyToLowercase(cfg.extensionHeaders || {});
     if (cfg.action === 'resumable') {
       extensionHeaders['x-goog-resumable'] = 'start';
