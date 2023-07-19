@@ -37,7 +37,12 @@ function main(bucketName = 'my-bucket', labelKey = ['label1', 'label2']) {
   const storage = new Storage();
 
   async function removeBucketLabel() {
-    await storage.bucket(bucketName).deleteLabels(labelKey);
+    const labels = {};
+    // To remove a label set the value of the key to null.
+    for (const curLabel of labelKey) {
+      labels[curLabel] = null;
+    }
+    await storage.bucket(bucketName).setMetadata({labels});
     console.log(`Removed labels from bucket ${bucketName}`);
   }
 
