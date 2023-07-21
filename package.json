@@ -61,7 +61,7 @@
     "extend": "^3.0.2",
     "fast-xml-parser": "^4.2.2",
     "gaxios": "^5.0.0",
-    "google-auth-library": "^8.0.1",
+    "google-auth-library": "^9.0.0",
     "mime": "^3.0.0",
     "mime-types": "^2.0.8",
     "p-limit": "^3.0.1",
