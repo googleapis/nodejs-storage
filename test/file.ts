@@ -16,7 +16,6 @@ import {
   ApiError,
   BodyResponseCallback,
   DecorateRequestOptions,
-  Metadata,
   MetadataCallback,
   ServiceObject,
   ServiceObjectConfig,
@@ -52,10 +51,14 @@ import {
   STORAGE_POST_POLICY_BASE_URL,
   MoveOptions,
   FileExceptionMessages,
+  FileMetadata,
 } from '../src/file';
 import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
 import {formatAsUTCISO} from '../src/util';
-import {SetMetadataOptions} from '../src/nodejs-common/service-object';
+import {
+  BaseMetadata,
+  SetMetadataOptions,
+} from '../src/nodejs-common/service-object';
 
 class HTTPError extends Error {
   code: number;
@@ -150,7 +153,7 @@ Object.assign(fakeResumableUpload, {
   },
 });
 
-class FakeServiceObject extends ServiceObject {
+class FakeServiceObject extends ServiceObject<FakeServiceObject, BaseMetadata> {
   calledWith_: IArguments;
   constructor(config: ServiceObjectConfig) {
     super(config);
@@ -3641,9 +3644,9 @@ describe('File', () => {
       const apiResponse = {};
 
       file.setMetadata = (
-        metadata: Metadata,
-        optionsOrCallback: SetMetadataOptions | MetadataCallback,
-        cb: MetadataCallback
+        metadata: FileMetadata,
+        optionsOrCallback: SetMetadataOptions | MetadataCallback<FileMetadata>,
+        cb: MetadataCallback<FileMetadata>
       ) => {
         Promise.resolve([apiResponse]).then(resp => cb(null, ...resp));
       };

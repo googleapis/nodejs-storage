@@ -553,7 +553,7 @@ export class TransferManager {
         : fileOrName;
 
     const fileInfo = await file.get();
-    const size = parseInt(fileInfo[0].metadata.size);
+    const size = parseInt(fileInfo[0].metadata.size!.toString());
     // If the file size does not meet the threshold download it as a single chunk.
     if (size < DOWNLOAD_IN_CHUNKS_FILE_SIZE_THRESHOLD) {
       limit = pLimit(1);

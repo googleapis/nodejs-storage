@@ -62,12 +62,14 @@ interface InternalServiceObject {
   interceptors: SO.Interceptor[];
 }
 
-function asInternal(serviceObject: SO.ServiceObject) {
+function asInternal(
+  serviceObject: SO.ServiceObject<InternalServiceObject, SO.BaseMetadata>
+) {
   return serviceObject as {} as InternalServiceObject;
 }
 
 describe('ServiceObject', () => {
-  let serviceObject: SO.ServiceObject<FakeServiceObject>;
+  let serviceObject: SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>;
   const sandbox = sinon.createSandbox();
 
   const CONFIG = {
@@ -281,10 +283,12 @@ describe('ServiceObject', () => {
       sandbox
         .stub(ServiceObject.prototype, 'request')
         .callsFake((reqOpts, callback) => {
-          assert.strictEqual(reqOpts.method, 'DELETE');
-          assert.strictEqual(reqOpts.uri, '');
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
+          assert.strictEqual(opts.method, 'DELETE');
+          assert.strictEqual(opts.uri, '');
           done();
-          callback(null, null, {} as r.Response);
+          cb(null, null, {} as r.Response);
         });
       serviceObject.delete(assert.ifError);
     });
@@ -294,9 +298,11 @@ describe('ServiceObject', () => {
       sandbox
         .stub(ServiceObject.prototype, 'request')
         .callsFake((reqOpts, callback) => {
-          assert.deepStrictEqual(reqOpts.qs, options);
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
+          assert.deepStrictEqual(opts.qs, options);
           done();
-          callback(null, null, {} as r.Response);
+          cb(null, null, {} as r.Response);
         });
       serviceObject.delete(options, assert.ifError);
     });
@@ -313,15 +319,17 @@ describe('ServiceObject', () => {
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts_, callback) => {
+        .callsFake((reqOpts, callback) => {
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
           assert.deepStrictEqual(
             serviceObject.methods.delete,
             cachedMethodConfig
           );
-          assert.deepStrictEqual(reqOpts_.uri, 'v2');
-          assert.deepStrictEqual(reqOpts_.method, 'PATCH');
+          assert.deepStrictEqual(opts.uri, 'v2');
+          assert.deepStrictEqual(opts.method, 'PATCH');
           done();
-          callback(null, null, null!);
+          cb(null, null, null!);
         });
 
       const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
@@ -356,9 +364,11 @@ describe('ServiceObject', () => {
       sandbox
         .stub(ServiceObject.prototype, 'request')
         .callsFake((reqOpts, callback) => {
-          assert.strictEqual(reqOpts.qs.ignoreNotFound, undefined);
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
+          assert.strictEqual(opts.qs.ignoreNotFound, undefined);
           done();
-          callback(null, null, {} as r.Response);
+          cb(null, null, {} as r.Response);
         });
       serviceObject.delete(options, assert.ifError);
     });
@@ -377,18 +387,20 @@ describe('ServiceObject', () => {
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts_, callback) => {
+        .callsFake((reqOpts, callback) => {
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
           assert.deepStrictEqual(
             serviceObject.methods.delete,
             cachedMethodConfig
           );
-          assert.deepStrictEqual(reqOpts_.qs, {
+          assert.deepStrictEqual(opts.qs, {
             defaultProperty: true,
             optionalProperty: true,
             thisPropertyWasOverridden: true,
           });
           done();
-          callback(null, null, null!);
+          cb(null, null, null!);
         });
 
       const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
@@ -430,10 +442,12 @@ describe('ServiceObject', () => {
       const options = {queryOptionProperty: true};
       sandbox
         .stub(ServiceObject.prototype, 'get')
-        .callsFake((options_, callback) => {
-          assert.deepStrictEqual(options_, options);
+        .callsFake((reqOpts, callback) => {
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
+          assert.deepStrictEqual(opts, options);
           done();
-          callback(null, null, {} as r.Response);
+          cb(null, null, {} as r.Response);
         });
       serviceObject.exists(options, assert.ifError);
     });
@@ -499,10 +513,13 @@ describe('ServiceObject', () => {
 
     it('should execute callback with error & metadata', done => {
       const error = new Error('Error.');
-      const metadata = {} as SO.Metadata;
+      const metadata = {} as SO.BaseMetadata;
 
       serviceObject.getMetadata = promisify(
-        (options: SO.GetMetadataOptions, callback: SO.MetadataCallback) => {
+        (
+          options: SO.GetMetadataOptions,
+          callback: SO.MetadataCallback<SO.BaseMetadata>
+        ) => {
           callback(error, metadata);
         }
       );
@@ -517,10 +534,13 @@ describe('ServiceObject', () => {
     });
 
     it('should execute callback with instance & metadata', done => {
-      const metadata = {} as SO.Metadata;
+      const metadata = {} as SO.BaseMetadata;
 
       serviceObject.getMetadata = promisify(
-        (options: SO.GetMetadataOptions, callback: SO.MetadataCallback) => {
+        (
+          options: SO.GetMetadataOptions,
+          callback: SO.MetadataCallback<SO.BaseMetadata>
+        ) => {
           callback(null, metadata);
         }
       );
@@ -540,7 +560,7 @@ describe('ServiceObject', () => {
 
       const ERROR = new ApiError('bad');
       ERROR.code = 404;
-      const METADATA = {} as SO.Metadata;
+      const METADATA = {} as SO.BaseMetadata;
 
       beforeEach(() => {
         AUTO_CREATE_CONFIG = {
@@ -548,7 +568,10 @@ describe('ServiceObject', () => {
         };
 
         serviceObject.getMetadata = promisify(
-          (options: SO.GetMetadataOptions, callback: SO.MetadataCallback) => {
+          (
+            options: SO.GetMetadataOptions,
+            callback: SO.MetadataCallback<SO.BaseMetadata>
+          ) => {
             callback(ERROR, METADATA);
           }
         );
@@ -632,11 +655,17 @@ describe('ServiceObject', () => {
     it('should make the correct request', done => {
       sandbox
         .stub(ServiceObject.prototype, 'request')
-        .callsFake(function (this: SO.ServiceObject, reqOpts, callback) {
+        .callsFake(function (
+          this: SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>,
+          reqOpts,
+          callback
+        ) {
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
           assert.strictEqual(this, serviceObject);
-          assert.strictEqual(reqOpts.uri, '');
+          assert.strictEqual(opts.uri, '');
           done();
-          callback(null, null, {} as r.Response);
+          cb(null, null, {} as r.Response);
         });
       serviceObject.getMetadata(() => {});
     });
@@ -646,9 +675,11 @@ describe('ServiceObject', () => {
       sandbox
         .stub(ServiceObject.prototype, 'request')
         .callsFake((reqOpts, callback) => {
-          assert.deepStrictEqual(reqOpts.qs, options);
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
+          assert.deepStrictEqual(opts.qs, options);
           done();
-          callback(null, null, {} as r.Response);
+          cb(null, null, {} as r.Response);
         });
       serviceObject.getMetadata(options, assert.ifError);
     });
@@ -664,14 +695,16 @@ describe('ServiceObject', () => {
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts_, callback) => {
+        .callsFake((reqOpts, callback) => {
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
           assert.deepStrictEqual(
             serviceObject.methods.getMetadata,
             cachedMethodConfig
           );
-          assert.deepStrictEqual(reqOpts_.uri, 'v2');
+          assert.deepStrictEqual(opts.uri, 'v2');
           done();
-          callback(null, null, null!);
+          cb(null, null, null!);
         });
 
       const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
@@ -693,18 +726,20 @@ describe('ServiceObject', () => {
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts_, callback) => {
+        .callsFake((reqOpts, callback) => {
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
           assert.deepStrictEqual(
             serviceObject.methods.getMetadata,
             cachedMethodConfig
           );
-          assert.deepStrictEqual(reqOpts_.qs, {
+          assert.deepStrictEqual(opts.qs, {
             defaultProperty: true,
             optionalProperty: true,
             thisPropertyWasOverridden: true,
           });
           done();
-          callback(null, null, null!);
+          cb(null, null, null!);
         });
 
       const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
@@ -848,13 +883,19 @@ describe('ServiceObject', () => {
       const metadata = {metadataProperty: true};
       sandbox
         .stub(ServiceObject.prototype, 'request')
-        .callsFake(function (this: SO.ServiceObject, reqOpts, callback) {
+        .callsFake(function (
+          this: SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>,
+          reqOpts,
+          callback
+        ) {
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
           assert.strictEqual(this, serviceObject);
-          assert.strictEqual(reqOpts.method, 'PATCH');
-          assert.strictEqual(reqOpts.uri, '');
-          assert.deepStrictEqual(reqOpts.json, metadata);
+          assert.strictEqual(opts.method, 'PATCH');
+          assert.strictEqual(opts.uri, '');
+          assert.deepStrictEqual(opts.json, metadata);
           done();
-          callback(null, null, {} as r.Response);
+          cb(null, null, {} as r.Response);
         });
       serviceObject.setMetadata(metadata, () => {});
     });
@@ -865,9 +906,11 @@ describe('ServiceObject', () => {
       sandbox
         .stub(ServiceObject.prototype, 'request')
         .callsFake((reqOpts, callback) => {
-          assert.deepStrictEqual(reqOpts.qs, options);
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
+          assert.deepStrictEqual(opts.qs, options);
           done();
-          callback(null, null, {} as r.Response);
+          cb(null, null, {} as r.Response);
         });
       serviceObject.setMetadata(metadata, options, () => {});
     });
@@ -883,15 +926,17 @@ describe('ServiceObject', () => {
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts_, callback) => {
+        .callsFake((reqOpts, callback) => {
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
           assert.deepStrictEqual(
             serviceObject.methods.setMetadata,
             cachedMethodConfig
           );
-          assert.deepStrictEqual(reqOpts_.uri, 'v2');
-          assert.deepStrictEqual(reqOpts_.method, 'PUT');
+          assert.deepStrictEqual(opts.uri, 'v2');
+          assert.deepStrictEqual(opts.method, 'PUT');
           done();
-          callback(null, null, null!);
+          cb(null, null, null!);
         });
 
       const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
@@ -912,18 +957,20 @@ describe('ServiceObject', () => {
 
       sandbox
         .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts_, callback) => {
+        .callsFake((reqOpts, callback) => {
+          const opts = reqOpts as r.OptionsWithUri;
+          const cb = callback as BodyResponseCallback;
           assert.deepStrictEqual(
             serviceObject.methods.setMetadata,
             cachedMethodConfig
           );
-          assert.deepStrictEqual(reqOpts_.qs, {
+          assert.deepStrictEqual(opts.qs, {
             defaultProperty: true,
             optionalProperty: true,
             thisPropertyWasOverridden: true,
           });
           done();
-          callback(null, null, null!);
+          cb(null, null, null!);
         });
 
       const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
@@ -1068,7 +1115,10 @@ describe('ServiceObject', () => {
       });
 
       sandbox
-        .stub(parent.parent as SO.ServiceObject, 'request')
+        .stub(
+          parent.parent as SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>,
+          'request'
+        )
         .callsFake((reqOpts, callback) => {
           assert.deepStrictEqual(
             reqOpts.interceptors_![0].request({} as DecorateRequestOptions),

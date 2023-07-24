@@ -18,7 +18,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
 import * as FormData from 'form-data';
-import pLimit = require('p-limit');
+import * as pLimit from 'p-limit';
 import {promisify} from 'util';
 import * as path from 'path';
 import * as tmp from 'tmp';
@@ -426,10 +426,9 @@ describe('storage', () => {
           resumable: false,
         });
         const [metadata] = await file.getMetadata();
-        assert.strictEqual(
-          metadata.customerEncryption.encryptionAlgorithm,
-          'AES256'
-        );
+        const encyrptionAlgorithm =
+          metadata.customerEncryption?.encryptionAlgorithm;
+        assert.strictEqual(encyrptionAlgorithm, 'AES256');
       });
 
       it('should set custom encryption in a resumable upload', async () => {
@@ -439,10 +438,9 @@ describe('storage', () => {
           resumable: true,
         });
         const [metadata] = await file.getMetadata();
-        assert.strictEqual(
-          metadata.customerEncryption.encryptionAlgorithm,
-          'AES256'
-        );
+        const encyrptionAlgorithm =
+          metadata.customerEncryption?.encryptionAlgorithm;
+        assert.strictEqual(encyrptionAlgorithm, 'AES256');
       });
 
       it('should make a file public during the upload', async () => {
@@ -631,7 +629,7 @@ describe('storage', () => {
       );
       const [bucketMetadata] = await bucket.getMetadata();
       const publicAccessPreventionStatus =
-        bucketMetadata.iamConfiguration.publicAccessPrevention;
+        bucketMetadata!.iamConfiguration!.publicAccessPrevention;
       return assert.strictEqual(
         publicAccessPreventionStatus,
         PUBLIC_ACCESS_PREVENTION_ENFORCED
@@ -680,7 +678,7 @@ describe('storage', () => {
       );
       const [bucketMetadata] = await bucket.getMetadata();
       const publicAccessPreventionStatus =
-        bucketMetadata.iamConfiguration.publicAccessPrevention;
+        bucketMetadata!.iamConfiguration!.publicAccessPrevention;
       return assert.strictEqual(
         publicAccessPreventionStatus,
         PUBLIC_ACCESS_PREVENTION_INHERITED
@@ -705,7 +703,7 @@ describe('storage', () => {
     it('UBLA modification on PAP bucket does not affect pap setting', async () => {
       const [bucketMetadata] = await bucket.getMetadata();
       const publicAccessPreventionStatus =
-        bucketMetadata.iamConfiguration.publicAccessPrevention;
+        bucketMetadata!.iamConfiguration!.publicAccessPrevention;
       await bucket.setMetadata({
         iamConfiguration: {
           uniformBucketLevelAccess: {
@@ -715,7 +713,7 @@ describe('storage', () => {
       });
       const [updatedBucketMetadata] = await bucket.getMetadata();
       return assert.strictEqual(
-        updatedBucketMetadata.iamConfiguration.publicAccessPrevention,
+        updatedBucketMetadata!.iamConfiguration!.publicAccessPrevention,
         publicAccessPreventionStatus
       );
     });
@@ -730,14 +728,15 @@ describe('storage', () => {
       });
       const [bucketMetadata] = await bucket.getMetadata();
       const ublaSetting =
-        bucketMetadata.iamConfiguration.uniformBucketLevelAccess.enabled;
+        bucketMetadata!.iamConfiguration!.uniformBucketLevelAccess!.enabled;
       await setPublicAccessPrevention(
         bucket,
         PUBLIC_ACCESS_PREVENTION_INHERITED
       );
       const [updatedBucketMetadata] = await bucket.getMetadata();
       return assert.strictEqual(
-        updatedBucketMetadata.iamConfiguration.uniformBucketLevelAccess.enabled,
+        updatedBucketMetadata!.iamConfiguration!.uniformBucketLevelAccess!
+          .enabled,
         ublaSetting
       );
     });
@@ -1062,33 +1061,33 @@ describe('storage', () => {
         },
       });
       let [metadata] = await bucket.getMetadata();
-      const timestampEnabled = metadata.autoclass.toggleTime;
-      assert.strictEqual(metadata.autoclass.enabled, true);
+      const timestampEnabled = metadata!.autoclass!.toggleTime;
+      assert.strictEqual(metadata!.autoclass!.enabled, true);
       [metadata] = await bucket.setMetadata({
         autoclass: {
           enabled: false,
         },
       });
-      const timestampDisabled = metadata.autoclass.toggleTime;
-      assert.strictEqual(metadata.autoclass.enabled, false);
-      assert.strictEqual(timestampDisabled > timestampEnabled, true);
+      const timestampDisabled = metadata!.autoclass!.toggleTime;
+      assert.strictEqual(metadata!.autoclass!.enabled, false);
+      assert.strictEqual(timestampDisabled! > timestampEnabled!, true);
     });
 
     describe('locationType', () => {
       const types = ['multi-region', 'region', 'dual-region'];
 
       beforeEach(() => {
-        delete bucket.metadata;
+        bucket.metadata = {};
       });
 
       it('should be available from getting a bucket', async () => {
         const [metadata] = await bucket.getMetadata();
-        assert(types.includes(metadata.locationType));
+        assert(types.includes(metadata.locationType!));
       });
 
       it('should be available from creating a bucket', async () => {
         const [bucket] = await storage.createBucket(generateName());
-        assert(types.includes(bucket.metadata.locationType));
+        assert(types.includes(bucket.metadata.locationType!));
         return bucket.delete();
       });
 
@@ -1098,19 +1097,19 @@ describe('storage', () => {
         assert(buckets.length > 0);
 
         buckets.forEach(bucket => {
-          assert(types.includes(bucket.metadata.locationType));
+          assert(types.includes(bucket.metadata.locationType!));
         });
       });
 
       it('should be available from setting retention policy', async () => {
         await bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS);
-        assert(types.includes(bucket.metadata.locationType));
+        assert(types.includes(bucket.metadata.locationType!));
         await bucket.removeRetentionPeriod();
       });
 
       it('should be available from updating a bucket', async () => {
         await bucket.setMetadata({labels: {a: 'b'}});
-        assert(types.includes(bucket.metadata.locationType));
+        assert(types.includes(bucket.metadata.locationType!));
       });
     });
 
@@ -1194,8 +1193,8 @@ describe('storage', () => {
           isLive: true,
         },
       });
-      const rules = [].slice.call(bucket.metadata.lifecycle.rule);
 
+      const rules = [].slice.call(bucket.metadata.lifecycle?.rule);
       assert.deepStrictEqual(rules.pop(), {
         action: {
           type: 'Delete',
@@ -1209,7 +1208,7 @@ describe('storage', () => {
 
     it('should append a new rule', async () => {
       const numExistingRules =
-        (bucket.metadata.lifecycle && bucket.metadata.lifecycle.rule.length) ||
+        (bucket.metadata.lifecycle && bucket.metadata.lifecycle.rule!.length) ||
         0;
 
       await bucket.addLifecycleRule({
@@ -1232,7 +1231,7 @@ describe('storage', () => {
         },
       });
       assert.strictEqual(
-        bucket.metadata.lifecycle.rule.length,
+        bucket.metadata.lifecycle!.rule!.length,
         numExistingRules + 2
       );
     });
@@ -1248,7 +1247,7 @@ describe('storage', () => {
       });
 
       assert(
-        bucket.metadata.lifecycle.rule.some(
+        bucket.metadata.lifecycle!.rule!.some(
           (rule: LifecycleRule) =>
             typeof rule.action === 'object' &&
             rule.action.type === 'Delete' &&
@@ -1270,7 +1269,7 @@ describe('storage', () => {
       });
 
       assert(
-        bucket.metadata.lifecycle.rule.some(
+        bucket.metadata.lifecycle!.rule!.some(
           (rule: LifecycleRule) =>
             typeof rule.action === 'object' &&
             rule.action.type === 'Delete' &&
@@ -1288,7 +1287,7 @@ describe('storage', () => {
           createdBefore: new Date('2018'),
         },
       });
-      const rules = [].slice.call(bucket.metadata.lifecycle.rule);
+      const rules = [].slice.call(bucket.metadata.lifecycle?.rule);
       assert.deepStrictEqual(rules.pop(), {
         action: {
           type: 'Delete',
@@ -1313,7 +1312,7 @@ describe('storage', () => {
       });
 
       assert(
-        bucket.metadata.lifecycle.rule.some(
+        bucket.metadata.lifecycle!.rule!.some(
           (rule: LifecycleRule) =>
             typeof rule.action === 'object' &&
             rule.action.type === 'Delete' &&
@@ -1337,7 +1336,7 @@ describe('storage', () => {
       });
 
       assert(
-        bucket.metadata.lifecycle.rule.some(
+        bucket.metadata.lifecycle!.rule!.some(
           (rule: LifecycleRule) =>
             typeof rule.action === 'object' &&
             rule.action.type === 'Delete' &&
@@ -1412,7 +1411,7 @@ describe('storage', () => {
           },
         });
         await bucket.getMetadata();
-        assert.strictEqual(bucket.metadata.versioning.enabled, true);
+        assert.strictEqual(bucket.metadata!.versioning!.enabled, true);
       });
 
       it('should by default create a bucket without versioning set', async () => {
@@ -1435,7 +1434,7 @@ describe('storage', () => {
         });
         await bucket.getMetadata();
         assert.strictEqual(
-          bucket.metadata.retentionPolicy.retentionPeriod,
+          bucket.metadata!.retentionPolicy!.retentionPeriod,
           `${RETENTION_DURATION_SECONDS}`
         );
       });
@@ -1446,7 +1445,7 @@ describe('storage', () => {
         await bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS);
         await bucket.getMetadata();
         assert.strictEqual(
-          bucket.metadata.retentionPolicy.retentionPeriod,
+          bucket.metadata!.retentionPolicy!.retentionPeriod,
           `${RETENTION_DURATION_SECONDS}`
         );
       });
@@ -1457,7 +1456,7 @@ describe('storage', () => {
         await bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS);
         await bucket.getMetadata();
 
-        await bucket.lock(bucket.metadata.metageneration);
+        await bucket.lock(bucket.metadata!.metageneration!.toString());
         await assert.rejects(
           bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS / 2),
           (err: ApiError) => {
@@ -1472,7 +1471,7 @@ describe('storage', () => {
         await bucket.setRetentionPeriod(RETENTION_DURATION_SECONDS);
         await bucket.getMetadata();
         assert.strictEqual(
-          bucket.metadata.retentionPolicy.retentionPeriod,
+          bucket.metadata!.retentionPolicy!.retentionPeriod,
           `${RETENTION_DURATION_SECONDS}`
         );
 
@@ -1622,7 +1621,7 @@ describe('storage', () => {
 
     it('should have enabled requesterPays functionality', async () => {
       const [metadata] = await bucket.getMetadata();
-      assert.strictEqual(metadata.billing.requesterPays, true);
+      assert.strictEqual(metadata.billing!.requesterPays, true);
     });
 
     // These tests will verify that the requesterPays functionality works from
@@ -2135,7 +2134,7 @@ describe('storage', () => {
       bucket.upload(FILES.big.path, (err: Error | null, file?: File | null) => {
         assert.ifError(err);
 
-        const fileSize = file!.metadata.size;
+        const fileSize = parseInt(file!.metadata.size!.toString());
         const byteRange = {
           start: Math.floor((fileSize * 1) / 3),
           end: Math.floor((fileSize * 2) / 3),
@@ -2530,7 +2529,7 @@ describe('storage', () => {
           // Strip the project ID, as it could be the placeholder locally, but
           // the real value upstream.
           const projectIdRegExp = /^.+\/locations/;
-          const actualKmsKeyName = metadata.kmsKeyName.replace(
+          const actualKmsKeyName = metadata!.kmsKeyName!.replace(
             projectIdRegExp,
             ''
           );
@@ -2550,7 +2549,7 @@ describe('storage', () => {
           // Strip the project ID, as it could be the placeholder locally,
           // but the real value upstream.
           const projectIdRegExp = /^.+\/locations/;
-          const actualKmsKeyName = metadata.kmsKeyName.replace(
+          const actualKmsKeyName = metadata!.kmsKeyName!.replace(
             projectIdRegExp,
             ''
           );
@@ -2616,7 +2615,10 @@ describe('storage', () => {
           // the real value upstream.
           const projectIdRegExp = /^.+\/locations/;
           const actualKmsKeyName =
-            metadata.encryption.defaultKmsKeyName.replace(projectIdRegExp, '');
+            metadata!.encryption!.defaultKmsKeyName!.replace(
+              projectIdRegExp,
+              ''
+            );
           const expectedKmsKeyName = kmsKeyName.replace(projectIdRegExp, '');
           assert.strictEqual(actualKmsKeyName, expectedKmsKeyName);
         });
@@ -2644,7 +2646,7 @@ describe('storage', () => {
 
           assert.strictEqual(
             fileMetadata.kmsKeyName,
-            `${metadata.encryption.defaultKmsKeyName}/cryptoKeyVersions/1`
+            `${metadata!.encryption!.defaultKmsKeyName}/cryptoKeyVersions/1`
           );
         });
       });
@@ -2671,10 +2673,10 @@ describe('storage', () => {
       const [copiedFile] = await file.copy('CloudLogoCopy', copyOpts);
       const [metadata] = await copiedFile.getMetadata();
       assert.strictEqual(
-        typeof metadata.metadata.originalProperty,
+        typeof metadata!.metadata!.originalProperty,
         'undefined'
       );
-      assert.strictEqual(metadata.metadata.newProperty, 'true');
+      assert.strictEqual(metadata!.metadata!.newProperty, 'true');
       await Promise.all([file.delete, copiedFile.delete()]);
     });
 
@@ -3673,7 +3675,7 @@ describe('storage', () => {
         const [metadata] = await file.getMetadata();
 
         assert.equal(metadata.crc32c, expected);
-        assert(crc32c.validate(metadata.crc32c));
+        assert(crc32c.validate(metadata.crc32c!));
       }
     });
   });
