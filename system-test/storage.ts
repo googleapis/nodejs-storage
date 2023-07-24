@@ -18,7 +18,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
 import * as FormData from 'form-data';
-import pLimit = require('p-limit');
+import * as pLimit from 'p-limit';
 import {promisify} from 'util';
 import * as path from 'path';
 import * as tmp from 'tmp';
@@ -1108,7 +1108,7 @@ describe('storage', () => {
 
       it('should be available from updating a bucket', async () => {
         await bucket.setMetadata({labels: {a: 'b'}});
-        assert(types.includes(bucket.metadata.locationType));
+        assert(types.includes(bucket.metadata.locationType!));
       });
     });
 

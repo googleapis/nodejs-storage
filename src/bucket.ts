@@ -31,7 +31,7 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as mime from 'mime-types';
 import * as path from 'path';
-import pLimit = require('p-limit');
+import * as pLimit from 'p-limit';
 import {promisify} from 'util';
 import retry = require('async-retry');
 import {convertObjKeysToSnakeCase} from './util';
@@ -309,7 +309,7 @@ export interface BucketMetadata extends BaseMetadata {
     };
   };
   labels?: {
-    [key: string]: string;
+    [key: string]: string | null;
   };
   lifecycle?: {
     rule?: LifecycleRule[];
