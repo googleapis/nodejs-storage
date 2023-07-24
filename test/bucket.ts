@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import {
+  BaseMetadata,
   DecorateRequestOptions,
-  Metadata,
   ServiceObject,
   ServiceObjectConfig,
   util,
@@ -34,6 +34,7 @@ import {
   File,
   SetFileMetadataOptions,
   FileOptions,
+  FileMetadata,
 } from '../src/file';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import {
@@ -44,6 +45,8 @@ import {
   GetBucketSignedUrlConfig,
   AvailableServiceObjectMethods,
   BucketExceptionMessages,
+  BucketMetadata,
+  LifecycleRule,
 } from '../src/bucket';
 import {AddAclOptions} from '../src/acl';
 import {Policy} from '../src/iam';
@@ -57,7 +60,7 @@ class FakeFile {
   bucket: Bucket;
   name: string;
   options: FileOptions;
-  metadata: {};
+  metadata: FileMetadata;
   createWriteStream: Function;
   delete: Function;
   isSameFile = () => false;
@@ -70,7 +73,7 @@ class FakeFile {
     this.metadata = {};
 
     this.createWriteStream = (options: CreateWriteStreamOptions) => {
-      this.metadata = options.metadata;
+      this.metadata = options.metadata!;
       const ws = new stream.Writable();
       ws.write = () => {
         ws.emit('complete');
@@ -160,7 +163,7 @@ class FakeIam {
   }
 }
 
-class FakeServiceObject extends ServiceObject {
+class FakeServiceObject extends ServiceObject<FakeServiceObject, BaseMetadata> {
   calledWith_: IArguments;
   constructor(config: ServiceObjectConfig) {
     super(config);
@@ -470,8 +473,8 @@ describe('Bucket', () => {
         condition: {},
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.lifecycle.rule, [rule]);
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.deepStrictEqual(metadata.lifecycle!.rule, [rule]);
         done();
       };
 
@@ -488,8 +491,8 @@ describe('Bucket', () => {
         },
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.lifecycle.rule, [
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.deepStrictEqual(metadata.lifecycle?.rule, [
           {
             action: {
               type: 'Delete',
@@ -515,10 +518,10 @@ describe('Bucket', () => {
         },
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
+      bucket.setMetadata = (metadata: BucketMetadata) => {
         const expectedDateString = date.toISOString().replace(/T.+$/, '');
 
-        const rule = metadata.lifecycle.rule[0];
+        const rule = metadata!.lifecycle!.rule![0];
         assert.strictEqual(rule.condition.createdBefore, expectedDateString);
 
         done();
@@ -543,9 +546,9 @@ describe('Bucket', () => {
         done(new Error('Metadata should not be refreshed.'));
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.strictEqual(metadata.lifecycle.rule.length, 1);
-        assert.deepStrictEqual(metadata.lifecycle.rule, [rule]);
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.strictEqual(metadata!.lifecycle!.rule!.length, 1);
+        assert.deepStrictEqual(metadata.lifecycle?.rule, [rule]);
         done();
       };
 
@@ -553,16 +556,16 @@ describe('Bucket', () => {
     });
 
     it('should combine rule with existing rules by default', done => {
-      const existingRule = {
+      const existingRule: LifecycleRule = {
         action: {
-          type: 'type',
+          type: 'Delete',
         },
         condition: {},
       };
 
-      const newRule = {
+      const newRule: LifecycleRule = {
         action: {
-          type: 'type',
+          type: 'Delete',
         },
         condition: {},
       };
@@ -571,9 +574,9 @@ describe('Bucket', () => {
         callback(null, {lifecycle: {rule: [existingRule]}}, {});
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.strictEqual(metadata.lifecycle.rule.length, 2);
-        assert.deepStrictEqual(metadata.lifecycle.rule, [
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.strictEqual(metadata!.lifecycle!.rule!.length, 2);
+        assert.deepStrictEqual(metadata.lifecycle?.rule, [
           existingRule,
           newRule,
         ]);
@@ -584,23 +587,23 @@ describe('Bucket', () => {
     });
 
     it('should accept multiple rules', done => {
-      const existingRule = {
+      const existingRule: LifecycleRule = {
         action: {
-          type: 'type',
+          type: 'Delete',
         },
         condition: {},
       };
 
-      const newRules = [
+      const newRules: LifecycleRule[] = [
         {
           action: {
-            type: 'type',
+            type: 'Delete',
           },
           condition: {},
         },
         {
           action: {
-            type: 'type2',
+            type: 'Delete',
           },
           condition: {},
         },
@@ -610,9 +613,9 @@ describe('Bucket', () => {
         callback(null, {lifecycle: {rule: [existingRule]}}, {});
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.strictEqual(metadata.lifecycle.rule.length, 3);
-        assert.deepStrictEqual(metadata.lifecycle.rule, [
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.strictEqual(metadata!.lifecycle!.rule!.length, 3);
+        assert.deepStrictEqual(metadata.lifecycle?.rule, [
           existingRule,
           newRules[0],
           newRules[1],
@@ -1601,7 +1604,7 @@ describe('Bucket', () => {
     });
 
     it('should update the logging metadata configuration', done => {
-      bucket.setMetadata = (metadata: Metadata) => {
+      bucket.setMetadata = (metadata: BucketMetadata) => {
         assert.deepStrictEqual(metadata.logging, {
           logBucket: bucket.id,
           logObjectPrefix: PREFIX,
@@ -1616,8 +1619,8 @@ describe('Bucket', () => {
     it('should allow a custom bucket to be provided', done => {
       const bucketName = 'bucket-name';
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.logging.logBucket, bucketName);
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.deepStrictEqual(metadata!.logging!.logBucket, bucketName);
         setImmediate(done);
         return Promise.resolve([]);
       };
@@ -1634,8 +1637,11 @@ describe('Bucket', () => {
     it('should accept a Bucket object', done => {
       const bucketForLogging = new Bucket(STORAGE, 'bucket-name');
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.logging.logBucket, bucketForLogging.id);
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.deepStrictEqual(
+          metadata!.logging!.logBucket,
+          bucketForLogging.id
+        );
         setImmediate(done);
         return Promise.resolve([]);
       };
@@ -2434,7 +2440,7 @@ describe('Bucket', () => {
     it('should correctly call setMetadata', done => {
       const labels = {};
       bucket.setMetadata = (
-        metadata: Metadata,
+        metadata: BucketMetadata,
         _callbackOrOptions: {},
         callback: Function
       ) => {
@@ -2466,7 +2472,7 @@ describe('Bucket', () => {
       ) => {
         assert.deepStrictEqual(metadata, {
           retentionPolicy: {
-            retentionPeriod: duration,
+            retentionPeriod: `${duration}`,
           },
         });
 
@@ -2503,7 +2509,7 @@ describe('Bucket', () => {
     const CALLBACK = util.noop;
 
     it('should convert camelCase to snake_case', done => {
-      bucket.setMetadata = (metadata: Metadata) => {
+      bucket.setMetadata = (metadata: BucketMetadata) => {
         assert.strictEqual(metadata.storageClass, 'CAMEL_CASE');
         done();
       };
@@ -2512,7 +2518,7 @@ describe('Bucket', () => {
     });
 
     it('should convert hyphenate to snake_case', done => {
-      bucket.setMetadata = (metadata: Metadata) => {
+      bucket.setMetadata = (metadata: BucketMetadata) => {
         assert.strictEqual(metadata.storageClass, 'HYPHENATED_CLASS');
         done();
       };
@@ -2522,7 +2528,7 @@ describe('Bucket', () => {
 
     it('should call setMetdata correctly', () => {
       bucket.setMetadata = (
-        metadata: Metadata,
+        metadata: BucketMetadata,
         options: {},
         callback: Function
       ) => {
@@ -2584,7 +2590,7 @@ describe('Bucket', () => {
     };
 
     beforeEach(() => {
-      bucket.file = (name: string, metadata: Metadata) => {
+      bucket.file = (name: string, metadata: FileMetadata) => {
         return new FakeFile(bucket, name, metadata);
       };
     });
@@ -2920,7 +2926,7 @@ describe('Bucket', () => {
         ws.write = () => true;
         setImmediate(() => {
           assert.strictEqual(
-            options.metadata.contentType,
+            options!.metadata!.contentType,
             metadata.contentType
           );
           done();
