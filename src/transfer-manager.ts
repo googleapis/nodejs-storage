@@ -256,7 +256,7 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     const sortedMap = new Map(
       [...this.partsMap.entries()].sort((a, b) => a[0] - b[0])
     );
-    const parts = [];
+    const parts: {}[] = [];
     for (const entry of sortedMap.entries()) {
       parts.push({PartNumber: entry[0], ETag: entry[1]});
     }
@@ -374,7 +374,7 @@ export class TransferManager {
     const limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_UPLOAD_LIMIT
     );
-    const promises = [];
+    const promises: Promise<UploadResponse>[] = [];
     let allPaths: string[] = [];
     if (!Array.isArray(filePathsOrDirectory)) {
       for await (const curPath of this.getPathsFromDirectory(
@@ -462,7 +462,7 @@ export class TransferManager {
     const limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_DOWNLOAD_LIMIT
     );
-    const promises = [];
+    const promises: Promise<DownloadResponse>[] = [];
     let files: File[] = [];
 
     if (!Array.isArray(filesOrFolder)) {
@@ -662,7 +662,7 @@ export class TransferManager {
       options.partsMap
     );
     let partNumber = 1;
-    let promises = [];
+    let promises: Promise<void>[] = [];
     try {
       if (options.uploadId === undefined) {
         await mpuHelper.initiateUpload();

@@ -350,7 +350,7 @@ describe('Transfer Manager', () => {
       sandbox = sinon.createSandbox();
       readStreamStub = sandbox
         .stub(fakeFs, 'createReadStream')
-        .returns(pThrough);
+        .returns(pThrough as unknown as fs.ReadStream);
       mockGeneratorFunction = (bucket, fileName, uploadId, partsMap) => {
         fakeHelper = sandbox.createStubInstance(FakeXMLHelper);
         fakeHelper.uploadId = uploadId || '';
