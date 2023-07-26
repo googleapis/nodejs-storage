@@ -37,6 +37,7 @@ export const PROTOCOL_REGEX = /^(\w*):\/\//;
 
 export interface ErrorWithCode extends Error {
   code: number;
+  status?: number | string;
 }
 
 export type CreateUriCallback = (err: Error | null, uri?: string) => void;
