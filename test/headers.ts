@@ -14,41 +14,33 @@
 
 import * as assert from 'assert';
 import {describe, it} from 'mocha';
-import * as proxyquire from 'proxyquire';
-
-const error = Error('not implemented');
+import {Storage} from '../src/storage';
+import * as auth from 'google-auth-library';
+import * as sinon from 'sinon';
+import {Headers} from 'gaxios';
 
 interface Request {
   headers: {
     [key: string]: string;
   };
 }
+const requests: Request[] = [];
+const error = new Error('not implemented');
 
 describe('headers', () => {
-  const requests: Request[] = [];
-  const {Storage} = proxyquire('../src', {
-    'google-auth-library': {
-      GoogleAuth: class {
-        async getProjectId() {
-          return 'foo-project';
-        }
-        async getClient() {
-          return class {
-            async request() {
-              return {};
-            }
-          };
-        }
-        getCredentials() {
-          return {};
-        }
-        async authorizeRequest(req: Request) {
-          requests.push(req);
+  let authStub: sinon.SinonStubbedInstance<auth.GoogleAuth<never>>;
+  before(() => {
+    authStub = sinon.createStubInstance(auth.GoogleAuth, {
+      authorizeRequest: sinon
+        .stub<
+          [{url?: string; uri?: string; headers?: Headers}],
+          Promise<{url?: string; uri?: string; headers?: Headers}>
+        >()
+        .callsFake(opts => {
+          requests.push(opts as Request);
           throw error;
-        }
-      },
-      '@global': true,
-    },
+        }),
+    });
   });
 
   afterEach(() => {
@@ -58,7 +50,7 @@ describe('headers', () => {
   });
 
   it('populates x-goog-api-client header (node)', async () => {
-    const storage = new Storage();
+    const storage = new Storage({authClient: authStub});
     const bucket = storage.bucket('foo-bucket');
     try {
       await bucket.create();
@@ -73,7 +65,7 @@ describe('headers', () => {
   });
 
   it('populates x-goog-api-client header (deno)', async () => {
-    const storage = new Storage();
+    const storage = new Storage({authClient: authStub});
     const bucket = storage.bucket('foo-bucket');
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
