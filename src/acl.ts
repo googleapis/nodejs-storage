@@ -29,7 +29,7 @@ export interface AclOptions {
 
 export type GetAclResponse = [
   AccessControlObject | AccessControlObject[],
-  Metadata
+  Metadata,
 ];
 export interface GetAclCallback {
   (

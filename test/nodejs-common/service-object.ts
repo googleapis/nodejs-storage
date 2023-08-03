@@ -642,14 +642,16 @@ describe('ServiceObject', () => {
 
   describe('getMetadata', () => {
     it('should make the correct request', done => {
-      sandbox
-        .stub(ServiceObject.prototype, 'request')
-        .callsFake(function (this: SO.ServiceObject, reqOpts, callback) {
-          assert.strictEqual(this, serviceObject);
-          assert.strictEqual(reqOpts.uri, '');
-          done();
-          callback(null, null, {} as r.Response);
-        });
+      sandbox.stub(ServiceObject.prototype, 'request').callsFake(function (
+        this: SO.ServiceObject,
+        reqOpts,
+        callback
+      ) {
+        assert.strictEqual(this, serviceObject);
+        assert.strictEqual(reqOpts.uri, '');
+        done();
+        callback(null, null, {} as r.Response);
+      });
       serviceObject.getMetadata(() => {});
     });
 
@@ -858,16 +860,18 @@ describe('ServiceObject', () => {
   describe('setMetadata', () => {
     it('should make the correct request', done => {
       const metadata = {metadataProperty: true};
-      sandbox
-        .stub(ServiceObject.prototype, 'request')
-        .callsFake(function (this: SO.ServiceObject, reqOpts, callback) {
-          assert.strictEqual(this, serviceObject);
-          assert.strictEqual(reqOpts.method, 'PATCH');
-          assert.strictEqual(reqOpts.uri, '');
-          assert.deepStrictEqual(reqOpts.json, metadata);
-          done();
-          callback(null, null, {} as r.Response);
-        });
+      sandbox.stub(ServiceObject.prototype, 'request').callsFake(function (
+        this: SO.ServiceObject,
+        reqOpts,
+        callback
+      ) {
+        assert.strictEqual(this, serviceObject);
+        assert.strictEqual(reqOpts.method, 'PATCH');
+        assert.strictEqual(reqOpts.uri, '');
+        assert.deepStrictEqual(reqOpts.json, metadata);
+        done();
+        callback(null, null, {} as r.Response);
+      });
       serviceObject.setMetadata(metadata, () => {});
     });
 
