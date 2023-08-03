@@ -1872,7 +1872,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    *
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/notifications/insert| Notifications: insert}
    *
-   * @param {Topic|string} topic The Cloud PubSub topic to which this
+   * @param {string} topic The Cloud PubSub topic to which this
    * subscription publishes. If the project ID is omitted, the current
    * project ID will be used.
    *
@@ -1951,13 +1951,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options = optionsOrCallback;
     }
 
-    const topicIsObject = topic !== null && typeof topic === 'object';
-    if (topicIsObject && util.isCustomType(topic, 'pubsub/topic')) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      topic = (topic as any).name;
-    }
-
-    if (typeof topic !== 'string') {
+    if (typeof topic !== 'string' || !topic) {
       throw new Error(BucketExceptionMessages.TOPIC_NAME_REQUIRED);
     }
 
@@ -3135,6 +3129,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     } as SignerGetSignedUrlConfig;
 
     if (!this.signer) {
+      console.log('here no signer');
       this.signer = new URLSigner(this.storage.authClient, this);
     }
 

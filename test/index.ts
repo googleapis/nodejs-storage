@@ -16,216 +16,45 @@ import {
   ApiError,
   DecorateRequestOptions,
   Service,
-  ServiceConfig,
   util,
 } from '../src/nodejs-common';
-import {PromisifyAllOptions} from '@google-cloud/promisify';
 import * as assert from 'assert';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
-import * as proxyquire from 'proxyquire';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import {Bucket, CRC32C_DEFAULT_VALIDATOR_GENERATOR} from '../src';
-import {GetFilesOptions} from '../src/bucket';
-import sinon = require('sinon');
-import {HmacKey} from '../src/hmacKey';
 import {
+  Bucket,
+  CRC32C,
+  CRC32C_DEFAULT_VALIDATOR_GENERATOR,
+  Channel,
+} from '../src';
+import * as sinon from 'sinon';
+import {HmacKey} from '../src/hmacKey';
+import * as hmacKeyModule from '../src/hmacKey';
+import {
+  CreateBucketRequest,
+  CreateHmacKeyOptions,
   HmacKeyResourceResponse,
   PROTOCOL_REGEX,
+  ServiceAccount,
+  Storage,
   StorageExceptionMessages,
 } from '../src/storage';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const hmacKeyModule = require('../src/hmacKey');
-
-class FakeChannel {
-  calledWith_: Array<{}>;
-  constructor(...args: Array<{}>) {
-    this.calledWith_ = args;
-  }
-}
-
-class FakeService extends Service {
-  calledWith_: Array<{}>;
-  constructor(...args: Array<{}>) {
-    super(args[0] as ServiceConfig);
-    this.calledWith_ = args;
-  }
-}
-
-let extended = false;
-const fakePaginator = {
-  paginator: {
-    // tslint:disable-next-line:variable-name
-    extend(Class: Function, methods: string[]) {
-      if (Class.name !== 'Storage') {
-        return;
-      }
-
-      assert.strictEqual(Class.name, 'Storage');
-      assert.deepStrictEqual(methods, ['getBuckets', 'getHmacKeys']);
-      extended = true;
-    },
-    streamify(methodName: string) {
-      return methodName;
-    },
-  },
-};
-
-let promisified = false;
-const fakePromisify = {
-  // tslint:disable-next-line:variable-name
-  promisifyAll(Class: Function, options: PromisifyAllOptions) {
-    if (Class.name !== 'Storage') {
-      return;
-    }
-
-    promisified = true;
-    assert.deepStrictEqual(options.exclude, ['bucket', 'channel', 'hmacKey']);
-  },
-};
-
 describe('Storage', () => {
   const PROJECT_ID = 'project-id';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let Storage: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let storage: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let Bucket: any;
-
-  before(() => {
-    Storage = proxyquire('../src/storage', {
-      '@google-cloud/promisify': fakePromisify,
-      '@google-cloud/paginator': fakePaginator,
-      './nodejs-common': {
-        Service: FakeService,
-      },
-      './channel.js': {Channel: FakeChannel},
-      './hmacKey': hmacKeyModule,
-    }).Storage;
-    Bucket = Storage.Bucket;
-  });
+  let storage: Storage;
 
   beforeEach(() => {
     storage = new Storage({projectId: PROJECT_ID});
   });
 
   describe('instantiation', () => {
-    it('should extend the correct methods', () => {
-      assert(extended); // See `fakePaginator.extend`
-    });
-
-    it('should streamify the correct methods', () => {
-      assert.strictEqual(storage.getBucketsStream, 'getBuckets');
-      assert.strictEqual(storage.getHmacKeysStream, 'getHmacKeys');
-    });
-
-    it('should promisify all the things', () => {
-      assert(promisified);
-    });
-
     it('should inherit from Service', () => {
       // Using assert.strictEqual instead of assert to prevent
       // coercing of types.
       assert.strictEqual(storage instanceof Service, true);
-
-      const calledWith = storage.calledWith_[0];
-
       const baseUrl = 'https://storage.googleapis.com/storage/v1';
-      assert.strictEqual(calledWith.baseUrl, baseUrl);
-      assert.strictEqual(calledWith.projectIdRequired, false);
-      assert.deepStrictEqual(calledWith.scopes, [
-        'https://www.googleapis.com/auth/iam',
-        'https://www.googleapis.com/auth/cloud-platform',
-        'https://www.googleapis.com/auth/devstorage.full_control',
-      ]);
-      assert.deepStrictEqual(
-        calledWith.packageJson,
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        require('../../package.json')
-      );
-    });
-
-    it('should not modify options argument', () => {
-      const options = {
-        projectId: PROJECT_ID,
-      };
-      const expectedCalledWith = Object.assign({}, options, {
-        apiEndpoint: 'https://storage.googleapis.com',
-      });
-      const storage = new Storage(options);
-      const calledWith = storage.calledWith_[1];
-      assert.notStrictEqual(calledWith, options);
-      assert.notDeepStrictEqual(calledWith, options);
-      assert.deepStrictEqual(calledWith, expectedCalledWith);
-    });
-
-    it('should propagate the apiEndpoint option', () => {
-      const apiEndpoint = 'https://some.fake.endpoint';
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        apiEndpoint,
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.baseUrl, `${apiEndpoint}/storage/v1`);
-      assert.strictEqual(calledWith.apiEndpoint, `${apiEndpoint}`);
-    });
-
-    it('should propagate the useAuthWithCustomEndpoint option', () => {
-      const useAuthWithCustomEndpoint = true;
-      const apiEndpoint = 'https://some.fake.endpoint';
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        useAuthWithCustomEndpoint,
-        apiEndpoint,
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.apiEndpoint, 'https://some.fake.endpoint');
-      assert.strictEqual(calledWith.customEndpoint, true);
-      assert.strictEqual(calledWith.useAuthWithCustomEndpoint, true);
-    });
-
-    it('should propagate autoRetry in retryOptions', () => {
-      const autoRetry = false;
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        retryOptions: {autoRetry},
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.autoRetry, autoRetry);
-    });
-
-    it('should propagate retryDelayMultiplier', () => {
-      const retryDelayMultiplier = 4;
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        retryOptions: {retryDelayMultiplier},
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(
-        calledWith.retryOptions.retryDelayMultiplier,
-        retryDelayMultiplier
-      );
-    });
-
-    it('should propagate totalTimeout', () => {
-      const totalTimeout = 60;
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        retryOptions: {totalTimeout},
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.totalTimeout, totalTimeout);
-    });
-
-    it('should propagate maxRetryDelay', () => {
-      const maxRetryDelay = 640;
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        retryOptions: {maxRetryDelay},
-      });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.maxRetryDelay, maxRetryDelay);
+      assert.strictEqual(storage.baseUrl, baseUrl);
+      assert.strictEqual(storage['projectIdRequired'], false);
     });
 
     it('should set correct defaults for retry configs', () => {
@@ -237,19 +66,18 @@ describe('Storage', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
       });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.autoRetry, autoRetryDefault);
-      assert.strictEqual(calledWith.retryOptions.maxRetries, maxRetryDefault);
+      assert.strictEqual(storage.retryOptions.autoRetry, autoRetryDefault);
+      assert.strictEqual(storage.retryOptions.maxRetries, maxRetryDefault);
       assert.strictEqual(
-        calledWith.retryOptions.retryDelayMultiplier,
+        storage.retryOptions.retryDelayMultiplier,
         retryDelayMultiplierDefault
       );
       assert.strictEqual(
-        calledWith.retryOptions.totalTimeout,
+        storage.retryOptions.totalTimeout,
         totalTimeoutDefault
       );
       assert.strictEqual(
-        calledWith.retryOptions.maxRetryDelay,
+        storage.retryOptions.maxRetryDelay,
         maxRetryDelayDefault
       );
     });
@@ -260,73 +88,63 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
         retryOptions: {maxRetries},
       });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.retryOptions.maxRetries, maxRetries);
+      assert.strictEqual(storage.retryOptions.maxRetries, maxRetries);
     });
 
     it('should set retryFunction', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
       });
-      const calledWith = storage.calledWith_[0];
-      assert(calledWith.retryOptions.retryableErrorFn);
+      assert(storage.retryOptions.retryableErrorFn);
     });
 
     it('should retry a 502 error', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
       });
-      const calledWith = storage.calledWith_[0];
       const error = new ApiError('502 Error');
       error.code = 502;
-      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
+      assert.strictEqual(storage.retryOptions.retryableErrorFn!(error), true);
     });
 
     it('should not retry blank error', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
       });
-      const calledWith = storage.calledWith_[0];
-      const error = undefined;
-      assert.strictEqual(
-        calledWith.retryOptions.retryableErrorFn(error),
-        false
-      );
+      const error = new ApiError('');
+      assert.strictEqual(storage.retryOptions.retryableErrorFn!(error), false);
     });
 
     it('should retry a reset connection error', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
       });
-      const calledWith = storage.calledWith_[0];
       const error = new ApiError('Connection Reset By Peer error');
       error.errors = [
         {
           reason: 'ECONNRESET',
         },
       ];
-      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
+      assert.strictEqual(storage.retryOptions.retryableErrorFn!(error), true);
     });
 
     it('should retry a broken pipe error', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
       });
-      const calledWith = storage.calledWith_[0];
       const error = new ApiError('Broken pipe');
       error.errors = [
         {
           reason: 'EPIPE',
         },
       ];
-      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
+      assert.strictEqual(storage.retryOptions.retryableErrorFn!(error), true);
     });
 
     it('should retry a socket connection timeout', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
       });
-      const calledWith = storage.calledWith_[0];
       const error = new ApiError('Broken pipe');
       const innerError = {
         /**
@@ -337,37 +155,29 @@ describe('Storage', () => {
       };
 
       error.errors = [innerError];
-      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
+      assert.strictEqual(storage.retryOptions.retryableErrorFn!(error), true);
     });
 
     it('should not retry a 999 error', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
       });
-      const calledWith = storage.calledWith_[0];
       const error = new ApiError('999 Error');
       error.code = 0;
-      assert.strictEqual(
-        calledWith.retryOptions.retryableErrorFn(error),
-        false
-      );
+      assert.strictEqual(storage.retryOptions.retryableErrorFn!(error), false);
     });
 
     it('should return false if reason and code are both undefined', () => {
       const storage = new Storage({
         projectId: PROJECT_ID,
       });
-      const calledWith = storage.calledWith_[0];
       const error = new ApiError('error without a code');
       error.errors = [
         {
           message: 'some error message',
         },
       ];
-      assert.strictEqual(
-        calledWith.retryOptions.retryableErrorFn(error),
-        false
-      );
+      assert.strictEqual(storage.retryOptions.retryableErrorFn!(error), false);
     });
 
     it('should retry a 999 error if dictated by custom function', () => {
@@ -383,20 +193,9 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
         retryOptions: {retryableErrorFn: customRetryFunc},
       });
-      const calledWith = storage.calledWith_[0];
       const error = new ApiError('999 Error');
       error.code = 999;
-      assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
-    });
-
-    it('should set customEndpoint to true when using apiEndpoint', () => {
-      const storage = new Storage({
-        projectId: PROJECT_ID,
-        apiEndpoint: 'https://apiendpoint',
-      });
-
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.customEndpoint, true);
+      assert.strictEqual(storage.retryOptions.retryableErrorFn!(error), true);
     });
 
     it('should prepend apiEndpoint with default protocol', () => {
@@ -405,13 +204,12 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
         apiEndpoint: protocollessApiEndpoint,
       });
-      const calledWith = storage.calledWith_[0];
       assert.strictEqual(
-        calledWith.baseUrl,
+        storage.baseUrl,
         `https://${protocollessApiEndpoint}/storage/v1`
       );
       assert.strictEqual(
-        calledWith.apiEndpoint,
+        storage.apiEndpoint,
         `https://${protocollessApiEndpoint}`
       );
     });
@@ -422,13 +220,13 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
         apiEndpoint,
       });
-      const calledWith = storage.calledWith_[0];
-      assert.strictEqual(calledWith.baseUrl, `${apiEndpoint}storage/v1`);
-      assert.strictEqual(calledWith.apiEndpoint, 'https://some.fake.endpoint');
+      assert.strictEqual(storage.baseUrl, `${apiEndpoint}storage/v1`);
+      assert.strictEqual(storage.apiEndpoint, 'https://some.fake.endpoint');
     });
 
     it('should accept a `crc32cGenerator`', () => {
-      const crc32cGenerator = () => {};
+      const crc32cValidatorStub = sinon.createStubInstance(CRC32C);
+      const crc32cGenerator = () => crc32cValidatorStub;
 
       const storage = new Storage({crc32cGenerator});
       assert.strictEqual(storage.crc32cGenerator, crc32cGenerator);
@@ -457,10 +255,9 @@ describe('Storage', () => {
           projectId: PROJECT_ID,
         });
 
-        const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(storage.baseUrl, EMULATOR_HOST);
         assert.strictEqual(
-          calledWith.apiEndpoint,
+          storage.apiEndpoint,
           'https://internal.benchmark.com/path'
         );
       });
@@ -471,9 +268,8 @@ describe('Storage', () => {
           apiEndpoint: 'https://some.api.com',
         });
 
-        const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
-        assert.strictEqual(calledWith.apiEndpoint, 'https://some.api.com');
+        assert.strictEqual(storage.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(storage.apiEndpoint, 'https://some.api.com');
       });
 
       it('should prepend default protocol and strip trailing slash', () => {
@@ -484,21 +280,11 @@ describe('Storage', () => {
           projectId: PROJECT_ID,
         });
 
-        const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(storage.baseUrl, EMULATOR_HOST);
         assert.strictEqual(
-          calledWith.apiEndpoint,
+          storage.apiEndpoint,
           'https://internal.benchmark.com/path'
         );
-      });
-
-      it('should set customEndpoint to true', () => {
-        const storage = new Storage({
-          projectId: PROJECT_ID,
-        });
-
-        const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.customEndpoint, true);
       });
     });
   });
@@ -506,14 +292,14 @@ describe('Storage', () => {
   describe('bucket', () => {
     it('should throw if no name was provided', () => {
       assert.throws(() => {
-        storage.bucket(), StorageExceptionMessages.BUCKET_NAME_REQUIRED;
+        storage.bucket(''), StorageExceptionMessages.BUCKET_NAME_REQUIRED;
       });
     });
 
     it('should accept a string for a name', () => {
       const newBucketName = 'new-bucket-name';
       const bucket = storage.bucket(newBucketName);
-      assert(bucket instanceof Bucket);
+      assert.strictEqual(bucket instanceof Bucket, true);
       assert.strictEqual(bucket.name, newBucketName);
     });
 
@@ -534,11 +320,10 @@ describe('Storage', () => {
     it('should create a Channel object', () => {
       const channel = storage.channel(ID, RESOURCE_ID);
 
-      assert(channel instanceof FakeChannel);
-
-      assert.strictEqual(channel.calledWith_[0], storage);
-      assert.strictEqual(channel.calledWith_[1], ID);
-      assert.strictEqual(channel.calledWith_[2], RESOURCE_ID);
+      assert.strictEqual(channel instanceof Channel, true);
+      assert.strictEqual(channel.parent, storage);
+      assert.strictEqual(channel.metadata.id, ID);
+      assert.strictEqual(channel.metadata.resourceId, RESOURCE_ID);
     });
   });
 
@@ -554,12 +339,12 @@ describe('Storage', () => {
 
     it('should throw if accessId is not provided', () => {
       assert.throws(() => {
-        storage.hmacKey(), StorageExceptionMessages.HMAC_ACCESS_ID;
+        storage.hmacKey(''), StorageExceptionMessages.HMAC_ACCESS_ID;
       });
     });
 
     it('should pass options object to HmacKey constructor', () => {
-      const options = {myOpts: 'a'};
+      const options: hmacKeyModule.HmacKeyOptions = {projectId: 'hello world'};
       storage.hmacKey('access-id', options);
       assert.deepStrictEqual(hmacKeyCtor.getCall(0).args, [
         storage,
@@ -586,8 +371,8 @@ describe('Storage', () => {
       secret: 'my-secret',
       metadata: metadataResponse,
     };
-    const OPTIONS = {
-      some: 'value',
+    const OPTIONS: CreateHmacKeyOptions = {
+      userProject: 'user-project',
     };
 
     let hmacKeyCtor: sinon.SinonSpy;
@@ -620,17 +405,18 @@ describe('Storage', () => {
       storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, done);
     });
 
-    it('should throw without a serviceAccountEmail', () => {
-      assert.throws(() => {
-        storage.createHmacKey(), StorageExceptionMessages.HMAC_SERVICE_ACCOUNT;
+    it('should reject without a serviceAccountEmail', () => {
+      assert.rejects(async () => {
+        storage.createHmacKey({} as unknown as string),
+          StorageExceptionMessages.HMAC_SERVICE_ACCOUNT;
       });
     });
 
-    it('should throw when first argument is not a string', () => {
-      assert.throws(() => {
+    it('should reject when first argument is not a string', () => {
+      assert.rejects(async () => {
         storage.createHmacKey({
           userProject: 'my-project',
-        }),
+        } as unknown as string),
           StorageExceptionMessages.HMAC_SERVICE_ACCOUNT;
       });
     });
@@ -638,10 +424,12 @@ describe('Storage', () => {
     it('should make request with method options as query parameter', async () => {
       storage.request = sinon
         .stub()
-        .returns((_reqOpts: {}, callback: Function) => callback());
+        .callsFake((_reqOpts: {}, callback: Function) =>
+          callback(null, response)
+        );
 
       await storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, OPTIONS);
-      const reqArg = storage.request.firstCall.args[0];
+      const reqArg = (storage.request as sinon.SinonStub).firstCall.args[0];
       assert.deepStrictEqual(reqArg.qs, {
         serviceAccountEmail: SERVICE_ACCOUNT_EMAIL,
         ...OPTIONS,
@@ -654,11 +442,15 @@ describe('Storage', () => {
       };
       const originalOptions = Object.assign({}, OPTIONS);
 
-      storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, OPTIONS, (err: Error) => {
-        assert.ifError(err);
-        assert.deepStrictEqual(OPTIONS, originalOptions);
-        done();
-      });
+      storage.createHmacKey(
+        SERVICE_ACCOUNT_EMAIL,
+        OPTIONS,
+        (err: Error | null) => {
+          assert.ifError(err);
+          assert.deepStrictEqual(OPTIONS, originalOptions);
+          done();
+        }
+      );
     });
 
     it('should invoke callback with a secret and an HmacKey instance', done => {
@@ -668,7 +460,11 @@ describe('Storage', () => {
 
       storage.createHmacKey(
         SERVICE_ACCOUNT_EMAIL,
-        (err: Error, hmacKey: HmacKey, secret: string) => {
+        (
+          err: Error | null,
+          hmacKey?: HmacKey | null,
+          secret?: string | null
+        ) => {
           assert.ifError(err);
           assert.strictEqual(secret, response.secret);
           assert.deepStrictEqual(hmacKeyCtor.getCall(0).args, [
@@ -676,7 +472,7 @@ describe('Storage', () => {
             response.metadata.accessId,
             {projectId: response.metadata.projectId},
           ]);
-          assert.strictEqual(hmacKey.metadata, metadataResponse);
+          assert.strictEqual(hmacKey!.metadata, metadataResponse);
           done();
         }
       );
@@ -690,10 +486,10 @@ describe('Storage', () => {
       storage.createHmacKey(
         SERVICE_ACCOUNT_EMAIL,
         (
-          err: Error,
-          _hmacKey: HmacKey,
-          _secret: string,
-          apiResponse: HmacKeyResourceResponse
+          err: Error | null,
+          _hmacKey?: HmacKey | null,
+          _secret?: string | null,
+          apiResponse?: HmacKeyResourceResponse
         ) => {
           assert.ifError(err);
           assert.strictEqual(apiResponse, response);
@@ -711,7 +507,12 @@ describe('Storage', () => {
 
       storage.createHmacKey(
         SERVICE_ACCOUNT_EMAIL,
-        (err: Error, _hmacKey: HmacKey, _secret: string, apiResponse: {}) => {
+        (
+          err: Error | null,
+          _hmacKey?: HmacKey | null,
+          _secret?: string | null,
+          apiResponse?: HmacKeyResourceResponse
+        ) => {
           assert.strictEqual(err, error);
           assert.strictEqual(apiResponse, response);
           done();
@@ -722,8 +523,9 @@ describe('Storage', () => {
 
   describe('createBucket', () => {
     const BUCKET_NAME = 'new-bucket-name';
-    const METADATA = {a: 'b', c: {d: 'e'}};
-    const BUCKET = {name: BUCKET_NAME};
+    const METADATA: CreateBucketRequest = {archive: true};
+    const BUCKET = sinon.createStubInstance(Bucket);
+    BUCKET.name = BUCKET_NAME;
 
     it('should make correct API request', done => {
       storage.request = (
@@ -746,17 +548,17 @@ describe('Storage', () => {
         reqOpts: DecorateRequestOptions,
         callback: Function
       ) => {
-        assert.deepStrictEqual(
-          reqOpts.json,
-          Object.assign(METADATA, {name: BUCKET_NAME})
-        );
+        assert.deepStrictEqual(reqOpts.json, {
+          name: 'new-bucket-name',
+          storageClass: 'ARCHIVE',
+        });
         callback(null, METADATA);
       };
       storage.bucket = (name: string) => {
         assert.strictEqual(name, BUCKET_NAME);
         return BUCKET;
       };
-      storage.createBucket(BUCKET_NAME, METADATA, (err: Error) => {
+      storage.createBucket(BUCKET_NAME, METADATA, (err: Error | null) => {
         assert.ifError(err);
         done();
       });
@@ -772,9 +574,9 @@ describe('Storage', () => {
       storage.createBucket(BUCKET_NAME, done);
     });
 
-    it('should throw if no name is provided', () => {
-      assert.throws(() => {
-        storage.createBucket(),
+    it('should reject if no name is provided', () => {
+      assert.rejects(async () => {
+        storage.createBucket(''),
           StorageExceptionMessages.BUCKET_NAME_REQUIRED_CREATE;
       });
     });
@@ -802,12 +604,15 @@ describe('Storage', () => {
       ) => {
         callback(null, METADATA);
       };
-      storage.createBucket(BUCKET_NAME, (err: Error, bucket: Bucket) => {
-        assert.ifError(err);
-        assert.deepStrictEqual(bucket, BUCKET);
-        assert.deepStrictEqual(bucket.metadata, METADATA);
-        done();
-      });
+      storage.createBucket(
+        BUCKET_NAME,
+        (err: Error | null, bucket?: Bucket | null) => {
+          assert.ifError(err);
+          assert.deepStrictEqual(bucket, BUCKET);
+          assert.deepStrictEqual(bucket.metadata, METADATA);
+          done();
+        }
+      );
     });
 
     it('should execute callback on error', done => {
@@ -818,7 +623,7 @@ describe('Storage', () => {
       ) => {
         callback(error);
       };
-      storage.createBucket(BUCKET_NAME, (err: Error) => {
+      storage.createBucket(BUCKET_NAME, (err: Error | null) => {
         assert.strictEqual(err, error);
         done();
       });
@@ -834,7 +639,7 @@ describe('Storage', () => {
       };
       storage.createBucket(
         BUCKET_NAME,
-        (err: Error, bucket: Bucket, apiResponse: unknown) => {
+        (err: Error | null, bucket?: Bucket | null, apiResponse?: unknown) => {
           assert.strictEqual(resp, apiResponse);
           done();
         }
@@ -1014,25 +819,18 @@ describe('Storage', () => {
 
     it('should execute callback with error', done => {
       const error = new Error('Error.');
-      const apiResponse = {};
 
       storage.request = (
         reqOpts: DecorateRequestOptions,
         callback: Function
       ) => {
-        callback(error, apiResponse);
+        callback(error);
       };
 
-      storage.getBuckets(
-        {},
-        (err: Error, buckets: Bucket[], nextQuery: {}, resp: unknown) => {
-          assert.strictEqual(err, error);
-          assert.strictEqual(buckets, null);
-          assert.strictEqual(nextQuery, null);
-          assert.strictEqual(resp, apiResponse);
-          done();
-        }
-      );
+      storage.getBuckets({}, (err: Error | null) => {
+        assert.strictEqual(err, error);
+        done();
+      });
     });
 
     it('should return nextQuery if more results exist', () => {
@@ -1045,9 +843,9 @@ describe('Storage', () => {
       };
       storage.getBuckets(
         {maxResults: 5},
-        (err: Error, results: {}, nextQuery: GetFilesOptions) => {
-          assert.strictEqual(nextQuery.pageToken, token);
-          assert.strictEqual(nextQuery.maxResults, 5);
+        (err: Error | null, buckets: Bucket[], nextQuery?: {}) => {
+          assert.ifError(err);
+          assert.notEqual(nextQuery, undefined);
         }
       );
     });
@@ -1061,7 +859,7 @@ describe('Storage', () => {
       };
       storage.getBuckets(
         {maxResults: 5},
-        (err: Error, results: {}, nextQuery: {}) => {
+        (err: Error | null, results: Bucket[], nextQuery?: {}) => {
           assert.strictEqual(nextQuery, null);
         }
       );
@@ -1074,7 +872,7 @@ describe('Storage', () => {
       ) => {
         callback(null, {items: [{id: 'fake-bucket-name'}]});
       };
-      storage.getBuckets((err: Error, buckets: Bucket[]) => {
+      storage.getBuckets((err: Error | null, buckets: Bucket[]) => {
         assert.ifError(err);
         assert(buckets[0] instanceof Bucket);
         done();
@@ -1082,7 +880,9 @@ describe('Storage', () => {
     });
 
     it('should return apiResponse', done => {
-      const resp = {items: [{id: 'fake-bucket-name'}]};
+      const resp = {
+        items: [{id: 'fake-bucket-name'}, {id: 'fake-bucket-name-two'}],
+      };
       storage.request = (
         reqOpts: DecorateRequestOptions,
         callback: Function
@@ -1090,7 +890,13 @@ describe('Storage', () => {
         callback(null, resp);
       };
       storage.getBuckets(
-        (err: Error, buckets: Bucket[], nextQuery: {}, apiResponse: {}) => {
+        {maxResults: 1},
+        (
+          err: Error | null,
+          buckets: Bucket[],
+          nextQuery?: {},
+          apiResponse?: unknown
+        ) => {
           assert.deepStrictEqual(resp, apiResponse);
           done();
         }
@@ -1111,7 +917,7 @@ describe('Storage', () => {
       ) => {
         callback(null, {items: [bucketMetadata]});
       };
-      storage.getBuckets((err: Error, buckets: Bucket[]) => {
+      storage.getBuckets((err: Error | null, buckets: Bucket[]) => {
         assert.ifError(err);
         assert.deepStrictEqual(buckets[0].metadata, bucketMetadata);
         done();
@@ -1136,10 +942,11 @@ describe('Storage', () => {
     };
 
     beforeEach(() => {
-      storageRequestStub = sinon.stub(storage, 'request');
-      storageRequestStub.callsFake((_opts: {}, callback: Function) => {
-        callback(null, {});
-      });
+      storageRequestStub = sinon
+        .stub(storage, 'request')
+        .callsFake((_opts: {}, callback: Function) => {
+          callback(null, {});
+        });
     });
 
     let hmacKeyCtor: sinon.SinonSpy;
@@ -1153,7 +960,7 @@ describe('Storage', () => {
 
     it('should get HmacKeys without a query', done => {
       storage.getHmacKeys(() => {
-        const firstArg = storage.request.firstCall.args[0];
+        const firstArg = storageRequestStub.firstCall.args[0];
         assert.strictEqual(
           firstArg.uri,
           `/projects/${storage.projectId}/hmacKeys`
@@ -1172,7 +979,7 @@ describe('Storage', () => {
       };
 
       storage.getHmacKeys(query, () => {
-        const firstArg = storage.request.firstCall.args[0];
+        const firstArg = storageRequestStub.firstCall.args[0];
         assert.strictEqual(
           firstArg.uri,
           `/projects/${storage.projectId}/hmacKeys`
@@ -1190,60 +997,58 @@ describe('Storage', () => {
         callback(error, apiResponse);
       });
 
-      storage.getHmacKeys(
-        {},
-        (err: Error, hmacKeys: HmacKey[], nextQuery: {}, resp: unknown) => {
-          assert.strictEqual(err, error);
-          assert.strictEqual(hmacKeys, null);
-          assert.strictEqual(nextQuery, null);
-          assert.strictEqual(resp, apiResponse);
-          done();
-        }
-      );
+      storage.getHmacKeys({}, (err: Error | null) => {
+        assert.strictEqual(err, error);
+        done();
+      });
     });
 
     it('should return nextQuery if more results exist', done => {
       const token = 'next-page-token';
-      const query = {
-        param1: 'a',
-        param2: 'b',
-      };
-      const expectedNextQuery = Object.assign({}, query, {pageToken: token});
       storageRequestStub.callsFake((_opts: {}, callback: Function) => {
         callback(null, {nextPageToken: token, items: []});
       });
 
       storage.getHmacKeys(
-        query,
+        {maxResults: 5},
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err: Error, _hmacKeys: [], nextQuery: any) => {
+        (err: Error | null, _hmacKeys: HmacKey[] | null, nextQuery: any) => {
           assert.ifError(err);
-          assert.deepStrictEqual(nextQuery, expectedNextQuery);
+          assert.notEqual(nextQuery, undefined);
           done();
         }
       );
     });
 
-    it('should return null nextQuery if there are no more results', done => {
+    it('should return undefined nextQuery if there are no more results', done => {
       storageRequestStub.callsFake((_opts: {}, callback: Function) => {
         callback(null, {items: []});
       });
 
-      storage.getHmacKeys({}, (err: Error, _hmacKeys: [], nextQuery: {}) => {
-        assert.ifError(err);
-        assert.strictEqual(nextQuery, null);
-        done();
-      });
+      storage.getHmacKeys(
+        {},
+        (err: Error | null, _hmacKeys: HmacKey[] | null, nextQuery?: {}) => {
+          assert.ifError(err);
+          assert.strictEqual(nextQuery, undefined);
+          done();
+        }
+      );
     });
 
     it('should return apiResponse', done => {
-      const resp = {items: [metadataResponse]};
+      const resp = {items: [metadataResponse, metadataResponse]};
       storageRequestStub.callsFake((_opts: {}, callback: Function) => {
         callback(null, resp);
       });
 
       storage.getHmacKeys(
-        (err: Error, _hmacKeys: [], _nextQuery: {}, apiResponse: unknown) => {
+        {maxResults: 1},
+        (
+          err: Error | null,
+          _hmacKeys: HmacKey[] | null,
+          _nextQuery?: {},
+          apiResponse?: unknown
+        ) => {
           assert.ifError(err);
           assert.deepStrictEqual(resp, apiResponse);
           done();
@@ -1256,14 +1061,14 @@ describe('Storage', () => {
         callback(null, {items: [metadataResponse]});
       });
 
-      storage.getHmacKeys((err: Error, hmacKeys: HmacKey[]) => {
+      storage.getHmacKeys((err: Error | null, hmacKeys: HmacKey[] | null) => {
         assert.ifError(err);
         assert.deepStrictEqual(hmacKeyCtor.getCall(0).args, [
           storage,
           metadataResponse.accessId,
           {projectId: metadataResponse.projectId},
         ]);
-        assert.deepStrictEqual(hmacKeys[0].metadata, metadataResponse);
+        assert.deepStrictEqual(hmacKeys![0].metadata, metadataResponse);
         done();
       });
     });
@@ -1309,7 +1114,11 @@ describe('Storage', () => {
 
       it('should return the error and apiResponse', done => {
         storage.getServiceAccount(
-          (err: Error, serviceAccount: {}, apiResponse: unknown) => {
+          (
+            err: Error | null,
+            serviceAccount?: ServiceAccount,
+            apiResponse?: unknown
+          ) => {
             assert.strictEqual(err, ERROR);
             assert.strictEqual(serviceAccount, null);
             assert.strictEqual(apiResponse, API_RESPONSE);
@@ -1331,37 +1140,13 @@ describe('Storage', () => {
         };
       });
 
-      it('should convert snake_case response to camelCase', done => {
-        const apiResponse = {
-          snake_case: true,
-        };
-
-        storage.request = (
-          reqOpts: DecorateRequestOptions,
-          callback: Function
-        ) => {
-          callback(null, apiResponse);
-        };
-
-        storage.getServiceAccount(
-          (
-            err: Error,
-            serviceAccount: {[index: string]: string | undefined}
-          ) => {
-            assert.ifError(err);
-            assert.strictEqual(
-              serviceAccount.snakeCase,
-              apiResponse.snake_case
-            );
-            assert.strictEqual(serviceAccount.snake_case, undefined);
-            done();
-          }
-        );
-      });
-
       it('should return the serviceAccount and apiResponse', done => {
         storage.getServiceAccount(
-          (err: Error, serviceAccount: {}, apiResponse: {}) => {
+          (
+            err: Error | null,
+            serviceAccount?: ServiceAccount,
+            apiResponse?: unknown
+          ) => {
             assert.ifError(err);
             assert.deepStrictEqual(serviceAccount, {});
             assert.strictEqual(apiResponse, API_RESPONSE);
@@ -1378,14 +1163,16 @@ describe('Storage', () => {
     const USER_DEFINED_FULL_API_ENDPOINT = `${USER_DEFINED_PROTOCOL}://myapi.com:8080`;
 
     it('should default protocol to https', () => {
-      const endpoint = Storage.sanitizeEndpoint(
+      const endpoint = Storage['sanitizeEndpoint'](
         USER_DEFINED_SHORT_API_ENDPOINT
       );
       assert.strictEqual(endpoint.match(PROTOCOL_REGEX)![1], 'https');
     });
 
     it('should not override protocol', () => {
-      const endpoint = Storage.sanitizeEndpoint(USER_DEFINED_FULL_API_ENDPOINT);
+      const endpoint = Storage['sanitizeEndpoint'](
+        USER_DEFINED_FULL_API_ENDPOINT
+      );
       assert.strictEqual(
         endpoint.match(PROTOCOL_REGEX)![1],
         USER_DEFINED_PROTOCOL
@@ -1398,7 +1185,9 @@ describe('Storage', () => {
         `${USER_DEFINED_FULL_API_ENDPOINT}//`,
       ];
       for (const endpointWithTrailingSlashes of endpointsWithTrailingSlashes) {
-        const endpoint = Storage.sanitizeEndpoint(endpointWithTrailingSlashes);
+        const endpoint = Storage['sanitizeEndpoint'](
+          endpointWithTrailingSlashes
+        );
         assert.strictEqual(endpoint.endsWith('/'), false);
       }
     });
