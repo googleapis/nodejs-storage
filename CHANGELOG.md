@@ -4,6 +4,25 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [8.0.0](https://github.com/googleapis/nodejs-storage/compare/v7.0.1...v8.0.0) (2023-08-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* support iterables in file#save ([#2202](https://github.com/googleapis/nodejs-storage/issues/2202)) (#2203)
+
+### Features
+
+* Support iterables in file#save ([#2202](https://github.com/googleapis/nodejs-storage/issues/2202)) ([#2203](https://github.com/googleapis/nodejs-storage/issues/2203)) ([c0d9d58](https://github.com/googleapis/nodejs-storage/commit/c0d9d58b56a9a3485b6c0e5eb92411bb094f7bcb))
+
+
+### Bug Fixes
+
+* **deps:** Update dependency @google-cloud/paginator to v5 ([#2263](https://github.com/googleapis/nodejs-storage/issues/2263)) ([0c9b342](https://github.com/googleapis/nodejs-storage/commit/0c9b3425b47c3031ec4bac6d45d8cdca48b2f1a6))
+* **deps:** Update dependency @google-cloud/projectify to v4 ([#2264](https://github.com/googleapis/nodejs-storage/issues/2264)) ([c881bae](https://github.com/googleapis/nodejs-storage/commit/c881bae96b40f609d2b7a8d7388c6a76d34faab1))
+* **deps:** Update dependency @google-cloud/promisify to v4 ([#2262](https://github.com/googleapis/nodejs-storage/issues/2262)) ([9d46ff3](https://github.com/googleapis/nodejs-storage/commit/9d46ff3c02315c5a3516aa5f2755ee0471ba036b))
+* **deps:** Update dependency @google-cloud/pubsub to v4 ([#2256](https://github.com/googleapis/nodejs-storage/issues/2256)) ([18282bb](https://github.com/googleapis/nodejs-storage/commit/18282bbefe1201e51867c676a86301f8086aaf1e))
+
 ## [7.0.1](https://github.com/googleapis/nodejs-storage/compare/v7.0.0...v7.0.1) (2023-08-07)
 
 
