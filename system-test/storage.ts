@@ -1530,16 +1530,14 @@ describe('storage', () => {
 
       async function createFile(): Promise<File> {
         const file = BUCKET.file(generateName());
-        FILES.push(file);
         await file.save('data');
+        FILES.push(file);
         return file;
       }
 
       async function deleteFilesAsync() {
         await new Promise(resolve =>
-          // Wait double the retention period to avoid issues with this resolving
-          // at the exact time the rentention period expires.
-          setTimeout(resolve, RETENTION_PERIOD_SECONDS * 2 * 1000)
+          setTimeout(resolve, RETENTION_PERIOD_SECONDS * 1000)
         );
         return Promise.all(
           FILES.map(async file => {
@@ -1557,8 +1555,9 @@ describe('storage', () => {
         });
       });
 
-      after(() => {
-        return deleteFilesAsync();
+      after(async () => {
+        await BUCKET.setMetadata({retentionPolicy: null});
+        await deleteFilesAsync();
       });
 
       it('should block an overwrite request', async () => {
