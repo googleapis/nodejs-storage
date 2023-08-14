@@ -1537,7 +1537,9 @@ describe('storage', () => {
 
       async function deleteFilesAsync() {
         await new Promise(resolve =>
-          setTimeout(resolve, RETENTION_PERIOD_SECONDS * 1000)
+          // Wait double the retention period to avoid issues with this resolving
+          // at the exact time the rentention period expires.
+          setTimeout(resolve, RETENTION_PERIOD_SECONDS * 2 * 1000)
         );
         return Promise.all(
           FILES.map(async file => {
