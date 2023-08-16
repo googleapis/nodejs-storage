@@ -1522,7 +1522,7 @@ describe('storage', () => {
       });
     });
 
-    describe.only('operations on held objects', () => {
+    describe('operations on held objects', () => {
       const BUCKET = storage.bucket(generateName());
       const FILES: File[] = [];
 
