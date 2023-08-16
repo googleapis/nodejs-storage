@@ -3129,7 +3129,6 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     } as SignerGetSignedUrlConfig;
 
     if (!this.signer) {
-      console.log('here no signer');
       this.signer = new URLSigner(this.storage.authClient, this);
     }
 
