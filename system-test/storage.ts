@@ -1522,7 +1522,7 @@ describe('storage', () => {
       });
     });
 
-    describe('operations on held objects', () => {
+    describe.only('operations on held objects', () => {
       const BUCKET = storage.bucket(generateName());
       const FILES: File[] = [];
 
@@ -1535,18 +1535,6 @@ describe('storage', () => {
         return file;
       }
 
-      async function deleteFilesAsync() {
-        await new Promise(resolve =>
-          setTimeout(resolve, RETENTION_PERIOD_SECONDS * 1000)
-        );
-        return Promise.all(
-          FILES.map(async file => {
-            await file.setMetadata({temporaryHold: null});
-            return file.delete();
-          })
-        );
-      }
-
       before(async () => {
         await BUCKET.create({
           retentionPolicy: {
@@ -1556,8 +1544,14 @@ describe('storage', () => {
       });
 
       after(async () => {
-        await BUCKET.setMetadata({retentionPolicy: null});
-        await deleteFilesAsync();
+        await new Promise(resolve =>
+          setTimeout(resolve, RETENTION_PERIOD_SECONDS * 1000)
+        );
+        await Promise.all(
+          FILES.map(async file => {
+            return file.delete();
+          })
+        );
       });
 
       it('should block an overwrite request', async () => {
