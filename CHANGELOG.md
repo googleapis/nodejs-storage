@@ -17,6 +17,7 @@
 ### ⚠ BREAKING CHANGES
 
 * Make node 14 the minimum supported version ([#2244](https://github.com/googleapis/nodejs-storage/issues/2244))
+* Add stronger typings to metadata ([#2234](https://github.com/googleapis/nodejs-storage/issues/2234))
 
 ### Features
 
