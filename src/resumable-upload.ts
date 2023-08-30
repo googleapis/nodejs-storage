@@ -23,16 +23,20 @@ import {
 import * as gaxios from 'gaxios';
 import {GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {Readable, Writable, WritableOptions} from 'stream';
-import retry = require('async-retry');
+import AsyncRetry from 'async-retry';
 import {RetryOptions, PreconditionOptions} from './storage';
 import * as uuid from 'uuid';
-import {getRuntimeTrackingString, getUserAgentString} from './util';
+import {
+  getRuntimeTrackingString,
+  getUserAgentString,
+  getPackageJSON,
+} from './util';
 import {GCCL_GCS_CMD_KEY} from './nodejs-common/util';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
 const DEFAULT_API_ENDPOINT_REGEX = /.*\.googleapis\.com/;
-const packageJson = require('../../package.json');
+const packageJson = getPackageJSON();
 
 export const PROTOCOL_REGEX = /^(\w*):\/\//;
 
@@ -642,7 +646,7 @@ export class Upload extends Writable {
     if (this.origin) {
       reqOpts.headers!.Origin = this.origin;
     }
-    const uri = await retry(
+    const uri = await AsyncRetry(
       async (bail: (err: Error) => void) => {
         try {
           const res = await this.makeRequest(reqOpts);

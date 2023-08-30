@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import {DecorateRequestOptions, util} from '../src/nodejs-common';
-import * as assert from 'assert';
+import assert from 'assert';
 import {describe, it, before, beforeEach} from 'mocha';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 import {IAMExceptionMessages} from '../src/iam';
 
 describe('storage/iam', () => {

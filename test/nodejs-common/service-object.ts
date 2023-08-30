@@ -19,9 +19,9 @@ import {
   promisifyAll,
   PromisifyAllOptions,
 } from '@google-cloud/promisify';
-import * as assert from 'assert';
+import assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 import * as r from 'teeny-request';
 import * as sinon from 'sinon';
 import {Service} from '../../src/nodejs-common';

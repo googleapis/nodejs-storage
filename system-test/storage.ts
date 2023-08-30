@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import * as assert from 'assert';
+import assert from 'assert';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
-import * as FormData from 'form-data';
-import * as pLimit from 'p-limit';
+import FormData from 'form-data';
+import pLimit from 'p-limit';
 import {promisify} from 'util';
 import * as path from 'path';
 import * as tmp from 'tmp';
@@ -34,7 +34,7 @@ import {
   CRC32C,
   UploadOptions,
 } from '../src';
-import * as nock from 'nock';
+import nock from 'nock';
 import {Transform} from 'stream';
 import {gzipSync} from 'zlib';
 
@@ -44,6 +44,7 @@ interface ErrorCallbackFunction {
 import {PubSub, Subscription, Topic} from '@google-cloud/pubsub';
 import {LifecycleRule} from '../src/bucket';
 import {IdempotencyStrategy} from '../src/storage';
+import {getDirName} from '../src/util';
 
 class HTTPError extends Error {
   code: number;
@@ -87,19 +88,25 @@ describe('storage', () => {
   const FILES: {[index: string]: any} = {
     logo: {
       path: path.join(
-        __dirname,
-        '../../system-test/data/CloudPlatform_128px_Retina.png'
+        getDirName(),
+        '../../../system-test/data/CloudPlatform_128px_Retina.png'
       ),
     },
     big: {
-      path: path.join(__dirname, '../../system-test/data/three-mb-file.tif'),
+      path: path.join(
+        getDirName(),
+        '../../../system-test/data/three-mb-file.tif'
+      ),
       hash: undefined,
     },
     html: {
-      path: path.join(__dirname, '../../system-test/data/long-html-file.html'),
+      path: path.join(
+        getDirName(),
+        '../../../system-test/data/long-html-file.html'
+      ),
     },
     empty: {
-      path: path.join(__dirname, '../../system-test/data/empty-file.txt'),
+      path: path.join(getDirName(), '../../../system-test/data/empty-file.txt'),
     },
   };
 
@@ -1689,7 +1696,7 @@ describe('storage', () => {
               // for the key file.
               let key2 = process.env.GCN_STORAGE_2ND_PROJECT_KEY;
               if (key2 && key2.charAt(0) === '.') {
-                key2 = `${__dirname}/../../${key2}`;
+                key2 = `${getDirName()}/../../../${key2}`;
               }
 
               // Get the service account for the "second" account (the

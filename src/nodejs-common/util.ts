@@ -26,15 +26,19 @@ import * as ent from 'ent';
 import {AuthClient, GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {CredentialBody} from 'google-auth-library';
 import * as r from 'teeny-request';
-import * as retryRequest from 'retry-request';
+import retryRequest from 'retry-request';
 import {Duplex, DuplexOptions, Readable, Transform, Writable} from 'stream';
 import {teenyRequest} from 'teeny-request';
 import {Interceptor} from './service-object';
 import * as uuid from 'uuid';
 import {DEFAULT_PROJECT_ID_TOKEN} from './service';
-import {getRuntimeTrackingString, getUserAgentString} from '../util';
+import {
+  getRuntimeTrackingString,
+  getUserAgentString,
+  getPackageJSON,
+} from '../util';
 
-const packageJson = require('../../../package.json');
+const packageJson = getPackageJSON();
 
 /**
  * A unique symbol for providing a `gccl-gcs-cmd` value
@@ -922,7 +926,7 @@ export class Util {
       dup.setReadable(requestStream);
     } else {
       // Streaming writable HTTP requests cannot be retried.
-      requestStream = options.request!(reqOpts);
+      requestStream = (options.request as unknown as Function)!(reqOpts);
       dup.setWritable(requestStream);
     }
 

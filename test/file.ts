@@ -24,11 +24,11 @@ import {
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
-import * as assert from 'assert';
+import assert from 'assert';
 import * as crypto from 'crypto';
-import * as duplexify from 'duplexify';
+import duplexify from 'duplexify';
 import * as fs from 'fs';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 import * as resumableUpload from '../src/resumable-upload';
 import * as sinon from 'sinon';
 import * as tmp from 'tmp';

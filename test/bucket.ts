@@ -19,13 +19,13 @@ import {
   ServiceObjectConfig,
   util,
 } from '../src/nodejs-common';
-import * as assert from 'assert';
+import assert from 'assert';
 import * as fs from 'fs';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
 import * as mime from 'mime-types';
-import pLimit = require('p-limit');
+import pLimit from 'p-limit';
 import * as path from 'path';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 
 import * as stream from 'stream';
 import {Bucket, Channel, Notification, CRC32C} from '../src';
@@ -53,7 +53,7 @@ import {Policy} from '../src/iam';
 import sinon = require('sinon');
 import {Transform} from 'stream';
 import {IdempotencyStrategy} from '../src/storage';
-import {convertObjKeysToSnakeCase} from '../src/util';
+import {convertObjKeysToSnakeCase, getDirName} from '../src/util';
 
 class FakeFile {
   calledWith_: IArguments;
@@ -2576,10 +2576,13 @@ describe('Bucket', () => {
 
   describe('upload', () => {
     const basename = 'testfile.json';
-    const filepath = path.join(__dirname, '../../test/testdata/' + basename);
+    const filepath = path.join(
+      getDirName(),
+      '../../../test/testdata/' + basename
+    );
     const nonExistentFilePath = path.join(
-      __dirname,
-      '../../test/testdata/',
+      getDirName(),
+      '../../../test/testdata/',
       'non-existent-file'
     );
     const metadata = {

@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import path from 'path';
 import * as querystring from 'querystring';
 import {PassThrough} from 'stream';
+import * as fs from 'fs';
 
 export function normalize<T = {}, U = Function>(
   optionsOrCallback?: T | U,
@@ -197,12 +199,32 @@ export function getRuntimeTrackingString(): string {
  * @returns {string} user agent string.
  */
 export function getUserAgentString(): string {
-  const pkg = require('../../package.json');
+  const pkg = getPackageJSON();
   const hyphenatedPackageName = pkg.name
     .replace('@google-cloud', 'gcloud-node') // For legacy purposes.
     .replace('/', '-'); // For UA spec-compliance purposes.
 
   return hyphenatedPackageName + '/' + pkg.version;
+}
+
+export function getDirName() {
+  let dirToUse = '';
+  try {
+    dirToUse = __dirname;
+  } catch (e) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    dirToUse = import.meta.url;
+  }
+
+  return dirToUse;
+}
+
+export function getPackageJSON() {
+  const dirName = path.dirname(getDirName());
+  return JSON.parse(
+    fs.readFileSync(path.join(dirName, '..', '..', 'package.json')).toString()
+  );
 }
 
 export class PassThroughShim extends PassThrough {

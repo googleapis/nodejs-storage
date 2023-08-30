@@ -20,7 +20,7 @@ import {Readable} from 'stream';
 import {Bucket, BucketMetadata} from './bucket';
 import {Channel} from './channel';
 import {File} from './file';
-import {normalize} from './util';
+import {getPackageJSON, normalize} from './util';
 import {HmacKey, HmacKeyMetadata, HmacKeyOptions} from './hmacKey';
 import {
   CRC32CValidatorGenerator,
@@ -742,7 +742,7 @@ export class Storage extends Service {
         'https://www.googleapis.com/auth/cloud-platform',
         'https://www.googleapis.com/auth/devstorage.full_control',
       ],
-      packageJson: require('../../package.json'),
+      packageJson: getPackageJSON(),
     };
 
     super(config, options);

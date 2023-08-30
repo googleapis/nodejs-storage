@@ -24,7 +24,7 @@ import {
 } from './nodejs-common';
 import {promisifyAll} from '@google-cloud/promisify';
 
-import compressible = require('compressible');
+import compressible from 'compressible';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as mime from 'mime';
@@ -76,7 +76,7 @@ import {CRC32CValidatorGenerator} from './crc32c';
 import {HashStreamValidator} from './hash-stream-validator';
 import {URL} from 'url';
 
-import retry = require('async-retry');
+import AsyncRetry from 'async-retry';
 import {
   BaseMetadata,
   DeleteCallback,
@@ -3665,7 +3665,7 @@ class File extends ServiceObject<File, FileMetadata> {
     ) {
       maxRetries = 0;
     }
-    const returnValue = retry(
+    const returnValue = AsyncRetry(
       async (bail: (err: Error) => void) => {
         return new Promise<void>((resolve, reject) => {
           if (maxRetries === 0) {

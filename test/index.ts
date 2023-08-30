@@ -20,19 +20,20 @@ import {
   util,
 } from '../src/nodejs-common';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
-import * as assert from 'assert';
+import assert from 'assert';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import {Bucket, CRC32C_DEFAULT_VALIDATOR_GENERATOR} from '../src';
 import {GetFilesOptions} from '../src/bucket';
-import sinon = require('sinon');
+import * as sinon from 'sinon';
 import {HmacKey} from '../src/hmacKey';
 import {
   HmacKeyResourceResponse,
   PROTOCOL_REGEX,
   StorageExceptionMessages,
 } from '../src/storage';
+import {getPackageJSON} from '../src/util';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hmacKeyModule = require('../src/hmacKey');
@@ -142,7 +143,7 @@ describe('Storage', () => {
       assert.deepStrictEqual(
         calledWith.packageJson,
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        require('../../package.json')
+        getPackageJSON()
       );
     });
 

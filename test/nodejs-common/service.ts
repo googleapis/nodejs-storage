@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
+import assert from 'assert';
 import {describe, it, before, beforeEach, after} from 'mocha';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 import {Request} from 'teeny-request';
 import {AuthClient, GoogleAuth, OAuth2Client} from 'google-auth-library';
 

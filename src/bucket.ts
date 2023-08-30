@@ -31,9 +31,9 @@ import * as fs from 'fs';
 import * as http from 'http';
 import * as mime from 'mime-types';
 import * as path from 'path';
-import * as pLimit from 'p-limit';
+import pLimit from 'p-limit';
 import {promisify} from 'util';
-import retry = require('async-retry');
+import AsyncRetry from 'async-retry';
 import {convertObjKeysToSnakeCase} from './util';
 
 import {Acl, AclMetadata} from './acl';
@@ -4255,7 +4255,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     callback?: UploadCallback
   ): Promise<UploadResponse> | void {
     const upload = (numberOfRetries: number | undefined) => {
-      const returnValue = retry(
+      const returnValue = AsyncRetry(
         async (bail: (err: Error) => void) => {
           await new Promise<void>((resolve, reject) => {
             if (

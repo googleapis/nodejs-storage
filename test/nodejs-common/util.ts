@@ -18,7 +18,7 @@ import {
   MissingProjectIdError,
   replaceProjectIdToken,
 } from '@google-cloud/projectify';
-import * as assert from 'assert';
+import assert from 'assert';
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
 import {
   AuthClient,
@@ -27,9 +27,9 @@ import {
   OAuth2Client,
 } from 'google-auth-library';
 import * as nock from 'nock';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 import * as r from 'teeny-request';
-import * as retryRequest from 'retry-request';
+import retryRequest from 'retry-request';
 import * as sinon from 'sinon';
 import * as stream from 'stream';
 import {teenyRequest} from 'teeny-request';

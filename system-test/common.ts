@@ -15,7 +15,7 @@
  */
 
 import {before, describe, it} from 'mocha';
-import * as assert from 'assert';
+import assert from 'assert';
 import * as http from 'http';
 
 import * as common from '../src/nodejs-common';
