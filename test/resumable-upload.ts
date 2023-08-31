@@ -27,16 +27,16 @@ import {
   AUTO_RETRY_DEFAULT,
   MAX_RETRY_DEFAULT,
   RETRYABLE_ERR_FN_DEFAULT,
-} from '../src/storage';
+} from '../src/storage.js';
 
 import {
   ApiError,
   CreateUriCallback,
   PROTOCOL_REGEX,
-} from '../src/resumable-upload';
+} from '../src/resumable-upload.js';
 import {GaxiosOptions, GaxiosError, GaxiosResponse} from 'gaxios';
-import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util';
-import {getDirName} from '../src/util';
+import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util.js';
+import {getDirName} from '../src/util.js';
 
 nock.disableNetConnect();
 

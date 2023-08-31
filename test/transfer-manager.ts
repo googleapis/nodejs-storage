@@ -15,7 +15,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {ApiError} from '../src/nodejs-common';
+import {ApiError} from '../src/nodejs-common/index.js';
 import {
   Bucket,
   File,
@@ -28,14 +28,14 @@ import {
   UploadOptions,
   TransferManager,
   Storage,
-} from '../src';
+} from '../src/index.js';
 import assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as sinon from 'sinon';
 import {GaxiosOptions, GaxiosResponse} from 'gaxios';
-import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util';
+import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util.js';
 import {AuthClient, GoogleAuth} from 'google-auth-library';
 import {tmpdir} from 'os';
 

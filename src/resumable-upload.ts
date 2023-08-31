@@ -24,14 +24,14 @@ import * as gaxios from 'gaxios';
 import {GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {Readable, Writable, WritableOptions} from 'stream';
 import AsyncRetry from 'async-retry';
-import {RetryOptions, PreconditionOptions} from './storage';
+import {RetryOptions, PreconditionOptions} from './storage.js';
 import * as uuid from 'uuid';
 import {
   getRuntimeTrackingString,
   getUserAgentString,
   getPackageJSON,
-} from './util';
-import {GCCL_GCS_CMD_KEY} from './nodejs-common/util';
+} from './util.js';
+import {GCCL_GCS_CMD_KEY} from './nodejs-common/util.js';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;

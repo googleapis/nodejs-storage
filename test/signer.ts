@@ -27,9 +27,9 @@ import {
   GetSignedUrlConfigInternal,
   Query,
   SignerExceptionMessages,
-} from '../src/signer';
-import {encodeURI, formatAsUTCISO, qsStringify} from '../src/util';
-import {ExceptionMessages} from '../src/storage';
+} from '../src/signer.js';
+import {encodeURI, formatAsUTCISO, qsStringify} from '../src/util.js';
+import {ExceptionMessages} from '../src/storage.js';
 import {OutgoingHttpHeaders} from 'http';
 
 interface SignedUrlArgs {

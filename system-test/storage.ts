@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import assert from 'assert';
-import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
+import {after, afterEach, before, beforeEach, describe, it} from 'mocha';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
@@ -23,17 +23,19 @@ import {promisify} from 'util';
 import * as path from 'path';
 import * as tmp from 'tmp';
 import * as uuid from 'uuid';
-import {ApiError} from '../src/nodejs-common';
+import {ApiError} from '../src/nodejs-common/index.js';
 import {
-  Storage,
-  Bucket,
-  File,
   AccessControlObject,
-  Notification,
-  DeleteBucketCallback,
+  Bucket,
   CRC32C,
+  DeleteBucketCallback,
+  File,
+  IdempotencyStrategy,
+  LifecycleRule,
+  Notification,
+  Storage,
   UploadOptions,
-} from '../src';
+} from '../src/index.js';
 import nock from 'nock';
 import {Transform} from 'stream';
 import {gzipSync} from 'zlib';
@@ -42,9 +44,7 @@ interface ErrorCallbackFunction {
   (err: Error | null): void;
 }
 import {PubSub, Subscription, Topic} from '@google-cloud/pubsub';
-import {LifecycleRule} from '../src/bucket';
-import {IdempotencyStrategy} from '../src/storage';
-import {getDirName} from '../src/util';
+import {getDirName} from '../src/util.js';
 
 class HTTPError extends Error {
   code: number;

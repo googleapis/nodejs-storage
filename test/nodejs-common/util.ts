@@ -47,8 +47,8 @@ import {
   MakeRequestConfig,
   ParsedHttpRespMessage,
   Util,
-} from '../../src/nodejs-common/util';
-import {DEFAULT_PROJECT_ID_TOKEN} from '../../src/nodejs-common/service';
+} from '../../src/nodejs-common/util.js';
+import {DEFAULT_PROJECT_ID_TOKEN} from '../../src/nodejs-common/service.js';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');

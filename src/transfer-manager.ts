@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import {Bucket, UploadOptions, UploadResponse} from './bucket';
-import {DownloadOptions, DownloadResponse, File} from './file';
+import {Bucket, UploadOptions, UploadResponse} from './bucket.js';
+import {DownloadOptions, DownloadResponse, File} from './file.js';
 import pLimit from 'p-limit';
 import * as path from 'path';
 import {createReadStream, promises as fsp} from 'fs';
-import {CRC32C} from './crc32c';
+import {CRC32C} from './crc32c.js';
 import {GoogleAuth} from 'google-auth-library';
 import {XMLParser, XMLBuilder} from 'fast-xml-parser';
 import AsyncRetry from 'async-retry';
-import {ApiError} from './nodejs-common';
+import {ApiError} from './nodejs-common/index.js';
 import {GaxiosResponse, Headers} from 'gaxios';
 import {createHash} from 'crypto';
 import {GCCL_GCS_CMD_KEY} from './nodejs-common/util';

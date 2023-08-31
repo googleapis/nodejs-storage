@@ -21,7 +21,7 @@ import {
   DecorateRequestOptions,
   ServiceObject,
   ServiceObjectConfig,
-} from '../src/nodejs-common';
+} from '../src/nodejs-common/index.js';
 import assert from 'assert';
 import {describe, it, before, beforeEach} from 'mocha';
 import proxyquire from 'proxyquire';

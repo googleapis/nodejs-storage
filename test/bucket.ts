@@ -18,7 +18,7 @@ import {
   ServiceObject,
   ServiceObjectConfig,
   util,
-} from '../src/nodejs-common';
+} from '../src/nodejs-common/index.js';
 import assert from 'assert';
 import * as fs from 'fs';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
@@ -28,14 +28,14 @@ import * as path from 'path';
 import proxyquire from 'proxyquire';
 
 import * as stream from 'stream';
-import {Bucket, Channel, Notification, CRC32C} from '../src';
+import {Bucket, Channel, Notification, CRC32C} from '../src/index.js';
 import {
   CreateWriteStreamOptions,
   File,
   SetFileMetadataOptions,
   FileOptions,
   FileMetadata,
-} from '../src/file';
+} from '../src/file.js';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import {
   GetBucketMetadataCallback,
@@ -47,13 +47,13 @@ import {
   BucketExceptionMessages,
   BucketMetadata,
   LifecycleRule,
-} from '../src/bucket';
-import {AddAclOptions} from '../src/acl';
-import {Policy} from '../src/iam';
-import sinon = require('sinon');
+} from '../src/bucket.js';
+import {AddAclOptions} from '../src/acl.js';
+import {Policy} from '../src/iam.js';
+import sinon from 'sinon';
 import {Transform} from 'stream';
-import {IdempotencyStrategy} from '../src/storage';
-import {convertObjKeysToSnakeCase, getDirName} from '../src/util';
+import {IdempotencyStrategy} from '../src/storage.js';
+import {convertObjKeysToSnakeCase, getDirName} from '../src/util.js';
 
 class FakeFile {
   calledWith_: IArguments;

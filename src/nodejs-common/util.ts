@@ -29,14 +29,14 @@ import * as r from 'teeny-request';
 import retryRequest from 'retry-request';
 import {Duplex, DuplexOptions, Readable, Transform, Writable} from 'stream';
 import {teenyRequest} from 'teeny-request';
-import {Interceptor} from './service-object';
+import {Interceptor} from './service-object.js';
 import * as uuid from 'uuid';
-import {DEFAULT_PROJECT_ID_TOKEN} from './service';
+import {DEFAULT_PROJECT_ID_TOKEN} from './service.js';
 import {
   getRuntimeTrackingString,
   getUserAgentString,
   getPackageJSON,
-} from '../util';
+} from '../util.js';
 
 const packageJson = getPackageJSON();
 

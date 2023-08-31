@@ -20,12 +20,12 @@ import proxyquire from 'proxyquire';
 import {Request} from 'teeny-request';
 import {AuthClient, GoogleAuth, OAuth2Client} from 'google-auth-library';
 
-import {Interceptor} from '../../src/nodejs-common';
+import {Interceptor} from '../../src/nodejs-common/index.js';
 import {
   DEFAULT_PROJECT_ID_TOKEN,
   ServiceConfig,
   ServiceOptions,
-} from '../../src/nodejs-common/service';
+} from '../../src/nodejs-common/service.js';
 import {
   BodyResponseCallback,
   DecorateRequestOptions,
@@ -34,8 +34,8 @@ import {
   MakeAuthenticatedRequestFactoryConfig,
   util,
   Util,
-} from '../../src/nodejs-common/util';
-import {getUserAgentString} from '../../src/util';
+} from '../../src/nodejs-common/util.js';
+import {getUserAgentString} from '../../src/util.js';
 
 proxyquire.noPreserveCache();
 
