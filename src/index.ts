@@ -56,6 +56,7 @@
  * region_tag:storage_quickstart
  * Full quickstart example:
  */
+export * from './nodejs-common';
 export {
   AclMetadata,
   AccessControlObject,
