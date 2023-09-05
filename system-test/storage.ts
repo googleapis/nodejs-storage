@@ -3182,9 +3182,9 @@ describe('storage', () => {
     });
 
     after(async () => {
-      await bucketWithVersioning.deleteFiles({
-        versions: true,
-      });
+      const [files] = await bucketWithVersioning.getFiles({versions: true});
+      const toDelete = files.map(file => file.delete());
+      await Promise.all(toDelete);
       await bucketWithVersioning.delete();
     });
 
