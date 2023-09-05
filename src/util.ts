@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import path from 'path';
+import * as path from 'path';
 import * as querystring from 'querystring';
 import {PassThrough} from 'stream';
 import * as fs from 'fs';
+import * as url from 'url';
+
+// Done to avoid a problem with mangling of identifiers when using esModuleInterop
+const fileURLToPath = url.fileURLToPath;
 
 export function normalize<T = {}, U = Function>(
   optionsOrCallback?: T | U,
@@ -214,16 +218,18 @@ export function getDirName() {
   } catch (e) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    dirToUse = import.meta.url;
+    dirToUse = path.dirname(fileURLToPath(import.meta.url));
   }
 
   return dirToUse;
 }
 
 export function getPackageJSON() {
-  const dirName = path.dirname(getDirName());
+  const dirName = getDirName();
   return JSON.parse(
-    fs.readFileSync(path.join(dirName, '..', '..', 'package.json')).toString()
+    fs
+      .readFileSync(path.join(dirName, '..', '..', '..', 'package.json'))
+      .toString()
   );
 }
 

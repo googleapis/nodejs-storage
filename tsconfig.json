@@ -6,12 +6,13 @@
         "resolveJsonModule": true,
         "module": "es2020",
         "moduleResolution": "node",
-        "esModuleInterop": true,
         "lib": ["ES2020"],
-        "sourceMap": false
+        "sourceMap": false,
+        "esModuleInterop": true,
     },
     "include": [
         "src/*.ts",
-        "internal-tooling/*.ts"
+        "internal-tooling/*.ts",
+        "system-test/*.ts"
     ]
 }

@@ -37,6 +37,7 @@ import {
   getUserAgentString,
   getPackageJSON,
 } from '../util.js';
+import duplexify from 'duplexify';
 
 const packageJson = getPackageJSON();
 
@@ -47,9 +48,6 @@ const packageJson = getPackageJSON();
  * E.g. the `V` in `X-Goog-API-Client: gccl-gcs-cmd/V`
  **/
 export const GCCL_GCS_CMD_KEY = Symbol.for('GCCL_GCS_CMD');
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const duplexify: DuplexifyConstructor = require('duplexify');
 
 const requestDefaults: r.CoreOptions = {
   timeout: 60000,

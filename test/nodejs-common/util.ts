@@ -38,8 +38,6 @@ import {
   Abortable,
   ApiError,
   DecorateRequestOptions,
-  Duplexify,
-  DuplexifyConstructor,
   GCCL_GCS_CMD_KEY,
   GoogleErrorBody,
   GoogleInnerError,
@@ -49,9 +47,7 @@ import {
   Util,
 } from '../../src/nodejs-common/util.js';
 import {DEFAULT_PROJECT_ID_TOKEN} from '../../src/nodejs-common/service.js';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const duplexify: DuplexifyConstructor = require('duplexify');
+import duplexify from 'duplexify';
 
 nock.disableNetConnect();
 

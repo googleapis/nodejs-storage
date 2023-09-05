@@ -58,6 +58,31 @@
  */
 export {ApiError} from './nodejs-common';
 export {
+  BucketCallback,
+  BucketOptions,
+  CreateBucketQuery,
+  CreateBucketRequest,
+  CreateBucketResponse,
+  CreateHmacKeyCallback,
+  CreateHmacKeyOptions,
+  CreateHmacKeyResponse,
+  GetBucketsCallback,
+  GetBucketsRequest,
+  GetBucketsResponse,
+  GetHmacKeysCallback,
+  GetHmacKeysOptions,
+  GetHmacKeysResponse,
+  GetServiceAccountCallback,
+  GetServiceAccountOptions,
+  GetServiceAccountResponse,
+  HmacKeyResourceResponse,
+  IdempotencyStrategy,
+  PreconditionOptions,
+  ServiceAccount,
+  Storage,
+  StorageOptions,
+} from './storage.js';
+export {
   AclMetadata,
   AccessControlObject,
   AclOptions,
@@ -238,30 +263,5 @@ export {
   Notification,
   NotificationMetadata,
 } from './notification.js';
-export {
-  BucketCallback,
-  BucketOptions,
-  CreateBucketQuery,
-  CreateBucketRequest,
-  CreateBucketResponse,
-  CreateHmacKeyCallback,
-  CreateHmacKeyOptions,
-  CreateHmacKeyResponse,
-  GetBucketsCallback,
-  GetBucketsRequest,
-  GetBucketsResponse,
-  GetHmacKeysCallback,
-  GetHmacKeysOptions,
-  GetHmacKeysResponse,
-  GetServiceAccountCallback,
-  GetServiceAccountOptions,
-  GetServiceAccountResponse,
-  HmacKeyResourceResponse,
-  IdempotencyStrategy,
-  PreconditionOptions,
-  ServiceAccount,
-  Storage,
-  StorageOptions,
-} from './storage.js';
 export {GetSignedUrlCallback, GetSignedUrlResponse} from './signer.js';
 export * from './transfer-manager.js';
