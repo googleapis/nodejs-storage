@@ -20,6 +20,7 @@ import * as url from 'url';
 
 // Done to avoid a problem with mangling of identifiers when using esModuleInterop
 const fileURLToPath = url.fileURLToPath;
+const isEsm = true;
 
 export function normalize<T = {}, U = Function>(
   optionsOrCallback?: T | U,
