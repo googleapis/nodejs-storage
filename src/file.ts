@@ -3682,7 +3682,7 @@ class File extends ServiceObject<File, FileMetadata> {
                 if (typeof data !== 'function') {
                   // Only PipelineSourceFunction can be retried. Async-iterables
                   // and Readable streams can only be consumed once.
-                  bail(err);
+                  return bail(err);
                 }
 
                 handleError(err);
