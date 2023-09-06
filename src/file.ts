@@ -3655,8 +3655,8 @@ class File extends ServiceObject<File, FileMetadata> {
 
           const handleError = (err: Error) => {
             if (
-              !this.storage.retryOptions.autoRetry ||
-              !this.storage.retryOptions.retryableErrorFn!(err)
+              this.storage.retryOptions.autoRetry &&
+              this.storage.retryOptions.retryableErrorFn!(err)
             ) {
               return reject(err);
             }
