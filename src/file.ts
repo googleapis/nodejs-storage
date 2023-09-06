@@ -3672,13 +3672,6 @@ class File extends ServiceObject<File, FileMetadata> {
           } else {
             pipeline(data, writable, err => {
               if (err) {
-                // If data is not a valid PipelineSource, then pipeline will
-                // fail without destroying the writable stream. If data is a
-                // PipelineSource that yields invalid chunks (e.g. a stream in
-                // object mode or an iterable that does not yield Buffers or
-                // strings), then pipeline will destroy the writable stream.
-                if (!writable.destroyed) writable.destroy();
-
                 if (typeof data !== 'function') {
                   // Only PipelineSourceFunction can be retried. Async-iterables
                   // and Readable streams can only be consumed once.
