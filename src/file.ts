@@ -463,7 +463,6 @@ export enum FileExceptionMessages {
   UPLOAD_MISMATCH = `The uploaded data did not match the data from the server.
     As a precaution, the file has been deleted.
     To be sure the content is the same, you should try uploading the file again.`,
-  STREAM_NOT_READABLE = 'Stream must be readable.',
 }
 
 /**
@@ -3644,20 +3643,6 @@ class File extends ServiceObject<File, FileMetadata> {
     }
     const returnValue = retry(
       async (bail: (err: Error) => void) => {
-        if (data instanceof Readable) {
-          // Make sure any pending async readable operations are finished before
-          // attempting to check if the stream is readable.
-          await new Promise(resolve => setImmediate(resolve));
-
-          if (!data.readable || data.destroyed) {
-            // Calling pipeline() with a non-readable stream will result in the
-            // callback being called without an error, and no piping taking
-            // place. In that case, file.save() would appear to succeed, but
-            // nothing would be uploaded.
-            return bail(new Error(FileExceptionMessages.STREAM_NOT_READABLE));
-          }
-        }
-
         return new Promise<void>((resolve, reject) => {
           if (maxRetries === 0) {
             this.storage.retryOptions.autoRetry = false;
@@ -3673,10 +3658,10 @@ class File extends ServiceObject<File, FileMetadata> {
               !this.storage.retryOptions.autoRetry ||
               !this.storage.retryOptions.retryableErrorFn!(err)
             ) {
-              bail(err);
+              return reject(err);
             }
 
-            reject(err);
+            return bail(err);
           };
 
           if (typeof data === 'string' || Buffer.isBuffer(data)) {
