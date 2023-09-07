@@ -21,7 +21,7 @@ import {
   deleteTestFile,
 } from './testBenchUtil';
 import * as uuid from 'uuid';
-import {getDirName} from '../src/util';
+import {getDirName} from '../src/util.js';
 
 const FILE_SIZE_BYTES = 9 * 1024 * 1024;
 const CHUNK_SIZE_BYTES = 2 * 1024 * 1024;

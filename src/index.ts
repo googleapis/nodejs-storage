@@ -56,7 +56,7 @@
  * region_tag:storage_quickstart
  * Full quickstart example:
  */
-export {ApiError} from './nodejs-common';
+export {ApiError} from './nodejs-common/index.js';
 export {
   BucketCallback,
   BucketOptions,

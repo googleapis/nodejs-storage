@@ -27,7 +27,7 @@ import {
   GenerateSignedPostPolicyV4Options,
 } from '../src/';
 import * as url from 'url';
-import {getDirName} from '../src/util';
+import {getDirName} from '../src/util.js';
 
 export enum UrlStyle {
   PATH_STYLE = 'PATH_STYLE',
@@ -196,7 +196,7 @@ describe('v4 conformance test', () => {
           expires,
         };
 
-        const conditions = [];
+        const conditions: (string | number)[][] = [];
         if (input.conditions) {
           if (input.conditions.startsWith) {
             const variable = input.conditions.startsWith[0];
