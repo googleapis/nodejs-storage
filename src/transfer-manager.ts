@@ -213,7 +213,9 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
           if (key.toLocaleLowerCase().trim() === 'x-goog-api-client') {
             // Prepend command feature to value, if not already there
             if (!value.includes(GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED)) {
-              headers[key] = `${value} ${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
+              headers[
+                key
+              ] = `${value} gccl-gcs-cmd/${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
             }
             break;
           }

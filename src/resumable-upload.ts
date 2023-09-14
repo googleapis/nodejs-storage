@@ -277,7 +277,7 @@ export class Upload extends Writable {
   private localWriteCache: Buffer[] = [];
   private localWriteCacheByteLength = 0;
   private upstreamEnded = false;
-  #gcclGcsCMD?: string;
+  #gcclGcsCmd?: string;
 
   constructor(cfg: UploadConfig) {
     super(cfg);
@@ -351,7 +351,7 @@ export class Upload extends Writable {
       : NaN;
     this.contentLength = isNaN(contentLength) ? '*' : contentLength;
 
-    this.#gcclGcsCMD = cfg[GCCL_GCS_CMD_KEY];
+    this.#gcclGcsCmd = cfg[GCCL_GCS_CMD_KEY];
 
     this.once('writing', () => {
       if (this.uri) {
@@ -591,10 +591,13 @@ export class Upload extends Writable {
       delete metadata.contentType;
     }
 
-    const gcsCommandSuffix = this.#gcclGcsCMD ? ` ${this.#gcclGcsCMD}` : '';
-    const googAPIClient = `${getRuntimeTrackingString()} gccl/${
+    let googAPIClient = `${getRuntimeTrackingString()} gccl/${
       packageJson.version
-    } gccl-invocation-id/${this.currentInvocationId.uri}${gcsCommandSuffix}`;
+    } gccl-invocation-id/${this.currentInvocationId.uri}`;
+
+    if (this.#gcclGcsCmd) {
+      googAPIClient += ` gccl-gcs-cmd/${this.#gcclGcsCmd}`;
+    }
 
     // Check if headers already exist before creating new ones
     const reqOpts: GaxiosOptions = {
@@ -775,10 +778,13 @@ export class Upload extends Writable {
       },
     });
 
-    const gcsCommandSuffix = this.#gcclGcsCMD ? ` ${this.#gcclGcsCMD}` : '';
-    const googAPIClient = `${getRuntimeTrackingString()} gccl/${
+    let googAPIClient = `${getRuntimeTrackingString()} gccl/${
       packageJson.version
-    } gccl-invocation-id/${this.currentInvocationId.chunk}${gcsCommandSuffix}`;
+    } gccl-invocation-id/${this.currentInvocationId.chunk}`;
+
+    if (this.#gcclGcsCmd) {
+      googAPIClient += ` gccl-gcs-cmd/${this.#gcclGcsCmd}`;
+    }
 
     const headers: GaxiosOptions['headers'] = {
       'x-goog-api-client': googAPIClient,
@@ -916,10 +922,13 @@ export class Upload extends Writable {
   }
 
   private async getAndSetOffset() {
-    const gcsCommandSuffix = this.#gcclGcsCMD ? ` ${this.#gcclGcsCMD}` : '';
-    const googAPIClient = `${getRuntimeTrackingString()} gccl/${
+    let googAPIClient = `${getRuntimeTrackingString()} gccl/${
       packageJson.version
-    } gccl-invocation-id/${this.currentInvocationId.offset}${gcsCommandSuffix}`;
+    } gccl-invocation-id/${this.currentInvocationId.offset}`;
+
+    if (this.#gcclGcsCmd) {
+      googAPIClient += ` gccl-gcs-cmd/${this.#gcclGcsCmd}`;
+    }
 
     const opts: GaxiosOptions = {
       method: 'PUT',

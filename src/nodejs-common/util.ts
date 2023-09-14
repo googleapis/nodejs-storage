@@ -36,11 +36,13 @@ import {getRuntimeTrackingString} from '../util';
 
 const packageJson = require('../../../package.json');
 
+/**
+ * A unique symbol for providing a `gccl-gcs-cmd` value
+ * for the `X-Goog-API-Client` header.
+ *
+ * E.g the `V` in `X-Goog-API-Client: gccl-gcs-cmd/V`
+ **/
 export const GCCL_GCS_CMD_KEY = Symbol('GCCL_GCS_CMD');
-
-export interface GCCL_GCS_CMD {
-  [GCCL_GCS_CMD_KEY]?: string;
-}
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');
@@ -537,7 +539,9 @@ export class Util {
           body: writeStream,
         },
       ],
-    } as {} as r.OptionsWithUri & GCCL_GCS_CMD;
+    } as {} as r.OptionsWithUri & {
+      [GCCL_GCS_CMD_KEY]?: string;
+    };
 
     options.makeAuthenticatedRequest(reqOpts, {
       onAuthenticated(err, authenticatedReqOpts) {
@@ -1032,7 +1036,7 @@ export class Util {
     };
 
     if (gcclGcsCmd) {
-      headers['x-goog-api-client'] += ` ${gcclGcsCmd}`;
+      headers['x-goog-api-client'] += ` gccl-gcs-cmd/${gcclGcsCmd}`;
     }
 
     return headers;

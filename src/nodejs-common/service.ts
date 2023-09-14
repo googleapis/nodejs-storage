@@ -255,7 +255,9 @@ export class Service {
     };
 
     if (reqOpts[GCCL_GCS_CMD_KEY]) {
-      reqOpts.headers['x-goog-api-client'] += reqOpts[GCCL_GCS_CMD_KEY];
+      reqOpts.headers[
+        'x-goog-api-client'
+      ] += ` gccl-gcs-cmd/${reqOpts[GCCL_GCS_CMD_KEY]}`;
     }
 
     if (reqOpts.shouldReturnStream) {
