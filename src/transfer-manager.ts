@@ -26,6 +26,7 @@ import * as retry from 'async-retry';
 import {ApiError} from './nodejs-common';
 import {GaxiosResponse, Headers} from 'gaxios';
 import {createHash} from 'crypto';
+import {GCCL_GCS_CMD_KEY} from './nodejs-common/util';
 
 /**
  * Default number of concurrently executing promises to use when calling uploadManyFiles.
@@ -64,6 +65,21 @@ const UPLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE = 32 * 1024 * 1024;
 const DEFAULT_PARALLEL_CHUNKED_UPLOAD_LIMIT = 2;
 
 const EMPTY_REGEX = '(?:)';
+
+/**
+ * The `gccl-gcs-cmd` value for the `X-Goog-API-Client` header.
+ * Example: `gccl-gcs-cmd/tm.upload_many`
+ *
+ * @see {@link GCCL_GCS_CMD}.
+ * @see {@link GCCL_GCS_CMD_KEY}.
+ */
+const GCCL_GCS_CMD_FEATURE = {
+  UPLOAD_MANY: 'tm.upload_many',
+  DOWNLOAD_MANY: 'tm.download_many',
+  UPLOAD_SHARDED: 'tm.upload_sharded',
+  DOWNLOAD_SHARDED: 'tm.download_sharded',
+};
+
 export interface UploadManyFilesOptions {
   concurrencyLimit?: number;
   skipIfExists?: boolean;
@@ -168,7 +184,9 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     this.bucket = bucket;
     this.fileName = fileName;
     // eslint-disable-next-line prettier/prettier
-    this.baseUrl = `https://${bucket.name}.${new URL(this.bucket.storage.apiEndpoint).hostname}/${fileName}`;
+    this.baseUrl = `https://${bucket.name}.${
+      new URL(this.bucket.storage.apiEndpoint).hostname
+    }/${fileName}`;
     this.xmlBuilder = new XMLBuilder({arrayNodeName: 'Part'});
     this.xmlParser = new XMLParser();
     this.partsMap = partsMap || new Map<number, string>();
@@ -189,7 +207,20 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     const url = `${this.baseUrl}?uploads`;
     return retry(async bail => {
       try {
+        const headers = await this.authClient.getRequestHeaders();
+
+        for (const [key, value] of Object.entries(headers)) {
+          if (key.toLocaleLowerCase().trim() === 'x-goog-api-client') {
+            // Prepend command feature to value, if not already there
+            if (!value.includes(GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED)) {
+              headers[key] = `${value} ${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
+            }
+            break;
+          }
+        }
+
         const res = await this.authClient.request({
+          headers,
           method: 'POST',
           url,
         });
@@ -314,6 +345,10 @@ export class TransferManager {
     this.bucket = bucket;
   }
 
+  #setMethodHeader() {
+    // .
+  }
+
   /**
    * @typedef {object} UploadManyFilesOptions
    * @property {number} [concurrencyLimit] The number of concurrently executing promises
@@ -394,6 +429,7 @@ export class TransferManager {
 
       const passThroughOptionsCopy: UploadOptions = {
         ...options.passthroughOptions,
+        [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.UPLOAD_MANY,
       };
 
       passThroughOptionsCopy.destination = filePath;
@@ -403,6 +439,7 @@ export class TransferManager {
           passThroughOptionsCopy.destination
         );
       }
+
       promises.push(
         limit(() =>
           this.bucket.upload(filePath, passThroughOptionsCopy as UploadOptions)
@@ -487,6 +524,7 @@ export class TransferManager {
     for (const file of files) {
       const passThroughOptionsCopy = {
         ...options.passthroughOptions,
+        [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_MANY,
       };
 
       if (options.prefix) {
@@ -499,6 +537,7 @@ export class TransferManager {
       if (options.stripPrefix) {
         passThroughOptionsCopy.destination = file.name.replace(regex, '');
       }
+
       promises.push(limit(() => file.download(passThroughOptionsCopy)));
     }
 
@@ -569,9 +608,15 @@ export class TransferManager {
       chunkEnd = chunkEnd > size ? size : chunkEnd;
       promises.push(
         limit(() =>
-          file.download({start: chunkStart, end: chunkEnd}).then(resp => {
-            return fileToWrite.write(resp[0], 0, resp[0].length, chunkStart);
-          })
+          file
+            .download({
+              start: chunkStart,
+              end: chunkEnd,
+              [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_SHARDED,
+            })
+            .then(resp => {
+              return fileToWrite.write(resp[0], 0, resp[0].length, chunkStart);
+            })
         )
       );
 

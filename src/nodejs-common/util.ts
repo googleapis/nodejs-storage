@@ -36,6 +36,12 @@ import {getRuntimeTrackingString} from '../util';
 
 const packageJson = require('../../../package.json');
 
+export const GCCL_GCS_CMD_KEY = Symbol('GCCL_GCS_CMD');
+
+export interface GCCL_GCS_CMD {
+  [GCCL_GCS_CMD_KEY]?: string;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');
 
@@ -233,6 +239,7 @@ export interface DecorateRequestOptions extends r.CoreOptions {
   interceptors_?: Interceptor[];
   shouldReturnStream?: boolean;
   projectId?: string;
+  [GCCL_GCS_CMD_KEY]?: string;
 }
 
 export interface ParsedHttpResponseBody {
@@ -530,7 +537,7 @@ export class Util {
           body: writeStream,
         },
       ],
-    } as {} as r.OptionsWithUri;
+    } as {} as r.OptionsWithUri & GCCL_GCS_CMD;
 
     options.makeAuthenticatedRequest(reqOpts, {
       onAuthenticated(err, authenticatedReqOpts) {
@@ -539,7 +546,9 @@ export class Util {
           return;
         }
 
-        requestDefaults.headers = util._getDefaultHeaders();
+        requestDefaults.headers = util._getDefaultHeaders(
+          reqOpts[GCCL_GCS_CMD_KEY]
+        );
         const request = teenyRequest.defaults(requestDefaults);
         request(authenticatedReqOpts!, (err, resp, body) => {
           util.handleResp(err, resp, body, (err, data) => {
@@ -1014,13 +1023,19 @@ export class Util {
       : [optionsOrCallback as T, cb as C];
   }
 
-  _getDefaultHeaders() {
-    return {
+  _getDefaultHeaders(gcclGcsCmd?: string) {
+    const headers = {
       'User-Agent': util.getUserAgentFromPackageJson(packageJson),
       'x-goog-api-client': `${getRuntimeTrackingString()} gccl/${
         packageJson.version
       } gccl-invocation-id/${uuid.v4()}`,
     };
+
+    if (gcclGcsCmd) {
+      headers['x-goog-api-client'] += ` ${gcclGcsCmd}`;
+    }
+
+    return headers;
   }
 }
 
