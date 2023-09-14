@@ -15,14 +15,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  BaseMetadata,
-  ServiceObject,
-  ServiceObjectConfig,
-  util,
-} from '../src/nodejs-common';
-import * as pLimit from 'p-limit';
-import * as proxyquire from 'proxyquire';
+import {ApiError} from '../src/nodejs-common';
 import {
   Bucket,
   File,
@@ -33,144 +26,37 @@ import {
   MultiPartUploadError,
   MultiPartUploadHelper,
   UploadOptions,
+  TransferManager,
+  Storage,
 } from '../src';
 import * as assert from 'assert';
 import * as path from 'path';
 import * as stream from 'stream';
 import * as fs from 'fs';
+import * as fsp from 'fs/promises';
 import * as sinon from 'sinon';
 import {GaxiosResponse} from 'gaxios';
 
-const fakeUtil = Object.assign({}, util);
-fakeUtil.noop = util.noop;
-
-class FakeServiceObject extends ServiceObject<FakeServiceObject, BaseMetadata> {
-  calledWith_: IArguments;
-  constructor(config: ServiceObjectConfig) {
-    super(config);
-    // eslint-disable-next-line prefer-rest-params
-    this.calledWith_ = arguments;
-  }
-}
-
-class FakeAcl {
-  calledWith_: Array<{}>;
-  constructor(...args: Array<{}>) {
-    this.calledWith_ = args;
-  }
-}
-
-/* class FakeFile {
-  calledWith_: IArguments;
-  bucket: Bucket;
-  name: string;
-  options: FileOptions;
-  metadata: FileMetadata;
-  createWriteStream: Function;
-  isSameFile = () => false;
-  constructor(bucket: Bucket, name: string, options?: FileOptions) {
-    // eslint-disable-next-line prefer-rest-params
-    this.calledWith_ = arguments;
-    this.bucket = bucket;
-    this.name = name;
-    this.options = options || {};
-    this.metadata = {};
-
-    this.createWriteStream = (options: CreateWriteStreamOptions) => {
-      this.metadata = options.metadata!;
-      const ws = new stream.Writable();
-      ws.write = () => {
-        ws.emit('complete');
-        ws.end();
-        return true;
-      };
-      return ws;
-    };
-  }
-} */
-
-class HTTPError extends Error {
-  code: number;
-  constructor(message: string, code: number) {
-    super(message);
-    this.code = code;
-  }
-}
-
-let pLimitOverride: Function | null;
-const fakePLimit = (limit: number) => (pLimitOverride || pLimit)(limit);
-const fakeFs = {
-  ...fs,
-  get promises() {
-    return {
-      open: () => {
-        return {
-          close: () => {},
-          write: (buffer: Buffer) => {
-            return Promise.resolve({buffer});
-          },
-        };
-      },
-      lstat: () => {
-        return {
-          isDirectory: () => {
-            return false;
-          },
-        };
-      },
-    };
-  },
-};
-
-describe.only('Transfer Manager', () => {
-  let sandbox: sinon.SinonSandbox;
-  let TransferManager: any;
-  let transferManager: any;
-  let Bucket: any;
-  let bucket: any;
-
-  const STORAGE: any = {
-    createBucket: util.noop,
-    apiEndpoint: 'https://test.notvalid.com',
-    retryOptions: {
-      autoRetry: true,
-      maxRetries: 3,
-      retryDelayMultipier: 2,
-      totalTimeout: 600,
-      maxRetryDelay: 60,
-      retryableErrorFn: (err: HTTPError) => {
-        return err.code === 500;
-      },
-      idempotencyStrategy: IdempotencyStrategy.RetryConditional,
-    },
-    crc32cGenerator: () => new CRC32C(),
-  };
+describe('Transfer Manager', () => {
   const BUCKET_NAME = 'test-bucket';
+  const STORAGE = sinon.createStubInstance(Storage);
+  STORAGE.retryOptions = {
+    autoRetry: true,
+    maxRetries: 3,
+    retryDelayMultiplier: 2,
+    totalTimeout: 600,
+    maxRetryDelay: 60,
+    retryableErrorFn: (err: ApiError) => {
+      return err.code === 500;
+    },
+    idempotencyStrategy: IdempotencyStrategy.RetryConditional,
+  };
+  let sandbox: sinon.SinonSandbox;
+  let transferManager: TransferManager;
+  let bucket: Bucket;
 
   before(() => {
     sandbox = sinon.createSandbox();
-
-    Bucket = proxyquire('../src/bucket.js', {
-      'p-limit': fakePLimit,
-      './nodejs-common': {
-        ServiceObject: FakeServiceObject,
-        util: fakeUtil,
-      },
-      './acl.js': {Acl: FakeAcl},
-      //'./file.js': {File: FakeFile},
-    }).Bucket;
-
-    TransferManager = proxyquire('../src/transfer-manager.js', {
-      'p-limit': fakePLimit,
-      './nodejs-common': {
-        ServiceObject: FakeServiceObject,
-        util: fakeUtil,
-      },
-      './acl.js': {Acl: FakeAcl},
-      //'./file.js': {File: FakeFile},
-      fs: fakeFs,
-      fsp: fakeFs,
-    }).TransferManager;
   });
 
   beforeEach(() => {
@@ -189,14 +75,21 @@ describe.only('Transfer Manager', () => {
   });
 
   describe('uploadManyFiles', () => {
+    beforeEach(() => {
+      sandbox.stub(fsp, 'lstat').resolves({
+        isDirectory: () => {
+          return false;
+        },
+      } as fs.Stats);
+    });
+
     it('calls upload with the provided file paths', async () => {
       const paths = ['/a/b/c', '/d/e/f', '/h/i/j'];
       let count = 0;
-
-      bucket.upload = (path: string) => {
+      sandbox.stub(bucket, 'upload').callsFake(path => {
         count++;
         assert(paths.includes(path));
-      };
+      });
 
       await transferManager.uploadManyFiles(paths);
       assert.strictEqual(count, paths.length);
@@ -204,10 +97,12 @@ describe.only('Transfer Manager', () => {
 
     it('sets ifGenerationMatch to 0 if skipIfExists is set', async () => {
       const paths = ['/a/b/c'];
-
-      bucket.upload = (_path: string, options: UploadOptions) => {
-        assert.strictEqual(options.preconditionOpts?.ifGenerationMatch, 0);
-      };
+      sandbox.stub(bucket, 'upload').callsFake((path, options) => {
+        assert.strictEqual(
+          (options as UploadOptions).preconditionOpts?.ifGenerationMatch,
+          0
+        );
+      });
 
       await transferManager.uploadManyFiles(paths, {skipIfExists: true});
     });
@@ -215,20 +110,23 @@ describe.only('Transfer Manager', () => {
     it('sets destination to prefix + filename when prefix is supplied', async () => {
       const paths = ['/a/b/foo/bar.txt'];
       const expectedDestination = path.normalize('hello/world/a/b/foo/bar.txt');
-
-      bucket.upload = (_path: string, options: UploadOptions) => {
-        assert.strictEqual(options.destination, expectedDestination);
-      };
+      sandbox.stub(bucket, 'upload').callsFake((path, options) => {
+        assert.strictEqual(
+          (options as UploadOptions).destination,
+          expectedDestination
+        );
+      });
 
       await transferManager.uploadManyFiles(paths, {prefix: 'hello/world'});
     });
 
     it('returns a promise with the uploaded file if there is no callback', async () => {
       const paths = [path.join(__dirname, '../../test/testdata/testfile.json')];
-      bucket.upload = () => {
+      sandbox.stub(bucket, 'upload').callsFake(() => {
         const resp = [{name: paths[0]}];
         return Promise.resolve(resp);
-      };
+      });
+
       const result = await transferManager.uploadManyFiles(paths);
       assert.strictEqual(result[0][0].name, paths[0]);
     });
@@ -283,27 +181,30 @@ describe.only('Transfer Manager', () => {
   });
 
   describe('downloadFileInChunks', () => {
-    let file: any;
+    let file: File;
 
     beforeEach(() => {
+      sandbox.stub(fsp, 'open').resolves({
+        close: () => Promise.resolve(),
+        write: (buffer: any) => Promise.resolve({buffer}),
+      } as fsp.FileHandle);
+
       file = new File(bucket, 'some-large-file');
-      file.get = () => {
-        return [
-          {
-            metadata: {
-              size: 1024,
-            },
+      sandbox.stub(file, 'get').resolves([
+        {
+          metadata: {
+            size: 1024,
           },
-        ];
-      };
+        },
+      ]);
     });
 
     it('should download a single chunk if file size is below threshold', async () => {
       let downloadCallCount = 0;
-      file.download = () => {
+      sandbox.stub(file, 'download').callsFake(() => {
         downloadCallCount++;
         return Promise.resolve([Buffer.alloc(100)]);
-      };
+      });
 
       await transferManager.downloadFileInChunks(file);
       assert.strictEqual(downloadCallCount, 1);
@@ -353,7 +254,7 @@ describe.only('Transfer Manager', () => {
 
     beforeEach(() => {
       readStreamStub = sandbox
-        .stub(fakeFs, 'createReadStream')
+        .stub(fs, 'createReadStream')
         .returns(pThrough as unknown as fs.ReadStream);
       mockGeneratorFunction = (bucket, fileName, uploadId, partsMap) => {
         fakeHelper = sandbox.createStubInstance(FakeXMLHelper);
