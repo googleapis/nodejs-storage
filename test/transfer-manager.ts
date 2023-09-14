@@ -250,6 +250,9 @@ describe('Transfer Manager', () => {
       completeUpload(): Promise<GaxiosResponse | undefined> {
         throw new Error('Method not implemented.');
       }
+      abortUpload(): Promise<void> {
+        throw new Error('Method not implemented.');
+      }
     }
 
     beforeEach(() => {
@@ -263,6 +266,7 @@ describe('Transfer Manager', () => {
         fakeHelper.initiateUpload.resolves();
         fakeHelper.uploadPart.resolves();
         fakeHelper.completeUpload.resolves();
+        fakeHelper.abortUpload.resolves();
         return fakeHelper;
       };
     });
@@ -344,6 +348,7 @@ describe('Transfer Manager', () => {
         fakeHelper.initiateUpload.rejects(new Error(expectedErr.message));
         fakeHelper.uploadPart.resolves();
         fakeHelper.completeUpload.resolves();
+        fakeHelper.abortUpload.resolves();
         return fakeHelper;
       };
       assert.rejects(
@@ -368,8 +373,44 @@ describe('Transfer Manager', () => {
         });
         fakeHelper.uploadPart.resolves();
         fakeHelper.completeUpload.resolves();
+        fakeHelper.abortUpload.resolves();
         return fakeHelper;
       };
+
+      await transferManager.uploadFileInChunks(
+        path,
+        {headers: headersToAdd},
+        mockGeneratorFunction
+      );
+    });
+
+    it('should call abortUpload when passed the option and uploadID', async () => {
+      mockGeneratorFunction = (bucket, fileName, uploadId, partsMap) => {
+        fakeHelper = sandbox.createStubInstance(FakeXMLHelper);
+        fakeHelper.uploadId = uploadId || '';
+        fakeHelper.partsMap = partsMap || new Map<number, string>();
+        fakeHelper.initiateUpload.resolves();
+        fakeHelper.uploadPart.resolves();
+        fakeHelper.completeUpload.resolves();
+        fakeHelper.abortUpload.resolves();
+        return fakeHelper;
+      };
+
+      await transferManager.uploadFileInChunks(
+        path,
+        {
+          uploadId: '123',
+          abortExisting: true,
+        },
+        mockGeneratorFunction
+      );
+
+      assert.strictEqual(fakeHelper.uploadId, '123');
+      assert.strictEqual(fakeHelper.initiateUpload.notCalled, true);
+      assert.strictEqual(fakeHelper.uploadPart.notCalled, true);
+      assert.strictEqual(fakeHelper.completeUpload.notCalled, true);
+      assert.strictEqual(fakeHelper.abortUpload.called, true);
+      assert.strictEqual(fakeHelper.abortUpload.callCount, 1);
     });
   });
 });

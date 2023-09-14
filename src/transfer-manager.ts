@@ -91,6 +91,7 @@ export interface UploadFileInChunksOptions {
   uploadName?: string;
   maxQueueSize?: number;
   uploadId?: string;
+  abortExisting?: boolean;
   partsMap?: Map<number, string>;
   validation?: 'md5' | false;
   headers?: {[key: string]: string};
@@ -108,6 +109,7 @@ export interface MultiPartUploadHelper {
     validation?: 'md5' | false
   ): Promise<void>;
   completeUpload(): Promise<GaxiosResponse | undefined>;
+  abortUpload(): Promise<void>;
 }
 
 export type MultiPartHelperGenerator = (
@@ -276,6 +278,30 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
           throw res.data.error;
         }
         return res;
+      } catch (e) {
+        this.#handleErrorResponse(e as Error, bail);
+        return;
+      }
+    }, this.retryOptions);
+  }
+
+  /**
+   * Aborts an multipart upload that is in progress. Once aborted, any parts in the process of being uploaded fail,
+   * and future requests using the upload ID fail.
+   *
+   * @returns {Promise<void>}
+   */
+  async abortUpload(): Promise<void> {
+    const url = `${this.baseUrl}?uploadId=${this.uploadId}`;
+    return retry(async bail => {
+      try {
+        const res = await this.authClient.request({
+          url,
+          method: 'DELETE',
+        });
+        if (res.data && res.data.error) {
+          throw res.data.error;
+        }
       } catch (e) {
         this.#handleErrorResponse(e as Error, bail);
         return;
@@ -614,6 +640,8 @@ export class TransferManager {
    * @property {Map} [partsMap] If specified alongside uploadId, attempts to resume a previous upload from the last chunk
    * specified in partsMap
    * @property {object} [headers] headers to be sent when initiating the multipart upload.
+   * @property {boolean} [abortExisting] boolean to indicate if an in progress upload should be aborted. uploadID must also be supplied
+   * in order to abort the upload.
    * See {@link https://cloud.google.com/storage/docs/xml-api/post-object-multipart#request_headers| Request Headers: Initiate a Multipart Upload}
    * @experimental
    */
@@ -668,6 +696,10 @@ export class TransferManager {
     let partNumber = 1;
     let promises: Promise<void>[] = [];
     try {
+      if (options.abortExisting && options.uploadId) {
+        await mpuHelper.abortUpload();
+        return;
+      }
       if (options.uploadId === undefined) {
         await mpuHelper.initiateUpload(options.headers);
       }
