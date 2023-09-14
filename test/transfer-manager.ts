@@ -133,7 +133,10 @@ describe('Transfer Manager', () => {
       });
 
       const result = await transferManager.uploadManyFiles(paths);
-      assert.strictEqual(result[0][0].name, paths[0]);
+      assert.strictEqual(
+        result[0][0].name,
+        paths[0].split(path.win32.sep).join(path.posix.sep)
+      );
     });
 
     it('should set the appropriate `GCCL_GCS_CMD_KEY`', async () => {
