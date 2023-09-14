@@ -93,6 +93,7 @@ export interface UploadFileInChunksOptions {
   uploadId?: string;
   partsMap?: Map<number, string>;
   validation?: 'md5' | false;
+  headers?: {[key: string]: string};
 }
 
 export interface MultiPartUploadHelper {
@@ -100,7 +101,7 @@ export interface MultiPartUploadHelper {
   fileName: string;
   uploadId?: string;
   partsMap?: Map<number, string>;
-  initiateUpload(): Promise<void>;
+  initiateUpload(headers?: {[key: string]: string}): Promise<void>;
   uploadPart(
     partNumber: number,
     chunk: Buffer,
@@ -185,13 +186,14 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
    *
    * @returns {Promise<void>}
    */
-  async initiateUpload(): Promise<void> {
+  async initiateUpload(headers: {[key: string]: string} = {}): Promise<void> {
     const url = `${this.baseUrl}?uploads`;
     return retry(async bail => {
       try {
         const res = await this.authClient.request({
           method: 'POST',
           url,
+          headers,
         });
         if (res.data && res.data.error) {
           throw res.data.error;
@@ -611,6 +613,8 @@ export class TransferManager {
    * @property {string} [uploadId] If specified attempts to resume a previous upload.
    * @property {Map} [partsMap] If specified alongside uploadId, attempts to resume a previous upload from the last chunk
    * specified in partsMap
+   * @property {object} [headers] headers to be sent when initiating the multipart upload.
+   * See {@link https://cloud.google.com/storage/docs/xml-api/post-object-multipart#request_headers| Request Headers: Initiate a Multipart Upload}
    * @experimental
    */
   /**
@@ -665,7 +669,7 @@ export class TransferManager {
     let promises: Promise<void>[] = [];
     try {
       if (options.uploadId === undefined) {
-        await mpuHelper.initiateUpload();
+        await mpuHelper.initiateUpload(options.headers);
       }
       const startOrResumptionByte = mpuHelper.partsMap!.size * chunkSize;
       const readStream = createReadStream(filePath, {

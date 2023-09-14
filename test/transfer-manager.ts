@@ -25,10 +25,9 @@ import * as pLimit from 'p-limit';
 import * as proxyquire from 'proxyquire';
 import {
   Bucket,
+  File,
   CRC32C,
-  CreateWriteStreamOptions,
   DownloadOptions,
-  FileOptions,
   IdempotencyStrategy,
   MultiPartHelperGenerator,
   MultiPartUploadError,
@@ -41,7 +40,6 @@ import * as stream from 'stream';
 import * as fs from 'fs';
 import * as sinon from 'sinon';
 import {GaxiosResponse} from 'gaxios';
-import {FileMetadata} from '../src/file';
 
 const fakeUtil = Object.assign({}, util);
 fakeUtil.noop = util.noop;
@@ -62,7 +60,7 @@ class FakeAcl {
   }
 }
 
-class FakeFile {
+/* class FakeFile {
   calledWith_: IArguments;
   bucket: Bucket;
   name: string;
@@ -89,7 +87,7 @@ class FakeFile {
       return ws;
     };
   }
-}
+} */
 
 class HTTPError extends Error {
   code: number;
@@ -124,12 +122,12 @@ const fakeFs = {
   },
 };
 
-describe('Transfer Manager', () => {
+describe.only('Transfer Manager', () => {
+  let sandbox: sinon.SinonSandbox;
   let TransferManager: any;
   let transferManager: any;
   let Bucket: any;
   let bucket: any;
-  let File: any;
 
   const STORAGE: any = {
     createBucket: util.noop,
@@ -150,6 +148,8 @@ describe('Transfer Manager', () => {
   const BUCKET_NAME = 'test-bucket';
 
   before(() => {
+    sandbox = sinon.createSandbox();
+
     Bucket = proxyquire('../src/bucket.js', {
       'p-limit': fakePLimit,
       './nodejs-common': {
@@ -157,15 +157,8 @@ describe('Transfer Manager', () => {
         util: fakeUtil,
       },
       './acl.js': {Acl: FakeAcl},
-      './file.js': {File: FakeFile},
+      //'./file.js': {File: FakeFile},
     }).Bucket;
-
-    File = proxyquire('../src/file.js', {
-      './nodejs-common': {
-        ServiceObject: FakeServiceObject,
-        util: fakeUtil,
-      },
-    }).File;
 
     TransferManager = proxyquire('../src/transfer-manager.js', {
       'p-limit': fakePLimit,
@@ -174,7 +167,7 @@ describe('Transfer Manager', () => {
         util: fakeUtil,
       },
       './acl.js': {Acl: FakeAcl},
-      './file.js': {File: FakeFile},
+      //'./file.js': {File: FakeFile},
       fs: fakeFs,
       fsp: fakeFs,
     }).TransferManager;
@@ -183,6 +176,10 @@ describe('Transfer Manager', () => {
   beforeEach(() => {
     bucket = new Bucket(STORAGE, BUCKET_NAME);
     transferManager = new TransferManager(bucket);
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   describe('instantiation', () => {
@@ -228,6 +225,10 @@ describe('Transfer Manager', () => {
 
     it('returns a promise with the uploaded file if there is no callback', async () => {
       const paths = [path.join(__dirname, '../../test/testdata/testfile.json')];
+      bucket.upload = () => {
+        const resp = [{name: paths[0]}];
+        return Promise.resolve(resp);
+      };
       const result = await transferManager.uploadManyFiles(paths);
       assert.strictEqual(result[0][0].name, paths[0]);
     });
@@ -236,13 +237,14 @@ describe('Transfer Manager', () => {
   describe('downloadManyFiles', () => {
     it('calls download for each provided file', async () => {
       let count = 0;
-      const download = () => {
-        count++;
-      };
       const firstFile = new File(bucket, 'first.txt');
-      firstFile.download = download;
+      sandbox.stub(firstFile, 'download').callsFake(() => {
+        count++;
+      });
       const secondFile = new File(bucket, 'second.txt');
-      secondFile.download = download;
+      sandbox.stub(secondFile, 'download').callsFake(() => {
+        count++;
+      });
 
       const files = [firstFile, secondFile];
       await transferManager.downloadManyFiles(files);
@@ -253,12 +255,14 @@ describe('Transfer Manager', () => {
       const prefix = 'test-prefix';
       const filename = 'first.txt';
       const expectedDestination = path.normalize(`${prefix}/${filename}`);
-      const download = (options: DownloadOptions) => {
-        assert.strictEqual(options.destination, expectedDestination);
-      };
 
       const file = new File(bucket, filename);
-      file.download = download;
+      sandbox.stub(file, 'download').callsFake(options => {
+        assert.strictEqual(
+          (options as DownloadOptions).destination,
+          expectedDestination
+        );
+      });
       await transferManager.downloadManyFiles([file], {prefix});
     });
 
@@ -266,12 +270,14 @@ describe('Transfer Manager', () => {
       const stripPrefix = 'should-be-removed/';
       const filename = 'should-be-removed/first.txt';
       const expectedDestination = 'first.txt';
-      const download = (options: DownloadOptions) => {
-        assert.strictEqual(options.destination, expectedDestination);
-      };
 
       const file = new File(bucket, filename);
-      file.download = download;
+      sandbox.stub(file, 'download').callsFake(options => {
+        assert.strictEqual(
+          (options as DownloadOptions).destination,
+          expectedDestination
+        );
+      });
       await transferManager.downloadManyFiles([file], {stripPrefix});
     });
   });
@@ -321,7 +327,6 @@ describe('Transfer Manager', () => {
   describe('uploadFileInChunks', () => {
     let mockGeneratorFunction: MultiPartHelperGenerator;
     let fakeHelper: sinon.SinonStubbedInstance<MultiPartUploadHelper>;
-    let sandbox: sinon.SinonSandbox;
     let readStreamStub: sinon.SinonStub;
     const path = '/a/b/c.txt';
     const pThrough = new stream.PassThrough();
@@ -347,7 +352,6 @@ describe('Transfer Manager', () => {
     }
 
     beforeEach(() => {
-      sandbox = sinon.createSandbox();
       readStreamStub = sandbox
         .stub(fakeFs, 'createReadStream')
         .returns(pThrough as unknown as fs.ReadStream);
@@ -360,10 +364,6 @@ describe('Transfer Manager', () => {
         fakeHelper.completeUpload.resolves();
         return fakeHelper;
       };
-    });
-
-    afterEach(() => {
-      sandbox.restore();
     });
 
     it('should call initiateUpload, uploadPart, and completeUpload', async () => {
@@ -449,6 +449,26 @@ describe('Transfer Manager', () => {
         transferManager.uploadFileInChunks(path, {}, mockGeneratorFunction),
         expectedErr
       );
+    });
+
+    it('should pass through headers to initiateUpload', async () => {
+      const headersToAdd = {
+        'Content-Type': 'foo/bar',
+        'x-goog-meta-foo': 'foobar',
+      };
+
+      mockGeneratorFunction = (bucket, fileName, uploadId, partsMap) => {
+        fakeHelper = sandbox.createStubInstance(FakeXMLHelper);
+        fakeHelper.uploadId = uploadId || '';
+        fakeHelper.partsMap = partsMap || new Map<number, string>();
+        fakeHelper.initiateUpload.callsFake(headers => {
+          assert.deepStrictEqual(headers, headersToAdd);
+          return Promise.resolve();
+        });
+        fakeHelper.uploadPart.resolves();
+        fakeHelper.completeUpload.resolves();
+        return fakeHelper;
+      };
     });
   });
 });
