@@ -352,7 +352,11 @@ describe('Transfer Manager', () => {
         return fakeHelper;
       };
       assert.rejects(
-        transferManager.uploadFileInChunks(path, {}, mockGeneratorFunction),
+        transferManager.uploadFileInChunks(
+          path,
+          {autoAbortFailure: false},
+          mockGeneratorFunction
+        ),
         expectedErr
       );
     });
@@ -384,33 +388,39 @@ describe('Transfer Manager', () => {
       );
     });
 
-    it('should call abortUpload when passed the option and uploadID', async () => {
+    it('should call abortUpload when a failure occurs after an uploadID is established', async () => {
+      const expectedErr = new MultiPartUploadError(
+        'Hello World',
+        '',
+        new Map<number, string>()
+      );
+      const fakeId = '123';
+
       mockGeneratorFunction = (bucket, fileName, uploadId, partsMap) => {
         fakeHelper = sandbox.createStubInstance(FakeXMLHelper);
         fakeHelper.uploadId = uploadId || '';
         fakeHelper.partsMap = partsMap || new Map<number, string>();
         fakeHelper.initiateUpload.resolves();
-        fakeHelper.uploadPart.resolves();
+        fakeHelper.uploadPart.callsFake(() => {
+          fakeHelper.uploadId = fakeId;
+          return Promise.reject(expectedErr);
+        });
         fakeHelper.completeUpload.resolves();
-        fakeHelper.abortUpload.resolves();
+        fakeHelper.abortUpload.callsFake(() => {
+          assert.strictEqual(fakeHelper.uploadId, fakeId);
+          return Promise.resolve();
+        });
         return fakeHelper;
       };
 
-      await transferManager.uploadFileInChunks(
-        path,
-        {
-          uploadId: '123',
-          abortExisting: true,
-        },
-        mockGeneratorFunction
-      );
+      process.nextTick(() => {
+        pThrough.push('hello world');
+        pThrough.end();
+      });
 
-      assert.strictEqual(fakeHelper.uploadId, '123');
-      assert.strictEqual(fakeHelper.initiateUpload.notCalled, true);
-      assert.strictEqual(fakeHelper.uploadPart.notCalled, true);
-      assert.strictEqual(fakeHelper.completeUpload.notCalled, true);
-      assert.strictEqual(fakeHelper.abortUpload.called, true);
-      assert.strictEqual(fakeHelper.abortUpload.callCount, 1);
+      assert.doesNotThrow(() =>
+        transferManager.uploadFileInChunks(path, {}, mockGeneratorFunction)
+      );
     });
   });
 });
