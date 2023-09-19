@@ -641,7 +641,7 @@ export class TransferManager {
    * specified in partsMap
    * @property {object} [headers] headers to be sent when initiating the multipart upload.
    * See {@link https://cloud.google.com/storage/docs/xml-api/post-object-multipart#request_headers| Request Headers: Initiate a Multipart Upload}
-   * @property {boolean} [autoAbortFailure] boolean to indicate if an in progress upload should be aborted automatically upon failure. If not set,
+   * @property {boolean} [autoAbortFailure] boolean to indicate if an in progress upload session will be automatically aborted upon failure. If not set,
    * failures will be automatically aborted.
    * @experimental
    */
