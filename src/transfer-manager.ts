@@ -351,10 +351,6 @@ export class TransferManager {
     this.bucket = bucket;
   }
 
-  #setMethodHeader() {
-    // .
-  }
-
   /**
    * @typedef {object} UploadManyFilesOptions
    * @property {number} [concurrencyLimit] The number of concurrently executing promises

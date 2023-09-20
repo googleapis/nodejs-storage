@@ -40,7 +40,7 @@ const packageJson = require('../../../package.json');
  * A unique symbol for providing a `gccl-gcs-cmd` value
  * for the `X-Goog-API-Client` header.
  *
- * E.g the `V` in `X-Goog-API-Client: gccl-gcs-cmd/V`
+ * E.g. the `V` in `X-Goog-API-Client: gccl-gcs-cmd/V`
  **/
 export const GCCL_GCS_CMD_KEY = Symbol('GCCL_GCS_CMD');
 
