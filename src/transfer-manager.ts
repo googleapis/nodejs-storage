@@ -107,8 +107,10 @@ export interface UploadFileInChunksOptions {
   uploadName?: string;
   maxQueueSize?: number;
   uploadId?: string;
+  autoAbortFailure?: boolean;
   partsMap?: Map<number, string>;
   validation?: 'md5' | false;
+  headers?: {[key: string]: string};
 }
 
 export interface MultiPartUploadHelper {
@@ -116,13 +118,14 @@ export interface MultiPartUploadHelper {
   fileName: string;
   uploadId?: string;
   partsMap?: Map<number, string>;
-  initiateUpload(): Promise<void>;
+  initiateUpload(headers?: {[key: string]: string}): Promise<void>;
   uploadPart(
     partNumber: number,
     chunk: Buffer,
     validation?: 'md5' | false
   ): Promise<void>;
   completeUpload(): Promise<GaxiosResponse | undefined>;
+  abortUpload(): Promise<void>;
 }
 
 export type MultiPartHelperGenerator = (
@@ -203,7 +206,7 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
    *
    * @returns {Promise<void>}
    */
-  async initiateUpload(): Promise<void> {
+  async initiateUpload(headers: {[key: string]: string} = {}): Promise<void> {
     const url = `${this.baseUrl}?uploads`;
     return retry(async bail => {
       try {
@@ -225,6 +228,7 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
           headers,
           method: 'POST',
           url,
+          headers,
         });
         if (res.data && res.data.error) {
           throw res.data.error;
@@ -311,6 +315,30 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
           throw res.data.error;
         }
         return res;
+      } catch (e) {
+        this.#handleErrorResponse(e as Error, bail);
+        return;
+      }
+    }, this.retryOptions);
+  }
+
+  /**
+   * Aborts an multipart upload that is in progress. Once aborted, any parts in the process of being uploaded fail,
+   * and future requests using the upload ID fail.
+   *
+   * @returns {Promise<void>}
+   */
+  async abortUpload(): Promise<void> {
+    const url = `${this.baseUrl}?uploadId=${this.uploadId}`;
+    return retry(async bail => {
+      try {
+        const res = await this.authClient.request({
+          url,
+          method: 'DELETE',
+        });
+        if (res.data && res.data.error) {
+          throw res.data.error;
+        }
       } catch (e) {
         this.#handleErrorResponse(e as Error, bail);
         return;
@@ -658,6 +686,10 @@ export class TransferManager {
    * @property {string} [uploadId] If specified attempts to resume a previous upload.
    * @property {Map} [partsMap] If specified alongside uploadId, attempts to resume a previous upload from the last chunk
    * specified in partsMap
+   * @property {object} [headers] headers to be sent when initiating the multipart upload.
+   * See {@link https://cloud.google.com/storage/docs/xml-api/post-object-multipart#request_headers| Request Headers: Initiate a Multipart Upload}
+   * @property {boolean} [autoAbortFailure] boolean to indicate if an in progress upload session will be automatically aborted upon failure. If not set,
+   * failures will be automatically aborted.
    * @experimental
    */
   /**
@@ -712,7 +744,7 @@ export class TransferManager {
     let promises: Promise<void>[] = [];
     try {
       if (options.uploadId === undefined) {
-        await mpuHelper.initiateUpload();
+        await mpuHelper.initiateUpload(options.headers);
       }
       const startOrResumptionByte = mpuHelper.partsMap!.size * chunkSize;
       const readStream = createReadStream(filePath, {
@@ -735,6 +767,21 @@ export class TransferManager {
       await Promise.all(promises);
       return await mpuHelper.completeUpload();
     } catch (e) {
+      if (
+        (options.autoAbortFailure === undefined || options.autoAbortFailure) &&
+        mpuHelper.uploadId
+      ) {
+        try {
+          await mpuHelper.abortUpload();
+          return;
+        } catch (e) {
+          throw new MultiPartUploadError(
+            (e as Error).message,
+            mpuHelper.uploadId!,
+            mpuHelper.partsMap!
+          );
+        }
+      }
       throw new MultiPartUploadError(
         (e as Error).message,
         mpuHelper.uploadId!,
