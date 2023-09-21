@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import {ApiError} from '../src/nodejs-common/index.js';
 import {
+  ApiError,
   Bucket,
   File,
   CRC32C,
@@ -28,16 +27,17 @@ import {
   UploadOptions,
   TransferManager,
   Storage,
+  DownloadResponse,
 } from '../src/index.js';
 import assert from 'assert';
 import * as path from 'path';
-import * as fs from 'fs';
-import * as fsp from 'fs/promises';
-import * as sinon from 'sinon';
 import {GaxiosOptions, GaxiosResponse} from 'gaxios';
 import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util.js';
 import {AuthClient, GoogleAuth} from 'google-auth-library';
 import {tmpdir} from 'os';
+import fs from 'fs';
+import {promises} from 'fs';
+import * as sinon from 'sinon';
 
 describe('Transfer Manager', () => {
   const BUCKET_NAME = 'test-bucket';
@@ -81,7 +81,7 @@ describe('Transfer Manager', () => {
 
   describe('uploadManyFiles', () => {
     beforeEach(() => {
-      sandbox.stub(fsp, 'lstat').resolves({
+      sandbox.stub(promises, 'lstat').resolves({
         isDirectory: () => {
           return false;
         },
@@ -238,10 +238,10 @@ describe('Transfer Manager', () => {
     let file: File;
 
     beforeEach(() => {
-      sandbox.stub(fsp, 'open').resolves({
+      sandbox.stub(promises, 'open').resolves({
         close: () => Promise.resolve(),
-        write: (buffer: any) => Promise.resolve({buffer}),
-      } as fsp.FileHandle);
+        write: (buffer: unknown) => Promise.resolve({buffer}),
+      } as promises.FileHandle);
 
       file = new File(bucket, 'some-large-file');
       sandbox.stub(file, 'get').resolves([
@@ -267,7 +267,7 @@ describe('Transfer Manager', () => {
     it('should call fromFile when validation is set to crc32c', async () => {
       let callCount = 0;
       file.download = () => {
-        return Promise.resolve([Buffer.alloc(0)]);
+        return Promise.resolve([Buffer.alloc(0)]) as Promise<DownloadResponse>;
       };
       CRC32C.fromFile = () => {
         callCount++;

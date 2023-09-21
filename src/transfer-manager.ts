@@ -349,7 +349,7 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
    */
   async abortUpload(): Promise<void> {
     const url = `${this.baseUrl}?uploadId=${this.uploadId}`;
-    return retry(async bail => {
+    return AsyncRetry(async bail => {
       try {
         const res = await this.authClient.request({
           url,
