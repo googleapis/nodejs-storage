@@ -25,6 +25,7 @@
   },
   "files": [
     "build/cjs/src",
+    "build/cjs/package.json",
     "!build/cjs/src/**/*.map",
     "build/esm/src",
     "!build/esm/src/**/*.map"
