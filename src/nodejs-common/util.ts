@@ -42,7 +42,7 @@ const packageJson = require('../../../package.json');
  *
  * E.g. the `V` in `X-Goog-API-Client: gccl-gcs-cmd/V`
  **/
-export const GCCL_GCS_CMD_KEY = Symbol('GCCL_GCS_CMD');
+export const GCCL_GCS_CMD_KEY = Symbol.for('GCCL_GCS_CMD');
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const duplexify: DuplexifyConstructor = require('duplexify');
