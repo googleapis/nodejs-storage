@@ -206,17 +206,20 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
    *
    * @returns {Promise<void>}
    */
-  async initiateUpload(headers: {[key: string]: string} = {}): Promise<void> {
+  async initiateUpload(headers: Headers = {}): Promise<void> {
     const url = `${this.baseUrl}?uploads`;
     return retry(async bail => {
       try {
-        const headers = await this.authClient.getRequestHeaders();
+        const combinedHeaders = {
+          ...(await this.authClient.getRequestHeaders()),
+          ...headers,
+        };
 
-        for (const [key, value] of Object.entries(headers)) {
+        for (const [key, value] of Object.entries(combinedHeaders)) {
           if (key.toLocaleLowerCase().trim() === 'x-goog-api-client') {
             // Prepend command feature to value, if not already there
             if (!value.includes(GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED)) {
-              headers[
+              combinedHeaders[
                 key
               ] = `${value} gccl-gcs-cmd/${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
             }
@@ -225,10 +228,9 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
         }
 
         const res = await this.authClient.request({
-          headers,
+          headers: combinedHeaders,
           method: 'POST',
           url,
-          headers,
         });
         if (res.data && res.data.error) {
           throw res.data.error;
