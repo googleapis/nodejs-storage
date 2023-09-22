@@ -186,7 +186,6 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     this.uploadId = uploadId || '';
     this.bucket = bucket;
     this.fileName = fileName;
-    // eslint-disable-next-line prettier/prettier
     this.baseUrl = `https://${bucket.name}.${
       new URL(this.bucket.storage.apiEndpoint).hostname
     }/${fileName}`;
@@ -215,8 +214,12 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
           ...headers,
         };
 
+        let headerFound = false;
+
         for (const [key, value] of Object.entries(combinedHeaders)) {
           if (key.toLocaleLowerCase().trim() === 'x-goog-api-client') {
+            headerFound = true;
+
             // Prepend command feature to value, if not already there
             if (!value.includes(GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED)) {
               combinedHeaders[
@@ -225,6 +228,12 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
             }
             break;
           }
+        }
+
+        if (!headerFound) {
+          combinedHeaders[
+            'x-goog-api-client'
+          ] = `gccl-gcs-cmd/${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
         }
 
         const res = await this.authClient.request({
