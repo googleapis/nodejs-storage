@@ -234,6 +234,10 @@ export function getPackageJSON() {
   );
 }
 
+export function getModuleFormat() {
+  return isEsm ? 'ESM' : 'CJS';
+}
+
 export class PassThroughShim extends PassThrough {
   private shouldEmitReading = true;
   private shouldEmitWriting = true;

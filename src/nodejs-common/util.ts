@@ -33,9 +33,10 @@ import {Interceptor} from './service-object.js';
 import * as uuid from 'uuid';
 import {DEFAULT_PROJECT_ID_TOKEN} from './service.js';
 import {
-  getRuntimeTrackingString,
   getUserAgentString,
+  getModuleFormat,
   getPackageJSON,
+  getRuntimeTrackingString,
 } from '../util.js';
 import duplexify from 'duplexify';
 
@@ -1024,7 +1025,7 @@ export class Util {
       'User-Agent': getUserAgentString(),
       'x-goog-api-client': `${getRuntimeTrackingString()} gccl/${
         packageJson.version
-      } gccl-invocation-id/${uuid.v4()}`,
+      }-${getModuleFormat()} gccl-invocation-id/${uuid.v4()}`,
     };
 
     if (gcclGcsCmd) {

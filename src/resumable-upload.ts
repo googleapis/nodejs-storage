@@ -30,6 +30,7 @@ import {
   getRuntimeTrackingString,
   getUserAgentString,
   getPackageJSON,
+  getModuleFormat,
 } from './util.js';
 import {GCCL_GCS_CMD_KEY} from './nodejs-common/util.js';
 
@@ -597,7 +598,7 @@ export class Upload extends Writable {
 
     let googAPIClient = `${getRuntimeTrackingString()} gccl/${
       packageJson.version
-    } gccl-invocation-id/${this.currentInvocationId.uri}`;
+    }-${getModuleFormat()} gccl-invocation-id/${this.currentInvocationId.uri}`;
 
     if (this.#gcclGcsCmd) {
       googAPIClient += ` gccl-gcs-cmd/${this.#gcclGcsCmd}`;
@@ -785,7 +786,9 @@ export class Upload extends Writable {
 
     let googAPIClient = `${getRuntimeTrackingString()} gccl/${
       packageJson.version
-    } gccl-invocation-id/${this.currentInvocationId.chunk}`;
+    }-${getModuleFormat()} gccl-invocation-id/${
+      this.currentInvocationId.chunk
+    }`;
 
     if (this.#gcclGcsCmd) {
       googAPIClient += ` gccl-gcs-cmd/${this.#gcclGcsCmd}`;
@@ -930,7 +933,9 @@ export class Upload extends Writable {
   private async getAndSetOffset() {
     let googAPIClient = `${getRuntimeTrackingString()} gccl/${
       packageJson.version
-    } gccl-invocation-id/${this.currentInvocationId.offset}`;
+    }-${getModuleFormat()} gccl-invocation-id/${
+      this.currentInvocationId.offset
+    }`;
 
     if (this.#gcclGcsCmd) {
       googAPIClient += ` gccl-gcs-cmd/${this.#gcclGcsCmd}`;

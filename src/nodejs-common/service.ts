@@ -26,7 +26,11 @@ import {
   PackageJson,
   util,
 } from './util.js';
-import {getRuntimeTrackingString, getUserAgentString} from '../util.js';
+import {
+  getRuntimeTrackingString,
+  getUserAgentString,
+  getModuleFormat,
+} from '../util.js';
 
 export const DEFAULT_PROJECT_ID_TOKEN = '{{projectId}}';
 
@@ -251,7 +255,7 @@ export class Service {
       'User-Agent': userAgent,
       'x-goog-api-client': `${getRuntimeTrackingString()} gccl/${
         pkg.version
-      } gccl-invocation-id/${uuid.v4()}`,
+      }-${getModuleFormat()} gccl-invocation-id/${uuid.v4()}`,
     };
 
     if (reqOpts[GCCL_GCS_CMD_KEY]) {

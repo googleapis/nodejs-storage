@@ -35,7 +35,7 @@ import {
   util,
   Util,
 } from '../../src/nodejs-common/util.js';
-import {getUserAgentString} from '../../src/util.js';
+import {getUserAgentString, getModuleFormat} from '../../src/util.js';
 
 proxyquire.noPreserveCache();
 
@@ -489,7 +489,9 @@ describe('Service', () => {
       service.makeAuthenticatedRequest = (reqOpts: DecorateRequestOptions) => {
         const pkg = service.packageJson;
         const r = new RegExp(
-          `^gl-node/${process.versions.node} gccl/${pkg.version} gccl-invocation-id/(?<gcclInvocationId>[^W]+)$`
+          `^gl-node/${process.versions.node} gccl/${
+            pkg.version
+          }-${getModuleFormat()} gccl-invocation-id/(?<gcclInvocationId>[^W]+)$`
         );
         assert.ok(r.test(reqOpts.headers!['x-goog-api-client']));
         done();
