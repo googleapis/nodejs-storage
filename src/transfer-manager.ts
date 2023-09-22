@@ -211,7 +211,7 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     return retry(async bail => {
       try {
         const combinedHeaders = {
-          ...(await this.authClient.getRequestHeaders()),
+          ...(await this.authClient.getRequestHeaders(url)),
           ...headers,
         };
 
