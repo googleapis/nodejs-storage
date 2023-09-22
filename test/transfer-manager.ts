@@ -35,22 +35,28 @@ import * as stream from 'stream';
 import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as sinon from 'sinon';
-import {GaxiosResponse} from 'gaxios';
+import {GaxiosOptions, GaxiosResponse} from 'gaxios';
+import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util';
+import {AuthClient, GoogleAuth} from 'google-auth-library';
+import {tmpdir} from 'os';
 
 describe('Transfer Manager', () => {
   const BUCKET_NAME = 'test-bucket';
-  const STORAGE = sinon.createStubInstance(Storage);
-  STORAGE.retryOptions = {
-    autoRetry: true,
-    maxRetries: 3,
-    retryDelayMultiplier: 2,
-    totalTimeout: 600,
-    maxRetryDelay: 60,
-    retryableErrorFn: (err: ApiError) => {
-      return err.code === 500;
-    },
-    idempotencyStrategy: IdempotencyStrategy.RetryConditional,
-  };
+  const STORAGE = sinon.stub(
+    new Storage({
+      retryOptions: {
+        autoRetry: true,
+        maxRetries: 3,
+        retryDelayMultiplier: 2,
+        totalTimeout: 600,
+        maxRetryDelay: 60,
+        retryableErrorFn: (err: ApiError) => {
+          return err.code === 500;
+        },
+        idempotencyStrategy: IdempotencyStrategy.RetryConditional,
+      },
+    })
+  );
   let sandbox: sinon.SinonSandbox;
   let transferManager: TransferManager;
   let bucket: Bucket;
@@ -130,6 +136,19 @@ describe('Transfer Manager', () => {
       const result = await transferManager.uploadManyFiles(paths);
       assert.strictEqual(result[0][0].name, paths[0]);
     });
+
+    it('should set the appropriate `GCCL_GCS_CMD_KEY`', async () => {
+      const paths = ['/a/b/foo/bar.txt'];
+
+      sandbox.stub(bucket, 'upload').callsFake(async (_path, options) => {
+        assert.strictEqual(
+          (options as UploadOptions)[GCCL_GCS_CMD_KEY],
+          'tm.upload_many'
+        );
+      });
+
+      await transferManager.uploadManyFiles(paths, {prefix: 'hello/world'});
+    });
   });
 
   describe('downloadManyFiles', () => {
@@ -178,6 +197,19 @@ describe('Transfer Manager', () => {
       });
       await transferManager.downloadManyFiles([file], {stripPrefix});
     });
+
+    it('should set the appropriate `GCCL_GCS_CMD_KEY`', async () => {
+      const file = new File(bucket, 'first.txt');
+
+      sandbox.stub(file, 'download').callsFake(async options => {
+        assert.strictEqual(
+          (options as DownloadOptions)[GCCL_GCS_CMD_KEY],
+          'tm.download_many'
+        );
+      });
+
+      await transferManager.downloadManyFiles([file]);
+    });
   });
 
   describe('downloadFileInChunks', () => {
@@ -223,14 +255,26 @@ describe('Transfer Manager', () => {
       await transferManager.downloadFileInChunks(file, {validation: 'crc32c'});
       assert.strictEqual(callCount, 1);
     });
+
+    it('should set the appropriate `GCCL_GCS_CMD_KEY`', async () => {
+      sandbox.stub(file, 'download').callsFake(async options => {
+        assert.strictEqual(
+          (options as DownloadOptions)[GCCL_GCS_CMD_KEY],
+          'tm.download_sharded'
+        );
+        return [Buffer.alloc(100)];
+      });
+
+      await transferManager.downloadFileInChunks(file);
+    });
   });
 
   describe('uploadFileInChunks', () => {
     let mockGeneratorFunction: MultiPartHelperGenerator;
     let fakeHelper: sinon.SinonStubbedInstance<MultiPartUploadHelper>;
-    let readStreamStub: sinon.SinonStub;
-    const path = '/a/b/c.txt';
-    const pThrough = new stream.PassThrough();
+    let readStreamSpy: sinon.SinonSpy;
+    let directory: string;
+    let filePath: string;
     class FakeXMLHelper implements MultiPartUploadHelper {
       bucket: Bucket;
       fileName: string;
@@ -255,10 +299,18 @@ describe('Transfer Manager', () => {
       }
     }
 
-    beforeEach(() => {
-      readStreamStub = sandbox
-        .stub(fs, 'createReadStream')
-        .returns(pThrough as unknown as fs.ReadStream);
+    before(async () => {
+      directory = await fsp.mkdtemp(
+        path.join(tmpdir(), 'tm-uploadFileInChunks-')
+      );
+
+      filePath = path.join(directory, 't.txt');
+
+      await fsp.writeFile(filePath, 'hello');
+    });
+
+    beforeEach(async () => {
+      readStreamSpy = sandbox.spy(fs, 'createReadStream');
       mockGeneratorFunction = (bucket, fileName, uploadId, partsMap) => {
         fakeHelper = sandbox.createStubInstance(FakeXMLHelper);
         fakeHelper.uploadId = uploadId || '';
@@ -271,12 +323,16 @@ describe('Transfer Manager', () => {
       };
     });
 
+    after(async () => {
+      await fsp.rm(directory, {force: true, recursive: true});
+    });
+
     it('should call initiateUpload, uploadPart, and completeUpload', async () => {
-      process.nextTick(() => {
-        pThrough.push('hello world');
-        pThrough.end();
-      });
-      await transferManager.uploadFileInChunks(path, {}, mockGeneratorFunction);
+      await transferManager.uploadFileInChunks(
+        filePath,
+        {},
+        mockGeneratorFunction
+      );
       assert.strictEqual(fakeHelper.initiateUpload.calledOnce, true);
       assert.strictEqual(fakeHelper.uploadPart.calledOnce, true);
       assert.strictEqual(fakeHelper.completeUpload.calledOnce, true);
@@ -286,14 +342,14 @@ describe('Transfer Manager', () => {
       const options = {highWaterMark: 32 * 1024 * 1024, start: 0};
 
       await transferManager.uploadFileInChunks(
-        path,
+        filePath,
         {
           chunkSizeBytes: 32 * 1024 * 1024,
         },
         mockGeneratorFunction
       );
 
-      assert.strictEqual(readStreamStub.calledOnceWith(path, options), true);
+      assert.strictEqual(readStreamSpy.calledOnceWith(filePath, options), true);
     });
 
     it('should set the correct start offset when called with an existing parts map', async () => {
@@ -303,7 +359,7 @@ describe('Transfer Manager', () => {
       };
 
       await transferManager.uploadFileInChunks(
-        path,
+        filePath,
         {
           uploadId: '123',
           partsMap: new Map<number, string>([
@@ -315,12 +371,12 @@ describe('Transfer Manager', () => {
         mockGeneratorFunction
       );
 
-      assert.strictEqual(readStreamStub.calledOnceWith(path, options), true);
+      assert.strictEqual(readStreamSpy.calledOnceWith(filePath, options), true);
     });
 
     it('should not call initiateUpload if an uploadId is provided', async () => {
       await transferManager.uploadFileInChunks(
-        path,
+        filePath,
         {
           uploadId: '123',
           partsMap: new Map<number, string>([
@@ -353,7 +409,7 @@ describe('Transfer Manager', () => {
       };
       assert.rejects(
         transferManager.uploadFileInChunks(
-          path,
+          filePath,
           {autoAbortFailure: false},
           mockGeneratorFunction
         ),
@@ -382,7 +438,7 @@ describe('Transfer Manager', () => {
       };
 
       await transferManager.uploadFileInChunks(
-        path,
+        filePath,
         {headers: headersToAdd},
         mockGeneratorFunction
       );
@@ -413,14 +469,50 @@ describe('Transfer Manager', () => {
         return fakeHelper;
       };
 
-      process.nextTick(() => {
-        pThrough.push('hello world');
-        pThrough.end();
+      assert.doesNotThrow(() =>
+        transferManager.uploadFileInChunks(filePath, {}, mockGeneratorFunction)
+      );
+    });
+
+    it('should set the appropriate `GCCL_GCS_CMD_KEY` - simple upload', async () => {
+      let firstCall = true;
+      class TestAuthClient extends AuthClient {
+        async getAccessToken() {
+          return {token: '', res: undefined};
+        }
+
+        async getRequestHeaders() {
+          return {};
+        }
+
+        async request(opts: GaxiosOptions) {
+          if (firstCall) {
+            firstCall = false;
+
+            assert(opts.headers);
+            assert('x-goog-api-client' in opts.headers);
+            assert.match(
+              opts.headers['x-goog-api-client'],
+              /gccl-gcs-cmd\/tm.upload_sharded/
+            );
+          }
+
+          return {
+            data: Buffer.from(
+              `<InitiateMultipartUploadResult>
+                <UploadId>1</UploadId>
+              </InitiateMultipartUploadResult>`
+            ),
+            headers: {},
+          } as GaxiosResponse;
+        }
+      }
+
+      transferManager.bucket.storage.authClient = new GoogleAuth({
+        authClient: new TestAuthClient(),
       });
 
-      assert.doesNotThrow(() =>
-        transferManager.uploadFileInChunks(path, {}, mockGeneratorFunction)
-      );
+      await transferManager.uploadFileInChunks(filePath);
     });
   });
 });
