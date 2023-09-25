@@ -31,7 +31,6 @@ import {
 } from '../src';
 import * as assert from 'assert';
 import * as path from 'path';
-import * as stream from 'stream';
 import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as sinon from 'sinon';
