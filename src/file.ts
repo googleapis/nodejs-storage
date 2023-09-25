@@ -1745,6 +1745,7 @@ class File extends ServiceObject<File, FileMetadata> {
         userProject: options.userProject || this.userProject,
         retryOptions: retryOptions,
         params: options?.preconditionOpts || this.instancePreconditionOpts,
+        [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
       },
       callback!
     );
@@ -3914,6 +3915,7 @@ class File extends ServiceObject<File, FileMetadata> {
       params: options?.preconditionOpts || this.instancePreconditionOpts,
       chunkSize: options?.chunkSize,
       highWaterMark: options?.highWaterMark,
+      [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
     });
 
     uploadStream
@@ -3958,6 +3960,7 @@ class File extends ServiceObject<File, FileMetadata> {
         name: this.name,
       },
       uri: uri,
+      [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
     };
 
     if (this.generation !== undefined) {
