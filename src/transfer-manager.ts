@@ -27,6 +27,9 @@ import {ApiError} from './nodejs-common';
 import {GaxiosResponse, Headers} from 'gaxios';
 import {createHash} from 'crypto';
 import {GCCL_GCS_CMD_KEY} from './nodejs-common/util';
+import {getRuntimeTrackingString} from './util';
+
+const packageJson = require('../../package.json');
 
 /**
  * Default number of concurrently executing promises to use when calling uploadManyFiles.
@@ -200,6 +203,33 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     };
   }
 
+  #setGoogApiClientHeaders(headers: Headers = {}): Headers {
+    let headerFound = false;
+
+    for (const [key, value] of Object.entries(headers)) {
+      if (key.toLocaleLowerCase().trim() === 'x-goog-api-client') {
+        headerFound = true;
+
+        // Prepend command feature to value, if not already there
+        if (!value.includes(GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED)) {
+          headers[
+            key
+          ] = `${value} gccl-gcs-cmd/${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
+        }
+        break;
+      }
+    }
+
+    // If the header isn't present, add it
+    if (!headerFound) {
+      headers['x-goog-api-client'] = `${getRuntimeTrackingString()} gccl/${
+        packageJson.version
+      } gccl-gcs-cmd/${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
+    }
+
+    return headers;
+  }
+
   /**
    * Initiates a multipart upload (MPU) to the XML API and stores the resultant upload id.
    *
@@ -209,38 +239,12 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     const url = `${this.baseUrl}?uploads`;
     return retry(async bail => {
       try {
-        const combinedHeaders = {
-          ...(await this.authClient.getRequestHeaders(url)),
-          ...headers,
-        };
-
-        let headerFound = false;
-
-        for (const [key, value] of Object.entries(combinedHeaders)) {
-          if (key.toLocaleLowerCase().trim() === 'x-goog-api-client') {
-            headerFound = true;
-
-            // Prepend command feature to value, if not already there
-            if (!value.includes(GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED)) {
-              combinedHeaders[
-                key
-              ] = `${value} gccl-gcs-cmd/${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
-            }
-            break;
-          }
-        }
-
-        if (!headerFound) {
-          combinedHeaders[
-            'x-goog-api-client'
-          ] = `gccl-gcs-cmd/${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
-        }
-
         const res = await this.authClient.request({
-          headers: combinedHeaders,
+          headers: this.#setGoogApiClientHeaders(headers),
           method: 'POST',
           url,
         });
+
         if (res.data && res.data.error) {
           throw res.data.error;
         }
@@ -271,7 +275,7 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     validation?: 'md5' | false
   ): Promise<void> {
     const url = `${this.baseUrl}?partNumber=${partNumber}&uploadId=${this.uploadId}`;
-    let headers: Headers = {};
+    let headers: Headers = this.#setGoogApiClientHeaders();
 
     if (validation === 'md5') {
       const hash = createHash('md5').update(chunk).digest('base64');
@@ -318,6 +322,7 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     return retry(async bail => {
       try {
         const res = await this.authClient.request({
+          headers: this.#setGoogApiClientHeaders(),
           url,
           method: 'POST',
           body,

@@ -474,8 +474,8 @@ describe('Transfer Manager', () => {
       );
     });
 
-    it('should set the appropriate `GCCL_GCS_CMD_KEY` - simple upload', async () => {
-      let firstCall = true;
+    it('should set the appropriate `GCCL_GCS_CMD_KEY`', async () => {
+      let called = true;
       class TestAuthClient extends AuthClient {
         async getAccessToken() {
           return {token: '', res: undefined};
@@ -486,16 +486,14 @@ describe('Transfer Manager', () => {
         }
 
         async request(opts: GaxiosOptions) {
-          if (firstCall) {
-            firstCall = false;
+          called = true;
 
-            assert(opts.headers);
-            assert('x-goog-api-client' in opts.headers);
-            assert.match(
-              opts.headers['x-goog-api-client'],
-              /gccl-gcs-cmd\/tm.upload_sharded/
-            );
-          }
+          assert(opts.headers);
+          assert('x-goog-api-client' in opts.headers);
+          assert.match(
+            opts.headers['x-goog-api-client'],
+            /gccl-gcs-cmd\/tm.upload_sharded/
+          );
 
           return {
             data: Buffer.from(
@@ -513,6 +511,8 @@ describe('Transfer Manager', () => {
       });
 
       await transferManager.uploadFileInChunks(filePath);
+
+      assert(called);
     });
   });
 });
