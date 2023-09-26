@@ -222,7 +222,9 @@ export interface MakeWritableStreamOptions {
   request?: r.Options;
 
   makeAuthenticatedRequest(
-    reqOpts: r.OptionsWithUri,
+    reqOpts: r.OptionsWithUri & {
+      [GCCL_GCS_CMD_KEY]?: string;
+    },
     fnobj: {
       onAuthenticated(
         err: Error | null,
@@ -876,7 +878,9 @@ export class Util {
       maxRetryValue = config.retryOptions.maxRetries;
     }
 
-    requestDefaults.headers = this._getDefaultHeaders();
+    requestDefaults.headers = this._getDefaultHeaders(
+      reqOpts[GCCL_GCS_CMD_KEY]
+    );
     const options = {
       request: teenyRequest.defaults(requestDefaults),
       retries: autoRetryValue !== false ? maxRetryValue : 0,
