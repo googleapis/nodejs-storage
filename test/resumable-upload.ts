@@ -1159,7 +1159,6 @@ describe('resumable-upload', () => {
             reqOpts.headers['Content-Range'],
             `bytes ${OFFSET}-*/${CONTENT_LENGTH}`
           );
-          console.dir({reqOpts});
           assert.ok(
             X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
           );

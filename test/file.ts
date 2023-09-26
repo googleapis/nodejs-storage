@@ -4951,6 +4951,7 @@ describe('File', () => {
       makeWritableStreamOverride = (stream: {}, options_: any) => {
         assert.deepStrictEqual(options_.metadata, options.metadata);
         assert.deepStrictEqual(options_.request, {
+          [GCCL_GCS_CMD_KEY]: undefined,
           qs: {
             name: file.name,
             predefinedAcl: options.predefinedAcl,
