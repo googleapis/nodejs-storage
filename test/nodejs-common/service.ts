@@ -505,7 +505,9 @@ describe('Service', () => {
       service.makeAuthenticatedRequest = (reqOpts: DecorateRequestOptions) => {
         const pkg = service.packageJson;
         const r = new RegExp(
-          `^gl-node/${process.versions.node} gccl/${pkg.version} gccl-invocation-id/(?<gcclInvocationId>[^W]+) gccl-gcs-cmd/${expected}$`
+          `^gl-node/${process.versions.node} gccl/${
+            pkg.version
+          }-${getModuleFormat()} gccl-invocation-id/(?<gcclInvocationId>[^W]+) gccl-gcs-cmd/${expected}$`
         );
         assert.ok(r.test(reqOpts.headers!['x-goog-api-client']));
         done();

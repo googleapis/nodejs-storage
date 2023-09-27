@@ -322,13 +322,13 @@ describe('Transfer Manager', () => {
     }
 
     before(async () => {
-      directory = await fsp.mkdtemp(
+      directory = await promises.mkdtemp(
         path.join(tmpdir(), 'tm-uploadFileInChunks-')
       );
 
       filePath = path.join(directory, 't.txt');
 
-      await fsp.writeFile(filePath, 'hello');
+      await promises.writeFile(filePath, 'hello');
     });
 
     beforeEach(async () => {
@@ -346,7 +346,7 @@ describe('Transfer Manager', () => {
     });
 
     after(async () => {
-      await fsp.rm(directory, {force: true, recursive: true});
+      await promises.rm(directory, {force: true, recursive: true});
     });
 
     it('should call initiateUpload, uploadPart, and completeUpload', async () => {

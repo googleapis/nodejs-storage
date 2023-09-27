@@ -38,6 +38,7 @@ import {
   Abortable,
   ApiError,
   DecorateRequestOptions,
+  Duplexify,
   GCCL_GCS_CMD_KEY,
   GoogleErrorBody,
   GoogleInnerError,

@@ -157,10 +157,7 @@ describe('storage', () => {
     beforeEach(() => {
       delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
       delete process.env.GOOGLE_CLOUD_PROJECT;
-      delete require.cache[require.resolve('../src')];
 
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const {Storage} = require('../src');
       storageWithoutAuth = new Storage({
         retryOptions: {
           idempotencyStrategy: IdempotencyStrategy.RetryAlways,
@@ -1701,7 +1698,9 @@ describe('storage', () => {
 
               // Get the service account for the "second" account (the
               // one that will read the requester pays file).
-              const clientEmail = require(key2!).client_email;
+              const clientEmail = JSON.parse(
+                fs.readFileSync(key2!, 'utf-8')
+              ).client_email;
 
               policy.bindings.push({
                 role: 'roles/storage.admin',

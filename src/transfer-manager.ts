@@ -26,10 +26,14 @@ import AsyncRetry from 'async-retry';
 import {ApiError} from './nodejs-common/index.js';
 import {GaxiosResponse, Headers} from 'gaxios';
 import {createHash} from 'crypto';
-import {GCCL_GCS_CMD_KEY} from './nodejs-common/util';
-import {getRuntimeTrackingString, getUserAgentString} from './util';
+import {GCCL_GCS_CMD_KEY} from './nodejs-common/util.js';
+import {
+  getPackageJSON,
+  getRuntimeTrackingString,
+  getUserAgentString,
+} from './util.js';
 
-const packageJson = require('../../package.json');
+const packageJson = getPackageJSON();
 
 /**
  * Default number of concurrently executing promises to use when calling uploadManyFiles.
@@ -255,7 +259,11 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
         if (res.data && res.data.error) {
           throw res.data.error;
         }
-        const parsedXML = this.xmlParser.parse(res.data);
+        const parsedXML = this.xmlParser.parse<{
+          InitiateMultipartUploadResult: {
+            UploadId: string;
+          };
+        }>(res.data);
         this.uploadId = parsedXML.InitiateMultipartUploadResult.UploadId;
       } catch (e) {
         this.#handleErrorResponse(e as Error, bail);
