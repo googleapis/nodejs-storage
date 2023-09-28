@@ -17,8 +17,7 @@
     "**/.jsdoc.js",
     "karma.conf.js",
     "webpack-tests.config.js",
-    "webpack.config.js",
-    "**/internal-tooling"
+    "webpack.config.js"
   ],
   "exclude-after-remap": false,
   "all": true
