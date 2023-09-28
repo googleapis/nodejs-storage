@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as extend from 'extend';
 import {AuthClient, GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import * as r from 'teeny-request';
 import * as uuid from 'uuid';
@@ -22,10 +21,12 @@ import {Interceptor} from './service-object';
 import {
   BodyResponseCallback,
   DecorateRequestOptions,
+  GCCL_GCS_CMD_KEY,
   MakeAuthenticatedRequest,
   PackageJson,
   util,
 } from './util';
+import {getRuntimeTrackingString} from '../util';
 
 export const DEFAULT_PROJECT_ID_TOKEN = '{{projectId}}';
 
@@ -111,15 +112,16 @@ export class Service {
     this.projectIdRequired = config.projectIdRequired !== false;
     this.providedUserAgent = options.userAgent;
 
-    const reqCfg = extend({}, config, {
+    const reqCfg = {
+      ...config,
       projectIdRequired: this.projectIdRequired,
       projectId: this.projectId,
-      authClient: options.authClient,
+      authClient: options.authClient || config.authClient,
       credentials: options.credentials,
       keyFile: options.keyFilename,
       email: options.email,
       token: options.token,
-    });
+    };
 
     this.makeAuthenticatedRequest =
       util.makeAuthenticatedRequestFactory(reqCfg);
@@ -192,7 +194,7 @@ export class Service {
     reqOpts: DecorateRequestOptions | StreamRequestOptions,
     callback?: BodyResponseCallback
   ): void | r.Request {
-    reqOpts = extend(true, {}, reqOpts, {timeout: this.timeout});
+    reqOpts = {...reqOpts, timeout: this.timeout};
     const isAbsoluteUrl = reqOpts.uri.indexOf('http') === 0;
     const uriComponents = [this.baseUrl];
 
@@ -244,12 +246,19 @@ export class Service {
     if (this.providedUserAgent) {
       userAgent = `${this.providedUserAgent} ${userAgent}`;
     }
-    reqOpts.headers = extend({}, reqOpts.headers, {
+    reqOpts.headers = {
+      ...reqOpts.headers,
       'User-Agent': userAgent,
-      'x-goog-api-client': `gl-node/${process.versions.node} gccl/${
+      'x-goog-api-client': `${getRuntimeTrackingString()} gccl/${
         pkg.version
       } gccl-invocation-id/${uuid.v4()}`,
-    });
+    };
+
+    if (reqOpts[GCCL_GCS_CMD_KEY]) {
+      reqOpts.headers[
+        'x-goog-api-client'
+      ] += ` gccl-gcs-cmd/${reqOpts[GCCL_GCS_CMD_KEY]}`;
+    }
 
     if (reqOpts.shouldReturnStream) {
       return this.makeAuthenticatedRequest(reqOpts) as {} as r.Request;
@@ -279,7 +288,7 @@ export class Service {
    * @param {string} reqOpts.uri - A URI relative to the baseUrl.
    */
   requestStream(reqOpts: DecorateRequestOptions): r.Request {
-    const opts = extend(true, reqOpts, {shouldReturnStream: true});
+    const opts = {...reqOpts, shouldReturnStream: true};
     return (Service.prototype.request_ as Function).call(this, opts);
   }
 }

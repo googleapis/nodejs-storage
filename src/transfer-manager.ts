@@ -18,9 +18,18 @@ import {Bucket, UploadOptions, UploadResponse} from './bucket';
 import {DownloadOptions, DownloadResponse, File} from './file';
 import * as pLimit from 'p-limit';
 import * as path from 'path';
-import * as extend from 'extend';
-import {promises as fsp} from 'fs';
+import {createReadStream, promises as fsp} from 'fs';
 import {CRC32C} from './crc32c';
+import {GoogleAuth} from 'google-auth-library';
+import {XMLParser, XMLBuilder} from 'fast-xml-parser';
+import * as retry from 'async-retry';
+import {ApiError} from './nodejs-common';
+import {GaxiosResponse, Headers} from 'gaxios';
+import {createHash} from 'crypto';
+import {GCCL_GCS_CMD_KEY} from './nodejs-common/util';
+import {getRuntimeTrackingString} from './util';
+
+const packageJson = require('../../package.json');
 
 /**
  * Default number of concurrently executing promises to use when calling uploadManyFiles.
@@ -47,7 +56,33 @@ const DOWNLOAD_IN_CHUNKS_FILE_SIZE_THRESHOLD = 32 * 1024 * 1024;
  * @experimental
  */
 const DOWNLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE = 10 * 1024 * 1024;
+/**
+ * The chunk size in bytes to use when calling uploadFileInChunks.
+ * @experimental
+ */
+const UPLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE = 32 * 1024 * 1024;
+/**
+ * Default number of concurrently executing promises to use when calling uploadFileInChunks.
+ * @experimental
+ */
+const DEFAULT_PARALLEL_CHUNKED_UPLOAD_LIMIT = 2;
+
 const EMPTY_REGEX = '(?:)';
+
+/**
+ * The `gccl-gcs-cmd` value for the `X-Goog-API-Client` header.
+ * Example: `gccl-gcs-cmd/tm.upload_many`
+ *
+ * @see {@link GCCL_GCS_CMD}.
+ * @see {@link GCCL_GCS_CMD_KEY}.
+ */
+const GCCL_GCS_CMD_FEATURE = {
+  UPLOAD_MANY: 'tm.upload_many',
+  DOWNLOAD_MANY: 'tm.download_many',
+  UPLOAD_SHARDED: 'tm.upload_sharded',
+  DOWNLOAD_SHARDED: 'tm.download_sharded',
+};
+
 export interface UploadManyFilesOptions {
   concurrencyLimit?: number;
   skipIfExists?: boolean;
@@ -67,6 +102,278 @@ export interface DownloadFileInChunksOptions {
   chunkSizeBytes?: number;
   destination?: string;
   validation?: 'crc32c' | false;
+}
+
+export interface UploadFileInChunksOptions {
+  concurrencyLimit?: number;
+  chunkSizeBytes?: number;
+  uploadName?: string;
+  maxQueueSize?: number;
+  uploadId?: string;
+  autoAbortFailure?: boolean;
+  partsMap?: Map<number, string>;
+  validation?: 'md5' | false;
+  headers?: {[key: string]: string};
+}
+
+export interface MultiPartUploadHelper {
+  bucket: Bucket;
+  fileName: string;
+  uploadId?: string;
+  partsMap?: Map<number, string>;
+  initiateUpload(headers?: {[key: string]: string}): Promise<void>;
+  uploadPart(
+    partNumber: number,
+    chunk: Buffer,
+    validation?: 'md5' | false
+  ): Promise<void>;
+  completeUpload(): Promise<GaxiosResponse | undefined>;
+  abortUpload(): Promise<void>;
+}
+
+export type MultiPartHelperGenerator = (
+  bucket: Bucket,
+  fileName: string,
+  uploadId?: string,
+  partsMap?: Map<number, string>
+) => MultiPartUploadHelper;
+
+const defaultMultiPartGenerator: MultiPartHelperGenerator = (
+  bucket,
+  fileName,
+  uploadId,
+  partsMap
+) => {
+  return new XMLMultiPartUploadHelper(bucket, fileName, uploadId, partsMap);
+};
+
+export class MultiPartUploadError extends Error {
+  private uploadId: string;
+  private partsMap: Map<number, string>;
+
+  constructor(
+    message: string,
+    uploadId: string,
+    partsMap: Map<number, string>
+  ) {
+    super(message);
+    this.uploadId = uploadId;
+    this.partsMap = partsMap;
+  }
+}
+/**
+ * Class representing an implementation of MPU in the XML API. This class is not meant for public usage.
+ *
+ * @private
+ * @experimental
+ */
+class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
+  public partsMap;
+  public uploadId;
+  public bucket;
+  public fileName;
+
+  private authClient;
+  private xmlParser;
+  private xmlBuilder;
+  private baseUrl;
+  private retryOptions;
+
+  constructor(
+    bucket: Bucket,
+    fileName: string,
+    uploadId?: string,
+    partsMap?: Map<number, string>
+  ) {
+    this.authClient = bucket.storage.authClient || new GoogleAuth();
+    this.uploadId = uploadId || '';
+    this.bucket = bucket;
+    this.fileName = fileName;
+    this.baseUrl = `https://${bucket.name}.${
+      new URL(this.bucket.storage.apiEndpoint).hostname
+    }/${fileName}`;
+    this.xmlBuilder = new XMLBuilder({arrayNodeName: 'Part'});
+    this.xmlParser = new XMLParser();
+    this.partsMap = partsMap || new Map<number, string>();
+    this.retryOptions = {
+      retries: this.bucket.storage.retryOptions.maxRetries,
+      factor: this.bucket.storage.retryOptions.retryDelayMultiplier,
+      maxTimeout: this.bucket.storage.retryOptions.maxRetryDelay! * 1000,
+      maxRetryTime: this.bucket.storage.retryOptions.totalTimeout! * 1000,
+    };
+  }
+
+  #setGoogApiClientHeaders(headers: Headers = {}): Headers {
+    let headerFound = false;
+
+    for (const [key, value] of Object.entries(headers)) {
+      if (key.toLocaleLowerCase().trim() === 'x-goog-api-client') {
+        headerFound = true;
+
+        // Prepend command feature to value, if not already there
+        if (!value.includes(GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED)) {
+          headers[
+            key
+          ] = `${value} gccl-gcs-cmd/${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
+        }
+        break;
+      }
+    }
+
+    // If the header isn't present, add it
+    if (!headerFound) {
+      headers['x-goog-api-client'] = `${getRuntimeTrackingString()} gccl/${
+        packageJson.version
+      } gccl-gcs-cmd/${GCCL_GCS_CMD_FEATURE.UPLOAD_SHARDED}`;
+    }
+
+    return headers;
+  }
+
+  /**
+   * Initiates a multipart upload (MPU) to the XML API and stores the resultant upload id.
+   *
+   * @returns {Promise<void>}
+   */
+  async initiateUpload(headers: Headers = {}): Promise<void> {
+    const url = `${this.baseUrl}?uploads`;
+    return retry(async bail => {
+      try {
+        const res = await this.authClient.request({
+          headers: this.#setGoogApiClientHeaders(headers),
+          method: 'POST',
+          url,
+        });
+
+        if (res.data && res.data.error) {
+          throw res.data.error;
+        }
+        const parsedXML = this.xmlParser.parse(res.data);
+        this.uploadId = parsedXML.InitiateMultipartUploadResult.UploadId;
+      } catch (e) {
+        this.#handleErrorResponse(e as Error, bail);
+      }
+    }, this.retryOptions);
+  }
+
+  /**
+   * Uploads the provided chunk of data to the XML API using the previously created upload id.
+   *
+   * @param {number} partNumber the sequence number of this chunk.
+   * @param {Buffer} chunk the chunk of data to be uploaded.
+   * @param {string | false} validation whether or not to include the md5 hash in the headers to cause the server
+   * to validate the chunk was not corrupted.
+   * @returns {Promise<void>}
+   */
+  async uploadPart(
+    partNumber: number,
+    chunk: Buffer,
+    validation?: 'md5' | false
+  ): Promise<void> {
+    const url = `${this.baseUrl}?partNumber=${partNumber}&uploadId=${this.uploadId}`;
+    let headers: Headers = this.#setGoogApiClientHeaders();
+
+    if (validation === 'md5') {
+      const hash = createHash('md5').update(chunk).digest('base64');
+      headers = {
+        'Content-MD5': hash,
+      };
+    }
+
+    return retry(async bail => {
+      try {
+        const res = await this.authClient.request({
+          url,
+          method: 'PUT',
+          body: chunk,
+          headers,
+        });
+        if (res.data && res.data.error) {
+          throw res.data.error;
+        }
+        this.partsMap.set(partNumber, res.headers['etag']);
+      } catch (e) {
+        this.#handleErrorResponse(e as Error, bail);
+      }
+    }, this.retryOptions);
+  }
+
+  /**
+   * Sends the final request of the MPU to tell GCS the upload is now complete.
+   *
+   * @returns {Promise<void>}
+   */
+  async completeUpload(): Promise<GaxiosResponse | undefined> {
+    const url = `${this.baseUrl}?uploadId=${this.uploadId}`;
+    const sortedMap = new Map(
+      [...this.partsMap.entries()].sort((a, b) => a[0] - b[0])
+    );
+    const parts: {}[] = [];
+    for (const entry of sortedMap.entries()) {
+      parts.push({PartNumber: entry[0], ETag: entry[1]});
+    }
+    const body = `<CompleteMultipartUpload>${this.xmlBuilder.build(
+      parts
+    )}</CompleteMultipartUpload>`;
+    return retry(async bail => {
+      try {
+        const res = await this.authClient.request({
+          headers: this.#setGoogApiClientHeaders(),
+          url,
+          method: 'POST',
+          body,
+        });
+        if (res.data && res.data.error) {
+          throw res.data.error;
+        }
+        return res;
+      } catch (e) {
+        this.#handleErrorResponse(e as Error, bail);
+        return;
+      }
+    }, this.retryOptions);
+  }
+
+  /**
+   * Aborts an multipart upload that is in progress. Once aborted, any parts in the process of being uploaded fail,
+   * and future requests using the upload ID fail.
+   *
+   * @returns {Promise<void>}
+   */
+  async abortUpload(): Promise<void> {
+    const url = `${this.baseUrl}?uploadId=${this.uploadId}`;
+    return retry(async bail => {
+      try {
+        const res = await this.authClient.request({
+          url,
+          method: 'DELETE',
+        });
+        if (res.data && res.data.error) {
+          throw res.data.error;
+        }
+      } catch (e) {
+        this.#handleErrorResponse(e as Error, bail);
+        return;
+      }
+    }, this.retryOptions);
+  }
+
+  /**
+   * Handles error responses and calls the bail function if the error should not be retried.
+   *
+   * @param {Error} err the thrown error
+   * @param {Function} bail if the error can not be retried, the function to be called.
+   */
+  #handleErrorResponse(err: Error, bail: Function) {
+    if (
+      this.bucket.storage.retryOptions.autoRetry &&
+      this.bucket.storage.retryOptions.retryableErrorFn!(err as ApiError)
+    ) {
+      throw err;
+    } else {
+      bail(err as Error);
+    }
+  }
 }
 
 /**
@@ -144,7 +451,7 @@ export class TransferManager {
     const limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_UPLOAD_LIMIT
     );
-    const promises = [];
+    const promises: Promise<UploadResponse>[] = [];
     let allPaths: string[] = [];
     if (!Array.isArray(filePathsOrDirectory)) {
       for await (const curPath of this.getPathsFromDirectory(
@@ -161,11 +468,12 @@ export class TransferManager {
       if (stat.isDirectory()) {
         continue;
       }
-      const passThroughOptionsCopy: UploadOptions = extend(
-        true,
-        {},
-        options.passthroughOptions
-      );
+
+      const passThroughOptionsCopy: UploadOptions = {
+        ...options.passthroughOptions,
+        [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.UPLOAD_MANY,
+      };
+
       passThroughOptionsCopy.destination = filePath;
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.join(
@@ -173,8 +481,11 @@ export class TransferManager {
           passThroughOptionsCopy.destination
         );
       }
+
       promises.push(
-        limit(() => this.bucket.upload(filePath, passThroughOptionsCopy))
+        limit(() =>
+          this.bucket.upload(filePath, passThroughOptionsCopy as UploadOptions)
+        )
       );
     }
 
@@ -230,7 +541,7 @@ export class TransferManager {
     const limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_DOWNLOAD_LIMIT
     );
-    const promises = [];
+    const promises: Promise<DownloadResponse>[] = [];
     let files: File[] = [];
 
     if (!Array.isArray(filesOrFolder)) {
@@ -253,11 +564,11 @@ export class TransferManager {
     const regex = new RegExp(stripRegexString, 'g');
 
     for (const file of files) {
-      const passThroughOptionsCopy = extend(
-        true,
-        {},
-        options.passthroughOptions
-      );
+      const passThroughOptionsCopy = {
+        ...options.passthroughOptions,
+        [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_MANY,
+      };
+
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.join(
           options.prefix || '',
@@ -268,6 +579,7 @@ export class TransferManager {
       if (options.stripPrefix) {
         passThroughOptionsCopy.destination = file.name.replace(regex, '');
       }
+
       promises.push(limit(() => file.download(passThroughOptionsCopy)));
     }
 
@@ -300,7 +612,7 @@ export class TransferManager {
    * //-
    * // Download a large file in chunks utilizing parallel operations.
    * //-
-   * const response = await transferManager.downloadLargeFile(bucket.file('large-file.txt');
+   * const response = await transferManager.downloadFileInChunks(bucket.file('large-file.txt');
    * // Your local directory now contains:
    * // - "large-file.txt" (with the contents from my-bucket.large-file.txt)
    * ```
@@ -322,7 +634,7 @@ export class TransferManager {
         : fileOrName;
 
     const fileInfo = await file.get();
-    const size = parseInt(fileInfo[0].metadata.size);
+    const size = parseInt(fileInfo[0].metadata.size!.toString());
     // If the file size does not meet the threshold download it as a single chunk.
     if (size < DOWNLOAD_IN_CHUNKS_FILE_SIZE_THRESHOLD) {
       limit = pLimit(1);
@@ -338,9 +650,15 @@ export class TransferManager {
       chunkEnd = chunkEnd > size ? size : chunkEnd;
       promises.push(
         limit(() =>
-          file.download({start: chunkStart, end: chunkEnd}).then(resp => {
-            return fileToWrite.write(resp[0], 0, resp[0].length, chunkStart);
-          })
+          file
+            .download({
+              start: chunkStart,
+              end: chunkEnd,
+              [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_SHARDED,
+            })
+            .then(resp => {
+              return fileToWrite.write(resp[0], 0, resp[0].length, chunkStart);
+            })
         )
       );
 
@@ -367,6 +685,121 @@ export class TransferManager {
           fileToWrite.close();
         });
     });
+  }
+
+  /**
+   * @typedef {object} UploadFileInChunksOptions
+   * @property {number} [concurrencyLimit] The number of concurrently executing promises
+   * to use when uploading the file.
+   * @property {number} [chunkSizeBytes] The size in bytes of each chunk to be uploaded.
+   * @property {string} [uploadName] Name of the file when saving to GCS. If ommitted the name is taken from the file path.
+   * @property {number} [maxQueueSize] The number of chunks to be uploaded to hold in memory concurrently. If not specified
+   * defaults to the specified concurrency limit.
+   * @property {string} [uploadId] If specified attempts to resume a previous upload.
+   * @property {Map} [partsMap] If specified alongside uploadId, attempts to resume a previous upload from the last chunk
+   * specified in partsMap
+   * @property {object} [headers] headers to be sent when initiating the multipart upload.
+   * See {@link https://cloud.google.com/storage/docs/xml-api/post-object-multipart#request_headers| Request Headers: Initiate a Multipart Upload}
+   * @property {boolean} [autoAbortFailure] boolean to indicate if an in progress upload session will be automatically aborted upon failure. If not set,
+   * failures will be automatically aborted.
+   * @experimental
+   */
+  /**
+   * Upload a large file in chunks utilizing parallel upload opertions. If the upload fails, an uploadId and
+   * map containing all the successfully uploaded parts will be returned to the caller. These arguments can be used to
+   * resume the upload.
+   *
+   * @param {string} [filePath] The path of the file to be uploaded
+   * @param {UploadFileInChunksOptions} [options] Configuration options.
+   * @param {MultiPartHelperGenerator} [generator] A function that will return a type that implements the MPU interface. Most users will not need to use this.
+   * @returns {Promise<void>} If successful a promise resolving to void, otherwise a error containing the message, uploadid, and parts map.
+   *
+   * @example
+   * ```
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   * const bucket = storage.bucket('my-bucket');
+   * const transferManager = new TransferManager(bucket);
+   *
+   * //-
+   * // Upload a large file in chunks utilizing parallel operations.
+   * //-
+   * const response = await transferManager.uploadFileInChunks('large-file.txt');
+   * // Your bucket now contains:
+   * // - "large-file.txt"
+   * ```
+   *
+   * @experimental
+   */
+  async uploadFileInChunks(
+    filePath: string,
+    options: UploadFileInChunksOptions = {},
+    generator: MultiPartHelperGenerator = defaultMultiPartGenerator
+  ): Promise<GaxiosResponse | undefined> {
+    const chunkSize =
+      options.chunkSizeBytes || UPLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE;
+    const limit = pLimit(
+      options.concurrencyLimit || DEFAULT_PARALLEL_CHUNKED_UPLOAD_LIMIT
+    );
+    const maxQueueSize =
+      options.maxQueueSize ||
+      options.concurrencyLimit ||
+      DEFAULT_PARALLEL_CHUNKED_UPLOAD_LIMIT;
+    const fileName = options.uploadName || path.basename(filePath);
+    const mpuHelper = generator(
+      this.bucket,
+      fileName,
+      options.uploadId,
+      options.partsMap
+    );
+    let partNumber = 1;
+    let promises: Promise<void>[] = [];
+    try {
+      if (options.uploadId === undefined) {
+        await mpuHelper.initiateUpload(options.headers);
+      }
+      const startOrResumptionByte = mpuHelper.partsMap!.size * chunkSize;
+      const readStream = createReadStream(filePath, {
+        highWaterMark: chunkSize,
+        start: startOrResumptionByte,
+      });
+      // p-limit only limits the number of running promises. We do not want to hold an entire
+      // large file in memory at once so promises acts a queue that will hold only maxQueueSize in memory.
+      for await (const curChunk of readStream) {
+        if (promises.length >= maxQueueSize) {
+          await Promise.all(promises);
+          promises = [];
+        }
+        promises.push(
+          limit(() =>
+            mpuHelper.uploadPart(partNumber++, curChunk, options.validation)
+          )
+        );
+      }
+      await Promise.all(promises);
+      return await mpuHelper.completeUpload();
+    } catch (e) {
+      if (
+        (options.autoAbortFailure === undefined || options.autoAbortFailure) &&
+        mpuHelper.uploadId
+      ) {
+        try {
+          await mpuHelper.abortUpload();
+          return;
+        } catch (e) {
+          throw new MultiPartUploadError(
+            (e as Error).message,
+            mpuHelper.uploadId!,
+            mpuHelper.partsMap!
+          );
+        }
+      }
+      throw new MultiPartUploadError(
+        (e as Error).message,
+        mpuHelper.uploadId!,
+        mpuHelper.partsMap!
+      );
+    }
   }
 
   private async *getPathsFromDirectory(

@@ -56,7 +56,9 @@
  * region_tag:storage_quickstart
  * Full quickstart example:
  */
+export {ApiError} from './nodejs-common';
 export {
+  AclMetadata,
   AccessControlObject,
   AclOptions,
   AddAclCallback,
@@ -79,6 +81,7 @@ export {
   BucketExistsResponse,
   BucketLockCallback,
   BucketLockResponse,
+  BucketMetadata,
   CombineCallback,
   CombineOptions,
   CombineResponse,
@@ -117,6 +120,9 @@ export {
   GetNotificationsOptions,
   GetNotificationsResponse,
   Labels,
+  LifecycleAction,
+  LifecycleCondition,
+  LifecycleRule,
   MakeBucketPrivateCallback,
   MakeBucketPrivateOptions,
   MakeBucketPrivateResponse,
@@ -157,6 +163,7 @@ export {
   FileExistsCallback,
   FileExistsOptions,
   FileExistsResponse,
+  FileMetadata,
   FileOptions,
   GetExpirationDateCallback,
   GetExpirationDateResponse,
@@ -229,6 +236,7 @@ export {
   GetNotificationOptions,
   GetNotificationResponse,
   Notification,
+  NotificationMetadata,
 } from './notification';
 export {
   BucketCallback,

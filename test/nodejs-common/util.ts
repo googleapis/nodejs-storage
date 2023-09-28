@@ -20,7 +20,6 @@ import {
 } from '@google-cloud/projectify';
 import * as assert from 'assert';
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
-import * as extend from 'extend';
 import {
   AuthClient,
   GoogleAuth,
@@ -41,6 +40,7 @@ import {
   DecorateRequestOptions,
   Duplexify,
   DuplexifyConstructor,
+  GCCL_GCS_CMD_KEY,
   GoogleErrorBody,
   GoogleInnerError,
   MakeAuthenticatedRequestFactoryConfig,
@@ -547,6 +547,7 @@ describe('common/util', () => {
         qs: {
           uploadType: 'media',
         },
+        [GCCL_GCS_CMD_KEY]: 'some.value',
       } as DecorateRequestOptions;
 
       util.makeWritableStream(dup, {
@@ -557,6 +558,7 @@ describe('common/util', () => {
           assert.strictEqual(request.method, req.method);
           assert.deepStrictEqual(request.qs, req.qs);
           assert.strictEqual(request.uri, req.uri);
+          assert.strictEqual(request[GCCL_GCS_CMD_KEY], req[GCCL_GCS_CMD_KEY]);
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const mp = request.multipart as any[];
@@ -907,13 +909,14 @@ describe('common/util', () => {
 
     describe('authentication', () => {
       it('should pass correct args to authorizeRequest', done => {
-        const fake = extend(true, authClient, {
+        const fake = {
+          ...authClient,
           authorizeRequest: async (rOpts: {}) => {
             assert.deepStrictEqual(rOpts, fakeReqOpts);
             setImmediate(done);
             return rOpts;
           },
-        });
+        };
         retryRequestOverride = () => {
           return new stream.PassThrough();
         };
@@ -924,11 +927,12 @@ describe('common/util', () => {
 
       it('should return a stream if callback is missing', () => {
         sandbox.stub(fakeGoogleAuth, 'GoogleAuth').callsFake(() => {
-          return extend(true, authClient, {
+          return {
+            ...authClient,
             authorizeRequest: async (rOpts: {}) => {
               return rOpts;
             },
-          });
+          };
         });
         retryRequestOverride = () => {
           return new stream.PassThrough();
@@ -1367,7 +1371,6 @@ describe('common/util', () => {
       return (reqOpts_: DecorateRequestOptions, config: MakeRequestConfig) => {
         assert.strictEqual(reqOpts_, reqOpts);
         assert.strictEqual(config.retries, 3);
-        extend({}, config, customRetryRequestFunctionConfig);
 
         const error = new Error(errorMessage);
         stub('parseHttpRespMessage', () => {
@@ -1601,11 +1604,10 @@ describe('common/util', () => {
 
       it('should allow request options to control retry setting', done => {
         retryRequestOverride = testCustomRetryRequestConfig(done);
-        const reqOptsWithRetrySettings = extend(
-          {},
-          reqOpts,
-          customRetryRequestConfig
-        );
+        const reqOptsWithRetrySettings = {
+          ...reqOpts,
+          ...customRetryRequestConfig,
+        };
         util.makeRequest(
           reqOptsWithRetrySettings,
           noRetryRequestConfig,

@@ -4,6 +4,86 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [7.1.0](https://github.com/googleapis/nodejs-storage/compare/v7.0.1...v7.1.0) (2023-09-07)
+
+
+### Features
+
+* Export `ApiError` ([#2291](https://github.com/googleapis/nodejs-storage/issues/2291)) ([c1d1b35](https://github.com/googleapis/nodejs-storage/commit/c1d1b3505b1c6b0306f632a48cbd7d774b2b94d0))
+* Support iterables in file@save ([4356dd0](https://github.com/googleapis/nodejs-storage/commit/4356dd0e6bea5241c4cacd1a58697a332ccf4784))
+* Support iterables in file@save ([49327ff](https://github.com/googleapis/nodejs-storage/commit/49327ff576b2367d9efdff2f82a515b0538ee471))
+* Support iterables in file@save ([c0d9d58](https://github.com/googleapis/nodejs-storage/commit/c0d9d58b56a9a3485b6c0e5eb92411bb094f7bcb))
+
+
+### Bug Fixes
+
+* `File#save` iterable fixes ([#2293](https://github.com/googleapis/nodejs-storage/issues/2293)) ([87c3f41](https://github.com/googleapis/nodejs-storage/commit/87c3f419e2a5a3a30ea581aaa6127dfac261be17))
+* **deps:** Update dependency @google-cloud/paginator to v5 ([#2263](https://github.com/googleapis/nodejs-storage/issues/2263)) ([0c9b342](https://github.com/googleapis/nodejs-storage/commit/0c9b3425b47c3031ec4bac6d45d8cdca48b2f1a6))
+* **deps:** Update dependency @google-cloud/projectify to v4 ([#2264](https://github.com/googleapis/nodejs-storage/issues/2264)) ([c881bae](https://github.com/googleapis/nodejs-storage/commit/c881bae96b40f609d2b7a8d7388c6a76d34faab1))
+* **deps:** Update dependency @google-cloud/promisify to v4 ([#2262](https://github.com/googleapis/nodejs-storage/issues/2262)) ([9d46ff3](https://github.com/googleapis/nodejs-storage/commit/9d46ff3c02315c5a3516aa5f2755ee0471ba036b))
+* **deps:** Update dependency @google-cloud/pubsub to v4 ([#2256](https://github.com/googleapis/nodejs-storage/issues/2256)) ([18282bb](https://github.com/googleapis/nodejs-storage/commit/18282bbefe1201e51867c676a86301f8086aaf1e))
+
+
+### Miscellaneous Chores
+
+* Release 7.1.0 ([#2274](https://github.com/googleapis/nodejs-storage/issues/2274)) ([e0f45c2](https://github.com/googleapis/nodejs-storage/commit/e0f45c24b44d11c72ff40cc534be11cb2a65192f))
+
+## [7.0.1](https://github.com/googleapis/nodejs-storage/compare/v7.0.0...v7.0.1) (2023-08-07)
+
+
+### Bug Fixes
+
+* Export new types from index.ts ([#2258](https://github.com/googleapis/nodejs-storage/issues/2258)) ([93d2a0f](https://github.com/googleapis/nodejs-storage/commit/93d2a0f9f6d6a3de652aaeb3dd914bbc0bb593e0))
+
+## [7.0.0](https://github.com/googleapis/nodejs-storage/compare/v6.12.0...v7.0.0) (2023-08-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* Make node 14 the minimum supported version ([#2244](https://github.com/googleapis/nodejs-storage/issues/2244))
+* Add stronger typings to metadata ([#2234](https://github.com/googleapis/nodejs-storage/issues/2234))
+* Remove extend and Treat Provided Options as Mutable ([#2204](https://github.com/googleapis/nodejs-storage/issues/2204))
+* Stronger typing for lifecycle rules ([#2215](https://github.com/googleapis/nodejs-storage/issues/2215))
+* Do not return responsebody in delete, only raw response ([#2236](https://github.com/googleapis/nodejs-storage/issues/2236))
+* Remove extraneous validation in favor of server errors ([#2237](https://github.com/googleapis/nodejs-storage/issues/2237))
+* Mark bucket.setLabels and associated interfaces as deprecated ([#2214](https://github.com/googleapis/nodejs-storage/issues/2214))
+* Disable source maps for smaller bundle size ([#2240](https://github.com/googleapis/nodejs-storage/issues/2240))
+
+
+
+### Features
+
+* Make node 14 the minimum supported version ([#2244](https://github.com/googleapis/nodejs-storage/issues/2244)) ([f48dcd2](https://github.com/googleapis/nodejs-storage/commit/f48dcd2d00081aea8990f35b68a91248f3862abe))
+
+## [6.12.0](https://github.com/googleapis/nodejs-storage/compare/v6.11.0...v6.12.0) (2023-07-13)
+
+
+### Features
+
+* Add header for deno runtime for metrics tracking ([#2220](https://github.com/googleapis/nodejs-storage/issues/2220)) ([5083920](https://github.com/googleapis/nodejs-storage/commit/50839209063e75996b2a57bd7664760e0e5331ca))
+* MPU for transfer manager ([#2192](https://github.com/googleapis/nodejs-storage/issues/2192)) ([ae83421](https://github.com/googleapis/nodejs-storage/commit/ae83421e617a5761c75a7c8a15eaa1ea7c7fb1de))
+
+## [6.11.0](https://github.com/googleapis/nodejs-storage/compare/v6.10.1...v6.11.0) (2023-06-02)
+
+
+### Features
+
+* Add support for matchGlob list option ([#2206](https://github.com/googleapis/nodejs-storage/issues/2206)) ([79dd839](https://github.com/googleapis/nodejs-storage/commit/79dd8394fbbc0c97aa3acb86ad2248fd58b243b4))
+
+## [6.10.1](https://github.com/googleapis/nodejs-storage/compare/v6.10.0...v6.10.1) (2023-05-10)
+
+
+### Performance Improvements
+
+* Improve Multiple Chunk Upload Performance ([#2185](https://github.com/googleapis/nodejs-storage/issues/2185)) ([3b2b877](https://github.com/googleapis/nodejs-storage/commit/3b2b87707072e5dc9221a5ba3c727c70db13a593))
+
+## [6.10.0](https://github.com/googleapis/nodejs-storage/compare/v6.9.5...v6.10.0) (2023-05-02)
+
+
+### Features
+
+* Retry Socket Connection Timeouts on Node 20+ ([#2187](https://github.com/googleapis/nodejs-storage/issues/2187)) ([733b560](https://github.com/googleapis/nodejs-storage/commit/733b560c2f634884dd31c916c208ee6395d4fbe1))
+
 ## [6.9.5](https://github.com/googleapis/nodejs-storage/compare/v6.9.4...v6.9.5) (2023-03-30)
 
 

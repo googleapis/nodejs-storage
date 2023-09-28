@@ -16,7 +16,6 @@ import {
   ApiError,
   BodyResponseCallback,
   DecorateRequestOptions,
-  Metadata,
   MetadataCallback,
   ServiceObject,
   ServiceObjectConfig,
@@ -28,7 +27,6 @@ import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
 import * as assert from 'assert';
 import * as crypto from 'crypto';
 import * as duplexify from 'duplexify';
-import * as extend from 'extend';
 import * as fs from 'fs';
 import * as proxyquire from 'proxyquire';
 import * as resumableUpload from '../src/resumable-upload';
@@ -53,10 +51,15 @@ import {
   STORAGE_POST_POLICY_BASE_URL,
   MoveOptions,
   FileExceptionMessages,
+  FileMetadata,
 } from '../src/file';
 import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
 import {formatAsUTCISO} from '../src/util';
-import {SetMetadataOptions} from '../src/nodejs-common/service-object';
+import {
+  BaseMetadata,
+  SetMetadataOptions,
+} from '../src/nodejs-common/service-object';
+import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util';
 
 class HTTPError extends Error {
   code: number;
@@ -105,20 +108,21 @@ const fakePromisify = {
   },
 };
 
-const fsCached = extend(true, {}, fs);
-const fakeFs = extend(true, {}, fsCached);
+const fsCached = fs;
+const fakeFs = {...fsCached};
 
-const zlibCached = extend(true, {}, zlib);
+const zlibCached = zlib;
 let createGunzipOverride: Function | null;
-const fakeZlib = extend(true, {}, zlib, {
+const fakeZlib = {
+  ...zlib,
   createGunzip(...args: Array<{}>) {
     return (createGunzipOverride || zlibCached.createGunzip)(...args);
   },
-});
+};
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const osCached = extend(true, {}, require('os'));
-const fakeOs = extend(true, {}, osCached);
+const osCached = require('os');
+const fakeOs = {...osCached};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let resumableUploadOverride: any;
@@ -150,7 +154,7 @@ Object.assign(fakeResumableUpload, {
   },
 });
 
-class FakeServiceObject extends ServiceObject {
+class FakeServiceObject extends ServiceObject<FakeServiceObject, BaseMetadata> {
   calledWith_: IArguments;
   constructor(config: ServiceObjectConfig) {
     super(config);
@@ -210,8 +214,8 @@ describe('File', () => {
   });
 
   beforeEach(() => {
-    extend(true, fakeFs, fsCached);
-    extend(true, fakeOs, osCached);
+    Object.assign(fakeFs, fsCached);
+    Object.assign(fakeOs, osCached);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     FakeServiceObject.prototype.request = util.noop as any;
 
@@ -1032,6 +1036,24 @@ describe('File', () => {
       };
 
       file.createReadStream(options).resume();
+    });
+
+    it('should pass the `GCCL_GCS_CMD_KEY` to `requestStream`', done => {
+      const expected = 'expected/value';
+
+      file.requestStream = (opts: DecorateRequestOptions) => {
+        assert.equal(opts[GCCL_GCS_CMD_KEY], expected);
+
+        process.nextTick(() => done());
+
+        return duplexify();
+      };
+
+      file
+        .createReadStream({
+          [GCCL_GCS_CMD_KEY]: expected,
+        })
+        .resume();
     });
 
     describe('authenticating', () => {
@@ -2078,19 +2100,6 @@ describe('File', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       file.startResumableUpload_ = (stream: {}, options: any) => {
         assert.strictEqual(options.metadata.contentType, 'image/png');
-        done();
-      };
-
-      writable.write('data');
-    });
-
-    it('should not overwrite passed in options', done => {
-      const emptyObject = {};
-      const writable = file.createWriteStream(emptyObject);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      file.startResumableUpload_ = (stream: {}, options: any) => {
-        assert.strictEqual(options.metadata.contentType, 'image/png');
-        assert.deepStrictEqual(emptyObject, {});
         done();
       };
 
@@ -3562,35 +3571,6 @@ describe('File', () => {
       });
     });
 
-    it('should error if action is null', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      SIGNED_URL_CONFIG.action = null as any;
-
-      assert.throws(() => {
-        file.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
-    });
-
-    it('should error if action is undefined', () => {
-      const urlConfig = {...SIGNED_URL_CONFIG} as Partial<GetSignedUrlConfig>;
-      delete urlConfig.action;
-      assert.throws(() => {
-        file.getSignedUrl(urlConfig, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
-    });
-
-    it('should error for an invalid action', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      SIGNED_URL_CONFIG.action = 'watch' as any;
-
-      assert.throws(() => {
-        file.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
-    });
-
     it('should add "x-goog-resumable: start" header if action is resumable', done => {
       SIGNED_URL_CONFIG.action = 'resumable';
       SIGNED_URL_CONFIG.extensionHeaders = {
@@ -3683,9 +3663,9 @@ describe('File', () => {
       const apiResponse = {};
 
       file.setMetadata = (
-        metadata: Metadata,
-        optionsOrCallback: SetMetadataOptions | MetadataCallback,
-        cb: MetadataCallback
+        metadata: FileMetadata,
+        optionsOrCallback: SetMetadataOptions | MetadataCallback<FileMetadata>,
+        cb: MetadataCallback<FileMetadata>
       ) => {
         Promise.resolve([apiResponse]).then(resp => cb(null, ...resp));
       };
@@ -4314,6 +4294,145 @@ describe('File', () => {
         await file.save(DATA, options, assert.ifError);
       });
 
+      it('should save a Readable with no errors', done => {
+        const options = {resumable: false};
+        file.createWriteStream = () => {
+          const writeStream = new PassThrough();
+          writeStream.on('data', data => {
+            assert.strictEqual(data.toString(), DATA);
+          });
+          writeStream.once('finish', done);
+          return writeStream;
+        };
+
+        const readable = new Readable({
+          read() {
+            this.push(DATA);
+            this.push(null);
+          },
+        });
+
+        void file.save(readable, options);
+      });
+
+      it('should propagate Readable errors', done => {
+        const options = {resumable: false};
+        file.createWriteStream = () => {
+          const writeStream = new PassThrough();
+          let errorCalled = false;
+          writeStream.on('data', data => {
+            assert.strictEqual(data.toString(), DATA);
+          });
+          writeStream.on('error', err => {
+            errorCalled = true;
+            assert.strictEqual(err.message, 'Error!');
+          });
+          writeStream.on('finish', () => {
+            assert.ok(errorCalled);
+          });
+          return writeStream;
+        };
+
+        const readable = new Readable({
+          read() {
+            setTimeout(() => {
+              this.push(DATA);
+              this.destroy(new Error('Error!'));
+            }, 50);
+          },
+        });
+
+        file.save(readable, options, (err: Error) => {
+          assert.strictEqual(err.message, 'Error!');
+          done();
+        });
+      });
+
+      it('Readable upload should not retry', async () => {
+        const options = {resumable: false};
+
+        let retryCount = 0;
+
+        file.createWriteStream = () => {
+          retryCount++;
+          return new Transform({
+            transform(
+              chunk: string | Buffer,
+              _encoding: string,
+              done: Function
+            ) {
+              this.push(chunk);
+              setTimeout(() => {
+                done(new HTTPError('retryable error', 408));
+              }, 5);
+            },
+          });
+        };
+        try {
+          const readable = new Readable({
+            read() {
+              this.push(DATA);
+              this.push(null);
+            },
+          });
+
+          await file.save(readable, options);
+          throw Error('unreachable');
+        } catch (e) {
+          assert.strictEqual((e as Error).message, 'retryable error');
+          assert.ok(retryCount === 1);
+        }
+      });
+
+      it('should save a generator with no error', done => {
+        const options = {resumable: false};
+        file.createWriteStream = () => {
+          const writeStream = new PassThrough();
+          writeStream.on('data', data => {
+            assert.strictEqual(data.toString(), DATA);
+            done();
+          });
+          return writeStream;
+        };
+
+        const generator = async function* (arg?: {signal?: AbortSignal}) {
+          await new Promise(resolve => setTimeout(resolve, 5));
+          if (arg?.signal?.aborted) return;
+          yield DATA;
+        };
+
+        void file.save(generator, options);
+      });
+
+      it('should propagate async iterable errors', done => {
+        const options = {resumable: false};
+        file.createWriteStream = () => {
+          const writeStream = new PassThrough();
+          let errorCalled = false;
+          writeStream.on('data', data => {
+            assert.strictEqual(data.toString(), DATA);
+          });
+          writeStream.on('error', err => {
+            errorCalled = true;
+            assert.strictEqual(err.message, 'Error!');
+          });
+          writeStream.on('finish', () => {
+            assert.ok(errorCalled);
+          });
+          return writeStream;
+        };
+
+        const generator = async function* () {
+          yield DATA;
+          throw new Error('Error!');
+        };
+
+        file.save(generator(), options, (err: Error) => {
+          assert.strictEqual(err.message, 'Error!');
+          done();
+        });
+      });
+
       it('buffer upload should retry on first failure', async () => {
         const options = {
           resumable: false,
@@ -4832,6 +4951,7 @@ describe('File', () => {
       makeWritableStreamOverride = (stream: {}, options_: any) => {
         assert.deepStrictEqual(options_.metadata, options.metadata);
         assert.deepStrictEqual(options_.request, {
+          [GCCL_GCS_CMD_KEY]: undefined,
           qs: {
             name: file.name,
             predefinedAcl: options.predefinedAcl,

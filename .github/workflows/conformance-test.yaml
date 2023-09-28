@@ -8,10 +8,10 @@ jobs:
   conformance-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
         with:
-          node-version: 12
+          node-version: 14
       - run: node --version
       - run: npm install
       - run: npm run conformance-test
