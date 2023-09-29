@@ -36,7 +36,8 @@ import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util.js';
 import {AuthClient, GoogleAuth} from 'google-auth-library';
 import {tmpdir} from 'os';
 import fs from 'fs';
-import {promises} from 'fs';
+import {promises as fsp, Stats} from 'fs';
+
 import * as sinon from 'sinon';
 
 describe('Transfer Manager', () => {
@@ -81,11 +82,11 @@ describe('Transfer Manager', () => {
 
   describe('uploadManyFiles', () => {
     beforeEach(() => {
-      sandbox.stub(promises, 'lstat').resolves({
+      sandbox.stub(fsp, 'lstat').resolves({
         isDirectory: () => {
           return false;
         },
-      } as fs.Stats);
+      } as Stats);
     });
 
     it('calls upload with the provided file paths', async () => {
@@ -238,10 +239,10 @@ describe('Transfer Manager', () => {
     let file: File;
 
     beforeEach(() => {
-      sandbox.stub(promises, 'open').resolves({
+      sandbox.stub(fsp, 'open').resolves({
         close: () => Promise.resolve(),
         write: (buffer: unknown) => Promise.resolve({buffer}),
-      } as promises.FileHandle);
+      } as fsp.FileHandle);
 
       file = new File(bucket, 'some-large-file');
       sandbox.stub(file, 'get').resolves([
@@ -322,13 +323,13 @@ describe('Transfer Manager', () => {
     }
 
     before(async () => {
-      directory = await promises.mkdtemp(
+      directory = await fsp.mkdtemp(
         path.join(tmpdir(), 'tm-uploadFileInChunks-')
       );
 
       filePath = path.join(directory, 't.txt');
 
-      await promises.writeFile(filePath, 'hello');
+      await fsp.writeFile(filePath, 'hello');
     });
 
     beforeEach(async () => {
@@ -346,7 +347,7 @@ describe('Transfer Manager', () => {
     });
 
     after(async () => {
-      await promises.rm(directory, {force: true, recursive: true});
+      await fsp.rm(directory, {force: true, recursive: true});
     });
 
     it('should call initiateUpload, uploadPart, and completeUpload', async () => {
