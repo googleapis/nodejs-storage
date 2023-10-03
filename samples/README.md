@@ -128,6 +128,7 @@ objects to users via direct download.
   * [Upload Directory With Transfer Manager](#upload-directory-with-transfer-manager)
   * [Upload Encrypted File](#upload-encrypted-file)
   * [Upload File](#upload-file)
+  * [Upload a File in Chunks Utilzing Transfer Manager](#upload-a-file-in-chunks-utilzing-transfer-manager)
   * [Upload File With Kms Key](#upload-file-with-kms-key)
   * [Upload From Memory](#upload-from-memory)
   * [Upload Many Files With Transfer Manager](#upload-many-files-with-transfer-manager)
@@ -2079,6 +2080,25 @@ __Usage:__
 
 
 `node samples/uploadFile.js`
+
+
+-----
+
+
+
+
+### Upload a File in Chunks Utilzing Transfer Manager
+
+Uploads a single file in in chunks in parallel utilizing transfer manager.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadFileInChunksWithTransferManager.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadFileInChunksWithTransferManager.js,samples/README.md)
+
+__Usage:__
+
+
+`node uploadFileInChunksWithTransferManager.js <BUCKET_NAME> <FILE_NAME> <CHUNK_SIZE>`
 
 
 -----
