@@ -50,7 +50,7 @@ objects to users via direct download.
   * [Download Byte Range](#download-byte-range)
   * [Download Encrypted File](#download-encrypted-file)
   * [Download File](#download-file)
-  * [Download a File in Chunks Utilzing Transfer Manager](#download-a-file-in-chunks-utilzing-transfer-manager)
+  * [Download a File in Chunks With Transfer Manager](#download-a-file-in-chunks-with-transfer-manager)
   * [Download File Using Requester Pays](#download-file-using-requester-pays)
   * [Download Folder With Transfer Manager](#download-folder-with-transfer-manager)
   * [Download Into Memory](#download-into-memory)
@@ -128,7 +128,7 @@ objects to users via direct download.
   * [Upload Directory With Transfer Manager](#upload-directory-with-transfer-manager)
   * [Upload Encrypted File](#upload-encrypted-file)
   * [Upload File](#upload-file)
-  * [Upload a File in Chunks Utilzing Transfer Manager](#upload-a-file-in-chunks-utilzing-transfer-manager)
+  * [Upload a File in Chunks With Transfer Manager](#upload-a-file-in-chunks-with-transfer-manager)
   * [Upload File With Kms Key](#upload-file-with-kms-key)
   * [Upload From Memory](#upload-from-memory)
   * [Upload Many Files With Transfer Manager](#upload-many-files-with-transfer-manager)
@@ -719,7 +719,7 @@ __Usage:__
 
 
 
-### Download a File in Chunks Utilzing Transfer Manager
+### Download a File in Chunks With Transfer Manager
 
 Downloads a single file in in chunks in parallel utilizing transfer manager.
 
@@ -2087,7 +2087,7 @@ __Usage:__
 
 
 
-### Upload a File in Chunks Utilzing Transfer Manager
+### Upload a File in Chunks With Transfer Manager
 
 Uploads a single file in in chunks in parallel utilizing transfer manager.
 
