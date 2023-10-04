@@ -643,7 +643,7 @@ export class TransferManager {
 
     let start = 0;
     const filePath = options.destination || path.basename(file.name);
-    const fileToWrite = await fsp.open(filePath, 'w+');
+    const fileToWrite = await fsp.open(filePath, 'w');
     while (start < size) {
       const chunkStart = start;
       let chunkEnd = start + chunkSize - 1;

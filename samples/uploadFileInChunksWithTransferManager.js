@@ -16,7 +16,7 @@
  */
 
 // sample-metadata:
-//   title: Upload a File in Chunks Utilzing Transfer Manager
+//   title: Upload a File in Chunks With Transfer Manager
 //   description: Uploads a single file in in chunks in parallel utilizing transfer manager.
 //   usage: node uploadFileInChunksWithTransferManager.js <BUCKET_NAME> <FILE_NAME> <CHUNK_SIZE>
 
