@@ -478,10 +478,10 @@ export class TransferManager {
         .split(path.win32.sep)
         .join(path.posix.sep);
       if (options.prefix) {
-        passThroughOptionsCopy.destination = path
-          .join(options.prefix, passThroughOptionsCopy.destination)
-          .split(path.win32.sep)
-          .join(path.posix.sep);
+        passThroughOptionsCopy.destination = path.posix.join(
+          ...options.prefix.split(path.sep),
+          passThroughOptionsCopy.destination
+        );
       }
 
       promises.push(
