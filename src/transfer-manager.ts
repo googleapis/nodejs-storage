@@ -475,7 +475,7 @@ export class TransferManager {
       };
 
       passThroughOptionsCopy.destination = filePath
-        .split(path.win32.sep)
+        .split(path.sep)
         .join(path.posix.sep);
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.posix.join(

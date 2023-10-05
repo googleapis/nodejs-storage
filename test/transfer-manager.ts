@@ -152,15 +152,15 @@ describe('Transfer Manager', () => {
       await transferManager.uploadManyFiles(paths, {prefix: 'hello/world'});
     });
 
-    it('replaces win32 separator with posix separator when calling bucket.upload', async () => {
-      const path = ['\\a\\b\\c'];
-      const expected = '/a/b/c';
+    it('replaces OS specfic separator with posix separator when calling bucket.upload', async () => {
+      const filePath = ['a', 'b', 'c'].join(path.sep);
+      const expected = ['a', 'b', 'c'].join(path.posix.sep);
 
       sandbox.stub(bucket, 'upload').callsFake((path, options) => {
         assert.strictEqual(expected, (options as UploadOptions).destination);
       });
 
-      await transferManager.uploadManyFiles(path);
+      await transferManager.uploadManyFiles([filePath]);
     });
   });
 
