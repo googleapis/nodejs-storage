@@ -113,8 +113,15 @@ describe('Transfer Manager', () => {
     });
 
     it('sets destination to prefix + filename when prefix is supplied', async () => {
-      const paths = ['/a/b/foo/bar.txt'];
-      const expectedDestination = path.normalize('hello/world/a/b/foo/bar.txt');
+      const filePaths = ['a', 'b', 'foo', 'bar.txt'].join(path.sep);
+      const expectedDestination = [
+        'hello',
+        'world',
+        'a',
+        'b',
+        'foo',
+        'bar.txt',
+      ].join(path.posix.sep);
       sandbox.stub(bucket, 'upload').callsFake((path, options) => {
         assert.strictEqual(
           (options as UploadOptions).destination,
@@ -122,20 +129,22 @@ describe('Transfer Manager', () => {
         );
       });
 
-      await transferManager.uploadManyFiles(paths, {prefix: 'hello/world'});
+      await transferManager.uploadManyFiles([filePaths], {
+        prefix: ['hello', 'world'].join(path.sep),
+      });
     });
 
     it('returns a promise with the uploaded file if there is no callback', async () => {
-      const paths = [path.join(__dirname, '../../test/testdata/testfile.json')];
+      const paths = [['a', 'b', 'foo', 'bar.txt'].join(path.sep)];
       sandbox.stub(bucket, 'upload').callsFake(() => {
-        const resp = [{name: paths[0]}];
+        const resp = [{name: paths[0].split(path.sep).join(path.posix.sep)}];
         return Promise.resolve(resp);
       });
 
       const result = await transferManager.uploadManyFiles(paths);
       assert.strictEqual(
         result[0][0].name,
-        paths[0].split(path.win32.sep).join(path.posix.sep)
+        paths[0].split(path.sep).join(path.posix.sep)
       );
     });
 
