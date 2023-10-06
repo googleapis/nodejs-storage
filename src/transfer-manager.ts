@@ -27,11 +27,10 @@ import {ApiError} from './nodejs-common/index.js';
 import {GaxiosResponse, Headers} from 'gaxios';
 import {createHash} from 'crypto';
 import {GCCL_GCS_CMD_KEY} from './nodejs-common/util.js';
-import {
-  getPackageJSON,
-  getRuntimeTrackingString,
-  getUserAgentString,
-} from './util.js';
+import {getRuntimeTrackingString, getUserAgentString} from './util.js';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {getPackageJSON} from './package-json-helper.cjs';
 
 const packageJson = getPackageJSON();
 

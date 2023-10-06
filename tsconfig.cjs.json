@@ -5,10 +5,11 @@
     "outDir": "build/cjs",
     "resolveJsonModule": true,
     "sourceMap": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
   },
   "include": [
     "src/*.ts",
+    "src/*.cjs",
     "test/**/*.ts",
     "system-test/*.ts",
     "conformance-test/*.ts",

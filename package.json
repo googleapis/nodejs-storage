@@ -55,6 +55,7 @@
     "docs": "jsdoc -c .jsdoc.json",
     "fix": "gts fix",
     "lint": "gts check",
+    "postcompile": "cp ./src/package-json-helper.cjs ./build/cjs/src && cp ./src/package-json-helper.cjs ./build/esm/src",
     "postcompile:cjs": "babel --plugins gapic-tools/build/src/replaceImportMetaUrl,gapic-tools/build/src/toggleESMFlagVariable build/cjs/src/util.js -o build/cjs/src/util.js && cp internal-tooling/helpers/package.cjs.json build/cjs/package.json",
     "precompile": "rm -rf build/",
     "preconformance-test": "npm run compile:cjs -- --sourceMap",

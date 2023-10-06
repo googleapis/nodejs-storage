@@ -15,7 +15,6 @@
 import * as path from 'path';
 import * as querystring from 'querystring';
 import {PassThrough} from 'stream';
-import * as fs from 'fs';
 import * as url from 'url';
 
 // Done to avoid a problem with mangling of identifiers when using esModuleInterop
@@ -223,15 +222,6 @@ export function getDirName() {
   }
 
   return dirToUse;
-}
-
-export function getPackageJSON() {
-  const dirName = getDirName();
-  return JSON.parse(
-    fs
-      .readFileSync(path.join(dirName, '..', '..', '..', 'package.json'))
-      .toString()
-  );
 }
 
 export function getModuleFormat() {

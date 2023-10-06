@@ -20,7 +20,10 @@ import {Readable} from 'stream';
 import {Bucket, BucketMetadata} from './bucket.js';
 import {Channel} from './channel.js';
 import {File} from './file.js';
-import {getPackageJSON, normalize} from './util.js';
+import {normalize} from './util.js';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {getPackageJSON} from './package-json-helper.cjs';
 import {HmacKey, HmacKeyMetadata, HmacKeyOptions} from './hmacKey.js';
 import {
   CRC32CValidatorGenerator,

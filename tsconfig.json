@@ -12,6 +12,7 @@
     },
     "include": [
         "src/*.ts",
+        "src/*.cjs",
         "internal-tooling/*.ts",
         "system-test/*.ts"
     ]

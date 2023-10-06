@@ -33,7 +33,9 @@ import {
   PROTOCOL_REGEX,
   StorageExceptionMessages,
 } from '../src/storage.js';
-import {getPackageJSON} from '../src/util.js';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {getPackageJSON} from '../src/package-json-helper.cjs';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hmacKeyModule = require('../src/hmacKey');

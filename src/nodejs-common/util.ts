@@ -33,12 +33,14 @@ import {Interceptor} from './service-object.js';
 import * as uuid from 'uuid';
 import {DEFAULT_PROJECT_ID_TOKEN} from './service.js';
 import {
-  getUserAgentString,
   getModuleFormat,
-  getPackageJSON,
   getRuntimeTrackingString,
+  getUserAgentString,
 } from '../util.js';
 import duplexify from 'duplexify';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {getPackageJSON} from '../package-json-helper.cjs';
 
 const packageJson = getPackageJSON();
 

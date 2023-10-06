@@ -26,13 +26,15 @@ import {Readable, Writable, WritableOptions} from 'stream';
 import AsyncRetry from 'async-retry';
 import {RetryOptions, PreconditionOptions} from './storage.js';
 import * as uuid from 'uuid';
+import {GCCL_GCS_CMD_KEY} from './nodejs-common/util.js';
 import {
   getRuntimeTrackingString,
-  getUserAgentString,
-  getPackageJSON,
   getModuleFormat,
+  getUserAgentString,
 } from './util.js';
-import {GCCL_GCS_CMD_KEY} from './nodejs-common/util.js';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {getPackageJSON} from './package-json-helper.cjs';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
