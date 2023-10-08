@@ -649,17 +649,14 @@ export class TransferManager {
       let chunkEnd = start + chunkSize - 1;
       chunkEnd = chunkEnd > size ? size : chunkEnd;
       promises.push(
-        limit(() =>
-          file
-            .download({
-              start: chunkStart,
-              end: chunkEnd,
-              [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_SHARDED,
-            })
-            .then(resp => {
-              return fileToWrite.write(resp[0], 0, resp[0].length, chunkStart);
-            })
-        )
+        limit(async () => {
+          const resp = await file.download({
+            start: chunkStart,
+            end: chunkEnd,
+            [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_SHARDED,
+          });
+          return fileToWrite.write(resp[0], 0, resp[0].length, chunkStart);
+        })
       );
 
       start += chunkSize;
