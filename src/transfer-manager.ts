@@ -665,26 +665,17 @@ export class TransferManager {
       start += chunkSize;
     }
 
-    return new Promise((resolve, reject) => {
-      let results: DownloadResponse;
-      Promise.all(promises)
-        .then(data => {
-          results = data.map(result => result.buffer) as DownloadResponse;
-          if (options.validation === 'crc32c') {
-            return CRC32C.fromFile(filePath);
-          }
-          return;
-        })
-        .then(() => {
-          resolve(results);
-        })
-        .catch(e => {
-          reject(e);
-        })
-        .finally(() => {
-          fileToWrite.close();
-        });
-    });
+    let results: DownloadResponse;
+    try {
+      const data = await Promise.all(promises);
+      results = data.map(result => result.buffer) as DownloadResponse;
+      if (options.validation === 'crc32c') {
+        await CRC32C.fromFile(filePath);
+      }
+      return results;
+    } finally {
+      fileToWrite.close();
+    }
   }
 
   /**
