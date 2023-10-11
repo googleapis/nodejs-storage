@@ -88,9 +88,16 @@ it('should disable autoclass', async () => {
   assert.include(output, 'Autoclass');
 });
 
+it('should enable autoclass with terminal storage class ARCHIVE', async () => {
+  const output = execSync(
+    `node setAutoclass.js ${bucketNameAutoclass} ${true} ARCHIVE`
+  );
+  assert.include(output, 'ARCHIVE');
+});
+
 it('should get autoclass', async () => {
   const output = execSync(`node getAutoclass.js ${bucketNameAutoclass}`);
-  assert.include(output, 'Autoclass enabled is set to false');
+  assert.include(output, 'Autoclass terminal storage class is set to');
 });
 
 it('should set a buckets default KMS key', async () => {
