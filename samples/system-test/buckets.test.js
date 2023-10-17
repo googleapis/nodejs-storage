@@ -98,7 +98,7 @@ it('should disable autoclass', async () => {
 
 it('should get autoclass', async () => {
   const output = execSync(`node getAutoclass.js ${bucketNameAutoclass}`);
-  assert.include(output, 'Autoclass terminal storage class is set to');
+  assert.include(output, `Autoclass is disabled for ${bucketNameAutoclass}`);
 });
 
 it('should set a buckets default KMS key', async () => {

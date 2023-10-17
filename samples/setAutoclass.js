@@ -16,8 +16,8 @@
 
 function main(
   bucketName = 'my-bucket',
-  toggle = false,
-  terminalStorageClass = 'NEARLINE'
+  toggle = true,
+  terminalStorageClass = 'ARCHIVE'
 ) {
   // [START storage_set_autoclass]
   /**
