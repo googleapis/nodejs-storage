@@ -240,6 +240,7 @@ describe('resumable-upload', () => {
         bucket: BUCKET,
         file: FILE,
         offset,
+        uri: 'https://example.com',
         retryOptions: RETRY_OPTIONS,
       });
 
@@ -1288,6 +1289,7 @@ describe('resumable-upload', () => {
         assert.strictEqual(body, BODY);
         done();
       });
+      up.upstreamEnded = true;
 
       up.responseHandler(RESP);
     });
@@ -1302,6 +1304,7 @@ describe('resumable-upload', () => {
         assert.strictEqual(typeof data.size, 'number');
         done();
       });
+      up.upstreamEnded = true;
 
       up.responseHandler(RESP);
     });
@@ -1314,6 +1317,7 @@ describe('resumable-upload', () => {
         assert.strictEqual(err, RESP.data.error);
         done();
       };
+      up.upstreamEnded = true;
       up.responseHandler(RESP);
     });
 
@@ -1325,6 +1329,7 @@ describe('resumable-upload', () => {
         assert.strictEqual(err.message, 'Upload failed');
         done();
       };
+      up.upstreamEnded = true;
       up.responseHandler(RESP);
     });
 
@@ -1340,12 +1345,32 @@ describe('resumable-upload', () => {
       };
 
       up.chunkSize = 1;
+      up.writeBuffers = [Buffer.alloc(0)];
 
       up.continueUploading = () => {
         assert.equal(up.offset, lastByteReceived + 1);
 
         done();
       };
+
+      up.responseHandler(RESP);
+    });
+
+    it('should not continue with multi-chunk upload when incomplete if the upstream has finished', done => {
+      const lastByteReceived = 9;
+
+      const RESP = {
+        data: '',
+        status: RESUMABLE_INCOMPLETE_STATUS_CODE,
+        headers: {
+          range: `bytes=0-${lastByteReceived}`,
+        },
+      };
+
+      up.chunkSize = 1;
+      up.upstreamEnded = true;
+
+      up.on('uploadFinished', done);
 
       up.responseHandler(RESP);
     });
@@ -1401,6 +1426,8 @@ describe('resumable-upload', () => {
     it('currentInvocationId.chunk should be different after success', done => {
       const beforeCallInvocationId = up.currentInvocationId.chunk;
       const RESP = {data: '', status: 200};
+      up.upstreamEnded = true;
+
       up.on('uploadFinished', () => {
         assert.notEqual(beforeCallInvocationId, up.currentInvocationId.chunk);
         done();

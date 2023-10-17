@@ -72,7 +72,7 @@ import {
   formatAsUTCISO,
   PassThroughShim,
 } from './util';
-import {CRC32CValidatorGenerator} from './crc32c';
+import {CRC32C, CRC32CValidatorGenerator} from './crc32c';
 import {HashStreamValidator} from './hash-stream-validator';
 import {URL} from 'url';
 
@@ -210,6 +210,7 @@ export type PredefinedAcl =
 type PublicResumableUploadOptions =
   | 'chunkSize'
   | 'highWaterMark'
+  | 'isPartialUpload'
   | 'metadata'
   | 'origin'
   | 'offset'
@@ -221,6 +222,11 @@ type PublicResumableUploadOptions =
 
 export interface CreateResumableUploadOptions
   extends Pick<resumableUpload.UploadConfig, PublicResumableUploadOptions> {
+  /**
+   * A CRC32C to resume from when resuming a previous upload.
+   * @see {@link CRC32C.from} for possible values.
+   */
+  resumeCrc32c?: Parameters<(typeof CRC32C)['from']>[0];
   preconditionOpts?: PreconditionOptions;
   [GCCL_GCS_CMD_KEY]?: resumableUpload.UploadConfig[typeof GCCL_GCS_CMD_KEY];
 }
@@ -469,6 +475,7 @@ export enum FileExceptionMessages {
   UPLOAD_MISMATCH = `The uploaded data did not match the data from the server.
     As a precaution, the file has been deleted.
     To be sure the content is the same, you should try uploading the file again.`,
+  MD5_RESUMED_UPLOAD = 'MD5 cannot be used with a resumed resumable upload as MD5 cannot be extended from an existing value',
 }
 
 /**
@@ -1936,12 +1943,12 @@ class File extends ServiceObject<File, FileMetadata> {
       md5 = options.validation === 'md5';
     } else if (options.validation === false) {
       crc32c = false;
-    } else if (options.offset) {
-      // TODO: check for provided offset
-      // if available,
+      md5 = false;
     }
 
-    // offset
+    if (options.offset && md5) {
+      throw new RangeError(FileExceptionMessages.MD5_RESUMED_UPLOAD);
+    }
 
     /**
      * A callback for determining when the underlying pipeline is complete.
@@ -1981,7 +1988,7 @@ class File extends ServiceObject<File, FileMetadata> {
       fileWriteStreamMetadataReceived = true;
     });
 
-    writeStream.on('writing', async () => {
+    const writingCallback = async () => {
       if (options.resumable === false) {
         this.startSimpleUpload_(fileWriteStream, options);
       } else {
@@ -1995,13 +2002,20 @@ class File extends ServiceObject<File, FileMetadata> {
 
       let hashCalculatingStream: HashStreamValidator | null = null;
       if (crc32c || md5) {
-        // if offset
-        // - if md5 -> error
-        // - if crc32cResume -> set for init HSV value
-        // - if !crc32cResume -> query for current crc32c for init HSV value
+        let crc32cInstance: CRC32C | undefined = undefined;
+
+        if (options.offset) {
+          // set the initial CRC32C value for the resumed upload.
+          if (options.resumeCrc32c) {
+            crc32cInstance = CRC32C.from(options.resumeCrc32c);
+          } else {
+            // TODO: query for current crc32c for init HSV value
+          }
+        }
 
         hashCalculatingStream = new HashStreamValidator({
           crc32c,
+          crc32cInstance,
           md5,
           crc32cGenerator: this.crc32cGenerator,
           updateHashesOnly: true,
@@ -2047,7 +2061,11 @@ class File extends ServiceObject<File, FileMetadata> {
           }
         }
       );
-    });
+    };
+
+    writeStream.once('writing', () =>
+      writingCallback().catch(pipelineCallback)
+    );
 
     return writeStream;
   }
@@ -3927,6 +3945,7 @@ class File extends ServiceObject<File, FileMetadata> {
       ),
       file: this.name,
       generation: this.generation,
+      isPartialUpload: options.isPartialUpload,
       key: this.encryptionKey,
       kmsKeyName: this.kmsKeyName,
       metadata: options.metadata,

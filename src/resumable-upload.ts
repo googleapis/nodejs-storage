@@ -125,6 +125,14 @@ export interface UploadConfig extends Pick<WritableOptions, 'highWaterMark'> {
   generation?: number;
 
   /**
+   * Set to `true` if the upload is only a subset of the overall object to upload.
+   * This can be used when planning to continue upload an object in another session.
+   *
+   * Must be used with {@link UploadConfig.chunkSize} != `0`.
+   */
+  isPartialUpload?: boolean;
+
+  /**
    * A customer-supplied encryption key. See
    * https://cloud.google.com/storage/docs/encryption#customer-supplied.
    */
@@ -146,11 +154,9 @@ export interface UploadConfig extends Pick<WritableOptions, 'highWaterMark'> {
   /**
    * The starting byte of the upload stream, for resuming an interrupted upload.
    *
-   * If the provided stream is resuming from where the initial stream left off, consider
-   * setting `resumeFromOffset: true`.
+   * If the provided stream should start at the
    *
-   * See
-   * https://cloud.google.com/storage/docs/json_api/v1/how-tos/resumable-upload#resume-upload.
+   * @see {@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/resumable-upload#resume-upload.}
    */
   offset?: number;
 
@@ -183,16 +189,6 @@ export interface UploadConfig extends Pick<WritableOptions, 'highWaterMark'> {
   public?: boolean;
 
   /**
-   * Determines if the provided stream to upload is a continuation of a previous
-   * upload (e.g. partial/remaining stream) or a restart of a previous upload
-   * (a stream containing the entire object).
-   *
-   * If this is `true` and if the `offset` is not provided, it will be calculated
-   * by checking the `uri`.
-   */
-  resumeFromOffset?: boolean;
-
-  /**
    * If you already have a resumable URI from a previously-created resumable
    * upload, just pass it in here and we'll use that.
    */
@@ -217,7 +213,8 @@ export interface ConfigMetadata {
   [key: string]: any;
 
   /**
-   * Set the length of the file being uploaded.
+   * Set the length of the object being uploaded. If uploading a partial
+   * object, this is the overall size of the finalized object.
    */
   contentLength?: number;
 
@@ -273,6 +270,8 @@ export class Upload extends Writable {
   contentLength: number | '*';
   retryOptions: RetryOptions;
   timeOfFirstRequest: number;
+  isPartialUpload: boolean;
+
   private currentInvocationId = {
     chunk: uuid.v4(),
     uri: uuid.v4(),
@@ -299,6 +298,12 @@ export class Upload extends Writable {
 
     if (!cfg.bucket || !cfg.file) {
       throw new Error('A bucket and file name are required');
+    }
+
+    if (cfg.offset && !cfg.uri) {
+      throw new RangeError(
+        'Cannot provide an `offset` without providing a `uri`'
+      );
     }
 
     cfg.authConfig = cfg.authConfig || {};
@@ -336,6 +341,7 @@ export class Upload extends Writable {
     this.userProject = cfg.userProject;
     this.chunkSize = cfg.chunkSize;
     this.retryOptions = cfg.retryOptions;
+    this.isPartialUpload = cfg.isPartialUpload ?? false;
 
     if (cfg.key) {
       const base64Key = Buffer.from(cfg.key).toString('base64');
@@ -353,7 +359,8 @@ export class Upload extends Writable {
     this.uriProvidedManually = !!cfg.uri;
     this.uri = cfg.uri;
 
-    if (cfg.resumeFromOffset && this.offset) {
+    if (this.offset) {
+      // we're resuming an incomplete upload
       this.numBytesWritten = this.offset;
     }
 
@@ -373,7 +380,7 @@ export class Upload extends Writable {
 
     this.once('writing', () => {
       if (this.uri) {
-        this.continueUploading(cfg.resumeFromOffset);
+        this.continueUploading();
       } else {
         this.createURI(err => {
           if (err) {
@@ -491,7 +498,6 @@ export class Upload extends Writable {
    * Retrieves data from upstream's buffer.
    *
    * @param limit The maximum amount to return from the buffer.
-   * @returns The data requested.
    */
   private *pullFromChunkBuffer(limit: number) {
     while (limit) {
@@ -698,20 +704,12 @@ export class Upload extends Writable {
 
     this.uri = uri;
     this.offset = 0;
+
     return uri;
   }
 
-  /**
-   *
-   * @param resumeFromOffset if `true`, set `numBytesWritten` to offset
-   * @returns
-   */
-  private async continueUploading(resumeFromOffset = false) {
+  private async continueUploading() {
     this.offset ?? (await this.getAndSetOffset());
-
-    if (resumeFromOffset) {
-      this.numBytesWritten = this.offset ?? 0;
-    }
 
     return this.startUploading();
   }
@@ -820,10 +818,11 @@ export class Upload extends Writable {
       // https://cloud.google.com/storage/docs/performing-resumable-uploads#chunked-upload
       for await (const chunk of this.upstreamIterator(expectedUploadSize)) {
         // This will conveniently track and keep the size of the buffers
+        // We will hit either the expected upload size or the remainder
         this.#addLocalBufferCache(chunk);
       }
 
-      // We hit either the expected upload size or the remainder
+      // This is the sum from the `#addLocalBufferCache` calls
       const bytesToUpload = this.localWriteCacheByteLength;
 
       // Important: we want to know if the upstream has ended and the queue is empty before
@@ -835,7 +834,11 @@ export class Upload extends Writable {
 
       let totalObjectSize = this.contentLength;
 
-      if (typeof this.contentLength !== 'number' && isLastChunkOfUpload) {
+      if (
+        typeof this.contentLength !== 'number' &&
+        isLastChunkOfUpload &&
+        !this.isPartialUpload
+      ) {
         // Let's let the server know this is the last chunk since
         // we didn't know the content-length beforehand.
         totalObjectSize = bytesToUpload + this.numBytesWritten;
@@ -865,7 +868,7 @@ export class Upload extends Writable {
       const resp = await this.makeRequestStream(reqOpts);
       if (resp) {
         responseReceived = true;
-        this.responseHandler(resp);
+        await this.responseHandler(resp);
       }
     } catch (e) {
       const err = e as ApiError;
@@ -884,7 +887,7 @@ export class Upload extends Writable {
 
   // Process the API response to look for errors that came in
   // the response body.
-  private responseHandler(resp: GaxiosResponse) {
+  private async responseHandler(resp: GaxiosResponse) {
     if (resp.data.error) {
       this.destroy(resp.data.error);
       return;
@@ -893,10 +896,20 @@ export class Upload extends Writable {
     // At this point we can safely create a new id for the chunk
     this.currentInvocationId.chunk = uuid.v4();
 
+    const moreDataToUpload = await this.waitForNextChunk();
+
     const shouldContinueWithNextMultiChunkRequest =
       this.chunkSize &&
       resp.status === RESUMABLE_INCOMPLETE_STATUS_CODE &&
-      resp.headers.range;
+      resp.headers.range &&
+      moreDataToUpload;
+
+    /**
+     * This is true when we're expecting to upload more data, yet
+     *
+     */
+    const shouldContinueUploadInAnotherRequest =
+      resp.status === RESUMABLE_INCOMPLETE_STATUS_CODE && !moreDataToUpload;
 
     if (shouldContinueWithNextMultiChunkRequest) {
       // Use the upper value in this header to determine where to start the next chunk.
@@ -921,7 +934,10 @@ export class Upload extends Writable {
 
       // continue uploading next chunk
       this.continueUploading();
-    } else if (!this.isSuccessfulResponse(resp.status)) {
+    } else if (
+      !this.isSuccessfulResponse(resp.status) &&
+      !shouldContinueUploadInAnotherRequest
+    ) {
       const err: ApiError = new Error('Upload failed');
       err.code = resp.status;
       err.name = 'Upload failed';
@@ -1147,7 +1163,7 @@ export class Upload extends Writable {
    * Check if a given status code is 2xx
    *
    * @param status The status code to check
-   * @returns if the status is 2xx
+   * @returns {boolean} if the status is 2xx
    */
   public isSuccessfulResponse(status: number): boolean {
     return status >= 200 && status < 300;
