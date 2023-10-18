@@ -1997,7 +1997,7 @@ class File extends ServiceObject<File, FileMetadata> {
 
       const transformStreams: Transform[] = [];
       if (gzip) {
-        transformStreams.push(new PassThrough());
+        transformStreams.push(zlib.createGzip());
       }
 
       let hashCalculatingStream: HashStreamValidator | null = null;
