@@ -1133,7 +1133,7 @@ export class Upload extends Writable {
   }
 
   /**
-   * @returns {number} the amount of time to wait before retrying the request
+   * @returns the amount of time to wait before retrying the request
    */
   private getRetryDelay(): number {
     const randomMs = Math.round(Math.random() * 1000);
@@ -1163,7 +1163,7 @@ export class Upload extends Writable {
    * Check if a given status code is 2xx
    *
    * @param status The status code to check
-   * @returns {boolean} if the status is 2xx
+   * @returns if the status is 2xx
    */
   public isSuccessfulResponse(status: number): boolean {
     return status >= 200 && status < 300;
