@@ -126,7 +126,8 @@ export interface UploadConfig extends Pick<WritableOptions, 'highWaterMark'> {
 
   /**
    * Set to `true` if the upload is only a subset of the overall object to upload.
-   * This can be used when planning to continue upload an object in another session.
+   * This can be used when planning to continue the upload an object in another
+   * session.
    *
    * **Must be used with {@link UploadConfig.chunkSize} != `0`**.
    *
@@ -162,10 +163,11 @@ export interface UploadConfig extends Pick<WritableOptions, 'highWaterMark'> {
    *
    * If resuming an interrupted stream, do not supply this argument unless you
    * know the exact number of bytes the service has AND the provided stream's
-   * beginning is a continuation from that provided offset. If resuming an
+   * first byte is a continuation from that provided offset. If resuming an
    * interrupted stream and this option has not been provided, we will treat
-   * the provided upload stream as the object to upload; skipping any bytes
-   * that are already on the server.
+   * the provided upload stream as the object to upload - where the first byte
+   * of the upload stream is the first byte of the object to upload; skipping
+   * any bytes that are already present on the server.
    *
    * @see {@link checkUploadStatus} for checking the status of an existing upload.
    * @see {@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/resumable-upload#resume-upload.}
@@ -206,7 +208,9 @@ export interface UploadConfig extends Pick<WritableOptions, 'highWaterMark'> {
    *
    * If resuming an interrupted stream and the {@link UploadConfig.offset}
    * option has not been provided, we will treat the provided upload stream as
-   * the object to upload; skipping any bytes that are already on the server.
+   * the object to upload - where the first byte of the upload stream is the
+   * first byte of the object to upload; skipping any bytes that are already
+   * present on the server.
    *
    * @see {@link checkUploadStatus} for checking the status of an existing upload.
    */
