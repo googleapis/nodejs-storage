@@ -128,7 +128,12 @@ export interface UploadConfig extends Pick<WritableOptions, 'highWaterMark'> {
    * Set to `true` if the upload is only a subset of the overall object to upload.
    * This can be used when planning to continue upload an object in another session.
    *
-   * Must be used with {@link UploadConfig.chunkSize} != `0`.
+   * **Must be used with {@link UploadConfig.chunkSize} != `0`**.
+   *
+   * If this is a continuation of a previous upload, {@link UploadConfig.offset}
+   * should be set.
+   *
+   * @see {@link checkUploadStatus} for checking the status of an existing upload.
    */
   isPartialUpload?: boolean;
 
@@ -152,10 +157,17 @@ export interface UploadConfig extends Pick<WritableOptions, 'highWaterMark'> {
   metadata?: ConfigMetadata;
 
   /**
-   * The starting byte of the upload stream, for resuming an interrupted upload.
+   * The starting byte in relation to the final uploaded object.
+   * **Must be used with {@link UploadConfig.uri}**.
    *
-   * If the provided stream should start at the
+   * If resuming an interrupted stream, do not supply this argument unless you
+   * know the exact number of bytes the service has AND the provided stream's
+   * beginning is a continuation from that provided offset. If resuming an
+   * interrupted stream and this option has not been provided, we will treat
+   * the provided upload stream as the object to upload; skipping any bytes
+   * that are already on the server.
    *
+   * @see {@link checkUploadStatus} for checking the status of an existing upload.
    * @see {@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/resumable-upload#resume-upload.}
    */
   offset?: number;
@@ -191,6 +203,12 @@ export interface UploadConfig extends Pick<WritableOptions, 'highWaterMark'> {
   /**
    * If you already have a resumable URI from a previously-created resumable
    * upload, just pass it in here and we'll use that.
+   *
+   * If resuming an interrupted stream and the {@link UploadConfig.offset}
+   * option has not been provided, we will treat the provided upload stream as
+   * the object to upload; skipping any bytes that are already on the server.
+   *
+   * @see {@link checkUploadStatus} for checking the status of an existing upload.
    */
   uri?: string;
 
@@ -312,6 +330,12 @@ export class Upload extends Writable {
     if (cfg.offset && !cfg.uri) {
       throw new RangeError(
         'Cannot provide an `offset` without providing a `uri`'
+      );
+    }
+
+    if (cfg.isPartialUpload && !cfg.chunkSize) {
+      throw new RangeError(
+        'Cannot set `isPartialUpload` without providing a `chunkSize`'
       );
     }
 
@@ -714,6 +738,8 @@ export class Upload extends Writable {
     this.uri = uri;
     this.offset = 0;
 
+    this.emit('uri', uri);
+
     return uri;
   }
 
@@ -826,8 +852,8 @@ export class Upload extends Writable {
       // We need to know how much data is available upstream to set the `Content-Range` header.
       // https://cloud.google.com/storage/docs/performing-resumable-uploads#chunked-upload
       for await (const chunk of this.upstreamIterator(expectedUploadSize)) {
-        // This will conveniently track and keep the size of the buffers
-        // We will hit either the expected upload size or the remainder
+        // This will conveniently track and keep the size of the buffers.
+        // We will reach either the expected upload size or the remainder of the stream.
         this.#addLocalBufferCache(chunk);
       }
 
@@ -848,8 +874,7 @@ export class Upload extends Writable {
         isLastChunkOfUpload &&
         !this.isPartialUpload
       ) {
-        // Let's let the server know this is the last chunk since
-        // we didn't know the content-length beforehand.
+        // Let's let the server know this is the last chunk of the object since we didn't set it before.
         totalObjectSize = bytesToUpload + this.numBytesWritten;
       }
 
@@ -914,8 +939,8 @@ export class Upload extends Writable {
       moreDataToUpload;
 
     /**
-     * This is true when we're expecting to upload more data, yet the upstream
-     * has been exhausted.
+     * This is true when we're expecting to upload more data in a future request,
+     * yet the upstream for the upload session has been exhausted.
      */
     const shouldContinueUploadInAnotherRequest =
       this.isPartialUpload &&
@@ -972,6 +997,12 @@ export class Upload extends Writable {
     }
   }
 
+  /**
+   * Check the status of an existing resumable upload.
+   *
+   * @param cfg A configuration to use. `uri` is required.
+   * @returns the current upload status
+   */
   async checkUploadStatus(
     config: CheckUploadStatusConfig = {}
   ): Promise<GaxiosResponse<FileMetadata | void>> {
@@ -1232,6 +1263,12 @@ export function createURI(
   up.createURI().then(r => callback(null, r), callback);
 }
 
+/**
+ * Check the status of an existing resumable upload.
+ *
+ * @param cfg A configuration to use. `uri` is required.
+ * @returns the current upload status
+ */
 export function checkUploadStatus(
   cfg: UploadConfig & Required<Pick<UploadConfig, 'uri'>>
 ) {

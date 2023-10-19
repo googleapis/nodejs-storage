@@ -216,7 +216,9 @@ type PublicResumableUploadOptions =
 export interface CreateResumableUploadOptions
   extends Pick<resumableUpload.UploadConfig, PublicResumableUploadOptions> {
   /**
-   * A CRC32C to resume from when resuming a previous upload.
+   * An optional CRC32C to resume from when resuming a previous upload.
+   * When not provided the current CRC32C will be fetched from GCS.
+   *
    * @see {@link CRC32C.from} for possible values.
    */
   resumeCRC32C?: Parameters<(typeof CRC32C)['from']>[0];
@@ -1840,8 +1842,8 @@ class File extends ServiceObject<File, FileMetadata> {
    * NOTE: Writable streams will emit the `finish` event when the file is fully
    * uploaded.
    *
-   * See {@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload| Upload Options (Simple or Resumable)}
-   * See {@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert| Objects: insert API Documentation}
+   * See {@link https://cloud.google.com/storage/docs/json_api/v1/how-tos/upload Upload Options (Simple or Resumable)}
+   * See {@link https://cloud.google.com/storage/docs/json_api/v1/objects/insert Objects: insert API Documentation}
    *
    * @param {CreateWriteStreamOptions} [options] Configuration options.
    * @returns {WritableStream}
@@ -1906,6 +1908,18 @@ class File extends ServiceObject<File, FileMetadata> {
    *     // The file upload is complete.
    *   });
    * ```
+   *
+   * //-
+   * // <h4>Resuming a Resumable Upload</h4>
+   * //
+   * // One can capture a `uri` from a resumable upload to reuse later.
+   * //-
+   * let uri: string | undefined = undefined;
+   *
+   * fs.createWriteStream().on('uri', (link) => {uri = link});
+   *
+   * // later...
+   * fs.createWriteStream({uri});
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
@@ -1983,6 +1997,7 @@ class File extends ServiceObject<File, FileMetadata> {
     // Handing off emitted events to users
     emitStream.on('reading', () => writeStream.emit('reading'));
     emitStream.on('writing', () => writeStream.emit('writing'));
+    fileWriteStream.on('uri', evt => writeStream.emit('uri', evt));
     fileWriteStream.on('progress', evt => writeStream.emit('progress', evt));
     fileWriteStream.on('response', resp => writeStream.emit('response', resp));
     fileWriteStream.once('metadata', () => {
@@ -3992,6 +4007,9 @@ class File extends ServiceObject<File, FileMetadata> {
     uploadStream
       .on('response', resp => {
         dup.emit('response', resp);
+      })
+      .on('uri', uri => {
+        dup.emit('uri', uri);
       })
       .on('metadata', metadata => {
         this.metadata = metadata;
