@@ -100,6 +100,7 @@ describe('resumable-upload', () => {
         assert.ifError(err);
 
         const size = fd.size;
+        let uri: string | undefined = undefined;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         type DoUploadCallback = (...args: any[]) => void;
@@ -111,10 +112,15 @@ describe('resumable-upload', () => {
           let destroyed = false;
 
           const ws = upload({
+            uri,
             bucket: bucketName,
             file: filePath,
             metadata: {contentType: 'image/jpg'},
             retryOptions: retryOptions,
+          });
+
+          ws.on('uri', (link: string) => {
+            uri = link;
           });
 
           fs.createReadStream(filePath)
@@ -141,6 +147,7 @@ describe('resumable-upload', () => {
             {interrupt: false},
             (err: Error, metadata: {size: number}) => {
               assert.ifError(err);
+              assert(uri);
               assert.strictEqual(metadata.size, size);
               assert.strictEqual(typeof metadata.size, 'number');
               done();
