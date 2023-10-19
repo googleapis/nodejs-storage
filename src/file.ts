@@ -226,7 +226,7 @@ export interface CreateResumableUploadOptions
    * A CRC32C to resume from when resuming a previous upload.
    * @see {@link CRC32C.from} for possible values.
    */
-  resumeCrc32c?: Parameters<(typeof CRC32C)['from']>[0];
+  resumeCRC32C?: Parameters<(typeof CRC32C)['from']>[0];
   preconditionOpts?: PreconditionOptions;
   [GCCL_GCS_CMD_KEY]?: resumableUpload.UploadConfig[typeof GCCL_GCS_CMD_KEY];
 }
@@ -477,6 +477,14 @@ export enum FileExceptionMessages {
     To be sure the content is the same, you should try uploading the file again.`,
   MD5_RESUMED_UPLOAD = 'MD5 cannot be used with a resumed resumable upload as MD5 cannot be extended from an existing value',
 }
+
+const RESUME_RESUMABLE_UPLOAD_OFFSET_ERROR = (
+  actualOffset: number,
+  providedOffset: number
+) =>
+  `The server has ${actualOffset} bytes and while the provided offset is ${providedOffset} - thus ${
+    providedOffset - actualOffset
+  } bytes are missing. Stopping as this could result in data loss. Initiate a new upload to continue.`;
 
 /**
  * A File object is created from your {@link Bucket} object using
@@ -2001,15 +2009,37 @@ class File extends ServiceObject<File, FileMetadata> {
       }
 
       let hashCalculatingStream: HashStreamValidator | null = null;
+
       if (crc32c || md5) {
         let crc32cInstance: CRC32C | undefined = undefined;
 
         if (options.offset) {
           // set the initial CRC32C value for the resumed upload.
-          if (options.resumeCrc32c) {
-            crc32cInstance = CRC32C.from(options.resumeCrc32c);
+          if (options.resumeCRC32C) {
+            crc32cInstance = CRC32C.from(options.resumeCRC32C);
           } else {
-            // TODO: query for current crc32c for init HSV value
+            const resp =
+              await this.#createResumableUpload(options).checkUploadStatus();
+
+            if (resp.data?.crc32c) {
+              crc32cInstance = CRC32C.from(resp.data.crc32c);
+            }
+
+            // check if the offset provided is higher than `options.offset` to
+            // avoid any data loss, otherwise we would have a strange, difficult-
+            // to-debug validation error later when the upload has completed.
+            if (typeof resp.headers.range === 'string') {
+              const actualOffset = Number(resp.headers.range.split('-')[1]) + 1;
+
+              if (actualOffset < options.offset) {
+                throw new RangeError(
+                  RESUME_RESUMABLE_UPLOAD_OFFSET_ERROR(
+                    actualOffset,
+                    options.offset
+                  )
+                );
+              }
+            }
           }
         }
 
@@ -3912,18 +3942,7 @@ class File extends ServiceObject<File, FileMetadata> {
     this.bucket.setUserProject.call(this, userProject);
   }
 
-  /**
-   * This creates a resumable-upload upload stream.
-   *
-   * @param {Duplexify} stream - Duplexify stream of data to pipe to the file.
-   * @param {object=} options - Configuration object.
-   *
-   * @private
-   */
-  startResumableUpload_(
-    dup: Duplexify,
-    options: CreateResumableUploadOptions = {}
-  ): void {
+  #createResumableUpload(options: CreateResumableUploadOptions = {}) {
     options.metadata ??= {};
 
     const retryOptions = this.storage.retryOptions;
@@ -3935,7 +3954,7 @@ class File extends ServiceObject<File, FileMetadata> {
       retryOptions.autoRetry = false;
     }
 
-    const uploadStream = resumableUpload.upload({
+    return resumableUpload.upload({
       authClient: this.storage.authClient,
       apiEndpoint: this.storage.apiEndpoint,
       bucket: this.bucket.name,
@@ -3961,6 +3980,21 @@ class File extends ServiceObject<File, FileMetadata> {
       highWaterMark: options?.highWaterMark,
       [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
     });
+  }
+
+  /**
+   * This creates a resumable-upload upload stream.
+   *
+   * @param {Duplexify} stream - Duplexify stream of data to pipe to the file.
+   * @param {object=} options - Configuration object.
+   *
+   * @private
+   */
+  startResumableUpload_(
+    dup: Duplexify,
+    options: CreateResumableUploadOptions = {}
+  ): void {
+    const uploadStream = this.#createResumableUpload(options);
 
     uploadStream
       .on('response', resp => {

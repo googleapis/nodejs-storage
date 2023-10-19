@@ -28,6 +28,7 @@ import {RetryOptions, PreconditionOptions} from './storage';
 import * as uuid from 'uuid';
 import {getRuntimeTrackingString} from './util';
 import {GCCL_GCS_CMD_KEY} from './nodejs-common/util';
+import {FileMetadata} from './file';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
@@ -42,7 +43,6 @@ export interface ErrorWithCode extends Error {
 }
 
 export type CreateUriCallback = (err: Error | null, uri?: string) => void;
-
 export interface Encryption {
   key: {};
   hash: {};
@@ -233,6 +233,15 @@ export interface ApiError extends Error {
   errors?: GoogleInnerError[];
 }
 
+export interface CheckUploadStatusConfig {
+  /**
+   * Set to `false` to disable retries within this method.
+   *
+   * @defaultValue `true`
+   */
+  retry?: boolean;
+}
+
 export class Upload extends Writable {
   bucket: string;
   file: string;
@@ -273,9 +282,9 @@ export class Upload extends Writable {
   isPartialUpload: boolean;
 
   private currentInvocationId = {
+    checkUploadStatus: uuid.v4(),
     chunk: uuid.v4(),
     uri: uuid.v4(),
-    offset: uuid.v4(),
   };
   /**
    * A cache of buffers written to this instance, ready for consuming
@@ -905,11 +914,13 @@ export class Upload extends Writable {
       moreDataToUpload;
 
     /**
-     * This is true when we're expecting to upload more data, yet
-     *
+     * This is true when we're expecting to upload more data, yet the upstream
+     * has been exhausted.
      */
     const shouldContinueUploadInAnotherRequest =
-      resp.status === RESUMABLE_INCOMPLETE_STATUS_CODE && !moreDataToUpload;
+      this.isPartialUpload &&
+      resp.status === RESUMABLE_INCOMPLETE_STATUS_CODE &&
+      !moreDataToUpload;
 
     if (shouldContinueWithNextMultiChunkRequest) {
       // Use the upper value in this header to determine where to start the next chunk.
@@ -961,10 +972,12 @@ export class Upload extends Writable {
     }
   }
 
-  private async getAndSetOffset() {
+  async checkUploadStatus(
+    config: CheckUploadStatusConfig = {}
+  ): Promise<GaxiosResponse<FileMetadata | void>> {
     let googAPIClient = `${getRuntimeTrackingString()} gccl/${
       packageJson.version
-    } gccl-invocation-id/${this.currentInvocationId.offset}`;
+    } gccl-invocation-id/${this.currentInvocationId.checkUploadStatus}`;
 
     if (this.#gcclGcsCmd) {
       googAPIClient += ` gccl-gcs-cmd/${this.#gcclGcsCmd}`;
@@ -972,21 +985,50 @@ export class Upload extends Writable {
 
     const opts: GaxiosOptions = {
       method: 'PUT',
-      url: this.uri!,
+      url: this.uri,
       headers: {
         'Content-Length': 0,
         'Content-Range': 'bytes */*',
         'x-goog-api-client': googAPIClient,
       },
     };
+
     try {
       const resp = await this.makeRequest(opts);
+
       // Successfully got the offset we can now create a new offset invocation id
-      this.currentInvocationId.offset = uuid.v4();
+      this.currentInvocationId.checkUploadStatus = uuid.v4();
+
+      return resp;
+    } catch (e) {
+      if (
+        config.retry === false ||
+        !(e instanceof Error) ||
+        !this.retryOptions.retryableErrorFn!(e)
+      ) {
+        throw e;
+      }
+
+      const retryDelay = this.getRetryDelay();
+
+      if (retryDelay <= 0) {
+        throw e;
+      }
+
+      await new Promise(res => setTimeout(res, retryDelay));
+
+      return this.checkUploadStatus(config);
+    }
+  }
+
+  private async getAndSetOffset() {
+    try {
+      // we want to handle retries in this method.
+      const resp = await this.checkUploadStatus({retry: false});
+
       if (resp.status === RESUMABLE_INCOMPLETE_STATUS_CODE) {
-        if (resp.headers.range) {
-          const range = resp.headers.range as string;
-          this.offset = Number(range.split('-')[1]) + 1;
+        if (typeof resp.headers.range === 'string') {
+          this.offset = Number(resp.headers.range.split('-')[1]) + 1;
           return;
         }
       }
@@ -1133,7 +1175,10 @@ export class Upload extends Writable {
   }
 
   /**
-   * @returns the amount of time to wait before retrying the request
+   * The amount of time to wait before retrying the request, in milliseconds.
+   * If negative, do not retry.
+   *
+   * @returns the amount of time to wait, in milliseconds.
    */
   private getRetryDelay(): number {
     const randomMs = Math.round(Math.random() * 1000);
@@ -1185,4 +1230,12 @@ export function createURI(
     return up.createURI();
   }
   up.createURI().then(r => callback(null, r), callback);
+}
+
+export function checkUploadStatus(
+  cfg: UploadConfig & Required<Pick<UploadConfig, 'uri'>>
+) {
+  const up = new Upload(cfg);
+
+  return up.checkUploadStatus();
 }
