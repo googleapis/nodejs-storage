@@ -148,7 +148,7 @@ describe('resumable-upload', () => {
           );
         });
       });
-    });
+    }).catch(done);
   });
 
   it('should create an upload URI', async () => {
