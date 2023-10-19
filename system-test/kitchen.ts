@@ -20,7 +20,12 @@ import * as tmp from 'tmp';
 import * as crypto from 'crypto';
 import * as os from 'os';
 import {Readable} from 'stream';
-import {createURI, ErrorWithCode, upload} from '../src/resumable-upload';
+import {
+  checkUploadStatus,
+  createURI,
+  ErrorWithCode,
+  upload,
+} from '../src/resumable-upload';
 import {
   RETRY_DELAY_MULTIPLIER_DEFAULT,
   TOTAL_TIMEOUT_DEFAULT,
@@ -146,16 +151,24 @@ describe('resumable-upload', () => {
     });
   });
 
-  it('should just make an upload URI', done => {
-    createURI(
-      {
-        bucket: bucketName,
-        file: filePath,
-        metadata: {contentType: 'image/jpg'},
-        retryOptions: retryOptions,
-      },
-      done
-    );
+  it('should create an upload URI', async () => {
+    const uri = await createURI({
+      bucket: bucketName,
+      file: filePath,
+      metadata: {contentType: 'image/jpg'},
+      retryOptions: retryOptions,
+    });
+
+    const resp = await checkUploadStatus({
+      bucket: bucketName,
+      file: filePath,
+      metadata: {contentType: 'image/jpg'},
+      retryOptions: retryOptions,
+      uri,
+    });
+
+    assert(!resp.data);
+    assert.equal(resp.headers['content-length'], 0);
   });
 
   it('should return a non-resumable failed upload', done => {
