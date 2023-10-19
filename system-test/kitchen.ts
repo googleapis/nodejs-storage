@@ -168,7 +168,7 @@ describe('resumable-upload', () => {
     });
 
     assert(!resp.data);
-    assert.equal(resp.headers['content-length'], 0);
+    assert.equal(resp.headers['content-length'], '0');
   });
 
   it('should return a non-resumable failed upload', done => {
