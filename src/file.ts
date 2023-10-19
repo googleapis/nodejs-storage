@@ -29,14 +29,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as resumableUpload from './resumable-upload';
-import {
-  Writable,
-  Readable,
-  pipeline,
-  Transform,
-  PassThrough,
-  PipelineSource,
-} from 'stream';
+import {Writable, Readable, pipeline, Transform, PipelineSource} from 'stream';
 import * as zlib from 'zlib';
 import * as http from 'http';
 
