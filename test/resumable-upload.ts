@@ -53,6 +53,7 @@ const CHUNK_SIZE_MULTIPLE = 2 ** 18;
 const queryPath = '/?userProject=user-project-id';
 const X_GOOG_API_HEADER_REGEX =
   /^gl-node\/(?<nodeVersion>[^W]+) gccl\/(?<gccl>[^W]+) gccl-invocation-id\/(?<gcclInvocationId>[^W]+) gccl-gcs-cmd\/(?<gcclGcsCmd>[^W]+)$/;
+const USER_AGENT_REGEX = /^gcloud-node-storage\/(?<libVersion>[^W]+)$/;
 
 function mockAuthorizeRequest(
   code = 200,
@@ -1163,6 +1164,7 @@ describe('resumable-upload', () => {
           assert.ok(
             X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
           );
+          assert.ok(USER_AGENT_REGEX.test(reqOpts.headers['User-Agent']));
 
           const data = await getAllDataFromRequest();
 
@@ -1179,6 +1181,7 @@ describe('resumable-upload', () => {
           assert.ok(
             X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
           );
+          assert.ok(USER_AGENT_REGEX.test(reqOpts.headers['User-Agent']));
 
           const data = await getAllDataFromRequest();
 
@@ -1212,6 +1215,7 @@ describe('resumable-upload', () => {
           assert.ok(
             X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
           );
+          assert.ok(USER_AGENT_REGEX.test(reqOpts.headers['User-Agent']));
 
           const data = await getAllDataFromRequest();
 
@@ -1243,6 +1247,7 @@ describe('resumable-upload', () => {
           assert.ok(
             X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
           );
+          assert.ok(USER_AGENT_REGEX.test(reqOpts.headers['User-Agent']));
 
           const data = await getAllDataFromRequest();
 
@@ -1273,6 +1278,7 @@ describe('resumable-upload', () => {
           assert.ok(
             X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
           );
+          assert.ok(USER_AGENT_REGEX.test(reqOpts.headers['User-Agent']));
           const data = await getAllDataFromRequest();
 
           assert.equal(data.byteLength, CONTENT_LENGTH - NUM_BYTES_WRITTEN);
@@ -1514,6 +1520,7 @@ describe('resumable-upload', () => {
         assert.ok(
           X_GOOG_API_HEADER_REGEX.test(reqOpts.headers['x-goog-api-client'])
         );
+        assert.ok(USER_AGENT_REGEX.test(reqOpts.headers['User-Agent']));
         done();
         return {};
       };
@@ -2300,6 +2307,7 @@ describe('resumable-upload', () => {
               request.opts.headers['x-goog-api-client']
             )
           );
+          assert.ok(USER_AGENT_REGEX.test(request.opts.headers['User-Agent']));
 
           done();
         });
@@ -2471,6 +2479,9 @@ describe('resumable-upload', () => {
                   request.opts.headers['x-goog-api-client']
                 )
               );
+              assert.ok(
+                USER_AGENT_REGEX.test(request.opts.headers['User-Agent'])
+              );
             } else {
               // The preceding chunks
               const endByte = offset + CHUNK_SIZE - 1;
@@ -2486,6 +2497,9 @@ describe('resumable-upload', () => {
                 X_GOOG_API_HEADER_REGEX.test(
                   request.opts.headers['x-goog-api-client']
                 )
+              );
+              assert.ok(
+                USER_AGENT_REGEX.test(request.opts.headers['User-Agent'])
               );
             }
           }
@@ -2585,6 +2599,7 @@ describe('resumable-upload', () => {
               request.opts.headers['x-goog-api-client']
             )
           );
+          assert.ok(USER_AGENT_REGEX.test(request.opts.headers['User-Agent']));
 
           done();
         });
