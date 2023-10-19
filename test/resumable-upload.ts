@@ -1356,7 +1356,27 @@ describe('resumable-upload', () => {
       up.responseHandler(RESP);
     });
 
-    it('should not continue with multi-chunk upload when incomplete if the upstream has finished', done => {
+    it('should not continue with multi-chunk upload when incomplete if a partial upload has finished', done => {
+      const lastByteReceived = 9;
+
+      const RESP = {
+        data: '',
+        status: RESUMABLE_INCOMPLETE_STATUS_CODE,
+        headers: {
+          range: `bytes=0-${lastByteReceived}`,
+        },
+      };
+
+      up.chunkSize = 1;
+      up.upstreamEnded = true;
+      up.isPartialUpload = true;
+
+      up.on('uploadFinished', done);
+
+      up.responseHandler(RESP);
+    });
+
+    it('should error when upload is incomplete and the upstream is not a partial upload', done => {
       const lastByteReceived = 9;
 
       const RESP = {
@@ -1370,7 +1390,11 @@ describe('resumable-upload', () => {
       up.chunkSize = 1;
       up.upstreamEnded = true;
 
-      up.on('uploadFinished', done);
+      up.on('error', (e: Error) => {
+        assert.match(e.message, /Upload failed/);
+
+        done();
+      });
 
       up.responseHandler(RESP);
     });
@@ -1446,25 +1470,32 @@ describe('resumable-upload', () => {
     });
   });
 
-  it('currentInvocationId.offset should be different after success', async () => {
-    const beforeCallInvocationId = up.currentInvocationId.offset;
+  it('currentInvocationId.checkUploadStatus should be different after success', async () => {
+    const beforeCallInvocationId = up.currentInvocationId.checkUploadStatus;
     up.makeRequest = () => {
       return {};
     };
     await up.getAndSetOffset();
-    assert.notEqual(beforeCallInvocationId, up.currentInvocationId.offset);
+    assert.notEqual(
+      beforeCallInvocationId,
+      up.currentInvocationId.checkUploadStatus
+    );
   });
 
-  it('currentInvocationId.offset should be the same on error', async done => {
-    const beforeCallInvocationId = up.currentInvocationId.offset;
+  it('currentInvocationId.checkUploadStatus should be the same on error', done => {
+    const beforeCallInvocationId = up.currentInvocationId.checkUploadStatus;
     up.destroy = () => {
-      assert.equal(beforeCallInvocationId, up.currentInvocationId.offset);
+      assert.equal(
+        beforeCallInvocationId,
+        up.currentInvocationId.checkUploadStatus
+      );
       done();
     };
     up.makeRequest = () => {
       throw new Error() as GaxiosError;
     };
-    await up.getAndSetOffset();
+
+    up.getAndSetOffset().catch(done);
   });
 
   describe('#getAndSetOffset', () => {
