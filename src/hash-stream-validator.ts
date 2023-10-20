@@ -74,6 +74,9 @@ class HashStreamValidator extends Transform {
     }
   }
 
+  /**
+   * Return the current CRC32C value, if available.
+   */
   get crc32c() {
     return this.#crc32cHash?.toString();
   }

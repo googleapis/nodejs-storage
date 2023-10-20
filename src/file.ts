@@ -1916,14 +1916,14 @@ class File extends ServiceObject<File, FileMetadata> {
    * // Additionally, for validation, one can also capture and pass `crc32c`.
    * //-
    * let uri: string | undefined = undefined;
-   * let crc32: string | undefined = undefined;
+   * let resumeCRC32C: string | undefined = undefined;
    *
    * fs.createWriteStream()
    *   .on('uri', link => {uri = link})
    *   .on('crc32', crc32c => {resumeCRC32C = crc32c});
    *
    * // later...
-   * fs.createWriteStream({resumeCRC32C, uri});
+   * fs.createWriteStream({uri, resumeCRC32C});
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
@@ -2009,13 +2009,14 @@ class File extends ServiceObject<File, FileMetadata> {
     }
 
     const emitStream = new PassThroughShim();
-    const crc32cInstance = options.resumeCRC32C
-      ? CRC32C.from(options.resumeCRC32C)
-      : undefined;
 
     let hashCalculatingStream: HashStreamValidator | null = null;
 
     if (crc32c || md5) {
+      const crc32cInstance = options.resumeCRC32C
+        ? CRC32C.from(options.resumeCRC32C)
+        : undefined;
+
       hashCalculatingStream = new HashStreamValidator({
         crc32c,
         crc32cInstance,
@@ -2076,6 +2077,8 @@ class File extends ServiceObject<File, FileMetadata> {
           }
 
           try {
+            // Metadata may not be ready if the upload is a partial upload,
+            // nothing to validate yet.
             const metadataNotReady = options.isPartialUpload && !this.metadata;
 
             if (hashCalculatingStream && !metadataNotReady) {

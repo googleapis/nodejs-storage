@@ -743,6 +743,7 @@ export class Upload extends Writable {
     this.uri = uri;
     this.offset = 0;
 
+    // emit the newly generated URI for future reuse, if necessary.
     this.emit('uri', uri);
 
     return uri;
