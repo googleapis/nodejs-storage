@@ -16,52 +16,18 @@
  * @module storage/channel
  */
 
-import {
-  BaseMetadata,
-  DecorateRequestOptions,
-  ServiceObject,
-  ServiceObjectConfig,
-} from '../src/nodejs-common';
+import {ServiceObject} from '../src/nodejs-common';
+import {Channel} from '../src/channel';
 import * as assert from 'assert';
-import {describe, it, before, beforeEach} from 'mocha';
-import * as proxyquire from 'proxyquire';
-
-let promisified = false;
-const fakePromisify = {
-  promisifyAll(Class: Function) {
-    if (Class.name === 'Channel') {
-      promisified = true;
-    }
-  },
-};
-
-class FakeServiceObject extends ServiceObject<FakeServiceObject, BaseMetadata> {
-  calledWith_: IArguments;
-  constructor(config: ServiceObjectConfig) {
-    super(config);
-    // eslint-disable-next-line prefer-rest-params
-    this.calledWith_ = arguments;
-  }
-}
+import {describe, it, beforeEach} from 'mocha';
+import * as sinon from 'sinon';
+import {Storage} from '../src/storage';
 
 describe('Channel', () => {
-  const STORAGE = {};
+  const STORAGE = sinon.createStubInstance(Storage);
   const ID = 'channel-id';
   const RESOURCE_ID = 'resource-id';
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let Channel: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let channel: any;
-
-  before(() => {
-    Channel = proxyquire('../src/channel.js', {
-      '@google-cloud/promisify': fakePromisify,
-      './nodejs-common': {
-        ServiceObject: FakeServiceObject,
-      },
-    }).Channel;
-  });
+  let channel: Channel;
 
   beforeEach(() => {
     channel = new Channel(STORAGE, ID, RESOURCE_ID);
@@ -72,17 +38,9 @@ describe('Channel', () => {
       // Using assert.strictEqual instead of assert to prevent
       // coercing of types.
       assert.strictEqual(channel instanceof ServiceObject, true);
-
-      const calledWith = channel.calledWith_[0];
-
-      assert.strictEqual(calledWith.parent, STORAGE);
-      assert.strictEqual(calledWith.baseUrl, '/channels');
-      assert.strictEqual(calledWith.id, '');
-      assert.deepStrictEqual(calledWith.methods, {});
-    });
-
-    it('should promisify all the things', () => {
-      assert(promisified);
+      assert.strictEqual(channel.parent, STORAGE);
+      assert.strictEqual(channel.baseUrl, '/channels');
+      assert.strictEqual(channel.id, '');
     });
 
     it('should set the default metadata', () => {
@@ -95,13 +53,13 @@ describe('Channel', () => {
 
   describe('stop', () => {
     it('should make the correct request', done => {
-      channel.request = (reqOpts: DecorateRequestOptions) => {
+      sinon.stub(channel, 'request').callsFake(reqOpts => {
         assert.strictEqual(reqOpts.method, 'POST');
         assert.strictEqual(reqOpts.uri, '/stop');
         assert.strictEqual(reqOpts.json, channel.metadata);
 
         done();
-      };
+      });
 
       channel.stop(assert.ifError);
     });
@@ -110,14 +68,11 @@ describe('Channel', () => {
       const error = {};
       const apiResponse = {};
 
-      channel.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
-        callback(error, apiResponse);
-      };
+      sinon.stub(channel, 'request').callsFake((reqOpts, callback) => {
+        callback(error as Error, apiResponse);
+      });
 
-      channel.stop((err: Error, apiResponse_: {}) => {
+      channel.stop((err: Error | null, apiResponse_: unknown) => {
         assert.strictEqual(err, error);
         assert.strictEqual(apiResponse_, apiResponse);
         done();
@@ -125,13 +80,10 @@ describe('Channel', () => {
     });
 
     it('should not require a callback', done => {
-      channel.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
-        assert.doesNotThrow(() => callback());
+      sinon.stub(channel, 'request').callsFake((reqOpts, callback) => {
+        assert.doesNotThrow(() => callback(null));
         done();
-      };
+      });
 
       channel.stop();
     });
