@@ -216,8 +216,8 @@ type PublicResumableUploadOptions =
 export interface CreateResumableUploadOptions
   extends Pick<resumableUpload.UploadConfig, PublicResumableUploadOptions> {
   /**
-   * An optional CRC32C to resume from when resuming a previous upload.
-   * When not provided the current CRC32C will be fetched from GCS.
+   * A CRC32C to resume from when resuming a previous upload.
+   * This is **required** when validating a final portion of a resumed upload.
    *
    * @see {@link CRC32C.from} for possible values.
    */
@@ -471,15 +471,8 @@ export enum FileExceptionMessages {
     As a precaution, the file has been deleted.
     To be sure the content is the same, you should try uploading the file again.`,
   MD5_RESUMED_UPLOAD = 'MD5 cannot be used with a resumed resumable upload as MD5 cannot be extended from an existing value',
+  MISSING_RESUME_CRC32C_FINAL_UPLOAD = 'The CRC32C is missing for the final portion of a resumed upload, which is required for validation. Please provide `resumeCRC32C` if validation is required, or disable `validation`.',
 }
-
-const RESUME_RESUMABLE_UPLOAD_OFFSET_ERROR = (
-  actualOffset: number,
-  providedOffset: number
-) =>
-  `The server has ${actualOffset} bytes and while the provided offset is ${providedOffset} - thus ${
-    providedOffset - actualOffset
-  } bytes are missing. Stopping as this could result in data loss. Initiate a new upload to continue.`;
 
 /**
  * A File object is created from your {@link Bucket} object using
@@ -1920,13 +1913,17 @@ class File extends ServiceObject<File, FileMetadata> {
    * // <h4>Resuming a Resumable Upload</h4>
    * //
    * // One can capture a `uri` from a resumable upload to reuse later.
+   * // Additionally, for validation, one can also capture and pass `crc32c`.
    * //-
    * let uri: string | undefined = undefined;
+   * let crc32: string | undefined = undefined;
    *
-   * fs.createWriteStream().on('uri', (link) => {uri = link});
+   * fs.createWriteStream()
+   *   .on('uri', link => {uri = link})
+   *   .on('crc32', crc32c => {resumeCRC32C = crc32c});
    *
    * // later...
-   * fs.createWriteStream({uri});
+   * fs.createWriteStream({resumeCRC32C, uri});
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
@@ -1968,8 +1965,16 @@ class File extends ServiceObject<File, FileMetadata> {
       md5 = false;
     }
 
-    if (options.offset && md5) {
-      throw new RangeError(FileExceptionMessages.MD5_RESUMED_UPLOAD);
+    if (options.offset) {
+      if (md5) {
+        throw new RangeError(FileExceptionMessages.MD5_RESUMED_UPLOAD);
+      }
+
+      if (crc32c && !options.isPartialUpload && !options.resumeCRC32C) {
+        throw new RangeError(
+          FileExceptionMessages.MISSING_RESUME_CRC32C_FINAL_UPLOAD
+        );
+      }
     }
 
     /**
@@ -1997,7 +2002,31 @@ class File extends ServiceObject<File, FileMetadata> {
       },
     });
 
+    const transformStreams: Transform[] = [];
+
+    if (gzip) {
+      transformStreams.push(zlib.createGzip());
+    }
+
     const emitStream = new PassThroughShim();
+    const crc32cInstance = options.resumeCRC32C
+      ? CRC32C.from(options.resumeCRC32C)
+      : undefined;
+
+    let hashCalculatingStream: HashStreamValidator | null = null;
+
+    if (crc32c || md5) {
+      hashCalculatingStream = new HashStreamValidator({
+        crc32c,
+        crc32cInstance,
+        md5,
+        crc32cGenerator: this.crc32cGenerator,
+        updateHashesOnly: true,
+      });
+
+      transformStreams.push(hashCalculatingStream);
+    }
+
     const fileWriteStream = duplexify();
     let fileWriteStreamMetadataReceived = false;
 
@@ -2011,62 +2040,11 @@ class File extends ServiceObject<File, FileMetadata> {
       fileWriteStreamMetadataReceived = true;
     });
 
-    const writingCallback = async () => {
+    writeStream.once('writing', () => {
       if (options.resumable === false) {
         this.startSimpleUpload_(fileWriteStream, options);
       } else {
         this.startResumableUpload_(fileWriteStream, options);
-      }
-
-      const transformStreams: Transform[] = [];
-      if (gzip) {
-        transformStreams.push(zlib.createGzip());
-      }
-
-      let hashCalculatingStream: HashStreamValidator | null = null;
-
-      if (crc32c || md5) {
-        let crc32cInstance: CRC32C | undefined = undefined;
-
-        if (options.offset) {
-          // set the initial CRC32C value for the resumed upload.
-          if (options.resumeCRC32C) {
-            crc32cInstance = CRC32C.from(options.resumeCRC32C);
-          } else {
-            const resp =
-              await this.#createResumableUpload(options).checkUploadStatus();
-
-            if (resp.data?.crc32c) {
-              crc32cInstance = CRC32C.from(resp.data.crc32c);
-            }
-
-            // check if the offset provided is higher than `options.offset` to
-            // avoid any data loss, otherwise we would have a strange, difficult-
-            // to-debug validation error later when the upload has completed.
-            if (typeof resp.headers.range === 'string') {
-              const actualOffset = Number(resp.headers.range.split('-')[1]) + 1;
-
-              if (actualOffset < options.offset) {
-                throw new RangeError(
-                  RESUME_RESUMABLE_UPLOAD_OFFSET_ERROR(
-                    actualOffset,
-                    options.offset
-                  )
-                );
-              }
-            }
-          }
-        }
-
-        hashCalculatingStream = new HashStreamValidator({
-          crc32c,
-          crc32cInstance,
-          md5,
-          crc32cGenerator: this.crc32cGenerator,
-          updateHashesOnly: true,
-        });
-
-        transformStreams.push(hashCalculatingStream);
       }
 
       pipeline(
@@ -2092,8 +2070,15 @@ class File extends ServiceObject<File, FileMetadata> {
             }
           }
 
+          // Emit the local CRC32C value for future validation, if validation is enabled.
+          if (hashCalculatingStream?.crc32c) {
+            writeStream.emit('crc32c', hashCalculatingStream.crc32c);
+          }
+
           try {
-            if (hashCalculatingStream) {
+            const metadataNotReady = options.isPartialUpload && !this.metadata;
+
+            if (hashCalculatingStream && !metadataNotReady) {
               await this.#validateIntegrity(hashCalculatingStream, {
                 crc32c,
                 md5,
@@ -2106,11 +2091,7 @@ class File extends ServiceObject<File, FileMetadata> {
           }
         }
       );
-    };
-
-    writeStream.once('writing', () =>
-      writingCallback().catch(pipelineCallback)
-    );
+    });
 
     return writeStream;
   }
