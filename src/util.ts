@@ -16,6 +16,9 @@ import * as path from 'path';
 import * as querystring from 'querystring';
 import {PassThrough} from 'stream';
 import * as url from 'url';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {getPackageJSON} from './package-json-helper.cjs';
 
 // Done to avoid a problem with mangling of identifiers when using esModuleInterop
 const fileURLToPath = url.fileURLToPath;
