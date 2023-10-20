@@ -74,6 +74,10 @@ class HashStreamValidator extends Transform {
     }
   }
 
+  get crc32c() {
+    return this.#crc32cHash?.toString();
+  }
+
   _flush(callback: (error?: Error | null | undefined) => void) {
     if (this.#md5Hash) {
       this.#md5Digest = this.#md5Hash.digest('base64');
