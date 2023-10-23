@@ -216,8 +216,10 @@ type PublicResumableUploadOptions =
 export interface CreateResumableUploadOptions
   extends Pick<resumableUpload.UploadConfig, PublicResumableUploadOptions> {
   /**
-   * A CRC32C to resume from when resuming a previous upload.
-   * This is **required** when validating a final portion of a resumed upload.
+   * A CRC32C to resume from when continuing a previous upload. It is recommended
+   * to capture the `crc32c` event from previous upload sessions to provide in
+   * subsequent requests in order to accurately track the upload. This is **required**
+   * when validating a final portion of the uploaded object.
    *
    * @see {@link CRC32C.from} for possible values.
    */
@@ -470,7 +472,7 @@ export enum FileExceptionMessages {
   UPLOAD_MISMATCH = `The uploaded data did not match the data from the server.
     As a precaution, the file has been deleted.
     To be sure the content is the same, you should try uploading the file again.`,
-  MD5_RESUMED_UPLOAD = 'MD5 cannot be used with a resumed resumable upload as MD5 cannot be extended from an existing value',
+  MD5_RESUMED_UPLOAD = 'MD5 cannot be used with a continued resumable upload as MD5 cannot be extended from an existing value',
   MISSING_RESUME_CRC32C_FINAL_UPLOAD = 'The CRC32C is missing for the final portion of a resumed upload, which is required for validation. Please provide `resumeCRC32C` if validation is required, or disable `validation`.',
 }
 
