@@ -1912,7 +1912,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * ```
    *
    * //-
-   * // <h4>Resuming a Resumable Upload</h4>
+   * // <h4>Continuing a Resumable Upload</h4>
    * //
    * // One can capture a `uri` from a resumable upload to reuse later.
    * // Additionally, for validation, one can also capture and pass `crc32c`.
@@ -3949,7 +3949,18 @@ class File extends ServiceObject<File, FileMetadata> {
     this.bucket.setUserProject.call(this, userProject);
   }
 
-  #createResumableUpload(options: CreateResumableUploadOptions = {}) {
+  /**
+   * This creates a resumable-upload upload stream.
+   *
+   * @param {Duplexify} stream - Duplexify stream of data to pipe to the file.
+   * @param {object=} options - Configuration object.
+   *
+   * @private
+   */
+  startResumableUpload_(
+    dup: Duplexify,
+    options: CreateResumableUploadOptions = {}
+  ): void {
     options.metadata ??= {};
 
     const retryOptions = this.storage.retryOptions;
@@ -3961,7 +3972,7 @@ class File extends ServiceObject<File, FileMetadata> {
       retryOptions.autoRetry = false;
     }
 
-    return resumableUpload.upload({
+    const uploadStream = resumableUpload.upload({
       authClient: this.storage.authClient,
       apiEndpoint: this.storage.apiEndpoint,
       bucket: this.bucket.name,
@@ -3987,21 +3998,6 @@ class File extends ServiceObject<File, FileMetadata> {
       highWaterMark: options?.highWaterMark,
       [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
     });
-  }
-
-  /**
-   * This creates a resumable-upload upload stream.
-   *
-   * @param {Duplexify} stream - Duplexify stream of data to pipe to the file.
-   * @param {object=} options - Configuration object.
-   *
-   * @private
-   */
-  startResumableUpload_(
-    dup: Duplexify,
-    options: CreateResumableUploadOptions = {}
-  ): void {
-    const uploadStream = this.#createResumableUpload(options);
 
     uploadStream
       .on('response', resp => {
