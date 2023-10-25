@@ -178,7 +178,7 @@ describe('resumable-upload', () => {
             {interrupt: false},
             (err: Error, metadata: {size: number}) => {
               assert.ifError(err);
-              assert(uri);
+              assert.ok(uri);
               assert.strictEqual(metadata.size, size);
               assert.strictEqual(typeof metadata.size, 'number');
               done();
@@ -205,7 +205,7 @@ describe('resumable-upload', () => {
       uri,
     });
 
-    assert(!resp.data);
+    assert.ok(!resp.data);
     assert.equal(resp.headers['content-length'], '0');
   });
 
@@ -235,7 +235,7 @@ describe('resumable-upload', () => {
     const chunkSize = Math.floor(FILE_SIZE / 4);
 
     // ensure we're testing a valid size
-    assert(chunkSize > KNOWN_MULTI_CHUNK_MULTIPLE_BYTES);
+    assert.ok(chunkSize > KNOWN_MULTI_CHUNK_MULTIPLE_BYTES);
 
     await new Promise<void>((resolve, reject) =>
       pipeline(
@@ -296,7 +296,7 @@ describe('resumable-upload', () => {
 
     const [results] = await file.getMetadata();
 
-    assert(uri);
+    assert.ok(uri);
     assert.equal(uriGenerated, 1, 'uri should be generated once');
     assert.equal(
       crc32cGenerated,

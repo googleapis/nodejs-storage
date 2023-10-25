@@ -33,6 +33,8 @@ import {
 } from './util.js';
 import {GCCL_GCS_CMD_KEY} from './nodejs-common/util.js';
 import {FileMetadata} from './file.js';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import {getPackageJSON} from './package-json-helper.cjs';
 
 const NOT_FOUND_STATUS_CODE = 404;
