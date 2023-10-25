@@ -25,7 +25,7 @@ import {
   createURI,
   ErrorWithCode,
   upload,
-} from '../src/resumable-upload';
+} from '../src/resumable-upload.js';
 import {
   RETRY_DELAY_MULTIPLIER_DEFAULT,
   TOTAL_TIMEOUT_DEFAULT,
@@ -34,7 +34,7 @@ import {
   MAX_RETRY_DEFAULT,
   RETRYABLE_ERR_FN_DEFAULT,
   Storage,
-} from '../src/storage';
+} from '../src/storage.js';
 
 const bucketName = process.env.BUCKET_NAME || 'gcs-resumable-upload-test';
 

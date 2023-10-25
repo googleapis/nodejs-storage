@@ -23,17 +23,22 @@ import {
 import * as gaxios from 'gaxios';
 import {GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {Readable, Writable, WritableOptions} from 'stream';
-import retry = require('async-retry');
-import {RetryOptions, PreconditionOptions} from './storage';
+import AsyncRetry from 'async-retry';
+import {RetryOptions, PreconditionOptions} from './storage.js';
 import * as uuid from 'uuid';
-import {getRuntimeTrackingString, getUserAgentString} from './util';
-import {GCCL_GCS_CMD_KEY} from './nodejs-common/util';
-import {FileMetadata} from './file';
+import {
+  getRuntimeTrackingString,
+  getModuleFormat,
+  getUserAgentString,
+} from './util.js';
+import {GCCL_GCS_CMD_KEY} from './nodejs-common/util.js';
+import {FileMetadata} from './file.js';
+import {getPackageJSON} from './package-json-helper.cjs';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
 const DEFAULT_API_ENDPOINT_REGEX = /.*\.googleapis\.com/;
-const packageJson = require('../../package.json');
+const packageJson = getPackageJSON();
 
 export const PROTOCOL_REGEX = /^(\w*):\/\//;
 
@@ -654,7 +659,7 @@ export class Upload extends Writable {
 
     let googAPIClient = `${getRuntimeTrackingString()} gccl/${
       packageJson.version
-    } gccl-invocation-id/${this.currentInvocationId.uri}`;
+    }-${getModuleFormat()} gccl-invocation-id/${this.currentInvocationId.uri}`;
 
     if (this.#gcclGcsCmd) {
       googAPIClient += ` gccl-gcs-cmd/${this.#gcclGcsCmd}`;
@@ -703,7 +708,7 @@ export class Upload extends Writable {
     if (this.origin) {
       reqOpts.headers!.Origin = this.origin;
     }
-    const uri = await retry(
+    const uri = await AsyncRetry(
       async (bail: (err: Error) => void) => {
         try {
           const res = await this.makeRequest(reqOpts);
@@ -843,7 +848,9 @@ export class Upload extends Writable {
 
     let googAPIClient = `${getRuntimeTrackingString()} gccl/${
       packageJson.version
-    } gccl-invocation-id/${this.currentInvocationId.chunk}`;
+    }-${getModuleFormat()} gccl-invocation-id/${
+      this.currentInvocationId.chunk
+    }`;
 
     if (this.#gcclGcsCmd) {
       googAPIClient += ` gccl-gcs-cmd/${this.#gcclGcsCmd}`;
@@ -1015,7 +1022,9 @@ export class Upload extends Writable {
   ): Promise<GaxiosResponse<FileMetadata | void>> {
     let googAPIClient = `${getRuntimeTrackingString()} gccl/${
       packageJson.version
-    } gccl-invocation-id/${this.currentInvocationId.checkUploadStatus}`;
+    }-${getModuleFormat()} gccl-invocation-id/${
+      this.currentInvocationId.checkUploadStatus
+    }`;
 
     if (this.#gcclGcsCmd) {
       googAPIClient += ` gccl-gcs-cmd/${this.#gcclGcsCmd}`;
