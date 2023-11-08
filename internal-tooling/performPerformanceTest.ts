@@ -30,7 +30,7 @@ import {
   PERFORMANCE_TEST_TYPES,
   TestResult,
 } from './performanceUtils.js';
-import {Bucket} from '../src/index.js';
+import {Bucket, File} from '../src/index.js';
 import {getDirName} from '../src/util.js';
 
 const TEST_NAME_STRING = 'nodejs-perf-metrics';
@@ -63,6 +63,9 @@ async function main() {
       break;
     case PERFORMANCE_TEST_TYPES.RANGE_READ:
       results = await performRangedReadTest();
+      break;
+    case PERFORMANCE_TEST_TYPES.MANY_SMALL:
+      results = await performManyFilesTest();
       break;
     default:
       break;
@@ -211,6 +214,96 @@ async function performWriteReadTest(): Promise<TestResult[]> {
 
   await file.delete({ignoreNotFound: true});
   results.push(iterationResult);
+  return results;
+}
+
+/**
+ * Performs an iteration of the many files test.
+ *
+ * @returns {Promise<TestResult[]>} Promise that resolves to an array of test results for the iteration.
+ */
+async function performManyFilesTest(): Promise<TestResult[]> {
+  const results: TestResult[] = [];
+  const fileSizeRange = getLowHighFileSize(argv.object_size as string);
+  const fileMap = new Map<string, File>();
+  let totalSizeInBytes = 0;
+
+  for (let i = 0; i < (argv.num_objects as number); i++) {
+    const fileName = generateRandomFileName(TEST_NAME_STRING);
+    const file = bucket.file(`${fileName}`);
+    totalSizeInBytes += generateRandomFile(
+      fileName,
+      fileSizeRange.low,
+      fileSizeRange.high,
+      getDirName()
+    );
+    fileMap.set(fileName, file);
+  }
+
+  let iterationResult: TestResult = {
+    op: 'WRITE',
+    objectSize: totalSizeInBytes,
+    appBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32cEnabled: checkType === 'crc32c',
+    md5Enabled: checkType === 'md5',
+    api: 'JSON',
+    elapsedTimeUs: 0,
+    cpuTimeUs: -1,
+    status: 'OK',
+    chunkSize: totalSizeInBytes,
+    workers: argv.workers as number,
+    library: 'nodejs',
+    transferSize: totalSizeInBytes,
+    transferOffset: 0,
+    bucketName: bucket.name,
+  };
+
+  let start = performance.now();
+  for (const curFileName of fileMap.keys()) {
+    await bucket.upload(`${getDirName()}/${curFileName}`, {
+      validation: checkType,
+    });
+  }
+  let end = performance.now();
+  iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
+  results.push(iterationResult);
+
+  iterationResult = {
+    op: 'READ[0]',
+    objectSize: totalSizeInBytes,
+    appBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32cEnabled: checkType === 'crc32c',
+    md5Enabled: checkType === 'md5',
+    api: 'JSON',
+    elapsedTimeUs: 0,
+    cpuTimeUs: -1,
+    status: 'OK',
+    chunkSize: totalSizeInBytes,
+    workers: argv.workers as number,
+    library: 'nodejs',
+    transferSize: totalSizeInBytes,
+    transferOffset: 0,
+    bucketName: bucket.name,
+  };
+
+  for (let i = 0; i < DEFAULT_NUMBER_OF_READS; i++) {
+    start = performance.now();
+    for (const curToDownload of fileMap.values()) {
+      await curToDownload.download({
+        validation: checkType,
+        destination: path.join(getDirName(), curToDownload.name),
+      });
+    }
+    end = performance.now();
+  }
+
+  iterationResult.elapsedTimeUs = Math.round((end - start) * 1000);
+  results.push(iterationResult);
+  for (const curToDelete of fileMap.values()) {
+    await curToDelete.delete({ignoreNotFound: true});
+    cleanupFile(curToDelete.name, getDirName());
+  }
+
   return results;
 }
 

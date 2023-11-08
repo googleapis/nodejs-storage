@@ -32,6 +32,7 @@ export const OUTPUT_FORMATS = {
 export const PERFORMANCE_TEST_TYPES = {
   WRITE_ONE_READ_THREE: 'w1r3',
   RANGE_READ: 'range-read',
+  MANY_SMALL: 'many-small',
   TRANSFER_MANAGER_UPLOAD_MANY_FILES: 'tm-upload',
   TRANSFER_MANAGER_DOWNLOAD_MANY_FILES: 'tm-download',
   TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD: 'tm-chunked',
