@@ -90,17 +90,14 @@ describe('Storage', () => {
 
   beforeAll(async () => {
     const pullCmd = new Deno.Command('docker', {args: PULL_ARGS});
-    const a = await pullCmd.output();
+    await pullCmd.output();
     const runCmd = new Deno.Command('docker', {args: RUN_ARGS});
-    const b = await runCmd.output();
-    console.log(new TextDecoder().decode(a.stdout));
-    console.log(new TextDecoder().decode(b.stdout));
+    await runCmd.output();
   });
 
   afterAll(async () => {
     const stopCmd = new Deno.Command('docker', {args: STOP_ARGS});
-    const a = await stopCmd.output();
-    console.log(new TextDecoder().decode(a.stdout));
+    await stopCmd.output();
   });
 
   describe('bucket', () => {
