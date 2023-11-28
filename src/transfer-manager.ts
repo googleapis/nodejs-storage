@@ -111,7 +111,7 @@ export interface DownloadFileInChunksOptions {
   chunkSizeBytes?: number;
   destination?: string;
   validation?: 'crc32c' | false;
-  noReturnData?: true;
+  noReturnData?: boolean;
 }
 
 export interface UploadFileInChunksOptions {
