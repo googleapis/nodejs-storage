@@ -15,7 +15,13 @@
  */
 
 import {Bucket, UploadOptions, UploadResponse} from './bucket.js';
-import {DownloadOptions, DownloadResponse, File} from './file.js';
+import {
+  DownloadOptions,
+  DownloadResponse,
+  File,
+  FileExceptionMessages,
+  RequestError,
+} from './file.js';
 import pLimit from 'p-limit';
 import * as path from 'path';
 import {createReadStream, promises as fsp} from 'fs';
@@ -105,6 +111,7 @@ export interface DownloadFileInChunksOptions {
   chunkSizeBytes?: number;
   destination?: string;
   validation?: 'crc32c' | false;
+  noReturnData?: true;
 }
 
 export interface UploadFileInChunksOptions {
@@ -639,7 +646,8 @@ export class TransferManager {
     let limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_CHUNKED_DOWNLOAD_LIMIT
     );
-    const promises: Promise<{bytesWritten: number; buffer: Buffer}>[] = [];
+    const noReturnData = Boolean(options.noReturnData);
+    const promises: Promise<Buffer | void>[] = [];
     const file: File =
       typeof fileOrName === 'string'
         ? this.bucket.file(fileOrName)
@@ -667,24 +675,39 @@ export class TransferManager {
             end: chunkEnd,
             [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_SHARDED,
           });
-          return fileToWrite.write(resp[0], 0, resp[0].length, chunkStart);
+          const result = await fileToWrite.write(
+            resp[0],
+            0,
+            resp[0].length,
+            chunkStart
+          );
+          if (noReturnData) return;
+          return result.buffer;
         })
       );
 
       start += chunkSize;
     }
 
-    let results: DownloadResponse;
+    let chunks: Array<Buffer | void>;
     try {
-      const data = await Promise.all(promises);
-      results = data.map(result => result.buffer) as DownloadResponse;
-      if (options.validation === 'crc32c') {
-        await CRC32C.fromFile(filePath);
-      }
-      return results;
+      chunks = await Promise.all(promises);
     } finally {
-      fileToWrite.close();
+      await fileToWrite.close();
     }
+
+    if (options.validation === 'crc32c' && fileInfo[0].metadata.crc32c) {
+      const downloadedCrc32C = await CRC32C.fromFile(filePath);
+      if (!downloadedCrc32C.validate(fileInfo[0].metadata.crc32c)) {
+        const mismatchError = new RequestError(
+          FileExceptionMessages.DOWNLOAD_MISMATCH
+        );
+        mismatchError.code = 'CONTENT_DOWNLOAD_MISMATCH';
+        throw mismatchError;
+      }
+    }
+    if (noReturnData) return;
+    return [Buffer.concat(chunks as Buffer[], size)];
   }
 
   /**

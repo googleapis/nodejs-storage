@@ -249,6 +249,7 @@ describe('Transfer Manager', () => {
         {
           metadata: {
             size: 1024,
+            crc32c: 'AAAAAA==',
           },
         },
       ]);
