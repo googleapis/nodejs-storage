@@ -266,6 +266,26 @@ describe('Transfer Manager', () => {
       assert.strictEqual(downloadCallCount, 1);
     });
 
+    it('should return downloaded data', async () => {
+      sandbox.stub(file, 'download').callsFake(() => {
+        return Promise.resolve([Buffer.alloc(100)]);
+      });
+
+      const data = await transferManager.downloadFileInChunks(file);
+      assert.deepStrictEqual(data, [Buffer.alloc(1024)]);
+    });
+
+    it('should not return downloaded data when noReturnData flag is set', async () => {
+      sandbox.stub(file, 'download').callsFake(() => {
+        return Promise.resolve([Buffer.alloc(100)]);
+      });
+
+      const data = await transferManager.downloadFileInChunks(file, {
+        noReturnData: true,
+      });
+      assert.strictEqual(data, undefined);
+    });
+
     it('should call fromFile when validation is set to crc32c', async () => {
       let callCount = 0;
       file.download = () => {
