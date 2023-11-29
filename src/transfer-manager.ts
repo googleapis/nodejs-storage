@@ -618,9 +618,9 @@ export class TransferManager {
    * Download a large file in chunks utilizing parallel download operations. This is a convenience method
    * that utilizes {@link File#download} to perform the download.
    *
-   * @param {object} [file | string] {@link File} to download.
+   * @param {File | string} fileOrName {@link File} to download.
    * @param {DownloadFileInChunksOptions} [options] Configuration options.
-   * @returns {Promise<DownloadResponse>}
+   * @returns {Promise<void | DownloadResponse>}
    *
    * @example
    * ```
