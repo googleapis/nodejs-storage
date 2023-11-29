@@ -280,6 +280,22 @@ describe('Transfer Manager', () => {
       assert.strictEqual(callCount, 1);
     });
 
+    it('should throw an error if crc32c validation fails', async () => {
+      file.download = () => {
+        return Promise.resolve([Buffer.alloc(0)]) as Promise<DownloadResponse>;
+      };
+      CRC32C.fromFile = () => {
+        return Promise.resolve(new CRC32C(1)); // Set non-expected initial value
+      };
+
+      await assert.rejects(
+        transferManager.downloadFileInChunks(file, {validation: 'crc32c'}),
+        {
+          code: 'CONTENT_DOWNLOAD_MISMATCH',
+        }
+      );
+    });
+
     it('should set the appropriate `GCCL_GCS_CMD_KEY`', async () => {
       sandbox.stub(file, 'download').callsFake(async options => {
         assert.strictEqual(
