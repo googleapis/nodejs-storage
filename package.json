@@ -83,7 +83,7 @@
     "fast-xml-parser": "^4.3.0",
     "gaxios": "^6.0.2",
     "google-auth-library": "^9.0.0",
-    "mime": "^3.0.0",
+    "mime": "^4.0.0",
     "mime-types": "^2.0.8",
     "p-limit": "^3.0.1",
     "retry-request": "^7.0.0",
