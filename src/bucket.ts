@@ -1975,7 +1975,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       body.topic = 'projects/{{projectId}}/topics/' + body.topic;
     }
 
-    body.topic = '//pubsub.googleapis.com/' + body.topic;
+    body.topic = `//pubsub.${this.storage.universeDomain}/` + body.topic;
 
     if (!body.payloadFormat) {
       body.payloadFormat = 'JSON_API_V1';
@@ -3143,7 +3143,12 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     } as SignerGetSignedUrlConfig;
 
     if (!this.signer) {
-      this.signer = new URLSigner(this.storage.authClient, this);
+      this.signer = new URLSigner(
+        this.storage.authClient,
+        this,
+        undefined,
+        this.storage.universeDomain
+      );
     }
 
     this.signer

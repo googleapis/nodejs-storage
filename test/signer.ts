@@ -78,7 +78,7 @@ describe('signer', () => {
       });
 
       it('should localize authClient', () => {
-        assert.strictEqual(signer['authClient'], authClient);
+        assert.strictEqual(signer['auth'], authClient);
       });
 
       it('should localize bucket', () => {

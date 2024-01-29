@@ -108,6 +108,11 @@ export interface GenerateSignedPostPolicyV2Options {
   successRedirect?: string;
   successStatus?: string;
   contentLengthRange?: {min?: number; max?: number};
+  /**
+   * @example
+   * 'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'
+   */
+  signingEndpoint?: string;
 }
 
 export interface PolicyFields {
@@ -120,6 +125,11 @@ export interface GenerateSignedPostPolicyV4Options {
   virtualHostedStyle?: boolean;
   conditions?: object[];
   fields?: PolicyFields;
+  /**
+   * @example
+   * 'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'
+   */
+  signingEndpoint?: string;
 }
 
 export interface GenerateSignedPostPolicyV4Callback {
@@ -302,7 +312,7 @@ export enum ActionToHTTPMethod {
 }
 
 /**
- * @private
+ * @deprecated - no longer used
  */
 export const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
 
@@ -1760,6 +1770,7 @@ class File extends ServiceObject<File, FileMetadata> {
         userProject: options.userProject || this.userProject,
         retryOptions: retryOptions,
         params: options?.preconditionOpts || this.instancePreconditionOpts,
+        universeDomain: this.bucket.storage.universeDomain,
         [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
       },
       callback!
@@ -2580,7 +2591,7 @@ class File extends ServiceObject<File, FileMetadata> {
     const policyString = JSON.stringify(policy);
     const policyBase64 = Buffer.from(policyString).toString('base64');
 
-    this.storage.authClient.sign(policyBase64).then(
+    this.storage.authClient.sign(policyBase64, options.signingEndpoint).then(
       signature => {
         callback(null, {
           string: policyString,
@@ -2763,18 +2774,23 @@ class File extends ServiceObject<File, FileMetadata> {
       const policyBase64 = Buffer.from(policyString).toString('base64');
 
       try {
-        const signature = await this.storage.authClient.sign(policyBase64);
+        const signature = await this.storage.authClient.sign(
+          policyBase64,
+          options.signingEndpoint
+        );
         const signatureHex = Buffer.from(signature, 'base64').toString('hex');
+        const universe = this.parent.storage.universeDomain;
         fields['policy'] = policyBase64;
         fields['x-goog-signature'] = signatureHex;
 
         let url: string;
+
         if (options.virtualHostedStyle) {
-          url = `https://${this.bucket.name}.storage.googleapis.com/`;
+          url = `https://${this.bucket.name}.storage.${universe}/`;
         } else if (options.bucketBoundHostname) {
           url = `${options.bucketBoundHostname}/`;
         } else {
-          url = `${STORAGE_POST_POLICY_BASE_URL}/${this.bucket.name}/`;
+          url = `https://storage.${universe}/${this.bucket.name}/`;
         }
 
         return {
@@ -2828,8 +2844,8 @@ class File extends ServiceObject<File, FileMetadata> {
    * @param {string} [config.version='v2'] The signing version to use, either
    *     'v2' or 'v4'.
    * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
-   *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
-   *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
+   *     URLs (e.g. 'https://mybucket.storage.googleapis.com/...') instead of path-style
+   *     (e.g. 'https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
    *     should generally be preferred instaed of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
@@ -3012,7 +3028,12 @@ class File extends ServiceObject<File, FileMetadata> {
     }
 
     if (!this.signer) {
-      this.signer = new URLSigner(this.storage.authClient, this.bucket, this);
+      this.signer = new URLSigner(
+        this.storage.authClient,
+        this.bucket,
+        this,
+        this.storage.universeDomain
+      );
     }
 
     this.signer
@@ -4004,6 +4025,7 @@ class File extends ServiceObject<File, FileMetadata> {
       params: options?.preconditionOpts || this.instancePreconditionOpts,
       chunkSize: options?.chunkSize,
       highWaterMark: options?.highWaterMark,
+      universeDomain: this.bucket.storage.universeDomain,
       [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
     });
 
