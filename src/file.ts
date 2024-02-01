@@ -143,7 +143,8 @@ export interface SignedPostPolicyV4Output {
   fields: PolicyFields;
 }
 
-export interface GetSignedUrlConfig {
+export interface GetSignedUrlConfig
+  extends Pick<SignerGetSignedUrlConfig, 'host' | 'signingEndpoint'> {
   action: 'read' | 'write' | 'delete' | 'resumable';
   version?: 'v2' | 'v4';
   virtualHostedStyle?: boolean;
@@ -3005,7 +3006,7 @@ class File extends ServiceObject<File, FileMetadata> {
       queryParams['generation'] = this.generation.toString();
     }
 
-    const signConfig = {
+    const signConfig: SignerGetSignedUrlConfig = {
       method,
       expires: cfg.expires,
       accessibleAt: cfg.accessibleAt,
@@ -3013,7 +3014,8 @@ class File extends ServiceObject<File, FileMetadata> {
       queryParams,
       contentMd5: cfg.contentMd5,
       contentType: cfg.contentType,
-    } as SignerGetSignedUrlConfig;
+      host: cfg.host,
+    };
 
     if (cfg.cname) {
       signConfig.cname = cfg.cname;

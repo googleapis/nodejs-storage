@@ -3561,6 +3561,7 @@ describe('File', () => {
           expires: config.expires,
           accessibleAt: accessibleAtDate,
           extensionHeaders: {},
+          host: undefined,
           queryParams: {},
           contentMd5: config.contentMd5,
           contentType: config.contentType,

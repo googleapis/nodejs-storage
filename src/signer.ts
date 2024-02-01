@@ -55,6 +55,8 @@ export interface GetSignedUrlConfigInternal {
   bucket: string;
   file?: string;
   /**
+   * An endpoint for generating the signed URL
+   *
    * @example
    * 'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'
    */
@@ -84,6 +86,20 @@ export interface SignerGetSignedUrlConfig {
   queryParams?: Query;
   contentMd5?: string;
   contentType?: string;
+  /**
+   * The host for the generated signed URL
+   *
+   * @example
+   * 'https://localhost:8080/'
+   */
+  host?: string;
+  /**
+   * An endpoint for generating the signed URL
+   *
+   * @example
+   * 'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'
+   */
+  signingEndpoint?: string;
 }
 
 export type SignerGetSignedUrlResponse = string;
@@ -176,7 +192,7 @@ export class URLSigner {
       query = Object.assign(query, cfg.queryParams);
 
       const signedUrl = new url.URL(
-        config.cname || `https://storage.${this.universeDomain}`
+        cfg.host || config.cname || `https://storage.${this.universeDomain}`
       );
       signedUrl.pathname = this.getResourcePath(
         !!config.cname,

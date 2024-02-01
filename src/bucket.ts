@@ -367,7 +367,8 @@ export interface GetBucketMetadataOptions {
   userProject?: string;
 }
 
-export interface GetBucketSignedUrlConfig {
+export interface GetBucketSignedUrlConfig
+  extends Pick<SignerGetSignedUrlConfig, 'host' | 'signingEndpoint'> {
   action: 'list';
   version?: 'v2' | 'v4';
   cname?: string;
@@ -3133,14 +3134,16 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   ): void | Promise<GetSignedUrlResponse> {
     const method = BucketActionToHTTPMethod[cfg.action];
 
-    const signConfig = {
+    const signConfig: SignerGetSignedUrlConfig = {
       method,
       expires: cfg.expires,
       version: cfg.version,
       cname: cfg.cname,
       extensionHeaders: cfg.extensionHeaders || {},
       queryParams: cfg.queryParams || {},
-    } as SignerGetSignedUrlConfig;
+      host: cfg.host,
+      signingEndpoint: cfg.signingEndpoint,
+    };
 
     if (!this.signer) {
       this.signer = new URLSigner(
