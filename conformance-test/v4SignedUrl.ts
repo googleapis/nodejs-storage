@@ -37,17 +37,23 @@ export enum UrlStyle {
 
 interface V4SignedURLTestCase {
   description: string;
+  hostname?: string;
+  emulatorHostname?: string;
+  clientEndpoint?: string;
+  universeDomain?: string;
   bucket: string;
   object?: string;
-  urlStyle?: UrlStyle;
+  urlStyle?: keyof typeof UrlStyle;
   bucketBoundHostname?: string;
-  scheme: 'https' | 'http';
+  scheme?: 'https' | 'http';
   headers?: OutgoingHttpHeaders;
   queryParameters?: {[key: string]: string};
   method: string;
   expiration: number;
   timestamp: string;
   expectedUrl: string;
+  expectedCanonicalRequest: string;
+  expectedStringToSign: string;
 }
 
 interface V4SignedPolicyTestCase {
@@ -96,7 +102,6 @@ const testFile = fs.readFileSync(
   'utf-8'
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const testCases = JSON.parse(testFile);
 const v4SignedUrlCases: V4SignedURLTestCase[] = testCases.signingV4Tests;
 const v4SignedPolicyCases: V4SignedPolicyTestCase[] =
@@ -107,15 +112,32 @@ const SERVICE_ACCOUNT = path.join(
   '../../../conformance-test/fixtures/signing-service-account.json'
 );
 
-const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
+let storage: Storage; // = new Storage({keyFilename: SERVICE_ACCOUNT});
 
 describe('v4 conformance test', () => {
   describe('v4 signed url', () => {
+    beforeEach(() => {
+      delete process.env.STORAGE_EMULATOR_HOST;
+    });
+
     v4SignedUrlCases.forEach(testCase => {
       it(testCase.description, async () => {
         const NOW = new Date(testCase.timestamp);
 
         const fakeTimer = sinon.useFakeTimers(NOW);
+
+        if (testCase.emulatorHostname) {
+          process.env.STORAGE_EMULATOR_HOST = testCase.emulatorHostname;
+        }
+
+        storage = new Storage({
+          keyFilename: SERVICE_ACCOUNT,
+          apiEndpoint: testCase.hostname,
+          universeDomain: testCase.universeDomain,
+        });
+
+        // hostname
+
         const bucket = storage.bucket(testCase.bucket);
         const expires = NOW.valueOf() + testCase.expiration * 1000;
         const version = 'v4' as const;
@@ -132,7 +154,7 @@ describe('v4 conformance test', () => {
           extensionHeaders,
           version,
           expires,
-          cname: bucketBoundHostname,
+          cname: testCase.clientEndpoint || bucketBoundHostname,
           virtualHostedStyle,
           queryParams,
         };
@@ -245,7 +267,7 @@ describe('v4 conformance test', () => {
 });
 
 function parseUrlStyle(
-  style?: UrlStyle,
+  style?: keyof typeof UrlStyle,
   origin?: string
 ): {bucketBoundHostname?: string; virtualHostedStyle?: boolean} {
   if (style === UrlStyle.BUCKET_BOUND_HOSTNAME) {
