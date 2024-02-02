@@ -60,7 +60,7 @@ export interface GetSignedUrlConfigInternal {
    * @example
    * 'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'
    */
-  signingEndpoint?: string;
+  signingEndpoint?: string | URL;
 }
 
 interface SignedUrlQuery {
@@ -92,14 +92,14 @@ export interface SignerGetSignedUrlConfig {
    * @example
    * 'https://localhost:8080/'
    */
-  host?: string;
+  host?: string | URL;
   /**
    * An endpoint for generating the signed URL
    *
    * @example
    * 'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'
    */
-  signingEndpoint?: string;
+  signingEndpoint?: string | URL;
 }
 
 export type SignerGetSignedUrlResponse = string;
@@ -192,8 +192,11 @@ export class URLSigner {
       query = Object.assign(query, cfg.queryParams);
 
       const signedUrl = new url.URL(
-        cfg.host || config.cname || `https://storage.${this.universeDomain}`
+        cfg.host?.toString() ||
+          config.cname ||
+          `https://storage.${this.universeDomain}`
       );
+
       signedUrl.pathname = this.getResourcePath(
         !!config.cname,
         this.bucket.name,
@@ -228,7 +231,10 @@ export class URLSigner {
     const sign = async () => {
       const auth = this.auth;
       try {
-        const signature = await auth.sign(blobToSign, config.signingEndpoint);
+        const signature = await auth.sign(
+          blobToSign,
+          config.signingEndpoint?.toString()
+        );
         const credentials = await auth.getCredentials();
 
         return {
@@ -340,7 +346,7 @@ export class URLSigner {
       try {
         const signature = await this.auth.sign(
           blobToSign,
-          config.signingEndpoint
+          config.signingEndpoint?.toString()
         );
         const signatureHex = Buffer.from(signature, 'base64').toString('hex');
         const signedQuery: Query = Object.assign({}, queryParams, {

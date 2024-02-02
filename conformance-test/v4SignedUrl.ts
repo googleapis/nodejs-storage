@@ -108,7 +108,7 @@ const SERVICE_ACCOUNT = path.join(
   '../../../conformance-test/fixtures/signing-service-account.json'
 );
 
-let storage: Storage; // = new Storage({keyFilename: SERVICE_ACCOUNT});
+let storage: Storage;
 
 describe('v4 conformance test', () => {
   let fakeTimer: sinon.SinonFakeTimers;
@@ -140,6 +140,9 @@ describe('v4 conformance test', () => {
         const bucket = storage.bucket(testCase.bucket);
         const expires = NOW.valueOf() + testCase.expiration * 1000;
         const version = 'v4' as const;
+        const host = testCase.hostname
+          ? new URL((testCase.scheme || '') + testCase.hostname)
+          : undefined;
         const origin = testCase.bucketBoundHostname
           ? `${testCase.scheme}://${testCase.bucketBoundHostname}`
           : undefined;
@@ -156,7 +159,7 @@ describe('v4 conformance test', () => {
           cname: testCase.clientEndpoint || bucketBoundHostname,
           virtualHostedStyle,
           queryParams,
-          host: testCase.hostname,
+          host,
         } as const;
         let signedUrl: string;
 
@@ -210,6 +213,11 @@ describe('v4 conformance test', () => {
         const input = testCase.policyInput;
         const NOW = new Date(input.timestamp);
         fakeTimer = sinon.useFakeTimers(NOW);
+
+        storage = new Storage({
+          keyFilename: SERVICE_ACCOUNT,
+        });
+
         const bucket = storage.bucket(input.bucket);
         const expires = NOW.valueOf() + input.expiration * 1000;
         const options: GenerateSignedPostPolicyV4Options = {
