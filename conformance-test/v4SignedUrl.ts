@@ -141,7 +141,10 @@ describe('v4 conformance test', () => {
         const expires = NOW.valueOf() + testCase.expiration * 1000;
         const version = 'v4' as const;
         const host = testCase.hostname
-          ? new URL((testCase.scheme || '') + testCase.hostname)
+          ? new URL(
+              (testCase.scheme ? testCase.scheme + '://' : '') +
+                testCase.hostname
+            )
           : undefined;
         const origin = testCase.bucketBoundHostname
           ? `${testCase.scheme}://${testCase.bucketBoundHostname}`
