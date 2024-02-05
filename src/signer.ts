@@ -287,7 +287,7 @@ export class URLSigner {
     const fqdn = new url.URL(
       config.host?.toString() || config.cname || this.storage.apiEndpoint
     );
-    extensionHeaders.host = fqdn.host;
+    extensionHeaders.host = fqdn.hostname;
     if (config.contentMd5) {
       extensionHeaders['content-md5'] = config.contentMd5;
     }
