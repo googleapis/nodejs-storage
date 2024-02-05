@@ -133,7 +133,7 @@ describe('v4 conformance test', () => {
 
         storage = new Storage({
           keyFilename: SERVICE_ACCOUNT,
-          apiEndpoint: testCase.hostname,
+          apiEndpoint: testCase.clientEndpoint,
           universeDomain: testCase.universeDomain,
         });
 
@@ -159,7 +159,7 @@ describe('v4 conformance test', () => {
           extensionHeaders,
           version,
           expires,
-          cname: testCase.clientEndpoint || bucketBoundHostname,
+          cname: bucketBoundHostname,
           virtualHostedStyle,
           queryParams,
           host,

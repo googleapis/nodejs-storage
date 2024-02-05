@@ -29,7 +29,7 @@ import {
   SignerExceptionMessages,
 } from '../src/signer.js';
 import {encodeURI, formatAsUTCISO, qsStringify} from '../src/util.js';
-import {ExceptionMessages} from '../src/storage.js';
+import {ExceptionMessages, Storage} from '../src/storage.js';
 import {OutgoingHttpHeaders} from 'http';
 import {GoogleAuth} from 'google-auth-library';
 
@@ -93,9 +93,12 @@ describe('signer', () => {
 
     describe('getSignedUrl', () => {
       let signer: URLSigner;
+      let storage: Storage;
       let CONFIG: SignerGetSignedUrlConfig;
+
       beforeEach(() => {
-        signer = new URLSigner(authClient, bucket, file);
+        storage = new Storage();
+        signer = new URLSigner(authClient, bucket, file, storage);
 
         CONFIG = {
           method: 'GET',
@@ -320,7 +323,7 @@ describe('signer', () => {
         });
 
         it('should use a universe domain with the virtual host', async () => {
-          signer['universeDomain'] = 'my-universe.com';
+          storage.universeDomain = 'my-universe.com';
 
           CONFIG.virtualHostedStyle = true;
           const expectedCname = `https://${bucket.name}.storage.my-universe.com`;

@@ -3034,7 +3034,7 @@ class File extends ServiceObject<File, FileMetadata> {
         this.storage.authClient,
         this.bucket,
         this,
-        this.storage.universeDomain
+        this.storage
       );
     }
 

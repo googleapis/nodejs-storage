@@ -15,7 +15,7 @@
 import * as crypto from 'crypto';
 import * as http from 'http';
 import * as url from 'url';
-import {ExceptionMessages} from './storage.js';
+import {ExceptionMessages, Storage} from './storage.js';
 import {encodeURI, qsStringify, objectEntries, formatAsUTCISO} from './util.js';
 import {DEFAULT_UNIVERSE, GoogleAuth} from 'google-auth-library';
 
@@ -54,6 +54,13 @@ export interface GetSignedUrlConfigInternal {
   contentType?: string;
   bucket: string;
   file?: string;
+  /**
+   * The host for the generated signed URL
+   *
+   * @example
+   * 'https://localhost:8080/'
+   */
+  host?: string | URL;
   /**
    * An endpoint for generating the signed URL
    *
@@ -136,7 +143,16 @@ export class URLSigner {
     private auth: AuthClient | GoogleAuthLike,
     private bucket: BucketI,
     private file?: FileI,
-    private universeDomain = DEFAULT_UNIVERSE
+    /**
+     * A {@link Storage} object.
+     *
+     * @privateRemarks
+     *
+     * Technically this is a required field, however it would be a breaking change to
+     * move it before optional properties. In the next major we should refactor the
+     * constructor of this class to only accept a config object.
+     */
+    private storage: Storage = new Storage()
   ) {}
 
   getSignedUrl(
@@ -159,7 +175,7 @@ export class URLSigner {
     if (cfg.cname) {
       customHost = cfg.cname;
     } else if (isVirtualHostedStyle) {
-      customHost = `https://${this.bucket.name}.storage.${this.universeDomain}`;
+      customHost = `https://${this.bucket.name}.storage.${this.storage.universeDomain}`;
     }
 
     const secondsToMilliseconds = 1000;
@@ -192,9 +208,7 @@ export class URLSigner {
       query = Object.assign(query, cfg.queryParams);
 
       const signedUrl = new url.URL(
-        cfg.host?.toString() ||
-          config.cname ||
-          `https://storage.${this.universeDomain}`
+        cfg.host?.toString() || config.cname || this.storage.apiEndpoint
       );
 
       signedUrl.pathname = this.getResourcePath(
@@ -271,7 +285,7 @@ export class URLSigner {
 
     const extensionHeaders = Object.assign({}, config.extensionHeaders);
     const fqdn = new url.URL(
-      config.cname || `https://storage.${this.universeDomain}`
+      config.host?.toString() || config.cname || this.storage.apiEndpoint
     );
     extensionHeaders.host = fqdn.host;
     if (config.contentMd5) {

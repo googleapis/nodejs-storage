@@ -3150,7 +3150,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         this.storage.authClient,
         this,
         undefined,
-        this.storage.universeDomain
+        this.storage
       );
     }
 
