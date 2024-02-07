@@ -17,7 +17,7 @@ import * as http from 'http';
 import * as url from 'url';
 import {ExceptionMessages, Storage} from './storage.js';
 import {encodeURI, qsStringify, objectEntries, formatAsUTCISO} from './util.js';
-import {DEFAULT_UNIVERSE, GoogleAuth} from 'google-auth-library';
+import {GoogleAuth} from 'google-auth-library';
 
 type GoogleAuthLike = Pick<GoogleAuth, 'getCredentials' | 'sign'>;
 
