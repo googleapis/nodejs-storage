@@ -243,6 +243,7 @@ describe('File', () => {
         },
         idempotencyStrategy: IdempotencyStrategy.RetryConditional,
       },
+      customEndpoint: false,
     };
 
     BUCKET = new Bucket(STORAGE, 'bucket-name');
@@ -3376,6 +3377,25 @@ describe('File', () => {
 
     it('should output a virtualHostedStyle url', done => {
       CONFIG.virtualHostedStyle = true;
+
+      file.generateSignedPostPolicyV4(
+        CONFIG,
+        (err: Error, res: SignedPostPolicyV4Output) => {
+          assert.ifError(err);
+          assert(res.url, `https://${BUCKET.name}.storage.googleapis.com/`);
+          done();
+        }
+      );
+    });
+
+    it('should prefer a customEndpoint > virtualHostedStyle, cname', done => {
+      const customEndpoint = 'https://my-custom-endpoint.com';
+
+      STORAGE.apiEndpoint = customEndpoint;
+      STORAGE.customEndpoint = true;
+
+      CONFIG.virtualHostedStyle = true;
+      CONFIG.bucketBoundHostname = 'http://domain.tld';
 
       file.generateSignedPostPolicyV4(
         CONFIG,

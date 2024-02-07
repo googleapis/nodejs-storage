@@ -2786,7 +2786,9 @@ class File extends ServiceObject<File, FileMetadata> {
 
         let url: string;
 
-        if (options.virtualHostedStyle) {
+        if (this.storage.customEndpoint) {
+          url = this.storage.apiEndpoint;
+        } else if (options.virtualHostedStyle) {
           url = `https://${this.bucket.name}.storage.${universe}/`;
         } else if (options.bucketBoundHostname) {
           url = `${options.bucketBoundHostname}/`;

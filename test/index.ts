@@ -508,8 +508,7 @@ describe('Storage', () => {
           projectId: PROJECT_ID,
         });
 
-        const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.customEndpoint, true);
+        assert.strictEqual(storage.customEndpoint, true);
       });
     });
   });
