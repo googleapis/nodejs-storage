@@ -231,8 +231,10 @@ describe('storage', () => {
     describe('buckets', () => {
       // Some bucket update operations have a rate limit.
       // Introduce a delay between tests to avoid getting an error.
-      beforeEach(done => {
-        setTimeout(done, 1000);
+      beforeEach(async () => {
+        await new Promise(resolve =>
+          setTimeout(resolve, BUCKET_METADATA_UPDATE_WAIT_TIME)
+        );
       });
 
       it('should get access controls', async () => {
@@ -296,6 +298,9 @@ describe('storage', () => {
           entity: 'allUsers',
           role: 'READER',
         });
+        await new Promise(resolve =>
+          setTimeout(resolve, BUCKET_METADATA_UPDATE_WAIT_TIME)
+        );
         await bucket.acl.delete({entity: 'allUsers'});
       });
 
@@ -319,6 +324,9 @@ describe('storage', () => {
       it('should make a bucket private', async () => {
         try {
           await bucket.makePublic();
+          await new Promise(resolve =>
+            setTimeout(resolve, BUCKET_METADATA_UPDATE_WAIT_TIME)
+          );
           await bucket.makePrivate();
           assert.rejects(bucket.acl.get({entity: 'allUsers'}), err => {
             assert.strictEqual((err as ApiError).code, 404);
@@ -1727,40 +1735,31 @@ describe('storage', () => {
         //
         // - file.save()
         //   -> file.createWriteStream()
-        before(() => {
+        before(async () => {
           file = bucketNonAllowList.file(generateName());
 
-          return bucket
-            .enableRequesterPays()
-            .then(() => bucket.iam.getPolicy())
-            .then(data => {
-              const policy = data[0];
-
-              // Allow an absolute or relative path (from project root)
-              // for the key file.
-              let key2 = process.env.GCN_STORAGE_2ND_PROJECT_KEY;
-              if (key2 && key2.charAt(0) === '.') {
-                key2 = `${getDirName()}/../../../${key2}`;
-              }
-
-              // Get the service account for the "second" account (the
-              // one that will read the requester pays file).
-              const clientEmail = JSON.parse(
-                fs.readFileSync(key2!, 'utf-8')
-              ).client_email;
-
-              policy.bindings.push({
-                role: 'roles/storage.admin',
-                members: [`serviceAccount:${clientEmail}`],
-              });
-
-              return bucket.iam.setPolicy(policy);
-            })
-            .then(() => file.save('abc', USER_PROJECT_OPTIONS))
-            .then(() => topic.getMetadata())
-            .then(data => {
-              topicName = data[0].name!;
-            });
+          await bucket.enableRequesterPays();
+          const data = await bucket.iam.getPolicy();
+          const policy = data[0];
+          // Allow an absolute or relative path (from project root)
+          // for the key file.
+          let key2 = process.env.GCN_STORAGE_2ND_PROJECT_KEY;
+          if (key2 && key2.charAt(0) === '.') {
+            key2 = `${getDirName()}/../../../${key2}`;
+          }
+          // Get the service account for the "second" account (the
+          // one that will read the requester pays file).
+          const clientEmail = JSON.parse(
+            fs.readFileSync(key2!, 'utf-8')
+          ).client_email;
+          policy.bindings.push({
+            role: 'roles/storage.admin',
+            members: [`serviceAccount:${clientEmail}`],
+          });
+          await bucket.iam.setPolicy(policy);
+          await file.save('abc', USER_PROJECT_OPTIONS);
+          const data_2 = await topic.getMetadata();
+          topicName = data_2[0].name!;
         });
 
         // This acts as a test for the following methods:
@@ -1788,7 +1787,7 @@ describe('storage', () => {
         type requesterPaysFunction<
           T = {} | typeof USER_PROJECT_OPTIONS,
           R = {} | void,
-        > = (options: T) => Promise<R>;
+        > = (options?: T) => Promise<R>;
 
         /**
          * Accepts a function and runs 2 tests - a test where the requester pays
@@ -1805,20 +1804,17 @@ describe('storage', () => {
           const failureMessage =
             'Bucket is a requester pays bucket but no user project provided.';
 
-          let expectedError: unknown = null;
-
-          try {
-            // Should raise an error on requester pays bucket
-            await testFunction({});
-          } catch (e) {
-            expectedError = e;
-          }
-
-          assert(expectedError instanceof Error);
-          assert(
-            expectedError.message.includes(failureMessage),
-            `Expected '${expectedError.message}' to include '${failureMessage}'`
-          );
+          await assert.rejects(testFunction(), err => {
+            console.log(JSON.stringify(err));
+            console.log('');
+            assert(
+              (err as Error).message.includes(failureMessage),
+              `Expected '${
+                (err as Error).message
+              }' to include '${failureMessage}'`
+            );
+            return true;
+          });
 
           // Validate the desired functionality
           const results = await testFunction(USER_PROJECT_OPTIONS);
