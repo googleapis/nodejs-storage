@@ -3129,6 +3129,20 @@ describe('storage', () => {
       assert.strictEqual(files!.length, NEW_FILES.length);
     });
 
+    it('returns folders as prefixes when includeFoldersAsPrefixes is set', async () => {
+      const expected = [`${DIRECTORY_NAME}/`];
+      const [, , result] = await bucket.getFiles({
+        delimiter: '/',
+        includeFoldersAsPrefixes: true,
+        autoPaginate: false,
+      });
+
+      assert.deepStrictEqual(
+        (result as {prefixes: string[]}).prefixes,
+        expected
+      );
+    });
+
     it('should get files as a stream', done => {
       let numFilesEmitted = 0;
 
