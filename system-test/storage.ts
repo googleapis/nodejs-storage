@@ -1805,8 +1805,6 @@ describe('storage', () => {
             'Bucket is a requester pays bucket but no user project provided.';
 
           await assert.rejects(testFunction(), err => {
-            console.log(JSON.stringify(err));
-            console.log('');
             assert(
               (err as Error).message.includes(failureMessage),
               `Expected '${
