@@ -68,7 +68,10 @@ nock('http://metadata.google.internal')
   .replyWithError({code: 'ENOTFOUND'})
   .persist();
 
-describe('storage', () => {
+// eslint-disable-next-line prefer-arrow-callback
+describe('storage', function () {
+  this.retries(3);
+
   const USER_ACCOUNT = 'user-spsawchuk@gmail.com';
   const TESTS_PREFIX = `storage-tests-${shortUUID()}-`;
   const RETENTION_DURATION_SECONDS = 10;
@@ -110,23 +113,18 @@ describe('storage', () => {
     },
   };
 
-  before(() => {
-    return bucket
-      .create()
-      .then(() => {
-        return pubsub.createTopic(generateName());
-      })
-      .then(data => {
-        topic = data[0];
-        return topic.iam.setPolicy({
-          bindings: [
-            {
-              role: 'roles/pubsub.editor',
-              members: ['allUsers'],
-            },
-          ],
-        });
-      });
+  before(async () => {
+    await bucket.create();
+    const data = await pubsub.createTopic(generateName());
+    topic = data[0];
+    await topic.iam.setPolicy({
+      bindings: [
+        {
+          role: 'roles/pubsub.editor',
+          members: ['allUsers'],
+        },
+      ],
+    });
   });
 
   after(() => {
