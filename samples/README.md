@@ -34,7 +34,7 @@ objects to users via direct download.
   * [Copy File](#copy-file)
   * [Copy Old Version Of File.](#copy-old-version-of-file.)
   * [Create a Dual-Region Bucket](#create-a-dual-region-bucket)
-  * [Create a Bucket with Object Retention](#create-a-bucket-object-retention)
+  * [Create a Bucket with object retention enabled.](#create-a-bucket-with-object-retention-enabled.)
   * [Create Bucket With Storage Class and Location.](#create-bucket-with-storage-class-and-location.)
   * [Create Bucket With Turbo Replication](#create-bucket-with-turbo-replication)
   * [Create New Bucket](#create-new-bucket)
@@ -117,7 +117,7 @@ objects to users via direct download.
   * [Set Autoclass](#set-autoclass)
   * [Set Client Endpoint](#set-client-endpoint)
   * [Set Event Based Hold](#set-event-based-hold)
-  * [Set Object Retention Policy](#set-object-retention-policy)
+  * [Set the object retention policy of a File.](#set-the-object-retention-policy-of-a-file.)
   * [Set Public Access Prevention Enforced](#set-public-access-prevention-enforced)
   * [Set Public Access Prevention Inherited](#set-public-access-prevention-inherited)
   * [Set RPO Async Turbo](#set-rpo-async-turbo)
@@ -443,9 +443,9 @@ __Usage:__
 
 
 
-### Create a Bucket with Object Retention
+### Create a Bucket with object retention enabled.
 
-Create a Bucket with Object Retention.
+Create a Bucket with object retention enabled.
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithObjectRetention.js).
 
@@ -651,7 +651,6 @@ __Usage:__
 
 
 -----
-
 
 
 
@@ -1900,7 +1899,10 @@ __Usage:__
 
 
 
-### Set Object Retention Policy
+
+### Set the object retention policy of a File.
+
+Set the object retention policy of a File.
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setObjectRetentionPolicy.js).
 
@@ -1909,7 +1911,7 @@ View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/sa
 __Usage:__
 
 
-`node samples/setObjectRetentionPolicy.js <BUCKET_NAME> <FILE_NAME> <FILE_CONTENTS>`
+`node setObjectRetentionPolicy.js <BUCKET_NAME>`
 
 
 -----
