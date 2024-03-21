@@ -34,6 +34,7 @@ objects to users via direct download.
   * [Copy File](#copy-file)
   * [Copy Old Version Of File.](#copy-old-version-of-file.)
   * [Create a Dual-Region Bucket](#create-a-dual-region-bucket)
+  * [Create a Bucket with Object Retention](#create-a-bucket-object-retention)
   * [Create Bucket With Storage Class and Location.](#create-bucket-with-storage-class-and-location.)
   * [Create Bucket With Turbo Replication](#create-bucket-with-turbo-replication)
   * [Create New Bucket](#create-new-bucket)
@@ -116,6 +117,7 @@ objects to users via direct download.
   * [Set Autoclass](#set-autoclass)
   * [Set Client Endpoint](#set-client-endpoint)
   * [Set Event Based Hold](#set-event-based-hold)
+  * [Set Object Retention Policy](#set-object-retention-policy)
   * [Set Public Access Prevention Enforced](#set-public-access-prevention-enforced)
   * [Set Public Access Prevention Inherited](#set-public-access-prevention-inherited)
   * [Set RPO Async Turbo](#set-rpo-async-turbo)
@@ -441,6 +443,25 @@ __Usage:__
 
 
 
+### Create a Bucket with Object Retention
+
+Create a Bucket with Object Retention.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithObjectRetention.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithObjectRetention.js,samples/README.md)
+
+__Usage:__
+
+
+`node createBucketWithObjectRetention.js <BUCKET_NAME>`
+
+
+-----
+
+
+
+
 ### Create Bucket With Storage Class and Location.
 
 Create Bucket With Storage Class and Location.
@@ -630,6 +651,7 @@ __Usage:__
 
 
 -----
+
 
 
 
@@ -1872,6 +1894,22 @@ __Usage:__
 
 
 `node samples/setEventBasedHold.js`
+
+
+-----
+
+
+
+### Set Object Retention Policy
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setObjectRetentionPolicy.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setObjectRetentionPolicy.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/setObjectRetentionPolicy.js <BUCKET_NAME> <FILE_NAME> <FILE_CONTENTS>`
 
 
 -----
