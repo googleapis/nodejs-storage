@@ -324,7 +324,7 @@ export const STORAGE_POST_POLICY_BASE_URL = 'https://storage.googleapis.com';
 /**
  * @private
  */
-const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/g;
+const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
 
 export interface FileOptions {
   crc32cGenerator?: CRC32CValidatorGenerator;
@@ -479,7 +479,7 @@ export class RequestError extends Error {
 }
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60;
-const GS_URL_REGEX = /(gs):\/\/([a-z0-9_.-]+)\/(.+)/g;
+const GS_UTIL_URL_REGEX = /(gs):\/\/([a-z0-9_.-]+)\/(.+)/g;
 const HTTPS_PUBLIC_URL_REGEX =
   /(https):\/\/(storage\.googleapis\.com)\/([a-z0-9_.-]+)\/(.+)/g;
 
@@ -2374,7 +2374,7 @@ class File extends ServiceObject<File, FileMetadata> {
     storageInstance: Storage,
     options?: FileOptions
   ): File {
-    const gsMatches = [...publicUrlOrGsUrl.matchAll(GS_URL_REGEX)];
+    const gsMatches = [...publicUrlOrGsUrl.matchAll(GS_UTIL_URL_REGEX)];
     const httpsMatches = [...publicUrlOrGsUrl.matchAll(HTTPS_PUBLIC_URL_REGEX)];
 
     if (gsMatches.length > 0) {
