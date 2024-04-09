@@ -2039,7 +2039,7 @@ class File extends ServiceObject<File, FileMetadata> {
       emitStream.destroy(e);
     });
     // If the write stream is closed, cleanup the pipeline below by calling destroy on one of the streams.
-    writeStream.on('close', () => {
+    writeStream.once('close', () => {
       emitStream.destroy();
     });
 
