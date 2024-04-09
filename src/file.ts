@@ -2038,6 +2038,10 @@ class File extends ServiceObject<File, FileMetadata> {
     writeStream.once('error', e => {
       emitStream.destroy(e);
     });
+    // If the write stream is closed, cleanup the pipeline below by calling destroy on one of the streams.
+    writeStream.on('close', () => {
+      emitStream.destroy();
+    });
 
     const transformStreams: Transform[] = [];
 
