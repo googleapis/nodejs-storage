@@ -327,6 +327,9 @@ const GS_URL_REGEXP = /^gs:\/\/([a-z0-9_.-]+)\/(.+)$/;
 
 /**
  * @private
+ * This regex will match compressible content types. These are primarily text/*, +json, +text, +xml content types.
+ * This was based off of mime-db and may periodically need to be updated if new compressible content types become
+ * standards.
  */
 const COMPRESSIBLE_MIME_REGEX = new RegExp(
   [
