@@ -1625,7 +1625,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     callback = callback || util.noop;
 
     if (!destinationFile.metadata.contentType) {
-      const destinationContentType = mime.getType(destinationFile.name);
+      const destinationContentType =
+        mime.getType(destinationFile.name) || undefined;
 
       if (destinationContentType) {
         destinationFile.metadata.contentType = destinationContentType;

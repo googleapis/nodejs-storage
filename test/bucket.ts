@@ -752,7 +752,7 @@ describe('Bucket', () => {
         assert.strictEqual(reqOpts.uri, '/compose');
         assert.deepStrictEqual(reqOpts.json, {
           destination: {
-            contentType: mime.getType(destination.name),
+            contentType: mime.getType(destination.name) || undefined,
             contentEncoding: undefined,
           },
           sourceObjects: [{name: sources[0].name}, {name: sources[1].name}],
