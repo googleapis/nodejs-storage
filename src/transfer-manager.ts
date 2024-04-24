@@ -199,7 +199,8 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     uploadId?: string,
     partsMap?: Map<number, string>
   ) {
-    this.authClient = bucket.storage.authClient || new GoogleAuth();
+    this.authClient =
+      bucket.storage.storageTransport.authClient || new GoogleAuth();
     this.uploadId = uploadId || '';
     this.bucket = bucket;
     this.fileName = fileName;
