@@ -16,7 +16,6 @@
 export {GoogleAuthOptions} from 'google-auth-library';
 
 export {
-  Service,
   ServiceConfig,
   ServiceOptions,
   StreamRequestOptions,

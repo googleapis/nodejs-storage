@@ -15,8 +15,6 @@
 import {
   ApiError,
   DecorateRequestOptions,
-  Service,
-  ServiceConfig,
   util,
 } from '../src/nodejs-common/index.js';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
@@ -47,10 +45,9 @@ class FakeChannel {
   }
 }
 
-class FakeService extends Service {
+class FakeService {
   calledWith_: Array<{}>;
   constructor(...args: Array<{}>) {
-    super(args[0] as ServiceConfig);
     this.calledWith_ = args;
   }
 }
@@ -128,10 +125,6 @@ describe('Storage', () => {
     });
 
     it('should inherit from Service', () => {
-      // Using assert.strictEqual instead of assert to prevent
-      // coercing of types.
-      assert.strictEqual(storage instanceof Service, true);
-
       const calledWith = storage.calledWith_[0];
 
       const baseUrl = 'https://storage.googleapis.com/storage/v1';
