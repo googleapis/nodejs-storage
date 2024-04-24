@@ -338,7 +338,7 @@ class Notification extends ServiceObject<Notification, NotificationMetadata> {
     };
 
     super({
-      parent: bucket,
+      //parent: bucket,
       baseUrl: '/notificationConfigs',
       id: id.toString(),
       createMethod: bucket.createNotification.bind(bucket),

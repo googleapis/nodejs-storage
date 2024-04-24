@@ -82,7 +82,7 @@ export interface ServiceObjectConfig {
    * The parent service instance. For example, an instance of Storage if the
    * object is Bucket.
    */
-  parent: ServiceObjectParent;
+  //parent: ServiceObjectParent;
 
   /**
    * Override of projectId, used to allow access to resources in another project.
@@ -159,7 +159,7 @@ export interface BaseMetadata {
 class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   metadata: K;
   baseUrl?: string;
-  parent: ServiceObjectParent;
+  //parent: ServiceObjectParent;
   id?: string;
   private createMethod?: Function;
   protected methods: Methods;
@@ -188,7 +188,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
     super();
     this.metadata = {} as K;
     this.baseUrl = config.baseUrl;
-    this.parent = config.parent; // Parent class.
+    //this.parent = config.parent; // Parent class.
     this.id = config.id; // Name or ID (e.g. dataset ID, bucket name, etc).
     this.createMethod = config.createMethod;
     this.methods = config.methods || {};
@@ -471,7 +471,8 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
     const localInterceptors = this.interceptors
       .filter(interceptor => typeof interceptor.request === 'function')
       .map(interceptor => interceptor.request);
-    return this.parent.getRequestInterceptors().concat(localInterceptors);
+    //return this.parent.getRequestInterceptors().concat(localInterceptors);
+    return [];
   }
 
   /**
@@ -580,9 +581,9 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
     reqOpts.interceptors_ = childInterceptors.concat(localInterceptors);
 
     if (reqOpts.shouldReturnStream) {
-      return this.parent.requestStream(reqOpts);
+      //return this.parent.requestStream(reqOpts);
     }
-    this.parent.request(reqOpts, callback!);
+    //this.parent.request(reqOpts, callback!);
   }
 
   /**
