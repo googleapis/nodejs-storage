@@ -19,7 +19,6 @@ import * as fs from 'fs';
 import fetch from 'node-fetch';
 import FormData from 'form-data';
 import pLimit from 'p-limit';
-import {promisify} from 'util';
 import * as path from 'path';
 import * as tmp from 'tmp';
 import * as uuid from 'uuid';
@@ -2723,7 +2722,7 @@ describe('storage', function () {
 
         // getServiceAccountEmail
         if (!SERVICE_ACCOUNT_EMAIL) {
-          const [serviceAccount] = await storage.getServiceAccount();
+          const serviceAccount = await storage.getServiceAccount();
           SERVICE_ACCOUNT_EMAIL = serviceAccount!.emailAddress!;
         }
 
