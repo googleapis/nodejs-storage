@@ -12,7 +12,7 @@ import {getPackageJSON} from './package-json-helper.cjs';
 import {GCCL_GCS_CMD_KEY} from './nodejs-common/util';
 import {RetryOptions} from './storage';
 
-interface StandardStorageQueryParams {
+export interface StandardStorageQueryParams {
   alt?: 'json' | 'media';
   callback?: string;
   fields?: string;
@@ -57,10 +57,11 @@ interface PackageJson {
 
 export class StorageTransport {
   authClient: GoogleAuth<AuthClient>;
-  providedUserAgent?: string;
-  packageJson: PackageJson;
-  retryOptions: RetryOptions;
-  baseUrl: string;
+  private providedUserAgent?: string;
+  private packageJson: PackageJson;
+  private retryOptions: RetryOptions;
+  private baseUrl: string;
+  private timeout?: number;
 
   constructor(options: TransportParameters) {
     if (options.authClient instanceof GoogleAuth) {
@@ -76,6 +77,7 @@ export class StorageTransport {
     this.packageJson = getPackageJSON();
     this.retryOptions = options.retryOptions;
     this.baseUrl = options.baseUrl;
+    this.timeout = options.timeout;
   }
 
   makeRequest<T>(
@@ -92,6 +94,7 @@ export class StorageTransport {
       ...reqOpts,
       headers,
       url: this.#buildUrl(reqOpts.url?.toString(), reqOpts.queryParameters),
+      timeout: this.timeout,
     });
 
     return callback

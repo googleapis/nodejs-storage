@@ -45,7 +45,7 @@ export interface ServiceAccount {
   kind?: string;
   [key: string]: string | undefined;
 }
-export type GetServiceAccountResponse = [ServiceAccount, unknown];
+export type GetServiceAccountResponse = ServiceAccount;
 
 export interface CreateBucketQuery {
   project: string;
