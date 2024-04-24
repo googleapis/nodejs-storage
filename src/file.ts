@@ -1022,7 +1022,7 @@ class File extends ServiceObject<File, FileMetadata> {
     };
 
     super({
-      parent: bucket,
+      //parent: bucket,
       baseUrl: '/o',
       id: encodeURIComponent(name),
       methods,
@@ -1794,7 +1794,7 @@ class File extends ServiceObject<File, FileMetadata> {
 
     resumableUpload.createURI(
       {
-        authClient: this.storage.authClient,
+        authClient: this.storage.storageTransport.authClient,
         apiEndpoint: this.storage.apiEndpoint,
         bucket: this.bucket.name,
         customRequestOptions: this.getRequestInterceptors().reduce(
@@ -2696,18 +2696,20 @@ class File extends ServiceObject<File, FileMetadata> {
     const policyString = JSON.stringify(policy);
     const policyBase64 = Buffer.from(policyString).toString('base64');
 
-    this.storage.authClient.sign(policyBase64, options.signingEndpoint).then(
-      signature => {
-        callback(null, {
-          string: policyString,
-          base64: policyBase64,
-          signature,
-        });
-      },
-      err => {
-        callback(new SigningError(err.message));
-      }
-    );
+    this.storage.storageTransport.authClient
+      .sign(policyBase64, options.signingEndpoint)
+      .then(
+        signature => {
+          callback(null, {
+            string: policyString,
+            base64: policyBase64,
+            signature,
+          });
+        },
+        err => {
+          callback(new SigningError(err.message));
+        }
+      );
   }
 
   generateSignedPostPolicyV4(
@@ -2846,7 +2848,8 @@ class File extends ServiceObject<File, FileMetadata> {
     const todayISO = formatAsUTCISO(now);
 
     const sign = async () => {
-      const {client_email} = await this.storage.authClient.getCredentials();
+      const {client_email} =
+        await this.storage.storageTransport.authClient.getCredentials();
       const credential = `${client_email}/${todayISO}/auto/storage/goog4_request`;
 
       fields = {
@@ -2879,7 +2882,7 @@ class File extends ServiceObject<File, FileMetadata> {
       const policyBase64 = Buffer.from(policyString).toString('base64');
 
       try {
-        const signature = await this.storage.authClient.sign(
+        const signature = await this.storage.storageTransport.authClient.sign(
           policyBase64,
           options.signingEndpoint
         );
@@ -3137,7 +3140,7 @@ class File extends ServiceObject<File, FileMetadata> {
 
     if (!this.signer) {
       this.signer = new URLSigner(
-        this.storage.authClient,
+        this.storage.storageTransport.authClient,
         this.bucket,
         this,
         this.storage
@@ -4143,7 +4146,7 @@ class File extends ServiceObject<File, FileMetadata> {
     }
 
     const uploadStream = resumableUpload.upload({
-      authClient: this.storage.authClient,
+      authClient: this.storage.storageTransport.authClient,
       apiEndpoint: this.storage.apiEndpoint,
       bucket: this.bucket.name,
       customRequestOptions: this.getRequestInterceptors().reduce(

@@ -640,9 +640,10 @@ describe('Transfer Manager', () => {
         }
       }
 
-      transferManager.bucket.storage.authClient = new GoogleAuth({
-        authClient: new TestAuthClient(),
-      });
+      transferManager.bucket.storage.storageTransport.authClient =
+        new GoogleAuth({
+          authClient: new TestAuthClient(),
+        });
 
       await transferManager.uploadFileInChunks(filePath);
 
@@ -678,9 +679,10 @@ describe('Transfer Manager', () => {
         }
       }
 
-      transferManager.bucket.storage.authClient = new GoogleAuth({
-        authClient: new TestAuthClient(),
-      });
+      transferManager.bucket.storage.storageTransport.authClient =
+        new GoogleAuth({
+          authClient: new TestAuthClient(),
+        });
 
       await transferManager.uploadFileInChunks(filePath);
 

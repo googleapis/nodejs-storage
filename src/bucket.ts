@@ -1208,7 +1208,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     };
 
     super({
-      parent: storage,
+      //parent: storage,
       baseUrl: '/b',
       id: name,
       createMethod: storage.createBucket.bind(storage),
@@ -3176,7 +3176,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     if (!this.signer) {
       this.signer = new URLSigner(
-        this.storage.authClient,
+        this.storage.storageTransport.authClient,
         this,
         undefined,
         this.storage
