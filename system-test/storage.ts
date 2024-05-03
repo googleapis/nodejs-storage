@@ -1512,7 +1512,7 @@ describe('storage', function () {
     });
   });
 
-  describe.only('bucket hierarchical namespace', async () => {
+  describe('bucket hierarchical namespace', async () => {
     let bucket: Bucket;
 
     beforeEach(() => {
