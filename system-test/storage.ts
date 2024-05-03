@@ -1538,13 +1538,17 @@ describe('storage', function () {
         hierarchicalNamespace: {enabled: false},
       });
       const [metadata] = await bucket.getMetadata();
-      assert(metadata.hierarchicalNamespace);
-      assert.strictEqual(metadata.hierarchicalNamespace.enabled, false);
+      assert.strictEqual(metadata.hierarchicalNamespace, undefined);
     });
 
     it('should create a bucket with hierarchical namespace enabled', async () => {
       await storage.createBucket(bucket.name, {
         hierarchicalNamespace: {enabled: true},
+        iamConfiguration: {
+          uniformBucketLevelAccess: {
+            enabled: true,
+          },
+        },
       });
       const [metadata] = await bucket.getMetadata();
       assert(metadata.hierarchicalNamespace);

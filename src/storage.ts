@@ -127,6 +127,13 @@ export interface CreateBucketRequest {
   hierarchicalNamespace?: {
     enabled?: boolean;
   };
+  iamConfiguration?: {
+    publicAccessPrevention?: string;
+    uniformBucketLevelAccess?: {
+      enabled?: boolean;
+      lockedTime?: string;
+    };
+  };
   location?: string;
   multiRegional?: boolean;
   nearline?: boolean;
