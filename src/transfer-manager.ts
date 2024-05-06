@@ -589,7 +589,7 @@ export class TransferManager {
         [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_MANY,
       };
 
-      if (options.prefix) {
+      if (options.prefix || passThroughOptionsCopy.destination) {
         passThroughOptionsCopy.destination = path.join(
           options.prefix || '',
           passThroughOptionsCopy.destination || '',
