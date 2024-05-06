@@ -21,12 +21,9 @@ import * as path from 'path';
 import * as sinon from 'sinon';
 import * as querystring from 'querystring';
 
-import {
-  Storage,
-  GetSignedUrlConfig,
-  GenerateSignedPostPolicyV4Options,
-} from '../src/';
+import {Storage, GenerateSignedPostPolicyV4Options} from '../src/';
 import * as url from 'url';
+import {getDirName} from '../src/util.js';
 
 export enum UrlStyle {
   PATH_STYLE = 'PATH_STYLE',
@@ -36,17 +33,23 @@ export enum UrlStyle {
 
 interface V4SignedURLTestCase {
   description: string;
+  hostname?: string;
+  emulatorHostname?: string;
+  clientEndpoint?: string;
+  universeDomain?: string;
   bucket: string;
   object?: string;
-  urlStyle?: UrlStyle;
+  urlStyle?: keyof typeof UrlStyle;
   bucketBoundHostname?: string;
-  scheme: 'https' | 'http';
+  scheme?: 'https' | 'http';
   headers?: OutgoingHttpHeaders;
   queryParameters?: {[key: string]: string};
   method: string;
   expiration: number;
   timestamp: string;
   expectedUrl: string;
+  expectedCanonicalRequest: string;
+  expectedStringToSign: string;
 }
 
 interface V4SignedPolicyTestCase {
@@ -88,33 +91,61 @@ interface BucketAction {
 }
 
 const testFile = fs.readFileSync(
-  path.join(__dirname, '../../conformance-test/test-data/v4SignedUrl.json'),
+  path.join(
+    getDirName(),
+    '../../../conformance-test/test-data/v4SignedUrl.json'
+  ),
   'utf-8'
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const testCases = JSON.parse(testFile);
 const v4SignedUrlCases: V4SignedURLTestCase[] = testCases.signingV4Tests;
 const v4SignedPolicyCases: V4SignedPolicyTestCase[] =
   testCases.postPolicyV4Tests;
 
 const SERVICE_ACCOUNT = path.join(
-  __dirname,
-  '../../conformance-test/fixtures/signing-service-account.json'
+  getDirName(),
+  '../../../conformance-test/fixtures/signing-service-account.json'
 );
 
-const storage = new Storage({keyFilename: SERVICE_ACCOUNT});
+let storage: Storage;
 
 describe('v4 conformance test', () => {
+  let fakeTimer: sinon.SinonFakeTimers;
+
+  beforeEach(() => {
+    delete process.env.STORAGE_EMULATOR_HOST;
+  });
+
+  afterEach(() => {
+    fakeTimer.restore();
+  });
+
   describe('v4 signed url', () => {
     v4SignedUrlCases.forEach(testCase => {
       it(testCase.description, async () => {
         const NOW = new Date(testCase.timestamp);
+        fakeTimer = sinon.useFakeTimers(NOW);
 
-        const fakeTimer = sinon.useFakeTimers(NOW);
+        if (testCase.emulatorHostname) {
+          process.env.STORAGE_EMULATOR_HOST = testCase.emulatorHostname;
+        }
+
+        storage = new Storage({
+          keyFilename: SERVICE_ACCOUNT,
+          apiEndpoint: testCase.clientEndpoint,
+          universeDomain: testCase.universeDomain,
+        });
+
         const bucket = storage.bucket(testCase.bucket);
         const expires = NOW.valueOf() + testCase.expiration * 1000;
         const version = 'v4' as const;
+        const host = testCase.hostname
+          ? new URL(
+              (testCase.scheme ? testCase.scheme + '://' : '') +
+                testCase.hostname
+            )
+          : undefined;
         const origin = testCase.bucketBoundHostname
           ? `${testCase.scheme}://${testCase.bucketBoundHostname}`
           : undefined;
@@ -131,7 +162,8 @@ describe('v4 conformance test', () => {
           cname: bucketBoundHostname,
           virtualHostedStyle,
           queryParams,
-        };
+          host,
+        } as const;
         let signedUrl: string;
 
         if (testCase.object) {
@@ -149,7 +181,7 @@ describe('v4 conformance test', () => {
           [signedUrl] = await file.getSignedUrl({
             action,
             ...baseConfig,
-          } as GetSignedUrlConfig);
+          });
         } else {
           // bucket operation
           const action = (
@@ -174,8 +206,6 @@ describe('v4 conformance test', () => {
           querystring.parse(actual.search),
           querystring.parse(expected.search)
         );
-
-        fakeTimer.restore();
       });
     });
   });
@@ -185,14 +215,19 @@ describe('v4 conformance test', () => {
       it(testCase.description, async () => {
         const input = testCase.policyInput;
         const NOW = new Date(input.timestamp);
-        const fakeTimer = sinon.useFakeTimers(NOW);
+        fakeTimer = sinon.useFakeTimers(NOW);
+
+        storage = new Storage({
+          keyFilename: SERVICE_ACCOUNT,
+        });
+
         const bucket = storage.bucket(input.bucket);
         const expires = NOW.valueOf() + input.expiration * 1000;
         const options: GenerateSignedPostPolicyV4Options = {
           expires,
         };
 
-        const conditions = [];
+        const conditions: (string | number)[][] = [];
         if (input.conditions) {
           if (input.conditions.startsWith) {
             const variable = input.conditions.startsWith[0];
@@ -233,15 +268,13 @@ describe('v4 conformance test', () => {
         );
 
         assert.deepStrictEqual(policy.fields, outputFields);
-
-        fakeTimer.restore();
       });
     });
   });
 });
 
 function parseUrlStyle(
-  style?: UrlStyle,
+  style?: keyof typeof UrlStyle,
   origin?: string
 ): {bucketBoundHostname?: string; virtualHostedStyle?: boolean} {
   if (style === UrlStyle.BUCKET_BOUND_HOSTNAME) {

@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * @experimental
+ *
  */
 
 // sample-metadata:
@@ -25,7 +25,7 @@ function main(
   firstFilePath = './local/path/to/file1.txt',
   secondFilePath = './local/path/to/file2.txt'
 ) {
-  // [START storage_upload_many_files_transfer_manager]
+  // [START storage_transfer_manager_upload_many]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -33,10 +33,10 @@ function main(
   // const bucketName = 'your-unique-bucket-name';
 
   // The ID of the first GCS file to download
-  // const firstFileName = 'your-first-file-name';
+  // const firstFilePath = 'your-first-file-name';
 
   // The ID of the second GCS file to download
-  // const secondFileName = 'your-second-file-name;
+  // const secondFilePath = 'your-second-file-name';
 
   // Imports the Google Cloud client library
   const {Storage, TransferManager} = require('@google-cloud/storage');
@@ -57,7 +57,7 @@ function main(
   }
 
   uploadManyFilesWithTransferManager().catch(console.error);
-  // [END storage_upload_many_files_transfer_manager]
+  // [END storage_transfer_manager_upload_many]
 }
 
 process.on('unhandledRejection', err => {

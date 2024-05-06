@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * @experimental
+ *
  */
 
 // sample-metadata:
@@ -21,7 +21,7 @@
 //   usage: node downloadFolderWithTransferManager.js <BUCKET_NAME> <FOLDER_NAME>
 
 function main(bucketName = 'my-bucket', folderName = 'my-folder') {
-  // [START storage_download_folder_transfer_manager]
+  // [START storage_transfer_manager_download_folder]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -50,7 +50,7 @@ function main(bucketName = 'my-bucket', folderName = 'my-folder') {
   }
 
   downloadFolderWithTransferManager().catch(console.error);
-  // [END storage_download_folder_transfer_manager]
+  // [END storage_transfer_manager_download_folder]
 }
 
 process.on('unhandledRejection', err => {

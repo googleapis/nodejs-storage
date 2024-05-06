@@ -15,19 +15,18 @@
 import {
   BodyResponseCallback,
   DecorateRequestOptions,
-  Metadata,
-} from './nodejs-common';
+} from './nodejs-common/index.js';
 import {promisifyAll} from '@google-cloud/promisify';
 
-import {Bucket} from './bucket';
-import {normalize} from './util';
+import {Bucket} from './bucket.js';
+import {normalize} from './util.js';
 
 export interface GetPolicyOptions {
   userProject?: string;
   requestedPolicyVersion?: number;
 }
 
-export type GetPolicyResponse = [Policy, Metadata];
+export type GetPolicyResponse = [Policy, unknown];
 
 /**
  * @callback GetPolicyCallback
@@ -36,7 +35,7 @@ export type GetPolicyResponse = [Policy, Metadata];
  * @param {object} apiResponse The full API response.
  */
 export interface GetPolicyCallback {
-  (err?: Error | null, acl?: Policy, apiResponse?: Metadata): void;
+  (err?: Error | null, acl?: Policy, apiResponse?: unknown): void;
 }
 
 /**
@@ -53,7 +52,7 @@ export interface SetPolicyOptions {
  * @property {object} 0 The policy.
  * @property {object} 1 The full API response.
  */
-export type SetPolicyResponse = [Policy, Metadata];
+export type SetPolicyResponse = [Policy, unknown];
 
 /**
  * @callback SetPolicyCallback
@@ -88,7 +87,7 @@ export interface Expr {
  * @property {object} 0 A subset of permissions that the caller is allowed.
  * @property {object} 1 The full API response.
  */
-export type TestIamPermissionsResponse = [{[key: string]: boolean}, Metadata];
+export type TestIamPermissionsResponse = [{[key: string]: boolean}, unknown];
 
 /**
  * @callback TestIamPermissionsCallback
@@ -100,7 +99,7 @@ export interface TestIamPermissionsCallback {
   (
     err?: Error | null,
     acl?: {[key: string]: boolean} | null,
-    apiResponse?: Metadata
+    apiResponse?: unknown
   ): void;
 }
 

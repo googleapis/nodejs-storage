@@ -12,20 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ApiError, Metadata, Service, ServiceOptions} from './nodejs-common';
+import {ApiError, Service, ServiceOptions} from './nodejs-common/index.js';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import {Readable} from 'stream';
 
-import {Bucket} from './bucket';
-import {Channel} from './channel';
-import {File} from './file';
-import {normalize} from './util';
-import {HmacKey, HmacKeyMetadata, HmacKeyOptions} from './hmacKey';
+import {Bucket, BucketMetadata} from './bucket.js';
+import {Channel} from './channel.js';
+import {File} from './file.js';
+import {normalize} from './util.js';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {getPackageJSON} from './package-json-helper.cjs';
+import {HmacKey, HmacKeyMetadata, HmacKeyOptions} from './hmacKey.js';
 import {
   CRC32CValidatorGenerator,
   CRC32C_DEFAULT_VALIDATOR_GENERATOR,
-} from './crc32c';
+} from './crc32c.js';
+import {DEFAULT_UNIVERSE} from 'google-auth-library';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -33,18 +37,19 @@ export interface GetServiceAccountOptions {
 export interface ServiceAccount {
   emailAddress?: string;
 }
-export type GetServiceAccountResponse = [ServiceAccount, Metadata];
+export type GetServiceAccountResponse = [ServiceAccount, unknown];
 export interface GetServiceAccountCallback {
   (
     err: Error | null,
     serviceAccount?: ServiceAccount,
-    apiResponse?: Metadata
+    apiResponse?: unknown
   ): void;
 }
 
 export interface CreateBucketQuery {
   project: string;
   userProject: string;
+  enableObjectRetention: boolean;
 }
 
 export enum IdempotencyStrategy {
@@ -64,10 +69,10 @@ export interface RetryOptions {
 }
 
 export interface PreconditionOptions {
-  ifGenerationMatch?: number;
-  ifGenerationNotMatch?: number;
-  ifMetagenerationMatch?: number;
-  ifMetagenerationNotMatch?: number;
+  ifGenerationMatch?: number | string;
+  ifGenerationNotMatch?: number | string;
+  ifMetagenerationMatch?: number | string;
+  ifMetagenerationNotMatch?: number | string;
 }
 
 export interface StorageOptions extends ServiceOptions {
@@ -108,6 +113,7 @@ export interface CustomPlacementConfig {
 
 export interface AutoclassConfig {
   enabled?: boolean;
+  terminalStorageClass?: 'NEARLINE' | 'ARCHIVE';
 }
 
 export interface CreateBucketRequest {
@@ -117,6 +123,17 @@ export interface CreateBucketRequest {
   cors?: Cors[];
   customPlacementConfig?: CustomPlacementConfig;
   dra?: boolean;
+  enableObjectRetention?: boolean;
+  hierarchicalNamespace?: {
+    enabled?: boolean;
+  };
+  iamConfiguration?: {
+    publicAccessPrevention?: string;
+    uniformBucketLevelAccess?: {
+      enabled?: boolean;
+      lockedTime?: string;
+    };
+  };
   location?: string;
   multiRegional?: boolean;
   nearline?: boolean;
@@ -130,19 +147,19 @@ export interface CreateBucketRequest {
   versioning?: Versioning;
 }
 
-export type CreateBucketResponse = [Bucket, Metadata];
+export type CreateBucketResponse = [Bucket, unknown];
 
 export interface BucketCallback {
-  (err: Error | null, bucket?: Bucket | null, apiResponse?: Metadata): void;
+  (err: Error | null, bucket?: Bucket | null, apiResponse?: unknown): void;
 }
 
-export type GetBucketsResponse = [Bucket[], {}, Metadata];
+export type GetBucketsResponse = [Bucket[], {}, unknown];
 export interface GetBucketsCallback {
   (
     err: Error | null,
     buckets: Bucket[],
     nextQuery?: {},
-    apiResponse?: Metadata
+    apiResponse?: unknown
   ): void;
 }
 export interface GetBucketsRequest {
@@ -192,14 +209,13 @@ export interface GetHmacKeysCallback {
     err: Error | null,
     hmacKeys: HmacKey[] | null,
     nextQuery?: {},
-    apiResponse?: Metadata
+    apiResponse?: unknown
   ): void;
 }
 
 export enum ExceptionMessages {
   EXPIRATION_DATE_INVALID = 'The expiration date provided was invalid.',
   EXPIRATION_DATE_PAST = 'An expiration date cannot be in the past.',
-  INVALID_ACTION = 'The action is not provided or invalid.',
 }
 
 export enum StorageExceptionMessages {
@@ -687,7 +703,9 @@ export class Storage extends Service {
    * @param {StorageOptions} [options] Configuration options.
    */
   constructor(options: StorageOptions = {}) {
-    let apiEndpoint = 'https://storage.googleapis.com';
+    const universe = options.universeDomain || DEFAULT_UNIVERSE;
+
+    let apiEndpoint = `https://storage.${universe}`;
     let customEndpoint = false;
 
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
@@ -743,7 +761,7 @@ export class Storage extends Service {
         'https://www.googleapis.com/auth/cloud-platform',
         'https://www.googleapis.com/auth/devstorage.full_control',
       ],
-      packageJson: require('../../package.json'),
+      packageJson: getPackageJSON(),
     };
 
     super(config, options);
@@ -851,12 +869,16 @@ export class Storage extends Service {
    * @property {boolean} [archive=false] Specify the storage class as Archive.
    * @property {object} [autoclass.enabled=false] Specify whether Autoclass is
    *     enabled for the bucket.
+   * @property {object} [autoclass.terminalStorageClass='NEARLINE'] The storage class that objects in an Autoclass bucket eventually transition to if
+   *     they are not read for a certain length of time. Valid values are NEARLINE and ARCHIVE.
    * @property {boolean} [coldline=false] Specify the storage class as Coldline.
    * @property {Cors[]} [cors=[]] Specify the CORS configuration to use.
    * @property {CustomPlacementConfig} [customPlacementConfig={}] Specify the bucket's regions for dual-region buckets.
    *     For more information, see {@link https://cloud.google.com/storage/docs/locations| Bucket Locations}.
    * @property {boolean} [dra=false] Specify the storage class as Durable Reduced
    *     Availability.
+   * @property {boolean} [enableObjectRetention=false] Specifiy whether or not object retention should be enabled on this bucket.
+   * @property {object} [hierarchicalNamespace.enabled=false] Specify whether or not to enable hierarchical namespace on this bucket.
    * @property {string} [location] Specify the bucket's location. If specifying
    *     a dual-region, the `customPlacementConfig` property should be set in conjunction.
    *     For more information, see {@link https://cloud.google.com/storage/docs/locations| Bucket Locations}.
@@ -1018,6 +1040,11 @@ export class Storage extends Service {
       delete body.userProject;
     }
 
+    if (body.enableObjectRetention) {
+      query.enableObjectRetention = body.enableObjectRetention;
+      delete body.enableObjectRetention;
+    }
+
     this.request(
       {
         method: 'POST',
@@ -1156,7 +1183,7 @@ export class Storage extends Service {
         }
 
         const metadata = resp.metadata;
-        const hmacKey = this.hmacKey(metadata.accessId, {
+        const hmacKey = this.hmacKey(metadata.accessId!, {
           projectId: metadata.projectId,
         });
         hmacKey.metadata = resp.metadata;
@@ -1276,8 +1303,8 @@ export class Storage extends Service {
         }
 
         const itemsArray = resp.items ? resp.items : [];
-        const buckets = itemsArray.map((bucket: Metadata) => {
-          const bucketInstance = this.bucket(bucket.id);
+        const buckets = itemsArray.map((bucket: BucketMetadata) => {
+          const bucketInstance = this.bucket(bucket.id!);
           bucketInstance.metadata = bucket;
           return bucketInstance;
         });
@@ -1399,7 +1426,7 @@ export class Storage extends Service {
 
         const itemsArray = resp.items ? resp.items : [];
         const hmacKeys = itemsArray.map((hmacKey: HmacKeyMetadata) => {
-          const hmacKeyInstance = this.hmacKey(hmacKey.accessId, {
+          const hmacKeyInstance = this.hmacKey(hmacKey.accessId!, {
             projectId: hmacKey.projectId,
           });
           hmacKeyInstance.metadata = hmacKey;

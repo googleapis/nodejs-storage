@@ -13,29 +13,29 @@
 // limitations under the License.
 
 import {
+  BaseMetadata,
   DecorateRequestOptions,
-  Metadata,
   ServiceObject,
   ServiceObjectConfig,
   util,
-} from '../src/nodejs-common';
-import * as assert from 'assert';
-import * as extend from 'extend';
+} from '../src/nodejs-common/index.js';
+import assert from 'assert';
 import * as fs from 'fs';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
-import * as mime from 'mime-types';
-import pLimit = require('p-limit');
+import mime from 'mime';
+import pLimit from 'p-limit';
 import * as path from 'path';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 
 import * as stream from 'stream';
-import {Bucket, Channel, Notification, CRC32C} from '../src';
+import {Bucket, Channel, Notification, CRC32C} from '../src/index.js';
 import {
   CreateWriteStreamOptions,
   File,
   SetFileMetadataOptions,
   FileOptions,
-} from '../src/file';
+  FileMetadata,
+} from '../src/file.js';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import {
   GetBucketMetadataCallback,
@@ -45,20 +45,23 @@ import {
   GetBucketSignedUrlConfig,
   AvailableServiceObjectMethods,
   BucketExceptionMessages,
-} from '../src/bucket';
-import {AddAclOptions} from '../src/acl';
-import {Policy} from '../src/iam';
-import sinon = require('sinon');
+  BucketMetadata,
+  LifecycleRule,
+} from '../src/bucket.js';
+import {AddAclOptions} from '../src/acl.js';
+import {Policy} from '../src/iam.js';
+import sinon from 'sinon';
 import {Transform} from 'stream';
-import {ExceptionMessages, IdempotencyStrategy} from '../src/storage';
-import {convertObjKeysToSnakeCase} from '../src/util';
+import {IdempotencyStrategy} from '../src/storage.js';
+import {convertObjKeysToSnakeCase, getDirName} from '../src/util.js';
+import {DEFAULT_UNIVERSE} from 'google-auth-library';
 
 class FakeFile {
   calledWith_: IArguments;
   bucket: Bucket;
   name: string;
   options: FileOptions;
-  metadata: {};
+  metadata: FileMetadata;
   createWriteStream: Function;
   delete: Function;
   isSameFile = () => false;
@@ -71,7 +74,7 @@ class FakeFile {
     this.metadata = {};
 
     this.createWriteStream = (options: CreateWriteStreamOptions) => {
-      this.metadata = options.metadata;
+      this.metadata = options.metadata!;
       const ws = new stream.Writable();
       ws.write = () => {
         ws.emit('complete');
@@ -97,11 +100,12 @@ class FakeNotification {
 }
 
 let fsStatOverride: Function | null;
-const fakeFs = extend(true, {}, fs, {
+const fakeFs = {
+  ...fs,
   stat: (filePath: string, callback: Function) => {
     return (fsStatOverride || fs.stat)(filePath, callback);
   },
-});
+};
 
 let pLimitOverride: Function | null;
 const fakePLimit = (limit: number) => (pLimitOverride || pLimit)(limit);
@@ -160,7 +164,7 @@ class FakeIam {
   }
 }
 
-class FakeServiceObject extends ServiceObject {
+class FakeServiceObject extends ServiceObject<FakeServiceObject, BaseMetadata> {
   calledWith_: IArguments;
   constructor(config: ServiceObjectConfig) {
     super(config);
@@ -201,6 +205,7 @@ describe('Bucket', () => {
       idempotencyStrategy: IdempotencyStrategy.RetryConditional,
     },
     crc32cGenerator: () => new CRC32C(),
+    universeDomain: DEFAULT_UNIVERSE,
   };
   const BUCKET_NAME = 'test-bucket';
 
@@ -470,54 +475,8 @@ describe('Bucket', () => {
         condition: {},
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.lifecycle.rule, [rule]);
-        done();
-      };
-
-      bucket.addLifecycleRule(rule, assert.ifError);
-    });
-
-    it('should properly capitalize rule action', done => {
-      const rule = {
-        action: 'delete',
-        condition: {},
-      };
-
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.lifecycle.rule, [
-          {
-            action: {
-              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
-            },
-            condition: rule.condition,
-          },
-        ]);
-
-        done();
-      };
-
-      bucket.addLifecycleRule(rule, assert.ifError);
-    });
-
-    it('should properly set the storage class', done => {
-      const rule = {
-        action: 'setStorageClass',
-        storageClass: 'storage class',
-        condition: {},
-      };
-
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.lifecycle.rule, [
-          {
-            action: {
-              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
-              storageClass: rule.storageClass,
-            },
-            condition: rule.condition,
-          },
-        ]);
-
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.deepStrictEqual(metadata.lifecycle!.rule, [rule]);
         done();
       };
 
@@ -526,17 +485,19 @@ describe('Bucket', () => {
 
     it('should properly set condition', done => {
       const rule = {
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           age: 30,
         },
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.lifecycle.rule, [
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.deepStrictEqual(metadata.lifecycle?.rule, [
           {
             action: {
-              type: rule.action.charAt(0).toUpperCase() + rule.action.slice(1),
+              type: 'Delete',
             },
             condition: rule.condition,
           },
@@ -551,16 +512,18 @@ describe('Bucket', () => {
       const date = new Date();
 
       const rule = {
-        action: 'delete',
+        action: {
+          type: 'Delete',
+        },
         condition: {
           createdBefore: date,
         },
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
+      bucket.setMetadata = (metadata: BucketMetadata) => {
         const expectedDateString = date.toISOString().replace(/T.+$/, '');
 
-        const rule = metadata.lifecycle.rule[0];
+        const rule = metadata!.lifecycle!.rule![0];
         assert.strictEqual(rule.condition.createdBefore, expectedDateString);
 
         done();
@@ -585,9 +548,9 @@ describe('Bucket', () => {
         done(new Error('Metadata should not be refreshed.'));
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.strictEqual(metadata.lifecycle.rule.length, 1);
-        assert.deepStrictEqual(metadata.lifecycle.rule, [rule]);
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.strictEqual(metadata!.lifecycle!.rule!.length, 1);
+        assert.deepStrictEqual(metadata.lifecycle?.rule, [rule]);
         done();
       };
 
@@ -595,16 +558,16 @@ describe('Bucket', () => {
     });
 
     it('should combine rule with existing rules by default', done => {
-      const existingRule = {
+      const existingRule: LifecycleRule = {
         action: {
-          type: 'type',
+          type: 'Delete',
         },
         condition: {},
       };
 
-      const newRule = {
+      const newRule: LifecycleRule = {
         action: {
-          type: 'type',
+          type: 'Delete',
         },
         condition: {},
       };
@@ -613,9 +576,9 @@ describe('Bucket', () => {
         callback(null, {lifecycle: {rule: [existingRule]}}, {});
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.strictEqual(metadata.lifecycle.rule.length, 2);
-        assert.deepStrictEqual(metadata.lifecycle.rule, [
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.strictEqual(metadata!.lifecycle!.rule!.length, 2);
+        assert.deepStrictEqual(metadata.lifecycle?.rule, [
           existingRule,
           newRule,
         ]);
@@ -626,23 +589,23 @@ describe('Bucket', () => {
     });
 
     it('should accept multiple rules', done => {
-      const existingRule = {
+      const existingRule: LifecycleRule = {
         action: {
-          type: 'type',
+          type: 'Delete',
         },
         condition: {},
       };
 
-      const newRules = [
+      const newRules: LifecycleRule[] = [
         {
           action: {
-            type: 'type',
+            type: 'Delete',
           },
           condition: {},
         },
         {
           action: {
-            type: 'type2',
+            type: 'Delete',
           },
           condition: {},
         },
@@ -652,9 +615,9 @@ describe('Bucket', () => {
         callback(null, {lifecycle: {rule: [existingRule]}}, {});
       };
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.strictEqual(metadata.lifecycle.rule.length, 3);
-        assert.deepStrictEqual(metadata.lifecycle.rule, [
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.strictEqual(metadata!.lifecycle!.rule!.length, 3);
+        assert.deepStrictEqual(metadata.lifecycle?.rule, [
           existingRule,
           newRules[0],
           newRules[1],
@@ -741,7 +704,7 @@ describe('Bucket', () => {
       destination.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(
           reqOpts.json.destination.contentType,
-          mime.contentType(destination.name)
+          mime.getType(destination.name)
         );
 
         done();
@@ -772,7 +735,7 @@ describe('Bucket', () => {
       destination.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(
           reqOpts.json.destination.contentType,
-          mime.contentType(destination.name)
+          mime.getType(destination.name)
         );
 
         done();
@@ -782,13 +745,16 @@ describe('Bucket', () => {
     });
 
     it('should make correct API request', done => {
-      const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
-      const destination = bucket.file('destination.txt');
+      const sources = [bucket.file('1.foo'), bucket.file('2.foo')];
+      const destination = bucket.file('destination.foo');
 
       destination.request = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(reqOpts.uri, '/compose');
         assert.deepStrictEqual(reqOpts.json, {
-          destination: {contentType: mime.contentType(destination.name)},
+          destination: {
+            contentType: mime.getType(destination.name) || undefined,
+            contentEncoding: undefined,
+          },
           sourceObjects: [{name: sources[0].name}, {name: sources[1].name}],
         });
 
@@ -960,12 +926,6 @@ describe('Bucket', () => {
       assert.throws(() => {
         bucket.createChannel(), BucketExceptionMessages.CHANNEL_ID_REQUIRED;
       });
-    });
-
-    it('should throw if an address is not provided', () => {
-      assert.throws(() => {
-        bucket.createChannel(ID, {});
-      }, /An address is required to create a channel\./);
     });
 
     it('should make the correct request', done => {
@@ -1649,7 +1609,7 @@ describe('Bucket', () => {
     });
 
     it('should update the logging metadata configuration', done => {
-      bucket.setMetadata = (metadata: Metadata) => {
+      bucket.setMetadata = (metadata: BucketMetadata) => {
         assert.deepStrictEqual(metadata.logging, {
           logBucket: bucket.id,
           logObjectPrefix: PREFIX,
@@ -1664,8 +1624,8 @@ describe('Bucket', () => {
     it('should allow a custom bucket to be provided', done => {
       const bucketName = 'bucket-name';
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.logging.logBucket, bucketName);
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.deepStrictEqual(metadata!.logging!.logBucket, bucketName);
         setImmediate(done);
         return Promise.resolve([]);
       };
@@ -1682,8 +1642,11 @@ describe('Bucket', () => {
     it('should accept a Bucket object', done => {
       const bucketForLogging = new Bucket(STORAGE, 'bucket-name');
 
-      bucket.setMetadata = (metadata: Metadata) => {
-        assert.deepStrictEqual(metadata.logging.logBucket, bucketForLogging.id);
+      bucket.setMetadata = (metadata: BucketMetadata) => {
+        assert.deepStrictEqual(
+          metadata!.logging!.logBucket,
+          bucketForLogging.id
+        );
         setImmediate(done);
         return Promise.resolve([]);
       };
@@ -1812,10 +1775,25 @@ describe('Bucket', () => {
     it('should get files with a query', done => {
       const token = 'next-page-token';
       bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.qs, {maxResults: 5, pageToken: token});
+        assert.deepStrictEqual(reqOpts.qs, {
+          maxResults: 5,
+          pageToken: token,
+          includeFoldersAsPrefixes: true,
+          delimiter: '/',
+          autoPaginate: false,
+        });
         done();
       };
-      bucket.getFiles({maxResults: 5, pageToken: token}, util.noop);
+      bucket.getFiles(
+        {
+          maxResults: 5,
+          pageToken: token,
+          includeFoldersAsPrefixes: true,
+          delimiter: '/',
+          autoPaginate: false,
+        },
+        util.noop
+      );
     });
 
     it('should return nextQuery if more results exist', () => {
@@ -1884,6 +1862,25 @@ describe('Bucket', () => {
         assert.ifError(err);
         assert(files[0] instanceof FakeFile);
         assert.strictEqual(files[0].calledWith_[2].generation, 1);
+        done();
+      });
+    });
+
+    it('should return soft-deleted Files if queried for softDeleted', done => {
+      const softDeletedTime = new Date('1/1/2024').toISOString();
+      bucket.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        callback(null, {
+          items: [{name: 'fake-file-name', generation: 1, softDeletedTime}],
+        });
+      };
+
+      bucket.getFiles({softDeleted: true}, (err: Error, files: FakeFile[]) => {
+        assert.ifError(err);
+        assert(files[0] instanceof FakeFile);
+        assert.strictEqual(files[0].metadata.softDeletedTime, softDeletedTime);
         done();
       });
     });
@@ -2165,43 +2162,14 @@ describe('Bucket', () => {
             version: 'v4',
             expires: SIGNED_URL_CONFIG.expires,
             extensionHeaders: {},
+            host: undefined,
             queryParams: {},
             cname: CNAME,
+            signingEndpoint: undefined,
           });
           done();
         }
       );
-    });
-
-    it('should error if action is null', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      SIGNED_URL_CONFIG.action = null as any;
-
-      assert.throws(() => {
-        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
-    });
-
-    it('should error if action is undefined', () => {
-      const urlConfig = {
-        ...SIGNED_URL_CONFIG,
-      } as Partial<GetBucketSignedUrlConfig>;
-      delete urlConfig.action;
-      assert.throws(() => {
-        bucket.getSignedUrl(urlConfig, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
-    });
-
-    it('should error for an invalid action', () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      SIGNED_URL_CONFIG.action = 'watch' as any;
-
-      assert.throws(() => {
-        bucket.getSignedUrl(SIGNED_URL_CONFIG, () => {}),
-          ExceptionMessages.INVALID_ACTION;
-      });
     });
   });
 
@@ -2513,7 +2481,7 @@ describe('Bucket', () => {
     it('should correctly call setMetadata', done => {
       const labels = {};
       bucket.setMetadata = (
-        metadata: Metadata,
+        metadata: BucketMetadata,
         _callbackOrOptions: {},
         callback: Function
       ) => {
@@ -2545,7 +2513,7 @@ describe('Bucket', () => {
       ) => {
         assert.deepStrictEqual(metadata, {
           retentionPolicy: {
-            retentionPeriod: duration,
+            retentionPeriod: `${duration}`,
           },
         });
 
@@ -2582,7 +2550,7 @@ describe('Bucket', () => {
     const CALLBACK = util.noop;
 
     it('should convert camelCase to snake_case', done => {
-      bucket.setMetadata = (metadata: Metadata) => {
+      bucket.setMetadata = (metadata: BucketMetadata) => {
         assert.strictEqual(metadata.storageClass, 'CAMEL_CASE');
         done();
       };
@@ -2591,7 +2559,7 @@ describe('Bucket', () => {
     });
 
     it('should convert hyphenate to snake_case', done => {
-      bucket.setMetadata = (metadata: Metadata) => {
+      bucket.setMetadata = (metadata: BucketMetadata) => {
         assert.strictEqual(metadata.storageClass, 'HYPHENATED_CLASS');
         done();
       };
@@ -2601,7 +2569,7 @@ describe('Bucket', () => {
 
     it('should call setMetdata correctly', () => {
       bucket.setMetadata = (
-        metadata: Metadata,
+        metadata: BucketMetadata,
         options: {},
         callback: Function
       ) => {
@@ -2649,10 +2617,13 @@ describe('Bucket', () => {
 
   describe('upload', () => {
     const basename = 'testfile.json';
-    const filepath = path.join(__dirname, '../../test/testdata/' + basename);
+    const filepath = path.join(
+      getDirName(),
+      '../../../test/testdata/' + basename
+    );
     const nonExistentFilePath = path.join(
-      __dirname,
-      '../../test/testdata/',
+      getDirName(),
+      '../../../test/testdata/',
       'non-existent-file'
     );
     const metadata = {
@@ -2663,7 +2634,7 @@ describe('Bucket', () => {
     };
 
     beforeEach(() => {
-      bucket.file = (name: string, metadata: Metadata) => {
+      bucket.file = (name: string, metadata: FileMetadata) => {
         return new FakeFile(bucket, name, metadata);
       };
     });
@@ -2999,7 +2970,7 @@ describe('Bucket', () => {
         ws.write = () => true;
         setImmediate(() => {
           assert.strictEqual(
-            options.metadata.contentType,
+            options!.metadata!.contentType,
             metadata.contentType
           );
           done();

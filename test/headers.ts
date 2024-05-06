@@ -14,7 +14,7 @@
 
 import * as assert from 'assert';
 import {describe, it} from 'mocha';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 
 const error = Error('not implemented');
 
@@ -51,7 +51,13 @@ describe('headers', () => {
     },
   });
 
-  it('populates x-goog-api-client header', async () => {
+  afterEach(() => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    globalThis.Deno = undefined;
+  });
+
+  it('populates x-goog-api-client header (node)', async () => {
     const storage = new Storage();
     const bucket = storage.bucket('foo-bucket');
     try {
@@ -62,6 +68,28 @@ describe('headers', () => {
     assert.ok(
       /^gl-node\/(?<nodeVersion>[^W]+) gccl\/(?<gccl>[^W]+) gccl-invocation-id\/(?<gcclInvocationId>[^W]+)$/.test(
         requests[0].headers['x-goog-api-client']
+      )
+    );
+  });
+
+  it('populates x-goog-api-client header (deno)', async () => {
+    const storage = new Storage();
+    const bucket = storage.bucket('foo-bucket');
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    globalThis.Deno = {
+      version: {
+        deno: '0.00.0',
+      },
+    };
+    try {
+      await bucket.create();
+    } catch (err) {
+      if (err !== error) throw err;
+    }
+    assert.ok(
+      /^gl-deno\/0.00.0 gccl\/(?<gccl>[^W]+) gccl-invocation-id\/(?<gcclInvocationId>[^W]+)$/.test(
+        requests[1].headers['x-goog-api-client']
       )
     );
   });

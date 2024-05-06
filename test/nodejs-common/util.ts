@@ -18,9 +18,8 @@ import {
   MissingProjectIdError,
   replaceProjectIdToken,
 } from '@google-cloud/projectify';
-import * as assert from 'assert';
+import assert from 'assert';
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
-import * as extend from 'extend';
 import {
   AuthClient,
   GoogleAuth,
@@ -28,9 +27,9 @@ import {
   OAuth2Client,
 } from 'google-auth-library';
 import * as nock from 'nock';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 import * as r from 'teeny-request';
-import * as retryRequest from 'retry-request';
+import retryRequest from 'retry-request';
 import * as sinon from 'sinon';
 import * as stream from 'stream';
 import {teenyRequest} from 'teeny-request';
@@ -40,18 +39,16 @@ import {
   ApiError,
   DecorateRequestOptions,
   Duplexify,
-  DuplexifyConstructor,
+  GCCL_GCS_CMD_KEY,
   GoogleErrorBody,
   GoogleInnerError,
   MakeAuthenticatedRequestFactoryConfig,
   MakeRequestConfig,
   ParsedHttpRespMessage,
   Util,
-} from '../../src/nodejs-common/util';
-import {DEFAULT_PROJECT_ID_TOKEN} from '../../src/nodejs-common/service';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const duplexify: DuplexifyConstructor = require('duplexify');
+} from '../../src/nodejs-common/util.js';
+import {DEFAULT_PROJECT_ID_TOKEN} from '../../src/nodejs-common/service.js';
+import duplexify from 'duplexify';
 
 nock.disableNetConnect();
 
@@ -547,6 +544,7 @@ describe('common/util', () => {
         qs: {
           uploadType: 'media',
         },
+        [GCCL_GCS_CMD_KEY]: 'some.value',
       } as DecorateRequestOptions;
 
       util.makeWritableStream(dup, {
@@ -557,6 +555,7 @@ describe('common/util', () => {
           assert.strictEqual(request.method, req.method);
           assert.deepStrictEqual(request.qs, req.qs);
           assert.strictEqual(request.uri, req.uri);
+          assert.strictEqual(request[GCCL_GCS_CMD_KEY], req[GCCL_GCS_CMD_KEY]);
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const mp = request.multipart as any[];
@@ -733,7 +732,11 @@ describe('common/util', () => {
       sandbox
         .stub(fakeGoogleAuth, 'GoogleAuth')
         .callsFake((config_: GoogleAuthOptions) => {
-          assert.deepStrictEqual(config_, {...config, authClient: undefined});
+          assert.deepStrictEqual(config_, {
+            ...config,
+            authClient: undefined,
+            clientOptions: undefined,
+          });
           setImmediate(done);
           return authClient;
         });
@@ -746,6 +749,7 @@ describe('common/util', () => {
 
       const config: MakeAuthenticatedRequestFactoryConfig = {
         authClient: customAuthClient,
+        clientOptions: undefined,
       };
 
       sandbox
@@ -907,13 +911,14 @@ describe('common/util', () => {
 
     describe('authentication', () => {
       it('should pass correct args to authorizeRequest', done => {
-        const fake = extend(true, authClient, {
+        const fake = {
+          ...authClient,
           authorizeRequest: async (rOpts: {}) => {
             assert.deepStrictEqual(rOpts, fakeReqOpts);
             setImmediate(done);
             return rOpts;
           },
-        });
+        };
         retryRequestOverride = () => {
           return new stream.PassThrough();
         };
@@ -924,11 +929,12 @@ describe('common/util', () => {
 
       it('should return a stream if callback is missing', () => {
         sandbox.stub(fakeGoogleAuth, 'GoogleAuth').callsFake(() => {
-          return extend(true, authClient, {
+          return {
+            ...authClient,
             authorizeRequest: async (rOpts: {}) => {
               return rOpts;
             },
-          });
+          };
         });
         retryRequestOverride = () => {
           return new stream.PassThrough();
@@ -1367,7 +1373,6 @@ describe('common/util', () => {
       return (reqOpts_: DecorateRequestOptions, config: MakeRequestConfig) => {
         assert.strictEqual(reqOpts_, reqOpts);
         assert.strictEqual(config.retries, 3);
-        extend({}, config, customRetryRequestFunctionConfig);
 
         const error = new Error(errorMessage);
         stub('parseHttpRespMessage', () => {
@@ -1601,11 +1606,10 @@ describe('common/util', () => {
 
       it('should allow request options to control retry setting', done => {
         retryRequestOverride = testCustomRetryRequestConfig(done);
-        const reqOptsWithRetrySettings = extend(
-          {},
-          reqOpts,
-          customRetryRequestConfig
-        );
+        const reqOptsWithRetrySettings = {
+          ...reqOpts,
+          ...customRetryRequestConfig,
+        };
         util.makeRequest(
           reqOptsWithRetrySettings,
           noRetryRequestConfig,
@@ -1864,17 +1868,6 @@ describe('common/util', () => {
       it('should not match if the wrong ServiceObject', () => {
         assert(!util.isCustomType(subscription, 'pubsub/topic'));
       });
-    });
-  });
-
-  describe('getUserAgentFromPackageJson', () => {
-    it('should format a User Agent string from a package.json', () => {
-      const userAgent = util.getUserAgentFromPackageJson({
-        name: '@google-cloud/storage',
-        version: '0.1.0',
-      });
-
-      assert.strictEqual(userAgent, 'gcloud-node-storage/0.1.0');
     });
   });
 

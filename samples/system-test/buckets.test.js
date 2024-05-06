@@ -29,6 +29,7 @@ const bucketNameDualRegion = `${samplesTestBucketPrefix}-b`;
 const bucketNameDualRegionTurbo = `${samplesTestBucketPrefix}-c`;
 const bucketNameWithClassAndLocation = `${samplesTestBucketPrefix}-d`;
 const bucketNameAutoclass = `${samplesTestBucketPrefix}-e`;
+const bucketNameObjectRetention = `${samplesTestBucketPrefix}-f`;
 const defaultKmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA;
 const bucket = storage.bucket(bucketName);
 const bucketWithClassAndLocation = storage.bucket(
@@ -36,6 +37,7 @@ const bucketWithClassAndLocation = storage.bucket(
 );
 const dualRegionBucket = storage.bucket(bucketNameDualRegion);
 const dualRegionBucketTurbo = storage.bucket(bucketNameDualRegionTurbo);
+const objectRetentionBucket = storage.bucket(bucketNameObjectRetention);
 
 const PUBLIC_ACCESS_PREVENTION_INHERITED = 'inherited';
 const PUBLIC_ACCESS_PREVENTION_ENFORCED = 'enforced';
@@ -76,12 +78,20 @@ it('should get bucket metadata', async () => {
   assert.include(output, bucketName);
 });
 
-it('should disable autoclass', async () => {
+it('should set autoclass terminal storage class to ARCHIVE', async () => {
   await storage.createBucket(bucketNameAutoclass, {
     autoclass: {
       enabled: true,
+      terminalStorageClass: 'NEARLINE',
     },
   });
+  const output = execSync(
+    `node setAutoclass.js ${bucketNameAutoclass} ${true} ARCHIVE`
+  );
+  assert.include(output, 'ARCHIVE');
+});
+
+it('should disable autoclass', async () => {
   const output = execSync(
     `node setAutoclass.js ${bucketNameAutoclass} ${false}`
   );
@@ -90,7 +100,7 @@ it('should disable autoclass', async () => {
 
 it('should get autoclass', async () => {
   const output = execSync(`node getAutoclass.js ${bucketNameAutoclass}`);
-  assert.include(output, 'Autoclass enabled is set to false');
+  assert.include(output, `Autoclass is disabled for ${bucketNameAutoclass}`);
 });
 
 it('should set a buckets default KMS key', async () => {
@@ -408,4 +418,17 @@ it('should delete a bucket', async () => {
   assert.match(output, new RegExp(`Bucket ${bucketName} deleted`));
   const [exists] = await bucket.exists();
   assert.strictEqual(exists, false);
+});
+
+it('should create a bucket with object retention enabled', async () => {
+  const output = execSync(
+    `node createBucketWithObjectRetention.js ${bucketNameObjectRetention}`
+  );
+  console.log(output);
+  assert.include(
+    output,
+    `Created '${bucketNameObjectRetention}' with object retention enabled setting: Enabled`
+  );
+  const [metadata] = await objectRetentionBucket.getMetadata();
+  assert.strictEqual(metadata.objectRetention.mode, 'Enabled');
 });

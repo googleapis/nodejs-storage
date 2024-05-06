@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-const yargs = require('yargs');
-// eslint-disable-next-line node/no-unsupported-features/node-builtins
+import yargs from 'yargs';
 import {parentPort} from 'worker_threads';
-import {Bucket, TransferManager} from '../src';
+import {Bucket, File, TransferManager} from '../src/index.js';
 import {
   cleanupFile,
   generateRandomDirectoryStructure,
@@ -30,10 +29,11 @@ import {
   performanceTestCommand,
   getLowHighFileSize,
   PERFORMANCE_TEST_TYPES,
-} from './performanceUtils';
+} from './performanceUtils.js';
 import {performance} from 'perf_hooks';
 import {rmSync} from 'fs';
 import * as path from 'path';
+import {getDirName} from '../src/util.js';
 
 const TEST_NAME_STRING = 'tm-perf-metrics';
 const DIRECTORY_PROBABILITY = 0.1;
@@ -51,35 +51,44 @@ const argv = yargs(process.argv.slice(2))
  * to the parent thread.
  */
 async function main() {
-  let result: TestResult | undefined = undefined;
+  let results: TestResult[] = [];
 
   ({bucket, transferManager} = await performanceTestSetup(
-    argv.project!,
-    argv.bucket!
+    argv.project! as string,
+    argv.bucket! as string
   ));
 
   switch (argv.test_type) {
     case PERFORMANCE_TEST_TYPES.TRANSFER_MANAGER_UPLOAD_MANY_FILES:
-      result = await performUploadManyFilesTest();
+      results = await performUploadManyFilesTest();
       break;
     case PERFORMANCE_TEST_TYPES.TRANSFER_MANAGER_DOWNLOAD_MANY_FILES:
-      result = await performDownloadManyFilesTest();
+      results = await performDownloadManyFilesTest();
       break;
     case PERFORMANCE_TEST_TYPES.TRANSFER_MANAGER_CHUNKED_FILE_DOWNLOAD:
-      result = await performDownloadFileInChunksTest();
+      results = await performChunkUploadDownloadTest();
       break;
     default:
       break;
   }
-  parentPort?.postMessage(result);
-  await performTestCleanup();
+  parentPort?.postMessage(results);
 }
 
 /**
- * Cleans up after a test is complete by removing all files from the bucket
+ * Cleans up after a test is complete by removing files from the bucket
  */
-async function performTestCleanup() {
-  await bucket.deleteFiles({force: true});
+async function performTestCleanup(fileOrFiles: File[] | File | string[]) {
+  const filesToDelete = Array.isArray(fileOrFiles)
+    ? fileOrFiles
+    : [fileOrFiles];
+  const promises = filesToDelete.map(f => {
+    let fileToDelete = f;
+    if (typeof f === 'string') {
+      fileToDelete = bucket.file(f);
+    }
+    (fileToDelete as File).delete({ignoreNotFound: true});
+  });
+  return Promise.all(promises);
 }
 
 /**
@@ -87,10 +96,10 @@ async function performTestCleanup() {
  *
  * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
  */
-async function performUploadManyFilesTest(): Promise<TestResult> {
-  const fileSizeRange = getLowHighFileSize(argv.object_size);
+async function performUploadManyFilesTest(): Promise<TestResult[]> {
+  const fileSizeRange = getLowHighFileSize(argv.object_size as string);
   const creationInfo = generateRandomDirectoryStructure(
-    argv.num_objects,
+    argv.num_objects as number,
     TEST_NAME_STRING,
     fileSizeRange.low,
     fileSizeRange.high,
@@ -99,7 +108,7 @@ async function performUploadManyFilesTest(): Promise<TestResult> {
 
   const start = performance.now();
   await transferManager.uploadManyFiles(creationInfo.paths, {
-    concurrencyLimit: argv.workers,
+    concurrencyLimit: argv.workers as number,
     passthroughOptions: {
       validation: checkType,
     },
@@ -119,25 +128,27 @@ async function performUploadManyFilesTest(): Promise<TestResult> {
     cpuTimeUs: -1,
     status: 'OK',
     chunkSize: creationInfo.totalSizeInBytes,
-    workers: argv.workers,
+    workers: argv.workers as number,
     library: 'nodejs',
     transferSize: creationInfo.totalSizeInBytes,
     transferOffset: 0,
     bucketName: bucket.name,
   };
 
-  return result;
+  await performTestCleanup(creationInfo.paths);
+
+  return [result];
 }
 
 /**
  * Performs a test where multiple objects are downloaded in parallel from a bucket.
  *
- * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
+ * @returns {Promise<TestResult[]>} A promise that resolves containing information about the test results.
  */
-async function performDownloadManyFilesTest(): Promise<TestResult> {
-  const fileSizeRange = getLowHighFileSize(argv.object_size);
+async function performDownloadManyFilesTest(): Promise<TestResult[]> {
+  const fileSizeRange = getLowHighFileSize(argv.object_size as string);
   const creationInfo = generateRandomDirectoryStructure(
-    argv.num_objects,
+    argv.num_objects as number,
     TEST_NAME_STRING,
     fileSizeRange.low,
     fileSizeRange.high,
@@ -145,15 +156,15 @@ async function performDownloadManyFilesTest(): Promise<TestResult> {
   );
 
   await transferManager.uploadManyFiles(creationInfo.paths, {
-    concurrencyLimit: argv.workers,
+    concurrencyLimit: argv.workers as number,
     passthroughOptions: {
       validation: checkType,
     },
   });
   const start = performance.now();
   await transferManager.downloadManyFiles(TEST_NAME_STRING, {
-    prefix: path.join(__dirname, '..', '..'),
-    concurrencyLimit: argv.workers,
+    prefix: path.join(getDirName(), '..', '..'),
+    concurrencyLimit: argv.workers as number,
     passthroughOptions: {
       validation: checkType,
     },
@@ -173,45 +184,74 @@ async function performDownloadManyFilesTest(): Promise<TestResult> {
     cpuTimeUs: -1,
     status: 'OK',
     chunkSize: creationInfo.totalSizeInBytes,
-    workers: argv.workers,
+    workers: argv.workers as number,
     library: 'nodejs',
     transferSize: creationInfo.totalSizeInBytes,
     transferOffset: 0,
     bucketName: bucket.name,
   };
-  return result;
+
+  await performTestCleanup(creationInfo.paths);
+
+  return [result];
 }
 
 /**
- * Performs a test where a large file is downloaded as chunks in parallel.
+ * Performs a test where a large file is uploaded and downloaded as chunks in parallel.
  *
  * @returns {Promise<TestResult>} A promise that resolves containing information about the test results.
  */
-async function performDownloadFileInChunksTest(): Promise<TestResult> {
-  const fileSizeRange = getLowHighFileSize(argv.object_size);
+async function performChunkUploadDownloadTest(): Promise<TestResult[]> {
+  const results: TestResult[] = [];
+  const fileSizeRange = getLowHighFileSize(argv.object_size as string);
   const fileName = generateRandomFileName(TEST_NAME_STRING);
   const sizeInBytes = generateRandomFile(
     fileName,
     fileSizeRange.low,
     fileSizeRange.high,
-    __dirname
+    getDirName()
   );
   const file = bucket.file(`${fileName}`);
+  let result: TestResult = {
+    op: 'WRITE',
+    objectSize: sizeInBytes,
+    appBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
+    crc32cEnabled: checkType === 'crc32c',
+    md5Enabled: false,
+    api: 'JSON',
+    elapsedTimeUs: -1,
+    cpuTimeUs: -1,
+    status: 'OK',
+    chunkSize: argv.range_read_size as number,
+    workers: argv.workers as number,
+    library: 'nodejs',
+    transferSize: sizeInBytes,
+    transferOffset: 0,
+    bucketName: bucket.name,
+  };
 
-  await bucket.upload(`${__dirname}/${fileName}`);
+  let start = performance.now();
+  await transferManager.uploadFileInChunks(`${getDirName()}/${fileName}`, {
+    concurrencyLimit: argv.workers as number,
+    chunkSizeBytes: argv.range_read_size as number,
+  });
+  let end = performance.now();
+  result.elapsedTimeUs = Math.round((end - start) * 1000);
+  results.push(result);
   cleanupFile(fileName);
-  const start = performance.now();
+
+  start = performance.now();
   await transferManager.downloadFileInChunks(file, {
-    concurrencyLimit: argv.workers,
-    chunkSizeBytes: argv.range_read_size,
-    destination: path.join(__dirname, fileName),
+    concurrencyLimit: argv.workers as number,
+    chunkSizeBytes: argv.range_read_size as number,
+    destination: path.join(getDirName(), fileName),
     validation: checkType === 'crc32c' ? checkType : false,
   });
-  const end = performance.now();
+  end = performance.now();
 
   cleanupFile(fileName);
 
-  const result: TestResult = {
+  result = {
     op: 'READ[0]',
     objectSize: sizeInBytes,
     appBufferSize: NODE_DEFAULT_HIGHWATER_MARK_BYTES,
@@ -221,15 +261,18 @@ async function performDownloadFileInChunksTest(): Promise<TestResult> {
     elapsedTimeUs: Math.round((end - start) * 1000),
     cpuTimeUs: -1,
     status: 'OK',
-    chunkSize: argv.range_read_size,
-    workers: argv.workers,
+    chunkSize: argv.range_read_size as number,
+    workers: argv.workers as number,
     library: 'nodejs',
     transferSize: sizeInBytes,
     transferOffset: 0,
     bucketName: bucket.name,
   };
+  results.push(result);
 
-  return result;
+  await performTestCleanup(file);
+
+  return results;
 }
 
 main();

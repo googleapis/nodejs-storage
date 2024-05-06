@@ -20,15 +20,15 @@ export {
   ServiceConfig,
   ServiceOptions,
   StreamRequestOptions,
-} from './service';
+} from './service.js';
 
 export {
+  BaseMetadata,
   DeleteCallback,
   ExistsCallback,
   GetConfig,
   InstanceResponseCallback,
   Interceptor,
-  Metadata,
   MetadataCallback,
   MetadataResponse,
   Methods,
@@ -37,7 +37,7 @@ export {
   ServiceObjectConfig,
   ServiceObjectParent,
   SetMetadataResponse,
-} from './service-object';
+} from './service-object.js';
 
 export {
   Abortable,
@@ -47,4 +47,4 @@ export {
   DecorateRequestOptions,
   ResponseBody,
   util,
-} from './util';
+} from './util.js';

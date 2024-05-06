@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import * as sinon from 'sinon';
-import * as proxyquire from 'proxyquire';
-import * as assert from 'assert';
+import proxyquire from 'proxyquire';
+import assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
-import {util, ServiceObject, Metadata} from '../src/nodejs-common';
-import {IdempotencyStrategy} from '../src';
+import {util, ServiceObject} from '../src/nodejs-common/index.js';
+import {HmacKeyMetadata, IdempotencyStrategy} from '../src/index.js';
 
 const sandbox = sinon.createSandbox();
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -98,7 +98,7 @@ describe('HmacKey', () => {
     });
 
     it('should correctly call setMetadata', done => {
-      hmacKey.setMetadata = (metadata: Metadata, callback: Function) => {
+      hmacKey.setMetadata = (metadata: HmacKeyMetadata, callback: Function) => {
         assert.deepStrictEqual(metadata.accessId, ACCESS_ID);
         Promise.resolve([]).then(resp => callback(null, ...resp));
       };

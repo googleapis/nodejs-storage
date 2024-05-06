@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
+import assert from 'assert';
 import {describe, it, before, beforeEach, after} from 'mocha';
-import * as extend from 'extend';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 import {Request} from 'teeny-request';
 import {AuthClient, GoogleAuth, OAuth2Client} from 'google-auth-library';
 
-import {Interceptor} from '../../src/nodejs-common';
+import {Interceptor} from '../../src/nodejs-common/index.js';
 import {
   DEFAULT_PROJECT_ID_TOKEN,
   ServiceConfig,
   ServiceOptions,
-} from '../../src/nodejs-common/service';
+} from '../../src/nodejs-common/service.js';
 import {
   BodyResponseCallback,
   DecorateRequestOptions,
+  GCCL_GCS_CMD_KEY,
   MakeAuthenticatedRequest,
   MakeAuthenticatedRequestFactoryConfig,
   util,
   Util,
-} from '../../src/nodejs-common/util';
+} from '../../src/nodejs-common/util.js';
+import {getUserAgentString, getModuleFormat} from '../../src/util.js';
 
 proxyquire.noPreserveCache();
 
@@ -102,15 +103,18 @@ describe('Service', () => {
       makeAuthenticatedRequestFactoryOverride = (
         config: MakeAuthenticatedRequestFactoryConfig
       ) => {
-        const expectedConfig = extend({}, CONFIG, {
+        const expectedConfig = {
+          ...CONFIG,
           authClient: OPTIONS.authClient,
           credentials: OPTIONS.credentials,
           keyFile: OPTIONS.keyFilename,
           email: OPTIONS.email,
           projectIdRequired: CONFIG.projectIdRequired,
           projectId: OPTIONS.projectId,
-          token: OPTIONS.token,
-        });
+          clientOptions: {
+            universeDomain: undefined,
+          },
+        };
 
         assert.deepStrictEqual(config, expectedConfig);
 
@@ -186,24 +190,9 @@ describe('Service', () => {
 
     it('should localize the timeout', () => {
       const timeout = 10000;
-      const options = extend({}, OPTIONS, {timeout});
+      const options = {...OPTIONS, timeout};
       const service = new Service(fakeCfg, options);
       assert.strictEqual(service.timeout, timeout);
-    });
-
-    it('should localize the getCredentials method', () => {
-      function getCredentials() {}
-
-      makeAuthenticatedRequestFactoryOverride = () => {
-        return {
-          authClient: {},
-          getCredentials,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any;
-      };
-
-      const service = new Service(CONFIG, OPTIONS);
-      assert.strictEqual(service.getCredentials, getCredentials);
     });
 
     it('should default globalInterceptors to an empty array', () => {
@@ -212,7 +201,7 @@ describe('Service', () => {
 
     it('should preserve the original global interceptors', () => {
       const globalInterceptors: Interceptor[] = [];
-      const options = extend({}, OPTIONS);
+      const options = {...OPTIONS};
       options.interceptors_ = globalInterceptors;
       const service = new Service(fakeCfg, options);
       assert.strictEqual(service.globalInterceptors, globalInterceptors);
@@ -460,8 +449,8 @@ describe('Service', () => {
 
     it('should set reqOpt.timeout', done => {
       const timeout = 10000;
-      const config = extend({}, CONFIG);
-      const options = extend({}, OPTIONS, {timeout});
+      const config = {...CONFIG};
+      const options = {...OPTIONS, timeout};
       const service = new Service(config, options);
 
       service.makeAuthenticatedRequest = (reqOpts_: DecorateRequestOptions) => {
@@ -472,40 +461,10 @@ describe('Service', () => {
     });
 
     it('should add the User Agent', done => {
-      const userAgent = 'user-agent/0.0.0';
-
-      const getUserAgentFn = util.getUserAgentFromPackageJson;
-      util.getUserAgentFromPackageJson = packageJson => {
-        util.getUserAgentFromPackageJson = getUserAgentFn;
-        assert.strictEqual(packageJson, service.packageJson);
-        return userAgent;
-      };
-
-      service.makeAuthenticatedRequest = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.headers!['User-Agent'], userAgent);
-        done();
-      };
-
-      service.request_(reqOpts, assert.ifError);
-    });
-
-    it('should add the provided User Agent', done => {
-      const userAgent = 'user-agent/0.0.0';
-      const providedUserAgent = 'test';
-
-      service.providedUserAgent = providedUserAgent;
-
-      const getUserAgentFn = util.getUserAgentFromPackageJson;
-      util.getUserAgentFromPackageJson = packageJson => {
-        util.getUserAgentFromPackageJson = getUserAgentFn;
-        assert.strictEqual(packageJson, service.packageJson);
-        return userAgent;
-      };
-
       service.makeAuthenticatedRequest = (reqOpts: DecorateRequestOptions) => {
         assert.strictEqual(
           reqOpts.headers!['User-Agent'],
-          `${providedUserAgent} ${userAgent}`
+          getUserAgentString()
         );
         done();
       };
@@ -517,7 +476,9 @@ describe('Service', () => {
       service.makeAuthenticatedRequest = (reqOpts: DecorateRequestOptions) => {
         const pkg = service.packageJson;
         const r = new RegExp(
-          `^gl-node/${process.versions.node} gccl/${pkg.version} gccl-invocation-id/(?<gcclInvocationId>[^W]+)$`
+          `^gl-node/${process.versions.node} gccl/${
+            pkg.version
+          }-${getModuleFormat()} gccl-invocation-id/(?<gcclInvocationId>[^W]+)$`
         );
         assert.ok(r.test(reqOpts.headers!['x-goog-api-client']));
         done();
@@ -526,10 +487,29 @@ describe('Service', () => {
       service.request_(reqOpts, assert.ifError);
     });
 
+    it('should add the `gccl-gcs-cmd` to the api-client header when provided', done => {
+      const expected = 'example.expected/value';
+      service.makeAuthenticatedRequest = (reqOpts: DecorateRequestOptions) => {
+        const pkg = service.packageJson;
+        const r = new RegExp(
+          `^gl-node/${process.versions.node} gccl/${
+            pkg.version
+          }-${getModuleFormat()} gccl-invocation-id/(?<gcclInvocationId>[^W]+) gccl-gcs-cmd/${expected}$`
+        );
+        assert.ok(r.test(reqOpts.headers!['x-goog-api-client']));
+        done();
+      };
+
+      service.request_(
+        {...reqOpts, [GCCL_GCS_CMD_KEY]: expected},
+        assert.ifError
+      );
+    });
+
     describe('projectIdRequired', () => {
       describe('false', () => {
         it('should include the projectId', done => {
-          const config = extend({}, CONFIG, {projectIdRequired: false});
+          const config = {...CONFIG, projectIdRequired: false};
           const service = new Service(config, OPTIONS);
 
           const expectedUri = [service.baseUrl, reqOpts.uri].join('/');
@@ -548,7 +528,7 @@ describe('Service', () => {
 
       describe('true', () => {
         it('should not include the projectId', done => {
-          const config = extend({}, CONFIG, {projectIdRequired: true});
+          const config = {...CONFIG, projectIdRequired: true};
           const service = new Service(config, OPTIONS);
 
           const expectedUri = [
@@ -570,7 +550,7 @@ describe('Service', () => {
         });
 
         it('should use projectId override', done => {
-          const config = extend({}, CONFIG, {projectIdRequired: true});
+          const config = {...CONFIG, projectIdRequired: true};
           const service = new Service(config, OPTIONS);
           const projectOverride = 'turing';
 
@@ -727,7 +707,7 @@ describe('Service', () => {
       const fakeStream = {};
 
       Service.prototype.request_ = async (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts, fakeOpts);
+        assert.deepStrictEqual(reqOpts, {shouldReturnStream: true});
         return fakeStream;
       };
 

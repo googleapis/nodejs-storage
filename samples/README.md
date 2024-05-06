@@ -34,6 +34,7 @@ objects to users via direct download.
   * [Copy File](#copy-file)
   * [Copy Old Version Of File.](#copy-old-version-of-file.)
   * [Create a Dual-Region Bucket](#create-a-dual-region-bucket)
+  * [Create a Bucket with object retention enabled.](#create-a-bucket-with-object-retention-enabled.)
   * [Create Bucket With Storage Class and Location.](#create-bucket-with-storage-class-and-location.)
   * [Create Bucket With Turbo Replication](#create-bucket-with-turbo-replication)
   * [Create New Bucket](#create-new-bucket)
@@ -50,7 +51,7 @@ objects to users via direct download.
   * [Download Byte Range](#download-byte-range)
   * [Download Encrypted File](#download-encrypted-file)
   * [Download File](#download-file)
-  * [Download a File in Chunks Utilzing Transfer Manager](#download-a-file-in-chunks-utilzing-transfer-manager)
+  * [Download a File in Chunks With Transfer Manager](#download-a-file-in-chunks-with-transfer-manager)
   * [Download File Using Requester Pays](#download-file-using-requester-pays)
   * [Download Folder With Transfer Manager](#download-folder-with-transfer-manager)
   * [Download Into Memory](#download-into-memory)
@@ -116,6 +117,7 @@ objects to users via direct download.
   * [Set Autoclass](#set-autoclass)
   * [Set Client Endpoint](#set-client-endpoint)
   * [Set Event Based Hold](#set-event-based-hold)
+  * [Set the object retention policy of a File.](#set-the-object-retention-policy-of-a-file.)
   * [Set Public Access Prevention Enforced](#set-public-access-prevention-enforced)
   * [Set Public Access Prevention Inherited](#set-public-access-prevention-inherited)
   * [Set RPO Async Turbo](#set-rpo-async-turbo)
@@ -128,6 +130,7 @@ objects to users via direct download.
   * [Upload Directory With Transfer Manager](#upload-directory-with-transfer-manager)
   * [Upload Encrypted File](#upload-encrypted-file)
   * [Upload File](#upload-file)
+  * [Upload a File in Chunks With Transfer Manager](#upload-a-file-in-chunks-with-transfer-manager)
   * [Upload File With Kms Key](#upload-file-with-kms-key)
   * [Upload From Memory](#upload-from-memory)
   * [Upload Many Files With Transfer Manager](#upload-many-files-with-transfer-manager)
@@ -440,6 +443,25 @@ __Usage:__
 
 
 
+### Create a Bucket with object retention enabled.
+
+Create a Bucket with object retention enabled.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/createBucketWithObjectRetention.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/createBucketWithObjectRetention.js,samples/README.md)
+
+__Usage:__
+
+
+`node createBucketWithObjectRetention.js <BUCKET_NAME>`
+
+
+-----
+
+
+
+
 ### Create Bucket With Storage Class and Location.
 
 Create Bucket With Storage Class and Location.
@@ -718,7 +740,7 @@ __Usage:__
 
 
 
-### Download a File in Chunks Utilzing Transfer Manager
+### Download a File in Chunks With Transfer Manager
 
 Downloads a single file in in chunks in parallel utilizing transfer manager.
 
@@ -1878,6 +1900,25 @@ __Usage:__
 
 
 
+### Set the object retention policy of a File.
+
+Set the object retention policy of a File.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setObjectRetentionPolicy.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setObjectRetentionPolicy.js,samples/README.md)
+
+__Usage:__
+
+
+`node setObjectRetentionPolicy.js <BUCKET_NAME>`
+
+
+-----
+
+
+
+
 ### Set Public Access Prevention Enforced
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setPublicAccessPreventionEnforced.js).
@@ -2079,6 +2120,25 @@ __Usage:__
 
 
 `node samples/uploadFile.js`
+
+
+-----
+
+
+
+
+### Upload a File in Chunks With Transfer Manager
+
+Uploads a single file in in chunks in parallel utilizing transfer manager.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/uploadFileInChunksWithTransferManager.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/uploadFileInChunksWithTransferManager.js,samples/README.md)
+
+__Usage:__
+
+
+`node uploadFileInChunksWithTransferManager.js <BUCKET_NAME> <FILE_NAME> <CHUNK_SIZE>`
 
 
 -----

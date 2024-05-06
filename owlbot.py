@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 common_templates = gcp.CommonTemplates()
 templates = common_templates.node_library(source_location='build/src')
-s.copy(templates, excludes=['.jsdoc.js', '.github/release-please.yml', '.github/sync-repo-settings.yaml'])
+s.copy(templates, excludes=['.jsdoc.js', '.github/release-please.yml', '.github/sync-repo-settings.yaml', '.prettierrc.js', '.mocharc.js'])
 
 # Create .config directory under $HOME to get around permissions issues
 # with resumable upload.
@@ -29,4 +29,4 @@ s.replace(
     ".circleci/config.yml",
     "command: npm run system-test",
     "command: mkdir $HOME/.config && npm run system-test")
-node.fix_hermetic()
+node.fix()

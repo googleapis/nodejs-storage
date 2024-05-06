@@ -22,22 +22,35 @@ import {
   replaceProjectIdToken,
   MissingProjectIdError,
 } from '@google-cloud/projectify';
-import * as ent from 'ent';
-import * as extend from 'extend';
+import * as htmlEntities from 'html-entities';
 import {AuthClient, GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {CredentialBody} from 'google-auth-library';
 import * as r from 'teeny-request';
-import * as retryRequest from 'retry-request';
+import retryRequest from 'retry-request';
 import {Duplex, DuplexOptions, Readable, Transform, Writable} from 'stream';
 import {teenyRequest} from 'teeny-request';
-import {Interceptor} from './service-object';
+import {Interceptor} from './service-object.js';
 import * as uuid from 'uuid';
-import {DEFAULT_PROJECT_ID_TOKEN} from './service';
+import {DEFAULT_PROJECT_ID_TOKEN} from './service.js';
+import {
+  getModuleFormat,
+  getRuntimeTrackingString,
+  getUserAgentString,
+} from '../util.js';
+import duplexify from 'duplexify';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {getPackageJSON} from '../package-json-helper.cjs';
 
-const packageJson = require('../../../package.json');
+const packageJson = getPackageJSON();
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const duplexify: DuplexifyConstructor = require('duplexify');
+/**
+ * A unique symbol for providing a `gccl-gcs-cmd` value
+ * for the `X-Goog-API-Client` header.
+ *
+ * E.g. the `V` in `X-Goog-API-Client: gccl-gcs-cmd/V`
+ **/
+export const GCCL_GCS_CMD_KEY = Symbol.for('GCCL_GCS_CMD');
 
 const requestDefaults: r.CoreOptions = {
   timeout: 60000,
@@ -166,7 +179,7 @@ export interface MakeAuthenticatedRequestFactoryConfig
 
   /**
    * A pre-instantiated `AuthClient` or `GoogleAuth` client that should be used.
-   * A new will be created if this is not set.
+   * A new client will be created if this is not set.
    */
   authClient?: AuthClient | GoogleAuth;
 
@@ -214,7 +227,9 @@ export interface MakeWritableStreamOptions {
   request?: r.Options;
 
   makeAuthenticatedRequest(
-    reqOpts: r.OptionsWithUri,
+    reqOpts: r.OptionsWithUri & {
+      [GCCL_GCS_CMD_KEY]?: string;
+    },
     fnobj: {
       onAuthenticated(
         err: Error | null,
@@ -233,6 +248,7 @@ export interface DecorateRequestOptions extends r.CoreOptions {
   interceptors_?: Interceptor[];
   shouldReturnStream?: boolean;
   projectId?: string;
+  [GCCL_GCS_CMD_KEY]?: string;
 }
 
 export interface ParsedHttpResponseBody {
@@ -295,7 +311,7 @@ export class ApiError extends Error {
     if (errors && errors.length) {
       errors.forEach(({message}) => messages.add(message!));
     } else if (err.response && err.response.body) {
-      messages.add(ent.decode(err.response.body.toString()));
+      messages.add(htmlEntities.decode(err.response.body.toString()));
     } else if (!err.message) {
       messages.add('A failure occurred during this request.');
     }
@@ -400,12 +416,12 @@ export class Util {
   ) {
     callback = callback || util.noop;
 
-    const parsedResp = extend(
-      true,
-      {err: err || null},
-      resp && util.parseHttpRespMessage(resp),
-      body && util.parseHttpRespBody(body)
-    );
+    const parsedResp = {
+      err: err || null,
+      ...(resp && util.parseHttpRespMessage(resp)),
+      ...(body && util.parseHttpRespBody(body)),
+    };
+
     // Assign the parsed body to resp.body, even if { json: false } was passed
     // as a request option.
     // We assume that nobody uses the previously unparsed value of resp.body.
@@ -513,7 +529,13 @@ export class Util {
 
     const metadata = options.metadata || {};
 
-    const reqOpts = extend(true, defaultReqOpts, options.request, {
+    const reqOpts = {
+      ...defaultReqOpts,
+      ...options.request,
+      qs: {
+        ...defaultReqOpts.qs,
+        ...options.request?.qs,
+      },
       multipart: [
         {
           'Content-Type': 'application/json',
@@ -524,7 +546,9 @@ export class Util {
           body: writeStream,
         },
       ],
-    }) as r.OptionsWithUri;
+    } as {} as r.OptionsWithUri & {
+      [GCCL_GCS_CMD_KEY]?: string;
+    };
 
     options.makeAuthenticatedRequest(reqOpts, {
       onAuthenticated(err, authenticatedReqOpts) {
@@ -533,7 +557,9 @@ export class Util {
           return;
         }
 
-        requestDefaults.headers = util._getDefaultHeaders();
+        requestDefaults.headers = util._getDefaultHeaders(
+          reqOpts[GCCL_GCS_CMD_KEY]
+        );
         const request = teenyRequest.defaults(requestDefaults);
         request(authenticatedReqOpts!, (err, resp, body) => {
           util.handleResp(err, resp, body, (err, data) => {
@@ -601,7 +627,7 @@ export class Util {
   makeAuthenticatedRequestFactory(
     config: MakeAuthenticatedRequestFactoryConfig
   ) {
-    const googleAutoAuthConfig = extend({}, config);
+    const googleAutoAuthConfig = {...config};
     if (googleAutoAuthConfig.projectId === DEFAULT_PROJECT_ID_TOKEN) {
       delete googleAutoAuthConfig.projectId;
     }
@@ -612,13 +638,12 @@ export class Util {
       // Use an existing `GoogleAuth`
       authClient = googleAutoAuthConfig.authClient;
     } else {
-      // Pass an `AuthClient` to `GoogleAuth`, if available
-      const config = {
+      // Pass an `AuthClient` & `clientOptions` to `GoogleAuth`, if available
+      authClient = new GoogleAuth({
         ...googleAutoAuthConfig,
         authClient: googleAutoAuthConfig.authClient,
-      };
-
-      authClient = new GoogleAuth(config);
+        clientOptions: googleAutoAuthConfig.clientOptions,
+      });
     }
 
     /**
@@ -647,7 +672,7 @@ export class Util {
     ): void | Abortable | Duplexify {
       let stream: Duplexify;
       let projectId: string;
-      const reqConfig = extend({}, config);
+      const reqConfig = {...config};
       let activeRequest_: void | Abortable | null;
 
       if (!optionsOrCallback) {
@@ -857,7 +882,9 @@ export class Util {
       maxRetryValue = config.retryOptions.maxRetries;
     }
 
-    requestDefaults.headers = this._getDefaultHeaders();
+    requestDefaults.headers = this._getDefaultHeaders(
+      reqOpts[GCCL_GCS_CMD_KEY]
+    );
     const options = {
       request: teenyRequest.defaults(requestDefaults),
       retries: autoRetryValue !== false ? maxRetryValue : 0,
@@ -899,7 +926,7 @@ export class Util {
       dup.setReadable(requestStream);
     } else {
       // Streaming writable HTTP requests cannot be retried.
-      requestStream = options.request!(reqOpts);
+      requestStream = (options.request as unknown as Function)!(reqOpts);
       dup.setWritable(requestStream);
     }
 
@@ -979,20 +1006,6 @@ export class Util {
   }
 
   /**
-   * Create a properly-formatted User-Agent string from a package.json file.
-   *
-   * @param {object} packageJson - A module's package.json file.
-   * @return {string} userAgent - The formatted User-Agent string.
-   */
-  getUserAgentFromPackageJson(packageJson: PackageJson) {
-    const hyphenatedPackageName = packageJson.name
-      .replace('@google-cloud', 'gcloud-node') // For legacy purposes.
-      .replace('/', '-'); // For UA spec-compliance purposes.
-
-    return hyphenatedPackageName + '/' + packageJson.version;
-  }
-
-  /**
    * Given two parameters, figure out if this is either:
    *  - Just a callback function
    *  - An options object, and then a callback function
@@ -1008,13 +1021,19 @@ export class Util {
       : [optionsOrCallback as T, cb as C];
   }
 
-  _getDefaultHeaders() {
-    return {
-      'User-Agent': util.getUserAgentFromPackageJson(packageJson),
-      'x-goog-api-client': `gl-node/${process.versions.node} gccl/${
+  _getDefaultHeaders(gcclGcsCmd?: string) {
+    const headers = {
+      'User-Agent': getUserAgentString(),
+      'x-goog-api-client': `${getRuntimeTrackingString()} gccl/${
         packageJson.version
-      } gccl-invocation-id/${uuid.v4()}`,
+      }-${getModuleFormat()} gccl-invocation-id/${uuid.v4()}`,
     };
+
+    if (gcclGcsCmd) {
+      headers['x-goog-api-client'] += ` gccl-gcs-cmd/${gcclGcsCmd}`;
+    }
+
+    return headers;
   }
 }
 

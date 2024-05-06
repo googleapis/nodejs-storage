@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * @experimental
+ *
  */
 
 // sample-metadata:
@@ -21,7 +21,7 @@
 //   usage: node uploadFolderWithTransferManager.js <BUCKET_NAME> <DIRECTORY_NAME>
 
 function main(bucketName = 'my-bucket', directoryName = 'my-directory') {
-  // [START storage_upload_directory_transfer_manager]
+  // [START storage_transfer_manager_upload_directory]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -48,7 +48,7 @@ function main(bucketName = 'my-bucket', directoryName = 'my-directory') {
   }
 
   uploadDirectoryWithTransferManager().catch(console.error);
-  // [END storage_upload_directory_transfer_manager]
+  // [END storage_transfer_manager_upload_directory]
 }
 
 process.on('unhandledRejection', err => {

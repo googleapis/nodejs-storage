@@ -12,14 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * @experimental
+ *
  */
 
 const path = require('path');
 const cwd = path.join(__dirname, '..');
 
 // sample-metadata:
-//   title: Download a File in Chunks Utilzing Transfer Manager
+//   title: Download a File in Chunks With Transfer Manager
 //   description: Downloads a single file in in chunks in parallel utilizing transfer manager.
 //   usage: node downloadFileInChunksWithTransferManager.js <BUCKET_NAME> <FILE_NAME> <DESTINATION_FILE_NAME> <CHUNK_SIZE>
 
@@ -29,7 +29,7 @@ function main(
   destFileName = path.join(cwd, fileName),
   chunkSize = 1024
 ) {
-  // [START storage_download_many_files_transfer_manager]
+  // [START storage_transfer_manager_download_chunks_concurrently]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -67,7 +67,7 @@ function main(
   }
 
   downloadFileInChunksWithTransferManager().catch(console.error);
-  // [END storage_download_many_files_transfer_manager]
+  // [END storage_transfer_manager_download_chunks_concurrently]
 }
 
 process.on('unhandledRejection', err => {

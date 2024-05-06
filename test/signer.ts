@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-import * as assert from 'assert';
+import assert from 'assert';
 import * as crypto from 'crypto';
 import * as sinon from 'sinon';
 import {describe, it, beforeEach, afterEach} from 'mocha';
@@ -27,10 +27,11 @@ import {
   GetSignedUrlConfigInternal,
   Query,
   SignerExceptionMessages,
-} from '../src/signer';
-import {encodeURI, formatAsUTCISO, qsStringify} from '../src/util';
-import {ExceptionMessages} from '../src/storage';
+} from '../src/signer.js';
+import {encodeURI, formatAsUTCISO, qsStringify} from '../src/util.js';
+import {ExceptionMessages, Storage} from '../src/storage.js';
 import {OutgoingHttpHeaders} from 'http';
+import {GoogleAuth} from 'google-auth-library';
 
 interface SignedUrlArgs {
   bucket: string;
@@ -52,7 +53,7 @@ describe('signer', () => {
   afterEach(() => sandbox.restore());
 
   describe('URLSigner', () => {
-    let authClient: AuthClient;
+    let authClient: GoogleAuth | AuthClient;
     let bucket: BucketI;
     let file: FileI;
 
@@ -78,7 +79,7 @@ describe('signer', () => {
       });
 
       it('should localize authClient', () => {
-        assert.strictEqual(signer['authClient'], authClient);
+        assert.strictEqual(signer['auth'], authClient);
       });
 
       it('should localize bucket', () => {
@@ -92,9 +93,12 @@ describe('signer', () => {
 
     describe('getSignedUrl', () => {
       let signer: URLSigner;
+      let storage: Storage;
       let CONFIG: SignerGetSignedUrlConfig;
+
       beforeEach(() => {
-        signer = new URLSigner(authClient, bucket, file);
+        storage = new Storage();
+        signer = new URLSigner(authClient, bucket, file, storage);
 
         CONFIG = {
           method: 'GET',
@@ -318,6 +322,17 @@ describe('signer', () => {
           assert.strictEqual(v2arg.cname, expectedCname);
         });
 
+        it('should use a universe domain with the virtual host', async () => {
+          storage.universeDomain = 'my-universe.com';
+
+          CONFIG.virtualHostedStyle = true;
+          const expectedCname = `https://${bucket.name}.storage.my-universe.com`;
+
+          await signer.getSignedUrl(CONFIG);
+          const v2arg = v2.getCall(0).args[0];
+          assert.strictEqual(v2arg.cname, expectedCname);
+        });
+
         it('should take precedence in cname if both passed', async () => {
           CONFIG = {
             virtualHostedStyle: true,
@@ -446,10 +461,13 @@ describe('signer', () => {
       });
 
       describe('blobToSign', () => {
-        let authClientSign: sinon.SinonStub<[string], Promise<string>>;
+        let authClientSign: sinon.SinonStub<
+          [blobToSign: string] & [data: string, endpoint?: string | undefined],
+          Promise<string>
+        >;
         beforeEach(() => {
           authClientSign = sandbox
-            .stub(authClient, 'sign')
+            .stub<GoogleAuth | AuthClient, 'sign'>(authClient, 'sign')
             .resolves('signature');
         });
 
@@ -458,6 +476,20 @@ describe('signer', () => {
 
           const blobToSign = authClientSign.getCall(0).args[0];
           assert(blobToSign.startsWith('GET'));
+        });
+
+        it('should sign using the `signingEndpoint` when provided', async () => {
+          const signingEndpoint = 'https://my-endpoint.com';
+
+          CONFIG = {
+            ...CONFIG,
+            signingEndpoint,
+          };
+
+          await signer['getSignedUrlV2'](CONFIG);
+
+          const endpoint = authClientSign.getCall(0).args[1];
+          assert.equal(endpoint, signingEndpoint);
         });
 
         it('should sign contentMd5 if given', async () => {
@@ -590,7 +622,7 @@ describe('signer', () => {
             assert(err instanceof Error);
             assert.strictEqual(
               err.message,
-              `Max allowed expiration is seven days (${SEVEN_DAYS_IN_SECONDS} seconds).`
+              `Max allowed expiration is seven days (${SEVEN_DAYS_IN_SECONDS.toString()} seconds).`
             );
             return true;
           }
@@ -813,6 +845,25 @@ describe('signer', () => {
           .digest('hex');
 
         assert(blobToSign.endsWith(canonicalRequestHash));
+      });
+
+      it('should sign using the `signingEndpoint` when provided', async () => {
+        const signingEndpoint = 'https://my-endpoint.com';
+
+        sinon.stub(signer, 'getCanonicalRequest').returns('canonical-request');
+        const authClientSign = sinon
+          .stub(authClient, 'sign')
+          .resolves('signature');
+
+        CONFIG = {
+          ...CONFIG,
+          signingEndpoint,
+        };
+
+        await signer['getSignedUrlV4'](CONFIG);
+
+        const endpoint = authClientSign.getCall(0).args[1];
+        assert.equal(endpoint, signingEndpoint);
       });
 
       it('should compose blobToSign', async () => {

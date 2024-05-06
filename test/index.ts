@@ -15,25 +15,27 @@
 import {
   ApiError,
   DecorateRequestOptions,
-  Metadata,
   Service,
   ServiceConfig,
   util,
-} from '../src/nodejs-common';
+} from '../src/nodejs-common/index.js';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
-import * as assert from 'assert';
+import assert from 'assert';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
-import * as proxyquire from 'proxyquire';
+import proxyquire from 'proxyquire';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import {Bucket, CRC32C_DEFAULT_VALIDATOR_GENERATOR} from '../src';
-import {GetFilesOptions} from '../src/bucket';
-import sinon = require('sinon');
-import {HmacKey} from '../src/hmacKey';
+import {Bucket, CRC32C_DEFAULT_VALIDATOR_GENERATOR} from '../src/index.js';
+import {GetFilesOptions} from '../src/bucket.js';
+import * as sinon from 'sinon';
+import {HmacKey} from '../src/hmacKey.js';
 import {
   HmacKeyResourceResponse,
   PROTOCOL_REGEX,
   StorageExceptionMessages,
-} from '../src/storage';
+} from '../src/storage.js';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {getPackageJSON} from '../src/package-json-helper.cjs';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hmacKeyModule = require('../src/hmacKey');
@@ -143,7 +145,7 @@ describe('Storage', () => {
       assert.deepStrictEqual(
         calledWith.packageJson,
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        require('../../package.json')
+        getPackageJSON()
       );
     });
 
@@ -442,6 +444,14 @@ describe('Storage', () => {
       );
     });
 
+    it('should accept and use a `universeDomain`', () => {
+      const universeDomain = 'my-universe.com';
+
+      const storage = new Storage({universeDomain});
+
+      assert.equal(storage.apiEndpoint, `https://storage.${universeDomain}`);
+    });
+
     describe('STORAGE_EMULATOR_HOST', () => {
       // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
       const EMULATOR_HOST = 'https://internal.benchmark.com/path';
@@ -498,8 +508,7 @@ describe('Storage', () => {
           projectId: PROJECT_ID,
         });
 
-        const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.customEndpoint, true);
+        assert.strictEqual(storage.customEndpoint, true);
       });
     });
   });
@@ -835,7 +844,7 @@ describe('Storage', () => {
       };
       storage.createBucket(
         BUCKET_NAME,
-        (err: Error, bucket: Bucket, apiResponse: Metadata) => {
+        (err: Error, bucket: Bucket, apiResponse: unknown) => {
           assert.strictEqual(resp, apiResponse);
           done();
         }
@@ -901,6 +910,32 @@ describe('Storage', () => {
           assert.ifError
         );
       }, /Both `coldline` and `storageClass` were provided./);
+    });
+
+    it('should allow enabling object retention', done => {
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        assert.strictEqual(reqOpts.qs.enableObjectRetention, true);
+        callback();
+      };
+      storage.createBucket(BUCKET_NAME, {enableObjectRetention: true}, done);
+    });
+
+    it('should allow enabling hierarchical namespace', done => {
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        assert.strictEqual(reqOpts.json.hierarchicalNamespace.enabled, true);
+        callback();
+      };
+      storage.createBucket(
+        BUCKET_NAME,
+        {hierarchicalNamespace: {enabled: true}},
+        done
+      );
     });
 
     describe('storage classes', () => {
@@ -1026,7 +1061,7 @@ describe('Storage', () => {
 
       storage.getBuckets(
         {},
-        (err: Error, buckets: Bucket[], nextQuery: {}, resp: Metadata) => {
+        (err: Error, buckets: Bucket[], nextQuery: {}, resp: unknown) => {
           assert.strictEqual(err, error);
           assert.strictEqual(buckets, null);
           assert.strictEqual(nextQuery, null);
@@ -1193,7 +1228,7 @@ describe('Storage', () => {
 
       storage.getHmacKeys(
         {},
-        (err: Error, hmacKeys: HmacKey[], nextQuery: {}, resp: Metadata) => {
+        (err: Error, hmacKeys: HmacKey[], nextQuery: {}, resp: unknown) => {
           assert.strictEqual(err, error);
           assert.strictEqual(hmacKeys, null);
           assert.strictEqual(nextQuery, null);
@@ -1244,7 +1279,7 @@ describe('Storage', () => {
       });
 
       storage.getHmacKeys(
-        (err: Error, _hmacKeys: [], _nextQuery: {}, apiResponse: Metadata) => {
+        (err: Error, _hmacKeys: [], _nextQuery: {}, apiResponse: unknown) => {
           assert.ifError(err);
           assert.deepStrictEqual(resp, apiResponse);
           done();
@@ -1310,7 +1345,7 @@ describe('Storage', () => {
 
       it('should return the error and apiResponse', done => {
         storage.getServiceAccount(
-          (err: Error, serviceAccount: {}, apiResponse: Metadata) => {
+          (err: Error, serviceAccount: {}, apiResponse: unknown) => {
             assert.strictEqual(err, ERROR);
             assert.strictEqual(serviceAccount, null);
             assert.strictEqual(apiResponse, API_RESPONSE);
