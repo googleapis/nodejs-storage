@@ -69,7 +69,6 @@ import {URL} from 'url';
 import AsyncRetry from 'async-retry';
 import {
   BaseMetadata,
-  DeleteCallback,
   DeleteOptions,
   GetResponse,
   InstanceResponseCallback,
@@ -1022,7 +1021,8 @@ class File extends ServiceObject<File, FileMetadata> {
     };
 
     super({
-      //parent: bucket,
+      storageTransport: bucket.storage.storageTransport,
+      parent: bucket,
       baseUrl: '/o',
       id: encodeURIComponent(name),
       methods,
@@ -1797,10 +1797,11 @@ class File extends ServiceObject<File, FileMetadata> {
         authClient: this.storage.storageTransport.authClient,
         apiEndpoint: this.storage.apiEndpoint,
         bucket: this.bucket.name,
-        customRequestOptions: this.getRequestInterceptors().reduce(
+        //TODO: Fill in with gaxios interceptors
+        /* customRequestOptions: this.getRequestInterceptors().reduce(
           (reqOpts, interceptorFn) => interceptorFn(reqOpts),
           {}
-        ),
+        ), */
         file: this.name,
         generation: this.generation,
         key: this.encryptionKey,
