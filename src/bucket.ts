@@ -1208,7 +1208,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     };
 
     super({
-      //parent: storage,
+      storageTransport: storage.storageTransport,
+      parent: storage,
       baseUrl: '/b',
       id: name,
       createMethod: storage.createBucket.bind(storage),
