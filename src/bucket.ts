@@ -87,11 +87,7 @@ interface MetadataOptions {
   ifMetagenerationNotMatch?: number | string;
 }
 
-interface NextPageFilesOptions {
-  pageToken?: string;
-}
-
-export type GetFilesResponse = [File[], NextPageFilesOptions, unknown];
+export type GetFilesResponse = [File[], (GetFilesOptions | GetFilesCallback) & Partial<Pick<GetFilesOptions, 'pageToken'>>, unknown];
 export interface GetFilesCallback {
   (
     err: Error | null,
