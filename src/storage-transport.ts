@@ -1,4 +1,4 @@
-import {GaxiosOptions, GaxiosResponse, Headers} from 'gaxios';
+import {GaxiosError, GaxiosOptions, Headers} from 'gaxios';
 import {AuthClient, GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {
   getModuleFormat,
@@ -23,16 +23,23 @@ export interface StandardStorageQueryParams {
 }
 
 export interface StorageQueryParameters extends StandardStorageQueryParams {
-  [key: string]: string | boolean | undefined;
+  [key: string]: string | number | boolean | undefined;
 }
 
 export interface StorageRequestOptions extends GaxiosOptions {
   [GCCL_GCS_CMD_KEY]?: string;
+  //interceptors_?: Interceptor[];
+  autoPaginate?: boolean;
+  autoPaginateVal?: boolean;
+  maxRetries?: number;
+  objectMode?: boolean;
+  projectId?: string;
   queryParameters?: StorageQueryParameters;
+  shouldReturnStream?: boolean;
 }
 
 export interface StorageCallback<T> {
-  (err: Error | null, data?: T): void;
+  (err: GaxiosError<T> | null, data?: T): void;
 }
 
 interface TransportParameters extends Omit<GoogleAuthOptions, 'authClient'> {
@@ -83,13 +90,13 @@ export class StorageTransport {
   makeRequest<T>(
     reqOpts: StorageRequestOptions,
     callback?: StorageCallback<T>
-  ): Promise<GaxiosResponse> | Promise<void> {
+  ): Promise<T> | Promise<void> {
     const headers = this.#buildRequestHeaders(reqOpts.headers);
     if (reqOpts[GCCL_GCS_CMD_KEY]) {
       headers['x-goog-api-client'] +=
         ` gccl-gcs-cmd/${reqOpts[GCCL_GCS_CMD_KEY]}`;
     }
-    const requestPromise = this.authClient.request({
+    const requestPromise = this.authClient.request<T>({
       //TODO: Retry Options
       ...reqOpts,
       headers,
@@ -99,7 +106,7 @@ export class StorageTransport {
 
     return callback
       ? requestPromise.then(resp => callback(null, resp.data)).catch(callback)
-      : requestPromise;
+      : (requestPromise.then(resp => resp.data) as Promise<T>);
   }
 
   #buildUrl(pathUri = '', queryParameters: StorageQueryParameters = {}): URL {

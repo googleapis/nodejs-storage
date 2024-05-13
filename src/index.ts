@@ -163,7 +163,7 @@ export {
   UploadResponse,
 } from './bucket.js';
 export * from './crc32c.js';
-export {Channel, StopCallback} from './channel.js';
+export {Channel} from './channel.js';
 export {
   CopyCallback,
   CopyOptions,

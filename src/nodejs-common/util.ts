@@ -29,7 +29,6 @@ import * as r from 'teeny-request';
 import retryRequest from 'retry-request';
 import {Duplex, DuplexOptions, Readable, Transform, Writable} from 'stream';
 import {teenyRequest} from 'teeny-request';
-import {Interceptor} from './service-object.js';
 import * as uuid from 'uuid';
 import {DEFAULT_PROJECT_ID_TOKEN} from './service.js';
 import {
@@ -237,18 +236,6 @@ export interface MakeWritableStreamOptions {
       ): void;
     },
   ): void;
-}
-
-export interface DecorateRequestOptions extends r.CoreOptions {
-  autoPaginate?: boolean;
-  autoPaginateVal?: boolean;
-  objectMode?: boolean;
-  maxRetries?: number;
-  uri: string;
-  interceptors_?: Interceptor[];
-  shouldReturnStream?: boolean;
-  projectId?: string;
-  [GCCL_GCS_CMD_KEY]?: string;
 }
 
 export interface ParsedHttpResponseBody {

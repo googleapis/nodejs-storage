@@ -13,13 +13,8 @@
 // limitations under the License.
 
 import {BaseMetadata, ServiceObject, util} from './nodejs-common/index.js';
-import {promisifyAll} from '@google-cloud/promisify';
-
+import {StorageCallback} from './storage-transport.js';
 import {Storage} from './storage.js';
-
-export interface StopCallback {
-  (err: Error | null, apiResponse?: unknown): void;
-}
 
 /**
  * Create a channel object to interact with a Cloud Storage channel.
@@ -42,16 +37,10 @@ class Channel extends ServiceObject<Channel, BaseMetadata> {
   constructor(storage: Storage, id: string, resourceId: string) {
     const config = {
       parent: storage,
+      storageTransport: storage.storageTransport,
       baseUrl: '/channels',
-
-      // An ID shouldn't be included in the API requests.
-      // RE:
-      // https://github.com/GoogleCloudPlatform/google-cloud-node/issues/1145
       id: '',
-
-      methods: {
-        // Only need `request`.
-      },
+      methods: {},
     };
 
     super(config);
@@ -60,22 +49,13 @@ class Channel extends ServiceObject<Channel, BaseMetadata> {
     this.metadata.resourceId = resourceId;
   }
 
-  stop(): Promise<unknown>;
-  stop(callback: StopCallback): void;
-  /**
-   * @typedef {array} StopResponse
-   * @property {object} 0 The full API response.
-   */
-  /**
-   * @callback StopCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} apiResponse The full API response.
-   */
+  stop(): Promise<void | {}>;
+  stop(callback: StorageCallback<{}>): void;
   /**
    * Stop this channel.
    *
-   * @param {StopCallback} [callback] Callback function.
-   * @returns {Promise<StopResponse>}
+   * @param {StorageCallback} [callback] Callback function.
+   * @returns {Promise<{}>} A promise that resolves to an empty object when successful
    *
    * @example
    * ```
@@ -96,27 +76,20 @@ class Channel extends ServiceObject<Channel, BaseMetadata> {
    * });
    * ```
    */
-  stop(callback?: StopCallback): Promise<unknown> | void {
+  stop(callback?: StorageCallback<{}>): Promise<void | {}> | void {
     callback = callback || util.noop;
-    this.request(
-      {
-        method: 'POST',
-        uri: '/stop',
-        json: this.metadata,
-      },
-      (err, apiResponse) => {
-        callback!(err, apiResponse);
-      },
-    );
+    const reqPromise = this.storageTransport.makeRequest<{}>({
+      method: 'POST',
+      url: `${this.baseUrl}/stop`,
+      body: this.metadata,
+      responseType: 'json',
+    });
+
+    return callback
+      ? reqPromise.then(() => callback(null, {})).catch(callback)
+      : reqPromise;
   }
 }
-
-/*! Developer Documentation
- *
- * All async methods (except for streams) will return a Promise in the event
- * that a callback is omitted.
- */
-promisifyAll(Channel);
 
 /**
  * Reference to the {@link Channel} class.
