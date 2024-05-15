@@ -275,16 +275,18 @@ describe('Transfer Manager', () => {
     });
 
     it('should recursively create directory and write file contents if destination path is nested', async () => {
-      const filesOrFolder = ['nestedFolder/', 'nestedFolder/first.txt'];
+      const prefix = 'text-prefix';
+      const folder = 'nestedFolder/';
+      const file = 'first.txt';
+      const filesOrFolder = [folder, path.join(folder, file)];
+      const expectedFilePath = path.join(prefix, folder, file);
+      const expectedDir = path.join(prefix, folder);
       const mkdirSyncSpy = sandbox.spy(fs, 'mkdirSync');
       const download = (optionsOrCb?: DownloadOptions | DownloadCallback) => {
         if (typeof optionsOrCb === 'function') {
           optionsOrCb(null, Buffer.alloc(0));
         } else if (optionsOrCb) {
-          assert.strictEqual(
-            optionsOrCb.destination,
-            'test-prefix/nestedFolder/first.txt'
-          );
+          assert.strictEqual(optionsOrCb.destination, expectedFilePath);
         }
         return Promise.resolve([Buffer.alloc(0)]) as Promise<DownloadResponse>;
       };
@@ -295,10 +297,10 @@ describe('Transfer Manager', () => {
         return file;
       });
       await transferManager.downloadManyFiles(filesOrFolder, {
-        prefix: 'test-prefix',
+        prefix: prefix,
       });
       assert.strictEqual(
-        mkdirSyncSpy.calledOnceWith('test-prefix/nestedFolder/', {
+        mkdirSyncSpy.calledOnceWith(expectedDir, {
           recursive: true,
         }),
         true
