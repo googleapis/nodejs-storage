@@ -31,7 +31,6 @@ import * as resumableUpload from './resumable-upload.js';
 import {Writable, Readable, pipeline, Transform, PipelineSource} from 'stream';
 import * as zlib from 'zlib';
 import * as http from 'http';
-import * as path from 'path';
 
 import {
   ExceptionMessages,
@@ -2290,20 +2289,12 @@ class File extends ServiceObject<File, FileMetadata> {
     const fileStream = this.createReadStream(options);
     let receivedData = false;
 
-    // Skip directory objects as they cannot be written to local filesystem
-    if (
-      destination &&
-      (destination.endsWith('/') || destination.endsWith('\\'))
-    ) {
-      callback?.(null, Buffer.alloc(0));
-    } else if (destination) {
-      fs.mkdirSync(path.dirname(destination), {recursive: true});
-
+    if (destination) {
       fileStream
         .on('error', callback)
         .once('data', data => {
-          // We know that the file exists the server - now we can truncate/write to a file
           receivedData = true;
+          // We know that the file exists the server - now we can truncate/write to a file
           const writable = fs.createWriteStream(destination);
           writable.write(data);
           fileStream

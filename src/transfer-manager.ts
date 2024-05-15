@@ -24,7 +24,7 @@ import {
 } from './file.js';
 import pLimit from 'p-limit';
 import * as path from 'path';
-import {createReadStream, promises as fsp} from 'fs';
+import {createReadStream, mkdirSync, promises as fsp} from 'fs';
 import {CRC32C} from './crc32c.js';
 import {GoogleAuth} from 'google-auth-library';
 import {XMLParser, XMLBuilder} from 'fast-xml-parser';
@@ -600,7 +600,20 @@ export class TransferManager {
         passThroughOptionsCopy.destination = file.name.replace(regex, '');
       }
 
-      promises.push(limit(() => file.download(passThroughOptionsCopy)));
+      promises.push(
+        limit(async () => {
+          const destination = passThroughOptionsCopy.destination;
+          if (destination && destination.endsWith(path.sep)) {
+            mkdirSync(destination, {recursive: true});
+            // Skip directory objects as they cannot be written to local filesystem
+            return Promise.resolve([
+              Buffer.alloc(0),
+            ]) as Promise<DownloadResponse>;
+          }
+
+          return file.download(passThroughOptionsCopy);
+        })
+      );
     }
 
     return Promise.all(promises);

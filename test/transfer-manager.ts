@@ -273,6 +273,37 @@ describe('Transfer Manager', () => {
       file.download = download;
       await transferManager.downloadManyFiles([file], options);
     });
+
+    it('should recursively create directory and write file contents if destination path is nested', async () => {
+      const filesOrFolder = ['nestedFolder/', 'nestedFolder/first.txt'];
+      const mkdirSyncSpy = sandbox.spy(fs, 'mkdirSync');
+      const download = (optionsOrCb?: DownloadOptions | DownloadCallback) => {
+        if (typeof optionsOrCb === 'function') {
+          optionsOrCb(null, Buffer.alloc(0));
+        } else if (optionsOrCb) {
+          assert.strictEqual(
+            optionsOrCb.destination,
+            'test-prefix/nestedFolder/first.txt'
+          );
+        }
+        return Promise.resolve([Buffer.alloc(0)]) as Promise<DownloadResponse>;
+      };
+
+      sandbox.stub(bucket, 'file').callsFake(filename => {
+        const file = new File(bucket, filename);
+        file.download = download;
+        return file;
+      });
+      await transferManager.downloadManyFiles(filesOrFolder, {
+        prefix: 'test-prefix',
+      });
+      assert.strictEqual(
+        mkdirSyncSpy.calledOnceWith('test-prefix/nestedFolder/', {
+          recursive: true,
+        }),
+        true
+      );
+    });
   });
 
   describe('downloadFileInChunks', () => {
