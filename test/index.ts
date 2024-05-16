@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ApiError,
-  DecorateRequestOptions,
-  util,
-} from '../src/nodejs-common/index.js';
+import {ApiError, util} from '../src/nodejs-common/index.js';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import assert from 'assert';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
 import proxyquire from 'proxyquire';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import {Bucket, CRC32C_DEFAULT_VALIDATOR_GENERATOR} from '../src/index.js';
+import {
+  Bucket,
+  CRC32C_DEFAULT_VALIDATOR_GENERATOR,
+  StorageRequestOptions,
+} from '../src/index.js';
 import {GetFilesOptions} from '../src/bucket.js';
 import * as sinon from 'sinon';
 import {HmacKey} from '../src/hmacKey.js';
@@ -628,16 +628,16 @@ describe('Storage', () => {
 
     it('should make correct API request', done => {
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         assert.strictEqual(reqOpts.method, 'POST');
         assert.strictEqual(
-          reqOpts.uri,
+          reqOpts.url,
           `/projects/${storage.projectId}/hmacKeys`
         );
         assert.strictEqual(
-          reqOpts.qs.serviceAccountEmail,
+          reqOpts.queryParameters?.serviceAccountEmail,
           SERVICE_ACCOUNT_EMAIL
         );
 
@@ -754,13 +754,13 @@ describe('Storage', () => {
 
     it('should make correct API request', done => {
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         assert.strictEqual(reqOpts.method, 'POST');
-        assert.strictEqual(reqOpts.uri, '/b');
-        assert.strictEqual(reqOpts.qs.project, storage.projectId);
-        assert.strictEqual(reqOpts.json.name, BUCKET_NAME);
+        assert.strictEqual(reqOpts.url, '/b');
+        assert.strictEqual(reqOpts.queryParameters?.project, storage.projectId);
+        assert.strictEqual(reqOpts.body.name, BUCKET_NAME);
 
         callback();
       };
@@ -770,11 +770,11 @@ describe('Storage', () => {
 
     it('should accept a name, metadata, and callback', done => {
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         assert.deepStrictEqual(
-          reqOpts.json,
+          reqOpts.body,
           Object.assign(METADATA, {name: BUCKET_NAME})
         );
         callback(null, METADATA);
@@ -791,7 +791,7 @@ describe('Storage', () => {
 
     it('should accept a name and callback only', done => {
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback();
@@ -811,8 +811,11 @@ describe('Storage', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      storage.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.userProject, options.userProject);
+      storage.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.userProject,
+          options.userProject
+        );
         done();
       };
 
@@ -824,7 +827,7 @@ describe('Storage', () => {
         return BUCKET;
       };
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(null, METADATA);
@@ -840,7 +843,7 @@ describe('Storage', () => {
     it('should execute callback on error', done => {
       const error = new Error('Error.');
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(error);
@@ -854,7 +857,7 @@ describe('Storage', () => {
     it('should execute callback with apiResponse', done => {
       const resp = {success: true};
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(null, resp);
@@ -871,10 +874,10 @@ describe('Storage', () => {
     it('should allow a user-specified storageClass', done => {
       const storageClass = 'nearline';
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
-        assert.strictEqual(reqOpts.json.storageClass, storageClass);
+        assert.strictEqual(reqOpts.body.storageClass, storageClass);
         callback(); // done
       };
       storage.createBucket(BUCKET_NAME, {storageClass}, done);
@@ -883,11 +886,11 @@ describe('Storage', () => {
     it('should allow settings `storageClass` to same value as provided storage class name', done => {
       const storageClass = 'coldline';
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         assert.strictEqual(
-          reqOpts.json.storageClass,
+          reqOpts.body.storageClass,
           storageClass.toUpperCase()
         );
         callback(); // done
@@ -906,11 +909,11 @@ describe('Storage', () => {
       const location = 'NAM4';
       const rpo = 'ASYNC_TURBO';
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
-        assert.strictEqual(reqOpts.json.location, location);
-        assert.strictEqual(reqOpts.json.rpo, rpo);
+        assert.strictEqual(reqOpts.body.location, location);
+        assert.strictEqual(reqOpts.body.rpo, rpo);
         callback();
       };
       storage.createBucket(BUCKET_NAME, {location, rpo}, done);
@@ -931,10 +934,13 @@ describe('Storage', () => {
 
     it('should allow enabling object retention', done => {
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
-        assert.strictEqual(reqOpts.qs.enableObjectRetention, true);
+        assert.strictEqual(
+          reqOpts.queryParameters?.enableObjectRetention,
+          true
+        );
         callback();
       };
       storage.createBucket(BUCKET_NAME, {enableObjectRetention: true}, done);
@@ -942,10 +948,10 @@ describe('Storage', () => {
 
     it('should allow enabling hierarchical namespace', done => {
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
-        assert.strictEqual(reqOpts.json.hierarchicalNamespace.enabled, true);
+        assert.strictEqual(reqOpts.body.hierarchicalNamespace.enabled, true);
         callback();
       };
       storage.createBucket(
@@ -957,8 +963,8 @@ describe('Storage', () => {
 
     describe('storage classes', () => {
       it('should expand metadata.archive', done => {
-        storage.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.json.storageClass, 'ARCHIVE');
+        storage.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.body.storageClass, 'ARCHIVE');
           done();
         };
 
@@ -966,8 +972,8 @@ describe('Storage', () => {
       });
 
       it('should expand metadata.coldline', done => {
-        storage.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.json.storageClass, 'COLDLINE');
+        storage.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.body.storageClass, 'COLDLINE');
           done();
         };
 
@@ -975,8 +981,8 @@ describe('Storage', () => {
       });
 
       it('should expand metadata.dra', done => {
-        storage.request = (reqOpts: DecorateRequestOptions) => {
-          const body = reqOpts.json;
+        storage.request = (reqOpts: StorageRequestOptions) => {
+          const body = reqOpts.body;
           assert.strictEqual(body.storageClass, 'DURABLE_REDUCED_AVAILABILITY');
           done();
         };
@@ -985,8 +991,8 @@ describe('Storage', () => {
       });
 
       it('should expand metadata.multiRegional', done => {
-        storage.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.json.storageClass, 'MULTI_REGIONAL');
+        storage.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.body.storageClass, 'MULTI_REGIONAL');
           done();
         };
 
@@ -1000,8 +1006,8 @@ describe('Storage', () => {
       });
 
       it('should expand metadata.nearline', done => {
-        storage.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.json.storageClass, 'NEARLINE');
+        storage.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.body.storageClass, 'NEARLINE');
           done();
         };
 
@@ -1009,8 +1015,8 @@ describe('Storage', () => {
       });
 
       it('should expand metadata.regional', done => {
-        storage.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.json.storageClass, 'REGIONAL');
+        storage.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.body.storageClass, 'REGIONAL');
           done();
         };
 
@@ -1018,8 +1024,8 @@ describe('Storage', () => {
       });
 
       it('should expand metadata.standard', done => {
-        storage.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.json.storageClass, 'STANDARD');
+        storage.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.body.storageClass, 'STANDARD');
           done();
         };
 
@@ -1032,9 +1038,9 @@ describe('Storage', () => {
         const options = {
           requesterPays: true,
         };
-        storage.request = (reqOpts: DecorateRequestOptions) => {
-          assert.deepStrictEqual(reqOpts.json.billing, options);
-          assert.strictEqual(reqOpts.json.requesterPays, undefined);
+        storage.request = (reqOpts: StorageRequestOptions) => {
+          assert.deepStrictEqual(reqOpts.body.billing, options);
+          assert.strictEqual(reqOpts.body.requesterPays, undefined);
           done();
         };
         storage.createBucket(BUCKET_NAME, options, assert.ifError);
@@ -1044,9 +1050,11 @@ describe('Storage', () => {
 
   describe('getBuckets', () => {
     it('should get buckets without a query', done => {
-      storage.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.uri, '/b');
-        assert.deepStrictEqual(reqOpts.qs, {project: storage.projectId});
+      storage.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.url, '/b');
+        assert.deepStrictEqual(reqOpts.queryParameters, {
+          project: storage.projectId,
+        });
         done();
       };
       storage.getBuckets(util.noop);
@@ -1054,8 +1062,8 @@ describe('Storage', () => {
 
     it('should get buckets with a query', done => {
       const token = 'next-page-token';
-      storage.request = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.qs, {
+      storage.request = (reqOpts: StorageRequestOptions) => {
+        assert.deepStrictEqual(reqOpts.queryParameters, {
           project: storage.projectId,
           maxResults: 5,
           pageToken: token,
@@ -1070,7 +1078,7 @@ describe('Storage', () => {
       const apiResponse = {};
 
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(error, apiResponse);
@@ -1091,7 +1099,7 @@ describe('Storage', () => {
     it('should return nextQuery if more results exist', () => {
       const token = 'next-page-token';
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(null, {nextPageToken: token, items: []});
@@ -1107,7 +1115,7 @@ describe('Storage', () => {
 
     it('should return null nextQuery if there are no more results', () => {
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(null, {items: []});
@@ -1122,7 +1130,7 @@ describe('Storage', () => {
 
     it('should return Bucket objects', done => {
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(null, {items: [{id: 'fake-bucket-name'}]});
@@ -1137,7 +1145,7 @@ describe('Storage', () => {
     it('should return apiResponse', done => {
       const resp = {items: [{id: 'fake-bucket-name'}]};
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(null, resp);
@@ -1159,7 +1167,7 @@ describe('Storage', () => {
         },
       };
       storage.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(null, {items: [bucketMetadata]});
@@ -1324,12 +1332,12 @@ describe('Storage', () => {
 
   describe('getServiceAccount', () => {
     it('should make the correct request', done => {
-      storage.request = (reqOpts: DecorateRequestOptions) => {
+      storage.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(
-          reqOpts.uri,
+          reqOpts.url,
           `/projects/${storage.projectId}/serviceAccount`
         );
-        assert.deepStrictEqual(reqOpts.qs, {});
+        assert.deepStrictEqual(reqOpts.queryParameters, {});
         done();
       };
 
@@ -1342,8 +1350,8 @@ describe('Storage', () => {
         userProject: 'test-user-project',
       };
 
-      storage.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs, options);
+      storage.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.queryParameters, options);
         done();
       };
 
@@ -1356,7 +1364,7 @@ describe('Storage', () => {
 
       beforeEach(() => {
         storage.request = (
-          reqOpts: DecorateRequestOptions,
+          reqOpts: StorageRequestOptions,
           callback: Function
         ) => {
           callback(ERROR, API_RESPONSE);
@@ -1380,7 +1388,7 @@ describe('Storage', () => {
 
       beforeEach(() => {
         storage.request = (
-          reqOpts: DecorateRequestOptions,
+          reqOpts: StorageRequestOptions,
           callback: Function
         ) => {
           callback(null, API_RESPONSE);
@@ -1393,7 +1401,7 @@ describe('Storage', () => {
         };
 
         storage.request = (
-          reqOpts: DecorateRequestOptions,
+          reqOpts: StorageRequestOptions,
           callback: Function
         ) => {
           callback(null, apiResponse);

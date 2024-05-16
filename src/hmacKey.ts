@@ -12,16 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ServiceObject,
-  Methods,
-  MetadataCallback,
-  SetMetadataResponse,
-} from './nodejs-common/index.js';
+import {ServiceObject, Methods} from './nodejs-common/index.js';
 import {
   BaseMetadata,
   SetMetadataOptions,
 } from './nodejs-common/service-object.js';
+import {StorageCallback} from './storage-transport.js';
 import {IdempotencyStrategy, Storage} from './storage.js';
 import {promisifyAll} from '@google-cloud/promisify';
 
@@ -374,21 +370,21 @@ export class HmacKey extends ServiceObject<HmacKey, HmacKeyMetadata> {
   setMetadata(
     metadata: HmacKeyMetadata,
     options?: SetMetadataOptions
-  ): Promise<SetMetadataResponse<HmacKeyMetadata>>;
+  ): Promise<HmacKeyMetadata>;
   setMetadata(
     metadata: HmacKeyMetadata,
-    callback: MetadataCallback<HmacKeyMetadata>
-  ): void;
+    callback: StorageCallback<HmacKeyMetadata>
+  ): Promise<void>;
   setMetadata(
     metadata: HmacKeyMetadata,
     options: SetMetadataOptions,
-    callback: MetadataCallback<HmacKeyMetadata>
-  ): void;
+    callback: StorageCallback<HmacKeyMetadata>
+  ): Promise<void>;
   setMetadata(
     metadata: HmacKeyMetadata,
-    optionsOrCallback: SetMetadataOptions | MetadataCallback<HmacKeyMetadata>,
-    cb?: MetadataCallback<HmacKeyMetadata>
-  ): Promise<SetMetadataResponse<HmacKeyMetadata>> | void {
+    optionsOrCallback: SetMetadataOptions | StorageCallback<HmacKeyMetadata>,
+    cb?: StorageCallback<HmacKeyMetadata>
+  ): Promise<HmacKeyMetadata> | Promise<void> {
     // ETag preconditions are not currently supported. Retries should be disabled if the idempotency strategy is not set to RetryAlways
     if (
       this.storage.retryOptions.idempotencyStrategy !==
@@ -400,16 +396,21 @@ export class HmacKey extends ServiceObject<HmacKey, HmacKeyMetadata> {
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb =
       typeof optionsOrCallback === 'function'
-        ? (optionsOrCallback as MetadataCallback<HmacKeyMetadata>)
+        ? (optionsOrCallback as StorageCallback<HmacKeyMetadata>)
         : cb;
 
-    super
-      .setMetadata(metadata, options)
-      .then(resp => cb!(null, ...resp))
-      .catch(cb!)
-      .finally(() => {
-        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-      });
+    const reqPromise = super.setMetadata(metadata, options);
+
+    return cb
+      ? reqPromise
+          .then(resp => cb(null, resp))
+          .catch(cb)
+          .finally(() => {
+            this.storage.retryOptions.autoRetry = this.instanceRetryValue;
+          })
+      : reqPromise.finally(() => {
+          this.storage.retryOptions.autoRetry = this.instanceRetryValue;
+        });
   }
 }
 

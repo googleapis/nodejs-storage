@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {DecorateRequestOptions, util} from '../src/nodejs-common/index.js';
+import {util} from '../src/nodejs-common/index.js';
 import assert from 'assert';
 import {describe, it, before, beforeEach} from 'mocha';
 import proxyquire from 'proxyquire';
 import {Storage} from '../src/storage.js';
+import {StorageRequestOptions} from '../src/storage-transport.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let Acl: any;
@@ -66,10 +67,10 @@ describe('storage/acl', () => {
 
   describe('add', () => {
     it('should make the correct api request', done => {
-      acl.request = (reqOpts: DecorateRequestOptions) => {
+      acl.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(reqOpts.method, 'POST');
-        assert.strictEqual(reqOpts.uri, '');
-        assert.deepStrictEqual(reqOpts.json, {entity: ENTITY, role: ROLE});
+        assert.strictEqual(reqOpts.url, '');
+        assert.deepStrictEqual(reqOpts.body, {entity: ENTITY, role: ROLE});
         done();
       };
 
@@ -83,8 +84,11 @@ describe('storage/acl', () => {
         generation: 8,
       };
 
-      acl.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.generation, options.generation);
+      acl.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.generation,
+          options.generation
+        );
         done();
       };
 
@@ -98,8 +102,11 @@ describe('storage/acl', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      acl.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.userProject, options.userProject);
+      acl.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.userProject,
+          options.userProject
+        );
         done();
       };
 
@@ -115,7 +122,7 @@ describe('storage/acl', () => {
         return expectedAclObject;
       };
 
-      acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, apiResponse);
       };
 
@@ -127,7 +134,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with an error', done => {
-      acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(ERROR);
       };
 
@@ -140,7 +147,7 @@ describe('storage/acl', () => {
     it('should execute the callback with apiResponse', done => {
       const resp = {success: true};
 
-      acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, resp);
       };
 
@@ -156,9 +163,9 @@ describe('storage/acl', () => {
 
   describe('delete', () => {
     it('should make the correct api request', done => {
-      acl.request = (reqOpts: DecorateRequestOptions) => {
+      acl.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(reqOpts.method, 'DELETE');
-        assert.strictEqual(reqOpts.uri, '/' + encodeURIComponent(ENTITY));
+        assert.strictEqual(reqOpts.url, '/' + encodeURIComponent(ENTITY));
 
         done();
       };
@@ -172,8 +179,11 @@ describe('storage/acl', () => {
         generation: 8,
       };
 
-      acl.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.generation, options.generation);
+      acl.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.generation,
+          options.generation
+        );
         done();
       };
 
@@ -187,8 +197,11 @@ describe('storage/acl', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      acl.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.userProject, options.userProject);
+      acl.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.userProject,
+          options.userProject
+        );
         done();
       };
 
@@ -196,7 +209,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with an error', done => {
-      acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(ERROR);
       };
 
@@ -209,7 +222,7 @@ describe('storage/acl', () => {
     it('should execute the callback with apiResponse', done => {
       const resp = {success: true};
 
-      acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, resp);
       };
 
@@ -223,8 +236,8 @@ describe('storage/acl', () => {
   describe('get', () => {
     describe('all ACL objects', () => {
       it('should make the correct API request', done => {
-        acl.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.uri, '');
+        acl.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.url, '');
 
           done();
         };
@@ -235,8 +248,8 @@ describe('storage/acl', () => {
       it('should accept a configuration object', done => {
         const generation = 1;
 
-        acl.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.qs.generation, generation);
+        acl.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.queryParameters?.generation, generation);
 
           done();
         };
@@ -263,7 +276,7 @@ describe('storage/acl', () => {
           return expectedAclObjects[index];
         };
 
-        acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+        acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
           callback(null, apiResponse);
         };
 
@@ -277,8 +290,8 @@ describe('storage/acl', () => {
 
     describe('ACL object for an entity', () => {
       it('should get a specific ACL object', done => {
-        acl.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.uri, '/' + encodeURIComponent(ENTITY));
+        acl.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.url, '/' + encodeURIComponent(ENTITY));
 
           done();
         };
@@ -289,8 +302,8 @@ describe('storage/acl', () => {
       it('should accept a configuration object', done => {
         const generation = 1;
 
-        acl.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.qs.generation, generation);
+        acl.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.queryParameters?.generation, generation);
 
           done();
         };
@@ -304,8 +317,11 @@ describe('storage/acl', () => {
           userProject: 'grape-spaceship-123',
         };
 
-        acl.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.qs.userProject, options.userProject);
+        acl.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(
+            reqOpts.queryParameters?.userProject,
+            options.userProject
+          );
           done();
         };
 
@@ -320,7 +336,7 @@ describe('storage/acl', () => {
           return expectedAclObject;
         };
 
-        acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+        acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
           callback(null, apiResponse);
         };
 
@@ -333,7 +349,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with an error', done => {
-      acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(ERROR);
       };
 
@@ -346,7 +362,7 @@ describe('storage/acl', () => {
     it('should execute the callback with apiResponse', done => {
       const resp = {success: true};
 
-      acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, resp);
       };
 
@@ -359,10 +375,10 @@ describe('storage/acl', () => {
 
   describe('update', () => {
     it('should make the correct API request', done => {
-      acl.request = (reqOpts: DecorateRequestOptions) => {
+      acl.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(reqOpts.method, 'PUT');
-        assert.strictEqual(reqOpts.uri, '/' + encodeURIComponent(ENTITY));
-        assert.deepStrictEqual(reqOpts.json, {role: ROLE});
+        assert.strictEqual(reqOpts.url, '/' + encodeURIComponent(ENTITY));
+        assert.deepStrictEqual(reqOpts.body, {role: ROLE});
 
         done();
       };
@@ -377,8 +393,11 @@ describe('storage/acl', () => {
         generation: 8,
       };
 
-      acl.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.generation, options.generation);
+      acl.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.generation,
+          options.generation
+        );
         done();
       };
 
@@ -392,8 +411,11 @@ describe('storage/acl', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      acl.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.userProject, options.userProject);
+      acl.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.userProject,
+          options.userProject
+        );
         done();
       };
 
@@ -408,7 +430,7 @@ describe('storage/acl', () => {
         return expectedAclObject;
       };
 
-      acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, apiResponse);
       };
 
@@ -420,7 +442,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with an error', done => {
-      acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(ERROR);
       };
 
@@ -433,7 +455,7 @@ describe('storage/acl', () => {
     it('should execute the callback with apiResponse', done => {
       const resp = {success: true};
 
-      acl.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      acl.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, resp);
       };
 
@@ -479,7 +501,7 @@ describe('storage/acl', () => {
         uri,
       };
 
-      acl.request_ = (reqOpts_: DecorateRequestOptions, callback: Function) => {
+      acl.request_ = (reqOpts_: StorageRequestOptions, callback: Function) => {
         assert.strictEqual(reqOpts_, reqOpts);
         assert.strictEqual(reqOpts_.uri, PATH_PREFIX + uri);
         callback(); // done()

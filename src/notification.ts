@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {BaseMetadata, ServiceObject} from './nodejs-common/index.js';
+import {BaseMetadata, Methods, ServiceObject} from './nodejs-common/index.js';
 import {ResponseBody} from './nodejs-common/util.js';
-import {promisifyAll} from '@google-cloud/promisify';
-
 import {Bucket} from './bucket.js';
 
 export interface DeleteNotificationOptions {
@@ -135,7 +133,7 @@ class Notification extends ServiceObject<Notification, NotificationMetadata> {
       ifMetagenerationNotMatch?: number;
     } = {};
 
-    const methods = {
+    const methods: Methods = {
       /**
        * Creates a notification subscription for the bucket.
        *
@@ -218,7 +216,7 @@ class Notification extends ServiceObject<Notification, NotificationMetadata> {
        */
       delete: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
 
@@ -258,7 +256,7 @@ class Notification extends ServiceObject<Notification, NotificationMetadata> {
        */
       get: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
 
@@ -297,7 +295,7 @@ class Notification extends ServiceObject<Notification, NotificationMetadata> {
        */
       getMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
 
@@ -347,13 +345,6 @@ class Notification extends ServiceObject<Notification, NotificationMetadata> {
     });
   }
 }
-
-/*! Developer Documentation
- *
- * All async methods (except for streams) will return a Promise in the event
- * that a callback is omitted.
- */
-promisifyAll(Notification);
 
 /**
  * Reference to the {@link Notification} class.

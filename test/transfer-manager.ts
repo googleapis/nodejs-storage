@@ -29,6 +29,7 @@ import {
   TransferManager,
   Storage,
   DownloadResponse,
+  GetFileOptions,
 } from '../src/index.js';
 import assert from 'assert';
 import * as path from 'path';
@@ -318,14 +319,17 @@ describe('Transfer Manager', () => {
       } as fsp.FileHandle);
 
       file = new File(bucket, 'some-large-file');
-      sandbox.stub(file, 'get').resolves([
-        {
-          metadata: {
-            size: 1024,
-            crc32c: 'AAAAAA==',
-          },
+      (
+        sandbox.stub(file, 'get') as unknown as sinon.SinonStub<
+          [GetFileOptions],
+          Promise<File>
+        >
+      ).resolves({
+        metadata: {
+          size: 1024,
+          crc32c: 'AAAAAA==',
         },
-      ]);
+      } as unknown as File);
     });
 
     it('should download a single chunk if file size is below threshold', async () => {

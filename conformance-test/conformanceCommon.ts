@@ -18,7 +18,6 @@ import * as libraryMethods from './libraryMethods';
 import {Bucket, File, HmacKey, Notification, Storage} from '../src/';
 import * as uuid from 'uuid';
 import * as assert from 'assert';
-import {DecorateRequestOptions} from '../src/nodejs-common';
 import fetch from 'node-fetch';
 
 interface RetryCase {
@@ -122,11 +121,10 @@ export function executeScenario(testCase: RetryTestCase) {
             notification = bucket.notification(`${TESTS_PREFIX}`);
             await notification.create();
 
-            [hmacKey] = await storage.createHmacKey(
-              `${TESTS_PREFIX}@email.com`
-            );
+            hmacKey = await storage.createHmacKey(`${TESTS_PREFIX}@email.com`);
 
-            storage.interceptors.push({
+            //TODO: Interceptors
+            /* storage.interceptors.push({
               request: requestConfig => {
                 requestConfig.headers = requestConfig.headers || {};
                 Object.assign(requestConfig.headers, {
@@ -134,7 +132,7 @@ export function executeScenario(testCase: RetryTestCase) {
                 });
                 return requestConfig as DecorateRequestOptions;
               },
-            });
+            }); */
           });
 
           it(`${instructionNumber}`, async () => {

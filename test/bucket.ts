@@ -14,7 +14,6 @@
 
 import {
   BaseMetadata,
-  DecorateRequestOptions,
   ServiceObject,
   ServiceObjectConfig,
   util,
@@ -28,7 +27,13 @@ import * as path from 'path';
 import proxyquire from 'proxyquire';
 
 import * as stream from 'stream';
-import {Bucket, Channel, Notification, CRC32C} from '../src/index.js';
+import {
+  Bucket,
+  Channel,
+  Notification,
+  CRC32C,
+  StorageRequestOptions,
+} from '../src/index.js';
 import {
   CreateWriteStreamOptions,
   File,
@@ -683,11 +688,11 @@ describe('Bucket', () => {
 
         assert.strictEqual(name, destinationFileName);
 
-        file.request = (reqOpts: DecorateRequestOptions) => {
+        file.request = (reqOpts: StorageRequestOptions) => {
           assert.strictEqual(reqOpts.method, 'POST');
-          assert.strictEqual(reqOpts.uri, '/compose');
-          assert.strictEqual(reqOpts.json.sourceObjects[0].name, file1.name);
-          assert.strictEqual(reqOpts.json.sourceObjects[1].name, file2);
+          assert.strictEqual(reqOpts.url, '/compose');
+          assert.strictEqual(reqOpts.body.sourceObjects[0].name, file1.name);
+          assert.strictEqual(reqOpts.body.sourceObjects[1].name, file2);
 
           done();
         };
@@ -701,9 +706,9 @@ describe('Bucket', () => {
     it('should use content type from the destination metadata', done => {
       const destination = bucket.file('destination.txt');
 
-      destination.request = (reqOpts: DecorateRequestOptions) => {
+      destination.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(
-          reqOpts.json.destination.contentType,
+          reqOpts.body.destination.contentType,
           mime.getType(destination.name)
         );
 
@@ -717,9 +722,9 @@ describe('Bucket', () => {
       const destination = bucket.file('destination.txt');
       destination.metadata = {contentType: 'content-type'};
 
-      destination.request = (reqOpts: DecorateRequestOptions) => {
+      destination.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(
-          reqOpts.json.destination.contentType,
+          reqOpts.body.destination.contentType,
           destination.metadata.contentType
         );
 
@@ -732,9 +737,9 @@ describe('Bucket', () => {
     it('should detect dest content type if not in metadata', done => {
       const destination = bucket.file('destination.txt');
 
-      destination.request = (reqOpts: DecorateRequestOptions) => {
+      destination.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(
-          reqOpts.json.destination.contentType,
+          reqOpts.body.destination.contentType,
           mime.getType(destination.name)
         );
 
@@ -748,9 +753,9 @@ describe('Bucket', () => {
       const sources = [bucket.file('1.foo'), bucket.file('2.foo')];
       const destination = bucket.file('destination.foo');
 
-      destination.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.uri, '/compose');
-        assert.deepStrictEqual(reqOpts.json, {
+      destination.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.url, '/compose');
+        assert.deepStrictEqual(reqOpts.body, {
           destination: {
             contentType: mime.getType(destination.name) || undefined,
             contentEncoding: undefined,
@@ -768,8 +773,8 @@ describe('Bucket', () => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('needs encoding.jpg');
 
-      destination.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.uri.indexOf(destination), -1);
+      destination.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.url?.toString().indexOf(destination), -1);
         done();
       };
 
@@ -783,8 +788,8 @@ describe('Bucket', () => {
 
       const destination = bucket.file('destination.txt');
 
-      destination.request = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.json.sourceObjects, [
+      destination.request = (reqOpts: StorageRequestOptions) => {
+        assert.deepStrictEqual(reqOpts.body.sourceObjects, [
           {name: sources[0].name, generation: sources[0].metadata.generation},
           {name: sources[1].name, generation: sources[1].metadata.generation},
         ]);
@@ -803,8 +808,8 @@ describe('Bucket', () => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');
 
-      destination.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs, options);
+      destination.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.queryParameters, options);
         done();
       };
 
@@ -822,21 +827,21 @@ describe('Bucket', () => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');
 
-      destination.request = (reqOpts: DecorateRequestOptions) => {
+      destination.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(
-          reqOpts.qs.ifGenerationMatch,
+          reqOpts.queryParameters?.ifGenerationMatch,
           options.ifGenerationMatch
         );
         assert.strictEqual(
-          reqOpts.qs.ifGenerationNotMatch,
+          reqOpts.queryParameters.ifGenerationNotMatch,
           options.ifGenerationNotMatch
         );
         assert.strictEqual(
-          reqOpts.qs.ifMetagenerationMatch,
+          reqOpts.queryParameters.ifMetagenerationMatch,
           options.ifMetagenerationMatch
         );
         assert.strictEqual(
-          reqOpts.qs.ifMetagenerationNotMatch,
+          reqOpts.queryParameters.ifMetagenerationNotMatch,
           options.ifMetagenerationNotMatch
         );
         done();
@@ -850,7 +855,7 @@ describe('Bucket', () => {
       const destination = bucket.file('destination.txt');
 
       destination.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback();
@@ -866,7 +871,7 @@ describe('Bucket', () => {
       const error = new Error('Error.');
 
       destination.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(error);
@@ -884,7 +889,7 @@ describe('Bucket', () => {
       const resp = {success: true};
 
       destination.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(null, resp);
@@ -905,7 +910,7 @@ describe('Bucket', () => {
       const destination = bucket.file('destination.txt');
 
       destination.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         assert.strictEqual(reqOpts.maxRetries, 0);
@@ -935,15 +940,15 @@ describe('Bucket', () => {
       });
       const originalConfig = Object.assign({}, config);
 
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
+      bucket.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(reqOpts.method, 'POST');
-        assert.strictEqual(reqOpts.uri, '/o/watch');
+        assert.strictEqual(reqOpts.url, '/o/watch');
 
         const expectedJson = Object.assign({}, config, {
           id: ID,
           type: 'web_hook',
         });
-        assert.deepStrictEqual(reqOpts.json, expectedJson);
+        assert.deepStrictEqual(reqOpts.body, expectedJson);
         assert.deepStrictEqual(config, originalConfig);
 
         done();
@@ -957,8 +962,8 @@ describe('Bucket', () => {
         userProject: 'user-project-id',
       };
 
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs, options);
+      bucket.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.queryParameters, options);
         done();
       };
 
@@ -971,7 +976,7 @@ describe('Bucket', () => {
 
       beforeEach(() => {
         bucket.request = (
-          reqOpts: DecorateRequestOptions,
+          reqOpts: StorageRequestOptions,
           callback: Function
         ) => {
           callback(error, apiResponse);
@@ -1000,7 +1005,7 @@ describe('Bucket', () => {
 
       beforeEach(() => {
         bucket.request = (
-          reqOpts: DecorateRequestOptions,
+          reqOpts: StorageRequestOptions,
           callback: Function
         ) => {
           callback(null, apiResponse);
@@ -1064,11 +1069,11 @@ describe('Bucket', () => {
         convertObjKeysToSnakeCase(options)
       );
 
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
+      bucket.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(reqOpts.method, 'POST');
-        assert.strictEqual(reqOpts.uri, '/notificationConfigs');
-        assert.deepStrictEqual(reqOpts.json, expectedJson);
-        assert.notStrictEqual(reqOpts.json, options);
+        assert.strictEqual(reqOpts.url, '/notificationConfigs');
+        assert.deepStrictEqual(reqOpts.body, expectedJson);
+        assert.notStrictEqual(reqOpts.body, options);
         done();
       };
 
@@ -1076,8 +1081,8 @@ describe('Bucket', () => {
     });
 
     it('should accept incomplete topic names', done => {
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.json.topic, FULL_TOPIC_NAME);
+      bucket.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.body.topic, FULL_TOPIC_NAME);
         done();
       };
 
@@ -1094,8 +1099,8 @@ describe('Bucket', () => {
         return true;
       };
 
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.json.topic, expectedTopicName);
+      bucket.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.body.topic, expectedTopicName);
         done();
       };
 
@@ -1103,8 +1108,8 @@ describe('Bucket', () => {
     });
 
     it('should set a default payload format', done => {
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.json.payload_format, 'JSON_API_V1');
+      bucket.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.body.payload_format, 'JSON_API_V1');
         done();
       };
 
@@ -1117,8 +1122,8 @@ describe('Bucket', () => {
         payload_format: 'JSON_API_V1',
       };
 
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.json, expectedJson);
+      bucket.request = (reqOpts: StorageRequestOptions) => {
+        assert.deepStrictEqual(reqOpts.body, expectedJson);
         done();
       };
 
@@ -1130,8 +1135,11 @@ describe('Bucket', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.userProject, options.userProject);
+      bucket.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.userProject,
+          options.userProject
+        );
         done();
       };
 
@@ -1142,10 +1150,7 @@ describe('Bucket', () => {
       const error = new Error('err');
       const response = {};
 
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(error, response);
       };
 
@@ -1165,10 +1170,7 @@ describe('Bucket', () => {
       const response = {id: fakeId};
       const fakeNotification = {};
 
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, response);
       };
 
@@ -1763,9 +1765,9 @@ describe('Bucket', () => {
 
   describe('getFiles', () => {
     it('should get files without a query', done => {
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.uri, '/o');
-        assert.deepStrictEqual(reqOpts.qs, {});
+      bucket.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.url, '/o');
+        assert.deepStrictEqual(reqOpts.queryParameters, {});
         done();
       };
 
@@ -1774,8 +1776,8 @@ describe('Bucket', () => {
 
     it('should get files with a query', done => {
       const token = 'next-page-token';
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.qs, {
+      bucket.request = (reqOpts: StorageRequestOptions) => {
+        assert.deepStrictEqual(reqOpts.queryParameters, {
           maxResults: 5,
           pageToken: token,
           includeFoldersAsPrefixes: true,
@@ -1798,10 +1800,7 @@ describe('Bucket', () => {
 
     it('should return nextQuery if more results exist', () => {
       const token = 'next-page-token';
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, {nextPageToken: token, items: []});
       };
       bucket.getFiles(
@@ -1814,10 +1813,7 @@ describe('Bucket', () => {
     });
 
     it('should return null nextQuery if there are no more results', () => {
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, {items: []});
       };
       bucket.getFiles(
@@ -1829,10 +1825,7 @@ describe('Bucket', () => {
     });
 
     it('should return File objects', done => {
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, {
           items: [{name: 'fake-file-name', generation: 1}],
         });
@@ -1849,10 +1842,7 @@ describe('Bucket', () => {
     });
 
     it('should return versioned Files if queried for versions', done => {
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, {
           items: [{name: 'fake-file-name', generation: 1}],
         });
@@ -1868,10 +1858,7 @@ describe('Bucket', () => {
 
     it('should return soft-deleted Files if queried for softDeleted', done => {
       const softDeletedTime = new Date('1/1/2024').toISOString();
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, {
           items: [{name: 'fake-file-name', generation: 1, softDeletedTime}],
         });
@@ -1888,10 +1875,7 @@ describe('Bucket', () => {
     it('should set kmsKeyName on file', done => {
       const kmsKeyName = 'kms-key-name';
 
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, {
           items: [{name: 'fake-file-name', kmsKeyName}],
         });
@@ -1906,10 +1890,7 @@ describe('Bucket', () => {
 
     it('should return apiResponse in callback', done => {
       const resp = {items: [{name: 'fake-file-name'}]};
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, resp);
       };
       bucket.getFiles(
@@ -1924,10 +1905,7 @@ describe('Bucket', () => {
       const error = new Error('Error.');
       const apiResponse = {};
 
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(error, apiResponse);
       };
 
@@ -1951,10 +1929,7 @@ describe('Bucket', () => {
           my: 'custom metadata',
         },
       };
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, {items: [fileMetadata]});
       };
       bucket.getFiles((err: Error, files: FakeFile[]) => {
@@ -2035,9 +2010,9 @@ describe('Bucket', () => {
     it('should make the correct request', done => {
       const options = {};
 
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.uri, '/notificationConfigs');
-        assert.strictEqual(reqOpts.qs, options);
+      bucket.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.url, '/notificationConfigs');
+        assert.strictEqual(reqOpts.queryParameters, options);
         done();
       };
 
@@ -2045,8 +2020,8 @@ describe('Bucket', () => {
     });
 
     it('should optionally accept options', done => {
-      bucket.request = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.qs, {});
+      bucket.request = (reqOpts: StorageRequestOptions) => {
+        assert.deepStrictEqual(reqOpts.queryParameters, {});
         done();
       };
 
@@ -2057,10 +2032,7 @@ describe('Bucket', () => {
       const error = new Error('err');
       const response = {};
 
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(error, response);
       };
 
@@ -2078,10 +2050,7 @@ describe('Bucket', () => {
       const fakeItems = [{id: '1'}, {id: '2'}, {id: '3'}];
       const response = {items: fakeItems};
 
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, response);
       };
 
@@ -2184,10 +2153,7 @@ describe('Bucket', () => {
     it('should make the correct request', done => {
       const metageneration = 8;
 
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         assert.deepStrictEqual(reqOpts, {
           method: 'POST',
           uri: '/lockRetentionPolicy',
@@ -2267,7 +2233,7 @@ describe('Bucket', () => {
 
     it('should not make files private by default', done => {
       bucket.parent.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback();
@@ -2284,7 +2250,7 @@ describe('Bucket', () => {
       const error = new Error('Error.');
 
       bucket.parent.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(error);
@@ -2299,10 +2265,7 @@ describe('Bucket', () => {
 
   describe('makePublic', () => {
     beforeEach(() => {
-      bucket.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      bucket.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback();
       };
     });
@@ -2414,9 +2377,9 @@ describe('Bucket', () => {
 
     it('should set the userProject if qs is undefined', done => {
       FakeServiceObject.prototype.request = ((
-        reqOpts: DecorateRequestOptions
+        reqOpts: StorageRequestOptions
       ) => {
-        assert.strictEqual(reqOpts.qs.userProject, USER_PROJECT);
+        assert.strictEqual(reqOpts.queryParameters?.userProject, USER_PROJECT);
         done();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any;
@@ -2432,10 +2395,10 @@ describe('Bucket', () => {
       };
 
       FakeServiceObject.prototype.request = ((
-        reqOpts: DecorateRequestOptions
+        reqOpts: StorageRequestOptions
       ) => {
-        assert.strictEqual(reqOpts.qs.userProject, USER_PROJECT);
-        assert.strictEqual(reqOpts.qs, options.qs);
+        assert.strictEqual(reqOpts.queryParameters?.userProject, USER_PROJECT);
+        assert.strictEqual(reqOpts.queryParameters, options.qs);
         done();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any;
@@ -2452,9 +2415,12 @@ describe('Bucket', () => {
       };
 
       FakeServiceObject.prototype.request = ((
-        reqOpts: DecorateRequestOptions
+        reqOpts: StorageRequestOptions
       ) => {
-        assert.strictEqual(reqOpts.qs.userProject, fakeUserProject);
+        assert.strictEqual(
+          reqOpts.queryParameters?.userProject,
+          fakeUserProject
+        );
         done();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }) as any;
@@ -2466,7 +2432,7 @@ describe('Bucket', () => {
       const options = {};
 
       Object.assign(FakeServiceObject.prototype, {
-        request(reqOpts: DecorateRequestOptions, callback: Function) {
+        request(reqOpts: StorageRequestOptions, callback: Function) {
           assert.strictEqual(this, bucket);
           assert.strictEqual(reqOpts, options);
           callback(); // done fn

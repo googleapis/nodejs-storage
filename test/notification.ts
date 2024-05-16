@@ -14,7 +14,6 @@
 
 import {
   BaseMetadata,
-  DecorateRequestOptions,
   ServiceObject,
   ServiceObjectConfig,
   util,
@@ -23,7 +22,7 @@ import assert from 'assert';
 import {describe, it, before, beforeEach} from 'mocha';
 import proxyquire from 'proxyquire';
 
-import {Bucket} from '../src/index.js';
+import {Bucket, StorageRequestOptions} from '../src/index.js';
 
 class FakeServiceObject extends ServiceObject<FakeServiceObject, BaseMetadata> {
   calledWith_: IArguments;
@@ -53,7 +52,7 @@ describe('Notification', () => {
   const BUCKET = {
     createNotification: fakeUtil.noop,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    request(_reqOpts: DecorateRequestOptions, _callback: Function) {
+    request(_reqOpts: StorageRequestOptions, _callback: Function) {
       return fakeUtil.noop();
     },
   };
@@ -138,13 +137,10 @@ describe('Notification', () => {
     it('should make the correct request', done => {
       const options = {};
 
-      BUCKET.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
+      BUCKET.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         assert.strictEqual(reqOpts.method, 'DELETE');
-        assert.strictEqual(reqOpts.uri, 'notificationConfigs/123');
-        assert.deepStrictEqual(reqOpts.qs, options);
+        assert.strictEqual(reqOpts.url, 'notificationConfigs/123');
+        assert.deepStrictEqual(reqOpts.queryParameters, options);
         callback(); // the done fn
       };
 
@@ -152,11 +148,8 @@ describe('Notification', () => {
     });
 
     it('should optionally accept options', done => {
-      BUCKET.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
-        assert.deepStrictEqual(reqOpts.qs, {});
+      BUCKET.request = (reqOpts: StorageRequestOptions, callback: Function) => {
+        assert.deepStrictEqual(reqOpts.queryParameters, {});
         callback(); // the done fn
       };
 
@@ -165,7 +158,7 @@ describe('Notification', () => {
 
     it('should optionally accept a callback', done => {
       BUCKET.request = (
-        _reqOpts: DecorateRequestOptions,
+        _reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(); // the done fn
@@ -318,9 +311,9 @@ describe('Notification', () => {
     it('should make the correct request', done => {
       const options = {};
 
-      BUCKET.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.uri, 'notificationConfigs/123');
-        assert.deepStrictEqual(reqOpts.qs, options);
+      BUCKET.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.url, 'notificationConfigs/123');
+        assert.deepStrictEqual(reqOpts.queryParameters, options);
         done();
       };
 
@@ -328,8 +321,8 @@ describe('Notification', () => {
     });
 
     it('should optionally accept options', done => {
-      BUCKET.request = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.qs, {});
+      BUCKET.request = (reqOpts: StorageRequestOptions) => {
+        assert.deepStrictEqual(reqOpts.queryParameters, {});
         done();
       };
 
@@ -341,7 +334,7 @@ describe('Notification', () => {
       const response = {};
 
       BUCKET.request = (
-        _reqOpts: DecorateRequestOptions,
+        _reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(error, response, response);
@@ -359,7 +352,7 @@ describe('Notification', () => {
       const response = {};
 
       BUCKET.request = (
-        _reqOpts: DecorateRequestOptions,
+        _reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(null, response, response);

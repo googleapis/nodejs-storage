@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {DecorateRequestOptions, util} from '../src/nodejs-common/index.js';
+import {util} from '../src/nodejs-common/index.js';
 import assert from 'assert';
 import {describe, it, before, beforeEach} from 'mocha';
 import proxyquire from 'proxyquire';
 import {IAMExceptionMessages} from '../src/iam.js';
+import {StorageRequestOptions} from '../src/index.js';
 
 describe('storage/iam', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -77,7 +78,7 @@ describe('storage/iam', () => {
 
   describe('getPolicy', () => {
     it('should make the correct api request', done => {
-      iam.request_ = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      iam.request_ = (reqOpts: StorageRequestOptions, callback: Function) => {
         assert.deepStrictEqual(reqOpts, {
           uri: '/iam',
           qs: {},
@@ -94,8 +95,8 @@ describe('storage/iam', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      iam.request_ = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.qs, options);
+      iam.request_ = (reqOpts: StorageRequestOptions) => {
+        assert.deepStrictEqual(reqOpts.queryParameters, options);
         done();
       };
 
@@ -108,8 +109,8 @@ describe('storage/iam', () => {
         requestedPolicyVersion: VERSION,
       };
 
-      iam.request_ = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.qs, {
+      iam.request_ = (reqOpts: StorageRequestOptions) => {
+        assert.deepStrictEqual(reqOpts.queryParameters, {
           optionsRequestedPolicyVersion: VERSION,
         });
         done();
@@ -131,7 +132,7 @@ describe('storage/iam', () => {
         a: 'b',
       };
 
-      iam.request_ = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      iam.request_ = (reqOpts: StorageRequestOptions, callback: Function) => {
         assert.deepStrictEqual(reqOpts, {
           method: 'PUT',
           uri: '/iam',
@@ -160,8 +161,8 @@ describe('storage/iam', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      iam.request_ = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs, options);
+      iam.request_ = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.queryParameters, options);
         done();
       };
 
@@ -180,7 +181,7 @@ describe('storage/iam', () => {
     it('should make the correct API request', done => {
       const permissions = 'storage.bucket.list';
 
-      iam.request_ = (reqOpts: DecorateRequestOptions) => {
+      iam.request_ = (reqOpts: StorageRequestOptions) => {
         assert.deepStrictEqual(reqOpts, {
           uri: '/iam/testPermissions',
           qs: {
@@ -200,7 +201,7 @@ describe('storage/iam', () => {
       const error = new Error('Error.');
       const apiResponse = {};
 
-      iam.request_ = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      iam.request_ = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(error, apiResponse);
       };
 
@@ -221,7 +222,7 @@ describe('storage/iam', () => {
         permissions: ['storage.bucket.consume'],
       };
 
-      iam.request_ = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      iam.request_ = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, apiResponse);
       };
 
@@ -244,7 +245,7 @@ describe('storage/iam', () => {
       const permissions = ['storage.bucket.list', 'storage.bucket.consume'];
       const apiResponse = {permissions: undefined};
 
-      iam.request_ = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      iam.request_ = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(null, apiResponse);
       };
       iam.testPermissions(
@@ -275,8 +276,8 @@ describe('storage/iam', () => {
         options
       );
 
-      iam.request_ = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.qs, expectedQuery);
+      iam.request_ = (reqOpts: StorageRequestOptions) => {
+        assert.deepStrictEqual(reqOpts.queryParameters, expectedQuery);
         done();
       };
 

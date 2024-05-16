@@ -23,19 +23,10 @@ export {
 
 export {
   BaseMetadata,
-  DeleteCallback,
-  ExistsCallback,
   GetConfig,
-  InstanceResponseCallback,
-  Interceptor,
-  MetadataCallback,
-  MetadataResponse,
   Methods,
-  ResponseCallback,
   ServiceObject,
   ServiceObjectConfig,
-  ServiceObjectParent,
-  SetMetadataResponse,
 } from './service-object.js';
 
 export {
@@ -43,7 +34,6 @@ export {
   AbortableDuplex,
   ApiError,
   BodyResponseCallback,
-  DecorateRequestOptions,
   ResponseBody,
   util,
 } from './util.js';

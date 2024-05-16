@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  BodyResponseCallback,
-  DecorateRequestOptions,
-} from './nodejs-common/index.js';
+import {BodyResponseCallback} from './nodejs-common/index.js';
 import {promisifyAll} from '@google-cloud/promisify';
 
 import {Bucket} from './bucket.js';
@@ -141,10 +138,8 @@ export enum IAMExceptionMessages {
  * ```
  */
 class Iam {
-  private request_: (
-    reqOpts: DecorateRequestOptions,
-    callback: BodyResponseCallback
-  ) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private request_: (reqOpts: any, callback: BodyResponseCallback) => void;
   private resourceId_: string;
 
   constructor(bucket: Bucket) {

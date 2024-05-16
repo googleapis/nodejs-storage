@@ -669,7 +669,7 @@ export class TransferManager {
         : fileOrName;
 
     const fileInfo = await file.get();
-    const size = parseInt(fileInfo[0].metadata.size!.toString());
+    const size = parseInt(fileInfo.metadata.size!.toString());
     // If the file size does not meet the threshold download it as a single chunk.
     if (size < DOWNLOAD_IN_CHUNKS_FILE_SIZE_THRESHOLD) {
       limit = pLimit(1);
@@ -711,9 +711,9 @@ export class TransferManager {
       await fileToWrite.close();
     }
 
-    if (options.validation === 'crc32c' && fileInfo[0].metadata.crc32c) {
+    if (options.validation === 'crc32c' && fileInfo.metadata.crc32c) {
       const downloadedCrc32C = await CRC32C.fromFile(filePath);
-      if (!downloadedCrc32C.validate(fileInfo[0].metadata.crc32c)) {
+      if (!downloadedCrc32C.validate(fileInfo.metadata.crc32c)) {
         const mismatchError = new RequestError(
           FileExceptionMessages.DOWNLOAD_MISMATCH
         );

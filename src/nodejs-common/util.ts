@@ -40,6 +40,7 @@ import duplexify from 'duplexify';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {getPackageJSON} from '../package-json-helper.cjs';
+import {StorageRequestOptions} from '../storage-transport.js';
 
 const packageJson = getPackageJSON();
 
@@ -115,17 +116,17 @@ export interface ParsedHttpRespMessage {
 }
 
 export interface MakeAuthenticatedRequest {
-  (reqOpts: DecorateRequestOptions): Duplexify;
+  (reqOpts: StorageRequestOptions): Duplexify;
   (
-    reqOpts: DecorateRequestOptions,
+    reqOpts: StorageRequestOptions,
     options?: MakeAuthenticatedRequestOptions
   ): void | Abortable;
   (
-    reqOpts: DecorateRequestOptions,
+    reqOpts: StorageRequestOptions,
     callback?: BodyResponseCallback
   ): void | Abortable;
   (
-    reqOpts: DecorateRequestOptions,
+    reqOpts: StorageRequestOptions,
     optionsOrCallback?: MakeAuthenticatedRequestOptions | BodyResponseCallback
   ): void | Abortable | Duplexify;
   getCredentials: (
@@ -193,7 +194,7 @@ export interface MakeAuthenticatedRequestOptions {
 }
 
 export interface OnAuthenticatedCallback {
-  (err: Error | null, reqOpts?: DecorateRequestOptions): void;
+  (err: Error | null, reqOpts?: StorageRequestOptions): void;
 }
 
 export interface GoogleErrorBody {
@@ -643,18 +644,18 @@ export class Util {
      * authenticated request options.
      */
     function makeAuthenticatedRequest(
-      reqOpts: DecorateRequestOptions
+      reqOpts: StorageRequestOptions
     ): Duplexify;
     function makeAuthenticatedRequest(
-      reqOpts: DecorateRequestOptions,
+      reqOpts: StorageRequestOptions,
       options?: MakeAuthenticatedRequestOptions
     ): void | Abortable;
     function makeAuthenticatedRequest(
-      reqOpts: DecorateRequestOptions,
+      reqOpts: StorageRequestOptions,
       callback?: BodyResponseCallback
     ): void | Abortable;
     function makeAuthenticatedRequest(
-      reqOpts: DecorateRequestOptions,
+      reqOpts: StorageRequestOptions,
       optionsOrCallback?: MakeAuthenticatedRequestOptions | BodyResponseCallback
     ): void | Abortable | Duplexify {
       let stream: Duplexify;
@@ -678,7 +679,7 @@ export class Util {
 
       const onAuthenticated = async (
         err: Error | null,
-        authenticatedReqOpts?: DecorateRequestOptions
+        authenticatedReqOpts?: StorageRequestOptions
       ) => {
         const authLibraryError = err;
         const autoAuthFailed =
@@ -790,7 +791,9 @@ export class Util {
               // authentication. (ex: connecting to a local Datastore server)
               return reqOpts;
             } else {
-              return authClient.authorizeRequest(reqOpts);
+              return authClient.authorizeRequest(
+                reqOpts as unknown as r.OptionsWithUrl
+              );
             }
           };
 
@@ -805,7 +808,7 @@ export class Util {
 
           return onAuthenticated(
             null,
-            authorizedReqOpts as DecorateRequestOptions
+            authorizedReqOpts as StorageRequestOptions
           );
         } catch (e) {
           return onAuthenticated(e as Error);
@@ -851,7 +854,7 @@ export class Util {
    * @param {function} callback - The callback function.
    */
   makeRequest(
-    reqOpts: DecorateRequestOptions,
+    reqOpts: StorageRequestOptions,
     config: MakeRequestConfig,
     callback: BodyResponseCallback
   ): void | Abortable {
@@ -895,7 +898,7 @@ export class Util {
 
     if (!config.stream) {
       return retryRequest(
-        reqOpts,
+        reqOpts as unknown as r.OptionsWithUrl,
         options,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (err: Error | null, response: {}, body: any) => {
@@ -909,7 +912,10 @@ export class Util {
     const isGetRequest = (reqOpts.method || 'GET').toUpperCase() === 'GET';
 
     if (isGetRequest) {
-      requestStream = retryRequest(reqOpts, options);
+      requestStream = retryRequest(
+        reqOpts as unknown as r.OptionsWithUrl,
+        options
+      );
       dup.setReadable(requestStream);
     } else {
       // Streaming writable HTTP requests cannot be retried.
@@ -934,15 +940,21 @@ export class Util {
    * @param {string} projectId - The project ID.
    * @return {object} reqOpts - The decorated reqOpts.
    */
-  decorateRequest(reqOpts: DecorateRequestOptions, projectId: string) {
+  decorateRequest(reqOpts: StorageRequestOptions, projectId: string) {
     delete reqOpts.autoPaginate;
     delete reqOpts.autoPaginateVal;
     delete reqOpts.objectMode;
 
-    if (reqOpts.qs !== null && typeof reqOpts.qs === 'object') {
-      delete reqOpts.qs.autoPaginate;
-      delete reqOpts.qs.autoPaginateVal;
-      reqOpts.qs = replaceProjectIdToken(reqOpts.qs, projectId);
+    if (
+      reqOpts.queryParameters !== null &&
+      typeof reqOpts.queryParameters === 'object'
+    ) {
+      delete reqOpts.queryParameters.autoPaginate;
+      delete reqOpts.queryParameters.autoPaginateVal;
+      reqOpts.queryParameters = replaceProjectIdToken(
+        reqOpts.queryParameters,
+        projectId
+      );
     }
 
     if (Array.isArray(reqOpts.multipart)) {
@@ -951,13 +963,13 @@ export class Util {
       });
     }
 
-    if (reqOpts.json !== null && typeof reqOpts.json === 'object') {
-      delete reqOpts.json.autoPaginate;
-      delete reqOpts.json.autoPaginateVal;
-      reqOpts.json = replaceProjectIdToken(reqOpts.json, projectId);
+    if (reqOpts.body !== null && typeof reqOpts.body === 'object') {
+      delete reqOpts.body.autoPaginate;
+      delete reqOpts.body.autoPaginateVal;
+      reqOpts.body = replaceProjectIdToken(reqOpts.body, projectId);
     }
 
-    reqOpts.uri = replaceProjectIdToken(reqOpts.uri, projectId);
+    reqOpts.url = replaceProjectIdToken(reqOpts.url, projectId);
 
     return reqOpts;
   }

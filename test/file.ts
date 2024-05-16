@@ -15,8 +15,6 @@
 import {
   ApiError,
   BodyResponseCallback,
-  DecorateRequestOptions,
-  MetadataCallback,
   ServiceObject,
   ServiceObjectConfig,
   util,
@@ -45,6 +43,8 @@ import {
   GetSignedUrlConfig,
   GenerateSignedPostPolicyV2Options,
   CRC32C,
+  StorageRequestOptions,
+  StorageCallback,
 } from '../src/index.js';
 import {
   SignedPostPolicyV4Output,
@@ -81,7 +81,7 @@ const fakeUtil = Object.assign({}, util, {
     (makeWritableStreamOverride || util.makeWritableStream)(...args);
   },
   makeRequest(
-    reqOpts: DecorateRequestOptions,
+    reqOpts: StorageRequestOptions,
     config: object,
     callback: BodyResponseCallback
   ) {
@@ -505,8 +505,8 @@ describe('File', () => {
         file.bucket.name
       }/o/${encodeURIComponent(newFile.name)}`;
 
-      directoryFile.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.uri, expectedPath);
+      directoryFile.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.url, expectedPath);
         done();
       };
 
@@ -519,7 +519,7 @@ describe('File', () => {
 
       const newFile = new File(BUCKET, 'new-file');
 
-      file.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+      file.request = (reqOpts: StorageRequestOptions, callback: Function) => {
         callback(error, apiResponse);
       };
 
@@ -536,8 +536,8 @@ describe('File', () => {
       const versionedFile = new File(BUCKET, 'name', {generation: 1});
       const newFile = new File(BUCKET, 'new-file');
 
-      versionedFile.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.sourceGeneration, 1);
+      versionedFile.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(reqOpts.queryParameters?.sourceGeneration, 1);
         done();
       };
 
@@ -554,9 +554,9 @@ describe('File', () => {
         metadata: METADATA,
       };
 
-      file.request = (reqOpts: DecorateRequestOptions) => {
-        assert.deepStrictEqual(reqOpts.json, options);
-        assert.strictEqual(reqOpts.json.metadata, METADATA);
+      file.request = (reqOpts: StorageRequestOptions) => {
+        assert.deepStrictEqual(reqOpts.body, options);
+        assert.strictEqual(reqOpts.body.metadata, METADATA);
         done();
       };
 
@@ -570,9 +570,12 @@ describe('File', () => {
       const originalOptions = Object.assign({}, options);
       const newFile = new File(BUCKET, 'new-file');
 
-      file.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.userProject, options.userProject);
-        assert.strictEqual(reqOpts.json.userProject, undefined);
+      file.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.userProject,
+          options.userProject
+        );
+        assert.strictEqual(reqOpts.body.userProject, undefined);
         assert.deepStrictEqual(options, originalOptions);
         done();
       };
@@ -587,7 +590,7 @@ describe('File', () => {
 
       const newFile = new File(BUCKET, 'new-file');
 
-      file.request = (reqOpts: DecorateRequestOptions) => {
+      file.request = (reqOpts: StorageRequestOptions) => {
         assert.deepStrictEqual(reqOpts.headers, {
           'x-goog-copy-source-encryption-algorithm': 'AES256',
           'x-goog-copy-source-encryption-key': file.encryptionKeyBase64,
@@ -615,9 +618,9 @@ describe('File', () => {
       const newFile = new File(BUCKET, 'new-file');
       newFile.kmsKeyName = 'kms-key-name';
 
-      file.request = (reqOpts: DecorateRequestOptions) => {
+      file.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(
-          reqOpts.qs.destinationKmsKeyName,
+          reqOpts.queryParameters?.destinationKmsKeyName,
           newFile.kmsKeyName
         );
         assert.strictEqual(file.kmsKeyName, newFile.kmsKeyName);
@@ -631,9 +634,9 @@ describe('File', () => {
       const newFile = new File(BUCKET, 'new-file');
       const destinationKmsKeyName = 'destination-kms-key-name';
 
-      file.request = (reqOpts: DecorateRequestOptions) => {
+      file.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(
-          reqOpts.qs.destinationKmsKeyName,
+          reqOpts.queryParameters?.destinationKmsKeyName,
           destinationKmsKeyName
         );
         assert.strictEqual(file.kmsKeyName, destinationKmsKeyName);
@@ -648,12 +651,12 @@ describe('File', () => {
         predefinedAcl: 'authenticatedRead',
       };
       const newFile = new File(BUCKET, 'new-file');
-      file.request = (reqOpts: DecorateRequestOptions) => {
+      file.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(
-          reqOpts.qs.destinationPredefinedAcl,
+          reqOpts.queryParameters?.destinationPredefinedAcl,
           options.predefinedAcl
         );
-        assert.strictEqual(reqOpts.json.destinationPredefinedAcl, undefined);
+        assert.strictEqual(reqOpts.body.destinationPredefinedAcl, undefined);
         done();
       };
 
@@ -665,9 +668,9 @@ describe('File', () => {
       newFile.kmsKeyName = 'incorrect-kms-key-name';
       const destinationKmsKeyName = 'correct-kms-key-name';
 
-      file.request = (reqOpts: DecorateRequestOptions) => {
+      file.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(
-          reqOpts.qs.destinationKmsKeyName,
+          reqOpts.queryParameters?.destinationKmsKeyName,
           destinationKmsKeyName
         );
         assert.strictEqual(file.kmsKeyName, destinationKmsKeyName);
@@ -700,8 +703,8 @@ describe('File', () => {
         expectedPath: string,
         callback: Function
       ) {
-        file.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.uri, expectedPath);
+        file.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(reqOpts.url, expectedPath);
           callback();
         };
       }
@@ -758,10 +761,7 @@ describe('File', () => {
       };
 
       beforeEach(() => {
-        file.request = (
-          reqOpts: DecorateRequestOptions,
-          callback: Function
-        ) => {
+        file.request = (reqOpts: StorageRequestOptions, callback: Function) => {
           callback(null, apiResponse);
         };
       });
@@ -769,10 +769,7 @@ describe('File', () => {
       it('should continue attempting to copy', done => {
         const newFile = new File(BUCKET, 'new-file');
 
-        file.request = (
-          reqOpts: DecorateRequestOptions,
-          callback: Function
-        ) => {
+        file.request = (reqOpts: StorageRequestOptions, callback: Function) => {
           file.copy = (newFile_: {}, options: {}, callback: Function) => {
             assert.strictEqual(newFile_, newFile);
             assert.deepStrictEqual(options, {token: apiResponse.rewriteToken});
@@ -791,10 +788,7 @@ describe('File', () => {
           userProject: 'grapce-spaceship-123',
         };
 
-        file.request = (
-          reqOpts: DecorateRequestOptions,
-          callback: Function
-        ) => {
+        file.request = (reqOpts: StorageRequestOptions, callback: Function) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           file.copy = (newFile_: {}, options: any) => {
             assert.notStrictEqual(options, fakeOptions);
@@ -814,10 +808,7 @@ describe('File', () => {
           destinationKmsKeyName: 'kms-key-name',
         };
 
-        file.request = (
-          reqOpts: DecorateRequestOptions,
-          callback: Function
-        ) => {
+        file.request = (reqOpts: StorageRequestOptions, callback: Function) => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           file.copy = (newFile_: {}, options: any) => {
             assert.strictEqual(
@@ -836,8 +827,11 @@ describe('File', () => {
       it('should make the subsequent correct API request', done => {
         const newFile = new File(BUCKET, 'new-file');
 
-        file.request = (reqOpts: DecorateRequestOptions) => {
-          assert.strictEqual(reqOpts.qs.rewriteToken, apiResponse.rewriteToken);
+        file.request = (reqOpts: StorageRequestOptions) => {
+          assert.strictEqual(
+            reqOpts.queryParameters?.rewriteToken,
+            apiResponse.rewriteToken
+          );
           done();
         };
 
@@ -848,10 +842,7 @@ describe('File', () => {
     describe('returned File object', () => {
       beforeEach(() => {
         const resp = {success: true};
-        file.request = (
-          reqOpts: DecorateRequestOptions,
-          callback: Function
-        ) => {
+        file.request = (reqOpts: StorageRequestOptions, callback: Function) => {
           callback(null, resp);
         };
       });
@@ -896,10 +887,10 @@ describe('File', () => {
 
   describe('createReadStream', () => {
     function getFakeRequest(data?: {}) {
-      let requestOptions: DecorateRequestOptions | undefined;
+      let requestOptions: StorageRequestOptions | undefined;
 
       class FakeRequest extends Readable {
-        constructor(_requestOptions?: DecorateRequestOptions) {
+        constructor(_requestOptions?: StorageRequestOptions) {
           super();
           requestOptions = _requestOptions;
           this._read = () => {
@@ -929,7 +920,7 @@ describe('File', () => {
       const FakeRequest = getFakeRequest(data);
 
       class FakeSuccessfulRequest extends FakeRequest {
-        constructor(req?: DecorateRequestOptions) {
+        constructor(req?: StorageRequestOptions) {
           super(req);
           setImmediate(() => {
             const stream = new FakeRequest();
@@ -952,7 +943,7 @@ describe('File', () => {
       const FakeRequest = getFakeRequest();
 
       class FakeFailedRequest extends FakeRequest {
-        constructor(_req?: DecorateRequestOptions) {
+        constructor(_req?: StorageRequestOptions) {
           super(_req);
           setImmediate(() => {
             this.emit('error', error);
@@ -1023,8 +1014,8 @@ describe('File', () => {
     it('should send query.generation if File has one', done => {
       const versionedFile = new File(BUCKET, 'file.txt', {generation: 1});
 
-      versionedFile.requestStream = (rOpts: DecorateRequestOptions) => {
-        assert.strictEqual(rOpts.qs.generation, 1);
+      versionedFile.requestStream = (rOpts: StorageRequestOptions) => {
+        assert.strictEqual(rOpts.queryParameters?.generation, 1);
         setImmediate(done);
         return duplexify();
       };
@@ -1037,8 +1028,11 @@ describe('File', () => {
         userProject: 'user-project-id',
       };
 
-      file.requestStream = (rOpts: DecorateRequestOptions) => {
-        assert.strictEqual(rOpts.qs.userProject, options.userProject);
+      file.requestStream = (rOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          rOpts.queryParameters?.userProject,
+          options.userProject
+        );
         setImmediate(done);
         return duplexify();
       };
@@ -1049,7 +1043,7 @@ describe('File', () => {
     it('should pass the `GCCL_GCS_CMD_KEY` to `requestStream`', done => {
       const expected = 'expected/value';
 
-      file.requestStream = (opts: DecorateRequestOptions) => {
+      file.requestStream = (opts: StorageRequestOptions) => {
         assert.equal(opts[GCCL_GCS_CMD_KEY], expected);
 
         process.nextTick(() => done());
@@ -1066,7 +1060,7 @@ describe('File', () => {
 
     describe('authenticating', () => {
       it('should create an authenticated request', done => {
-        file.requestStream = (opts: DecorateRequestOptions) => {
+        file.requestStream = (opts: StorageRequestOptions) => {
           assert.deepStrictEqual(opts, {
             uri: '',
             headers: {
@@ -1690,7 +1684,7 @@ describe('File', () => {
       it('should accept a start range', done => {
         const startOffset = 100;
 
-        file.requestStream = (opts: DecorateRequestOptions) => {
+        file.requestStream = (opts: StorageRequestOptions) => {
           setImmediate(() => {
             assert.strictEqual(
               opts.headers!.Range,
@@ -1707,7 +1701,7 @@ describe('File', () => {
       it('should accept an end range and set start to 0', done => {
         const endOffset = 100;
 
-        file.requestStream = (opts: DecorateRequestOptions) => {
+        file.requestStream = (opts: StorageRequestOptions) => {
           setImmediate(() => {
             assert.strictEqual(opts.headers!.Range, 'bytes=0-' + endOffset);
             done();
@@ -1722,7 +1716,7 @@ describe('File', () => {
         const startOffset = 100;
         const endOffset = 101;
 
-        file.requestStream = (opts: DecorateRequestOptions) => {
+        file.requestStream = (opts: StorageRequestOptions) => {
           setImmediate(() => {
             const expectedRange = 'bytes=' + startOffset + '-' + endOffset;
             assert.strictEqual(opts.headers!.Range, expectedRange);
@@ -1738,7 +1732,7 @@ describe('File', () => {
         const startOffset = 0;
         const endOffset = 0;
 
-        file.requestStream = (opts: DecorateRequestOptions) => {
+        file.requestStream = (opts: StorageRequestOptions) => {
           setImmediate(() => {
             const expectedRange = 'bytes=0-0';
             assert.strictEqual(opts.headers!.Range, expectedRange);
@@ -1763,7 +1757,7 @@ describe('File', () => {
       it('should make a request for the tail bytes', done => {
         const endOffset = -10;
 
-        file.requestStream = (opts: DecorateRequestOptions) => {
+        file.requestStream = (opts: StorageRequestOptions) => {
           setImmediate(() => {
             assert.strictEqual(opts.headers!.Range, 'bytes=' + endOffset);
             done();
@@ -3721,8 +3715,8 @@ describe('File', () => {
 
       file.setMetadata = (
         metadata: FileMetadata,
-        optionsOrCallback: SetMetadataOptions | MetadataCallback<FileMetadata>,
-        cb: MetadataCallback<FileMetadata>
+        optionsOrCallback: SetMetadataOptions | StorageCallback<FileMetadata>,
+        cb: StorageCallback<FileMetadata>
       ) => {
         Promise.resolve([apiResponse]).then(resp => cb(null, ...resp));
       };
@@ -3870,7 +3864,7 @@ describe('File', () => {
 
     it('should execute callback with `false` in response', done => {
       fakeUtil.makeRequest = function (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         config: object,
         callback: BodyResponseCallback
       ) {
@@ -3889,7 +3883,7 @@ describe('File', () => {
       const error = new ApiError('400 Error.');
       error.code = 400;
       fakeUtil.makeRequest = function (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         config: object,
         callback: BodyResponseCallback
       ) {
@@ -3903,7 +3897,7 @@ describe('File', () => {
 
     it('should correctly send a GET request', done => {
       fakeUtil.makeRequest = function (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         config: object,
         callback: BodyResponseCallback
       ) {
@@ -3923,11 +3917,11 @@ describe('File', () => {
       }/${encodeURIComponent(file.name)}`;
 
       fakeUtil.makeRequest = function (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         config: object,
         callback: BodyResponseCallback
       ) {
-        assert.strictEqual(reqOpts.uri, expectedURL);
+        assert.strictEqual(reqOpts.url, expectedURL);
         callback(null);
       };
       file.isPublic((err: ApiError) => {
@@ -3938,7 +3932,7 @@ describe('File', () => {
 
     it('should not set any headers when there are no interceptors', done => {
       fakeUtil.makeRequest = function (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         config: object,
         callback: BodyResponseCallback
       ) {
@@ -3955,15 +3949,15 @@ describe('File', () => {
       const expectedHeader = {hello: 'world'};
       file.storage.interceptors = [];
       file.storage.interceptors.push({
-        request: (requestConfig: DecorateRequestOptions) => {
+        request: (requestConfig: StorageRequestOptions) => {
           requestConfig.headers = requestConfig.headers || {};
           Object.assign(requestConfig.headers, expectedHeader);
-          return requestConfig as DecorateRequestOptions;
+          return requestConfig as StorageRequestOptions;
         },
       });
 
       fakeUtil.makeRequest = function (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         config: object,
         callback: BodyResponseCallback
       ) {
@@ -4184,7 +4178,7 @@ describe('File', () => {
   describe('restore', () => {
     it('should pass options to underlying request call', async () => {
       file.parent.request = function (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback_: Function
       ) {
         assert.strictEqual(this, file);
@@ -4208,7 +4202,7 @@ describe('File', () => {
       const expectedReturnValue = {};
 
       file.parent.request = function (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback_: Function
       ) {
         assert.strictEqual(this, file);
@@ -4701,8 +4695,11 @@ describe('File', () => {
     it('should accept overrideUnlockedRetention option and set query parameter', done => {
       const newFile = new File(BUCKET, 'new-file');
 
-      newFile.parent.request = (reqOpts: DecorateRequestOptions) => {
-        assert.strictEqual(reqOpts.qs.overrideUnlockedRetention, true);
+      newFile.parent.request = (reqOpts: StorageRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.overrideUnlockedRetention,
+          true
+        );
         done();
       };
 
@@ -4897,13 +4894,13 @@ describe('File', () => {
         file.kmsKeyName = 'kms-key-name';
 
         const customRequestInterceptors = [
-          (reqOpts: DecorateRequestOptions) => {
+          (reqOpts: StorageRequestOptions) => {
             reqOpts.headers = Object.assign({}, reqOpts.headers, {
               a: 'b',
             });
             return reqOpts;
           },
-          (reqOpts: DecorateRequestOptions) => {
+          (reqOpts: StorageRequestOptions) => {
             reqOpts.headers = Object.assign({}, reqOpts.headers, {
               c: 'd',
             });
@@ -5179,7 +5176,7 @@ describe('File', () => {
 
         beforeEach(() => {
           file.request = (
-            reqOpts: DecorateRequestOptions,
+            reqOpts: StorageRequestOptions,
             callback: Function
           ) => {
             callback(error);
@@ -5206,7 +5203,7 @@ describe('File', () => {
 
         beforeEach(() => {
           file.request = (
-            reqOpts: DecorateRequestOptions,
+            reqOpts: StorageRequestOptions,
             callback: Function
           ) => {
             callback(null, body, resp);

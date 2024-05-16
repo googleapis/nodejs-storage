@@ -15,16 +15,10 @@
 import {
   ApiError,
   BodyResponseCallback,
-  DecorateRequestOptions,
-  DeleteCallback,
-  ExistsCallback,
   GetConfig,
-  MetadataCallback,
   ServiceObject,
-  SetMetadataResponse,
   util,
 } from './nodejs-common/index.js';
-import {RequestResponse} from './nodejs-common/service-object.js';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as fs from 'fs';
@@ -66,8 +60,14 @@ import {CRC32CValidatorGenerator} from './crc32c.js';
 import {URL} from 'url';
 import {
   BaseMetadata,
+  Methods,
   SetMetadataOptions,
 } from './nodejs-common/service-object.js';
+import {
+  StorageCallback,
+  StorageQueryParameters,
+  StorageRequestOptions,
+} from './storage-transport.js';
 
 interface SourceObject {
   name: string;
@@ -229,10 +229,6 @@ export interface DeleteBucketOptions {
 
 export type DeleteBucketResponse = [unknown];
 
-export interface DeleteBucketCallback extends DeleteCallback {
-  (err: Error | null, apiResponse: unknown): void;
-}
-
 export interface DeleteFilesOptions
   extends GetFilesOptions,
     PreconditionOptions {
@@ -269,8 +265,6 @@ export interface BucketExistsOptions extends GetConfig {
 }
 
 export type BucketExistsResponse = [boolean];
-
-export type BucketExistsCallback = ExistsCallback;
 
 export interface GetBucketOptions extends GetConfig {
   userProject?: string;
@@ -866,7 +860,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       requestQueryObject.userProject = userProject;
     }
 
-    const methods = {
+    const methods: Methods = {
       /**
        * Create a bucket.
        *
@@ -897,7 +891,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       create: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -951,7 +945,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       delete: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -996,7 +990,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       exists: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -1055,7 +1049,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       get: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -1111,7 +1105,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       getMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -1202,7 +1196,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       setMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
     };
@@ -1662,9 +1656,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     destinationFile.request(
       {
         method: 'POST',
-        uri: '/compose',
+        url: '/compose',
         maxRetries,
-        json: {
+        body: {
           destination: {
             contentType: destinationFile.metadata.contentType,
             contentEncoding: destinationFile.metadata.contentEncoding,
@@ -1683,7 +1677,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
             return sourceObject;
           }),
         },
-        qs: options,
+        queryParameters: options as StorageQueryParameters,
       },
       (err, resp) => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -1824,15 +1818,15 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     this.request(
       {
         method: 'POST',
-        uri: '/o/watch',
-        json: Object.assign(
+        url: '/o/watch',
+        body: Object.assign(
           {
             id,
             type: 'web_hook',
           },
           config
         ),
-        qs: options,
+        queryParameters: options as StorageQueryParameters,
       },
       (err, apiResponse) => {
         if (err) {
@@ -2008,9 +2002,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     this.request(
       {
         method: 'POST',
-        uri: '/notificationConfigs',
-        json: convertObjKeysToSnakeCase(body),
-        qs: query,
+        url: '/notificationConfigs',
+        body: convertObjKeysToSnakeCase(body),
+        queryParameters: query as StorageQueryParameters,
         maxRetries: 0, //explicitly set this value since this is a non-idempotent function
       },
       (err, apiResponse) => {
@@ -2812,8 +2806,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     this.request(
       {
-        uri: '/o',
-        qs: query,
+        url: '/o',
+        queryParameters: query as StorageQueryParameters,
       },
       (err, resp) => {
         if (err) {
@@ -2918,17 +2912,14 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options = optionsOrCallback;
     }
 
-    this.getMetadata(
-      options,
-      (err: ApiError | null, metadata: BucketMetadata | undefined) => {
-        if (err) {
-          callback!(err, null);
-          return;
-        }
-
-        callback!(null, metadata?.labels || {});
+    this.getMetadata(options, (err, metadata) => {
+      if (err) {
+        callback!(err, null);
+        return;
       }
-    );
+
+      callback!(null, metadata?.labels || {});
+    });
   }
 
   getNotifications(
@@ -3005,8 +2996,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     this.request(
       {
-        uri: '/notificationConfigs',
-        qs: options,
+        url: '/notificationConfigs',
+        queryParameters: options as StorageQueryParameters,
       },
       (err, resp) => {
         if (err) {
@@ -3236,8 +3227,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     this.request(
       {
         method: 'POST',
-        uri: '/lockRetentionPolicy',
-        qs: {
+        url: '/lockRetentionPolicy',
+        queryParameters: {
           ifMetagenerationMatch: metageneration,
         },
       },
@@ -3620,11 +3611,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     );
   }
 
-  request(reqOpts: DecorateRequestOptions): Promise<RequestResponse>;
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback: BodyResponseCallback
-  ): void;
+  request(reqOpts: StorageRequestOptions): Promise<Bucket>;
+  request(reqOpts: StorageRequestOptions, callback: BodyResponseCallback): void;
   /**
    * Makes request and applies userProject query parameter if necessary.
    *
@@ -3634,11 +3622,17 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * @param {function} callback - The callback function.
    */
   request(
-    reqOpts: DecorateRequestOptions,
+    reqOpts: StorageRequestOptions,
     callback?: BodyResponseCallback
-  ): void | Promise<RequestResponse> {
-    if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
-      reqOpts.qs = {...reqOpts.qs, userProject: this.userProject};
+  ): void | Promise<Bucket> {
+    if (
+      this.userProject &&
+      (!reqOpts.queryParameters || !reqOpts.queryParameters.userProject)
+    ) {
+      reqOpts.queryParameters = {
+        ...reqOpts.queryParameters,
+        userProject: this.userProject,
+      };
     }
     return super.request(reqOpts, callback!);
   }
@@ -3728,26 +3722,26 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   setMetadata(
     metadata: BucketMetadata,
     options?: SetMetadataOptions
-  ): Promise<SetMetadataResponse<BucketMetadata>>;
+  ): Promise<BucketMetadata>;
   setMetadata(
     metadata: BucketMetadata,
-    callback: MetadataCallback<BucketMetadata>
-  ): void;
+    callback: StorageCallback<BucketMetadata>
+  ): Promise<void>;
   setMetadata(
     metadata: BucketMetadata,
     options: SetMetadataOptions,
-    callback: MetadataCallback<BucketMetadata>
-  ): void;
+    callback: StorageCallback<BucketMetadata>
+  ): Promise<void>;
   setMetadata(
     metadata: BucketMetadata,
-    optionsOrCallback: SetMetadataOptions | MetadataCallback<BucketMetadata>,
-    cb?: MetadataCallback<BucketMetadata>
-  ): Promise<SetMetadataResponse<BucketMetadata>> | void {
+    optionsOrCallback: SetMetadataOptions | StorageCallback<BucketMetadata>,
+    cb?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | Promise<void> {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb =
       typeof optionsOrCallback === 'function'
-        ? (optionsOrCallback as MetadataCallback<BucketMetadata>)
+        ? (optionsOrCallback as StorageCallback<BucketMetadata>)
         : cb;
 
     this.disableAutoRetryConditionallyIdempotent_(
@@ -3756,13 +3750,19 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options
     );
 
-    super
-      .setMetadata(metadata, options)
-      .then(resp => cb!(null, ...resp))
-      .catch(cb!)
-      .finally(() => {
-        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-      });
+    const reqPromise = super.setMetadata(metadata, options);
+
+    return cb
+      ? reqPromise
+          .then(resp => cb(null, resp))
+          .catch(cb)
+          .finally(
+            () =>
+              (this.storage.retryOptions.autoRetry = this.instanceRetryValue)
+          )
+      : reqPromise.finally(
+          () => (this.storage.retryOptions.autoRetry = this.instanceRetryValue)
+        );
   }
 
   setRetentionPeriod(
@@ -4024,10 +4024,12 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       const methodConfig = this.methods[method];
       if (typeof methodConfig === 'object') {
         if (typeof methodConfig.reqOpts === 'object') {
-          Object.assign(methodConfig.reqOpts.qs, {userProject});
+          Object.assign(methodConfig.reqOpts.queryParameters as {}, {
+            userProject,
+          });
         } else {
           methodConfig.reqOpts = {
-            qs: {userProject},
+            queryParameters: {userProject},
           };
         }
       }

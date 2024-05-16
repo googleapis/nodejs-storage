@@ -18,13 +18,13 @@
 
 import {
   BaseMetadata,
-  DecorateRequestOptions,
   ServiceObject,
   ServiceObjectConfig,
 } from '../src/nodejs-common/index.js';
 import assert from 'assert';
 import {describe, it, before, beforeEach} from 'mocha';
 import proxyquire from 'proxyquire';
+import {StorageRequestOptions} from '../src/storage-transport.js';
 
 let promisified = false;
 const fakePromisify = {
@@ -95,10 +95,10 @@ describe('Channel', () => {
 
   describe('stop', () => {
     it('should make the correct request', done => {
-      channel.request = (reqOpts: DecorateRequestOptions) => {
+      channel.request = (reqOpts: StorageRequestOptions) => {
         assert.strictEqual(reqOpts.method, 'POST');
-        assert.strictEqual(reqOpts.uri, '/stop');
-        assert.strictEqual(reqOpts.json, channel.metadata);
+        assert.strictEqual(reqOpts.url, '/stop');
+        assert.strictEqual(reqOpts.body, channel.metadata);
 
         done();
       };
@@ -111,7 +111,7 @@ describe('Channel', () => {
       const apiResponse = {};
 
       channel.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         callback(error, apiResponse);
@@ -126,7 +126,7 @@ describe('Channel', () => {
 
     it('should not require a callback', done => {
       channel.request = (
-        reqOpts: DecorateRequestOptions,
+        reqOpts: StorageRequestOptions,
         callback: Function
       ) => {
         assert.doesNotThrow(() => callback());

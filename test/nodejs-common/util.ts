@@ -37,9 +37,7 @@ import {teenyRequest} from 'teeny-request';
 import {
   Abortable,
   ApiError,
-  DecorateRequestOptions,
   Duplexify,
-  GCCL_GCS_CMD_KEY,
   GoogleErrorBody,
   GoogleInnerError,
   MakeAuthenticatedRequestFactoryConfig,
@@ -49,6 +47,7 @@ import {
 } from '../../src/nodejs-common/util.js';
 import {DEFAULT_PROJECT_ID_TOKEN} from '../../src/nodejs-common/service.js';
 import duplexify from 'duplexify';
+import {StorageRequestOptions} from '../../src/storage-transport.js';
 
 nock.disableNetConnect();
 
@@ -62,8 +61,8 @@ const fakeBadResp = {
   statusMessage: 'Not Good',
 } as r.Response;
 
-const fakeReqOpts: DecorateRequestOptions = {
-  uri: 'http://so-fake',
+const fakeReqOpts: StorageRequestOptions = {
+  url: 'http://so-fake',
   method: 'GET',
 };
 
@@ -495,229 +494,6 @@ describe('common/util', () => {
     });
   });
 
-  describe('makeWritableStream', () => {
-    it('should use defaults', done => {
-      const dup = duplexify();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const metadata = {a: 'b', c: 'd'} as any;
-      util.makeWritableStream(dup, {
-        metadata,
-        makeAuthenticatedRequest(request: DecorateRequestOptions) {
-          assert.strictEqual(request.method, 'POST');
-          assert.strictEqual(request.qs.uploadType, 'multipart');
-          assert.strictEqual(request.timeout, 0);
-          assert.strictEqual(request.maxRetries, 0);
-          assert.strictEqual(Array.isArray(request.multipart), true);
-
-          const mp = request.multipart as r.RequestPart[];
-
-          assert.strictEqual(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (mp[0] as any)['Content-Type'],
-            'application/json'
-          );
-          assert.strictEqual(mp[0].body, JSON.stringify(metadata));
-
-          assert.strictEqual(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (mp[1] as any)['Content-Type'],
-            'application/octet-stream'
-          );
-          // (is a writable stream:)
-          assert.strictEqual(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            typeof (mp[1].body as any)._writableState,
-            'object'
-          );
-
-          done();
-        },
-      });
-    });
-
-    it('should allow overriding defaults', done => {
-      const dup = duplexify();
-
-      const req = {
-        uri: 'http://foo',
-        method: 'PUT',
-        qs: {
-          uploadType: 'media',
-        },
-        [GCCL_GCS_CMD_KEY]: 'some.value',
-      } as DecorateRequestOptions;
-
-      util.makeWritableStream(dup, {
-        metadata: {
-          contentType: 'application/json',
-        },
-        makeAuthenticatedRequest(request) {
-          assert.strictEqual(request.method, req.method);
-          assert.deepStrictEqual(request.qs, req.qs);
-          assert.strictEqual(request.uri, req.uri);
-          assert.strictEqual(request[GCCL_GCS_CMD_KEY], req[GCCL_GCS_CMD_KEY]);
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const mp = request.multipart as any[];
-          assert.strictEqual(mp[1]['Content-Type'], 'application/json');
-
-          done();
-        },
-
-        request: req,
-      });
-    });
-
-    it('should emit an error', done => {
-      const error = new Error('Error.');
-
-      const ws = duplexify();
-      ws.on('error', err => {
-        assert.strictEqual(err, error);
-        done();
-      });
-
-      util.makeWritableStream(ws, {
-        makeAuthenticatedRequest(request, opts) {
-          opts!.onAuthenticated(error);
-        },
-      });
-    });
-
-    it('should set the writable stream', done => {
-      const dup = duplexify();
-
-      dup.setWritable = () => {
-        done();
-      };
-
-      util.makeWritableStream(dup, {makeAuthenticatedRequest() {}});
-    });
-
-    it('dup should emit a progress event with the bytes written', done => {
-      let happened = false;
-
-      const dup = duplexify();
-      dup.on('progress', () => {
-        happened = true;
-      });
-
-      util.makeWritableStream(dup, {makeAuthenticatedRequest() {}}, util.noop);
-      dup.write(Buffer.from('abcdefghijklmnopqrstuvwxyz'), 'utf-8', util.noop);
-
-      assert.strictEqual(happened, true);
-      done();
-    });
-
-    it('should emit an error if the request fails', done => {
-      const dup = duplexify();
-      const fakeStream = new stream.Writable();
-      const error = new Error('Error.');
-      fakeStream.write = () => false;
-      dup.end = () => dup;
-
-      stub('handleResp', (err, res, body, callback) => {
-        callback(error);
-      });
-
-      requestOverride = (
-        reqOpts: DecorateRequestOptions,
-        callback: (err: Error) => void
-      ) => {
-        callback(error);
-      };
-
-      requestOverride.defaults = () => requestOverride;
-
-      dup.on('error', err => {
-        assert.strictEqual(err, error);
-        done();
-      });
-
-      util.makeWritableStream(dup, {
-        makeAuthenticatedRequest(request, opts) {
-          opts.onAuthenticated(null);
-        },
-      });
-
-      setImmediate(() => {
-        fakeStream.emit('complete', {});
-      });
-    });
-
-    it('should emit the response', done => {
-      const dup = duplexify();
-      const fakeStream = new stream.Writable();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (fakeStream as any).write = () => {};
-
-      stub('handleResp', (err, res, body, callback) => {
-        callback();
-      });
-
-      requestOverride = (
-        reqOpts: DecorateRequestOptions,
-        callback: (err: Error | null, res: r.Response) => void
-      ) => {
-        callback(null, fakeResponse);
-      };
-
-      requestOverride.defaults = () => requestOverride;
-      const options = {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        makeAuthenticatedRequest(request: DecorateRequestOptions, opts: any) {
-          opts.onAuthenticated();
-        },
-      };
-
-      dup.on('response', resp => {
-        assert.strictEqual(resp, fakeResponse);
-        done();
-      });
-
-      util.makeWritableStream(dup, options, util.noop);
-    });
-
-    it('should pass back the response data to the callback', done => {
-      const dup = duplexify();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const fakeStream: any = new stream.Writable();
-      const fakeResponse = {};
-
-      fakeStream.write = () => {};
-
-      stub('handleResp', (err, res, body, callback) => {
-        callback(null, fakeResponse);
-      });
-
-      requestOverride = (
-        reqOpts: DecorateRequestOptions,
-        callback: () => void
-      ) => {
-        callback();
-      };
-      requestOverride.defaults = () => {
-        return requestOverride;
-      };
-
-      const options = {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        makeAuthenticatedRequest(request: DecorateRequestOptions, opts: any) {
-          opts.onAuthenticated();
-        },
-      };
-
-      util.makeWritableStream(dup, options, (data: {}) => {
-        assert.strictEqual(data, fakeResponse);
-        done();
-      });
-
-      setImmediate(() => {
-        fakeStream.emit('complete', {});
-      });
-    });
-  });
-
   describe('makeAuthenticatedRequestFactory', () => {
     const AUTH_CLIENT_PROJECT_ID = 'authclient-project-id';
     const authClient = {
@@ -834,7 +610,7 @@ describe('common/util', () => {
         makeAuthenticatedRequest(fakeReqOpts, {
           onAuthenticated(
             err: Error,
-            authenticatedReqOpts: DecorateRequestOptions
+            authenticatedReqOpts: StorageRequestOptions
           ) {
             assert.ifError(err);
             assert.strictEqual(authenticatedReqOpts, decoratedRequest);
@@ -861,7 +637,7 @@ describe('common/util', () => {
         makeAuthenticatedRequest(reqOpts, {
           onAuthenticated(
             err: Error,
-            authenticatedReqOpts: DecorateRequestOptions
+            authenticatedReqOpts: StorageRequestOptions
           ) {
             assert.ifError(err);
             assert.deepStrictEqual(reqOpts, authenticatedReqOpts);
@@ -945,7 +721,7 @@ describe('common/util', () => {
       });
 
       describe('projectId', () => {
-        const reqOpts = {} as DecorateRequestOptions;
+        const reqOpts = {} as StorageRequestOptions;
 
         it('should default to authClient projectId', done => {
           sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
@@ -1059,8 +835,8 @@ describe('common/util', () => {
             {}
           );
 
-          const correctReqOpts = {} as DecorateRequestOptions;
-          const incorrectReqOpts = {} as DecorateRequestOptions;
+          const correctReqOpts = {} as StorageRequestOptions;
+          const incorrectReqOpts = {} as StorageRequestOptions;
 
           authClient.authorizeRequest = async () => {
             throw new Error('Could not load the default credentials');
@@ -1097,7 +873,7 @@ describe('common/util', () => {
             {}
           );
           makeAuthenticatedRequest(
-            {} as DecorateRequestOptions,
+            {} as StorageRequestOptions,
             (arg1, arg2, arg3) => {
               assert.strictEqual(arg1, authClientError);
               assert.strictEqual(arg2, makeRequestArg2);
@@ -1125,7 +901,7 @@ describe('common/util', () => {
             {}
           );
           makeAuthenticatedRequest(
-            {} as DecorateRequestOptions,
+            {} as StorageRequestOptions,
             (arg1, arg2, arg3) => {
               assert.strictEqual(arg1, makeRequestArg1);
               assert.strictEqual(arg2, makeRequestArg2);
@@ -1342,10 +1118,10 @@ describe('common/util', () => {
   describe('makeRequest', () => {
     const reqOpts = {
       method: 'GET',
-    } as DecorateRequestOptions;
+    } as StorageRequestOptions;
 
     function testDefaultRetryRequestConfig(done: () => void) {
-      return (reqOpts_: DecorateRequestOptions, config: MakeRequestConfig) => {
+      return (reqOpts_: StorageRequestOptions, config: MakeRequestConfig) => {
         assert.strictEqual(reqOpts_, reqOpts);
         assert.strictEqual(config.retries, 3);
 
@@ -1370,7 +1146,7 @@ describe('common/util', () => {
       },
     };
     function testCustomFunctionRetryRequestConfig(done: () => void) {
-      return (reqOpts_: DecorateRequestOptions, config: MakeRequestConfig) => {
+      return (reqOpts_: StorageRequestOptions, config: MakeRequestConfig) => {
         assert.strictEqual(reqOpts_, reqOpts);
         assert.strictEqual(config.retries, 3);
 
@@ -1390,10 +1166,7 @@ describe('common/util', () => {
 
     const noRetryRequestConfig = {autoRetry: false};
     function testNoRetryRequestConfig(done: () => void) {
-      return (
-        reqOpts: DecorateRequestOptions,
-        config: retryRequest.Options
-      ) => {
+      return (reqOpts: StorageRequestOptions, config: retryRequest.Options) => {
         assert.strictEqual(config.retries, 0);
         done();
       };
@@ -1409,10 +1182,7 @@ describe('common/util', () => {
       },
     };
     function testRetryOptions(done: () => void) {
-      return (
-        reqOpts: DecorateRequestOptions,
-        config: retryRequest.Options
-      ) => {
+      return (reqOpts: StorageRequestOptions, config: retryRequest.Options) => {
         assert.strictEqual(
           config.retries,
           0 //autoRetry was set to false, so shouldn't retry
@@ -1439,7 +1209,7 @@ describe('common/util', () => {
 
     const customRetryRequestConfig = {maxRetries: 10};
     function testCustomRetryRequestConfig(done: () => void) {
-      return (reqOpts: DecorateRequestOptions, config: MakeRequestConfig) => {
+      return (reqOpts: StorageRequestOptions, config: MakeRequestConfig) => {
         assert.strictEqual(config.retries, customRetryRequestConfig.maxRetries);
         done();
       };
@@ -1482,7 +1252,7 @@ describe('common/util', () => {
       describe('GET requests', () => {
         it('should use retryRequest', done => {
           const userStream = duplexify();
-          retryRequestOverride = (reqOpts_: DecorateRequestOptions) => {
+          retryRequestOverride = (reqOpts_: StorageRequestOptions) => {
             assert.strictEqual(reqOpts_, reqOpts);
             setImmediate(done);
             return new stream.Stream();
@@ -1523,10 +1293,10 @@ describe('common/util', () => {
           const userStream = duplexify();
           const reqOpts = {
             method: 'POST',
-          } as DecorateRequestOptions;
+          } as StorageRequestOptions;
 
           retryRequestOverride = done; // will throw.
-          requestOverride = (reqOpts_: DecorateRequestOptions) => {
+          requestOverride = (reqOpts_: StorageRequestOptions) => {
             assert.strictEqual(reqOpts_, reqOpts);
             setImmediate(done);
             return userStream;
@@ -1545,7 +1315,7 @@ describe('common/util', () => {
             done();
           };
           util.makeRequest(
-            {method: 'POST'} as DecorateRequestOptions,
+            {method: 'POST'} as StorageRequestOptions,
             {stream: userStream},
             util.noop
           );
@@ -1631,7 +1401,7 @@ describe('common/util', () => {
         const body = fakeResponse.body;
 
         retryRequestOverride = (
-          rOpts: DecorateRequestOptions,
+          rOpts: StorageRequestOptions,
           opts: MakeRequestConfig,
           callback: r.RequestCallback
         ) => {
@@ -1656,7 +1426,7 @@ describe('common/util', () => {
       const decoratedReqOpts = util.decorateRequest(
         {
           autoPaginate: true,
-        } as DecorateRequestOptions,
+        } as StorageRequestOptions,
         projectId
       );
 
@@ -1667,7 +1437,7 @@ describe('common/util', () => {
       const decoratedReqOpts = util.decorateRequest(
         {
           autoPaginateVal: true,
-        } as DecorateRequestOptions,
+        } as StorageRequestOptions,
         projectId
       );
 
@@ -1678,7 +1448,7 @@ describe('common/util', () => {
       const decoratedReqOpts = util.decorateRequest(
         {
           objectMode: true,
-        } as DecorateRequestOptions,
+        } as StorageRequestOptions,
         projectId
       );
 
@@ -1691,11 +1461,14 @@ describe('common/util', () => {
           qs: {
             autoPaginate: true,
           },
-        } as DecorateRequestOptions,
+        } as StorageRequestOptions,
         projectId
       );
 
-      assert.strictEqual(decoratedReqOpts.qs.autoPaginate, undefined);
+      assert.strictEqual(
+        decoratedReqOpts.queryParameters?.autoPaginate,
+        undefined
+      );
     });
 
     it('should delete qs.autoPaginateVal', () => {
@@ -1704,11 +1477,14 @@ describe('common/util', () => {
           qs: {
             autoPaginateVal: true,
           },
-        } as DecorateRequestOptions,
+        } as StorageRequestOptions,
         projectId
       );
 
-      assert.strictEqual(decoratedReqOpts.qs.autoPaginateVal, undefined);
+      assert.strictEqual(
+        decoratedReqOpts.queryParameters?.autoPaginateVal,
+        undefined
+      );
     });
 
     it('should delete json.autoPaginate', () => {
@@ -1717,11 +1493,11 @@ describe('common/util', () => {
           json: {
             autoPaginate: true,
           },
-        } as DecorateRequestOptions,
+        } as StorageRequestOptions,
         projectId
       );
 
-      assert.strictEqual(decoratedReqOpts.json.autoPaginate, undefined);
+      assert.strictEqual(decoratedReqOpts.body.autoPaginate, undefined);
     });
 
     it('should delete json.autoPaginateVal', () => {
@@ -1730,52 +1506,54 @@ describe('common/util', () => {
           json: {
             autoPaginateVal: true,
           },
-        } as DecorateRequestOptions,
+        } as StorageRequestOptions,
         projectId
       );
 
-      assert.strictEqual(decoratedReqOpts.json.autoPaginateVal, undefined);
+      assert.strictEqual(decoratedReqOpts.body.autoPaginateVal, undefined);
     });
 
     it('should replace project ID tokens for qs object', () => {
       const projectId = 'project-id';
-      const reqOpts = {
-        uri: 'http://',
-        qs: {},
+      const reqOpts: StorageRequestOptions = {
+        url: 'http://',
+        queryParameters: {},
       };
       const decoratedQs = {};
 
       replaceProjectIdTokenOverride = (qs: {}, projectId_: string) => {
-        if (qs === reqOpts.uri) {
+        if (qs === reqOpts.url) {
           return;
         }
-        assert.deepStrictEqual(qs, reqOpts.qs);
+        assert.deepStrictEqual(qs, reqOpts.queryParameters);
         assert.strictEqual(projectId_, projectId);
         return decoratedQs;
       };
 
       const decoratedRequest = util.decorateRequest(reqOpts, projectId);
-      assert.deepStrictEqual(decoratedRequest.qs, decoratedQs);
+      assert.deepStrictEqual(decoratedRequest.queryParameters, decoratedQs);
     });
 
     it('should replace project ID tokens for multipart array', () => {
       const projectId = 'project-id';
-      const reqOpts = {
-        uri: 'http://',
+      const reqOpts: StorageRequestOptions = {
+        url: 'http://',
         multipart: [
           {
-            'Content-Type': '...',
-            body: '...',
+            headers: {
+              'Content-Type': '...',
+            },
+            content: '...',
           },
         ],
       };
       const decoratedPart = {};
 
       replaceProjectIdTokenOverride = (part: {}, projectId_: string) => {
-        if (part === reqOpts.uri) {
+        if (part === reqOpts.url) {
           return;
         }
-        assert.deepStrictEqual(part, reqOpts.multipart[0]);
+        assert.deepStrictEqual(part, reqOpts.multipart![0]);
         assert.strictEqual(projectId_, projectId);
         return decoratedPart;
       };
@@ -1786,34 +1564,34 @@ describe('common/util', () => {
 
     it('should replace project ID tokens for json object', () => {
       const projectId = 'project-id';
-      const reqOpts = {
-        uri: 'http://',
-        json: {},
+      const reqOpts: StorageRequestOptions = {
+        url: 'http://',
+        body: {},
       };
       const decoratedJson = {};
 
       replaceProjectIdTokenOverride = (json: {}, projectId_: string) => {
-        if (json === reqOpts.uri) {
+        if (json === reqOpts.url) {
           return;
         }
-        assert.strictEqual(reqOpts.json, json);
+        assert.strictEqual(reqOpts.body, json);
         assert.strictEqual(projectId_, projectId);
         return decoratedJson;
       };
 
       const decoratedRequest = util.decorateRequest(reqOpts, projectId);
-      assert.deepStrictEqual(decoratedRequest.json, decoratedJson);
+      assert.deepStrictEqual(decoratedRequest.body, decoratedJson);
     });
 
     it('should decorate the request', () => {
       const projectId = 'project-id';
-      const reqOpts = {
-        uri: 'http://',
+      const reqOpts: StorageRequestOptions = {
+        url: 'http://',
       };
       const decoratedUri = 'http://decorated';
 
       replaceProjectIdTokenOverride = (uri: string, projectId_: string) => {
-        assert.strictEqual(uri, reqOpts.uri);
+        assert.strictEqual(uri, reqOpts.url);
         assert.strictEqual(projectId_, projectId);
         return decoratedUri;
       };

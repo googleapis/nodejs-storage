@@ -12,16 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  BodyResponseCallback,
-  DecorateRequestOptions,
-  GetConfig,
-  Interceptor,
-  MetadataCallback,
-  ServiceObject,
-  SetMetadataResponse,
-  util,
-} from './nodejs-common/index.js';
+import {GetConfig, ServiceObject, util} from './nodejs-common/index.js';
 import {promisifyAll} from '@google-cloud/promisify';
 
 import * as crypto from 'crypto';
@@ -70,12 +61,15 @@ import AsyncRetry from 'async-retry';
 import {
   BaseMetadata,
   DeleteOptions,
-  GetResponse,
-  InstanceResponseCallback,
-  RequestResponse,
+  Methods,
   SetMetadataOptions,
 } from './nodejs-common/service-object.js';
 import * as r from 'teeny-request';
+import {
+  StorageCallback,
+  StorageQueryParameters,
+  StorageRequestOptions,
+} from './storage-transport.js';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -402,6 +396,15 @@ interface CopyQuery {
   ifMetagenerationNotMatch?: number | string;
 }
 
+interface RewriteResponse {
+  kind: string;
+  totalBytesRewritten: number;
+  objectSize: number;
+  done: boolean;
+  rewriteToken?: string;
+  resource?: FileMetadata;
+}
+
 interface FileQuery {
   alt: string;
   generation?: number;
@@ -551,7 +554,7 @@ class File extends ServiceObject<File, FileMetadata> {
   private encryptionKey?: string | Buffer;
   private encryptionKeyBase64?: string;
   private encryptionKeyHash?: string;
-  private encryptionKeyInterceptor?: Interceptor;
+  //private encryptionKeyInterceptor?: Interceptor;
   private instanceRetryValue?: boolean;
   instancePreconditionOpts?: PreconditionOptions;
 
@@ -732,7 +735,7 @@ class File extends ServiceObject<File, FileMetadata> {
       requestQueryObject.userProject = userProject;
     }
 
-    const methods = {
+    const methods: Methods = {
       /**
        * @typedef {array} DeleteFileResponse
        * @property {object} 0 The full API response.
@@ -779,7 +782,7 @@ class File extends ServiceObject<File, FileMetadata> {
        */
       delete: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -821,7 +824,7 @@ class File extends ServiceObject<File, FileMetadata> {
        */
       exists: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -871,7 +874,7 @@ class File extends ServiceObject<File, FileMetadata> {
        */
       get: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -922,7 +925,7 @@ class File extends ServiceObject<File, FileMetadata> {
        */
       getMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -1015,7 +1018,7 @@ class File extends ServiceObject<File, FileMetadata> {
        */
       setMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
     };
@@ -1298,7 +1301,7 @@ class File extends ServiceObject<File, FileMetadata> {
       throw noDestinationError;
     }
 
-    const query = {} as CopyQuery;
+    const query: StorageQueryParameters = {};
     if (this.generation !== undefined) {
       query.sourceGeneration = this.generation;
     }
@@ -1335,14 +1338,15 @@ class File extends ServiceObject<File, FileMetadata> {
     }
 
     if (query.destinationKmsKeyName) {
-      this.kmsKeyName = query.destinationKmsKeyName;
+      this.kmsKeyName = query.destinationKmsKeyName.toString();
 
-      const keyIndex = this.interceptors.indexOf(
+      // TODO: INTERCEPTORS
+      /*  const keyIndex = this.interceptors.indexOf(
         this.encryptionKeyInterceptor!
       );
       if (keyIndex > -1) {
         this.interceptors.splice(keyIndex, 1);
-      }
+      } */
     }
 
     if (
@@ -1358,14 +1362,14 @@ class File extends ServiceObject<File, FileMetadata> {
       delete options.preconditionOpts;
     }
 
-    this.request(
+    this.storageTransport.makeRequest<RewriteResponse>(
       {
         method: 'POST',
-        uri: `/rewriteTo/b/${destBucket.name}/o/${encodeURIComponent(
-          newFile.name
-        )}`,
-        qs: query,
-        json: options,
+        url: `${this.bucket.baseUrl}/${this.bucket.name}/${this.baseUrl}/${
+          this.name
+        }/rewriteTo/b/${destBucket.name}/o/${encodeURIComponent(newFile.name)}`,
+        queryParameters: query,
+        body: options,
         headers,
       },
       (err, resp) => {
@@ -1375,7 +1379,7 @@ class File extends ServiceObject<File, FileMetadata> {
           return;
         }
 
-        if (resp.rewriteToken) {
+        if (resp?.rewriteToken) {
           const options = {
             token: resp.rewriteToken,
           } as CopyOptions;
@@ -1385,7 +1389,8 @@ class File extends ServiceObject<File, FileMetadata> {
           }
 
           if (query.destinationKmsKeyName) {
-            options.destinationKmsKeyName = query.destinationKmsKeyName;
+            options.destinationKmsKeyName =
+              query.destinationKmsKeyName.toString();
           }
 
           this.copy(newFile, options, callback!);
@@ -1652,10 +1657,10 @@ class File extends ServiceObject<File, FileMetadata> {
         headers.Range = `bytes=${tailRequest ? end : `${start}-${end}`}`;
       }
 
-      const reqOpts: DecorateRequestOptions = {
-        uri: '',
+      const reqOpts: StorageRequestOptions = {
+        url: '',
         headers,
-        qs: query,
+        queryParameters: query as StorageQueryParameters,
       };
 
       if (options[GCCL_GCS_CMD_KEY]) {
@@ -2177,13 +2182,13 @@ class File extends ServiceObject<File, FileMetadata> {
    * @param {?error} callback.err - An error returned while making this request.
    * @param {object} callback.apiResponse - The full API response.
    */
-  delete(options?: DeleteOptions): Promise<[r.Response]>;
-  delete(options: DeleteOptions, callback: DeleteCallback): void;
-  delete(callback: DeleteCallback): void;
+  delete(options?: DeleteOptions): Promise<{}>;
+  delete(options: DeleteOptions, callback: StorageCallback<{}>): Promise<void>;
+  delete(callback: StorageCallback<{}>): Promise<void>;
   delete(
-    optionsOrCallback?: DeleteOptions | DeleteCallback,
-    cb?: DeleteCallback
-  ): Promise<[r.Response]> | void {
+    optionsOrCallback?: DeleteOptions | StorageCallback<{}>,
+    cb?: StorageCallback<{}>
+  ): Promise<{}> | Promise<void> {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : cb;
@@ -2194,13 +2199,22 @@ class File extends ServiceObject<File, FileMetadata> {
       options
     );
 
-    super
-      .delete(options)
-      .then(resp => cb!(null, ...resp))
-      .catch(cb!)
-      .finally(() => {
-        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-      });
+    const reqPromise = super.delete(options);
+
+    return cb
+      ? reqPromise
+          .then(() => cb(null, {}))
+          .catch(cb)
+          .finally(
+            () =>
+              (this.storage.retryOptions.autoRetry = this.instanceRetryValue)
+          )
+      : reqPromise
+          .then(() => {})
+          .finally(
+            () =>
+              (this.storage.retryOptions.autoRetry = this.instanceRetryValue)
+          );
   }
 
   download(options?: DownloadOptions): Promise<DownloadResponse>;
@@ -2383,18 +2397,19 @@ class File extends ServiceObject<File, FileMetadata> {
       .update(this.encryptionKeyBase64, 'base64' as any)
       .digest('base64');
 
-    this.encryptionKeyInterceptor = {
-      request: reqOpts => {
+    /* this.encryptionKeyInterceptor = {
+      request: (reqOpts: {headers: {[x: string]: string | undefined}}) => {
         reqOpts.headers = reqOpts.headers || {};
         reqOpts.headers['x-goog-encryption-algorithm'] = 'AES256';
         reqOpts.headers['x-goog-encryption-key'] = this.encryptionKeyBase64;
         reqOpts.headers['x-goog-encryption-key-sha256'] =
           this.encryptionKeyHash;
-        return reqOpts as DecorateRequestOptions;
+        return reqOpts as StorageRequestOptions;
       },
-    };
+    }; */
 
-    this.interceptors.push(this.encryptionKeyInterceptor!);
+    //TODO: Interceptors
+    //this.interceptors.push(this.encryptionKeyInterceptor!);
 
     return this;
   }
@@ -2428,25 +2443,24 @@ class File extends ServiceObject<File, FileMetadata> {
     }
   }
 
-  get(options?: GetFileOptions): Promise<GetResponse<File>>;
-  get(callback: InstanceResponseCallback<File>): void;
-  get(options: GetFileOptions, callback: InstanceResponseCallback<File>): void;
+  get(options?: GetFileOptions): Promise<File>;
+  get(callback: StorageCallback<File>): Promise<void>;
+  get(options: GetFileOptions, callback: StorageCallback<File>): Promise<void>;
   get(
-    optionsOrCallback?: GetFileOptions | InstanceResponseCallback<File>,
-    cb?: InstanceResponseCallback<File>
-  ): Promise<GetResponse<File>> | void {
+    optionsOrCallback?: GetFileOptions | StorageCallback<File>,
+    cb?: StorageCallback<File>
+  ): Promise<File> | Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const options: any =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb =
       typeof optionsOrCallback === 'function'
-        ? (optionsOrCallback as InstanceResponseCallback<File>)
+        ? (optionsOrCallback as StorageCallback<File>)
         : cb;
 
-    super
-      .get(options)
-      .then(resp => cb!(null, ...resp))
-      .catch(cb!);
+    const reqPromise = super.get(options);
+
+    return cb ? reqPromise.then(resp => cb(null, resp)).catch(cb) : reqPromise;
   }
 
   getExpirationDate(): Promise<GetExpirationDateResponse>;
@@ -3206,10 +3220,11 @@ class File extends ServiceObject<File, FileMetadata> {
   isPublic(callback?: IsPublicCallback): Promise<IsPublicResponse> | void {
     // Build any custom headers based on the defined interceptors on the parent
     // storage object and this object
-    const storageInterceptors = this.storage?.interceptors || [];
-    const fileInterceptors = this.interceptors || [];
-    const allInterceptors = storageInterceptors.concat(fileInterceptors);
-    const headers = allInterceptors.reduce((acc, curInterceptor) => {
+    //TODO: Interceptors
+    //const storageInterceptors = this.storage?.interceptors || [];
+    //const fileInterceptors = this.interceptors || [];
+    //const allInterceptors = storageInterceptors.concat(fileInterceptors);
+    /* const headers = allInterceptors.reduce((acc, curInterceptor) => {
       const currentHeaders = curInterceptor.request({
         uri: `${this.storage.apiEndpoint}/${
           this.bucket.name
@@ -3218,15 +3233,15 @@ class File extends ServiceObject<File, FileMetadata> {
 
       Object.assign(acc, currentHeaders.headers);
       return acc;
-    }, {});
+    }, {}); */
 
     util.makeRequest(
       {
         method: 'GET',
-        uri: `${this.storage.apiEndpoint}/${
+        url: `${this.storage.apiEndpoint}/${
           this.bucket.name
         }/${encodeURIComponent(this.name)}`,
-        headers,
+        //headers,
       },
       {
         retryOptions: this.storage.retryOptions,
@@ -3729,33 +3744,13 @@ class File extends ServiceObject<File, FileMetadata> {
    * @returns {Promise<File>}
    */
   async restore(options: RestoreOptions): Promise<File> {
-    const [file] = await this.request({
+    const file = await this.storageTransport.makeRequest<File>({
       method: 'POST',
-      uri: '/restore',
-      qs: options,
+      url: `${this.bucket.baseUrl}/${this.bucket.name}/${this.baseUrl}/${this.name}/restore`,
+      queryParameters: options as unknown as StorageQueryParameters,
     });
 
     return file as File;
-  }
-
-  request(reqOpts: DecorateRequestOptions): Promise<RequestResponse>;
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback: BodyResponseCallback
-  ): void;
-  /**
-   * Makes request and applies userProject query parameter if necessary.
-   *
-   * @private
-   *
-   * @param {object} reqOpts - The request options.
-   * @param {function} callback - The callback function.
-   */
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback?: BodyResponseCallback
-  ): void | Promise<RequestResponse> {
-    return this.parent.request.call(this, reqOpts, callback!);
   }
 
   rotateEncryptionKey(
@@ -3973,27 +3968,27 @@ class File extends ServiceObject<File, FileMetadata> {
   setMetadata(
     metadata: FileMetadata,
     options?: SetMetadataOptions
-  ): Promise<SetMetadataResponse<FileMetadata>>;
+  ): Promise<FileMetadata>;
   setMetadata(
     metadata: FileMetadata,
-    callback: MetadataCallback<FileMetadata>
-  ): void;
+    callback: StorageCallback<FileMetadata>
+  ): Promise<void>;
   setMetadata(
     metadata: FileMetadata,
     options: SetMetadataOptions,
-    callback: MetadataCallback<FileMetadata>
-  ): void;
+    callback: StorageCallback<FileMetadata>
+  ): Promise<void>;
   setMetadata(
     metadata: FileMetadata,
-    optionsOrCallback: SetMetadataOptions | MetadataCallback<FileMetadata>,
-    cb?: MetadataCallback<FileMetadata>
-  ): Promise<SetMetadataResponse<FileMetadata>> | void {
+    optionsOrCallback: SetMetadataOptions | StorageCallback<FileMetadata>,
+    cb?: StorageCallback<FileMetadata>
+  ): Promise<FileMetadata> | Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const options: any =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb =
       typeof optionsOrCallback === 'function'
-        ? (optionsOrCallback as MetadataCallback<FileMetadata>)
+        ? (optionsOrCallback as StorageCallback<FileMetadata>)
         : cb;
 
     this.disableAutoRetryConditionallyIdempotent_(
@@ -4002,13 +3997,19 @@ class File extends ServiceObject<File, FileMetadata> {
       options
     );
 
-    super
-      .setMetadata(metadata, options)
-      .then(resp => cb!(null, ...resp))
-      .catch(cb!)
-      .finally(() => {
-        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-      });
+    const reqPromise = super.setMetadata(metadata, options);
+
+    return cb
+      ? reqPromise
+          .then(resp => cb(null, resp))
+          .catch(cb)
+          .finally(
+            () =>
+              (this.storage.retryOptions.autoRetry = this.instanceRetryValue)
+          )
+      : reqPromise.finally(
+          () => (this.storage.retryOptions.autoRetry = this.instanceRetryValue)
+        );
   }
 
   setStorageClass(
@@ -4150,10 +4151,11 @@ class File extends ServiceObject<File, FileMetadata> {
       authClient: this.storage.storageTransport.authClient,
       apiEndpoint: this.storage.apiEndpoint,
       bucket: this.bucket.name,
-      customRequestOptions: this.getRequestInterceptors().reduce(
+      // TODO: interceptors
+      /*  customRequestOptions: this.getRequestInterceptors().reduce(
         (reqOpts, interceptorFn) => interceptorFn(reqOpts),
         {}
-      ),
+      ), */
       file: this.name,
       generation: this.generation,
       isPartialUpload: options.isPartialUpload,
@@ -4214,20 +4216,20 @@ class File extends ServiceObject<File, FileMetadata> {
     const bucketName = this.bucket.name;
     const uri = `${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
 
-    const reqOpts: DecorateRequestOptions = {
-      qs: {
+    const reqOpts: StorageRequestOptions = {
+      queryParameters: {
         name: this.name,
       },
-      uri: uri,
+      url: uri,
       [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
     };
 
     if (this.generation !== undefined) {
-      reqOpts.qs.ifGenerationMatch = this.generation;
+      reqOpts.queryParameters!.ifGenerationMatch = this.generation;
     }
 
     if (this.kmsKeyName !== undefined) {
-      reqOpts.qs.kmsKeyName = this.kmsKeyName;
+      reqOpts.queryParameters!.kmsKeyName = this.kmsKeyName;
     }
 
     if (typeof options.timeout === 'number') {
@@ -4235,39 +4237,36 @@ class File extends ServiceObject<File, FileMetadata> {
     }
 
     if (options.userProject || this.userProject) {
-      reqOpts.qs.userProject = options.userProject || this.userProject;
+      reqOpts.queryParameters!.userProject =
+        options.userProject || this.userProject;
     }
 
     if (options.predefinedAcl) {
-      reqOpts.qs.predefinedAcl = options.predefinedAcl;
+      reqOpts.queryParameters!.predefinedAcl = options.predefinedAcl;
     } else if (options.private) {
-      reqOpts.qs.predefinedAcl = 'private';
+      reqOpts.queryParameters!.predefinedAcl = 'private';
     } else if (options.public) {
-      reqOpts.qs.predefinedAcl = 'publicRead';
+      reqOpts.queryParameters!.predefinedAcl = 'publicRead';
     }
 
     Object.assign(
-      reqOpts.qs,
+      reqOpts.queryParameters as {},
       this.instancePreconditionOpts,
       options.preconditionOpts
     );
 
-    util.makeWritableStream(dup, {
-      makeAuthenticatedRequest: (reqOpts: object) => {
-        this.request(reqOpts as DecorateRequestOptions, (err, body, resp) => {
-          if (err) {
-            dup.destroy(err);
-            return;
-          }
+    this.storageTransport.makeRequest({});
 
-          this.metadata = body;
-          dup.emit('metadata', body);
-          dup.emit('response', resp);
-          dup.emit('complete');
-        });
-      },
-      metadata: options.metadata,
-      request: reqOpts,
+    reqOpts.responseType = 'stream';
+    this.storageTransport.makeRequest(reqOpts, (err, body) => {
+      if (err) {
+        dup.destroy(err);
+        return;
+      }
+      this.metadata = body as FileMetadata;
+      dup.emit('metadata', body);
+      dup.emit('response', body);
+      dup.emit('complete');
     });
   }
 

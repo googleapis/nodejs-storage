@@ -119,7 +119,7 @@ export async function combine(options: ConformanceTestOptions) {
 }
 
 export async function create(options: ConformanceTestOptions) {
-  const [bucketExists] = await options.bucket!.exists();
+  const bucketExists = await options.bucket!.exists();
   if (bucketExists) {
     await options.bucket!.deleteFiles();
     await options.bucket!.delete({
@@ -795,7 +795,7 @@ export async function notificationGetMetadata(options: ConformanceTestOptions) {
 
 export async function createBucket(options: ConformanceTestOptions) {
   const bucket = options.storage!.bucket('test-creating-bucket');
-  const [exists] = await bucket.exists();
+  const exists = await bucket.exists();
   if (exists) {
     bucket.delete();
   }

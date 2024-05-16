@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {promisifyAll} from '@google-cloud/promisify';
 import {EventEmitter} from 'events';
 import {StreamRequestOptions} from './service.js';
 import {util} from './util.js';
@@ -25,14 +24,10 @@ import {
   StorageTransport,
 } from '../storage-transport.js';
 import {GaxiosError} from 'gaxios';
-import {Readable, Stream} from 'stream';
+import {Readable} from 'stream';
 
 export type GetMetadataOptions = object;
 export type ExistsOptions = object;
-export interface ExistsCallback {
-  (err: Error | null, exists?: boolean): void;
-}
-
 export interface ServiceObjectConfig {
   /**
    * The base URL to make API requests to.
@@ -303,29 +298,41 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
    * @param {?error} callback.err - An error returned while making this request.
    * @param {boolean} callback.exists - Whether the object exists or not.
    */
-  exists(options?: ExistsOptions): Promise<[boolean]>;
-  exists(options: ExistsOptions, callback: ExistsCallback): void;
-  exists(callback: ExistsCallback): void;
+  exists(options?: ExistsOptions): Promise<boolean>;
   exists(
-    optionsOrCallback?: ExistsOptions | ExistsCallback,
-    cb?: ExistsCallback
-  ): void | Promise<[boolean]> {
+    options: ExistsOptions,
+    callback: StorageCallback<boolean>
+  ): Promise<void>;
+  exists(callback: StorageCallback<boolean>): Promise<void>;
+  exists(
+    optionsOrCallback?: ExistsOptions | StorageCallback<boolean>,
+    cb?: StorageCallback<boolean>
+  ): Promise<void> | Promise<boolean> {
     const [options, callback] = util.maybeOptionsOrCallback<
       ExistsOptions,
-      ExistsCallback
+      StorageCallback<boolean>
     >(optionsOrCallback, cb);
 
-    this.get(options, err => {
-      if (err) {
-        if (err.status === 404) {
-          callback!(null, false);
-        } else {
-          callback!(err);
-        }
-        return;
-      }
-      callback!(null, true);
-    });
+    const reqPromise = this.get(options);
+
+    return callback
+      ? reqPromise
+          .then(() => callback(null, true))
+          .catch(err => {
+            if ((err as GaxiosError).status === 404) {
+              callback(null, false);
+              return;
+            }
+            callback(err);
+          })
+      : reqPromise
+          .then(() => true)
+          .catch(err => {
+            if ((err as GaxiosError).status === 404) {
+              return false;
+            }
+            throw err;
+          });
   }
 
   /**
@@ -341,12 +348,12 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
    * @param {object} callback.apiResponse - The full API response.
    */
   get(options?: GetOrCreateOptions): Promise<T>;
-  get(callback: StorageCallback<T>): void;
-  get(options: GetOrCreateOptions, callback: StorageCallback<T>): void;
+  get(callback: StorageCallback<T>): Promise<void>;
+  get(options: GetOrCreateOptions, callback: StorageCallback<T>): Promise<void>;
   get(
     optionsOrCallback?: GetOrCreateOptions | StorageCallback<T>,
     cb?: StorageCallback<T>
-  ): Promise<T> | void {
+  ): Promise<T> | Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
 
@@ -371,22 +378,38 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       callback!(null, instance);
     }
 
-    this.getMetadata(options, err => {
-      if (err) {
-        if (err.status === 404 && autoCreate) {
-          const args: Array<Function | GetOrCreateOptions> = [];
-          if (Object.keys(options).length > 0) {
-            args.push(options);
-          }
-          args.push(onCreate);
-          self.create(...args);
-          return;
-        }
-        callback!(err as GaxiosError);
-        return;
-      }
-      callback!(null, self as {} as T);
-    });
+    const reqPromise = this.getMetadata(options);
+    return callback
+      ? reqPromise
+          .then(() => callback(null, self as unknown as T))
+          .catch(err => {
+            if ((err as GaxiosError).status === 404 && autoCreate) {
+              const args = [];
+              if (Object.keys(options).length > 0) {
+                args.push(options);
+              }
+              args.push(onCreate);
+              self.create(...args);
+              return;
+            }
+            callback(err);
+          })
+      : reqPromise
+          .then(r => {
+            self.metadata = r;
+            return self as unknown as T;
+          })
+          .catch(err => {
+            if ((err as GaxiosError).status === 404 && autoCreate) {
+              const args = [];
+              if (Object.keys(options).length > 0) {
+                args.push(options);
+              }
+              args.push(onCreate);
+              return self.create(...args);
+            }
+            throw err;
+          });
   }
 
   /**
@@ -583,13 +606,11 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
    * @param {object} reqOpts - Request options that are passed to `request`.
    * @param {string} reqOpts.uri - A URI relative to the baseUrl.
    */
-  requestStream(reqOpts: StorageRequestOptions): Stream {
+  requestStream(reqOpts: StorageRequestOptions): Readable {
     const opts = {...reqOpts, shouldReturnStream: true};
     //return this.request_(opts as StreamRequestOptions);
     return new Readable();
   }
 }
-
-promisifyAll(ServiceObject, {exclude: ['getRequestInterceptors']});
 
 export {ServiceObject};

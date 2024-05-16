@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  BodyResponseCallback,
-  DecorateRequestOptions,
-  BaseMetadata,
-} from './nodejs-common/index.js';
+import {BodyResponseCallback, BaseMetadata} from './nodejs-common/index.js';
 import {promisifyAll} from '@google-cloud/promisify';
+import {
+  StorageQueryParameters,
+  StorageRequestOptions,
+} from './storage-transport.js';
 
 export interface AclOptions {
   pathPrefix: string;
   request: (
-    reqOpts: DecorateRequestOptions,
+    reqOpts: StorageRequestOptions,
     callback: BodyResponseCallback
   ) => void;
 }
@@ -419,7 +419,7 @@ class Acl extends AclRoleAccessorMethods {
   default!: Acl;
   pathPrefix: string;
   request_: (
-    reqOpts: DecorateRequestOptions,
+    reqOpts: StorageRequestOptions,
     callback: BodyResponseCallback
   ) => void;
 
@@ -523,10 +523,10 @@ class Acl extends AclRoleAccessorMethods {
     this.request(
       {
         method: 'POST',
-        uri: '',
-        qs: query,
+        url: '',
+        queryParameters: query as unknown as StorageQueryParameters,
         maxRetries: 0, //explicitly set this value since this is a non-idempotent function
-        json: {
+        body: {
           entity: options.entity,
           role: options.role.toUpperCase(),
         },
@@ -623,8 +623,8 @@ class Acl extends AclRoleAccessorMethods {
     this.request(
       {
         method: 'DELETE',
-        uri: '/' + encodeURIComponent(options.entity),
-        qs: query,
+        url: '/' + encodeURIComponent(options.entity),
+        queryParameters: query as unknown as StorageQueryParameters,
       },
       (err, resp) => {
         callback!(err, resp);
@@ -745,8 +745,8 @@ class Acl extends AclRoleAccessorMethods {
 
     this.request(
       {
-        uri: path,
-        qs: query,
+        url: path,
+        queryParameters: query as unknown as StorageQueryParameters,
       },
       (err, resp) => {
         if (err) {
@@ -845,9 +845,9 @@ class Acl extends AclRoleAccessorMethods {
     this.request(
       {
         method: 'PUT',
-        uri: '/' + encodeURIComponent(options.entity),
-        qs: query,
-        json: {
+        url: '/' + encodeURIComponent(options.entity),
+        queryParameters: query as unknown as StorageQueryParameters,
+        body: {
           role: options.role.toUpperCase(),
         },
       },
@@ -894,10 +894,10 @@ class Acl extends AclRoleAccessorMethods {
    * @param {function} callback Callback function.
    */
   request(
-    reqOpts: DecorateRequestOptions,
+    reqOpts: StorageRequestOptions,
     callback: BodyResponseCallback
   ): void {
-    reqOpts.uri = this.pathPrefix + reqOpts.uri;
+    reqOpts.url = this.pathPrefix + reqOpts.url;
     this.request_(reqOpts, callback);
   }
 }

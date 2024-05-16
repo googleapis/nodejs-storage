@@ -247,7 +247,7 @@ describe('resumable-upload', () => {
       )
     );
 
-    const [results] = await file.getMetadata();
+    const results = await file.getMetadata();
 
     assert.equal(results.size, FILE_SIZE);
   });
@@ -294,7 +294,7 @@ describe('resumable-upload', () => {
       );
     }
 
-    const [results] = await file.getMetadata();
+    const results = await file.getMetadata();
 
     assert.ok(uri);
     assert.equal(uriGenerated, 1, 'uri should be generated once');

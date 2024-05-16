@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ApiError, Interceptor, ServiceOptions} from './nodejs-common/index.js';
+import {ApiError, ServiceOptions} from './nodejs-common/index.js';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import {Readable} from 'stream';
@@ -35,6 +35,7 @@ import {
   StorageQueryParameters,
   StorageTransport,
 } from './storage-transport.js';
+import {GaxiosError} from 'gaxios';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -45,7 +46,6 @@ export interface ServiceAccount {
   kind?: string;
   [key: string]: string | undefined;
 }
-export type GetServiceAccountResponse = ServiceAccount;
 
 export interface CreateBucketQuery {
   project: string;
@@ -148,7 +148,6 @@ export interface CreateBucketRequest {
   versioning?: Versioning;
 }
 
-export type CreateBucketResponse = [Bucket, unknown];
 export type GetBucketsResponse = [Bucket[], unknown];
 
 export interface GetBucketsRequest {
@@ -166,8 +165,6 @@ export interface HmacKeyResourceResponse {
   secret: string;
   kind: string;
 }
-
-export type CreateHmacKeyResponse = [HmacKey, string, HmacKeyResourceResponse];
 
 export interface CreateHmacKeyOptions {
   projectId?: string;
@@ -197,7 +194,7 @@ export enum StorageExceptionMessages {
   HMAC_ACCESS_ID = 'An access ID is needed to create an HmacKey object.',
 }
 
-export type GetHmacKeysResponse = [HmacKey[]];
+export type GetHmacKeysResponse = [HmacKey[], unknown];
 
 export const PROTOCOL_REGEX = /^(\w*):\/\//;
 
@@ -485,7 +482,7 @@ export class Storage {
   projectId?: string;
   apiEndpoint: string;
   storageTransport: StorageTransport;
-  interceptors: Interceptor[];
+  //interceptors: Interceptor[];
   universeDomain: string;
   customEndpoint = false;
 
@@ -757,7 +754,7 @@ export class Storage {
     this.retryOptions = config.retryOptions;
 
     this.storageTransport = new StorageTransport({...config, ...options});
-    this.interceptors = [];
+    //this.interceptors = [];
     this.universeDomain = options.universeDomain || DEFAULT_UNIVERSE;
 
     this.getBucketsStream = paginator.streamify('getBuckets');
@@ -818,10 +815,7 @@ export class Storage {
     return new Channel(this, id, resourceId);
   }
 
-  createBucket(
-    name: string,
-    metadata?: CreateBucketRequest
-  ): Promise<CreateBucketResponse>;
+  createBucket(name: string, metadata?: CreateBucketRequest): Promise<Bucket>;
   createBucket(name: string, callback: StorageCallback<Bucket>): void;
   createBucket(
     name: string,
@@ -834,15 +828,9 @@ export class Storage {
     callback: StorageCallback<Bucket>
   ): void;
   /**
-   * @typedef {array} CreateBucketResponse
-   * @property {Bucket} 0 The new {@link Bucket}.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback CreateBucketCallback
-   * @param {?Error} err Request error, if any.
+   * @callback StorageCallback
+   * @param {GaxiosError} err Request error, if any.
    * @param {Bucket} bucket The new {@link Bucket}.
-   * @param {object} apiResponse The full API response.
    */
   /**
    * Metadata to set for the bucket.
@@ -895,8 +883,8 @@ export class Storage {
    *
    * @param {string} name Name of the bucket to create.
    * @param {CreateBucketRequest} [metadata] Metadata to set for the bucket.
-   * @param {CreateBucketCallback} [callback] Callback function.
-   * @returns {Promise<CreateBucketResponse>}
+   * @param {StorageCallback} [callback] Callback function.
+   * @returns {Promise<Bucket>}
    * @throws {Error} If a name is not provided.
    * @see Bucket#create
    *
@@ -963,7 +951,7 @@ export class Storage {
     name: string,
     metadataOrCallback?: StorageCallback<Bucket> | CreateBucketRequest,
     callback?: StorageCallback<Bucket>
-  ): Promise<CreateBucketResponse> | void {
+  ): Promise<Bucket> | void {
     if (!name) {
       throw new Error(StorageExceptionMessages.BUCKET_NAME_REQUIRED_CREATE);
     }
@@ -1040,7 +1028,7 @@ export class Storage {
       },
       (err, resp) => {
         if (err) {
-          callback(err);
+          callback(err as unknown as GaxiosError<Bucket>);
           return;
         }
 
@@ -1055,7 +1043,7 @@ export class Storage {
   createHmacKey(
     serviceAccountEmail: string,
     options?: CreateHmacKeyOptions
-  ): Promise<CreateHmacKeyResponse>;
+  ): Promise<HmacKey>;
   createHmacKey(
     serviceAccountEmail: string,
     callback: StorageCallback<HmacKey>
@@ -1089,17 +1077,9 @@ export class Storage {
    *     RFC 3339 format.
    */
   /**
-   * @typedef {array} CreateHmacKeyResponse
-   * @property {HmacKey} 0 The HmacKey instance created from API response.
-   * @property {string} 1 The HMAC key's secret used to access the XML API.
-   * @property {object} 3 The raw API response.
-   */
-  /**
-   * @callback CreateHmacKeyCallback Callback function.
-   * @param {?Error} err Request error, if any.
+   * @callback StorageCallback Callback function.
+   * @param {GaxiosError} err Request error, if any.
    * @param {HmacKey} hmacKey The HmacKey instance created from API response.
-   * @param {string} secret The HMAC key's secret used to access the XML API.
-   * @param {object} apiResponse The raw API response.
    */
   /**
    * Create an HMAC key associated with an service account to authenticate
@@ -1109,8 +1089,8 @@ export class Storage {
    *
    * @param {string} serviceAccountEmail The service account's email address
    *     with which the HMAC key is created for.
-   * @param {CreateHmacKeyCallback} [callback] Callback function.
-   * @return {Promise<CreateHmacKeyResponse>}
+   * @param {StorageCallback} [callback] Callback function.
+   * @return {Promise<HmacKey>}
    *
    * @example
    * ```
@@ -1142,7 +1122,7 @@ export class Storage {
     serviceAccountEmail: string,
     optionsOrCb?: CreateHmacKeyOptions | StorageCallback<HmacKey>,
     cb?: StorageCallback<HmacKey>
-  ): Promise<CreateHmacKeyResponse> | void {
+  ): Promise<HmacKey> | void {
     if (typeof serviceAccountEmail !== 'string') {
       throw new Error(StorageExceptionMessages.HMAC_SERVICE_ACCOUNT);
     }
@@ -1165,7 +1145,7 @@ export class Storage {
       },
       (err, resp) => {
         if (err) {
-          callback(err);
+          callback(err as unknown as GaxiosError<HmacKey>);
           return;
         }
         const hmacMetadata = resp!.metadata;
@@ -1214,14 +1194,12 @@ export class Storage {
    * @typedef {array} GetBucketsResponse
    * @property {Bucket[]} 0 Array of {@link Bucket} instances.
    * @property {object} 1 nextQuery A query object to receive more results.
-   * @property {object} 2 The full API response.
    */
   /**
-   * @callback GetBucketsCallback
-   * @param {?Error} err Request error, if any.
+   * @callback StorageCallback
+   * @param {GaxiosError} err Request error, if any.
    * @param {Bucket[]} buckets Array of {@link Bucket} instances.
    * @param {object} nextQuery A query object to receive more results.
-   * @param {object} apiResponse The full API response.
    */
   /**
    * Get Bucket objects for all of the buckets in your project.
@@ -1229,7 +1207,7 @@ export class Storage {
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/list| Buckets: list API Documentation}
    *
    * @param {GetBucketsRequest} [query] Query object for listing buckets.
-   * @param {GetBucketsCallback} [callback] Callback function.
+   * @param {StorageCallback} [callback] Callback function.
    * @returns {Promise<GetBucketsResponse>}
    *
    * @example
@@ -1350,14 +1328,6 @@ export class Storage {
    * @typedef {array} GetHmacKeysResponse
    * @property {HmacKey[]} 0 Array of {@link HmacKey} instances.
    * @param {object} nextQuery 1 A query object to receive more results.
-   * @param {object} apiResponse 2 The full API response.
-   */
-  /**
-   * @callback GetHmacKeysCallback
-   * @param {?Error} err Request error, if any.
-   * @param {HmacKey[]} hmacKeys Array of {@link HmacKey} instances.
-   * @param {object} nextQuery A query object to receive more results.
-   * @param {object} apiResponse The full API response.
    */
   /**
    * Retrieves a list of HMAC keys matching the criteria.
@@ -1365,7 +1335,7 @@ export class Storage {
    * The authenticated user must have storage.hmacKeys.list permission for the project in which the key exists.
    *
    * @param {GetHmacKeysOption} options Configuration options.
-   * @param {GetHmacKeysCallback} callback Callback function.
+   * @param {StorageCallback} callback Callback function.
    * @return {Promise<GetHmacKeysResponse>}
    *
    * @example
@@ -1465,28 +1435,19 @@ export class Storage {
 
   getServiceAccount(
     options?: GetServiceAccountOptions
-  ): Promise<GetServiceAccountResponse>;
+  ): Promise<ServiceAccount>;
   getServiceAccount(
     options?: GetServiceAccountOptions
-  ): Promise<GetServiceAccountResponse>;
+  ): Promise<ServiceAccount>;
   getServiceAccount(
     options: GetServiceAccountOptions,
     callback: StorageCallback<ServiceAccount>
   ): void;
   getServiceAccount(callback: StorageCallback<ServiceAccount>): void;
   /**
-   * @typedef {array} GetServiceAccountResponse
-   * @property {object} 0 The service account resource.
-   * @property {object} 1 The full
-   * {@link https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource| API response}.
-   */
-  /**
    * @callback GetServiceAccountCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} serviceAccount The serviceAccount resource.
-   * @param {string} serviceAccount.emailAddress The service account email
-   *     address.
-   * @param {object} apiResponse The full
+   * @param {GaxiosError} err Request error, if any.
+   * @param {ServiceAccount} serviceAccount The serviceAccount resource.
    * {@link https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource| API response}.
    */
   /**
@@ -1500,7 +1461,7 @@ export class Storage {
    * @param {string} [options.userProject] User project to be billed for this
    *     request.
    * @param {GetServiceAccountCallback} [callback] Callback function.
-   * @returns {Promise<GetServiceAccountResponse>}
+   * @returns {Promise<ServiceAccount>}
    *
    * @example
    * ```
@@ -1527,7 +1488,7 @@ export class Storage {
       | GetServiceAccountOptions
       | StorageCallback<ServiceAccount>,
     cb?: StorageCallback<ServiceAccount>
-  ): void | Promise<GetServiceAccountResponse> {
+  ): void | Promise<ServiceAccount> {
     const {options, callback} = normalize<GetServiceAccountOptions>(
       optionsOrCallback,
       cb
