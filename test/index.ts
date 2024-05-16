@@ -493,7 +493,7 @@ describe('Storage', () => {
         });
 
         const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(calledWith.baseUrl, `${EMULATOR_HOST}/storage/v1`);
         assert.strictEqual(
           calledWith.apiEndpoint,
           'https://internal.benchmark.com/path'
@@ -507,7 +507,7 @@ describe('Storage', () => {
         });
 
         const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(calledWith.baseUrl, `${EMULATOR_HOST}/storage/v1`);
         assert.strictEqual(calledWith.apiEndpoint, 'https://some.api.com');
       });
 
@@ -520,7 +520,7 @@ describe('Storage', () => {
         });
 
         const calledWith = storage.calledWith_[0];
-        assert.strictEqual(calledWith.baseUrl, EMULATOR_HOST);
+        assert.strictEqual(calledWith.baseUrl, `${EMULATOR_HOST}/storage/v1`);
         assert.strictEqual(
           calledWith.apiEndpoint,
           'https://internal.benchmark.com/path'
