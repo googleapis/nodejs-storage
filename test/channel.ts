@@ -12,77 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*!
- * @module storage/channel
- */
-
-import {
-  BaseMetadata,
-  ServiceObject,
-  ServiceObjectConfig,
-} from '../src/nodejs-common/index.js';
+import {ServiceObject} from '../src/nodejs-common/index.js';
 import assert from 'assert';
-import {describe, it, before, beforeEach} from 'mocha';
-import proxyquire from 'proxyquire';
-import {StorageRequestOptions} from '../src/storage-transport.js';
-
-let promisified = false;
-const fakePromisify = {
-  promisifyAll(Class: Function) {
-    if (Class.name === 'Channel') {
-      promisified = true;
-    }
-  },
-};
-
-class FakeServiceObject extends ServiceObject<FakeServiceObject, BaseMetadata> {
-  calledWith_: IArguments;
-  constructor(config: ServiceObjectConfig) {
-    super(config);
-    // eslint-disable-next-line prefer-rest-params
-    this.calledWith_ = arguments;
-  }
-}
+import {describe, it, beforeEach} from 'mocha';
+import {StorageTransport} from '../src/storage-transport.js';
+import {Storage} from '../src/storage.js';
+import * as sinon from 'sinon';
+import {Channel} from '../src/channel.js';
 
 describe('Channel', () => {
-  const STORAGE = {};
+  const STORAGE = sinon.createStubInstance(Storage);
+  const STORAGE_TRANSPORT = sinon.createStubInstance(StorageTransport);
   const ID = 'channel-id';
   const RESOURCE_ID = 'resource-id';
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let Channel: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let channel: any;
-
-  before(() => {
-    Channel = proxyquire('../src/channel.js', {
-      '@google-cloud/promisify': fakePromisify,
-      './nodejs-common': {
-        ServiceObject: FakeServiceObject,
-      },
-    }).Channel;
-  });
+  let channel: Channel;
 
   beforeEach(() => {
     channel = new Channel(STORAGE, ID, RESOURCE_ID);
+    channel.storageTransport = STORAGE_TRANSPORT;
   });
 
   describe('initialization', () => {
     it('should inherit from ServiceObject', () => {
-      // Using assert.strictEqual instead of assert to prevent
-      // coercing of types.
       assert.strictEqual(channel instanceof ServiceObject, true);
-
-      const calledWith = channel.calledWith_[0];
-
-      assert.strictEqual(calledWith.parent, STORAGE);
-      assert.strictEqual(calledWith.baseUrl, '/channels');
-      assert.strictEqual(calledWith.id, '');
-      assert.deepStrictEqual(calledWith.methods, {});
-    });
-
-    it('should promisify all the things', () => {
-      assert(promisified);
+      assert.strictEqual(channel.parent, STORAGE);
+      assert.strictEqual(channel.baseUrl, '/channels');
+      assert.strictEqual(channel.id, '');
     });
 
     it('should set the default metadata', () => {
@@ -94,46 +49,56 @@ describe('Channel', () => {
   });
 
   describe('stop', () => {
-    it('should make the correct request', done => {
-      channel.request = (reqOpts: StorageRequestOptions) => {
+    it('should return a promise that resolves to undefined when stop is successful', async () => {
+      STORAGE_TRANSPORT.makeRequest.callsFake(reqOpts => {
         assert.strictEqual(reqOpts.method, 'POST');
-        assert.strictEqual(reqOpts.url, '/stop');
+        assert.strictEqual(reqOpts.url, '/channels/stop');
         assert.strictEqual(reqOpts.body, channel.metadata);
+        return Promise.resolve();
+      });
 
-        done();
-      };
-
-      channel.stop(assert.ifError);
+      const res = await channel.stop();
+      assert.strictEqual(res, undefined);
     });
 
-    it('should execute callback with error & API response', done => {
-      const error = {};
-      const apiResponse = {};
+    it('should reject when a call to stop is unsuccessful', async () => {
+      STORAGE_TRANSPORT.makeRequest.callsFake(reqOpts => {
+        assert.strictEqual(reqOpts.method, 'POST');
+        assert.strictEqual(reqOpts.url, '/channels/stop');
+        assert.strictEqual(reqOpts.body, channel.metadata);
+        return Promise.reject();
+      });
 
-      channel.request = (
-        reqOpts: StorageRequestOptions,
-        callback: Function
-      ) => {
-        callback(error, apiResponse);
-      };
+      assert.rejects(channel.stop());
+    });
 
-      channel.stop((err: Error, apiResponse_: {}) => {
-        assert.strictEqual(err, error);
-        assert.strictEqual(apiResponse_, apiResponse);
+    it('should execute callback when stop is successful', done => {
+      STORAGE_TRANSPORT.makeRequest.callsFake(reqOpts => {
+        assert.strictEqual(reqOpts.method, 'POST');
+        assert.strictEqual(reqOpts.url, '/channels/stop');
+        assert.strictEqual(reqOpts.body, channel.metadata);
+        return Promise.resolve();
+      });
+
+      channel.stop((err, resp) => {
+        assert.strictEqual(err, null);
+        assert.deepStrictEqual(resp, {});
         done();
       });
     });
 
-    it('should not require a callback', done => {
-      channel.request = (
-        reqOpts: StorageRequestOptions,
-        callback: Function
-      ) => {
-        assert.doesNotThrow(() => callback());
-        done();
-      };
+    it('should execute callback with error when stop is unsuccessful', done => {
+      STORAGE_TRANSPORT.makeRequest.callsFake(reqOpts => {
+        assert.strictEqual(reqOpts.method, 'POST');
+        assert.strictEqual(reqOpts.url, '/channels/stop');
+        assert.strictEqual(reqOpts.body, channel.metadata);
+        return Promise.reject('Testing Error');
+      });
 
-      channel.stop();
+      channel.stop(err => {
+        assert.strictEqual(err, 'Testing Error');
+        done();
+      });
     });
   });
 });

@@ -16,8 +16,8 @@
 import {EventEmitter} from 'events';
 import {StreamRequestOptions} from './service.js';
 import {util} from './util.js';
-import {Storage} from '../storage.js';
-import {Bucket} from '../bucket.js';
+//import {Storage} from '../storage.js';
+//import {Bucket} from '../bucket.js';
 import {
   StorageCallback,
   StorageRequestOptions,
@@ -28,6 +28,11 @@ import {Readable} from 'stream';
 
 export type GetMetadataOptions = object;
 export type ExistsOptions = object;
+
+interface ServiceObjectParent {
+  baseUrl?: string;
+  name?: string;
+}
 export interface ServiceObjectConfig {
   /**
    * The base URL to make API requests to.
@@ -54,7 +59,7 @@ export interface ServiceObjectConfig {
    * The parent service instance. For example, an instance of Storage if the
    * object is Bucket.
    */
-  parent: Bucket | Storage;
+  parent: ServiceObjectParent;
 
   /**
    * Override of projectId, used to allow access to resources in another project.
@@ -116,7 +121,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   metadata: K;
   baseUrl?: string;
   storageTransport: StorageTransport;
-  parent: Bucket | Storage;
+  parent: ServiceObjectParent;
   id?: string;
   name?: string;
   private createMethod?: Function;
@@ -256,9 +261,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       (typeof this.methods.delete === 'object' && this.methods.delete) || {};
 
     let url = `${this.baseUrl}/${this.name}`;
-    if (this.parent instanceof Bucket) {
-      url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
-    }
+    url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
 
     const reqPromise = this.storageTransport.makeRequest<{}>({
       method: 'DELETE',
@@ -441,9 +444,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       {};
 
     let url = `${this.baseUrl}/${this.name}`;
-    if (this.parent instanceof Bucket) {
-      url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
-    }
+    url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
 
     const reqPromise = this.storageTransport.makeRequest<K>({
       method: 'GET',
@@ -500,9 +501,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       {};
 
     let url = `${this.baseUrl}/${this.name}`;
-    if (this.parent instanceof Bucket) {
-      url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
-    }
+    url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
 
     const reqPromise = this.storageTransport.makeRequest<K>({
       method: 'PATCH',

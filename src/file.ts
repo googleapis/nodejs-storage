@@ -384,18 +384,6 @@ export interface DownloadOptions extends CreateReadStreamOptions {
   destination?: string;
 }
 
-interface CopyQuery {
-  sourceGeneration?: number;
-  rewriteToken?: string;
-  userProject?: string;
-  destinationKmsKeyName?: string;
-  destinationPredefinedAcl?: string;
-  ifGenerationMatch?: number | string;
-  ifGenerationNotMatch?: number | string;
-  ifMetagenerationMatch?: number | string;
-  ifMetagenerationNotMatch?: number | string;
-}
-
 interface RewriteResponse {
   kind: string;
   totalBytesRewritten: number;

@@ -485,6 +485,8 @@ export class Storage {
   //interceptors: Interceptor[];
   universeDomain: string;
   customEndpoint = false;
+  name = '';
+  baseUrl = '';
 
   getBucketsStream(): Readable {
     // placeholder body, overwritten in constructor
@@ -699,7 +701,7 @@ export class Storage {
     options = Object.assign({}, options, {apiEndpoint});
 
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
-    const baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
+    this.baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
 
     const config = {
       apiEndpoint: options.apiEndpoint!,
@@ -728,7 +730,7 @@ export class Storage {
             ? options.retryOptions?.idempotencyStrategy
             : IDEMPOTENCY_STRATEGY_DEFAULT,
       },
-      baseUrl,
+      baseUrl: this.baseUrl,
       customEndpoint: this.customEndpoint,
       useAuthWithCustomEndpoint: options?.useAuthWithCustomEndpoint,
       scopes: [
