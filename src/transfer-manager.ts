@@ -24,7 +24,7 @@ import {
 } from './file.js';
 import pLimit from 'p-limit';
 import * as path from 'path';
-import {createReadStream, mkdirSync, promises as fsp} from 'fs';
+import {createReadStream, promises as fsp} from 'fs';
 import {CRC32C} from './crc32c.js';
 import {GoogleAuth} from 'google-auth-library';
 import {XMLParser, XMLBuilder} from 'fast-xml-parser';
@@ -604,8 +604,7 @@ export class TransferManager {
         limit(async () => {
           const destination = passThroughOptionsCopy.destination;
           if (destination && destination.endsWith(path.sep)) {
-            mkdirSync(destination, {recursive: true});
-            // Skip directory objects as they cannot be written to local filesystem
+            await fsp.mkdir(destination, {recursive: true});
             return Promise.resolve([
               Buffer.alloc(0),
             ]) as Promise<DownloadResponse>;

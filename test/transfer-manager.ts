@@ -281,7 +281,7 @@ describe('Transfer Manager', () => {
       const filesOrFolder = [folder, path.join(folder, file)];
       const expectedFilePath = path.join(prefix, folder, file);
       const expectedDir = path.join(prefix, folder);
-      const mkdirSyncSpy = sandbox.spy(fs, 'mkdirSync');
+      const mkdirSyncSpy = sandbox.spy(fsp, 'mkdir');
       const download = (optionsOrCb?: DownloadOptions | DownloadCallback) => {
         if (typeof optionsOrCb === 'function') {
           optionsOrCb(null, Buffer.alloc(0));
