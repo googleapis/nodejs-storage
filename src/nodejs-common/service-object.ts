@@ -29,7 +29,7 @@ import {Readable} from 'stream';
 export type GetMetadataOptions = object;
 export type ExistsOptions = object;
 
-interface ServiceObjectParent {
+export interface ServiceObjectParent {
   baseUrl?: string;
   name?: string;
 }

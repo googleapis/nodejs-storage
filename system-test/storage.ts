@@ -24,7 +24,7 @@ import * as tmp from 'tmp';
 import * as uuid from 'uuid';
 import {ApiError} from '../src/nodejs-common/index.js';
 import {
-  AccessControlObject,
+  AclMetadata,
   Bucket,
   CRC32C,
   File,
@@ -241,13 +241,13 @@ describe('storage', function () {
       });
 
       it('should add entity to default access controls', async () => {
-        const [accessControl] = await bucket.acl.default.add({
+        const accessControl = await bucket.acl.default.add({
           entity: USER_ACCOUNT,
           role: storage.acl.OWNER_ROLE,
         });
         assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
 
-        const [updatedAccessControl] = await bucket.acl.default.update({
+        const updatedAccessControl = await bucket.acl.default.update({
           entity: USER_ACCOUNT,
           role: storage.acl.READER_ROLE,
         });
@@ -261,27 +261,27 @@ describe('storage', function () {
       });
 
       it('should grant an account access', async () => {
-        const [accessControl] = await bucket.acl.add({
+        const accessControl = await bucket.acl.add({
           entity: USER_ACCOUNT,
           role: storage.acl.OWNER_ROLE,
         });
         assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
         const opts = {entity: USER_ACCOUNT};
-        const [accessControlGet] = await bucket.acl.get(opts);
+        const accessControlGet = await bucket.acl.get(opts);
         assert.strictEqual(
-          (accessControlGet as AccessControlObject).role,
+          (accessControlGet as AclMetadata).role,
           storage.acl.OWNER_ROLE
         );
         await bucket.acl.delete(opts);
       });
 
       it('should update an account', async () => {
-        const [accessControl] = await bucket.acl.add({
+        const accessControl = await bucket.acl.add({
           entity: USER_ACCOUNT,
           role: storage.acl.OWNER_ROLE,
         });
         assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
-        const [updatedAcl] = await bucket.acl.update({
+        const updatedAcl = await bucket.acl.update({
           entity: USER_ACCOUNT,
           role: storage.acl.WRITER_ROLE,
         });
@@ -291,7 +291,7 @@ describe('storage', function () {
 
       it('should make a bucket public', async () => {
         await bucket.makePublic();
-        const [aclObject] = await bucket.acl.get({entity: 'allUsers'});
+        const aclObject = await bucket.acl.get({entity: 'allUsers'});
         assert.deepStrictEqual(aclObject, {
           entity: 'allUsers',
           role: 'READER',
@@ -367,7 +367,7 @@ describe('storage', function () {
       });
 
       it('should get access controls', async () => {
-        const [accessControls] = await file.acl.get();
+        const accessControls = await file.acl.get();
         assert(Array.isArray(accessControls));
       });
 
@@ -377,26 +377,26 @@ describe('storage', function () {
       });
 
       it('should grant an account access', async () => {
-        const [accessControl] = await file.acl.add({
+        const accessControl = await file.acl.add({
           entity: USER_ACCOUNT,
           role: storage.acl.OWNER_ROLE,
         });
         assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
-        const [accessControlGet] = await file.acl.get({entity: USER_ACCOUNT});
+        const accessControlGet = await file.acl.get({entity: USER_ACCOUNT});
         assert.strictEqual(
-          (accessControlGet as AccessControlObject).role,
+          (accessControlGet as AclMetadata).role,
           storage.acl.OWNER_ROLE
         );
         await file.acl.delete({entity: USER_ACCOUNT});
       });
 
       it('should update an account', async () => {
-        const [accessControl] = await file.acl.add({
+        const accessControl = await file.acl.add({
           entity: USER_ACCOUNT,
           role: storage.acl.OWNER_ROLE,
         });
         assert.strictEqual(accessControl!.role, storage.acl.OWNER_ROLE);
-        const [accessControlUpdate] = await file.acl.update({
+        const accessControlUpdate = await file.acl.update({
           entity: USER_ACCOUNT,
           role: storage.acl.READER_ROLE,
         });
@@ -406,7 +406,7 @@ describe('storage', function () {
 
       it('should make a file public', async () => {
         await file.makePublic();
-        const [aclObject] = await file.acl.get({entity: 'allUsers'});
+        const aclObject = await file.acl.get({entity: 'allUsers'});
         assert.deepStrictEqual(aclObject, {
           entity: 'allUsers',
           role: 'READER',
@@ -458,7 +458,7 @@ describe('storage', function () {
           public: true,
         });
 
-        const [aclObject] = await file.acl.get({entity: 'allUsers'});
+        const aclObject = await file.acl.get({entity: 'allUsers'});
         assert.deepStrictEqual(aclObject, {
           entity: 'allUsers',
           role: 'READER',
@@ -470,7 +470,7 @@ describe('storage', function () {
           resumable: true,
           public: true,
         });
-        const [aclObject] = await file.acl.get({entity: 'allUsers'});
+        const aclObject = await file.acl.get({entity: 'allUsers'});
         assert.deepStrictEqual(aclObject, {
           entity: 'allUsers',
           role: 'READER',
@@ -988,7 +988,7 @@ describe('storage', function () {
 
       it('should preserve default bucket ACL', async () => {
         await bucket.acl.default.update(customAcl);
-        const [aclBefore] = await bucket.acl.default.get();
+        const aclBefore = await bucket.acl.default.get();
 
         await setUniformBucketLevelAccess(bucket, true);
         await setUniformBucketLevelAccess(bucket, false);
@@ -996,7 +996,7 @@ describe('storage', function () {
         // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
         for (;;) {
           try {
-            const [aclAfter] = await bucket.acl.default.get();
+            const aclAfter = await bucket.acl.default.get();
             assert.deepStrictEqual(aclAfter, aclBefore);
             break;
           } catch {
@@ -1010,7 +1010,7 @@ describe('storage', function () {
         await file.save('data', {resumable: false});
 
         await file.acl.update(customAcl);
-        const [aclBefore] = await file.acl.get();
+        const aclBefore = await file.acl.get();
 
         await setUniformBucketLevelAccess(bucket, true);
         await setUniformBucketLevelAccess(bucket, false);
@@ -1018,7 +1018,7 @@ describe('storage', function () {
         // Setting uniform bucket level access is eventually consistent and may take up to a minute to be reflected
         for (;;) {
           try {
-            const [aclAfter] = await file.acl.get();
+            const aclAfter = await file.acl.get();
             assert.deepStrictEqual(aclAfter, aclBefore);
             break;
           } catch {
@@ -3945,10 +3945,10 @@ describe('storage', function () {
 
   async function isFilePublicAsync(file: File) {
     try {
-      const [aclObject] = await file.acl.get({entity: 'allUsers'});
+      const aclObject = await file.acl.get({entity: 'allUsers'});
       if (
-        (aclObject as AccessControlObject).entity === 'allUsers' &&
-        (aclObject as AccessControlObject).role === 'READER'
+        (aclObject as AclMetadata).entity === 'allUsers' &&
+        (aclObject as AclMetadata).role === 'READER'
       ) {
         return true;
       } else {

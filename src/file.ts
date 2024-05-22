@@ -268,8 +268,6 @@ export interface IsPublicCallback {
 
 export type IsPublicResponse = [boolean];
 
-export type MakeFilePublicResponse = [unknown];
-
 export interface MakeFilePublicCallback {
   (err?: Error | null, apiResponse?: unknown): void;
 }
@@ -1045,7 +1043,8 @@ class File extends ServiceObject<File, FileMetadata> {
     }
 
     this.acl = new Acl({
-      request: this.request.bind(this),
+      parent: this,
+      storageTransport: this.storageTransport,
       pathPrefix: '/acl',
     });
 
@@ -3343,12 +3342,8 @@ class File extends ServiceObject<File, FileMetadata> {
     this.setMetadata(metadata, query, callback!);
   }
 
-  makePublic(): Promise<MakeFilePublicResponse>;
+  makePublic(): Promise<AclMetadata>;
   makePublic(callback: MakeFilePublicCallback): void;
-  /**
-   * @typedef {array} MakeFilePublicResponse
-   * @property {object} 0 The full API response.
-   */
   /**
    * @callback MakeFilePublicCallback
    * @param {?Error} err Request error, if any.
@@ -3360,7 +3355,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/objectAccessControls/insert| ObjectAccessControls: insert API Documentation}
    *
    * @param {MakeFilePublicCallback} [callback] Callback function.
-   * @returns {Promise<MakeFilePublicResponse>}
+   * @returns {Promise<AclMetadata>}
    *
    * @example
    * ```
@@ -3384,17 +3379,15 @@ class File extends ServiceObject<File, FileMetadata> {
    * region_tag:storage_make_public
    * Another example:
    */
-  makePublic(
-    callback?: MakeFilePublicCallback
-  ): Promise<MakeFilePublicResponse> | void {
+  makePublic(callback?: MakeFilePublicCallback): Promise<AclMetadata> | void {
     callback = callback || util.noop;
     this.acl.add(
       {
         entity: 'allUsers',
         role: 'READER',
       },
-      (err, acl, resp) => {
-        callback!(err, resp);
+      (err, acl) => {
+        callback!(err, acl);
       }
     );
   }

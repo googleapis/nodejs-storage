@@ -1217,12 +1217,14 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     this.userProject = options.userProject;
 
     this.acl = new Acl({
-      request: this.request.bind(this),
+      parent: this,
+      storageTransport: this.storageTransport,
       pathPrefix: '/acl',
     });
 
     this.acl.default = new Acl({
-      request: this.request.bind(this),
+      parent: this,
+      storageTransport: this.storageTransport,
       pathPrefix: '/defaultObjectAcl',
     });
 
