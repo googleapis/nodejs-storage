@@ -11,12 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
-import {BodyResponseCallback} from './nodejs-common/index.js';
-import {promisifyAll} from '@google-cloud/promisify';
-
 import {Bucket} from './bucket.js';
 import {normalize} from './util.js';
+import {
+  StorageCallback,
+  StorageQueryParameters,
+  StorageRequestOptions,
+} from './storage-transport.js';
 
 export interface GetPolicyOptions {
   userProject?: string;
@@ -26,39 +27,12 @@ export interface GetPolicyOptions {
 export type GetPolicyResponse = [Policy, unknown];
 
 /**
- * @callback GetPolicyCallback
- * @param {?Error} err Request error, if any.
- * @param {object} acl The policy.
- * @param {object} apiResponse The full API response.
- */
-export interface GetPolicyCallback {
-  (err?: Error | null, acl?: Policy, apiResponse?: unknown): void;
-}
-
-/**
  * @typedef {object} SetPolicyOptions
  * @param {string} [userProject] The ID of the project which will be
  *     billed for the request.
  */
 export interface SetPolicyOptions {
   userProject?: string;
-}
-
-/**
- * @typedef {array} SetPolicyResponse
- * @property {object} 0 The policy.
- * @property {object} 1 The full API response.
- */
-export type SetPolicyResponse = [Policy, unknown];
-
-/**
- * @callback SetPolicyCallback
- * @param {?Error} err Request error, if any.
- * @param {object} acl The policy.
- * @param {object} apiResponse The full API response.
- */
-export interface SetPolicyCallback {
-  (err?: Error | null, acl?: Policy, apiResponse?: object): void;
 }
 
 export interface Policy {
@@ -77,27 +51,6 @@ export interface Expr {
   title?: string;
   description?: string;
   expression: string;
-}
-
-/**
- * @typedef {array} TestIamPermissionsResponse
- * @property {object} 0 A subset of permissions that the caller is allowed.
- * @property {object} 1 The full API response.
- */
-export type TestIamPermissionsResponse = [{[key: string]: boolean}, unknown];
-
-/**
- * @callback TestIamPermissionsCallback
- * @param {?Error} err Request error, if any.
- * @param {object} acl A subset of permissions that the caller is allowed.
- * @param {object} apiResponse The full API response.
- */
-export interface TestIamPermissionsCallback {
-  (
-    err?: Error | null,
-    acl?: {[key: string]: boolean} | null,
-    apiResponse?: unknown
-  ): void;
 }
 
 /**
@@ -138,18 +91,23 @@ export enum IAMExceptionMessages {
  * ```
  */
 class Iam {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private request_: (reqOpts: any, callback: BodyResponseCallback) => void;
+  #makeRequest: <T>(
+    reqOpts: StorageRequestOptions,
+    callback?: StorageCallback<T>
+  ) => Promise<void> | Promise<T>;
   private resourceId_: string;
 
   constructor(bucket: Bucket) {
-    this.request_ = bucket.request.bind(bucket);
+    this.#makeRequest = bucket.storageTransport.makeRequest.bind(bucket);
     this.resourceId_ = 'buckets/' + bucket.getId();
   }
 
-  getPolicy(options?: GetPolicyOptions): Promise<GetPolicyResponse>;
-  getPolicy(options: GetPolicyOptions, callback: GetPolicyCallback): void;
-  getPolicy(callback: GetPolicyCallback): void;
+  getPolicy(options?: GetPolicyOptions): Promise<Policy>;
+  getPolicy(
+    options: GetPolicyOptions,
+    callback: StorageCallback<Policy>
+  ): Promise<void>;
+  getPolicy(callback: StorageCallback<Policy>): Promise<void>;
   /**
    * @typedef {object} GetPolicyOptions Requested options for IAM#getPolicy().
    * @property {number} [requestedPolicyVersion] The version of IAM policies to
@@ -236,12 +194,12 @@ class Iam {
    * Example of retrieving a bucket's IAM policy:
    */
   getPolicy(
-    optionsOrCallback?: GetPolicyOptions | GetPolicyCallback,
-    callback?: GetPolicyCallback
-  ): Promise<GetPolicyResponse> | void {
+    optionsOrCallback?: GetPolicyOptions | StorageCallback<Policy>,
+    callback?: StorageCallback<Policy>
+  ): Promise<Policy | void> {
     const {options, callback: cb} = normalize<
       GetPolicyOptions,
-      GetPolicyCallback
+      StorageCallback<Policy>
     >(optionsOrCallback, callback);
 
     const qs: GetPolicyRequest = {};
@@ -256,25 +214,21 @@ class Iam {
       qs.optionsRequestedPolicyVersion = options.requestedPolicyVersion;
     }
 
-    this.request_(
-      {
-        uri: '/iam',
-        qs,
-      },
-      cb!
-    );
+    const reqPromise = this.#makeRequest<Policy>({
+      url: '/iam',
+      queryParameters: qs as unknown as StorageQueryParameters,
+    });
+
+    return cb ? reqPromise.then(resp => cb(null, resp!)).catch(cb) : reqPromise;
   }
 
-  setPolicy(
-    policy: Policy,
-    options?: SetPolicyOptions
-  ): Promise<SetPolicyResponse>;
-  setPolicy(policy: Policy, callback: SetPolicyCallback): void;
+  setPolicy(policy: Policy, options?: SetPolicyOptions): Promise<Policy>;
+  setPolicy(policy: Policy, callback: StorageCallback<Policy>): Promise<void>;
   setPolicy(
     policy: Policy,
     options: SetPolicyOptions,
-    callback: SetPolicyCallback
-  ): void;
+    callback: StorageCallback<Policy>
+  ): Promise<void>;
   /**
    * Set the IAM policy.
    *
@@ -325,16 +279,16 @@ class Iam {
    */
   setPolicy(
     policy: Policy,
-    optionsOrCallback?: SetPolicyOptions | SetPolicyCallback,
-    callback?: SetPolicyCallback
-  ): Promise<SetPolicyResponse> | void {
+    optionsOrCallback?: SetPolicyOptions | StorageCallback<Policy>,
+    callback?: StorageCallback<Policy>
+  ): Promise<Policy | void> {
     if (policy === null || typeof policy !== 'object') {
       throw new Error(IAMExceptionMessages.POLICY_OBJECT_REQUIRED);
     }
 
     const {options, callback: cb} = normalize<
       SetPolicyOptions,
-      SetPolicyCallback
+      StorageCallback<Policy>
     >(optionsOrCallback, callback);
 
     let maxRetries;
@@ -342,36 +296,35 @@ class Iam {
       maxRetries = 0;
     }
 
-    this.request_(
-      {
-        method: 'PUT',
-        uri: '/iam',
-        maxRetries,
-        json: Object.assign(
-          {
-            resourceId: this.resourceId_,
-          },
-          policy
-        ),
-        qs: options,
-      },
-      cb
-    );
+    const reqPromise = this.#makeRequest<Policy>({
+      method: 'PUT',
+      url: '/iam',
+      maxRetries,
+      body: Object.assign(
+        {
+          resourceId: this.resourceId_,
+        },
+        policy
+      ),
+      queryParameters: options as unknown as StorageQueryParameters,
+    });
+
+    return cb ? reqPromise.then(resp => cb(null, resp!)).catch(cb) : reqPromise;
   }
 
   testPermissions(
     permissions: string | string[],
     options?: TestIamPermissionsOptions
-  ): Promise<TestIamPermissionsResponse>;
+  ): Promise<string[]>;
   testPermissions(
     permissions: string | string[],
-    callback: TestIamPermissionsCallback
-  ): void;
+    callback: StorageCallback<string[]>
+  ): Promise<void>;
   testPermissions(
     permissions: string | string[],
     options: TestIamPermissionsOptions,
-    callback: TestIamPermissionsCallback
-  ): void;
+    callback: StorageCallback<string[]>
+  ): Promise<void>;
   /**
    * Test a set of permissions for a resource.
    *
@@ -429,16 +382,16 @@ class Iam {
    */
   testPermissions(
     permissions: string | string[],
-    optionsOrCallback?: TestIamPermissionsOptions | TestIamPermissionsCallback,
-    callback?: TestIamPermissionsCallback
-  ): Promise<TestIamPermissionsResponse> | void {
+    optionsOrCallback?: TestIamPermissionsOptions | StorageCallback<string[]>,
+    callback?: StorageCallback<string[]>
+  ): Promise<string[] | void> {
     if (!Array.isArray(permissions) && typeof permissions !== 'string') {
       throw new Error(IAMExceptionMessages.PERMISSIONS_REQUIRED);
     }
 
     const {options, callback: cb} = normalize<
       TestIamPermissionsOptions,
-      TestIamPermissionsCallback
+      StorageCallback<string[]>
     >(optionsOrCallback, callback);
 
     const permissionsArray = Array.isArray(permissions)
@@ -452,41 +405,23 @@ class Iam {
       options
     );
 
-    this.request_(
-      {
-        uri: '/iam/testPermissions',
-        qs: req,
-        useQuerystring: true,
-      },
-      (err, resp) => {
-        if (err) {
-          cb!(err, null, resp);
-          return;
-        }
+    const reqPromise = this.#makeRequest<{
+      kind: string;
+      permissions?: string[];
+    }>({
+      method: 'GET',
+      url: '/iam/testPermissions',
+      queryParameters: req as unknown as StorageQueryParameters,
+    });
 
-        const availablePermissions = Array.isArray(resp.permissions)
-          ? resp.permissions
-          : [];
-
-        const permissionsHash = permissionsArray.reduce(
-          (acc: {[index: string]: boolean}, permission) => {
-            acc[permission] = availablePermissions.indexOf(permission) > -1;
-            return acc;
-          },
-          {}
-        );
-
-        cb!(null, permissionsHash, resp);
-      }
-    );
+    return cb
+      ? reqPromise
+          .then(resp => {
+            return resp?.permissions;
+          })
+          .catch(cb)
+      : reqPromise.then(resp => resp?.permissions);
   }
 }
-
-/*! Developer Documentation
- *
- * All async methods (except for streams) will return a Promise in the event
- * that a callback is omitted.
- */
-promisifyAll(Iam);
 
 export {Iam};

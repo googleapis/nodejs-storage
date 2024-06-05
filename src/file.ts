@@ -41,7 +41,6 @@ import {
 } from './signer.js';
 import {
   ResponseBody,
-  ApiError,
   Duplexify,
   GCCL_GCS_CMD_KEY,
 } from './nodejs-common/util.js';
@@ -70,6 +69,7 @@ import {
   StorageQueryParameters,
   StorageRequestOptions,
 } from './storage-transport.js';
+import {GaxiosError, GaxiosInterceptor, GaxiosOptions, Gaxios} from 'gaxios';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -261,12 +261,6 @@ export interface MakeFilePrivateOptions {
 export type MakeFilePrivateResponse = [unknown];
 
 export type MakeFilePrivateCallback = SetFileMetadataCallback;
-
-export interface IsPublicCallback {
-  (err: Error | null, resp?: boolean): void;
-}
-
-export type IsPublicResponse = [boolean];
 
 export interface MakeFilePublicCallback {
   (err?: Error | null, apiResponse?: unknown): void;
@@ -540,7 +534,7 @@ class File extends ServiceObject<File, FileMetadata> {
   private encryptionKey?: string | Buffer;
   private encryptionKeyBase64?: string;
   private encryptionKeyHash?: string;
-  //private encryptionKeyInterceptor?: Interceptor;
+  private encryptionKeyInterceptor?: GaxiosInterceptor<GaxiosOptions>;
   private instanceRetryValue?: boolean;
   instancePreconditionOpts?: PreconditionOptions;
 
@@ -1654,15 +1648,19 @@ class File extends ServiceObject<File, FileMetadata> {
         reqOpts[GCCL_GCS_CMD_KEY] = options[GCCL_GCS_CMD_KEY];
       }
 
-      this.requestStream(reqOpts)
-        .on('error', err => {
-          throughStream.destroy(err);
-        })
-        .on('response', res => {
-          throughStream.emit('response', res);
-          util.handleResp(null, res, null, onResponse);
-        })
-        .resume();
+      reqOpts.responseType = 'stream';
+      this.storageTransport.makeRequest<Readable>(reqOpts).then(stream => {
+        stream = stream as Readable;
+        stream
+          .on('error', err => {
+            throughStream.destroy(err);
+          })
+          .on('response', res => {
+            throughStream.emit('response', res);
+            onResponse(null, null, res);
+          })
+          .resume();
+      });
     };
     throughStream.on('reading', makeRequest);
 
@@ -2486,7 +2484,11 @@ class File extends ServiceObject<File, FileMetadata> {
     callback?: GetExpirationDateCallback
   ): void | Promise<GetExpirationDateResponse> {
     this.getMetadata(
-      (err: ApiError | null, metadata: FileMetadata, apiResponse: unknown) => {
+      (
+        err: GaxiosError | null,
+        metadata: FileMetadata,
+        apiResponse: unknown
+      ) => {
         if (err) {
           callback!(err, null, apiResponse);
           return;
@@ -3154,8 +3156,8 @@ class File extends ServiceObject<File, FileMetadata> {
       .then(signedUrl => callback!(null, signedUrl), callback!);
   }
 
-  isPublic(): Promise<IsPublicResponse>;
-  isPublic(callback: IsPublicCallback): void;
+  isPublic(): Promise<boolean>;
+  isPublic(callback: StorageCallback<boolean>): Promise<void>;
   /**
    * @callback IsPublicCallback
    * @param {?Error} err Request error, if any.
@@ -3204,48 +3206,33 @@ class File extends ServiceObject<File, FileMetadata> {
    * ```
    */
 
-  isPublic(callback?: IsPublicCallback): Promise<IsPublicResponse> | void {
-    // Build any custom headers based on the defined interceptors on the parent
-    // storage object and this object
-    //TODO: Interceptors
-    //const storageInterceptors = this.storage?.interceptors || [];
-    //const fileInterceptors = this.interceptors || [];
-    //const allInterceptors = storageInterceptors.concat(fileInterceptors);
-    /* const headers = allInterceptors.reduce((acc, curInterceptor) => {
-      const currentHeaders = curInterceptor.request({
-        uri: `${this.storage.apiEndpoint}/${
-          this.bucket.name
-        }/${encodeURIComponent(this.name)}`,
-      });
+  isPublic(
+    callback?: StorageCallback<boolean>
+  ): Promise<boolean> | Promise<void> {
+    const gaxios = new Gaxios({baseURL: this.storage.apiEndpoint});
+    gaxios.interceptors.request = this.storage.interceptors;
+    const reqPromise = gaxios.request({
+      method: 'GET',
+      url: `${this.bucket.name}/${encodeURIComponent(this.name)}`,
+    });
 
-      Object.assign(acc, currentHeaders.headers);
-      return acc;
-    }, {}); */
-
-    util.makeRequest(
-      {
-        method: 'GET',
-        url: `${this.storage.apiEndpoint}/${
-          this.bucket.name
-        }/${encodeURIComponent(this.name)}`,
-        //headers,
-      },
-      {
-        retryOptions: this.storage.retryOptions,
-      },
-      (err: Error | ApiError | null) => {
-        if (err) {
-          const apiError = err as ApiError;
-          if (apiError.code === 403) {
-            callback!(null, false);
-          } else {
-            callback!(err);
-          }
-        } else {
-          callback!(null, true);
-        }
-      }
-    );
+    return callback
+      ? reqPromise
+          .then(() => callback(null, true))
+          .catch(err => {
+            const apiError = err as GaxiosError;
+            if (apiError.status === 403) {
+              callback(null, false);
+              return;
+            }
+            callback(err);
+          })
+      : reqPromise
+          .then(() => true)
+          .catch(err => {
+            const apiError = err as GaxiosError;
+            return apiError.status === 403;
+          });
   }
 
   makePrivate(
@@ -3892,7 +3879,7 @@ class File extends ServiceObject<File, FileMetadata> {
           const handleError = (err: Error) => {
             if (
               this.storage.retryOptions.autoRetry &&
-              this.storage.retryOptions.retryableErrorFn!(err)
+              this.storage.retryOptions.retryableErrorFn!(err as GaxiosError)
             ) {
               return reject(err);
             }

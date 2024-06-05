@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 import {EventEmitter} from 'events';
-import {StreamRequestOptions} from './service.js';
 import {util} from './util.js';
-//import {Storage} from '../storage.js';
-//import {Bucket} from '../bucket.js';
 import {
   StorageCallback,
   StorageRequestOptions,
   StorageTransport,
 } from '../storage-transport.js';
 import {GaxiosError} from 'gaxios';
-import {Readable} from 'stream';
 
 export type GetMetadataOptions = object;
 export type ExistsOptions = object;
@@ -529,86 +525,6 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
           this.metadata = resp!;
           return this.metadata;
         }) as Promise<K>);
-  }
-
-  /**
-   * Make an authenticated API request.
-   *
-   * @private
-   *
-   * @param {object} reqOpts - Request options that are passed to `request`.
-   * @param {string} reqOpts.uri - A URI relative to the baseUrl.
-   * @param {function} callback - The callback function passed to `request`.
-   */
-  private request_(reqOpts: StreamRequestOptions): Promise<T>;
-  private request_(
-    reqOpts: StorageRequestOptions,
-    callback: StorageCallback<T>
-  ): void;
-  private request_(
-    reqOpts: StreamRequestOptions | StreamRequestOptions,
-    callback?: StorageCallback<T>
-  ): void | Promise<T> {
-    /* reqOpts = {...reqOpts};
-
-    if (this.projectId) {
-      reqOpts.projectId = this.projectId;
-    }
-
-    const isAbsoluteUrl = reqOpts.uri.indexOf('http') === 0;
-    const uriComponents = [this.baseUrl, this.id || '', reqOpts.uri];
-
-    if (isAbsoluteUrl) {
-      uriComponents.splice(0, uriComponents.indexOf(reqOpts.uri));
-    }
-
-    reqOpts.uri = uriComponents
-      .filter(x => x!.trim()) // Limit to non-empty strings.
-      .map(uriComponent => {
-        const trimSlashesRegex = /^\/*|\/*$/g;
-        return uriComponent!.replace(trimSlashesRegex, '');
-      })
-      .join('/');
-
-    const childInterceptors = Array.isArray(reqOpts.interceptors_)
-      ? reqOpts.interceptors_
-      : [];
-    const localInterceptors = [].slice.call(this.interceptors);
-
-    reqOpts.interceptors_ = childInterceptors.concat(localInterceptors);
-
-    if (reqOpts.shouldReturnStream) {
-      //return this.parent.requestStream(reqOpts);
-    }
-    //this.parent.request(reqOpts, callback!); */
-  }
-
-  /**
-   * Make an authenticated API request.
-   *
-   * @param {object} reqOpts - Request options that are passed to `request`.
-   * @param {string} reqOpts.uri - A URI relative to the baseUrl.
-   * @param {function} callback - The callback function passed to `request`.
-   */
-  request(reqOpts: StorageRequestOptions): Promise<T>;
-  request(reqOpts: StorageRequestOptions, callback: StorageCallback<T>): void;
-  request(
-    reqOpts: StorageRequestOptions,
-    callback?: StorageCallback<T>
-  ): void | Promise<T> {
-    this.request_(reqOpts, callback!);
-  }
-
-  /**
-   * Make an authenticated API request.
-   *
-   * @param {object} reqOpts - Request options that are passed to `request`.
-   * @param {string} reqOpts.uri - A URI relative to the baseUrl.
-   */
-  requestStream(reqOpts: StorageRequestOptions): Readable {
-    const opts = {...reqOpts, shouldReturnStream: true};
-    //return this.request_(opts as StreamRequestOptions);
-    return new Readable();
   }
 }
 

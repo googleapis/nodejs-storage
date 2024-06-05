@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ApiError, ServiceOptions} from './nodejs-common/index.js';
+import {ServiceOptions} from './nodejs-common/index.js';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import {Readable} from 'stream';
@@ -35,7 +35,7 @@ import {
   StorageQueryParameters,
   StorageTransport,
 } from './storage-transport.js';
-import {GaxiosError} from 'gaxios';
+import {GaxiosError, GaxiosInterceptor, GaxiosOptions} from 'gaxios';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -65,7 +65,7 @@ export interface RetryOptions {
   maxRetryDelay?: number;
   autoRetry?: boolean;
   maxRetries?: number;
-  retryableErrorFn?: (err: ApiError) => boolean;
+  retryableErrorFn?: (err: GaxiosError) => boolean;
   idempotencyStrategy?: IdempotencyStrategy;
 }
 
@@ -249,7 +249,7 @@ const IDEMPOTENCY_STRATEGY_DEFAULT = IdempotencyStrategy.RetryConditional;
  * @param {error} err - The API error to check if it is appropriate to retry.
  * @return {boolean} True if the API request should be retried, false otherwise.
  */
-export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
+export const RETRYABLE_ERR_FN_DEFAULT = function (err?: GaxiosError) {
   const isConnectionProblem = (reason: string) => {
     return (
       reason.includes('eai_again') || // DNS lookup error
@@ -261,7 +261,7 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
   };
 
   if (err) {
-    if ([408, 429, 500, 502, 503, 504].indexOf(err.code!) !== -1) {
+    if ([408, 429, 500, 502, 503, 504].indexOf(err.status!) !== -1) {
       return true;
     }
 
@@ -272,15 +272,6 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
       const reason = (err.code as string).toLowerCase();
       if (isConnectionProblem(reason)) {
         return true;
-      }
-    }
-
-    if (err.errors) {
-      for (const e of err.errors) {
-        const reason = e?.reason?.toString().toLowerCase();
-        if (reason && isConnectionProblem(reason)) {
-          return true;
-        }
       }
     }
   }
@@ -482,7 +473,7 @@ export class Storage {
   projectId?: string;
   apiEndpoint: string;
   storageTransport: StorageTransport;
-  //interceptors: Interceptor[];
+  interceptors: Set<GaxiosInterceptor<GaxiosOptions>>;
   universeDomain: string;
   customEndpoint = false;
   name = '';
@@ -756,7 +747,7 @@ export class Storage {
     this.retryOptions = config.retryOptions;
 
     this.storageTransport = new StorageTransport({...config, ...options});
-    //this.interceptors = [];
+    this.interceptors = new Set<GaxiosInterceptor<GaxiosOptions>>();
     this.universeDomain = options.universeDomain || DEFAULT_UNIVERSE;
 
     this.getBucketsStream = paginator.streamify('getBuckets');

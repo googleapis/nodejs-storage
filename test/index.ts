@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ApiError, util} from '../src/nodejs-common/index.js';
+import {util} from '../src/nodejs-common/index.js';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
 import assert from 'assert';
 import {describe, it, before, beforeEach, after, afterEach} from 'mocha';
@@ -34,6 +34,7 @@ import {
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {getPackageJSON} from '../src/package-json-helper.cjs';
+import {GaxiosError} from 'gaxios';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const hmacKeyModule = require('../src/hmacKey');
@@ -297,8 +298,8 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
       });
       const calledWith = storage.calledWith_[0];
-      const error = new ApiError('502 Error');
-      error.code = 502;
+      const error = new GaxiosError('502 Error', {});
+      error.status = 502;
       assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
     });
 
@@ -319,12 +320,8 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
       });
       const calledWith = storage.calledWith_[0];
-      const error = new ApiError('Connection Reset By Peer error');
-      error.errors = [
-        {
-          reason: 'ECONNRESET',
-        },
-      ];
+      const error = new GaxiosError('Connection Reset By Peer error', {});
+      error.code = 'ECONNRESET';
       assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
     });
 
@@ -333,12 +330,8 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
       });
       const calledWith = storage.calledWith_[0];
-      const error = new ApiError('Broken pipe');
-      error.errors = [
-        {
-          reason: 'EPIPE',
-        },
-      ];
+      const error = new GaxiosError('Broken pipe', {});
+      error.code = 'EPIPE';
       assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
     });
 
@@ -347,16 +340,8 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
       });
       const calledWith = storage.calledWith_[0];
-      const error = new ApiError('Broken pipe');
-      const innerError = {
-        /**
-         * @link https://nodejs.org/api/errors.html#err_socket_connection_timeout
-         * @link https://github.com/nodejs/node/blob/798db3c92a9b9c9f991eed59ce91e9974c052bc9/lib/internal/errors.js#L1570-L1571
-         */
-        reason: 'Socket connection timeout',
-      };
-
-      error.errors = [innerError];
+      const error = new GaxiosError('Broken pipe', {});
+      error.code = 'Socket connection timeout';
       assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
     });
 
@@ -365,8 +350,8 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
       });
       const calledWith = storage.calledWith_[0];
-      const error = new ApiError('999 Error');
-      error.code = 0;
+      const error = new GaxiosError('999 Error', {});
+      error.status = 0;
       assert.strictEqual(
         calledWith.retryOptions.retryableErrorFn(error),
         false
@@ -378,12 +363,8 @@ describe('Storage', () => {
         projectId: PROJECT_ID,
       });
       const calledWith = storage.calledWith_[0];
-      const error = new ApiError('error without a code');
-      error.errors = [
-        {
-          message: 'some error message',
-        },
-      ];
+      const error = new GaxiosError('error without a code', {});
+      error.code = 'some error message';
       assert.strictEqual(
         calledWith.retryOptions.retryableErrorFn(error),
         false
@@ -391,9 +372,9 @@ describe('Storage', () => {
     });
 
     it('should retry a 999 error if dictated by custom function', () => {
-      const customRetryFunc = function (err?: ApiError) {
+      const customRetryFunc = function (err?: GaxiosError) {
         if (err) {
-          if ([999].indexOf(err.code!) !== -1) {
+          if ([999].indexOf(err.status!) !== -1) {
             return true;
           }
         }
@@ -404,8 +385,8 @@ describe('Storage', () => {
         retryOptions: {retryableErrorFn: customRetryFunc},
       });
       const calledWith = storage.calledWith_[0];
-      const error = new ApiError('999 Error');
-      error.code = 999;
+      const error = new GaxiosError('999 Error', {});
+      error.status = 999;
       assert.strictEqual(calledWith.retryOptions.retryableErrorFn(error), true);
     });
 

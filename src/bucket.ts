@@ -12,13 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  ApiError,
-  BodyResponseCallback,
-  GetConfig,
-  ServiceObject,
-  util,
-} from './nodejs-common/index.js';
+import {GetConfig, ServiceObject, util} from './nodejs-common/index.js';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as fs from 'fs';
@@ -31,7 +25,7 @@ import AsyncRetry from 'async-retry';
 import {convertObjKeysToSnakeCase} from './util.js';
 
 import {Acl, AclMetadata} from './acl.js';
-import {Channel} from './channel.js';
+import {Channel, ChannelMetadata} from './channel.js';
 import {
   File,
   FileOptions,
@@ -63,11 +57,8 @@ import {
   Methods,
   SetMetadataOptions,
 } from './nodejs-common/service-object.js';
-import {
-  StorageCallback,
-  StorageQueryParameters,
-  StorageRequestOptions,
-} from './storage-transport.js';
+import {StorageCallback, StorageQueryParameters} from './storage-transport.js';
+import {GaxiosError} from 'gaxios';
 
 interface SourceObject {
   name: string;
@@ -273,7 +264,7 @@ export interface GetBucketOptions extends GetConfig {
 export type GetBucketResponse = [Bucket, unknown];
 
 export interface GetBucketCallback {
-  (err: ApiError | null, bucket: Bucket | null, apiResponse: unknown): void;
+  (err: GaxiosError | null, bucket: Bucket | null, apiResponse: unknown): void;
 }
 
 export interface GetLabelsOptions {
@@ -364,7 +355,7 @@ export type GetBucketMetadataResponse = [BucketMetadata, unknown];
 
 export interface GetBucketMetadataCallback {
   (
-    err: ApiError | null,
+    err: GaxiosError | null,
     metadata: BucketMetadata | null,
     apiResponse: unknown
   ): void;
@@ -1483,7 +1474,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     // The default behavior appends the previously-defined lifecycle rules with
     // the new ones just passed in by the user.
-    this.getMetadata((err: ApiError | null, metadata: BucketMetadata) => {
+    this.getMetadata((err: GaxiosError | null, metadata: BucketMetadata) => {
       if (err) {
         callback!(err);
         return;
@@ -1654,8 +1645,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       Object.assign(options, destinationFile.instancePreconditionOpts, options);
     }
 
-    // Make the request from the destination File object.
-    destinationFile.request(
+    destinationFile.storageTransport.makeRequest(
       {
         method: 'POST',
         url: '/compose',
@@ -1817,7 +1807,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options = optionsOrCallback;
     }
 
-    this.request(
+    this.storageTransport.makeRequest<ChannelMetadata>(
       {
         method: 'POST',
         url: '/o/watch',
@@ -1836,10 +1826,10 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
           return;
         }
 
-        const resourceId = apiResponse.resourceId;
-        const channel = this.storage.channel(id, resourceId);
+        const resourceId = apiResponse?.resourceId;
+        const channel = this.storage.channel(id, resourceId!);
 
-        channel.metadata = apiResponse;
+        channel.metadata = apiResponse!;
 
         callback!(null, channel, apiResponse);
       }
@@ -2001,7 +1991,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       delete body.userProject;
     }
 
-    this.request(
+    this.storageTransport.makeRequest<NotificationMetadata>(
       {
         method: 'POST',
         url: '/notificationConfigs',
@@ -2015,9 +2005,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
           return;
         }
 
-        const notification = this.notification(apiResponse.id);
+        const notification = this.notification(apiResponse!.id!);
 
-        notification.metadata = apiResponse;
+        notification.metadata = apiResponse!;
 
         callback!(null, notification, apiResponse);
       }
@@ -2451,7 +2441,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
     (async () => {
       try {
-        const [policy] = await this.iam.getPolicy();
+        const policy = await this.iam.getPolicy();
         policy.bindings.push({
           members: ['group:cloud-storage-analytics@google.com'],
           role: 'roles/storage.objectCreator',
@@ -2806,8 +2796,12 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
     query = Object.assign({}, query);
 
-    this.request(
+    this.storageTransport.makeRequest<{
+      items?: FileMetadata[];
+      nextPageToken?: string;
+    }>(
       {
+        method: 'GET',
         url: '/o',
         queryParameters: query as StorageQueryParameters,
       },
@@ -2818,7 +2812,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
           return;
         }
 
-        const itemsArray = resp.items ? resp.items : [];
+        const itemsArray = resp?.items ? resp.items : [];
         const files = itemsArray.map((file: FileMetadata) => {
           const options = {} as FileOptions;
 
@@ -2837,7 +2831,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         });
 
         let nextQuery: object | null = null;
-        if (resp.nextPageToken) {
+        if (resp?.nextPageToken) {
           nextQuery = Object.assign({}, query, {
             pageToken: resp.nextPageToken,
           });
@@ -2996,8 +2990,12 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options = optionsOrCallback;
     }
 
-    this.request(
+    this.storageTransport.makeRequest<{
+      kind: string;
+      items?: NotificationMetadata[];
+    }>(
       {
+        method: 'GET',
         url: '/notificationConfigs',
         queryParameters: options as StorageQueryParameters,
       },
@@ -3006,7 +3004,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
           callback!(err, null, resp);
           return;
         }
-        const itemsArray = resp.items ? resp.items : [];
+        const itemsArray = resp?.items ? resp.items : [];
         const notifications = itemsArray.map(
           (notification: NotificationMetadata) => {
             const notificationInstance = this.notification(notification.id!);
@@ -3226,7 +3224,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       throw new Error(BucketExceptionMessages.METAGENERATION_NOT_PROVIDED);
     }
 
-    this.request(
+    this.storageTransport.makeRequest(
       {
         method: 'POST',
         url: '/lockRetentionPolicy',
@@ -3611,32 +3609,6 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options,
       callback!
     );
-  }
-
-  request(reqOpts: StorageRequestOptions): Promise<Bucket>;
-  request(reqOpts: StorageRequestOptions, callback: BodyResponseCallback): void;
-  /**
-   * Makes request and applies userProject query parameter if necessary.
-   *
-   * @private
-   *
-   * @param {object} reqOpts - The request options.
-   * @param {function} callback - The callback function.
-   */
-  request(
-    reqOpts: StorageRequestOptions,
-    callback?: BodyResponseCallback
-  ): void | Promise<Bucket> {
-    if (
-      this.userProject &&
-      (!reqOpts.queryParameters || !reqOpts.queryParameters.userProject)
-    ) {
-      reqOpts.queryParameters = {
-        ...reqOpts.queryParameters,
-        userProject: this.userProject,
-      };
-    }
-    return super.request(reqOpts, callback!);
   }
 
   setLabels(
@@ -4324,7 +4296,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
               .on('error', err => {
                 if (
                   this.storage.retryOptions.autoRetry &&
-                  this.storage.retryOptions.retryableErrorFn!(err)
+                  this.storage.retryOptions.retryableErrorFn!(
+                    err as GaxiosError
+                  )
                 ) {
                   return reject(err);
                 } else {

@@ -16,6 +16,19 @@ import {BaseMetadata, ServiceObject, util} from './nodejs-common/index.js';
 import {StorageCallback} from './storage-transport.js';
 import {Storage} from './storage.js';
 
+export interface ChannelMetadata extends BaseMetadata {
+  resourceId?: string;
+  resourceUri?: string;
+  token?: string;
+  expiration?: number;
+  type?: string;
+  address?: string;
+  payload?: boolean;
+  params?: {
+    [key: string]: string;
+  };
+}
+
 /**
  * Create a channel object to interact with a Cloud Storage channel.
  *
@@ -33,7 +46,7 @@ import {Storage} from './storage.js';
  * const channel = storage.channel('id', 'resource-id');
  * ```
  */
-class Channel extends ServiceObject<Channel, BaseMetadata> {
+class Channel extends ServiceObject<Channel, ChannelMetadata> {
   constructor(storage: Storage, id: string, resourceId: string) {
     const config = {
       parent: storage,

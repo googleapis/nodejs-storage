@@ -29,11 +29,4 @@ export {
   ServiceObjectConfig,
 } from './service-object.js';
 
-export {
-  Abortable,
-  AbortableDuplex,
-  ApiError,
-  BodyResponseCallback,
-  ResponseBody,
-  util,
-} from './util.js';
+export {Abortable, AbortableDuplex, ResponseBody, util} from './util.js';

@@ -56,7 +56,6 @@
  * region_tag:storage_quickstart
  * Full quickstart example:
  */
-export {ApiError} from './nodejs-common/index.js';
 export {
   BucketOptions,
   CreateBucketQuery,
@@ -151,7 +150,7 @@ export {
   UploadResponse,
 } from './bucket.js';
 export * from './crc32c.js';
-export {Channel} from './channel.js';
+export {Channel, ChannelMetadata} from './channel.js';
 export {
   CopyCallback,
   CopyOptions,
@@ -222,17 +221,12 @@ export {
   SetHmacKeyMetadataOptions,
 } from './hmacKey.js';
 export {
-  GetPolicyCallback,
   GetPolicyOptions,
   GetPolicyResponse,
   Iam,
   Policy,
-  SetPolicyCallback,
   SetPolicyOptions,
-  SetPolicyResponse,
-  TestIamPermissionsCallback,
   TestIamPermissionsOptions,
-  TestIamPermissionsResponse,
 } from './iam.js';
 export {
   DeleteNotificationCallback,

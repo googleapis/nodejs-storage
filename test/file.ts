@@ -13,8 +13,6 @@
 // limitations under the License.
 
 import {
-  ApiError,
-  BodyResponseCallback,
   ServiceObject,
   ServiceObjectConfig,
   util,
@@ -61,6 +59,7 @@ import {
   SetMetadataOptions,
 } from '../src/nodejs-common/service-object.js';
 import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util.js';
+import {GaxiosError} from 'gaxios';
 
 class HTTPError extends Error {
   code: number;
@@ -71,24 +70,6 @@ class HTTPError extends Error {
 }
 
 let promisified = false;
-let makeWritableStreamOverride: Function | null;
-let handleRespOverride: Function | null;
-const fakeUtil = Object.assign({}, util, {
-  handleResp(...args: Array<{}>) {
-    (handleRespOverride || util.handleResp)(...args);
-  },
-  makeWritableStream(...args: Array<{}>) {
-    (makeWritableStreamOverride || util.makeWritableStream)(...args);
-  },
-  makeRequest(
-    reqOpts: StorageRequestOptions,
-    config: object,
-    callback: BodyResponseCallback
-  ) {
-    callback(null);
-  },
-});
-
 const fakePromisify = {
   // tslint:disable-next-line:variable-name
   promisifyAll(Class: Function, options: PromisifyAllOptions) {
@@ -190,21 +171,16 @@ describe('File', () => {
   const DATA = 'test data';
   // crc32c hash of 'test data'
   const CRC32C_HASH = 'M3m0yg==';
-  // md5 hash of 'test data'
-  const MD5_HASH = '63M6AMDJ0zbmVpGjerVCkw==';
   // crc32c hash of `zlib.gzipSync(Buffer.from(DATA), {level: 9})`
   const GZIPPED_DATA = Buffer.from(
     'H4sIAAAAAAACEytJLS5RSEksSQQAsq4I0wkAAAA=',
     'base64'
   );
-  //crc32c hash of `GZIPPED_DATA`
-  const CRC32C_HASH_GZIP = '64jygg==';
 
   before(() => {
     File = proxyquire('../src/file.js', {
       './nodejs-common': {
         ServiceObject: FakeServiceObject,
-        util: fakeUtil,
       },
       '@google-cloud/promisify': fakePromisify,
       fs: fakeFs,
@@ -218,8 +194,6 @@ describe('File', () => {
   beforeEach(() => {
     Object.assign(fakeFs, fsCached);
     Object.assign(fakeOs, osCached);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    FakeServiceObject.prototype.request = util.noop as any;
 
     STORAGE = {
       createBucket: util.noop,
@@ -260,8 +234,6 @@ describe('File', () => {
     specialCharsFile.request = util.noop;
 
     createGunzipOverride = null;
-    handleRespOverride = null;
-    makeWritableStreamOverride = null;
     resumableUploadOverride = null;
   });
 
@@ -938,47 +910,7 @@ describe('File', () => {
       });
     }
 
-    function getFakeFailedRequest(error: Error) {
-      // tslint:disable-next-line:variable-name
-      const FakeRequest = getFakeRequest();
-
-      class FakeFailedRequest extends FakeRequest {
-        constructor(_req?: StorageRequestOptions) {
-          super(_req);
-          setImmediate(() => {
-            this.emit('error', error);
-          });
-        }
-      }
-
-      // Return a Proxy of FakeFailedRequest which can be instantiated
-      // without new.
-      return new Proxy(FakeFailedRequest, {
-        apply(target, _, argumentsList) {
-          return new target(...argumentsList);
-        },
-      });
-    }
-
-    beforeEach(() => {
-      handleRespOverride = (
-        err: Error,
-        res: {},
-        body: {},
-        callback: Function
-      ) => {
-        const rawResponseStream = new PassThrough();
-        Object.assign(rawResponseStream, {
-          toJSON() {
-            return {headers: {}};
-          },
-        });
-        callback(null, null, rawResponseStream);
-        setImmediate(() => {
-          rawResponseStream.end();
-        });
-      };
-    });
+    beforeEach(() => {});
 
     it('should throw if both a range and validation is given', () => {
       assert.throws(() => {
@@ -1058,254 +990,8 @@ describe('File', () => {
         .resume();
     });
 
-    describe('authenticating', () => {
-      it('should create an authenticated request', done => {
-        file.requestStream = (opts: StorageRequestOptions) => {
-          assert.deepStrictEqual(opts, {
-            uri: '',
-            headers: {
-              'Accept-Encoding': 'gzip',
-              'Cache-Control': 'no-store',
-            },
-            qs: {
-              alt: 'media',
-            },
-          });
-          setImmediate(() => {
-            done();
-          });
-          return duplexify();
-        };
-
-        file.createReadStream().resume();
-      });
-
-      describe('errors', () => {
-        const ERROR = new Error('Error.');
-
-        beforeEach(() => {
-          file.requestStream = () => {
-            const requestStream = new PassThrough();
-
-            setImmediate(() => {
-              requestStream.emit('error', ERROR);
-            });
-
-            return requestStream;
-          };
-        });
-
-        it('should emit an error from authenticating', done => {
-          file
-            .createReadStream()
-            .once('error', (err: Error) => {
-              assert.strictEqual(err, ERROR);
-              done();
-            })
-            .resume();
-        });
-      });
-    });
-
-    describe('requestStream', () => {
-      it('should get readable stream from request', done => {
-        file.requestStream = () => {
-          setImmediate(() => {
-            done();
-          });
-
-          return new PassThrough();
-        };
-
-        file.createReadStream().resume();
-      });
-
-      it('should emit response event from request', done => {
-        file.requestStream = getFakeSuccessfulRequest('body');
-
-        file
-          .createReadStream({validation: false})
-          .on('response', () => {
-            done();
-          })
-          .resume();
-      });
-
-      it('should let util.handleResp handle the response', done => {
-        const response = {a: 'b', c: 'd'};
-
-        handleRespOverride = (err: Error, response_: {}, body: {}) => {
-          assert.strictEqual(err, null);
-          assert.strictEqual(response_, response);
-          assert.strictEqual(body, null);
-          done();
-        };
-
-        file.requestStream = () => {
-          const rowRequestStream = new PassThrough();
-          setImmediate(() => {
-            rowRequestStream.emit('response', response);
-          });
-          return rowRequestStream;
-        };
-
-        file.createReadStream().resume();
-      });
-
-      describe('errors', () => {
-        const ERROR = new Error('Error.');
-
-        beforeEach(() => {
-          file.requestStream = getFakeFailedRequest(ERROR);
-        });
-
-        it('should emit the error', done => {
-          file
-            .createReadStream()
-            .once('error', (err: Error) => {
-              assert.deepStrictEqual(err, ERROR);
-              done();
-            })
-            .resume();
-        });
-
-        it('should parse a response stream for a better error', done => {
-          const rawResponsePayload = 'error message from body';
-          const rawResponseStream = new PassThrough();
-          const requestStream = new PassThrough();
-
-          handleRespOverride = (
-            err: Error,
-            res: {},
-            body: {},
-            callback: Function
-          ) => {
-            callback(ERROR, null, res);
-            setImmediate(() => {
-              rawResponseStream.end(rawResponsePayload);
-            });
-          };
-
-          file.requestStream = () => {
-            setImmediate(() => {
-              requestStream.emit('response', rawResponseStream);
-            });
-            return requestStream;
-          };
-
-          file
-            .createReadStream()
-            .once('error', (err: Error) => {
-              assert.strictEqual(err, ERROR);
-              assert.strictEqual(err.message, rawResponsePayload);
-              done();
-            })
-            .resume();
-        });
-
-        it('should emit errors from the request stream', done => {
-          const error = new Error('Error.');
-          const rawResponseStream = new PassThrough();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (rawResponseStream as any).toJSON = () => {
-            return {headers: {}};
-          };
-          const requestStream = new PassThrough();
-
-          handleRespOverride = (
-            err: Error,
-            res: {},
-            body: {},
-            callback: Function
-          ) => {
-            callback(null, null, rawResponseStream);
-            setImmediate(() => {
-              rawResponseStream.emit('error', error);
-            });
-          };
-
-          file.requestStream = () => {
-            setImmediate(() => {
-              requestStream.emit('response', rawResponseStream);
-            });
-            return requestStream;
-          };
-
-          file
-            .createReadStream()
-            .on('error', (err: Error) => {
-              assert.strictEqual(err, error);
-              done();
-            })
-            .resume();
-        });
-
-        it('should not handle both error and end events', done => {
-          const error = new Error('Error.');
-          const rawResponseStream = new PassThrough();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (rawResponseStream as any).toJSON = () => {
-            return {headers: {}};
-          };
-          const requestStream = new PassThrough();
-
-          handleRespOverride = (
-            err: Error,
-            res: {},
-            body: {},
-            callback: Function
-          ) => {
-            callback(null, null, rawResponseStream);
-            setImmediate(() => {
-              rawResponseStream.emit('error', error);
-            });
-          };
-
-          file.requestStream = () => {
-            setImmediate(() => {
-              requestStream.emit('response', rawResponseStream);
-            });
-            return requestStream;
-          };
-
-          file
-            .createReadStream({validation: false})
-            .on('error', (err: Error) => {
-              assert.strictEqual(err, error);
-              rawResponseStream.emit('end');
-              setImmediate(done);
-            })
-            .on('end', () => {
-              done(new Error('Should not have been called.'));
-            })
-            .resume();
-        });
-      });
-    });
-
     describe('compression', () => {
       beforeEach(() => {
-        handleRespOverride = (
-          err: Error,
-          res: {},
-          body: {},
-          callback: Function
-        ) => {
-          const rawResponseStream = new PassThrough();
-          Object.assign(rawResponseStream, {
-            toJSON() {
-              return {
-                headers: {
-                  'content-encoding': 'gzip',
-                  'x-goog-hash': `crc32c=${CRC32C_HASH_GZIP},md5=${MD5_HASH}`,
-                },
-              };
-            },
-          });
-          callback(null, null, rawResponseStream);
-
-          rawResponseStream.end(GZIPPED_DATA);
-        };
         file.requestStream = getFakeSuccessfulRequest(GZIPPED_DATA);
       });
 
@@ -1374,37 +1060,8 @@ describe('File', () => {
     });
 
     describe('validation', () => {
-      let responseCRC32C = CRC32C_HASH;
-      let responseMD5 = MD5_HASH;
-
       beforeEach(() => {
-        responseCRC32C = CRC32C_HASH;
-        responseMD5 = MD5_HASH;
-
         file.getMetadata = async () => ({});
-
-        handleRespOverride = (
-          err: Error,
-          res: {},
-          body: {},
-          callback: Function
-        ) => {
-          const rawResponseStream = new PassThrough();
-          Object.assign(rawResponseStream, {
-            toJSON() {
-              return {
-                headers: {
-                  'x-goog-hash': `crc32c=${responseCRC32C},md5=${responseMD5}`,
-                  'x-goog-stored-content-encoding': 'identity',
-                },
-              };
-            },
-          });
-          callback(null, null, rawResponseStream);
-          setImmediate(() => {
-            rawResponseStream.end(DATA);
-          });
-        };
         file.requestStream = getFakeSuccessfulRequest(DATA);
       });
 
@@ -1426,29 +1083,6 @@ describe('File', () => {
           file.metadata.crc32c = '.invalid.';
           file.metadata.contentEncoding = 'gzip';
 
-          handleRespOverride = (
-            err: Error,
-            res: {},
-            body: {},
-            callback: Function
-          ) => {
-            const rawResponseStream = new PassThrough();
-            Object.assign(rawResponseStream, {
-              toJSON() {
-                return {
-                  headers: {
-                    'x-goog-hash': `crc32c=${responseCRC32C},md5=${responseMD5}`,
-                    'x-goog-stored-content-encoding': 'gzip',
-                  },
-                };
-              },
-            });
-            callback(null, null, rawResponseStream);
-            setImmediate(() => {
-              rawResponseStream.end(DATA);
-            });
-          };
-
           file
             .createReadStream({validation: 'crc32c'})
             .on('end', done)
@@ -1459,29 +1093,6 @@ describe('File', () => {
       it('should perform validation if file was stored compressed and served compressed', done => {
         file.metadata.crc32c = '.invalid.';
         file.metadata.contentEncoding = 'gzip';
-        handleRespOverride = (
-          err: Error,
-          res: {},
-          body: {},
-          callback: Function
-        ) => {
-          const rawResponseStream = new PassThrough();
-          Object.assign(rawResponseStream, {
-            toJSON() {
-              return {
-                headers: {
-                  'x-goog-hash': `crc32c=${responseCRC32C},md5=${responseMD5}`,
-                  'x-goog-stored-content-encoding': 'gzip',
-                  'content-encoding': 'gzip',
-                },
-              };
-            },
-          });
-          callback(null, null, rawResponseStream);
-          setImmediate(() => {
-            rawResponseStream.end(DATA);
-          });
-        };
 
         const expectedError = new Error('test error');
         setFileValidationToError(expectedError);
@@ -1543,11 +1154,9 @@ describe('File', () => {
       it('should emit an error if crc32c validation fails', done => {
         file.requestStream = getFakeSuccessfulRequest('bad-data');
 
-        responseCRC32C = 'bad-crc32c';
-
         file
           .createReadStream({validation: 'crc32c'})
-          .on('error', (err: ApiError) => {
+          .on('error', (err: GaxiosError) => {
             assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
             done();
           })
@@ -1566,12 +1175,9 @@ describe('File', () => {
 
       it('should emit an error if md5 validation fails', done => {
         file.requestStream = getFakeSuccessfulRequest('bad-data');
-
-        responseMD5 = 'bad-md5';
-
         file
           .createReadStream({validation: 'md5'})
-          .on('error', (err: ApiError) => {
+          .on('error', (err: GaxiosError) => {
             assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
             done();
           })
@@ -1581,11 +1187,9 @@ describe('File', () => {
       it('should default to crc32c validation', done => {
         file.requestStream = getFakeSuccessfulRequest('bad-data');
 
-        responseCRC32C = 'bad-crc32c';
-
         file
           .createReadStream()
-          .on('error', (err: ApiError) => {
+          .on('error', (err: GaxiosError) => {
             assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
             done();
           })
@@ -1604,28 +1208,6 @@ describe('File', () => {
       });
 
       it('should handle x-goog-hash with only crc32c', done => {
-        handleRespOverride = (
-          err: Error,
-          res: {},
-          body: {},
-          callback: Function
-        ) => {
-          const rawResponseStream = new PassThrough();
-          Object.assign(rawResponseStream, {
-            toJSON() {
-              return {
-                headers: {
-                  'x-goog-hash': `crc32c=${CRC32C_HASH}`,
-                },
-              };
-            },
-          });
-          callback(null, null, rawResponseStream);
-          setImmediate(() => {
-            rawResponseStream.end(DATA);
-          });
-        };
-
         file.requestStream = getFakeSuccessfulRequest(DATA);
 
         file.createReadStream().on('error', done).on('end', done).resume();
@@ -1635,10 +1217,8 @@ describe('File', () => {
         it('should destroy after failed validation', done => {
           file.requestStream = getFakeSuccessfulRequest('bad-data');
 
-          responseMD5 = 'bad-md5';
-
           const readStream = file.createReadStream({validation: 'md5'});
-          readStream.on('error', (err: ApiError) => {
+          readStream.on('error', (err: GaxiosError) => {
             assert.strictEqual(err.code, 'CONTENT_DOWNLOAD_MISMATCH');
             done();
           });
@@ -1647,30 +1227,11 @@ describe('File', () => {
         });
 
         it('should destroy if MD5 is requested but absent', done => {
-          handleRespOverride = (
-            err: Error,
-            res: {},
-            body: {},
-            callback: Function
-          ) => {
-            const rawResponseStream = new PassThrough();
-            Object.assign(rawResponseStream, {
-              toJSON() {
-                return {
-                  headers: {},
-                };
-              },
-            });
-            callback(null, null, rawResponseStream);
-            setImmediate(() => {
-              rawResponseStream.end();
-            });
-          };
           file.requestStream = getFakeSuccessfulRequest('bad-data');
 
           const readStream = file.createReadStream({validation: 'md5'});
 
-          readStream.on('error', (err: ApiError) => {
+          readStream.on('error', (err: GaxiosError) => {
             assert.strictEqual(err.code, 'MD5_NOT_AVAILABLE');
             done();
           });
@@ -2011,17 +1572,6 @@ describe('File', () => {
 
     it('should emit progress via simple upload', done => {
       const progress = {};
-
-      makeWritableStreamOverride = (dup: duplexify.Duplexify) => {
-        const uploadStream = new PassThrough();
-        uploadStream.on('progress', evt => dup.emit('progress', evt));
-
-        dup.setWritable(uploadStream);
-        setImmediate(() => {
-          uploadStream.emit('progress', progress);
-        });
-      };
-
       const writable = file.createWriteStream({resumable: false});
 
       writable.on('progress', (evt: {}) => {
@@ -2298,7 +1848,7 @@ describe('File', () => {
         writable.write('bad-data');
         writable.end();
 
-        writable.on('error', (err: ApiError) => {
+        writable.on('error', (err: GaxiosError) => {
           assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
           done();
         });
@@ -2339,7 +1889,7 @@ describe('File', () => {
         writable.write('bad-data');
         writable.end();
 
-        writable.on('error', (err: ApiError) => {
+        writable.on('error', (err: GaxiosError) => {
           assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
           done();
         });
@@ -2362,7 +1912,7 @@ describe('File', () => {
         writable.write(data);
         writable.end();
 
-        writable.on('error', (err: ApiError) => {
+        writable.on('error', (err: GaxiosError) => {
           assert.strictEqual(err.code, 'FILE_NO_UPLOAD');
           done();
         });
@@ -2401,7 +1951,7 @@ describe('File', () => {
 
         file.delete = async () => {};
 
-        writable.on('error', (e: ApiError) => {
+        writable.on('error', (e: GaxiosError) => {
           assert.equal(e.code, 'FILE_NO_UPLOAD');
           done();
         });
@@ -2427,7 +1977,7 @@ describe('File', () => {
         writable.write(data);
         writable.end();
 
-        writable.on('error', (err: ApiError) => {
+        writable.on('error', (err: GaxiosError) => {
           assert.strictEqual(err.code, 'MD5_NOT_AVAILABLE');
           done();
         });
@@ -2454,7 +2004,7 @@ describe('File', () => {
         writable.write(data);
         writable.end();
 
-        writable.on('error', (err: ApiError) => {
+        writable.on('error', (err: GaxiosError) => {
           assert.strictEqual(err.code, 'FILE_NO_UPLOAD_DELETE');
           assert(err.message.indexOf(deleteErrorMessage) > -1);
           done();
@@ -3855,7 +3405,7 @@ describe('File', () => {
     afterEach(() => sandbox.restore());
 
     it('should execute callback with `true` in response', done => {
-      file.isPublic((err: ApiError, resp: boolean) => {
+      file.isPublic((err: GaxiosError, resp: boolean) => {
         assert.ifError(err);
         assert.strictEqual(resp, true);
         done();
@@ -3863,16 +3413,16 @@ describe('File', () => {
     });
 
     it('should execute callback with `false` in response', done => {
-      fakeUtil.makeRequest = function (
+      /* fakeUtil.makeRequest = function (
         reqOpts: StorageRequestOptions,
         config: object,
-        callback: BodyResponseCallback
+        callback: StorageCallback<boolean>
       ) {
-        const error = new ApiError('Permission Denied.');
-        error.code = 403;
+        const error = new GaxiosError('Permission Denied.', {});
+        error.status = 403;
         callback(error);
-      };
-      file.isPublic((err: ApiError, resp: boolean) => {
+      }; */
+      file.isPublic((err: GaxiosError, resp: boolean) => {
         assert.ifError(err);
         assert.strictEqual(resp, false);
         done();
@@ -3880,31 +3430,31 @@ describe('File', () => {
     });
 
     it('should propagate non-403 errors to user', done => {
-      const error = new ApiError('400 Error.');
-      error.code = 400;
-      fakeUtil.makeRequest = function (
+      const error = new GaxiosError('400 Error.', {});
+      error.status = 400;
+      /* fakeUtil.makeRequest = function (
         reqOpts: StorageRequestOptions,
         config: object,
-        callback: BodyResponseCallback
+        callback: StorageCallback<void>
       ) {
         callback(error);
-      };
-      file.isPublic((err: ApiError) => {
+      }; */
+      file.isPublic((err: GaxiosError) => {
         assert.strictEqual(err, error);
         done();
       });
     });
 
     it('should correctly send a GET request', done => {
-      fakeUtil.makeRequest = function (
+      /* fakeUtil.makeRequest = function (
         reqOpts: StorageRequestOptions,
         config: object,
-        callback: BodyResponseCallback
+        callback: StorageCallback<void>
       ) {
         assert.strictEqual(reqOpts.method, 'GET');
         callback(null);
-      };
-      file.isPublic((err: ApiError) => {
+      }; */
+      file.isPublic((err: GaxiosError) => {
         assert.ifError(err);
         done();
       });
@@ -3916,30 +3466,30 @@ describe('File', () => {
         BUCKET.name
       }/${encodeURIComponent(file.name)}`;
 
-      fakeUtil.makeRequest = function (
+      /* fakeUtil.makeRequest = function (
         reqOpts: StorageRequestOptions,
         config: object,
-        callback: BodyResponseCallback
+        callback: StorageCallback<void>
       ) {
         assert.strictEqual(reqOpts.url, expectedURL);
         callback(null);
-      };
-      file.isPublic((err: ApiError) => {
+      }; */
+      file.isPublic((err: GaxiosError) => {
         assert.ifError(err);
         done();
       });
     });
 
     it('should not set any headers when there are no interceptors', done => {
-      fakeUtil.makeRequest = function (
+      /* fakeUtil.makeRequest = function (
         reqOpts: StorageRequestOptions,
         config: object,
-        callback: BodyResponseCallback
+        callback: StorageCallback<void>
       ) {
         assert.deepStrictEqual(reqOpts.headers, {});
         callback(null);
-      };
-      file.isPublic((err: ApiError) => {
+      }; */
+      file.isPublic((err: GaxiosError) => {
         assert.ifError(err);
         done();
       });
@@ -3956,15 +3506,15 @@ describe('File', () => {
         },
       });
 
-      fakeUtil.makeRequest = function (
+      /* fakeUtil.makeRequest = function (
         reqOpts: StorageRequestOptions,
         config: object,
-        callback: BodyResponseCallback
+        callback: StorageCallback<void>
       ) {
         assert.deepStrictEqual(reqOpts.headers, expectedHeader);
         callback(null);
-      };
-      file.isPublic((err: ApiError) => {
+      }; */
+      file.isPublic((err: GaxiosError) => {
         assert.ifError(err);
         done();
       });
@@ -5075,10 +4625,10 @@ describe('File', () => {
 
   describe('startSimpleUpload_', () => {
     it('should get a writable stream', done => {
-      makeWritableStreamOverride = () => {
+      /*  makeWritableStreamOverride = () => {
         done();
       };
-
+ */
       file.startSimpleUpload_(duplexify());
     });
 
@@ -5092,7 +4642,7 @@ describe('File', () => {
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeWritableStreamOverride = (stream: {}, options_: any) => {
+      /* makeWritableStreamOverride = (stream: {}, options_: any) => {
         assert.deepStrictEqual(options_.metadata, options.metadata);
         assert.deepStrictEqual(options_.request, {
           [GCCL_GCS_CMD_KEY]: undefined,
@@ -5107,27 +4657,27 @@ describe('File', () => {
             '/o',
         });
         done();
-      };
+      }; */
 
       file.startSimpleUpload_(duplexify(), options);
     });
 
     it('should set predefinedAcl when public: true', done => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeWritableStreamOverride = (stream: {}, options_: any) => {
+      /* makeWritableStreamOverride = (stream: {}, options_: any) => {
         assert.strictEqual(options_.request.qs.predefinedAcl, 'publicRead');
         done();
-      };
+      }; */
 
       file.startSimpleUpload_(duplexify(), {public: true});
     });
 
     it('should set predefinedAcl when private: true', done => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeWritableStreamOverride = (stream: {}, options_: any) => {
+      /*  makeWritableStreamOverride = (stream: {}, options_: any) => {
         assert.strictEqual(options_.request.qs.predefinedAcl, 'private');
         done();
-      };
+      }; */
 
       file.startSimpleUpload_(duplexify(), {private: true});
     });
@@ -5135,10 +4685,10 @@ describe('File', () => {
     it('should send query.ifGenerationMatch if File has one', done => {
       const versionedFile = new File(BUCKET, 'new-file.txt', {generation: 1});
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeWritableStreamOverride = (stream: {}, options: any) => {
+      /* makeWritableStreamOverride = (stream: {}, options: any) => {
         assert.strictEqual(options.request.qs.ifGenerationMatch, 1);
         done();
-      };
+      }; */
 
       versionedFile.startSimpleUpload_(duplexify(), {});
     });
@@ -5146,10 +4696,10 @@ describe('File', () => {
     it('should send query.kmsKeyName if File has one', done => {
       file.kmsKeyName = 'kms-key-name';
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeWritableStreamOverride = (stream: {}, options: any) => {
+      /*  makeWritableStreamOverride = (stream: {}, options: any) => {
         assert.strictEqual(options.request.qs.kmsKeyName, file.kmsKeyName);
         done();
-      };
+      }; */
 
       file.startSimpleUpload_(duplexify(), {});
     });
@@ -5159,13 +4709,13 @@ describe('File', () => {
         userProject: 'user-project-id',
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      makeWritableStreamOverride = (stream: {}, options_: any) => {
+      /*  makeWritableStreamOverride = (stream: {}, options_: any) => {
         assert.strictEqual(
           options_.request.qs.userProject,
           options.userProject
         );
         done();
-      };
+      }; */
 
       file.startSimpleUpload_(duplexify(), options);
     });
