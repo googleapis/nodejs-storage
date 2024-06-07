@@ -40,6 +40,7 @@ import {FileMetadata} from './file.js';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import {getPackageJSON} from './package-json-helper.cjs';
+import {StorageCallback} from './storage-transport.js';
 
 const NOT_FOUND_STATUS_CODE = 404;
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
@@ -52,7 +53,6 @@ export interface ErrorWithCode extends Error {
   status?: number | string;
 }
 
-export type CreateUriCallback = (err: Error | null, uri?: string) => void;
 export interface Encryption {
   key: {};
   hash: {};
@@ -264,11 +264,6 @@ export interface ConfigMetadata {
 
 export interface GoogleInnerError {
   reason?: string;
-}
-
-export interface ApiError extends Error {
-  code?: number;
-  errors?: GoogleInnerError[];
 }
 
 export interface CheckUploadStatusConfig {
@@ -668,8 +663,8 @@ export class Upload extends Writable {
   }
 
   createURI(): Promise<string>;
-  createURI(callback: CreateUriCallback): void;
-  createURI(callback?: CreateUriCallback): void | Promise<string> {
+  createURI(callback: StorageCallback<string>): void;
+  createURI(callback?: StorageCallback<string>): void | Promise<string> {
     if (!callback) {
       return this.createURIAsync();
     }
@@ -1012,11 +1007,11 @@ export class Upload extends Writable {
       !this.isSuccessfulResponse(resp.status) &&
       !shouldContinueUploadInAnotherRequest
     ) {
-      const err: ApiError = new Error('Upload failed');
-      err.code = resp.status;
+      const err: GaxiosError = new GaxiosError('Upload failed', {});
+      err.status = resp.status;
       err.name = 'Upload failed';
       if (resp?.data) {
-        err.errors = [resp?.data];
+        err.code = resp?.data;
       }
 
       this.destroy(err);
@@ -1292,10 +1287,13 @@ export function upload(cfg: UploadConfig) {
 }
 
 export function createURI(cfg: UploadConfig): Promise<string>;
-export function createURI(cfg: UploadConfig, callback: CreateUriCallback): void;
 export function createURI(
   cfg: UploadConfig,
-  callback?: CreateUriCallback
+  callback: StorageCallback<string>
+): void;
+export function createURI(
+  cfg: UploadConfig,
+  callback?: StorageCallback<string>
 ): void | Promise<string> {
   const up = new Upload(cfg);
   if (!callback) {

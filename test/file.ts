@@ -115,9 +115,7 @@ function fakeResumableUpload() {
   };
 }
 Object.assign(fakeResumableUpload, {
-  createURI(
-    ...args: [resumableUpload.UploadConfig, resumableUpload.CreateUriCallback]
-  ) {
+  createURI(...args: [resumableUpload.UploadConfig, StorageCallback<string>]) {
     let createURI = resumableUpload.createURI;
 
     if (resumableUploadOverride && resumableUploadOverride.createURI) {

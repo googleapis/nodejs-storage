@@ -29,14 +29,11 @@ import {
   RETRYABLE_ERR_FN_DEFAULT,
 } from '../src/storage.js';
 
-import {
-  ApiError,
-  CreateUriCallback,
-  PROTOCOL_REGEX,
-} from '../src/resumable-upload.js';
+import {PROTOCOL_REGEX} from '../src/resumable-upload.js';
 import {GaxiosOptions, GaxiosError, GaxiosResponse} from 'gaxios';
 import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util.js';
 import {getDirName} from '../src/util.js';
+import {StorageCallback} from '../src/storage-transport.js';
 
 nock.disableNetConnect();
 
@@ -438,25 +435,24 @@ describe('resumable-upload', () => {
 
       it('should create an upload', done => {
         up.startUploading = done;
-        up.createURI = (callback: CreateUriCallback) => {
+        up.createURI = (callback: StorageCallback<string>) => {
           callback(null);
         };
         up.emit('writing');
       });
 
       it('should destroy the stream from an error', done => {
-        const error: ApiError = {
-          message: ':(',
-          name: ':(',
-          code: 123,
-        };
-        up.destroy = (err: ApiError) => {
+        const error = new GaxiosError(':(', {});
+        error.status = 123;
+        error.name = ':(';
+
+        up.destroy = (err: GaxiosError) => {
           assert(err.message.indexOf(error.message) > -1);
           assert(err.name.indexOf(error.name) > -1);
           assert.strictEqual(err.code, 123);
           done();
         };
-        up.createURI = (callback: CreateUriCallback) => {
+        up.createURI = (callback: StorageCallback<string>) => {
           callback(error);
         };
         up.emit('writing');
@@ -1946,8 +1942,8 @@ describe('resumable-upload', () => {
       it('should handle a custom status code when passed a retry function', () => {
         up.getRetryDelay = () => 1;
         const RESP = {status: 1000};
-        const customHandlerFunction = (err: ApiError) => {
-          return err.code === 1000;
+        const customHandlerFunction = (err: GaxiosError) => {
+          return err.status === 1000;
         };
         up.retryOptions.retryableErrorFn = customHandlerFunction;
 

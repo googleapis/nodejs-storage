@@ -25,36 +25,11 @@ import {
 } from 'google-auth-library';
 import * as nock from 'nock';
 import proxyquire from 'proxyquire';
-import * as r from 'teeny-request';
-import retryRequest from 'retry-request';
 import * as sinon from 'sinon';
-import {teenyRequest} from 'teeny-request';
 import {Util} from '../../src/nodejs-common/util.js';
 import {GaxiosError} from 'gaxios';
 
 nock.disableNetConnect();
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let requestOverride: any;
-function fakeRequest() {
-  // eslint-disable-next-line prefer-spread, prefer-rest-params
-  return (requestOverride || teenyRequest).apply(null, arguments);
-}
-
-fakeRequest.defaults = (defaults: r.CoreOptions) => {
-  assert.ok(
-    /^gl-node\/(?<nodeVersion>[^W]+) gccl\/(?<gccl>[^W]+) gccl-invocation-id\/(?<gcclInvocationId>[^W]+)$/.test(
-      defaults.headers!['x-goog-api-client']
-    )
-  );
-  return fakeRequest;
-};
-
-let retryRequestOverride: Function | null;
-function fakeRetryRequest() {
-  // eslint-disable-next-line prefer-spread, prefer-rest-params
-  return (retryRequestOverride || retryRequest).apply(null, arguments);
-}
 
 let replaceProjectIdTokenOverride: Function | null;
 function fakeReplaceProjectIdToken() {
@@ -92,8 +67,6 @@ describe('common/util', () => {
   before(() => {
     util = proxyquire('../../src/nodejs-common/util', {
       'google-auth-library': fakeGoogleAuth,
-      'retry-request': fakeRetryRequest,
-      'teeny-request': {teenyRequest: fakeRequest},
       '@google-cloud/projectify': {
         replaceProjectIdToken: fakeReplaceProjectIdToken,
       },
@@ -103,8 +76,6 @@ describe('common/util', () => {
   let sandbox: sinon.SinonSandbox;
   beforeEach(() => {
     sandbox = sinon.createSandbox();
-    requestOverride = null;
-    retryRequestOverride = null;
     replaceProjectIdTokenOverride = null;
   });
   afterEach(() => {

@@ -1653,7 +1653,7 @@ describe('storage', function () {
       });
 
       it('should get an expiration date', async () => {
-        const [expirationDate] = await FILE.getExpirationDate();
+        const expirationDate = await FILE.getExpirationDate();
         assert(expirationDate instanceof Date);
       });
     });
@@ -1710,7 +1710,7 @@ describe('storage', function () {
     const PREFIX = 'sys-test';
 
     it('should enable logging on current bucket by default', async () => {
-      const [metadata] = await bucket.enableLogging({prefix: PREFIX});
+      const metadata = await bucket.enableLogging({prefix: PREFIX});
       assert.deepStrictEqual(metadata.logging, {
         logBucket: bucket.id,
         logObjectPrefix: PREFIX,
@@ -1721,7 +1721,7 @@ describe('storage', function () {
       const bucketForLogging = storage.bucket(generateName());
       await bucketForLogging.create();
 
-      const [metadata] = await bucket.enableLogging({
+      const metadata = await bucket.enableLogging({
         bucket: bucketForLogging,
         prefix: PREFIX,
       });
@@ -1970,7 +1970,7 @@ describe('storage', function () {
         });
 
         it('bucket#createNotification', async () => {
-          const [notif] = await requesterPaysDoubleTest(async options => {
+          const notif = await requesterPaysDoubleTest(async options => {
             return bucketNonAllowList.createNotification(topicName, options);
           });
 
@@ -3049,7 +3049,7 @@ describe('storage', function () {
       const sourceFiles = files.map(x => x.file);
       let destinationFile = bucket.file('file-one-and-two.txt');
 
-      [destinationFile] = await bucket.combine(sourceFiles, destinationFile);
+      destinationFile = await bucket.combine(sourceFiles, destinationFile);
       const [contents] = await destinationFile.download();
       assert.strictEqual(
         contents.toString(),
@@ -3738,7 +3738,7 @@ describe('storage', function () {
           eventTypes: ['OBJECT_FINALIZE'],
         }
       );
-      notification = createNotificationData[0];
+      notification = createNotificationData;
       subscription = topic.subscription(generateName());
       await subscription.create();
     });
@@ -3805,7 +3805,7 @@ describe('storage', function () {
           eventTypes: ['OBJECT_DELETE'],
         })
         .then(data => {
-          notification = data[0];
+          notification = data;
           return bucket.getNotifications();
         })
         .then(data => {

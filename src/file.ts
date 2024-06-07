@@ -71,7 +71,6 @@ import {
 } from './storage-transport.js';
 import {GaxiosError, GaxiosInterceptor, GaxiosOptions, Gaxios} from 'gaxios';
 
-export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
   (
     err: Error | null,
@@ -235,12 +234,6 @@ export interface CreateResumableUploadOptions
   resumeCRC32C?: Parameters<(typeof CRC32C)['from']>[0];
   preconditionOpts?: PreconditionOptions;
   [GCCL_GCS_CMD_KEY]?: resumableUpload.UploadConfig[typeof GCCL_GCS_CMD_KEY];
-}
-
-export type CreateResumableUploadResponse = [string];
-
-export interface CreateResumableUploadCallback {
-  (err: Error | null, uri?: string): void;
 }
 
 export interface CreateWriteStreamOptions extends CreateResumableUploadOptions {
@@ -1669,12 +1662,12 @@ class File extends ServiceObject<File, FileMetadata> {
 
   createResumableUpload(
     options?: CreateResumableUploadOptions
-  ): Promise<CreateResumableUploadResponse>;
+  ): Promise<string>;
   createResumableUpload(
     options: CreateResumableUploadOptions,
-    callback: CreateResumableUploadCallback
+    callback: StorageCallback<string>
   ): void;
-  createResumableUpload(callback: CreateResumableUploadCallback): void;
+  createResumableUpload(callback: StorageCallback<string>): void;
   /**
    * @callback CreateResumableUploadCallback
    * @param {?Error} err Request error, if any.
@@ -1760,11 +1753,9 @@ class File extends ServiceObject<File, FileMetadata> {
    * ```
    */
   createResumableUpload(
-    optionsOrCallback?:
-      | CreateResumableUploadOptions
-      | CreateResumableUploadCallback,
-    callback?: CreateResumableUploadCallback
-  ): void | Promise<CreateResumableUploadResponse> {
+    optionsOrCallback?: CreateResumableUploadOptions | StorageCallback<string>,
+    callback?: StorageCallback<string>
+  ): void | Promise<string> {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
@@ -2448,7 +2439,7 @@ class File extends ServiceObject<File, FileMetadata> {
     return cb ? reqPromise.then(resp => cb(null, resp)).catch(cb) : reqPromise;
   }
 
-  getExpirationDate(): Promise<GetExpirationDateResponse>;
+  getExpirationDate(): Promise<Date>;
   getExpirationDate(callback: GetExpirationDateCallback): void;
   /**
    * @typedef {array} GetExpirationDateResponse
@@ -2482,7 +2473,7 @@ class File extends ServiceObject<File, FileMetadata> {
    */
   getExpirationDate(
     callback?: GetExpirationDateCallback
-  ): void | Promise<GetExpirationDateResponse> {
+  ): void | Promise<Date> {
     this.getMetadata(
       (
         err: GaxiosError | null,

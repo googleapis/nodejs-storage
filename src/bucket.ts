@@ -175,24 +175,12 @@ export interface CombineOptions extends PreconditionOptions {
   userProject?: string;
 }
 
-export interface CombineCallback {
-  (err: Error | null, newFile: File | null, apiResponse: unknown): void;
-}
-
-export type CombineResponse = [File, unknown];
-
 export interface CreateChannelConfig extends WatchAllOptions {
   address: string;
 }
 
 export interface CreateChannelOptions {
   userProject?: string;
-}
-
-export type CreateChannelResponse = [Channel, unknown];
-
-export interface CreateChannelCallback {
-  (err: Error | null, channel: Channel | null, apiResponse: unknown): void;
 }
 
 export interface CreateNotificationOptions {
@@ -203,22 +191,10 @@ export interface CreateNotificationOptions {
   userProject?: string;
 }
 
-export interface CreateNotificationCallback {
-  (
-    err: Error | null,
-    notification: Notification | null,
-    apiResponse: unknown
-  ): void;
-}
-
-export type CreateNotificationResponse = [Notification, unknown];
-
 export interface DeleteBucketOptions {
   ignoreNotFound?: boolean;
   userProject?: string;
 }
-
-export type DeleteBucketResponse = [unknown];
 
 export interface DeleteFilesOptions
   extends GetFilesOptions,
@@ -226,55 +202,21 @@ export interface DeleteFilesOptions
   force?: boolean;
 }
 
-export interface DeleteFilesCallback {
-  (err: Error | Error[] | null, apiResponse?: object): void;
-}
-
-export type DeleteLabelsResponse = [unknown];
-
-export type DeleteLabelsCallback = SetLabelsCallback;
-
 export type DeleteLabelsOptions = PreconditionOptions;
 
 export type DisableRequesterPaysOptions = PreconditionOptions;
-
-export type DisableRequesterPaysResponse = [unknown];
-
-export interface DisableRequesterPaysCallback {
-  (err?: Error | null, apiResponse?: object): void;
-}
-
-export type EnableRequesterPaysResponse = [unknown];
-
-export interface EnableRequesterPaysCallback {
-  (err?: Error | null, apiResponse?: unknown): void;
-}
 
 export type EnableRequesterPaysOptions = PreconditionOptions;
 export interface BucketExistsOptions extends GetConfig {
   userProject?: string;
 }
 
-export type BucketExistsResponse = [boolean];
-
 export interface GetBucketOptions extends GetConfig {
   userProject?: string;
 }
 
-export type GetBucketResponse = [Bucket, unknown];
-
-export interface GetBucketCallback {
-  (err: GaxiosError | null, bucket: Bucket | null, apiResponse: unknown): void;
-}
-
 export interface GetLabelsOptions {
   userProject?: string;
-}
-
-export type GetLabelsResponse = [unknown];
-
-export interface GetLabelsCallback {
-  (err: Error | null, labels: object | null): void;
 }
 
 export interface BucketMetadata extends BaseMetadata {
@@ -411,12 +353,6 @@ interface MakeBucketPrivateRequest extends MakeBucketPrivateOptions {
   private?: boolean;
 }
 
-export type MakeBucketPrivateResponse = [File[]];
-
-export interface MakeBucketPrivateCallback {
-  (err?: Error | null, files?: File[]): void;
-}
-
 export interface MakeBucketPublicOptions {
   includeFiles?: boolean;
   force?: boolean;
@@ -432,30 +368,12 @@ export interface SetBucketMetadataOptions extends PreconditionOptions {
   userProject?: string;
 }
 
-export type SetBucketMetadataResponse = [BucketMetadata];
-
-export interface SetBucketMetadataCallback {
-  (err?: Error | null, metadata?: BucketMetadata): void;
-}
-
-export interface BucketLockCallback {
-  (err?: Error | null, apiResponse?: unknown): void;
-}
-
-export type BucketLockResponse = [unknown];
-
 export interface Labels {
   [key: string]: string;
 }
 
 export interface SetLabelsOptions extends PreconditionOptions {
   userProject?: string;
-}
-
-export type SetLabelsResponse = [unknown];
-
-export interface SetLabelsCallback {
-  (err?: Error | null, metadata?: unknown): void;
 }
 
 export interface SetBucketStorageClassOptions extends PreconditionOptions {
@@ -1254,15 +1172,15 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   addLifecycleRule(
     rule: LifecycleRule | LifecycleRule[],
     options?: AddLifecycleRuleOptions
-  ): Promise<SetBucketMetadataResponse>;
+  ): Promise<BucketMetadata>;
   addLifecycleRule(
     rule: LifecycleRule | LifecycleRule[],
     options: AddLifecycleRuleOptions,
-    callback: SetBucketMetadataCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   addLifecycleRule(
     rule: LifecycleRule | LifecycleRule[],
-    callback: SetBucketMetadataCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   /**
    * @typedef {object} AddLifecycleRuleOptions Configuration options for Bucket#addLifecycleRule().
@@ -1434,9 +1352,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    */
   addLifecycleRule(
     rule: LifecycleRule | LifecycleRule[],
-    optionsOrCallback?: AddLifecycleRuleOptions | SetBucketMetadataCallback,
-    callback?: SetBucketMetadataCallback
-  ): Promise<SetBucketMetadataResponse> | void {
+    optionsOrCallback?:
+      | AddLifecycleRuleOptions
+      | StorageCallback<BucketMetadata>,
+    callback?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | void {
     let options: AddLifecycleRuleOptions = {};
 
     if (typeof optionsOrCallback === 'function') {
@@ -1498,17 +1418,17 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     sources: string[] | File[],
     destination: string | File,
     options?: CombineOptions
-  ): Promise<CombineResponse>;
+  ): Promise<File>;
   combine(
     sources: string[] | File[],
     destination: string | File,
     options: CombineOptions,
-    callback: CombineCallback
+    callback: StorageCallback<File>
   ): void;
   combine(
     sources: string[] | File[],
     destination: string | File,
-    callback: CombineCallback
+    callback: StorageCallback<File>
   ): void;
   /**
    * @typedef {object} CombineOptions
@@ -1583,9 +1503,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   combine(
     sources: string[] | File[],
     destination: string | File,
-    optionsOrCallback?: CombineOptions | CombineCallback,
-    callback?: CombineCallback
-  ): Promise<CombineResponse> | void {
+    optionsOrCallback?: CombineOptions | StorageCallback<File>,
+    callback?: StorageCallback<File>
+  ): Promise<File> | void {
     if (!Array.isArray(sources) || sources.length === 0) {
       throw new Error(BucketExceptionMessages.PROVIDE_SOURCE_FILE);
     }
@@ -1671,14 +1591,14 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         },
         queryParameters: options as StorageQueryParameters,
       },
-      (err, resp) => {
+      err => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
         if (err) {
-          callback!(err, null, resp);
+          callback!(err as GaxiosError<File>);
           return;
         }
 
-        callback!(null, destinationFile, resp);
+        callback!(null, destinationFile);
       }
     );
   }
@@ -1687,17 +1607,17 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     id: string,
     config: CreateChannelConfig,
     options?: CreateChannelOptions
-  ): Promise<CreateChannelResponse>;
+  ): Promise<Channel>;
   createChannel(
     id: string,
     config: CreateChannelConfig,
-    callback: CreateChannelCallback
+    callback: StorageCallback<Channel>
   ): void;
   createChannel(
     id: string,
     config: CreateChannelConfig,
     options: CreateChannelOptions,
-    callback: CreateChannelCallback
+    callback: StorageCallback<Channel>
   ): void;
   /**
    * See a {@link https://cloud.google.com/storage/docs/json_api/v1/objects/watchAll| Objects: watchAll request body}.
@@ -1793,9 +1713,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   createChannel(
     id: string,
     config: CreateChannelConfig,
-    optionsOrCallback?: CreateChannelOptions | CreateChannelCallback,
-    callback?: CreateChannelCallback
-  ): Promise<CreateChannelResponse> | void {
+    optionsOrCallback?: CreateChannelOptions | StorageCallback<Channel>,
+    callback?: StorageCallback<Channel>
+  ): Promise<Channel> | void {
     if (typeof id !== 'string') {
       throw new Error(BucketExceptionMessages.CHANNEL_ID_REQUIRED);
     }
@@ -1822,7 +1742,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       },
       (err, apiResponse) => {
         if (err) {
-          callback!(err, null, apiResponse);
+          callback!(err as GaxiosError);
           return;
         }
 
@@ -1831,7 +1751,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
         channel.metadata = apiResponse!;
 
-        callback!(null, channel, apiResponse);
+        callback!(null, channel);
       }
     );
   }
@@ -1839,13 +1759,16 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   createNotification(
     topic: string,
     options?: CreateNotificationOptions
-  ): Promise<CreateNotificationResponse>;
+  ): Promise<Notification>;
   createNotification(
     topic: string,
     options: CreateNotificationOptions,
-    callback: CreateNotificationCallback
+    callback: StorageCallback<Notification>
   ): void;
-  createNotification(topic: string, callback: CreateNotificationCallback): void;
+  createNotification(
+    topic: string,
+    callback: StorageCallback<Notification>
+  ): void;
   /**
    * Metadata to set for the Notification.
    *
@@ -1952,9 +1875,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    */
   createNotification(
     topic: string,
-    optionsOrCallback?: CreateNotificationOptions | CreateNotificationCallback,
-    callback?: CreateNotificationCallback
-  ): Promise<CreateNotificationResponse> | void {
+    optionsOrCallback?:
+      | CreateNotificationOptions
+      | StorageCallback<Notification>,
+    callback?: StorageCallback<Notification>
+  ): Promise<Notification> | void {
     let options: CreateNotificationOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
@@ -2001,7 +1926,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       },
       (err, apiResponse) => {
         if (err) {
-          callback!(err, null, apiResponse);
+          callback!(err as GaxiosError);
           return;
         }
 
@@ -2009,14 +1934,14 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
         notification.metadata = apiResponse!;
 
-        callback!(null, notification, apiResponse);
+        callback!(null, notification);
       }
     );
   }
 
   deleteFiles(query?: DeleteFilesOptions): Promise<void>;
-  deleteFiles(callback: DeleteFilesCallback): void;
-  deleteFiles(query: DeleteFilesOptions, callback: DeleteFilesCallback): void;
+  deleteFiles(callback: StorageCallback<null>): void;
+  deleteFiles(query: DeleteFilesOptions, callback: StorageCallback<null>): void;
   /**
    * @typedef {object} DeleteFilesOptions Query object. See {@link Bucket#getFiles}
    *     for all of the supported properties.
@@ -2098,8 +2023,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * ```
    */
   deleteFiles(
-    queryOrCallback?: DeleteFilesOptions | DeleteFilesCallback,
-    callback?: DeleteFilesCallback
+    queryOrCallback?: DeleteFilesOptions | StorageCallback<null>,
+    callback?: StorageCallback<null>
   ): Promise<void> | void {
     let query: DeleteFilesOptions = {};
     if (typeof queryOrCallback === 'function') {
@@ -2141,26 +2066,31 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         }
 
         await Promise.all(promises);
-        callback!(errors.length > 0 ? errors : null);
+        callback!(
+          errors.length > 0 ? (errors as unknown as GaxiosError) : null
+        );
       } catch (e) {
-        callback!(e as Error);
+        callback!(e as GaxiosError);
         return;
       }
     })();
   }
 
-  deleteLabels(labels?: string | string[]): Promise<DeleteLabelsResponse>;
-  deleteLabels(options: DeleteLabelsOptions): Promise<DeleteLabelsResponse>;
-  deleteLabels(callback: DeleteLabelsCallback): void;
+  deleteLabels(labels?: string | string[]): Promise<BucketMetadata>;
+  deleteLabels(options: DeleteLabelsOptions): Promise<BucketMetadata>;
+  deleteLabels(callback: StorageCallback<BucketMetadata>): void;
   deleteLabels(
     labels: string | string[],
     options: DeleteLabelsOptions
-  ): Promise<DeleteLabelsResponse>;
-  deleteLabels(labels: string | string[], callback: DeleteLabelsCallback): void;
+  ): Promise<BucketMetadata>;
+  deleteLabels(
+    labels: string | string[],
+    callback: StorageCallback<BucketMetadata>
+  ): void;
   deleteLabels(
     labels: string | string[],
     options: DeleteLabelsOptions,
-    callback: DeleteLabelsCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   /**
    * @deprecated
@@ -2219,11 +2149,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     labelsOrCallbackOrOptions?:
       | string
       | string[]
-      | DeleteLabelsCallback
+      | StorageCallback<BucketMetadata>
       | DeleteLabelsOptions,
-    optionsOrCallback?: DeleteLabelsCallback | DeleteLabelsOptions,
-    callback?: DeleteLabelsCallback
-  ): Promise<DeleteLabelsResponse> | void {
+    optionsOrCallback?: StorageCallback<BucketMetadata> | DeleteLabelsOptions,
+    callback?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | void {
     let labels = new Array<string>();
     let options: DeleteLabelsOptions = {};
 
@@ -2271,11 +2201,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
   disableRequesterPays(
     options?: DisableRequesterPaysOptions
-  ): Promise<DisableRequesterPaysResponse>;
-  disableRequesterPays(callback: DisableRequesterPaysCallback): void;
+  ): Promise<BucketMetadata>;
+  disableRequesterPays(callback: StorageCallback<BucketMetadata>): void;
   disableRequesterPays(
     options: DisableRequesterPaysOptions,
-    callback: DisableRequesterPaysCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   /**
    * @typedef {array} DisableRequesterPaysResponse
@@ -2327,9 +2257,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   disableRequesterPays(
     optionsOrCallback?:
       | DisableRequesterPaysOptions
-      | DisableRequesterPaysCallback,
-    callback?: DisableRequesterPaysCallback
-  ): Promise<DisableRequesterPaysResponse> | void {
+      | StorageCallback<BucketMetadata>,
+    callback?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | void {
     let options: DisableRequesterPaysOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
@@ -2348,12 +2278,10 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     );
   }
 
-  enableLogging(
-    config: EnableLoggingOptions
-  ): Promise<SetBucketMetadataResponse>;
+  enableLogging(config: EnableLoggingOptions): Promise<BucketMetadata>;
   enableLogging(
     config: EnableLoggingOptions,
-    callback: SetBucketMetadataCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   /**
    * Configuration object for enabling logging.
@@ -2413,8 +2341,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    */
   enableLogging(
     config: EnableLoggingOptions,
-    callback?: SetBucketMetadataCallback
-  ): Promise<SetBucketMetadataResponse> | void {
+    callback?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | void {
     if (
       !config ||
       typeof config === 'function' ||
@@ -2458,7 +2386,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
           callback!
         );
       } catch (e) {
-        callback!(e as Error);
+        callback!(e as GaxiosError);
         return;
       }
     })();
@@ -2466,11 +2394,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
   enableRequesterPays(
     options?: EnableRequesterPaysOptions
-  ): Promise<EnableRequesterPaysResponse>;
-  enableRequesterPays(callback: EnableRequesterPaysCallback): void;
+  ): Promise<BucketMetadata>;
+  enableRequesterPays(callback: StorageCallback<BucketMetadata>): void;
   enableRequesterPays(
     options: EnableRequesterPaysOptions,
-    callback: EnableRequesterPaysCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
 
   /**
@@ -2524,10 +2452,10 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    */
   enableRequesterPays(
     optionsOrCallback?:
-      | EnableRequesterPaysCallback
+      | StorageCallback<BucketMetadata>
       | EnableRequesterPaysOptions,
-    cb?: EnableRequesterPaysCallback
-  ): Promise<EnableRequesterPaysResponse> | void {
+    cb?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | void {
     let options: EnableRequesterPaysOptions = {};
     if (typeof optionsOrCallback === 'function') {
       cb = optionsOrCallback;
@@ -2842,9 +2770,14 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     );
   }
 
-  getLabels(options?: GetLabelsOptions): Promise<GetLabelsResponse>;
-  getLabels(callback: GetLabelsCallback): void;
-  getLabels(options: GetLabelsOptions, callback: GetLabelsCallback): void;
+  getLabels(
+    options?: GetLabelsOptions
+  ): Promise<{[key: string]: string | null}>;
+  getLabels(callback: StorageCallback<{[key: string]: string | null}>): void;
+  getLabels(
+    options: GetLabelsOptions,
+    callback: StorageCallback<{[key: string]: string | null}>
+  ): void;
   /**
    * @deprecated
    * @typedef {object} GetLabelsOptions Configuration options for Bucket#getLabels().
@@ -2898,9 +2831,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * ```
    */
   getLabels(
-    optionsOrCallback?: GetLabelsOptions | GetLabelsCallback,
-    callback?: GetLabelsCallback
-  ): Promise<GetLabelsResponse> | void {
+    optionsOrCallback?:
+      | GetLabelsOptions
+      | StorageCallback<{[key: string]: string | null}>,
+    callback?: StorageCallback<{[key: string]: string | null}>
+  ): Promise<BucketMetadata> | void {
     let options: GetLabelsOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
@@ -2910,7 +2845,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     this.getMetadata(options, (err, metadata) => {
       if (err) {
-        callback!(err, null);
+        callback!(err as GaxiosError);
         return;
       }
 
@@ -3180,8 +3115,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       .then(signedUrl => callback!(null, signedUrl), callback!);
   }
 
-  lock(metageneration: number | string): Promise<BucketLockResponse>;
-  lock(metageneration: number | string, callback: BucketLockCallback): void;
+  lock(metageneration: number | string): Promise<BucketMetadata>;
+  lock(
+    metageneration: number | string,
+    callback: StorageCallback<BucketMetadata>
+  ): void;
   /**
    * @callback BucketLockCallback
    * @param {?Error} err Request error, if any.
@@ -3217,8 +3155,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    */
   lock(
     metageneration: number | string,
-    callback?: BucketLockCallback
-  ): Promise<BucketLockResponse> | void {
+    callback?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | void {
     const metatype = typeof metageneration;
     if (metatype !== 'number' && metatype !== 'string') {
       throw new Error(BucketExceptionMessages.METAGENERATION_NOT_PROVIDED);
@@ -3236,13 +3174,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     );
   }
 
-  makePrivate(
-    options?: MakeBucketPrivateOptions
-  ): Promise<MakeBucketPrivateResponse>;
-  makePrivate(callback: MakeBucketPrivateCallback): void;
+  makePrivate(options?: MakeBucketPrivateOptions): Promise<File[]>;
+  makePrivate(callback: StorageCallback<File[]>): void;
   makePrivate(
     options: MakeBucketPrivateOptions,
-    callback: MakeBucketPrivateCallback
+    callback: StorageCallback<File[]>
   ): void;
   /**
    * @typedef {array} MakeBucketPrivateResponse
@@ -3346,9 +3282,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * ```
    */
   makePrivate(
-    optionsOrCallback?: MakeBucketPrivateOptions | MakeBucketPrivateCallback,
-    callback?: MakeBucketPrivateCallback
-  ): Promise<MakeBucketPrivateResponse> | void {
+    optionsOrCallback?: MakeBucketPrivateOptions | StorageCallback<File[]>,
+    callback?: StorageCallback<File[]>
+  ): Promise<File[]> | void {
     const options: MakeBucketPrivateRequest =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
@@ -3387,9 +3323,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     // so acl must explicitly be nullified.
     const metadata = {...options.metadata, acl: null};
 
-    this.setMetadata(metadata, query, (err: Error | null | undefined) => {
+    this.setMetadata(metadata, query, err => {
       if (err) {
-        callback!(err);
+        callback!(err as GaxiosError);
       }
       const internalCall = () => {
         if (options.includeFiles) {
@@ -3564,11 +3500,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
   removeRetentionPeriod(
     options?: SetBucketMetadataOptions
-  ): Promise<SetBucketMetadataResponse>;
-  removeRetentionPeriod(callback: SetBucketMetadataCallback): void;
+  ): Promise<BucketMetadata>;
+  removeRetentionPeriod(callback: StorageCallback<BucketMetadata>): void;
   removeRetentionPeriod(
     options: SetBucketMetadataOptions,
-    callback: SetBucketMetadataCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   /**
    * Remove an already-existing retention policy from this bucket, if it is not
@@ -3594,9 +3530,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * ```
    */
   removeRetentionPeriod(
-    optionsOrCallback?: SetBucketMetadataOptions | SetBucketMetadataCallback,
-    callback?: SetBucketMetadataCallback
-  ): Promise<SetBucketMetadataResponse> | void {
+    optionsOrCallback?:
+      | SetBucketMetadataOptions
+      | StorageCallback<BucketMetadata>,
+    callback?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | void {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
@@ -3614,12 +3552,12 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   setLabels(
     labels: Labels,
     options?: SetLabelsOptions
-  ): Promise<SetLabelsResponse>;
-  setLabels(labels: Labels, callback: SetLabelsCallback): void;
+  ): Promise<BucketMetadata>;
+  setLabels(labels: Labels, callback: StorageCallback<BucketMetadata>): void;
   setLabels(
     labels: Labels,
     options: SetLabelsOptions,
-    callback: SetLabelsCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   /**
    * @deprecated
@@ -3680,9 +3618,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    */
   setLabels(
     labels: Labels,
-    optionsOrCallback?: SetLabelsOptions | SetLabelsCallback,
-    callback?: SetLabelsCallback
-  ): Promise<SetLabelsResponse> | void {
+    optionsOrCallback?: SetLabelsOptions | StorageCallback<BucketMetadata>,
+    callback?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | void {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
@@ -3742,15 +3680,15 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   setRetentionPeriod(
     duration: number,
     options?: SetBucketMetadataOptions
-  ): Promise<SetBucketMetadataResponse>;
+  ): Promise<BucketMetadata>;
   setRetentionPeriod(
     duration: number,
-    callback: SetBucketMetadataCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   setRetentionPeriod(
     duration: number,
     options: SetBucketMetadataOptions,
-    callback: SetBucketMetadataCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   /**
    * Lock all objects contained in the bucket, based on their creation time. Any
@@ -3792,9 +3730,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    */
   setRetentionPeriod(
     duration: number,
-    optionsOrCallback?: SetBucketMetadataOptions | SetBucketMetadataCallback,
-    callback?: SetBucketMetadataCallback
-  ): Promise<SetBucketMetadataResponse> | void {
+    optionsOrCallback?:
+      | SetBucketMetadataOptions
+      | StorageCallback<BucketMetadata>,
+    callback?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | void {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
@@ -3813,15 +3753,15 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   setCorsConfiguration(
     corsConfiguration: Cors[],
     options?: SetBucketMetadataOptions
-  ): Promise<SetBucketMetadataResponse>;
+  ): Promise<BucketMetadata>;
   setCorsConfiguration(
     corsConfiguration: Cors[],
-    callback: SetBucketMetadataCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   setCorsConfiguration(
     corsConfiguration: Cors[],
     options: SetBucketMetadataOptions,
-    callback: SetBucketMetadataCallback
+    callback: StorageCallback<BucketMetadata>
   ): void;
   /**
    *
@@ -3871,9 +3811,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    */
   setCorsConfiguration(
     corsConfiguration: Cors[],
-    optionsOrCallback?: SetBucketMetadataOptions | SetBucketMetadataCallback,
-    callback?: SetBucketMetadataCallback
-  ): Promise<SetBucketMetadataResponse> | void {
+    optionsOrCallback?:
+      | SetBucketMetadataOptions
+      | StorageCallback<BucketMetadata>,
+    callback?: StorageCallback<BucketMetadata>
+  ): Promise<BucketMetadata> | void {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
@@ -3890,7 +3832,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   setStorageClass(
     storageClass: string,
     options?: SetBucketStorageClassOptions
-  ): Promise<SetBucketMetadataResponse>;
+  ): Promise<BucketMetadata>;
   setStorageClass(
     storageClass: string,
     callback: SetBucketStorageClassCallback
@@ -3951,7 +3893,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       | SetBucketStorageClassOptions
       | SetBucketStorageClassCallback,
     callback?: SetBucketStorageClassCallback
-  ): Promise<SetBucketMetadataResponse> | void {
+  ): Promise<BucketMetadata> | void {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     callback =
