@@ -30,6 +30,7 @@ const bucketNameDualRegionTurbo = `${samplesTestBucketPrefix}-c`;
 const bucketNameWithClassAndLocation = `${samplesTestBucketPrefix}-d`;
 const bucketNameAutoclass = `${samplesTestBucketPrefix}-e`;
 const bucketNameObjectRetention = `${samplesTestBucketPrefix}-f`;
+const bucketNameHierarchicalNamespace = `${samplesTestBucketPrefix}-g`;
 const defaultKmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA;
 const bucket = storage.bucket(bucketName);
 const bucketWithClassAndLocation = storage.bucket(
@@ -327,6 +328,21 @@ it("should set a bucket's RPO to DEFAULT", async () => {
   assert.match(
     output,
     new RegExp(`Turbo replication disabled for ${bucketNameDualRegionTurbo}.`)
+  );
+
+  const metadata = await dualRegionBucketTurbo.getMetadata();
+  assert.strictEqual(metadata[0].rpo, RPO_DEFAULT);
+});
+
+it('should create a hierarchical namespace enabled bucket', async () => {
+  const output = execSync(
+    `node createBucketWithHierarchicalNamespace.js ${bucketNameHierarchicalNamespace}`
+  );
+  assert.match(
+    output,
+    new RegExp(
+      `Created '${bucketNameHierarchicalNamespace}' with hierarchical namespace enabled.`
+    )
   );
 
   const metadata = await dualRegionBucketTurbo.getMetadata();
