@@ -39,6 +39,9 @@ function main(bucketName = 'my-bucket') {
 
   async function createBucketWithHierarchicalNamespace() {
     const [bucket] = await storage.createBucket(bucketName, {
+      iamConfiguration: {
+        uniformBucketLevelAccess: true,
+      },
       hierarchicalNamespace: true,
     });
 
