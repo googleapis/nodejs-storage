@@ -443,7 +443,6 @@ it('should create a bucket with object retention enabled', async () => {
   const output = execSync(
     `node createBucketWithObjectRetention.js ${bucketNameObjectRetention}`
   );
-  console.log(output);
   assert.include(
     output,
     `Created '${bucketNameObjectRetention}' with object retention enabled setting: Enabled`
