@@ -42,7 +42,9 @@ function main(bucketName = 'my-bucket') {
       iamConfiguration: {
         uniformBucketLevelAccess: true,
       },
-      hierarchicalNamespace: true,
+      hierarchicalNamespace: {
+        enabled: true,
+      },
     });
 
     console.log(
