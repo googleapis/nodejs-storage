@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ApiError, Service, ServiceOptions} from './nodejs-common/index.js';
+import {ServiceOptions} from './nodejs-common/index.js';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import {Readable} from 'stream';
@@ -30,6 +30,12 @@ import {
   CRC32C_DEFAULT_VALIDATOR_GENERATOR,
 } from './crc32c.js';
 import {DEFAULT_UNIVERSE} from 'google-auth-library';
+import {
+  StorageCallback,
+  StorageQueryParameters,
+  StorageTransport,
+} from './storage-transport.js';
+import {GaxiosError, GaxiosInterceptor, GaxiosOptions} from 'gaxios';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -37,14 +43,8 @@ export interface GetServiceAccountOptions {
 }
 export interface ServiceAccount {
   emailAddress?: string;
-}
-export type GetServiceAccountResponse = [ServiceAccount, unknown];
-export interface GetServiceAccountCallback {
-  (
-    err: Error | null,
-    serviceAccount?: ServiceAccount,
-    apiResponse?: unknown
-  ): void;
+  kind?: string;
+  [key: string]: string | undefined;
 }
 
 export interface CreateBucketQuery {
@@ -65,7 +65,7 @@ export interface RetryOptions {
   maxRetryDelay?: number;
   autoRetry?: boolean;
   maxRetries?: number;
-  retryableErrorFn?: (err: ApiError) => boolean;
+  retryableErrorFn?: (err: GaxiosError) => boolean;
   idempotencyStrategy?: IdempotencyStrategy;
 }
 
@@ -148,21 +148,8 @@ export interface CreateBucketRequest {
   versioning?: Versioning;
 }
 
-export type CreateBucketResponse = [Bucket, unknown];
+export type GetBucketsResponse = [Bucket[], unknown];
 
-export interface BucketCallback {
-  (err: Error | null, bucket?: Bucket | null, apiResponse?: unknown): void;
-}
-
-export type GetBucketsResponse = [Bucket[], {}, unknown];
-export interface GetBucketsCallback {
-  (
-    err: Error | null,
-    buckets: Bucket[],
-    nextQuery?: {},
-    apiResponse?: unknown
-  ): void;
-}
 export interface GetBucketsRequest {
   prefix?: string;
   project?: string;
@@ -176,22 +163,12 @@ export interface GetBucketsRequest {
 export interface HmacKeyResourceResponse {
   metadata: HmacKeyMetadata;
   secret: string;
+  kind: string;
 }
-
-export type CreateHmacKeyResponse = [HmacKey, string, HmacKeyResourceResponse];
 
 export interface CreateHmacKeyOptions {
   projectId?: string;
   userProject?: string;
-}
-
-export interface CreateHmacKeyCallback {
-  (
-    err: Error | null,
-    hmacKey?: HmacKey | null,
-    secret?: string | null,
-    apiResponse?: HmacKeyResourceResponse
-  ): void;
 }
 
 export interface GetHmacKeysOptions {
@@ -203,15 +180,6 @@ export interface GetHmacKeysOptions {
   maxResults?: number;
   pageToken?: string;
   userProject?: string;
-}
-
-export interface GetHmacKeysCallback {
-  (
-    err: Error | null,
-    hmacKeys: HmacKey[] | null,
-    nextQuery?: {},
-    apiResponse?: unknown
-  ): void;
 }
 
 export enum ExceptionMessages {
@@ -226,7 +194,7 @@ export enum StorageExceptionMessages {
   HMAC_ACCESS_ID = 'An access ID is needed to create an HmacKey object.',
 }
 
-export type GetHmacKeysResponse = [HmacKey[]];
+export type GetHmacKeysResponse = [HmacKey[], unknown];
 
 export const PROTOCOL_REGEX = /^(\w*):\/\//;
 
@@ -281,7 +249,7 @@ const IDEMPOTENCY_STRATEGY_DEFAULT = IdempotencyStrategy.RetryConditional;
  * @param {error} err - The API error to check if it is appropriate to retry.
  * @return {boolean} True if the API request should be retried, false otherwise.
  */
-export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
+export const RETRYABLE_ERR_FN_DEFAULT = function (err?: GaxiosError) {
   const isConnectionProblem = (reason: string) => {
     return (
       reason.includes('eai_again') || // DNS lookup error
@@ -293,7 +261,7 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
   };
 
   if (err) {
-    if ([408, 429, 500, 502, 503, 504].indexOf(err.code!) !== -1) {
+    if ([408, 429, 500, 502, 503, 504].indexOf(err.status!) !== -1) {
       return true;
     }
 
@@ -304,15 +272,6 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
       const reason = (err.code as string).toLowerCase();
       if (isConnectionProblem(reason)) {
         return true;
-      }
-    }
-
-    if (err.errors) {
-      for (const e of err.errors) {
-        const reason = e?.reason?.toString().toLowerCase();
-        if (reason && isConnectionProblem(reason)) {
-          return true;
-        }
       }
     }
   }
@@ -458,7 +417,7 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *
  * @class
  */
-export class Storage extends Service {
+export class Storage {
   /**
    * {@link Bucket} class.
    *
@@ -510,6 +469,15 @@ export class Storage extends Service {
   acl: typeof Storage.acl;
 
   crc32cGenerator: CRC32CValidatorGenerator;
+
+  projectId?: string;
+  apiEndpoint: string;
+  storageTransport: StorageTransport;
+  interceptors: Set<GaxiosInterceptor<GaxiosOptions>>;
+  universeDomain: string;
+  customEndpoint = false;
+  name = '';
+  baseUrl = '';
 
   getBucketsStream(): Readable {
     // placeholder body, overwritten in constructor
@@ -707,24 +675,24 @@ export class Storage extends Service {
     const universe = options.universeDomain || DEFAULT_UNIVERSE;
 
     let apiEndpoint = `https://storage.${universe}`;
-    let customEndpoint = false;
+    this.projectId = options.projectId;
 
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
     const EMULATOR_HOST = process.env.STORAGE_EMULATOR_HOST;
     if (typeof EMULATOR_HOST === 'string') {
       apiEndpoint = Storage.sanitizeEndpoint(EMULATOR_HOST);
-      customEndpoint = true;
+      this.customEndpoint = true;
     }
 
     if (options.apiEndpoint && options.apiEndpoint !== apiEndpoint) {
       apiEndpoint = Storage.sanitizeEndpoint(options.apiEndpoint);
-      customEndpoint = true;
+      this.customEndpoint = true;
     }
 
     options = Object.assign({}, options, {apiEndpoint});
 
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
-    const baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
+    this.baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
 
     const config = {
       apiEndpoint: options.apiEndpoint!,
@@ -753,10 +721,9 @@ export class Storage extends Service {
             ? options.retryOptions?.idempotencyStrategy
             : IDEMPOTENCY_STRATEGY_DEFAULT,
       },
-      baseUrl,
-      customEndpoint,
+      baseUrl: this.baseUrl,
+      customEndpoint: this.customEndpoint,
       useAuthWithCustomEndpoint: options?.useAuthWithCustomEndpoint,
-      projectIdRequired: false,
       scopes: [
         'https://www.googleapis.com/auth/iam',
         'https://www.googleapis.com/auth/cloud-platform',
@@ -765,7 +732,7 @@ export class Storage extends Service {
       packageJson: getPackageJSON(),
     };
 
-    super(config, options);
+    this.apiEndpoint = options.apiEndpoint!;
 
     /**
      * Reference to {@link Storage.acl}.
@@ -778,6 +745,10 @@ export class Storage extends Service {
       options.crc32cGenerator || CRC32C_DEFAULT_VALIDATOR_GENERATOR;
 
     this.retryOptions = config.retryOptions;
+
+    this.storageTransport = new StorageTransport({...config, ...options});
+    this.interceptors = new Set<GaxiosInterceptor<GaxiosOptions>>();
+    this.universeDomain = options.universeDomain || DEFAULT_UNIVERSE;
 
     this.getBucketsStream = paginator.streamify('getBuckets');
     this.getHmacKeysStream = paginator.streamify('getHmacKeys');
@@ -837,31 +808,22 @@ export class Storage extends Service {
     return new Channel(this, id, resourceId);
   }
 
-  createBucket(
-    name: string,
-    metadata?: CreateBucketRequest
-  ): Promise<CreateBucketResponse>;
-  createBucket(name: string, callback: BucketCallback): void;
+  createBucket(name: string, metadata?: CreateBucketRequest): Promise<Bucket>;
+  createBucket(name: string, callback: StorageCallback<Bucket>): void;
   createBucket(
     name: string,
     metadata: CreateBucketRequest,
-    callback: BucketCallback
+    callback: StorageCallback<Bucket>
   ): void;
   createBucket(
     name: string,
     metadata: CreateBucketRequest,
-    callback: BucketCallback
+    callback: StorageCallback<Bucket>
   ): void;
   /**
-   * @typedef {array} CreateBucketResponse
-   * @property {Bucket} 0 The new {@link Bucket}.
-   * @property {object} 1 The full API response.
-   */
-  /**
-   * @callback CreateBucketCallback
-   * @param {?Error} err Request error, if any.
+   * @callback StorageCallback
+   * @param {GaxiosError} err Request error, if any.
    * @param {Bucket} bucket The new {@link Bucket}.
-   * @param {object} apiResponse The full API response.
    */
   /**
    * Metadata to set for the bucket.
@@ -914,8 +876,8 @@ export class Storage extends Service {
    *
    * @param {string} name Name of the bucket to create.
    * @param {CreateBucketRequest} [metadata] Metadata to set for the bucket.
-   * @param {CreateBucketCallback} [callback] Callback function.
-   * @returns {Promise<CreateBucketResponse>}
+   * @param {StorageCallback} [callback] Callback function.
+   * @returns {Promise<Bucket>}
    * @throws {Error} If a name is not provided.
    * @see Bucket#create
    *
@@ -980,16 +942,16 @@ export class Storage extends Service {
    */
   createBucket(
     name: string,
-    metadataOrCallback?: BucketCallback | CreateBucketRequest,
-    callback?: BucketCallback
-  ): Promise<CreateBucketResponse> | void {
+    metadataOrCallback?: StorageCallback<Bucket> | CreateBucketRequest,
+    callback?: StorageCallback<Bucket>
+  ): Promise<Bucket> | void {
     if (!name) {
       throw new Error(StorageExceptionMessages.BUCKET_NAME_REQUIRED_CREATE);
     }
 
     let metadata: CreateBucketRequest;
     if (!callback) {
-      callback = metadataOrCallback as BucketCallback;
+      callback = metadataOrCallback as StorageCallback<Bucket>;
       metadata = {};
     } else {
       metadata = metadataOrCallback as CreateBucketRequest;
@@ -1032,9 +994,9 @@ export class Storage extends Service {
       delete body.requesterPays;
     }
 
-    const query = {
+    const query: StorageQueryParameters = {
       project: this.projectId,
-    } as CreateBucketQuery;
+    };
 
     if (body.userProject) {
       query.userProject = body.userProject as string;
@@ -1046,23 +1008,27 @@ export class Storage extends Service {
       delete body.enableObjectRetention;
     }
 
-    this.request(
+    this.storageTransport.makeRequest<BucketMetadata>(
       {
         method: 'POST',
-        uri: '/b',
-        qs: query,
-        json: body,
+        queryParameters: query,
+        body: JSON.stringify(body),
+        url: '/b',
+        responseType: 'json',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       },
       (err, resp) => {
         if (err) {
-          callback!(err, null, resp);
+          callback(err as unknown as GaxiosError<Bucket>);
           return;
         }
 
         const bucket = this.bucket(name);
-        bucket.metadata = resp;
+        bucket.metadata = resp!;
 
-        callback!(null, bucket, resp);
+        callback(null, bucket);
       }
     );
   }
@@ -1070,15 +1036,15 @@ export class Storage extends Service {
   createHmacKey(
     serviceAccountEmail: string,
     options?: CreateHmacKeyOptions
-  ): Promise<CreateHmacKeyResponse>;
+  ): Promise<HmacKey>;
   createHmacKey(
     serviceAccountEmail: string,
-    callback: CreateHmacKeyCallback
+    callback: StorageCallback<HmacKey>
   ): void;
   createHmacKey(
     serviceAccountEmail: string,
     options: CreateHmacKeyOptions,
-    callback: CreateHmacKeyCallback
+    callback: StorageCallback<HmacKey>
   ): void;
   /**
    * @typedef {object} CreateHmacKeyOptions
@@ -1104,17 +1070,9 @@ export class Storage extends Service {
    *     RFC 3339 format.
    */
   /**
-   * @typedef {array} CreateHmacKeyResponse
-   * @property {HmacKey} 0 The HmacKey instance created from API response.
-   * @property {string} 1 The HMAC key's secret used to access the XML API.
-   * @property {object} 3 The raw API response.
-   */
-  /**
-   * @callback CreateHmacKeyCallback Callback function.
-   * @param {?Error} err Request error, if any.
+   * @callback StorageCallback Callback function.
+   * @param {GaxiosError} err Request error, if any.
    * @param {HmacKey} hmacKey The HmacKey instance created from API response.
-   * @param {string} secret The HMAC key's secret used to access the XML API.
-   * @param {object} apiResponse The raw API response.
    */
   /**
    * Create an HMAC key associated with an service account to authenticate
@@ -1124,8 +1082,8 @@ export class Storage extends Service {
    *
    * @param {string} serviceAccountEmail The service account's email address
    *     with which the HMAC key is created for.
-   * @param {CreateHmacKeyCallback} [callback] Callback function.
-   * @return {Promise<CreateHmacKeyResponse>}
+   * @param {StorageCallback} [callback] Callback function.
+   * @return {Promise<HmacKey>}
    *
    * @example
    * ```
@@ -1155,48 +1113,58 @@ export class Storage extends Service {
    */
   createHmacKey(
     serviceAccountEmail: string,
-    optionsOrCb?: CreateHmacKeyOptions | CreateHmacKeyCallback,
-    cb?: CreateHmacKeyCallback
-  ): Promise<CreateHmacKeyResponse> | void {
+    optionsOrCb?: CreateHmacKeyOptions | StorageCallback<HmacKey>,
+    cb?: StorageCallback<HmacKey>
+  ): Promise<HmacKey> | void {
     if (typeof serviceAccountEmail !== 'string') {
       throw new Error(StorageExceptionMessages.HMAC_SERVICE_ACCOUNT);
     }
 
     const {options, callback} = normalize<
       CreateHmacKeyOptions,
-      CreateHmacKeyCallback
+      StorageCallback<HmacKey>
     >(optionsOrCb, cb);
     const query = Object.assign({}, options, {serviceAccountEmail});
     const projectId = query.projectId || this.projectId;
     delete query.projectId;
 
-    this.request(
+    this.storageTransport.makeRequest<HmacKeyResourceResponse>(
       {
         method: 'POST',
-        uri: `/projects/${projectId}/hmacKeys`,
-        qs: query,
-        maxRetries: 0, //explicitly set this value since this is a non-idempotent function
+        url: `/projects/${projectId}/hmacKeys`,
+        queryParameters: query as unknown as StorageQueryParameters,
+        retry: false,
+        responseType: 'json',
       },
-      (err, resp: HmacKeyResourceResponse) => {
+      (err, resp) => {
         if (err) {
-          callback!(err, null, null, resp);
+          callback(err as unknown as GaxiosError<HmacKey>);
           return;
         }
-
-        const metadata = resp.metadata;
-        const hmacKey = this.hmacKey(metadata.accessId!, {
-          projectId: metadata.projectId,
+        const hmacMetadata = resp!.metadata;
+        const hmacKey = this.hmacKey(hmacMetadata.accessId!, {
+          projectId: hmacMetadata?.projectId,
         });
-        hmacKey.metadata = resp.metadata;
+        hmacKey.metadata = hmacMetadata;
+        hmacKey.secret = resp?.secret;
 
-        callback!(null, hmacKey, resp.secret, resp);
+        callback(null, hmacKey);
       }
     );
   }
 
   getBuckets(options?: GetBucketsRequest): Promise<GetBucketsResponse>;
-  getBuckets(options: GetBucketsRequest, callback: GetBucketsCallback): void;
-  getBuckets(callback: GetBucketsCallback): void;
+  getBuckets(
+    options: GetBucketsRequest,
+    callback: StorageCallback<
+      [Bucket[], GetBucketsRequest & {pageToken: string}]
+    >
+  ): void;
+  getBuckets(
+    callback: StorageCallback<
+      [Bucket[], GetBucketsRequest & {pageToken: string}]
+    >
+  ): void;
   /**
    * Query object for listing buckets.
    *
@@ -1219,14 +1187,12 @@ export class Storage extends Service {
    * @typedef {array} GetBucketsResponse
    * @property {Bucket[]} 0 Array of {@link Bucket} instances.
    * @property {object} 1 nextQuery A query object to receive more results.
-   * @property {object} 2 The full API response.
    */
   /**
-   * @callback GetBucketsCallback
-   * @param {?Error} err Request error, if any.
+   * @callback StorageCallback
+   * @param {GaxiosError} err Request error, if any.
    * @param {Bucket[]} buckets Array of {@link Bucket} instances.
    * @param {object} nextQuery A query object to receive more results.
-   * @param {object} apiResponse The full API response.
    */
   /**
    * Get Bucket objects for all of the buckets in your project.
@@ -1234,7 +1200,7 @@ export class Storage extends Service {
    * See {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/list| Buckets: list API Documentation}
    *
    * @param {GetBucketsRequest} [query] Query object for listing buckets.
-   * @param {GetBucketsCallback} [callback] Callback function.
+   * @param {StorageCallback} [callback] Callback function.
    * @returns {Promise<GetBucketsResponse>}
    *
    * @example
@@ -1283,8 +1249,10 @@ export class Storage extends Service {
    * Another example:
    */
   getBuckets(
-    optionsOrCallback?: GetBucketsRequest | GetBucketsCallback,
-    cb?: GetBucketsCallback
+    optionsOrCallback?:
+      | GetBucketsRequest
+      | StorageCallback<[Bucket[], GetBucketsRequest & {pageToken: string}]>,
+    cb?: StorageCallback<[Bucket[], GetBucketsRequest & {pageToken: string}]>
   ): void | Promise<GetBucketsResponse> {
     const {options, callback} = normalize<GetBucketsRequest>(
       optionsOrCallback,
@@ -1292,29 +1260,35 @@ export class Storage extends Service {
     );
     options.project = options.project || this.projectId;
 
-    this.request(
+    this.storageTransport.makeRequest<{
+      kind: string;
+      nextPageToken?: string;
+      items: BucketMetadata[];
+    }>(
       {
-        uri: '/b',
-        qs: options,
+        url: '/b',
+        method: 'GET',
+        queryParameters: options as unknown as StorageQueryParameters,
+        responseType: 'json',
       },
       (err, resp) => {
         if (err) {
-          callback(err, null, null, resp);
+          callback(err);
           return;
         }
 
-        const itemsArray = resp.items ? resp.items : [];
-        const buckets = itemsArray.map((bucket: BucketMetadata) => {
+        const items = resp?.items ? resp.items : [];
+        const buckets = items.map((bucket: BucketMetadata) => {
           const bucketInstance = this.bucket(bucket.id!);
           bucketInstance.metadata = bucket;
           return bucketInstance;
         });
 
-        const nextQuery = resp.nextPageToken
+        const nextQuery = resp?.nextPageToken
           ? Object.assign({}, options, {pageToken: resp.nextPageToken})
           : null;
 
-        callback(null, buckets, nextQuery, resp);
+        callback(null, [buckets, nextQuery]);
       }
     );
   }
@@ -1347,14 +1321,6 @@ export class Storage extends Service {
    * @typedef {array} GetHmacKeysResponse
    * @property {HmacKey[]} 0 Array of {@link HmacKey} instances.
    * @param {object} nextQuery 1 A query object to receive more results.
-   * @param {object} apiResponse 2 The full API response.
-   */
-  /**
-   * @callback GetHmacKeysCallback
-   * @param {?Error} err Request error, if any.
-   * @param {HmacKey[]} hmacKeys Array of {@link HmacKey} instances.
-   * @param {object} nextQuery A query object to receive more results.
-   * @param {object} apiResponse The full API response.
    */
   /**
    * Retrieves a list of HMAC keys matching the criteria.
@@ -1362,7 +1328,7 @@ export class Storage extends Service {
    * The authenticated user must have storage.hmacKeys.list permission for the project in which the key exists.
    *
    * @param {GetHmacKeysOption} options Configuration options.
-   * @param {GetHmacKeysCallback} callback Callback function.
+   * @param {StorageCallback} callback Callback function.
    * @return {Promise<GetHmacKeysResponse>}
    *
    * @example
@@ -1403,29 +1369,46 @@ export class Storage extends Service {
    * ```
    */
   getHmacKeys(options?: GetHmacKeysOptions): Promise<GetHmacKeysResponse>;
-  getHmacKeys(callback: GetHmacKeysCallback): void;
-  getHmacKeys(options: GetHmacKeysOptions, callback: GetHmacKeysCallback): void;
   getHmacKeys(
-    optionsOrCb?: GetHmacKeysOptions | GetHmacKeysCallback,
-    cb?: GetHmacKeysCallback
+    callback: StorageCallback<
+      [HmacKey[], GetHmacKeysOptions & {pageToken: string}]
+    >
+  ): void;
+  getHmacKeys(
+    options: GetHmacKeysOptions,
+    callback: StorageCallback<
+      [HmacKey[], GetHmacKeysOptions & {pageToken: string}]
+    >
+  ): void;
+  getHmacKeys(
+    optionsOrCb?:
+      | GetHmacKeysOptions
+      | StorageCallback<[HmacKey[], GetHmacKeysOptions & {pageToken: string}]>,
+    cb?: StorageCallback<[HmacKey[], GetHmacKeysOptions & {pageToken: string}]>
   ): Promise<GetHmacKeysResponse> | void {
     const {options, callback} = normalize<GetHmacKeysOptions>(optionsOrCb, cb);
     const query = Object.assign({}, options);
     const projectId = query.projectId || this.projectId;
     delete query.projectId;
 
-    this.request(
+    this.storageTransport.makeRequest<{
+      kind: string;
+      nextPageToken?: string;
+      items: HmacKeyMetadata[];
+    }>(
       {
-        uri: `/projects/${projectId}/hmacKeys`,
-        qs: query,
+        url: `/projects/${projectId}/hmacKeys`,
+        responseType: 'json',
+        queryParameters: query as unknown as StorageQueryParameters,
+        method: 'GET',
       },
       (err, resp) => {
         if (err) {
-          callback(err, null, null, resp);
+          callback(err);
           return;
         }
 
-        const itemsArray = resp.items ? resp.items : [];
+        const itemsArray = resp?.items ? resp.items : [];
         const hmacKeys = itemsArray.map((hmacKey: HmacKeyMetadata) => {
           const hmacKeyInstance = this.hmacKey(hmacKey.accessId!, {
             projectId: hmacKey.projectId,
@@ -1434,39 +1417,30 @@ export class Storage extends Service {
           return hmacKeyInstance;
         });
 
-        const nextQuery = resp.nextPageToken
+        const nextQuery = resp?.nextPageToken
           ? Object.assign({}, options, {pageToken: resp.nextPageToken})
           : null;
 
-        callback(null, hmacKeys, nextQuery, resp);
+        callback(null, [hmacKeys, nextQuery]);
       }
     );
   }
 
   getServiceAccount(
     options?: GetServiceAccountOptions
-  ): Promise<GetServiceAccountResponse>;
+  ): Promise<ServiceAccount>;
   getServiceAccount(
     options?: GetServiceAccountOptions
-  ): Promise<GetServiceAccountResponse>;
+  ): Promise<ServiceAccount>;
   getServiceAccount(
     options: GetServiceAccountOptions,
-    callback: GetServiceAccountCallback
+    callback: StorageCallback<ServiceAccount>
   ): void;
-  getServiceAccount(callback: GetServiceAccountCallback): void;
-  /**
-   * @typedef {array} GetServiceAccountResponse
-   * @property {object} 0 The service account resource.
-   * @property {object} 1 The full
-   * {@link https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource| API response}.
-   */
+  getServiceAccount(callback: StorageCallback<ServiceAccount>): void;
   /**
    * @callback GetServiceAccountCallback
-   * @param {?Error} err Request error, if any.
-   * @param {object} serviceAccount The serviceAccount resource.
-   * @param {string} serviceAccount.emailAddress The service account email
-   *     address.
-   * @param {object} apiResponse The full
+   * @param {GaxiosError} err Request error, if any.
+   * @param {ServiceAccount} serviceAccount The serviceAccount resource.
    * {@link https://cloud.google.com/storage/docs/json_api/v1/projects/serviceAccount#resource| API response}.
    */
   /**
@@ -1480,7 +1454,7 @@ export class Storage extends Service {
    * @param {string} [options.userProject] User project to be billed for this
    *     request.
    * @param {GetServiceAccountCallback} [callback] Callback function.
-   * @returns {Promise<GetServiceAccountResponse>}
+   * @returns {Promise<ServiceAccount>}
    *
    * @example
    * ```
@@ -1503,37 +1477,34 @@ export class Storage extends Service {
    * ```
    */
   getServiceAccount(
-    optionsOrCallback?: GetServiceAccountOptions | GetServiceAccountCallback,
-    cb?: GetServiceAccountCallback
-  ): void | Promise<GetServiceAccountResponse> {
+    optionsOrCallback?:
+      | GetServiceAccountOptions
+      | StorageCallback<ServiceAccount>,
+    cb?: StorageCallback<ServiceAccount>
+  ): void | Promise<ServiceAccount> {
     const {options, callback} = normalize<GetServiceAccountOptions>(
       optionsOrCallback,
       cb
     );
-    this.request(
+
+    this.storageTransport.makeRequest<ServiceAccount>(
       {
-        uri: `/projects/${this.projectId}/serviceAccount`,
-        qs: options,
+        method: 'GET',
+        url: `/projects/${this.projectId}/serviceAccount`,
+        queryParameters: options as unknown as StorageQueryParameters,
+        responseType: 'json',
       },
       (err, resp) => {
         if (err) {
-          callback(err, null, resp);
+          callback(err);
           return;
         }
+        const serviceAccount: ServiceAccount = {
+          emailAddress: resp?.email_address,
+          kind: resp?.kind,
+        };
 
-        const camelCaseResponse = {} as {[index: string]: string};
-
-        for (const prop in resp) {
-          // eslint-disable-next-line no-prototype-builtins
-          if (resp.hasOwnProperty(prop)) {
-            const camelCaseProp = prop.replace(/_(\w)/g, (_, match) =>
-              match.toUpperCase()
-            );
-            camelCaseResponse[camelCaseProp] = resp[prop];
-          }
-        }
-
-        callback(null, camelCaseResponse, resp);
+        callback(null, serviceAccount);
       }
     );
   }

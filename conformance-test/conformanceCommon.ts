@@ -18,8 +18,8 @@ import * as libraryMethods from './libraryMethods';
 import {Bucket, File, HmacKey, Notification, Storage} from '../src/';
 import * as uuid from 'uuid';
 import * as assert from 'assert';
-import {DecorateRequestOptions} from '../src/nodejs-common';
 import fetch from 'node-fetch';
+import { GaxiosOptions } from 'gaxios';
 
 interface RetryCase {
   instructions: String[];
@@ -122,17 +122,14 @@ export function executeScenario(testCase: RetryTestCase) {
             notification = bucket.notification(`${TESTS_PREFIX}`);
             await notification.create();
 
-            [hmacKey] = await storage.createHmacKey(
-              `${TESTS_PREFIX}@email.com`
-            );
+            hmacKey = await storage.createHmacKey(`${TESTS_PREFIX}@email.com`);
 
-            storage.interceptors.push({
-              request: requestConfig => {
-                requestConfig.headers = requestConfig.headers || {};
-                Object.assign(requestConfig.headers, {
-                  'x-retry-test-id': creationResult.id,
-                });
-                return requestConfig as DecorateRequestOptions;
+            storage.interceptors.add({
+              resolved(config: GaxiosOptions) {
+                const headers = config.headers || {};
+                headers['x-retry-test-id'] = creationResult.id;
+                config.headers = headers;
+                return Promise.resolve(config);
               },
             });
           });

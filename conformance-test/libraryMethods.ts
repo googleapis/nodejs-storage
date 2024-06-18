@@ -14,7 +14,6 @@
 
 import {Bucket, File, Notification, Storage, HmacKey, Policy} from '../src';
 import * as path from 'path';
-import {ApiError} from '../src/nodejs-common';
 import {
   createTestBuffer,
   createTestFileFromBuffer,
@@ -119,7 +118,7 @@ export async function combine(options: ConformanceTestOptions) {
 }
 
 export async function create(options: ConformanceTestOptions) {
-  const [bucketExists] = await options.bucket!.exists();
+  const bucketExists = await options.bucket!.exists();
   if (bucketExists) {
     await options.bucket!.deleteFiles();
     await options.bucket!.delete({
@@ -227,7 +226,7 @@ export async function getFilesStream(options: ConformanceTestOptions) {
       .bucket!.getFilesStream()
       .on('data', () => {})
       .on('end', () => resolve(undefined))
-      .on('error', (err: ApiError) => reject(err));
+      .on('error', err => reject(err));
   });
 }
 
@@ -496,7 +495,7 @@ export async function createReadStream(options: ConformanceTestOptions) {
       .file!.createReadStream()
       .on('data', () => {})
       .on('end', () => resolve(undefined))
-      .on('error', (err: ApiError) => reject(err));
+      .on('error', err => reject(err));
   });
 }
 
@@ -755,7 +754,7 @@ export async function iamSetPolicy(options: ConformanceTestOptions) {
   };
   if (options.preconditionRequired) {
     const currentPolicy = await options.bucket!.iam.getPolicy();
-    testPolicy.etag = currentPolicy[0].etag;
+    testPolicy.etag = currentPolicy.etag;
   }
   await options.bucket!.iam.setPolicy(testPolicy);
 }
@@ -795,7 +794,7 @@ export async function notificationGetMetadata(options: ConformanceTestOptions) {
 
 export async function createBucket(options: ConformanceTestOptions) {
   const bucket = options.storage!.bucket('test-creating-bucket');
-  const [exists] = await bucket.exists();
+  const exists = await bucket.exists();
   if (exists) {
     bucket.delete();
   }

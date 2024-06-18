@@ -15,7 +15,6 @@
  */
 
 import {
-  ApiError,
   Bucket,
   File,
   CRC32C,
@@ -29,10 +28,11 @@ import {
   TransferManager,
   Storage,
   DownloadResponse,
+  GetFileOptions,
 } from '../src/index.js';
 import assert from 'assert';
 import * as path from 'path';
-import {GaxiosOptions, GaxiosResponse} from 'gaxios';
+import {GaxiosError, GaxiosOptions, GaxiosResponse} from 'gaxios';
 import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util.js';
 import {AuthClient, GoogleAuth} from 'google-auth-library';
 import {tmpdir} from 'os';
@@ -51,8 +51,8 @@ describe('Transfer Manager', () => {
         retryDelayMultiplier: 2,
         totalTimeout: 600,
         maxRetryDelay: 60,
-        retryableErrorFn: (err: ApiError) => {
-          return err.code === 500;
+        retryableErrorFn: (err: GaxiosError) => {
+          return err.status === 500;
         },
         idempotencyStrategy: IdempotencyStrategy.RetryConditional,
       },
@@ -318,14 +318,17 @@ describe('Transfer Manager', () => {
       } as fsp.FileHandle);
 
       file = new File(bucket, 'some-large-file');
-      sandbox.stub(file, 'get').resolves([
-        {
-          metadata: {
-            size: 1024,
-            crc32c: 'AAAAAA==',
-          },
+      (
+        sandbox.stub(file, 'get') as unknown as sinon.SinonStub<
+          [GetFileOptions],
+          Promise<File>
+        >
+      ).resolves({
+        metadata: {
+          size: 1024,
+          crc32c: 'AAAAAA==',
         },
-      ]);
+      } as unknown as File);
     });
 
     it('should download a single chunk if file size is below threshold', async () => {
@@ -640,9 +643,10 @@ describe('Transfer Manager', () => {
         }
       }
 
-      transferManager.bucket.storage.authClient = new GoogleAuth({
-        authClient: new TestAuthClient(),
-      });
+      transferManager.bucket.storage.storageTransport.authClient =
+        new GoogleAuth({
+          authClient: new TestAuthClient(),
+        });
 
       await transferManager.uploadFileInChunks(filePath);
 
@@ -678,9 +682,10 @@ describe('Transfer Manager', () => {
         }
       }
 
-      transferManager.bucket.storage.authClient = new GoogleAuth({
-        authClient: new TestAuthClient(),
-      });
+      transferManager.bucket.storage.storageTransport.authClient =
+        new GoogleAuth({
+          authClient: new TestAuthClient(),
+        });
 
       await transferManager.uploadFileInChunks(filePath);
 

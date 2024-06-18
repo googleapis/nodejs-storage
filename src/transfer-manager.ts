@@ -29,8 +29,7 @@ import {CRC32C} from './crc32c.js';
 import {GoogleAuth} from 'google-auth-library';
 import {XMLParser, XMLBuilder} from 'fast-xml-parser';
 import AsyncRetry from 'async-retry';
-import {ApiError} from './nodejs-common/index.js';
-import {GaxiosResponse, Headers} from 'gaxios';
+import {GaxiosError, GaxiosResponse, Headers} from 'gaxios';
 import {createHash} from 'crypto';
 import {GCCL_GCS_CMD_KEY} from './nodejs-common/util.js';
 import {getRuntimeTrackingString, getUserAgentString} from './util.js';
@@ -195,7 +194,8 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
     uploadId?: string,
     partsMap?: Map<number, string>
   ) {
-    this.authClient = bucket.storage.authClient || new GoogleAuth();
+    this.authClient =
+      bucket.storage.storageTransport.authClient || new GoogleAuth();
     this.uploadId = uploadId || '';
     this.bucket = bucket;
     this.fileName = fileName;
@@ -383,7 +383,7 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
   #handleErrorResponse(err: Error, bail: Function) {
     if (
       this.bucket.storage.retryOptions.autoRetry &&
-      this.bucket.storage.retryOptions.retryableErrorFn!(err as ApiError)
+      this.bucket.storage.retryOptions.retryableErrorFn!(err as GaxiosError)
     ) {
       throw err;
     } else {
@@ -668,7 +668,7 @@ export class TransferManager {
         : fileOrName;
 
     const fileInfo = await file.get();
-    const size = parseInt(fileInfo[0].metadata.size!.toString());
+    const size = parseInt(fileInfo.metadata.size!.toString());
     // If the file size does not meet the threshold download it as a single chunk.
     if (size < DOWNLOAD_IN_CHUNKS_FILE_SIZE_THRESHOLD) {
       limit = pLimit(1);
@@ -710,9 +710,9 @@ export class TransferManager {
       await fileToWrite.close();
     }
 
-    if (options.validation === 'crc32c' && fileInfo[0].metadata.crc32c) {
+    if (options.validation === 'crc32c' && fileInfo.metadata.crc32c) {
       const downloadedCrc32C = await CRC32C.fromFile(filePath);
-      if (!downloadedCrc32C.validate(fileInfo[0].metadata.crc32c)) {
+      if (!downloadedCrc32C.validate(fileInfo.metadata.crc32c)) {
         const mismatchError = new RequestError(
           FileExceptionMessages.DOWNLOAD_MISMATCH
         );

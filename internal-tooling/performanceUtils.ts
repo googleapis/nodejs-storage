@@ -310,7 +310,7 @@ export async function performanceTestSetup(
       ifGenerationMatch: 0,
     },
   });
-  if (!(await bucket.exists())[0]) {
+  if (!(await bucket.exists())) {
     await bucket.create();
   }
   const transferManager = new TransferManager(bucket);
