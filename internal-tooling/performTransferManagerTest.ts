@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/* eslint-disable node/no-unsupported-features/node-builtins */
 import yargs from 'yargs';
 import {parentPort} from 'worker_threads';
 import {Bucket, File, TransferManager} from '../src/index.js';

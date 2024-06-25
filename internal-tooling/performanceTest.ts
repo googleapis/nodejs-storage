@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+/* eslint-disable node/no-process-exit */
 import yargs from 'yargs';
 import {appendFile} from 'fs/promises';
 import {Worker} from 'worker_threads';
