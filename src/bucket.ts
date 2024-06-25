@@ -13,9 +13,6 @@
 // limitations under the License.
 
 import {
-  ApiError,
-  BodyResponseCallback,
-  DecorateRequestOptions,
   DeleteCallback,
   ExistsCallback,
   GetConfig,
@@ -24,7 +21,6 @@ import {
   SetMetadataResponse,
   util,
 } from './nodejs-common/index.js';
-import {RequestResponse} from './nodejs-common/service-object.js';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as fs from 'fs';
@@ -66,8 +62,11 @@ import {CRC32CValidatorGenerator} from './crc32c.js';
 import {URL} from 'url';
 import {
   BaseMetadata,
+  Methods,
   SetMetadataOptions,
 } from './nodejs-common/service-object.js';
+import {GaxiosError} from 'gaxios';
+import {StorageQueryParameters} from './storage-transport.js';
 
 interface SourceObject {
   name: string;
@@ -279,7 +278,7 @@ export interface GetBucketOptions extends GetConfig {
 export type GetBucketResponse = [Bucket, unknown];
 
 export interface GetBucketCallback {
-  (err: ApiError | null, bucket: Bucket | null, apiResponse: unknown): void;
+  (err: GaxiosError | null, bucket: Bucket | null, apiResponse: unknown): void;
 }
 
 export interface GetLabelsOptions {
@@ -370,7 +369,7 @@ export type GetBucketMetadataResponse = [BucketMetadata, unknown];
 
 export interface GetBucketMetadataCallback {
   (
-    err: ApiError | null,
+    err: GaxiosError | null,
     metadata: BucketMetadata | null,
     apiResponse: unknown
   ): void;
@@ -866,7 +865,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       requestQueryObject.userProject = userProject;
     }
 
-    const methods = {
+    const methods: Methods = {
       /**
        * Create a bucket.
        *
@@ -897,7 +896,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       create: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -951,7 +950,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       delete: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -996,7 +995,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       exists: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -1055,7 +1054,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       get: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -1111,7 +1110,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       getMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -1202,7 +1201,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
        */
       setMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
     };
@@ -1223,12 +1222,14 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     this.userProject = options.userProject;
 
     this.acl = new Acl({
-      request: this.request.bind(this),
+      parent: this,
+      storageTransport: this.storageTransport,
       pathPrefix: '/acl',
     });
 
     this.acl.default = new Acl({
-      request: this.request.bind(this),
+      parent: this,
+      storageTransport: this.storageTransport,
       pathPrefix: '/defaultObjectAcl',
     });
 
@@ -1487,7 +1488,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     // The default behavior appends the previously-defined lifecycle rules with
     // the new ones just passed in by the user.
-    this.getMetadata((err: ApiError | null, metadata: BucketMetadata) => {
+    this.getMetadata((err: GaxiosError | null, metadata: BucketMetadata) => {
       if (err) {
         callback!(err);
         return;
@@ -1659,12 +1660,12 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
 
     // Make the request from the destination File object.
-    destinationFile.request(
+    destinationFile.storageTransport.makeRequest(
       {
         method: 'POST',
-        uri: '/compose',
+        url: '/compose',
         maxRetries,
-        json: {
+        body: {
           destination: {
             contentType: destinationFile.metadata.contentType,
             contentEncoding: destinationFile.metadata.contentEncoding,
@@ -1683,7 +1684,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
             return sourceObject;
           }),
         },
-        qs: options,
+        queryParameters: options as unknown as StorageQueryParameters,
       },
       (err, resp) => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
@@ -1821,31 +1822,30 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options = optionsOrCallback;
     }
 
-    this.request(
+    this.storageTransport.makeRequest(
       {
         method: 'POST',
-        uri: '/o/watch',
-        json: Object.assign(
+        url: `${this.baseUrl}/o/watch`,
+        body: Object.assign(
           {
             id,
             type: 'web_hook',
           },
           config
         ),
-        qs: options,
+        queryParameters: options as unknown as StorageQueryParameters,
       },
-      (err, apiResponse) => {
+      (err, data, resp) => {
         if (err) {
-          callback!(err, null, apiResponse);
+          callback!(err, null, resp);
           return;
         }
 
-        const resourceId = apiResponse.resourceId;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const resourceId = (data as any).resourceId;
         const channel = this.storage.channel(id, resourceId);
 
-        channel.metadata = apiResponse;
-
-        callback!(null, channel, apiResponse);
+        channel.metadata = data as unknown as BaseMetadata;
       }
     );
   }
@@ -2005,25 +2005,25 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       delete body.userProject;
     }
 
-    this.request(
+    this.storageTransport.makeRequest(
       {
         method: 'POST',
-        uri: '/notificationConfigs',
-        json: convertObjKeysToSnakeCase(body),
-        qs: query,
-        maxRetries: 0, //explicitly set this value since this is a non-idempotent function
+        url: `${this.baseUrl}/notificationConfigs`,
+        body: convertObjKeysToSnakeCase(body),
+        queryParameters: query as unknown as StorageQueryParameters,
+        retry: false,
       },
-      (err, apiResponse) => {
+      (err, data, resp) => {
         if (err) {
-          callback!(err, null, apiResponse);
+          callback!(err, null, resp);
           return;
         }
 
-        const notification = this.notification(apiResponse.id);
-
-        notification.metadata = apiResponse;
-
-        callback!(null, notification, apiResponse);
+        const notification = this.notification(
+          (data as NotificationMetadata).id!
+        );
+        notification.metadata = data as NotificationMetadata;
+        callback!(null, notification, resp);
       }
     );
   }
@@ -2810,19 +2810,20 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
     query = Object.assign({}, query);
 
-    this.request(
+    this.storageTransport.makeRequest(
       {
-        uri: '/o',
-        qs: query,
+        url: `${this.baseUrl}/o`,
+        queryParameters: query as unknown as StorageQueryParameters,
       },
-      (err, resp) => {
+      (err, data, resp) => {
         if (err) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (callback as any)(err, null, null, resp);
           return;
         }
 
-        const itemsArray = resp.items ? resp.items : [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const itemsArray = (data as any).items ? (data as any).items : [];
         const files = itemsArray.map((file: FileMetadata) => {
           const options = {} as FileOptions;
 
@@ -2841,9 +2842,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         });
 
         let nextQuery: object | null = null;
-        if (resp.nextPageToken) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((data as any).nextPageToken) {
           nextQuery = Object.assign({}, query, {
-            pageToken: resp.nextPageToken,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            pageToken: (data as any).nextPageToken,
           });
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2920,7 +2923,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     this.getMetadata(
       options,
-      (err: ApiError | null, metadata: BucketMetadata | undefined) => {
+      (err: GaxiosError | null, metadata: BucketMetadata | undefined) => {
         if (err) {
           callback!(err, null);
           return;
@@ -3003,17 +3006,18 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options = optionsOrCallback;
     }
 
-    this.request(
+    this.storageTransport.makeRequest(
       {
-        uri: '/notificationConfigs',
-        qs: options,
+        url: `${this.baseUrl}/notificationConfigs`,
+        queryParameters: options as unknown as StorageQueryParameters,
       },
-      (err, resp) => {
+      (err, data, resp) => {
         if (err) {
           callback!(err, null, resp);
           return;
         }
-        const itemsArray = resp.items ? resp.items : [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const itemsArray = (data as any).items ? (data as any).items : [];
         const notifications = itemsArray.map(
           (notification: NotificationMetadata) => {
             const notificationInstance = this.notification(notification.id!);
@@ -3233,11 +3237,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       throw new Error(BucketExceptionMessages.METAGENERATION_NOT_PROVIDED);
     }
 
-    this.request(
+    this.storageTransport.makeRequest(
       {
         method: 'POST',
-        uri: '/lockRetentionPolicy',
-        qs: {
+        url: `${this.baseUrl}/lockRetentionPolicy`,
+        queryParameters: {
           ifMetagenerationMatch: metageneration,
         },
       },
@@ -3620,29 +3624,6 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     );
   }
 
-  request(reqOpts: DecorateRequestOptions): Promise<RequestResponse>;
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback: BodyResponseCallback
-  ): void;
-  /**
-   * Makes request and applies userProject query parameter if necessary.
-   *
-   * @private
-   *
-   * @param {object} reqOpts - The request options.
-   * @param {function} callback - The callback function.
-   */
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback?: BodyResponseCallback
-  ): void | Promise<RequestResponse> {
-    if (this.userProject && (!reqOpts.qs || !reqOpts.qs.userProject)) {
-      reqOpts.qs = {...reqOpts.qs, userProject: this.userProject};
-    }
-    return super.request(reqOpts, callback!);
-  }
-
   setLabels(
     labels: Labels,
     options?: SetLabelsOptions
@@ -3722,7 +3703,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     callback = callback || util.noop;
 
-    this.setMetadata({labels}, options, callback);
+    this.setMetadata({labels}, options, callback!);
   }
 
   setMetadata(
@@ -4024,10 +4005,10 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       const methodConfig = this.methods[method];
       if (typeof methodConfig === 'object') {
         if (typeof methodConfig.reqOpts === 'object') {
-          Object.assign(methodConfig.reqOpts.qs, {userProject});
+          Object.assign(methodConfig.reqOpts.queryParameters!, {userProject});
         } else {
           methodConfig.reqOpts = {
-            qs: {userProject},
+            queryParameters: {userProject},
           };
         }
       }
@@ -4302,7 +4283,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   ): Promise<UploadResponse> | void {
     const upload = (numberOfRetries: number | undefined) => {
       const returnValue = AsyncRetry(
-        async (bail: (err: Error) => void) => {
+        async (bail: (err: GaxiosError | Error) => void) => {
           await new Promise<void>((resolve, reject) => {
             if (
               numberOfRetries === 0 &&
@@ -4320,7 +4301,9 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
               .on('error', err => {
                 if (
                   this.storage.retryOptions.autoRetry &&
-                  this.storage.retryOptions.retryableErrorFn!(err)
+                  this.storage.retryOptions.retryableErrorFn!(
+                    err as GaxiosError
+                  )
                 ) {
                   return reject(err);
                 } else {
