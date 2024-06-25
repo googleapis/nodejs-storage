@@ -12,9 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import {GaxiosError, GaxiosResponse} from 'gaxios';
 import {BaseMetadata, ServiceObject, util} from './nodejs-common/index.js';
-import {StorageCallback} from './storage-transport.js';
 import {Storage} from './storage.js';
+import {promisifyAll} from '@google-cloud/promisify';
+
+export interface StopCallback {
+  (err: GaxiosError | null, apiResponse?: GaxiosResponse): void;
+}
 
 /**
  * Create a channel object to interact with a Cloud Storage channel.
@@ -49,8 +54,8 @@ class Channel extends ServiceObject<Channel, BaseMetadata> {
     this.metadata.resourceId = resourceId;
   }
 
-  stop(): Promise<void | {}>;
-  stop(callback: StorageCallback<{}>): void;
+  stop(): Promise<unknown>;
+  stop(callback: StopCallback): void;
   /**
    * Stop this channel.
    *
@@ -76,20 +81,28 @@ class Channel extends ServiceObject<Channel, BaseMetadata> {
    * });
    * ```
    */
-  stop(callback?: StorageCallback<{}>): Promise<void | {}> | void {
+  stop(callback?: StopCallback): Promise<unknown> | void {
     callback = callback || util.noop;
-    const reqPromise = this.storageTransport.makeRequest<{}>({
-      method: 'POST',
-      url: `${this.baseUrl}/stop`,
-      body: this.metadata,
-      responseType: 'json',
-    });
-
-    return callback
-      ? reqPromise.then(() => callback(null, {})).catch(callback)
-      : reqPromise;
+    this.storageTransport.makeRequest(
+      {
+        method: 'POST',
+        url: `${this.baseUrl}/stop`,
+        body: this.metadata,
+        responseType: 'json',
+      },
+      (err, data, resp) => {
+        callback!(err, resp);
+      }
+    );
   }
 }
+
+/*! Developer Documentation
+ *
+ * All async methods (except for streams) will return a Promise in the event
+ * that a callback is omitted.
+ */
+promisifyAll(Channel);
 
 /**
  * Reference to the {@link Channel} class.

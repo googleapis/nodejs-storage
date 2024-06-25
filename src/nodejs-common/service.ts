@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 import {AuthClient, GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
-import {Interceptor} from './service-object.js';
-import {DecorateRequestOptions, PackageJson} from './util.js';
+import {PackageJson} from './util.js';
+import {GaxiosInterceptor, GaxiosOptions} from 'gaxios';
 
 export const DEFAULT_PROJECT_ID_TOKEN = '{{projectId}}';
-
-export interface StreamRequestOptions extends DecorateRequestOptions {
-  shouldReturnStream: true;
-}
 
 export interface ServiceConfig {
   /**
@@ -56,7 +52,7 @@ export interface ServiceConfig {
 
 export interface ServiceOptions extends Omit<GoogleAuthOptions, 'authClient'> {
   authClient?: AuthClient | GoogleAuth;
-  interceptors_?: Interceptor[];
+  interceptors_?: GaxiosInterceptor<GaxiosOptions>[];
   email?: string;
   token?: string;
   timeout?: number; // http.request.options.timeout

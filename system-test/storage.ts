@@ -2722,7 +2722,7 @@ describe('storage', function () {
 
         // getServiceAccountEmail
         if (!SERVICE_ACCOUNT_EMAIL) {
-          const serviceAccount = await storage.getServiceAccount();
+          const [serviceAccount] = await storage.getServiceAccount();
           SERVICE_ACCOUNT_EMAIL = serviceAccount!.emailAddress!;
         }
 

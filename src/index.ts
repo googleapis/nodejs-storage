@@ -56,18 +56,22 @@
  * region_tag:storage_quickstart
  * Full quickstart example:
  */
-export {ApiError} from './nodejs-common/index.js';
 export {
+  BucketCallback,
   BucketOptions,
   CreateBucketQuery,
   CreateBucketRequest,
   CreateBucketResponse,
+  CreateHmacKeyCallback,
   CreateHmacKeyOptions,
   CreateHmacKeyResponse,
+  GetBucketsCallback,
   GetBucketsRequest,
   GetBucketsResponse,
+  GetHmacKeysCallback,
   GetHmacKeysOptions,
   GetHmacKeysResponse,
+  GetServiceAccountCallback,
   GetServiceAccountOptions,
   GetServiceAccountResponse,
   HmacKeyResourceResponse,
@@ -163,7 +167,7 @@ export {
   UploadResponse,
 } from './bucket.js';
 export * from './crc32c.js';
-export {Channel} from './channel.js';
+export {Channel, StopCallback} from './channel.js';
 export {
   CopyCallback,
   CopyOptions,
@@ -261,4 +265,4 @@ export {
 } from './notification.js';
 export {GetSignedUrlCallback, GetSignedUrlResponse} from './signer.js';
 export * from './transfer-manager.js';
-export * from './storage-transport.js';
+export * from 'gaxios';

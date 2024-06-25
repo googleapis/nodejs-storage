@@ -1,4 +1,4 @@
-import {GaxiosError, GaxiosOptions, Headers} from 'gaxios';
+import {GaxiosError, GaxiosOptions, GaxiosResponse, Headers} from 'gaxios';
 import {AuthClient, GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {
   getModuleFormat,
@@ -38,10 +38,6 @@ export interface StorageRequestOptions extends GaxiosOptions {
   shouldReturnStream?: boolean;
 }
 
-export interface StorageCallback<T> {
-  (err: GaxiosError<T> | null, data?: T): void;
-}
-
 interface TransportParameters extends Omit<GoogleAuthOptions, 'authClient'> {
   apiEndpoint: string;
   authClient?: GoogleAuth | AuthClient;
@@ -60,6 +56,14 @@ interface TransportParameters extends Omit<GoogleAuthOptions, 'authClient'> {
 interface PackageJson {
   name: string;
   version: string;
+}
+
+export interface StorageTransportCallback<T> {
+  (
+    err: GaxiosError | null,
+    data?: T | null,
+    fullResponse?: GaxiosResponse
+  ): void;
 }
 
 export class StorageTransport {
@@ -89,7 +93,7 @@ export class StorageTransport {
 
   makeRequest<T>(
     reqOpts: StorageRequestOptions,
-    callback?: StorageCallback<T>
+    callback?: StorageTransportCallback<T>
   ): Promise<T> | Promise<void> {
     const headers = this.#buildRequestHeaders(reqOpts.headers);
     if (reqOpts[GCCL_GCS_CMD_KEY]) {
@@ -105,7 +109,9 @@ export class StorageTransport {
     });
 
     return callback
-      ? requestPromise.then(resp => callback(null, resp.data)).catch(callback)
+      ? requestPromise
+          .then(resp => callback(null, resp.data, resp))
+          .catch(err => callback(err, null, err.response))
       : (requestPromise.then(resp => resp.data) as Promise<T>);
   }
 
