@@ -6,4 +6,3 @@ docs/
 protos/
 samples/generated/
 system-test/**/fixtures
-internal-tooling/
