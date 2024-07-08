@@ -1231,7 +1231,9 @@ export class Upload extends Writable {
 
         if (retryDelay <= 0) {
           this.destroy(
-            new Error(`Retry total time limit exceeded - ${JSON.stringify(resp.data)}`)
+            new Error(
+              `Retry total time limit exceeded - ${JSON.stringify(resp.data)}`
+            )
           );
           return;
         }
