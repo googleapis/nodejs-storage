@@ -1252,7 +1252,9 @@ export class Upload extends Writable {
       }
       this.numRetries++;
     } else {
-      this.destroy(new Error(`Retry limit exceeded - ${JSON.stringify(resp.data)}`);
+      this.destroy(
+        new Error(`Retry limit exceeded - ${JSON.stringify(resp.data)}`)
+      );
     }
   }
 
