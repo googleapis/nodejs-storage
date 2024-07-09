@@ -18,7 +18,6 @@ import * as libraryMethods from './libraryMethods';
 import {Bucket, File, HmacKey, Notification, Storage} from '../src/';
 import * as uuid from 'uuid';
 import * as assert from 'assert';
-import {DecorateRequestOptions} from '../src/nodejs-common';
 import fetch from 'node-fetch';
 
 interface RetryCase {
@@ -127,12 +126,12 @@ export function executeScenario(testCase: RetryTestCase) {
             );
 
             storage.interceptors.push({
-              request: requestConfig => {
+              resolved: requestConfig => {
                 requestConfig.headers = requestConfig.headers || {};
                 Object.assign(requestConfig.headers, {
                   'x-retry-test-id': creationResult.id,
                 });
-                return requestConfig as DecorateRequestOptions;
+                return Promise.resolve(requestConfig);
               },
             });
           });

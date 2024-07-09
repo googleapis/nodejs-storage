@@ -18,7 +18,12 @@ import {EventEmitter} from 'events';
 import {util} from './util.js';
 import {Bucket} from '../bucket.js';
 import {StorageRequestOptions, StorageTransport} from '../storage-transport.js';
-import {GaxiosError, GaxiosResponse} from 'gaxios';
+import {
+  GaxiosError,
+  GaxiosInterceptor,
+  GaxiosOptions,
+  GaxiosResponse,
+} from 'gaxios';
 
 export type GetMetadataOptions = object;
 
@@ -155,8 +160,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   name?: string;
   private createMethod?: Function;
   protected methods: Methods;
-  //TODO: Fill in with GaxiosInterceptors
-  //interceptors: Interceptor[];
+  interceptors: GaxiosInterceptor<GaxiosOptions>[];
   projectId?: string;
 
   /*
@@ -185,7 +189,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
     this.id = config.id; // Name or ID (e.g. dataset ID, bucket name, etc).
     this.createMethod = config.createMethod;
     this.methods = config.methods || {};
-    //this.interceptors = [];
+    this.interceptors = [];
     this.projectId = config.projectId;
     this.storageTransport = config.storageTransport;
 
