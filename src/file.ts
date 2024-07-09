@@ -1505,8 +1505,6 @@ class File extends ServiceObject<File, FileMetadata> {
     const tailRequest = options.end! < 0;
 
     let validateStream: HashStreamValidator | undefined = undefined;
-    let request: r.Request | undefined = undefined;
-
     const throughStream = new PassThroughShim();
 
     let crc32c = true;
@@ -1539,9 +1537,9 @@ class File extends ServiceObject<File, FileMetadata> {
       if (err) {
         // There is an issue with node-fetch 2.x that if the stream errors the underlying socket connection is not closed.
         // This causes a memory leak, so cleanup the sockets manually here by destroying the agent.
-        if (request?.agent) {
-          request.agent.destroy();
-        }
+        //if (request?.agent) {
+        //  request.agent.destroy();
+        //}
         throughStream.destroy(err);
       }
     };
@@ -1570,7 +1568,6 @@ class File extends ServiceObject<File, FileMetadata> {
         return;
       }
 
-      request = (rawResponseStream as r.Response).request;
       const headers = (rawResponseStream as ResponseBody).toJSON().headers;
       const isCompressed = headers['content-encoding'] === 'gzip';
       const hashes: {crc32c?: string; md5?: string} = {};
@@ -1682,7 +1679,7 @@ class File extends ServiceObject<File, FileMetadata> {
         })
         .on('response', res => {
           throughStream.emit('response', res);
-          util.handleResp(null, res, null, onResponse);
+          onResponse(res.err, res.body, res.resp);
         })
         .resume();
     };
@@ -1811,11 +1808,6 @@ class File extends ServiceObject<File, FileMetadata> {
         authClient: this.storage.storageTransport.authClient,
         apiEndpoint: this.storage.apiEndpoint,
         bucket: this.bucket.name,
-        //TODO: Fill in with gaxios interceptors
-        /* customRequestOptions: this.getRequestInterceptors().reduce(
-          (reqOpts, interceptorFn) => interceptorFn(reqOpts),
-          {}
-        ), */
         file: this.name,
         generation: this.generation,
         key: this.encryptionKey,
@@ -2398,13 +2390,13 @@ class File extends ServiceObject<File, FileMetadata> {
       .digest('base64');
 
     this.encryptionKeyInterceptor = {
-      request: reqOpts => {
+      resolved: reqOpts => {
         reqOpts.headers = reqOpts.headers || {};
         reqOpts.headers['x-goog-encryption-algorithm'] = 'AES256';
         reqOpts.headers['x-goog-encryption-key'] = this.encryptionKeyBase64;
         reqOpts.headers['x-goog-encryption-key-sha256'] =
           this.encryptionKeyHash;
-        return reqOpts as DecorateRequestOptions;
+        return Promise.resolve(reqOpts);
       },
     };
 
@@ -2499,7 +2491,11 @@ class File extends ServiceObject<File, FileMetadata> {
     callback?: GetExpirationDateCallback
   ): void | Promise<GetExpirationDateResponse> {
     this.getMetadata(
-      (err: ApiError | null, metadata: FileMetadata, apiResponse: unknown) => {
+      (
+        err: GaxiosError | null,
+        metadata: FileMetadata,
+        apiResponse: unknown
+      ) => {
         if (err) {
           callback!(err, null, apiResponse);
           return;
@@ -3223,16 +3219,10 @@ class File extends ServiceObject<File, FileMetadata> {
     const storageInterceptors = this.storage?.interceptors || [];
     const fileInterceptors = this.interceptors || [];
     const allInterceptors = storageInterceptors.concat(fileInterceptors);
-    const headers = allInterceptors.reduce((acc, curInterceptor) => {
-      const currentHeaders = curInterceptor.request({
-        uri: `${this.storage.apiEndpoint}/${
-          this.bucket.name
-        }/${encodeURIComponent(this.name)}`,
-      });
 
-      Object.assign(acc, currentHeaders.headers);
-      return acc;
-    }, {});
+    for (const curInter of allInterceptors) {
+      gaxios.instance.interceptors.request.add(curInter);
+    }
 
     gaxios
       .request({
@@ -3240,12 +3230,13 @@ class File extends ServiceObject<File, FileMetadata> {
         url: `${this.storage.apiEndpoint}/${
           this.bucket.name
         }/${encodeURIComponent(this.name)}`,
-        headers,
         retryConfig: {
           retry: this.storage.retryOptions.maxRetries,
           noResponseRetries: this.storage.retryOptions.maxRetries,
+          maxRetryDelay: this.storage.retryOptions.maxRetryDelay,
+          retryDelayMultiplier: this.storage.retryOptions.retryDelayMultiplier,
           shouldRetry: this.storage.retryOptions.retryableErrorFn,
-          //TODO: Finish rest of retry options
+          totalTimeout: this.storage.retryOptions.totalTimeout,
         },
       })
       .then(() => callback!(null, true))
@@ -4141,10 +4132,6 @@ class File extends ServiceObject<File, FileMetadata> {
       authClient: this.storage.storageTransport.authClient,
       apiEndpoint: this.storage.apiEndpoint,
       bucket: this.bucket.name,
-      customRequestOptions: this.getRequestInterceptors().reduce(
-        (reqOpts, interceptorFn) => interceptorFn(reqOpts),
-        {}
-      ),
       file: this.name,
       generation: this.generation,
       isPartialUpload: options.isPartialUpload,
@@ -4254,23 +4241,20 @@ class File extends ServiceObject<File, FileMetadata> {
       options.preconditionOpts
     );
 
-    util.makeWritableStream(dup, {
-      makeAuthenticatedRequest: (reqOpts: object) => {
-        this.request(reqOpts as DecorateRequestOptions, (err, body, resp) => {
-          if (err) {
-            dup.destroy(err);
-            return;
-          }
+    this.storageTransport.makeRequest(
+      reqOpts as StorageRequestOptions,
+      (err, body, resp) => {
+        if (err) {
+          dup.destroy(err);
+          return;
+        }
 
-          this.metadata = body;
-          dup.emit('metadata', body);
-          dup.emit('response', resp);
-          dup.emit('complete');
-        });
-      },
-      metadata: options.metadata,
-      request: reqOpts,
-    });
+        this.metadata = body as FileMetadata;
+        dup.emit('metadata', body);
+        dup.emit('response', resp);
+        dup.emit('complete');
+      }
+    );
   }
 
   disableAutoRetryConditionallyIdempotent_(

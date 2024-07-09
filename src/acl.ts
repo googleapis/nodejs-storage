@@ -91,7 +91,10 @@ interface AclQuery {
 export interface AccessControlObject {
   entity: string;
   role: string;
-  projectTeam: string;
+  projectTeam?: {
+    projectNumber?: string;
+    team?: 'editors' | 'owners' | 'viewers' | string;
+  };
 }
 
 export interface AclMetadata extends BaseMetadata {
@@ -103,7 +106,7 @@ export interface AclMetadata extends BaseMetadata {
   object?: string;
   projectTeam?: {
     projectNumber?: string;
-    team?: 'editors' | 'owners' | 'viewers';
+    team?: 'editors' | 'owners' | 'viewers' | string;
   };
   role?: 'OWNER' | 'READER' | 'WRITER' | 'FULL_CONTROL';
   [key: string]: unknown;

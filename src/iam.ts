@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  BodyResponseCallback,
-  DecorateRequestOptions,
-} from './nodejs-common/index.js';
 import {promisifyAll} from '@google-cloud/promisify';
-
 import {Bucket} from './bucket.js';
 import {normalize} from './util.js';
+import {StorageQueryParameters, StorageTransport} from './storage-transport.js';
 
 export interface GetPolicyOptions {
   userProject?: string;
@@ -141,15 +138,12 @@ export enum IAMExceptionMessages {
  * ```
  */
 class Iam {
-  private request_: (
-    reqOpts: DecorateRequestOptions,
-    callback: BodyResponseCallback
-  ) => void;
   private resourceId_: string;
+  private storageTransport: StorageTransport;
 
   constructor(bucket: Bucket) {
-    this.request_ = bucket.request.bind(bucket);
     this.resourceId_ = 'buckets/' + bucket.getId();
+    this.storageTransport = bucket.storageTransport;
   }
 
   getPolicy(options?: GetPolicyOptions): Promise<GetPolicyResponse>;
@@ -261,12 +255,18 @@ class Iam {
       qs.optionsRequestedPolicyVersion = options.requestedPolicyVersion;
     }
 
-    this.request_(
+    this.storageTransport.makeRequest(
       {
-        uri: '/iam',
-        qs,
+        url: '/iam',
+        queryParameters: qs as unknown as StorageQueryParameters,
       },
-      cb!
+      (err, data, resp) => {
+        if (err) {
+          cb(err);
+          return;
+        }
+        callback!(null, data as Policy, resp);
+      }
     );
   }
 
@@ -347,20 +347,26 @@ class Iam {
       maxRetries = 0;
     }
 
-    this.request_(
+    this.storageTransport.makeRequest(
       {
         method: 'PUT',
-        uri: '/iam',
+        url: '/iam',
         maxRetries,
-        json: Object.assign(
+        body: Object.assign(
           {
             resourceId: this.resourceId_,
           },
           policy
         ),
-        qs: options,
+        queryParameters: options as unknown as StorageQueryParameters,
       },
-      cb
+      (err, data, resp) => {
+        if (err) {
+          cb!(err);
+          return;
+        }
+        cb!(null, data as Policy, resp);
+      }
     );
   }
 
@@ -457,20 +463,19 @@ class Iam {
       options
     );
 
-    this.request_(
+    this.storageTransport.makeRequest(
       {
-        uri: '/iam/testPermissions',
-        qs: req,
-        useQuerystring: true,
+        url: '/iam/testPermissions',
+        queryParameters: req as unknown as StorageQueryParameters,
       },
-      (err, resp) => {
+      (err, data, resp) => {
         if (err) {
           cb!(err, null, resp);
           return;
         }
 
-        const availablePermissions = Array.isArray(resp.permissions)
-          ? resp.permissions
+        const availablePermissions = Array.isArray((data as any).permissions)
+          ? (data as any).permissions
           : [];
 
         const permissionsHash = permissionsArray.reduce(

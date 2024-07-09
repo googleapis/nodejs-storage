@@ -1,5 +1,16 @@
-import {GaxiosError, GaxiosOptions, GaxiosResponse, Headers} from 'gaxios';
-import {AuthClient, GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
+import {
+  GaxiosError,
+  GaxiosInterceptor,
+  GaxiosOptions,
+  GaxiosResponse,
+  Headers,
+} from 'gaxios';
+import {
+  AuthClient,
+  DefaultTransporter,
+  GoogleAuth,
+  GoogleAuthOptions,
+} from 'google-auth-library';
 import {
   getModuleFormat,
   getRuntimeTrackingString,
@@ -28,7 +39,7 @@ export interface StorageQueryParameters extends StandardStorageQueryParams {
 
 export interface StorageRequestOptions extends GaxiosOptions {
   [GCCL_GCS_CMD_KEY]?: string;
-  //interceptors_?: Interceptor[];
+  interceptors?: GaxiosInterceptor<GaxiosOptions>[];
   autoPaginate?: boolean;
   autoPaginateVal?: boolean;
   maxRetries?: number;
@@ -100,8 +111,22 @@ export class StorageTransport {
       headers['x-goog-api-client'] +=
         ` gccl-gcs-cmd/${reqOpts[GCCL_GCS_CMD_KEY]}`;
     }
+    if (reqOpts.interceptors) {
+      const transport = this.authClient.transporter as DefaultTransporter;
+      transport.instance.interceptors.request.clear();
+      for (const inter of reqOpts.interceptors) {
+        transport.instance.interceptors.request.add(inter);
+      }
+    }
     const requestPromise = this.authClient.request<T>({
-      //TODO: Retry Options
+      retryConfig: {
+        retry: this.retryOptions.maxRetries,
+        noResponseRetries: this.retryOptions.maxRetries,
+        maxRetryDelay: this.retryOptions.maxRetryDelay,
+        retryDelayMultiplier: this.retryOptions.retryDelayMultiplier,
+        shouldRetry: this.retryOptions.retryableErrorFn,
+        totalTimeout: this.retryOptions.totalTimeout,
+      },
       ...reqOpts,
       headers,
       url: this.#buildUrl(reqOpts.url?.toString(), reqOpts.queryParameters),

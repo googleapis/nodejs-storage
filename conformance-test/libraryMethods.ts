@@ -12,9 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {Bucket, File, Notification, Storage, HmacKey, Policy} from '../src';
+import {
+  Bucket,
+  File,
+  Notification,
+  Storage,
+  HmacKey,
+  Policy,
+  GaxiosError,
+} from '../src';
 import * as path from 'path';
-import {ApiError} from '../src/nodejs-common';
 import {
   createTestBuffer,
   createTestFileFromBuffer,
@@ -227,7 +234,7 @@ export async function getFilesStream(options: ConformanceTestOptions) {
       .bucket!.getFilesStream()
       .on('data', () => {})
       .on('end', () => resolve(undefined))
-      .on('error', (err: ApiError) => reject(err));
+      .on('error', (err: GaxiosError) => reject(err));
   });
 }
 
@@ -496,7 +503,7 @@ export async function createReadStream(options: ConformanceTestOptions) {
       .file!.createReadStream()
       .on('data', () => {})
       .on('end', () => resolve(undefined))
-      .on('error', (err: ApiError) => reject(err));
+      .on('error', (err: GaxiosError) => reject(err));
   });
 }
 
