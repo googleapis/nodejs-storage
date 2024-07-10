@@ -22,17 +22,29 @@ import {Channel} from '../src/channel.js';
 import {Storage} from '../src/storage.js';
 import * as sinon from 'sinon';
 import {GaxiosError} from 'gaxios';
+import {StorageTransport} from '../src/storage-transport.js';
 
 describe('Channel', () => {
-  const STORAGE = sinon.createStubInstance(Storage);
+  let STORAGE: Storage;
   const ID = 'channel-id';
   const RESOURCE_ID = 'resource-id';
   let channel: Channel;
+  let sandbox: sinon.SinonSandbox;
+  let storageTransport: StorageTransport;
 
-  before(() => {});
+  before(() => {
+    sandbox = sinon.createSandbox();
+    storageTransport = sandbox.createStubInstance(StorageTransport);
+    STORAGE = sandbox.createStubInstance(Storage);
+    STORAGE.storageTransport = storageTransport;
+  });
 
   beforeEach(() => {
     channel = new Channel(STORAGE, ID, RESOURCE_ID);
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   describe('initialization', () => {
@@ -46,37 +58,37 @@ describe('Channel', () => {
 
   describe('stop', () => {
     it('should make the correct request', () => {
-      sinon.stub(channel.storageTransport, 'makeRequest').callsFake(reqOpts => {
-        assert.strictEqual(reqOpts.method, 'POST');
-        assert.strictEqual(reqOpts.url, '/stop');
-        assert.strictEqual(reqOpts.body, channel.metadata);
+      sandbox
+        .stub(channel.storageTransport, 'makeRequest')
+        .callsFake(reqOpts => {
+          assert.strictEqual(reqOpts.method, 'POST');
+          assert.strictEqual(reqOpts.url, '/channels/stop');
+          assert.strictEqual(reqOpts.body, channel.metadata);
 
-        return Promise.resolve();
-      });
+          return Promise.resolve();
+        });
 
       channel.stop(assert.ifError);
     });
 
-    it('should execute callback with error & API response', done => {
+    it('should execute callback with error', done => {
       const error = {};
-      const apiResponse = {};
 
-      sinon
+      sandbox
         .stub(channel.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
-          callback!(error as GaxiosError, apiResponse);
+          callback!(error as GaxiosError);
           return Promise.resolve();
         });
 
-      channel.stop((err, apiResponse_) => {
+      channel.stop(err => {
         assert.strictEqual(err, error);
-        assert.strictEqual(apiResponse_, apiResponse);
         done();
       });
     });
 
     it('should not require a callback', () => {
-      sinon
+      sandbox
         .stub(channel.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
           assert.doesNotThrow(() => callback!(null));
