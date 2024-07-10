@@ -19,12 +19,13 @@ import {AccessControlObject, Acl, AclRoleAccessorMethods} from '../src/acl.js';
 import {StorageTransport} from '../src/storage-transport.js';
 import * as sinon from 'sinon';
 import {Bucket} from '../src/bucket.js';
-import {GaxiosError} from 'gaxios';
+import {GaxiosError, GaxiosResponse} from 'gaxios';
 
 describe('storage/acl', () => {
   let acl: Acl;
   let storageTransport: StorageTransport;
   let bucket: Bucket;
+  let sandbox: sinon.SinonSandbox;
 
   const ERROR = new Error('Error.');
   const PATH_PREFIX = '/acl';
@@ -36,12 +37,19 @@ describe('storage/acl', () => {
   const ENTITY = 'user-user@example.com';
 
   before(() => {
-    storageTransport = sinon.createStubInstance(StorageTransport);
-    bucket = sinon.createStubInstance(Bucket);
+    sandbox = sinon.createSandbox();
+    storageTransport = sandbox.createStubInstance(StorageTransport);
+    bucket = sandbox.createStubInstance(Bucket);
+    bucket.baseUrl = '';
+    bucket.name = 'bucket';
   });
 
   beforeEach(() => {
     acl = new Acl({pathPrefix: PATH_PREFIX, storageTransport, parent: bucket});
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   describe('initialization', () => {
@@ -52,9 +60,9 @@ describe('storage/acl', () => {
 
   describe('add', () => {
     it('should make the correct api request', () => {
-      sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+      sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(reqOpts.method, 'POST');
-        assert.strictEqual(reqOpts.url, '');
+        assert.strictEqual(reqOpts.url, '/bucket/acl');
         assert.deepStrictEqual(reqOpts.body, {entity: ENTITY, role: ROLE});
         return Promise.resolve();
       });
@@ -69,7 +77,7 @@ describe('storage/acl', () => {
         generation: 8,
       };
 
-      sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+      sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.generation,
           options.generation
@@ -87,7 +95,7 @@ describe('storage/acl', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+      sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.userProject,
           options.userProject
@@ -115,7 +123,7 @@ describe('storage/acl', () => {
         return expectedAclObject;
       };
 
-      sinon
+      sandbox
         .stub(acl.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
           callback!(null, apiResponse);
@@ -130,7 +138,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with an error', done => {
-      sinon
+      sandbox
         .stub(acl.storageTransport, 'makeRequest')
         .callsFake((reqOpts, cb) => {
           cb!(ERROR as GaxiosError);
@@ -145,7 +153,7 @@ describe('storage/acl', () => {
 
     it('should execute the callback with apiResponse', done => {
       const resp = {success: true};
-      sinon
+      sandbox
         .stub(acl.storageTransport, 'makeRequest')
         .callsFake((reqOpts, cb) => {
           cb!(null, resp);
@@ -161,9 +169,9 @@ describe('storage/acl', () => {
 
   describe('delete', () => {
     it('should make the correct api request', () => {
-      sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+      sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(reqOpts.method, 'DELETE');
-        assert.strictEqual(reqOpts.url, '/' + encodeURIComponent(ENTITY));
+        assert.strictEqual(reqOpts.url, `/bucket/acl/${ENTITY}`);
         return Promise.resolve();
       });
 
@@ -175,7 +183,7 @@ describe('storage/acl', () => {
         entity: ENTITY,
         generation: 8,
       };
-      sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+      sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.generation,
           options.generation
@@ -193,7 +201,7 @@ describe('storage/acl', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+      sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.userProject,
           options.userProject
@@ -205,7 +213,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with an error', done => {
-      sinon
+      sandbox
         .stub(acl.storageTransport, 'makeRequest')
         .callsFake((reqOpts, cb) => {
           cb!(ERROR as GaxiosError);
@@ -221,7 +229,7 @@ describe('storage/acl', () => {
     it('should execute the callback with apiResponse', done => {
       const resp = {success: true};
 
-      sinon
+      sandbox
         .stub(acl.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
           callback!(null, resp);
@@ -238,8 +246,8 @@ describe('storage/acl', () => {
   describe('get', () => {
     describe('all ACL objects', () => {
       it('should make the correct API request', () => {
-        sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
-          assert.strictEqual(reqOpts.url, '');
+        sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+          assert.strictEqual(reqOpts.url, '/bucket/acl');
 
           return Promise.resolve();
         });
@@ -249,7 +257,7 @@ describe('storage/acl', () => {
       it('should accept a configuration object', () => {
         const generation = 1;
 
-        sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+        sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
           assert.strictEqual(reqOpts.queryParameters!.generation, generation);
           return Promise.resolve();
         });
@@ -277,7 +285,7 @@ describe('storage/acl', () => {
           return expectedAclObjects[index++];
         };
 
-        sinon
+        sandbox
           .stub(acl.storageTransport, 'makeRequest')
           .callsFake((reqOpts, callback) => {
             callback!(null, apiResponse);
@@ -294,8 +302,8 @@ describe('storage/acl', () => {
 
     describe('ACL object for an entity', () => {
       it('should get a specific ACL object', () => {
-        sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
-          assert.strictEqual(reqOpts.url, '/' + encodeURIComponent(ENTITY));
+        sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+          assert.strictEqual(reqOpts.url, `/bucket/acl/${ENTITY}`);
           return Promise.resolve();
         });
 
@@ -305,7 +313,7 @@ describe('storage/acl', () => {
       it('should accept a configuration object', () => {
         const generation = 1;
 
-        sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+        sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
           assert.strictEqual(reqOpts.queryParameters!.generation, generation);
           return Promise.resolve();
         });
@@ -319,7 +327,7 @@ describe('storage/acl', () => {
           userProject: 'grape-spaceship-123',
         };
 
-        sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+        sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
           assert.strictEqual(
             reqOpts.queryParameters!.userProject,
             options.userProject
@@ -342,7 +350,7 @@ describe('storage/acl', () => {
           return expectedAclObject;
         };
 
-        sinon
+        sandbox
           .stub(acl.storageTransport, 'makeRequest')
           .callsFake((reqOpts, callback) => {
             callback!(null, apiResponse);
@@ -358,7 +366,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with an error', done => {
-      sinon
+      sandbox
         .stub(acl.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
           callback!(ERROR as GaxiosError);
@@ -373,16 +381,26 @@ describe('storage/acl', () => {
 
     it('should execute the callback with apiResponse', done => {
       const resp = {success: true};
+      const gaxiosResponse: GaxiosResponse = {
+        config: {},
+        data: resp,
+        status: 0,
+        statusText: '',
+        headers: [],
+        request: {
+          responseURL: '',
+        },
+      };
 
-      sinon
+      sandbox
         .stub(acl.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
-          callback!(null, resp);
+          callback!(null, resp, gaxiosResponse);
           return Promise.resolve();
         });
 
       acl.get((err, acls, apiResponse) => {
-        assert.deepStrictEqual(resp, apiResponse);
+        assert.deepStrictEqual(resp, apiResponse!.data);
         done();
       });
     });
@@ -390,9 +408,9 @@ describe('storage/acl', () => {
 
   describe('update', () => {
     it('should make the correct API request', () => {
-      sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+      sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(reqOpts.method, 'PUT');
-        assert.strictEqual(reqOpts.url, '/' + encodeURIComponent(ENTITY));
+        assert.strictEqual(reqOpts.url, `/bucket/acl/${ENTITY}`);
         assert.deepStrictEqual(reqOpts.body, {role: ROLE});
         return Promise.resolve();
       });
@@ -407,7 +425,7 @@ describe('storage/acl', () => {
         generation: 8,
       };
 
-      sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+      sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.generation,
           options.generation
@@ -425,7 +443,7 @@ describe('storage/acl', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      sinon.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
+      sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.userProject,
           options.userProject
@@ -452,7 +470,7 @@ describe('storage/acl', () => {
         return expectedAclObject;
       };
 
-      sinon
+      sandbox
         .stub(acl.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
           callback!(null, apiResponse);
@@ -467,7 +485,7 @@ describe('storage/acl', () => {
     });
 
     it('should execute the callback with an error', done => {
-      sinon
+      sandbox
         .stub(acl.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
           callback!(ERROR as GaxiosError);
@@ -483,7 +501,7 @@ describe('storage/acl', () => {
     it('should execute the callback with apiResponse', done => {
       const resp = {success: true};
 
-      sinon
+      sandbox
         .stub(acl.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
           callback!(null, resp);
