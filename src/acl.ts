@@ -554,7 +554,8 @@ class Acl extends AclRoleAccessorMethods {
         }
         callback!(
           null,
-          this.makeAclObject_(data as unknown as AccessControlObject)
+          this.makeAclObject_(data as unknown as AccessControlObject),
+          data as unknown as AclMetadata
         );
       }
     );
