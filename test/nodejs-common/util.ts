@@ -15,25 +15,11 @@
  */
 
 import assert from 'assert';
-import {describe, it, beforeEach, afterEach} from 'mocha';
-import * as nock from 'nock';
-import * as sinon from 'sinon';
-import {Util} from '../../src/nodejs-common/util';
+import {describe, it} from 'mocha';
+import {util} from '../../src/nodejs-common/util';
 import {GaxiosError} from 'gaxios';
 
-nock.disableNetConnect();
-
 describe('common/util', () => {
-  let util: Util & {[index: string]: Function};
-  let sandbox: sinon.SinonSandbox;
-
-  beforeEach(() => {
-    sandbox = sinon.createSandbox();
-  });
-  afterEach(() => {
-    sandbox.restore();
-  });
-
   describe('shouldRetryRequest', () => {
     it('should return false if there is no error', () => {
       assert.strictEqual(util.shouldRetryRequest(), false);
