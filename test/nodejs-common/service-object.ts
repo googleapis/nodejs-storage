@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /*!
  * Copyright 2022 Google LLC. All Rights Reserved.
  *
@@ -13,75 +14,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
-import {
-  promisify,
-  promisifyAll,
-  PromisifyAllOptions,
-} from '@google-cloud/promisify';
 import assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
-import proxyquire from 'proxyquire';
-import * as r from 'teeny-request';
 import * as sinon from 'sinon';
-import {Service} from '../../src/nodejs-common/index.js';
 import * as SO from '../../src/nodejs-common/service-object.js';
-
-let promisified = false;
-const fakePromisify = {
-  // tslint:disable-next-line:variable-name
-  promisifyAll(Class: Function, options: PromisifyAllOptions) {
-    if (Class.name === 'ServiceObject') {
-      promisified = true;
-      assert.deepStrictEqual(options.exclude, ['getRequestInterceptors']);
-    }
-
-    return promisifyAll(Class, options);
-  },
-};
-const ServiceObject = proxyquire('../../src/nodejs-common/service-object', {
-  '@google-cloud/promisify': fakePromisify,
-}).ServiceObject;
-
-import {
-  ApiError,
-  BodyResponseCallback,
-  DecorateRequestOptions,
-  util,
-} from '../../src/nodejs-common/util.js';
+import {util} from '../../src/nodejs-common/util.js';
+import {ServiceObject} from '../../src/nodejs-common/service-object.js';
+import {StorageTransport} from '../../src/storage-transport.js';
+import {GaxiosError} from 'gaxios';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FakeServiceObject = any;
-interface InternalServiceObject {
-  request_: (
-    reqOpts: DecorateRequestOptions,
-    callback?: BodyResponseCallback,
-  ) => void | r.Request;
-  createMethod?: Function;
-  methods: SO.Methods;
-  interceptors: SO.Interceptor[];
-}
-
-function asInternal(
-  serviceObject: SO.ServiceObject<InternalServiceObject, SO.BaseMetadata>,
-) {
-  return serviceObject as {} as InternalServiceObject;
-}
-
 describe('ServiceObject', () => {
   let serviceObject: SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>;
   const sandbox = sinon.createSandbox();
+  const storageTransport = sandbox.createStubInstance(StorageTransport);
 
   const CONFIG = {
     baseUrl: 'base-url',
-    parent: {} as Service,
+    parent: {},
     id: 'id',
     createMethod: util.noop,
+    storageTransport,
   };
 
   beforeEach(() => {
     serviceObject = new ServiceObject(CONFIG);
-    serviceObject.parent.interceptors = [];
   });
 
   afterEach(() => {
@@ -89,10 +47,6 @@ describe('ServiceObject', () => {
   });
 
   describe('instantiation', () => {
-    it('should promisify all the things', () => {
-      assert(promisified);
-    });
-
     it('should create an empty metadata object', () => {
       assert.deepStrictEqual(serviceObject.metadata, {});
     });
@@ -107,24 +61,6 @@ describe('ServiceObject', () => {
 
     it('should localize the ID', () => {
       assert.strictEqual(serviceObject.id, CONFIG.id);
-    });
-
-    it('should localize the createMethod', () => {
-      assert.strictEqual(
-        asInternal(serviceObject).createMethod,
-        CONFIG.createMethod,
-      );
-    });
-
-    it('should localize the methods', () => {
-      const methods = {};
-      const config = {...CONFIG, methods};
-      const serviceObject = new ServiceObject(config);
-      assert.deepStrictEqual(asInternal(serviceObject).methods, methods);
-    });
-
-    it('should default methods to an empty object', () => {
-      assert.deepStrictEqual(asInternal(serviceObject).methods, {});
     });
 
     it('should clear out methods that are not asked for', () => {
@@ -143,16 +79,9 @@ describe('ServiceObject', () => {
       const methods = {};
       const config = {...CONFIG, methods};
       const serviceObject = new ServiceObject(config);
-      assert.strictEqual(typeof serviceObject.request, 'function');
-    });
-
-    it('should always expose the getRequestInterceptors method', () => {
-      const methods = {};
-      const config = {...CONFIG, methods};
-      const serviceObject = new ServiceObject(config);
       assert.strictEqual(
-        typeof serviceObject.getRequestInterceptors,
-        'function',
+        typeof serviceObject.storageTransport.makeRequest,
+        'function'
       );
     });
   });
@@ -220,15 +149,12 @@ describe('ServiceObject', () => {
       }
 
       const serviceObject = new ServiceObject(config);
-      serviceObject.create(
-        options,
-        (err: Error | null, instance: {}, apiResponse_: {}) => {
-          assert.strictEqual(err, error);
-          assert.strictEqual(instance, null);
-          assert.strictEqual(apiResponse_, apiResponse);
-          done();
-        },
-      );
+      serviceObject.create(options, (err, instance, apiResponse_) => {
+        assert.strictEqual(err, error);
+        assert.strictEqual(instance, null);
+        assert.strictEqual(apiResponse_, apiResponse);
+        done();
+      });
     });
 
     it('should return instance and apiResponse to callback', async () => {
@@ -279,16 +205,19 @@ describe('ServiceObject', () => {
   });
 
   describe('delete', () => {
+    before(() => {
+      sandbox.restore();
+    });
+
     it('should make the correct request', done => {
       sandbox
-        .stub(ServiceObject.prototype, 'request')
+        .stub(serviceObject.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.strictEqual(opts.method, 'DELETE');
-          assert.strictEqual(opts.uri, '');
+          assert.strictEqual(reqOpts.method, 'DELETE');
+          assert.strictEqual(reqOpts.url, 'base-url/undefined');
           done();
-          cb(null, null, {} as r.Response);
+          callback!(null);
+          return Promise.resolve();
         });
       serviceObject.delete(assert.ifError);
     });
@@ -296,51 +225,23 @@ describe('ServiceObject', () => {
     it('should accept options', done => {
       const options = {queryOptionProperty: true};
       sandbox
-        .stub(ServiceObject.prototype, 'request')
+        .stub(serviceObject.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.deepStrictEqual(opts.qs, options);
+          assert.deepStrictEqual(reqOpts.queryParameters, options);
           done();
-          cb(null, null, {} as r.Response);
+          callback!(null);
+          return Promise.resolve();
         });
       serviceObject.delete(options, assert.ifError);
     });
 
-    it('should override method and uri field in request with methodConfig', done => {
-      const methodConfig = {
-        reqOpts: {
-          uri: 'v2',
-          method: 'PATCH',
-        },
-      };
-
-      const cachedMethodConfig = {reqOpts: {...methodConfig.reqOpts}};
-
-      sandbox
-        .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.deepStrictEqual(
-            serviceObject.methods.delete,
-            cachedMethodConfig,
-          );
-          assert.deepStrictEqual(opts.uri, 'v2');
-          assert.deepStrictEqual(opts.method, 'PATCH');
-          done();
-          cb(null, null, null!);
-        });
-
-      const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
-      serviceObject.methods.delete = methodConfig;
-      serviceObject.delete();
-    });
-
     it('should respect ignoreNotFound opion', done => {
       const options = {ignoreNotFound: true};
-      const error = new ApiError({code: 404, response: {} as r.Response});
-      sandbox.stub(ServiceObject.prototype, 'request').callsArgWith(1, error);
+      const error = new GaxiosError('404', {});
+      error.status = 404;
+      sandbox
+        .stub(serviceObject.storageTransport, 'makeRequest')
+        .callsArgWith(1, error);
       serviceObject.delete(options, (err, apiResponse_) => {
         assert.ifError(err);
         assert.strictEqual(apiResponse_, undefined);
@@ -350,8 +251,11 @@ describe('ServiceObject', () => {
 
     it('should propagate other then 404 error', done => {
       const options = {ignoreNotFound: true};
-      const error = new ApiError({code: 406, response: {} as r.Response});
-      sandbox.stub(ServiceObject.prototype, 'request').callsArgWith(1, error);
+      const error = new GaxiosError('406', {});
+      error.status = 406;
+      sandbox
+        .stub(serviceObject.storageTransport, 'makeRequest')
+        .callsArgWith(1, error);
       serviceObject.delete(options, (err, apiResponse_) => {
         assert.strictEqual(err, error);
         assert.strictEqual(apiResponse_, undefined);
@@ -362,58 +266,22 @@ describe('ServiceObject', () => {
     it('should not pass ignoreNotFound to request', done => {
       const options = {ignoreNotFound: true};
       sandbox
-        .stub(ServiceObject.prototype, 'request')
+        .stub(serviceObject.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.strictEqual(opts.qs.ignoreNotFound, undefined);
+          assert.strictEqual(
+            reqOpts.queryParameters!.ignoreNotFound,
+            undefined
+          );
           done();
-          cb(null, null, {} as r.Response);
+          callback!(null);
+          return Promise.resolve();
         });
       serviceObject.delete(options, assert.ifError);
     });
 
-    it('should extend the defaults with request options', done => {
-      const methodConfig = {
-        reqOpts: {
-          qs: {
-            defaultProperty: true,
-            thisPropertyWasOverridden: false,
-          },
-        },
-      };
-
-      const cachedMethodConfig = {reqOpts: {qs: {...methodConfig.reqOpts.qs}}};
-
-      sandbox
-        .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.deepStrictEqual(
-            serviceObject.methods.delete,
-            cachedMethodConfig,
-          );
-          assert.deepStrictEqual(opts.qs, {
-            defaultProperty: true,
-            optionalProperty: true,
-            thisPropertyWasOverridden: true,
-          });
-          done();
-          cb(null, null, null!);
-        });
-
-      const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
-      serviceObject.methods.delete = methodConfig;
-      serviceObject.delete({
-        optionalProperty: true,
-        thisPropertyWasOverridden: true,
-      });
-    });
-
     it('should not require a callback', () => {
       sandbox
-        .stub(ServiceObject.prototype, 'request')
+        .stub(serviceObject.storageTransport, 'makeRequest')
         .callsArgWith(1, null, null, {});
       assert.doesNotThrow(async () => {
         await serviceObject.delete();
@@ -422,9 +290,11 @@ describe('ServiceObject', () => {
 
     it('should execute callback with correct arguments', done => {
       const error = new Error('🦃');
-      sandbox.stub(ServiceObject.prototype, 'request').callsArgWith(1, error);
       const serviceObject = new ServiceObject(CONFIG);
-      serviceObject.delete((err: Error, apiResponse_: {}) => {
+      sandbox
+        .stub(serviceObject.storageTransport, 'makeRequest')
+        .callsArgWith(1, error);
+      serviceObject.delete((err, apiResponse_) => {
         assert.strictEqual(err, error);
         assert.strictEqual(apiResponse_, undefined);
         done();
@@ -440,21 +310,17 @@ describe('ServiceObject', () => {
 
     it('should accept options', done => {
       const options = {queryOptionProperty: true};
-      sandbox
-        .stub(ServiceObject.prototype, 'get')
-        .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.deepStrictEqual(opts, options);
-          done();
-          cb(null, null, {} as r.Response);
-        });
+      sandbox.stub(serviceObject, 'get').callsFake((reqOpts, callback) => {
+        assert.deepStrictEqual(reqOpts, options);
+        done();
+        callback(null);
+      });
       serviceObject.exists(options, assert.ifError);
     });
 
-    it('should execute callback with false if 404', async done => {
-      const error = new ApiError('');
-      error.code = 404;
+    it('should execute callback with false if 404', done => {
+      const error = new GaxiosError('404', {});
+      error.status = 404;
       sandbox.stub(serviceObject, 'get').callsArgWith(1, error);
       await serviceObject.exists((err: Error, exists: boolean) => {
         assert.ifError(err);
@@ -463,9 +329,9 @@ describe('ServiceObject', () => {
       });
     });
 
-    it('should execute callback with error if not 404', async done => {
-      const error = new ApiError('');
-      error.code = 500;
+    it('should execute callback with error if not 404', done => {
+      const error = new GaxiosError('500', {});
+      error.status = 500;
       sandbox.stub(serviceObject, 'get').callsArgWith(1, error);
       await serviceObject.exists((err: Error, exists: boolean) => {
         assert.strictEqual(err, error);
@@ -486,7 +352,7 @@ describe('ServiceObject', () => {
 
   describe('get', () => {
     it('should get the metadata', done => {
-      serviceObject.getMetadata = promisify((): void => {
+      sandbox.stub(serviceObject, 'getMetadata').callsFake(() => {
         done();
       });
 
@@ -495,62 +361,45 @@ describe('ServiceObject', () => {
 
     it('should accept options', done => {
       const options = {};
-      serviceObject.getMetadata = promisify(
-        (options_: SO.GetMetadataOptions): void => {
-          assert.deepStrictEqual(options, options_);
-          done();
-        },
-      );
+      sandbox.stub(serviceObject, 'getMetadata').callsFake(options_ => {
+        assert.deepStrictEqual(options, options_);
+        done();
+      });
       serviceObject.exists(options, assert.ifError);
     });
 
     it('handles not getting a config', done => {
-      serviceObject.getMetadata = promisify((): void => {
+      sandbox.stub(serviceObject, 'getMetadata').callsFake(() => {
         done();
       });
-      (serviceObject as FakeServiceObject).get(assert.ifError);
+      serviceObject.get(assert.ifError);
     });
 
-    it('should execute callback with error & metadata', done => {
-      const error = new Error('Error.');
-      const metadata = {} as SO.BaseMetadata;
+    it('should execute callback with error', done => {
+      const error = new GaxiosError('Error.', {});
+      sandbox
+        .stub<any, any>(serviceObject, 'getMetadata')
+        .callsFake((opts, callback) => {
+          (callback as SO.MetadataCallback<SO.BaseMetadata>)!(error);
+        });
 
-      serviceObject.getMetadata = promisify(
-        (
-          options: SO.GetMetadataOptions,
-          callback: SO.MetadataCallback<SO.BaseMetadata>,
-        ) => {
-          callback(error, metadata);
-        },
-      );
-
-      serviceObject.get((err, instance, metadata_) => {
+      serviceObject.get(err => {
         assert.strictEqual(err, error);
-        assert.strictEqual(instance, null);
-        assert.strictEqual(metadata_, metadata);
-
         done();
       });
     });
 
-    it('should execute callback with instance & metadata', done => {
+    it('should execute callback with metadata', done => {
       const metadata = {} as SO.BaseMetadata;
+      sandbox
+        .stub<any, any>(serviceObject, 'getMetadata')
+        .callsFake((opts, callback) => {
+          (callback as SO.MetadataCallback<SO.BaseMetadata>)!(null, metadata);
+        });
 
-      serviceObject.getMetadata = promisify(
-        (
-          options: SO.GetMetadataOptions,
-          callback: SO.MetadataCallback<SO.BaseMetadata>,
-        ) => {
-          callback(null, metadata);
-        },
-      );
-
-      serviceObject.get((err, instance, metadata_) => {
+      serviceObject.get((err, metadata) => {
         assert.ifError(err);
-
-        assert.strictEqual(instance, serviceObject);
-        assert.strictEqual(metadata_, metadata);
-
+        assert.strictEqual(metadata, metadata);
         done();
       });
     });
@@ -558,8 +407,8 @@ describe('ServiceObject', () => {
     describe('autoCreate', () => {
       let AUTO_CREATE_CONFIG: {};
 
-      const ERROR = new ApiError('bad');
-      ERROR.code = 404;
+      const ERROR = new GaxiosError('bad', {});
+      ERROR.status = 404;
       const METADATA = {} as SO.BaseMetadata;
 
       beforeEach(() => {
@@ -567,14 +416,14 @@ describe('ServiceObject', () => {
           autoCreate: true,
         };
 
-        serviceObject.getMetadata = promisify(
-          (
-            options: SO.GetMetadataOptions,
-            callback: SO.MetadataCallback<SO.BaseMetadata>,
-          ) => {
-            callback(ERROR, METADATA);
-          },
-        );
+        sandbox
+          .stub<any, any>(serviceObject, 'getMetadata')
+          .callsFake((opts, callback) => {
+            (callback as SO.MetadataCallback<SO.BaseMetadata>)!(
+              ERROR,
+              METADATA
+            );
+          });
       });
 
       it('should keep the original options intact', () => {
@@ -609,9 +458,8 @@ describe('ServiceObject', () => {
       });
 
       describe('error', () => {
-        it('should execute callback with error & API response', done => {
+        it('should execute callback with error', done => {
           const error = new Error('Error.');
-          const apiResponse = {} as r.Response;
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (sandbox.stub(serviceObject, 'create') as any).callsFake(
@@ -621,27 +469,25 @@ describe('ServiceObject', () => {
                 assert.deepStrictEqual(cfg, {});
                 callback!(null); // done()
               });
-              callback!(error, null, apiResponse);
-            },
+              callback!(error, null, {});
+            }
           );
 
-          serviceObject.get(AUTO_CREATE_CONFIG, (err, instance, resp) => {
+          serviceObject.get(AUTO_CREATE_CONFIG, err => {
             assert.strictEqual(err, error);
-            assert.strictEqual(instance, null);
-            assert.strictEqual(resp, apiResponse);
             done();
           });
         });
 
         it('should refresh the metadata after a 409', done => {
-          const error = new ApiError('errrr');
-          error.code = 409;
+          const error = new GaxiosError('errrr', {});
+          error.status = 409;
           sandbox.stub(serviceObject, 'create').callsFake(callback => {
             sandbox.stub(serviceObject, 'get').callsFake((cfgOrCb, cb) => {
               const config = typeof cfgOrCb === 'object' ? cfgOrCb : {};
               const callback = typeof cfgOrCb === 'function' ? cfgOrCb : cb;
               assert.deepStrictEqual(config, {});
-              callback!(null, null, {} as r.Response); // done()
+              callback!(null); // done()
             });
             callback(error, null, undefined);
           });
@@ -652,106 +498,42 @@ describe('ServiceObject', () => {
   });
 
   describe('getMetadata', () => {
-    it('should make the correct request', async done => {
-      sandbox.stub(ServiceObject.prototype, 'request').callsFake(function (
-        this: SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>,
-        reqOpts,
-        callback,
-      ) {
-        const opts = reqOpts as r.OptionsWithUri;
-        const cb = callback as BodyResponseCallback;
-        assert.strictEqual(this, serviceObject);
-        assert.strictEqual(opts.uri, '');
-        done();
-        cb(null, null, {} as r.Response);
-      });
-      await serviceObject.getMetadata(() => {});
+    it('should make the correct request', done => {
+      sandbox
+        .stub(serviceObject.storageTransport, 'makeRequest')
+        .callsFake(function (
+          this: SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>,
+          reqOpts,
+          callback
+        ) {
+          assert.strictEqual(this, serviceObject.storageTransport);
+          assert.strictEqual(reqOpts.url, 'base-url/undefined');
+          done();
+          callback!(null);
+          return Promise.resolve();
+        });
+      serviceObject.getMetadata(() => {});
     });
 
     it('should accept options', done => {
       const options = {queryOptionProperty: true};
       sandbox
-        .stub(ServiceObject.prototype, 'request')
+        .stub(serviceObject.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.deepStrictEqual(opts.qs, options);
+          assert.deepStrictEqual(reqOpts.queryParameters, options);
           done();
-          cb(null, null, {} as r.Response);
+          callback!(null);
+          return Promise.resolve();
         });
       serviceObject.getMetadata(options, assert.ifError);
     });
 
-    it('should override uri field in request with methodConfig', done => {
-      const methodConfig = {
-        reqOpts: {
-          uri: 'v2',
-        },
-      };
-
-      const cachedMethodConfig = {reqOpts: {...methodConfig.reqOpts}};
-
+    it('should execute callback with error & apiResponse', done => {
+      const error = new GaxiosError('ಠ_ಠ', {});
       sandbox
-        .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.deepStrictEqual(
-            serviceObject.methods.getMetadata,
-            cachedMethodConfig,
-          );
-          assert.deepStrictEqual(opts.uri, 'v2');
-          done();
-          cb(null, null, null!);
-        });
-
-      const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
-      serviceObject.methods.getMetadata = methodConfig;
-      serviceObject.getMetadata();
-    });
-
-    it('should extend the defaults with request options', done => {
-      const methodConfig = {
-        reqOpts: {
-          qs: {
-            defaultProperty: true,
-            thisPropertyWasOverridden: false,
-          },
-        },
-      };
-
-      const cachedMethodConfig = {reqOpts: {qs: {...methodConfig.reqOpts.qs}}};
-
-      sandbox
-        .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.deepStrictEqual(
-            serviceObject.methods.getMetadata,
-            cachedMethodConfig,
-          );
-          assert.deepStrictEqual(opts.qs, {
-            defaultProperty: true,
-            optionalProperty: true,
-            thisPropertyWasOverridden: true,
-          });
-          done();
-          cb(null, null, null!);
-        });
-
-      const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
-      serviceObject.methods.getMetadata = methodConfig;
-      serviceObject.getMetadata({
-        optionalProperty: true,
-        thisPropertyWasOverridden: true,
-      });
-    });
-
-    it('should execute callback with error & apiResponse', async done => {
-      const error = new Error('ಠ_ಠ');
-      sandbox.stub(ServiceObject.prototype, 'request').callsArgWith(1, error);
-      await serviceObject.getMetadata((err: Error, metadata: {}) => {
+        .stub(serviceObject.storageTransport, 'makeRequest')
+        .callsArgWith(1, error);
+      serviceObject.getMetadata((err: Error, metadata: {}) => {
         assert.strictEqual(err, error);
         assert.strictEqual(metadata, undefined);
         done();
@@ -761,7 +543,7 @@ describe('ServiceObject', () => {
     it('should update metadata', async done => {
       const apiResponse = {};
       sandbox
-        .stub(ServiceObject.prototype, 'request')
+        .stub(serviceObject.storageTransport, 'makeRequest')
         .callsArgWith(1, null, {}, apiResponse);
       await serviceObject.getMetadata((err: Error) => {
         assert.ifError(err);
@@ -774,7 +556,7 @@ describe('ServiceObject', () => {
       const apiResponse = {};
       const requestResponse = {body: apiResponse};
       sandbox
-        .stub(ServiceObject.prototype, 'request')
+        .stub(serviceObject.storageTransport, 'makeRequest')
         .callsArgWith(1, null, apiResponse, requestResponse);
       await serviceObject.getMetadata((err: Error, metadata: {}) => {
         assert.ifError(err);
@@ -784,206 +566,47 @@ describe('ServiceObject', () => {
     });
   });
 
-  describe('getRequestInterceptors', () => {
-    it('should call the request interceptors in order', () => {
-      // Called first.
-      serviceObject.parent.interceptors.push({
-        request(reqOpts: DecorateRequestOptions) {
-          reqOpts.uri = '1';
-          return reqOpts;
-        },
-      });
-
-      // Called third.
-      serviceObject.interceptors.push({
-        request(reqOpts: DecorateRequestOptions) {
-          reqOpts.uri += '3';
-          return reqOpts;
-        },
-      });
-
-      // Called second.
-      serviceObject.parent.interceptors.push({
-        request(reqOpts: DecorateRequestOptions) {
-          reqOpts.uri += '2';
-          return reqOpts;
-        },
-      });
-
-      // Called fourth.
-      serviceObject.interceptors.push({
-        request(reqOpts: DecorateRequestOptions) {
-          reqOpts.uri += '4';
-          return reqOpts;
-        },
-      });
-
-      serviceObject.parent.getRequestInterceptors = () => {
-        return serviceObject.parent.interceptors.map(
-          interceptor => interceptor.request,
-        );
-      };
-
-      const reqOpts: DecorateRequestOptions = {uri: ''};
-      const requestInterceptors = serviceObject.getRequestInterceptors();
-      requestInterceptors.forEach((requestInterceptor: Function) => {
-        Object.assign(reqOpts, requestInterceptor(reqOpts));
-      });
-      assert.strictEqual(reqOpts.uri, '1234');
-    });
-
-    it('should not affect original interceptor arrays', () => {
-      function request(reqOpts: DecorateRequestOptions) {
-        return reqOpts;
-      }
-
-      serviceObject.parent.interceptors = [{request}];
-      serviceObject.interceptors = [{request}];
-
-      const originalParentInterceptors = [].slice.call(
-        serviceObject.parent.interceptors,
-      );
-      const originalLocalInterceptors = [].slice.call(
-        serviceObject.interceptors,
-      );
-
-      serviceObject.getRequestInterceptors();
-
-      assert.deepStrictEqual(
-        serviceObject.parent.interceptors,
-        originalParentInterceptors,
-      );
-      assert.deepStrictEqual(
-        serviceObject.interceptors,
-        originalLocalInterceptors,
-      );
-    });
-
-    it('should not call unrelated interceptors', () => {
-      (serviceObject.interceptors as object[]).push({
-        anotherInterceptor() {
-          throw new Error('Unrelated interceptor was called.');
-        },
-        request(reqOpts: DecorateRequestOptions) {
-          return reqOpts;
-        },
-      });
-
-      const requestInterceptors = serviceObject.getRequestInterceptors();
-      requestInterceptors.forEach((requestInterceptor: Function) => {
-        requestInterceptor();
-      });
-    });
-  });
-
   describe('setMetadata', () => {
     it('should make the correct request', async done => {
       const metadata = {metadataProperty: true};
-      sandbox.stub(ServiceObject.prototype, 'request').callsFake(function (
-        this: SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>,
-        reqOpts,
-        callback,
-      ) {
-        const opts = reqOpts as r.OptionsWithUri;
-        const cb = callback as BodyResponseCallback;
-        assert.strictEqual(this, serviceObject);
-        assert.strictEqual(opts.method, 'PATCH');
-        assert.strictEqual(opts.uri, '');
-        assert.deepStrictEqual(opts.json, metadata);
-        done();
-        cb(null, null, {} as r.Response);
-      });
-      await serviceObject.setMetadata(metadata, () => {});
+      sandbox
+        .stub(serviceObject.storageTransport, 'makeRequest')
+        .callsFake(function (
+          this: SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>,
+          reqOpts,
+          callback
+        ) {
+          assert.strictEqual(this, serviceObject.storageTransport);
+          assert.strictEqual(reqOpts.method, 'PATCH');
+          assert.strictEqual(reqOpts.url, 'base-url/undefined');
+          assert.deepStrictEqual(reqOpts.body, metadata);
+          done();
+          callback!(null);
+          return Promise.resolve();
+        });
+      serviceObject.setMetadata(metadata, () => {});
     });
 
     it('should accept options', done => {
       const metadata = {};
       const options = {queryOptionProperty: true};
       sandbox
-        .stub(ServiceObject.prototype, 'request')
+        .stub(serviceObject.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.deepStrictEqual(opts.qs, options);
+          assert.deepStrictEqual(reqOpts.queryParameters, options);
           done();
-          cb(null, null, {} as r.Response);
+          callback!(null);
+          return Promise.resolve();
         });
       serviceObject.setMetadata(metadata, options, () => {});
     });
 
-    it('should override uri and method with methodConfig', done => {
-      const methodConfig = {
-        reqOpts: {
-          uri: 'v2',
-          method: 'PUT',
-        },
-      };
-      const cachedMethodConfig = {reqOpts: {...methodConfig.reqOpts}};
-
-      sandbox
-        .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.deepStrictEqual(
-            serviceObject.methods.setMetadata,
-            cachedMethodConfig,
-          );
-          assert.deepStrictEqual(opts.uri, 'v2');
-          assert.deepStrictEqual(opts.method, 'PUT');
-          done();
-          cb(null, null, null!);
-        });
-
-      const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
-      serviceObject.methods.setMetadata = methodConfig;
-      serviceObject.setMetadata({});
-    });
-
-    it('should extend the defaults with request options', done => {
-      const methodConfig = {
-        reqOpts: {
-          qs: {
-            defaultProperty: true,
-            thisPropertyWasOverridden: false,
-          },
-        },
-      };
-      const cachedMethodConfig = {reqOpts: {qs: {...methodConfig.reqOpts.qs}}};
-
-      sandbox
-        .stub(ServiceObject.prototype, 'request')
-        .callsFake((reqOpts, callback) => {
-          const opts = reqOpts as r.OptionsWithUri;
-          const cb = callback as BodyResponseCallback;
-          assert.deepStrictEqual(
-            serviceObject.methods.setMetadata,
-            cachedMethodConfig,
-          );
-          assert.deepStrictEqual(opts.qs, {
-            defaultProperty: true,
-            optionalProperty: true,
-            thisPropertyWasOverridden: true,
-          });
-          done();
-          cb(null, null, null!);
-        });
-
-      const serviceObject = new ServiceObject(CONFIG) as FakeServiceObject;
-      serviceObject.methods.setMetadata = methodConfig;
-      serviceObject.setMetadata(
-        {},
-        {
-          optionalProperty: true,
-          thisPropertyWasOverridden: true,
-        },
-      );
-    });
-
     it('should execute callback with error & apiResponse', async done => {
       const error = new Error('Error.');
-      sandbox.stub(ServiceObject.prototype, 'request').callsArgWith(1, error);
-      await serviceObject.setMetadata({}, (err: Error, apiResponse_: {}) => {
+      sandbox
+        .stub(serviceObject.storageTransport, 'makeRequest')
+        .callsArgWith(1, error);
+      serviceObject.setMetadata({}, (err: Error, apiResponse_: {}) => {
         assert.strictEqual(err, error);
         assert.strictEqual(apiResponse_, undefined);
         done();
@@ -993,7 +616,7 @@ describe('ServiceObject', () => {
     it('should update metadata', async done => {
       const apiResponse = {};
       sandbox
-        .stub(ServiceObject.prototype, 'request')
+        .stub(serviceObject.storageTransport, 'makeRequest')
         .callsArgWith(1, undefined, apiResponse);
       await serviceObject.setMetadata({}, (err: Error) => {
         assert.ifError(err);
@@ -1006,7 +629,7 @@ describe('ServiceObject', () => {
       const body = {};
       const apiResponse = {body};
       sandbox
-        .stub(ServiceObject.prototype, 'request')
+        .stub(serviceObject.storageTransport, 'makeRequest')
         .callsArgWith(1, null, body, apiResponse);
       await serviceObject.setMetadata({}, (err: Error, metadata: {}) => {
         assert.ifError(err);
@@ -1015,221 +638,4 @@ describe('ServiceObject', () => {
       });
     });
   });
-
-  describe('request_', () => {
-    let reqOpts: DecorateRequestOptions;
-    beforeEach(() => {
-      reqOpts = {
-        uri: 'uri',
-      };
-    });
-
-    it('should compose the correct request', done => {
-      const expectedUri = [
-        serviceObject.baseUrl,
-        serviceObject.id,
-        reqOpts.uri,
-      ].join('/');
-
-      serviceObject.parent.request = (reqOpts_, callback) => {
-        assert.notStrictEqual(reqOpts_, reqOpts);
-        assert.strictEqual(reqOpts_.uri, expectedUri);
-        assert.deepStrictEqual(reqOpts_.interceptors_, []);
-        callback(null, null, {} as r.Response);
-      };
-      asInternal(serviceObject).request_(reqOpts, () => done());
-    });
-
-    it('should not require a service object ID', done => {
-      const expectedUri = [serviceObject.baseUrl, reqOpts.uri].join('/');
-      serviceObject.parent.request = (reqOpts, callback) => {
-        assert.strictEqual(reqOpts.uri, expectedUri);
-        callback(null, null, {} as r.Response);
-      };
-      serviceObject.id = undefined;
-      asInternal(serviceObject).request_(reqOpts, () => done());
-    });
-
-    it('should support absolute uris', done => {
-      const expectedUri = 'http://www.google.com';
-      serviceObject.parent.request = (reqOpts, callback) => {
-        assert.strictEqual(reqOpts.uri, expectedUri);
-        callback(null, null, {} as r.Response);
-      };
-      asInternal(serviceObject).request_({uri: expectedUri}, () => {
-        done();
-      });
-    });
-
-    it('should remove empty components', done => {
-      const reqOpts = {uri: ''};
-      const expectedUri = [
-        serviceObject.baseUrl,
-        serviceObject.id,
-        // reqOpts.uri (reqOpts.uri is an empty string, so it should be removed)
-      ].join('/');
-      serviceObject.parent.request = (reqOpts_, callback) => {
-        assert.strictEqual(reqOpts_.uri, expectedUri);
-        callback(null, null, {} as r.Response);
-      };
-      asInternal(serviceObject).request_(reqOpts, () => done());
-    });
-
-    it('should trim slashes', done => {
-      const reqOpts = {
-        uri: '//1/2//',
-      };
-      const expectedUri = [serviceObject.baseUrl, serviceObject.id, '1/2'].join(
-        '/',
-      );
-      serviceObject.parent.request = (reqOpts_, callback) => {
-        assert.strictEqual(reqOpts_.uri, expectedUri);
-        callback(null, null, {} as r.Response);
-      };
-      asInternal(serviceObject).request_(reqOpts, () => {
-        done();
-      });
-    });
-
-    it('should extend interceptors from child ServiceObjects', async () => {
-      const parent = new ServiceObject(CONFIG) as FakeServiceObject;
-      parent.interceptors.push({
-        request(reqOpts: DecorateRequestOptions) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (reqOpts as any).parent = true;
-          return reqOpts;
-        },
-      });
-
-      const child = new ServiceObject({...CONFIG, parent}) as FakeServiceObject;
-      child.interceptors.push({
-        request(reqOpts: DecorateRequestOptions) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (reqOpts as any).child = true;
-          return reqOpts;
-        },
-      });
-
-      sandbox
-        .stub(
-          parent.parent as SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>,
-          'request',
-        )
-        .callsFake((reqOpts, callback) => {
-          assert.deepStrictEqual(
-            reqOpts.interceptors_![0].request({} as DecorateRequestOptions),
-            {
-              child: true,
-            },
-          );
-          assert.deepStrictEqual(
-            reqOpts.interceptors_![1].request({} as DecorateRequestOptions),
-            {
-              parent: true,
-            },
-          );
-          callback(null, null, {} as r.Response);
-        });
-
-      await child.request_({uri: ''});
-    });
-
-    it('should pass a clone of the interceptors', done => {
-      asInternal(serviceObject).interceptors.push({
-        request(reqOpts: DecorateRequestOptions) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (reqOpts as any).one = true;
-          return reqOpts;
-        },
-      });
-
-      serviceObject.parent.request = (reqOpts, callback) => {
-        const serviceObjectInterceptors =
-          asInternal(serviceObject).interceptors;
-        assert.deepStrictEqual(
-          reqOpts.interceptors_,
-          serviceObjectInterceptors,
-        );
-        assert.notStrictEqual(reqOpts.interceptors_, serviceObjectInterceptors);
-        callback(null, null, {} as r.Response);
-        done();
-      };
-      asInternal(serviceObject).request_({uri: ''}, () => {});
-    });
-
-    it('should call the parent requestStream method', () => {
-      const fakeObj = {};
-      const expectedUri = [
-        serviceObject.baseUrl,
-        serviceObject.id,
-        reqOpts.uri,
-      ].join('/');
-
-      serviceObject.parent.requestStream = reqOpts_ => {
-        assert.notStrictEqual(reqOpts_, reqOpts);
-        assert.strictEqual(reqOpts_.uri, expectedUri);
-        assert.deepStrictEqual(reqOpts_.interceptors_, []);
-        return fakeObj as r.Request;
-      };
-
-      const opts = {...reqOpts, shouldReturnStream: true};
-      const res = asInternal(serviceObject).request_(opts);
-      assert.strictEqual(res, fakeObj);
-    });
-  });
-
-  describe('request', () => {
-    it('should call through to request_', async () => {
-      const fakeOptions = {} as DecorateRequestOptions;
-      sandbox
-        .stub(asInternal(serviceObject), 'request_')
-        .callsFake((reqOpts, callback) => {
-          assert.strictEqual(reqOpts, fakeOptions);
-          callback!(null, null, {} as r.Response);
-        });
-      await serviceObject.request(fakeOptions);
-    });
-
-    it('should accept a callback', done => {
-      const response = {body: {abc: '123'}, statusCode: 200} as r.Response;
-      sandbox
-        .stub(asInternal(serviceObject), 'request_')
-        .callsArgWith(1, null, response.body, response);
-      serviceObject.request({} as DecorateRequestOptions, (err, body, res) => {
-        assert.ifError(err);
-        assert.deepStrictEqual(res, response);
-        assert.deepStrictEqual(body, response.body);
-        done();
-      });
-    });
-
-    it('should return response with a request error and callback', done => {
-      const errorBody = '🤮';
-      const response = {body: {error: errorBody}, statusCode: 500};
-      const err = new Error(errorBody);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (err as any).response = response;
-      sandbox
-        .stub(asInternal(serviceObject), 'request_')
-        .callsArgWith(1, err, response.body, response);
-      serviceObject.request({} as DecorateRequestOptions, (err, body, res) => {
-        assert(err instanceof Error);
-        assert.deepStrictEqual(res, response);
-        assert.deepStrictEqual(body, response.body);
-        done();
-      });
-    });
-  });
-
-  describe('requestStream', () => {
-    it('should call through to request_', async () => {
-      const fakeOptions = {} as DecorateRequestOptions;
-      const serviceObject = new ServiceObject(CONFIG);
-      asInternal(serviceObject).request_ = reqOpts => {
-        assert.deepStrictEqual(reqOpts, {shouldReturnStream: true});
-      };
-      serviceObject.requestStream(fakeOptions);
-    });
-  });
 });
-*/
