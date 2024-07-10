@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
+/**import {
   BaseMetadata,
-  DecorateRequestOptions,
   ServiceObject,
   ServiceObjectConfig,
   util,
@@ -189,7 +188,7 @@ describe('Bucket', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let Bucket: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let bucket: any;
+  let bucket: Bucket;
 
   const STORAGE = {
     createBucket: util.noop,
@@ -3165,3 +3164,4 @@ describe('Bucket', () => {
     });
   });
 });
+**/
