@@ -270,7 +270,7 @@ export class Util {
         return true;
       }
 
-      if (err.error) {
+      if (err.error || err.code) {
         const reason = err.code;
         if (reason === 'rateLimitExceeded') {
           return true;
