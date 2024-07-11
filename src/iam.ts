@@ -265,7 +265,7 @@ class Iam {
           cb(err);
           return;
         }
-        callback!(null, data as Policy, resp);
+        cb(null, data as Policy, resp);
       }
     );
   }
