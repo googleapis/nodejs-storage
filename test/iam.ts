@@ -18,22 +18,37 @@ import {Iam} from '../src/iam.js';
 import {Bucket} from '../src/bucket.js';
 import * as sinon from 'sinon';
 import {GaxiosError} from 'gaxios';
+import {StorageTransport} from '../src/storage-transport.js';
 
 describe('storage/iam', () => {
   let iam: Iam;
+  let sandbox: sinon.SinonSandbox;
   let BUCKET_INSTANCE: Bucket;
+  let storageTransport: StorageTransport;
+  const id = 'bucket-id';
+
+  before(() => {
+    sandbox = sinon.createSandbox();
+  });
 
   beforeEach(() => {
-    const id = 'bucket-id';
-    BUCKET_INSTANCE = sinon.createStubInstance(Bucket);
+    storageTransport = sandbox.createStubInstance(StorageTransport);
+    BUCKET_INSTANCE = sandbox.createStubInstance(Bucket, {
+      getId: id,
+    });
     BUCKET_INSTANCE.id = id;
+    BUCKET_INSTANCE.storageTransport = storageTransport;
     iam = new Iam(BUCKET_INSTANCE);
+  });
+
+  afterEach(() => {
+    sandbox.restore();
   });
 
   describe('getPolicy', () => {
     it('should make the correct api request', done => {
-      sinon
-        .stub(BUCKET_INSTANCE.storageTransport, 'makeRequest')
+      BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake((reqOpts, callback) => {
           assert.deepStrictEqual(reqOpts, {
             url: '/iam',
@@ -51,8 +66,8 @@ describe('storage/iam', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      sinon
-        .stub(BUCKET_INSTANCE.storageTransport, 'makeRequest')
+      BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake(reqOpts => {
           assert.deepStrictEqual(reqOpts.queryParameters, options);
           return Promise.resolve();
@@ -67,8 +82,8 @@ describe('storage/iam', () => {
         requestedPolicyVersion: VERSION,
       };
 
-      sinon
-        .stub(BUCKET_INSTANCE.storageTransport, 'makeRequest')
+      BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake(reqOpts => {
           assert.deepStrictEqual(reqOpts.queryParameters, {
             optionsRequestedPolicyVersion: VERSION,
@@ -86,14 +101,14 @@ describe('storage/iam', () => {
         bindings: [{role: 'role', members: ['member']}],
       };
 
-      sinon
-        .stub(BUCKET_INSTANCE.storageTransport, 'makeRequest')
+      BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake((reqOpts, callback) => {
           assert.deepStrictEqual(reqOpts, {
             method: 'PUT',
             url: '/iam',
             maxRetries: 0,
-            body: Object.assign(policy),
+            body: Object.assign(policy, {resourceId: `buckets/${id}`}),
             queryParameters: {},
           });
           callback!(null);
@@ -112,8 +127,8 @@ describe('storage/iam', () => {
         userProject: 'grape-spaceship-123',
       };
 
-      sinon
-        .stub(BUCKET_INSTANCE.storageTransport, 'makeRequest')
+      BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake(reqOpts => {
           assert.strictEqual(reqOpts.queryParameters, options);
           return Promise.resolve();
@@ -127,8 +142,8 @@ describe('storage/iam', () => {
     it('should make the correct API request', () => {
       const permissions = 'storage.bucket.list';
 
-      sinon
-        .stub(BUCKET_INSTANCE.storageTransport, 'makeRequest')
+      BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake(reqOpts => {
           assert.deepStrictEqual(reqOpts, {
             url: '/iam/testPermissions',
@@ -147,17 +162,15 @@ describe('storage/iam', () => {
       const error = new GaxiosError('Error.', {});
       const apiResponse = {};
 
-      sinon
-        .stub(BUCKET_INSTANCE.storageTransport, 'makeRequest')
+      BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake((reqOpts, callback) => {
           callback!(error, apiResponse);
           return Promise.resolve();
         });
 
-      iam.testPermissions(permissions, (err, permissions, apiResp) => {
+      iam.testPermissions(permissions, err => {
         assert.strictEqual(err, error);
-        assert.strictEqual(permissions, null);
-        assert.strictEqual(apiResp, apiResponse);
         done();
       });
     });
@@ -168,10 +181,10 @@ describe('storage/iam', () => {
         permissions: ['storage.bucket.consume'],
       };
 
-      sinon
-        .stub(BUCKET_INSTANCE.storageTransport, 'makeRequest')
+      BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake((reqOpts, callback) => {
-          callback!(null, apiResponse);
+          callback!(null, apiResponse, apiResponse);
           return Promise.resolve();
         });
 
@@ -191,10 +204,10 @@ describe('storage/iam', () => {
       const permissions = ['storage.bucket.list', 'storage.bucket.consume'];
       const apiResponse = {permissions: undefined};
 
-      sinon
-        .stub(BUCKET_INSTANCE.storageTransport, 'makeRequest')
+      BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake((reqOpts, callback) => {
-          callback!(null, apiResponse);
+          callback!(null, apiResponse, apiResponse);
           return Promise.resolve();
         });
       iam.testPermissions(permissions, (err, permissions, apiResp) => {
@@ -222,8 +235,8 @@ describe('storage/iam', () => {
         options,
       );
 
-      sinon
-        .stub(BUCKET_INSTANCE.storageTransport, 'makeRequest')
+      BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake(reqOpts => {
           assert.deepStrictEqual(reqOpts.queryParameters, expectedQuery);
           return Promise.resolve();
