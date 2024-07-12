@@ -98,6 +98,7 @@ export class StorageTransport {
   private retryOptions: RetryOptions;
   private baseUrl: string;
   private timeout?: number;
+  private useAuthWithCustomEndpoint?: boolean;
 
   constructor(options: TransportParameters) {
     if (options.authClient instanceof GoogleAuth) {
@@ -114,6 +115,7 @@ export class StorageTransport {
     this.retryOptions = options.retryOptions;
     this.baseUrl = options.baseUrl;
     this.timeout = options.timeout;
+    this.useAuthWithCustomEndpoint = options.useAuthWithCustomEndpoint;
   }
 
   makeRequest<T>(

@@ -19,6 +19,9 @@ import * as sinon from 'sinon';
 import {StorageTransport} from '../src/storage-transport.js';
 import {Storage} from '../src/storage.js';
 import {GaxiosResponse} from 'gaxios';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import {getPackageJSON} from '../src/package-json-helper.cjs';
 
 const error = Error('not implemented');
 
@@ -49,7 +52,7 @@ describe('headers', () => {
       baseUrl: 'https://base-url.com',
       scopes: 'scope',
       retryOptions: {},
-      packageJson: require('../package.json'),
+      packageJson: getPackageJSON(),
     });
     storage.storageTransport = storageTransport;
   });

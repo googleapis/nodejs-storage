@@ -1091,7 +1091,7 @@ export class Storage {
       {
         method: 'POST',
         queryParameters: query,
-        body: JSON.stringify(body),
+        body,
         url: '/b',
         responseType: 'json',
         headers: {
@@ -1487,7 +1487,6 @@ export class Storage {
           callback(err, null, null, resp);
           return;
         }
-
         const itemsArray = data?.items ? data.items : [];
         const hmacKeys = itemsArray.map((hmacKey: HmacKeyMetadata) => {
           const hmacKeyInstance = this.hmacKey(hmacKey.accessId!, {
@@ -1501,7 +1500,7 @@ export class Storage {
           ? Object.assign({}, options, {pageToken: data.nextPageToken})
           : null;
 
-        callback(null, [hmacKeys, nextQuery]);
+        callback(null, hmacKeys, nextQuery, resp);
       }
     );
   }
@@ -1588,9 +1587,9 @@ export class Storage {
         }
         const camelCaseResponse = {} as {[index: string]: string};
 
-        for (const prop in resp) {
+        for (const prop in data) {
           // eslint-disable-next-line no-prototype-builtins
-          if (resp.hasOwnProperty(prop)) {
+          if (data.hasOwnProperty(prop)) {
             const camelCaseProp = prop.replace(/_(\w)/g, (_, match) =>
               match.toUpperCase()
             );
