@@ -49,6 +49,7 @@ import {
   ResponseBody,
   Duplexify,
   GCCL_GCS_CMD_KEY,
+  ProgressStream,
 } from './nodejs-common/util.js';
 import duplexify from 'duplexify';
 import {
@@ -4240,6 +4241,24 @@ class File extends ServiceObject<File, FileMetadata> {
       this.instancePreconditionOpts,
       options.preconditionOpts
     );
+
+    const writeStream = new ProgressStream();
+    writeStream.on('progress', evt => dup.emit('progress', evt));
+    dup.setWritable(writeStream);
+
+    reqOpts.multipart = [
+      {
+        headers: {'Content-Type': 'application/json'},
+        content: JSON.stringify(options.metadata),
+      },
+      {
+        headers: {
+          'Content-Type':
+            options.metadata.contentType || 'application/octet-stream',
+        },
+        content: writeStream,
+      },
+    ];
 
     this.storageTransport.makeRequest(
       reqOpts as StorageRequestOptions,
