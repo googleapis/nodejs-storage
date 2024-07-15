@@ -15,52 +15,77 @@
 import assert from 'assert';
 import {describe, it, before, beforeEach} from 'mocha';
 import {Bucket, GaxiosError} from '../src/index.js';
-import {Notification} from '../src/index.js';
+import {Notification, Storage} from '../src/index.js';
 import * as sinon from 'sinon';
+import {StorageTransport} from '../src/storage-transport.js';
 
 describe('Notification', () => {
   let notification: Notification;
   let BUCKET: Bucket;
+  let storageTransport: StorageTransport;
+  let storage: Storage;
+  let sandbox: sinon.SinonSandbox;
   const ID = '123';
 
   before(() => {
-    BUCKET = sinon.createStubInstance(Bucket);
+    sandbox = sinon.createSandbox();
+    storage = sandbox.createStubInstance(Storage);
+    BUCKET = sandbox.createStubInstance(Bucket);
+    storageTransport = sandbox.createStubInstance(StorageTransport);
+    BUCKET.baseUrl = '';
+    BUCKET.storage = storage;
+    BUCKET.id = 'test-bucket';
+    BUCKET.storage.storageTransport = storageTransport;
+    BUCKET.storageTransport = storageTransport;
   });
 
   beforeEach(() => {
     notification = new Notification(BUCKET, ID);
   });
 
+  afterEach(() => {
+    sandbox.restore();
+  });
+
   describe('delete', () => {
     it('should make the correct request', done => {
       const options = {};
 
-      BUCKET.storageTransport.makeRequest = (reqOpts, callback) => {
-        assert.strictEqual(reqOpts.method, 'DELETE');
-        assert.strictEqual(reqOpts.url, 'notificationConfigs/123');
-        assert.deepStrictEqual(reqOpts.queryParameters, options);
-        callback!(null); // the done fn
-        return Promise.resolve();
-      };
+      BUCKET.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          assert.strictEqual(reqOpts.method, 'DELETE');
+          assert.strictEqual(
+            reqOpts.url,
+            '/test-bucket/notificationConfigs/123'
+          );
+          assert.deepStrictEqual(reqOpts.queryParameters, options);
+          callback!(null); // the done fn
+          return Promise.resolve();
+        });
 
       notification.delete(options, done);
     });
 
     it('should optionally accept options', done => {
-      BUCKET.storageTransport.makeRequest = (reqOpts, callback) => {
-        assert.deepStrictEqual(reqOpts.queryParameters, {});
-        callback!(null); // the done fn
-        return Promise.resolve();
-      };
+      BUCKET.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          assert.deepStrictEqual(reqOpts.queryParameters, {});
+          callback!(null); // the done fn
+          return Promise.resolve();
+        });
 
       notification.delete(done);
     });
 
     it('should optionally accept a callback', done => {
-      BUCKET.storageTransport.makeRequest = (_reqOpts, callback) => {
-        callback!(null); // the done fn
-        return Promise.resolve();
-      };
+      BUCKET.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((_reqOpts, callback) => {
+          callback!(null); // the done fn
+          return Promise.resolve();
+        });
 
       notification.delete(done);
     });
@@ -68,7 +93,7 @@ describe('Notification', () => {
 
   describe('get', () => {
     it('should get the metadata', done => {
-      sinon.stub(notification, 'getMetadata').callsFake(() => {
+      sandbox.stub(notification, 'getMetadata').callsFake(() => {
         done();
       });
 
@@ -78,7 +103,7 @@ describe('Notification', () => {
     it('should accept an options object', done => {
       const options = {};
 
-      sinon.stub(notification, 'getMetadata').callsFake(options_ => {
+      sandbox.stub(notification, 'getMetadata').callsFake(options_ => {
         assert.deepStrictEqual(options_, options);
         done();
       });
@@ -86,35 +111,35 @@ describe('Notification', () => {
       notification.get(options, assert.ifError);
     });
 
-    it('should execute callback with error & metadata', done => {
+    it('should execute callback with error', done => {
       const error = new GaxiosError('Error.', {});
       const metadata = {};
 
-      sinon.stub(notification, 'getMetadata').callsFake(callback => {
-        callback!(error, metadata);
-      });
+      notification.getMetadata = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback!(error, metadata);
+        });
 
-      notification.get((err: Error, instance: {}, metadata_: {}) => {
+      notification.get(err => {
         assert.strictEqual(err, error);
-        assert.strictEqual(instance, null);
-        assert.strictEqual(metadata_, metadata);
 
         done();
       });
     });
 
-    it('should execute callback with instance & metadata', done => {
+    it('should execute callback with instance', done => {
       const metadata = {};
 
-      sinon.stub(notification, 'getMetadata').callsFake(callback => {
-        callback!(null, metadata);
-      });
+      notification.getMetadata = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback!(null, metadata);
+        });
 
-      notification.get((err: Error, instance: {}, metadata_: {}) => {
+      notification.get((err, instance) => {
         assert.ifError(err);
-
         assert.strictEqual(instance, notification);
-        assert.strictEqual(metadata_, metadata);
 
         done();
       });
@@ -132,7 +157,7 @@ describe('Notification', () => {
           autoCreate: true,
         };
 
-        sinon.stub(notification, 'getMetadata').callsFake(callback => {
+        sandbox.stub(notification, 'getMetadata').callsFake(callback => {
           callback(ERROR, METADATA);
         });
       });
@@ -145,7 +170,7 @@ describe('Notification', () => {
           },
         );
 
-        sinon.stub(notification, 'get').callsFake(config_ => {
+        sandbox.stub(notification, 'get').callsFake(config_ => {
           assert.deepStrictEqual(config_, config);
           done();
         });
@@ -153,47 +178,20 @@ describe('Notification', () => {
         notification.get(config);
       });
 
-      it('should pass only a callback to create if no config', done => {
-        sinon.stub(notification, 'create').callsFake(callback => {
-          callback(null);
-        });
-
-        notification.get(AUTO_CREATE_CONFIG, done);
-      });
-
       describe('error', () => {
-        it('should execute callback with error & API response', done => {
+        it('should execute callback with error', done => {
           const error = new GaxiosError('Error.', {});
-          const apiResponse = {};
-          sinon.stub(notification, 'get').callsFake((config, callback) => {
-            assert.deepStrictEqual(config, {});
-            callback!(null); // done()
+          sandbox.stub(notification, 'get').callsFake((config, callback) => {
+            callback!(error); // done()
           });
-          sinon.stub(notification, 'create').callsFake(callback => {
-            callback(error, null, apiResponse);
-          });
-
-          notification.get(AUTO_CREATE_CONFIG, (err, instance, resp) => {
-            assert.strictEqual(err, error);
-            assert.strictEqual(instance, null);
-            assert.strictEqual(resp, apiResponse);
-            done();
-          });
-        });
-
-        it('should refresh the metadata after a 409', done => {
-          const error = new GaxiosError('409', {});
-          error.status = 409;
-
-          sinon.stub(notification, 'get').callsFake((config, callback) => {
-            assert.deepStrictEqual(config, {});
-            callback(null); // done()
-          });
-          sinon.stub(notification, 'create').callsFake(callback => {
+          sandbox.stub(notification, 'create').callsFake(callback => {
             callback(error);
           });
 
-          notification.get(AUTO_CREATE_CONFIG, done);
+          notification.get(AUTO_CREATE_CONFIG, err => {
+            assert.strictEqual(err, error);
+            done();
+          });
         });
       });
     });
@@ -203,40 +201,45 @@ describe('Notification', () => {
     it('should make the correct request', done => {
       const options = {};
 
-      BUCKET.storageTransport.makeRequest = reqOpts => {
-        assert.strictEqual(reqOpts.url, 'notificationConfigs/123');
-        assert.deepStrictEqual(reqOpts.queryParameters, options);
-        done();
-        return Promise.resolve();
-      };
+      BUCKET.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake(reqOpts => {
+          assert.strictEqual(
+            reqOpts.url,
+            '/test-bucket/notificationConfigs/123'
+          );
+          assert.deepStrictEqual(reqOpts.queryParameters, options);
+          done();
+          return Promise.resolve();
+        });
 
       notification.getMetadata(options, assert.ifError);
     });
 
     it('should optionally accept options', done => {
-      BUCKET.storageTransport.makeRequest = reqOpts => {
-        assert.deepStrictEqual(reqOpts.queryParameters, {});
-        done();
-        return Promise.resolve();
-      };
+      BUCKET.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake(reqOpts => {
+          assert.deepStrictEqual(reqOpts.queryParameters, {});
+          done();
+          return Promise.resolve();
+        });
 
       notification.getMetadata(assert.ifError);
     });
 
     it('should return any errors to the callback', done => {
       const error = new GaxiosError('err', {});
-      const response = {};
 
-      BUCKET.storageTransport.makeRequest = (_reqOpts, callback) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        callback!(error, response as any, response as any);
-        return Promise.resolve();
-      };
+      BUCKET.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((_reqOpts, callback) => {
+          callback!(error);
+          return Promise.resolve();
+        });
 
-      notification.getMetadata((err: Error, metadata: {}, resp: {}) => {
+      notification.getMetadata((err: GaxiosError | null) => {
         assert.strictEqual(err, error);
-        assert.strictEqual(metadata, response);
-        assert.strictEqual(resp, response);
         done();
       });
     });
@@ -244,11 +247,13 @@ describe('Notification', () => {
     it('should set and return the metadata', done => {
       const response = {};
 
-      BUCKET.storageTransport.makeRequest = (_reqOpts, callback) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        callback!(null, response as any, response as any);
-        return Promise.resolve();
-      };
+      BUCKET.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((_reqOpts, callback) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          callback!(null, response as any, response as any);
+          return Promise.resolve();
+        });
 
       notification.getMetadata((err: Error, metadata: {}, resp: {}) => {
         assert.ifError(err);

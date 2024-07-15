@@ -293,9 +293,9 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
     const methodConfig =
       (typeof this.methods.delete === 'object' && this.methods.delete) || {};
 
-    let url = `${this.baseUrl}/${this.name}`;
+    let url = `${this.baseUrl}/${this.id}`;
     if (this.parent instanceof Bucket) {
-      url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
+      url = `${this.parent.baseUrl}/${this.parent.id}/${url}`;
     }
 
     this.storageTransport.makeRequest(
@@ -438,9 +438,9 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
         this.methods.getMetadata) ||
       {};
 
-    let url = `${this.baseUrl}/${this.name}`;
+    let url = `${this.baseUrl}/${this.id}`;
     if (this.parent instanceof Bucket) {
-      url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
+      url = `${this.parent.baseUrl}/${this.parent.id}/${url}`;
     }
 
     this.storageTransport.makeRequest<K>(
