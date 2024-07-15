@@ -29,7 +29,6 @@ import {
 // @ts-ignore
 import {getPackageJSON} from '../package-json-helper.cjs';
 import {GaxiosError, GaxiosResponse} from 'gaxios';
-import {StorageRequestOptions} from '../storage-transport.js';
 
 const packageJson = getPackageJSON();
 
@@ -175,88 +174,6 @@ export class Util {
   noop() {}
 
   /**
-   * Take a Duplexify stream, fetch an authenticated connection header, and
-   * create an outgoing writable stream.
-   *
-   * @param {Duplexify} dup - Duplexify stream.
-   * @param {object} options - Configuration object.
-   * @param {module:common/connection} options.connection - A connection instance used to get a token with and send the request through.
-   * @param {object} options.metadata - Metadata to send at the head of the request.
-   * @param {object} options.request - Request object, in the format of a standard Node.js http.request() object.
-   * @param {string=} options.request.method - Default: "POST".
-   * @param {string=} options.request.qs.uploadType - Default: "multipart".
-   * @param {string=} options.streamContentType - Default: "application/octet-stream".
-   * @param {function} onComplete - Callback, executed after the writable Request stream has completed.
-   */
-  makeWritableStream(
-    dup: Duplexify,
-    options: StorageRequestOptions,
-    onComplete?: Function
-  ) {
-    onComplete = onComplete || util.noop;
-
-    const writeStream = new ProgressStream();
-    writeStream.on('progress', evt => dup.emit('progress', evt));
-    dup.setWritable(writeStream);
-
-    const defaultReqOpts = {
-      method: 'POST',
-      qs: {
-        uploadType: 'multipart',
-      },
-      timeout: 0,
-      maxRetries: 0,
-    };
-
-    //const metadata = options.metadata || {};
-
-    /* const reqOpts = {
-      ...defaultReqOpts,
-      ...options.request,
-      qs: {
-        ...defaultReqOpts.qs,
-        ...options.request?.qs,
-      },
-      multipart: [
-        {
-          'Content-Type': 'application/json',
-          body: JSON.stringify(metadata),
-        },
-        {
-          'Content-Type': metadata.contentType || 'application/octet-stream',
-          body: writeStream,
-        },
-      ],
-    } as {} as r.OptionsWithUri & {
-      [GCCL_GCS_CMD_KEY]?: string;
-    }; */
-
-    /* options.makeAuthenticatedRequest(reqOpts, {
-      onAuthenticated(err, authenticatedReqOpts) {
-        if (err) {
-          dup.destroy(err);
-          return;
-        }
-
-        requestDefaults.headers = util._getDefaultHeaders(
-          reqOpts[GCCL_GCS_CMD_KEY],
-        );
-        const request = teenyRequest.defaults(requestDefaults);
-        request(authenticatedReqOpts!, (err, resp, body) => {
-          util.handleResp(err, resp, body, (err, data) => {
-            if (err) {
-              dup.destroy(err);
-              return;
-            }
-            dup.emit('response', resp);
-            onComplete!(data);
-          });
-        });
-      },
-    }); */
-  }
-
-  /**
    * Returns true if the API request should be retried, given the error that was
    * given the first time the request was attempted. This is used for rate limit
    * related errors as well as intermittent server errors.
@@ -353,7 +270,7 @@ export class Util {
  * Basic Passthrough Stream that records the number of bytes read
  * every time the cursor is moved.
  */
-class ProgressStream extends Transform {
+export class ProgressStream extends Transform {
   bytesRead = 0;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   _transform(chunk: any, encoding: string, callback: Function) {
