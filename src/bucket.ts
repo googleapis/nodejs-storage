@@ -2815,7 +2815,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     this.storageTransport.makeRequest(
       {
-        url: `${this.baseUrl}/o`,
+        url: `${this.baseUrl}/${this.id}/o`,
         queryParameters: query as unknown as StorageQueryParameters,
       },
       (err, data, resp) => {

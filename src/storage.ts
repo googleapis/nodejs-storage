@@ -1091,7 +1091,7 @@ export class Storage {
       {
         method: 'POST',
         queryParameters: query,
-        body,
+        body: JSON.stringify(body),
         url: '/b',
         responseType: 'json',
         headers: {
