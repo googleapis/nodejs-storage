@@ -158,10 +158,23 @@ export class StorageTransport {
 
   #buildUrl(pathUri = '', queryParameters: StorageQueryParameters = {}): URL {
     const qp = this.#buildRequestQueryParams(queryParameters);
-    const url = new URL(`${this.baseUrl}${pathUri}`);
+    let url: URL;
+    if (this.#isValidUrl(pathUri)) {
+      url = new URL(pathUri);
+    } else {
+      url = new URL(`${this.baseUrl}${pathUri}`);
+    }
     url.search = qp;
 
     return url;
+  }
+
+  #isValidUrl(url: string): boolean {
+    try {
+      return Boolean(new URL(url));
+    } catch {
+      return false;
+    }
   }
 
   #buildRequestHeaders(requestHeaders: Headers = {}) {
