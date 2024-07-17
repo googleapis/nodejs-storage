@@ -4259,14 +4259,17 @@ class File extends ServiceObject<File, FileMetadata> {
 
     const apiEndpoint = this.storage.apiEndpoint;
     const bucketName = this.bucket.name;
-    const uri = `${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
+    const url = `${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
 
     const reqOpts: StorageRequestOptions = {
       queryParameters: {
         name: this.name,
+        uploadType: 'multipart',
       },
-      url: uri,
+      url,
       [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
+      method: 'POST',
+      responseType: 'json',
     };
 
     if (this.generation !== undefined) {
