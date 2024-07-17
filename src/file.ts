@@ -1576,8 +1576,8 @@ class File extends ServiceObject<File, FileMetadata> {
     //      applicable, to the user.
     const onResponse = async (
       err: Error | null,
-      _body: ResponseBody,
-      rawResponseStream: unknown,
+      response: GaxiosResponse,
+      rawResponseStream: Readable
     ) => {
       if (err) {
         // Get error message from the body.
@@ -1591,7 +1591,7 @@ class File extends ServiceObject<File, FileMetadata> {
         return;
       }
 
-      const headers = (rawResponseStream as ResponseBody).toJSON().headers;
+      const headers = response.headers;
       const isCompressed = headers['content-encoding'] === 'gzip';
       const hashes: {crc32c?: string; md5?: string} = {};
 
@@ -1683,7 +1683,7 @@ class File extends ServiceObject<File, FileMetadata> {
       }
 
       const reqOpts: StorageRequestOptions = {
-        url: this.baseUrl,
+        url: `${this.bucket.baseUrl}/${this.bucket.name}${this.baseUrl}/${this.name}`,
         headers,
         queryParameters: query as unknown as StorageQueryParameters,
         responseType: 'stream',
@@ -1693,18 +1693,13 @@ class File extends ServiceObject<File, FileMetadata> {
         reqOpts[GCCL_GCS_CMD_KEY] = options[GCCL_GCS_CMD_KEY];
       }
 
-      const readableBody = (await this.storageTransport.makeRequest<Readable>(
-        reqOpts
-      )) as Readable;
-      readableBody
-        .on('error', err => {
+      this.storageTransport.makeRequest(reqOpts, (err, stream, rawResponse) => {
+        (stream as Readable).on('error', err => {
           throughStream.destroy(err);
-        })
-        .on('response', res => {
-          throughStream.emit('response', res);
-          onResponse(res.err, res.body, res.resp);
-        })
-        .resume();
+        });
+        throughStream.emit('response', rawResponse);
+        onResponse(err, rawResponse!, stream as Readable);
+      });
     };
     throughStream.on('reading', makeRequest);
 
