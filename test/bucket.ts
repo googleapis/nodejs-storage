@@ -1861,9 +1861,30 @@ describe('Bucket', () => {
       bucket.getFiles({versions: true}, (err: Error, files: FakeFile[]) => {
         assert.ifError(err);
         assert(files[0] instanceof FakeFile);
+        console.log(files);
         assert.strictEqual(files[0].calledWith_[2].generation, 1);
         done();
       });
+    });
+
+    it('should return Files with specified values if queried for fields', done => {
+      bucket.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        callback(null, {
+          items: [{name: 'fake-file-name'}],
+        });
+      };
+
+      bucket.getFiles(
+        {fields: 'items(name)'},
+        (err: Error, files: FakeFile[]) => {
+          assert.ifError(err);
+          assert.strictEqual(files[0].name, 'fake-file-name');
+          done();
+        }
+      );
     });
 
     it('should return soft-deleted Files if queried for softDeleted', done => {
