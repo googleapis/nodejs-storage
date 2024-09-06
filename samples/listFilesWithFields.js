@@ -20,7 +20,7 @@
  * at https://cloud.google.com/storage/docs.
  */
 
-function main(bucketName = 'sandbox-thee-1') {
+function main(bucketName = 'my-bucket') {
   // [START storage_list_files_with_fields]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.

@@ -1861,7 +1861,6 @@ describe('Bucket', () => {
       bucket.getFiles({versions: true}, (err: Error, files: FakeFile[]) => {
         assert.ifError(err);
         assert(files[0] instanceof FakeFile);
-        console.log(files);
         assert.strictEqual(files[0].calledWith_[2].generation, 1);
         done();
       });
