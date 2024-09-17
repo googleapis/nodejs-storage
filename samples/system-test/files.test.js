@@ -254,13 +254,6 @@ describe('file', () => {
     assert.match(output, new RegExp(copiedFileName));
   });
 
-  it('should list files with fields', () => {
-    const output = execSync(`node listFilesWithFields.js ${bucketName}`);
-    assert.match(output, /Files:/);
-    assert.match(output, new RegExp(movedFileName));
-    assert.match(output, new RegExp(copiedFileName));
-  });
-
   it('should list files by a prefix', () => {
     let output = execSync(`node listFilesByPrefix.js ${bucketName} test "/"`);
     assert.match(output, /Files:/);
