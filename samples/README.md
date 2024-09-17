@@ -91,7 +91,6 @@ objects to users via direct download.
   * [List Files](#list-files)
   * [List Files By Prefix](#list-files-by-prefix)
   * [List Files Paginate](#list-files-paginate)
-  * [List Files With Fields](#list-files-with-fields)
   * [List Files with Old Versions.](#list-files-with-old-versions.)
   * [List Notifications](#list-notifications)
   * [Lock Retention Policy](#lock-retention-policy)
@@ -1445,23 +1444,6 @@ __Usage:__
 
 
 `node samples/listFilesPaginate.js`
-
-
------
-
-
-
-
-### List Files With Fields
-
-View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/listFilesWithFields.js).
-
-[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/listFilesWithFields.js,samples/README.md)
-
-__Usage:__
-
-
-`node samples/listFilesWithFields.js`
 
 
 -----
