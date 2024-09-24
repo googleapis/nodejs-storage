@@ -24,6 +24,7 @@ import * as path from 'path';
 import * as tmp from 'tmp';
 import * as uuid from 'uuid';
 import {ApiError} from '../src/nodejs-common/index.js';
+import {DEFAULT_UNIVERSE} from 'google-auth-library';
 import {
   AccessControlObject,
   Bucket,
@@ -3863,6 +3864,50 @@ describe('storage', function () {
         assert.equal(metadata.crc32c, expected);
         assert(crc32c.validate(metadata.crc32c!));
       }
+    });
+  });
+
+  describe('universeDomainTests', () => {
+    storage.universeDomain = DEFAULT_UNIVERSE;
+    const bucketName = generateName();
+    const bucket = storage.bucket(bucketName);
+    const localFile = fs.readFileSync(FILES.logo.path);
+    let file: File;
+
+    before(async () => {
+      await bucket.create();
+
+      file = bucket.file('LogoToSign.jpg');
+      fs.createReadStream(FILES.logo.path).pipe(file.createWriteStream());
+    });
+
+    after(async () => {
+      await deleteFileAsync(file);
+      storage.bucket(bucketName).delete();
+    });
+
+    it('should get bucket', async () => {
+      const [buckets] = await storage.getBuckets();
+      const getBucket = buckets.filter(item => item.name === bucketName);
+      assert.strictEqual(getBucket[0].name, bucketName);
+    });
+
+    it('should get files', async () => {
+      const [files] = await bucket.getFiles();
+      assert.strictEqual(files[0].name, file.name);
+    });
+
+    it('should create a signed read url', async () => {
+      const [signedReadUrl] = await file.getSignedUrl({
+        version: 'v2',
+        action: 'read',
+        expires: Date.now() + 5000,
+        virtualHostedStyle: true,
+      });
+
+      const res = await fetch(signedReadUrl);
+      const body = await res.text();
+      assert.strictEqual(body, localFile.toString());
     });
   });
 
