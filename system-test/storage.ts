@@ -3897,20 +3897,20 @@ describe('storage', function () {
       universeDomainStorage.bucket(bucketName).delete();
     });
 
-    it.only('should get bucket', async () => {
+    it('should get bucket', async () => {
       const [buckets] = await universeDomainStorage.getBuckets();
       const getBucket = buckets.filter(item => item.name === bucketName);
       assert.strictEqual(getBucket[0].name, bucketName);
     });
 
-    it.only('should get files', async () => {
+    it('should get files', async () => {
       const fileName = await universeDomainStorage
         .bucket(bucketName)
         .file(file.name).name;
       assert.strictEqual(fileName, file.name);
     });
 
-    it.only('should create a signed read url', async () => {
+    it('should create a signed read url', async () => {
       const [signedReadUrl] = await file.getSignedUrl({
         version: 'v2',
         action: 'read',
