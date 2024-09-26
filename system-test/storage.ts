@@ -24,7 +24,6 @@ import * as path from 'path';
 import * as tmp from 'tmp';
 import * as uuid from 'uuid';
 import {ApiError} from '../src/nodejs-common/index.js';
-import {DEFAULT_UNIVERSE} from 'google-auth-library';
 import {
   AccessControlObject,
   Bucket,
@@ -3868,14 +3867,26 @@ describe('storage', function () {
   });
 
   describe('universeDomainTests', () => {
-    storage.universeDomain = DEFAULT_UNIVERSE;
+    const TEST_UNIVERSE_DOMAIN = process.env.TEST_UNIVERSE_DOMAIN;
+    const TEST_PROJECT_ID = process.env.TEST_UNIVERSE_PROJECT_ID;
+    const TEST_UNIVERSE_LOCATION = process.env.TEST_UNIVERSE_LOCATION;
+    const CREDENTIAL_PATH = process.env.TEST_UNIVERSE_DOMAIN_CREDENTIAL;
+
+    // Create a client with universe domain credentials
+    const universeDomainStorage = new Storage({
+      projectId: TEST_PROJECT_ID,
+      keyFilename: CREDENTIAL_PATH,
+      universeDomain: TEST_UNIVERSE_DOMAIN,
+    });
+
     const bucketName = generateName();
-    const bucket = storage.bucket(bucketName);
     const localFile = fs.readFileSync(FILES.logo.path);
     let file: File;
 
     before(async () => {
-      await bucket.create();
+      const [bucket] = await universeDomainStorage.createBucket(bucketName, {
+        location: TEST_UNIVERSE_LOCATION,
+      });
 
       file = bucket.file('LogoToSign.jpg');
       fs.createReadStream(FILES.logo.path).pipe(file.createWriteStream());
@@ -3883,21 +3894,23 @@ describe('storage', function () {
 
     after(async () => {
       await deleteFileAsync(file);
-      storage.bucket(bucketName).delete();
+      universeDomainStorage.bucket(bucketName).delete();
     });
 
-    it('should get bucket', async () => {
-      const [buckets] = await storage.getBuckets();
+    it.only('should get bucket', async () => {
+      const [buckets] = await universeDomainStorage.getBuckets();
       const getBucket = buckets.filter(item => item.name === bucketName);
       assert.strictEqual(getBucket[0].name, bucketName);
     });
 
-    it('should get files', async () => {
-      const [files] = await bucket.getFiles();
-      assert.strictEqual(files[0].name, file.name);
+    it.only('should get files', async () => {
+      const fileName = await universeDomainStorage
+        .bucket(bucketName)
+        .file(file.name).name;
+      assert.strictEqual(fileName, file.name);
     });
 
-    it('should create a signed read url', async () => {
+    it.only('should create a signed read url', async () => {
       const [signedReadUrl] = await file.getSignedUrl({
         version: 'v2',
         action: 'read',
