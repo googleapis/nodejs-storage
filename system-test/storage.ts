@@ -3894,7 +3894,6 @@ describe('storage', function () {
 
     after(async () => {
       await deleteFileAsync(file);
-      universeDomainStorage.bucket(bucketName).delete();
     });
 
     it('should get bucket', async () => {
