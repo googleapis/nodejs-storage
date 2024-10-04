@@ -3867,23 +3867,27 @@ describe('storage', function () {
   });
 
   describe('universeDomainTests', () => {
-    const TEST_UNIVERSE_DOMAIN = process.env.TEST_UNIVERSE_DOMAIN;
-    const TEST_PROJECT_ID = process.env.TEST_UNIVERSE_PROJECT_ID;
-    const TEST_UNIVERSE_LOCATION = process.env.TEST_UNIVERSE_LOCATION;
-    const CREDENTIAL_PATH = process.env.TEST_UNIVERSE_DOMAIN_CREDENTIAL;
-
-    // Create a client with universe domain credentials
-    const universeDomainStorage = new Storage({
-      projectId: TEST_PROJECT_ID,
-      keyFilename: CREDENTIAL_PATH,
-      universeDomain: TEST_UNIVERSE_DOMAIN,
-    });
-
+    let universeDomainStorage: Storage;
     const bucketName = generateName();
     const localFile = fs.readFileSync(FILES.logo.path);
     let file: File;
 
     before(async () => {
+      const TEST_UNIVERSE_DOMAIN = isNullOrUndefined('TEST_UNIVERSE_DOMAIN');
+      const TEST_PROJECT_ID = isNullOrUndefined('TEST_UNIVERSE_PROJECT_ID');
+      const TEST_UNIVERSE_LOCATION = isNullOrUndefined(
+        'TEST_UNIVERSE_LOCATION'
+      );
+      const CREDENTIAL_PATH = isNullOrUndefined(
+        'TEST_UNIVERSE_DOMAIN_CREDENTIAL'
+      );
+      // Create a client with universe domain credentials
+      universeDomainStorage = new Storage({
+        projectId: TEST_PROJECT_ID,
+        keyFilename: CREDENTIAL_PATH,
+        universeDomain: TEST_UNIVERSE_DOMAIN,
+      });
+
       const [bucket] = await universeDomainStorage.createBucket(bucketName, {
         location: TEST_UNIVERSE_LOCATION,
       });
@@ -4072,5 +4076,13 @@ describe('storage', function () {
 
   function createFileWithContentPromise(content: string) {
     return bucket.file(`${generateName()}.txt`).save(content);
+  }
+
+  function isNullOrUndefined(envVarName: string) {
+    const value = process.env[envVarName];
+    if (value === undefined || value === null) {
+      throw new Error(`Please set the ${envVarName} environment variable.`);
+    }
+    return value;
   }
 });
