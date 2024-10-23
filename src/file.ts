@@ -3714,8 +3714,8 @@ class File extends ServiceObject<File, FileMetadata> {
    * @param {string} [userProject] The ID of the project which will be
    *     billed for the request.
    * @param {number} [generation] If present, selects a specific revision of this object.
-   * @param {string} [restoreToken] If this is a soft-deleted object in an HNS-enabled bucket, returns the restore token which will
-   *     be necessary to restore it if there's a name conflict with another object.
+   * @param {string} [restoreToken] Returns an option that must be specified when getting a soft-deleted object from an HNS-enabled
+   *  bucket that has a naming and generation conflict with another object in the same bucket.
    * @param {string} [projection] Specifies the set of properties to return. If used, must be 'full' or 'noAcl'.
    * @param {string | number} [ifGenerationMatch] Request proceeds if the generation of the target resource
    *  matches the value used in the precondition.
