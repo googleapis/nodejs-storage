@@ -14,6 +14,7 @@
         "src/*.ts",
         "src/*.cjs",
         "internal-tooling/*.ts",
-        "system-test/*.ts"
+        "system-test/*.ts",
+        "src/nodejs-common/*.ts"
     ]
 }

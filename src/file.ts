@@ -552,7 +552,7 @@ class File extends ServiceObject<File, FileMetadata> {
 
   generation?: number;
   restoreToken?: string;
-  parent!: Bucket;
+  declare parent: Bucket;
 
   private encryptionKey?: string | Buffer;
   private encryptionKeyBase64?: string;
