@@ -400,7 +400,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       callback!(null, instance, apiResponse);
     }
 
-    this.getMetadata(options, (err: ApiError | null, metadata) => {
+    this.getMetadata(options, async (err: ApiError | null, metadata) => {
       if (err) {
         if (err.code === 404 && autoCreate) {
           const args: Array<Function | GetOrCreateOptions> = [];
@@ -408,7 +408,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
             args.push(options);
           }
           args.push(onCreate);
-          self.create(...args);
+          await self.create(...args);
           return;
         }
         callback!(err, null, metadata as unknown as r.Response);

@@ -1552,17 +1552,19 @@ class File extends ServiceObject<File, FileMetadata> {
     //      which will return the bytes from the source without decompressing
     //      gzip'd content. We then send it through decompressed, if
     //      applicable, to the user.
-    const onResponse = (
+    const onResponse = async (
       err: Error | null,
       _body: ResponseBody,
       rawResponseStream: unknown,
     ) => {
       if (err) {
         // Get error message from the body.
-        this.getBufferFromReadable(rawResponseStream as Readable).then(body => {
-          err.message = body.toString('utf8');
-          throughStream.destroy(err);
-        });
+        await this.getBufferFromReadable(rawResponseStream as Readable).then(
+          body => {
+            err.message = body.toString('utf8');
+            throughStream.destroy(err);
+          },
+        );
 
         return;
       }
@@ -2487,10 +2489,10 @@ class File extends ServiceObject<File, FileMetadata> {
    * });
    * ```
    */
-  getExpirationDate(
+  async getExpirationDate(
     callback?: GetExpirationDateCallback,
-  ): void | Promise<GetExpirationDateResponse> {
-    this.getMetadata(
+  ): Promise<void | Promise<GetExpirationDateResponse>> {
+    await this.getMetadata(
       (err: ApiError | null, metadata: FileMetadata, apiResponse: unknown) => {
         if (err) {
           callback!(err, null, apiResponse);

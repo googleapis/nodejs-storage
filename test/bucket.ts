@@ -1492,7 +1492,9 @@ describe('Bucket', () => {
             requesterPays: false,
           },
         });
-        Promise.resolve([]).then(resp => callback(null, ...resp));
+        Promise.resolve([])
+          .then(resp => callback(null, ...resp))
+          .catch(() => {});
       };
 
       bucket.disableRequesterPays(done);
@@ -1513,10 +1515,12 @@ describe('Bucket', () => {
 
     it('should set autoRetry to false when ifMetagenerationMatch is undefined', done => {
       bucket.setMetadata = () => {
-        Promise.resolve().then(() => {
-          assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
-          done();
-        });
+        Promise.resolve()
+          .then(() => {
+            assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+            done();
+          })
+          .catch(() => {});
       };
       bucket.disableRequesterPays();
     });
@@ -1668,9 +1672,9 @@ describe('Bucket', () => {
         optionsOrCallback: {},
         callback: Function,
       ) => {
-        Promise.resolve([setMetadataResponse]).then(resp =>
-          callback(null, ...resp),
-        );
+        Promise.resolve([setMetadataResponse])
+          .then(resp => callback(null, ...resp))
+          .catch(() => {});
       };
 
       bucket.enableLogging(
@@ -1709,7 +1713,9 @@ describe('Bucket', () => {
             requesterPays: true,
           },
         });
-        Promise.resolve([]).then(resp => callback(null, ...resp));
+        Promise.resolve([])
+          .then(resp => callback(null, ...resp))
+          .catch(() => {});
       };
 
       bucket.enableRequesterPays(done);
@@ -2418,7 +2424,9 @@ describe('Bucket', () => {
           retentionPolicy: null,
         });
 
-        Promise.resolve([]).then(resp => callback(null, ...resp));
+        Promise.resolve([])
+          .then(resp => callback(null, ...resp))
+          .catch(() => {});
       };
 
       bucket.removeRetentionPeriod(done);
@@ -2506,7 +2514,9 @@ describe('Bucket', () => {
         callback: Function,
       ) => {
         assert.strictEqual(metadata.labels, labels);
-        Promise.resolve([]).then(resp => callback(null, ...resp));
+        Promise.resolve([])
+          .then(resp => callback(null, ...resp))
+          .catch(() => {});
       };
       bucket.setLabels(labels, done);
     });
@@ -2537,7 +2547,9 @@ describe('Bucket', () => {
           },
         });
 
-        Promise.resolve([]).then(resp => callback(null, ...resp));
+        Promise.resolve([])
+          .then(resp => callback(null, ...resp))
+          .catch(() => {});
       };
 
       bucket.setRetentionPeriod(duration, done);
@@ -2595,7 +2607,9 @@ describe('Bucket', () => {
       ) => {
         assert.deepStrictEqual(metadata, {storageClass: STORAGE_CLASS});
         assert.strictEqual(options, OPTIONS);
-        Promise.resolve([]).then(resp => callback(null, ...resp));
+        Promise.resolve([])
+          .then(resp => callback(null, ...resp))
+          .catch(() => {});
       };
 
       bucket.setStorageClass(STORAGE_CLASS, OPTIONS, CALLBACK);

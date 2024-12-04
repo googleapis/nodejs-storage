@@ -3743,7 +3743,9 @@ describe('File', () => {
         optionsOrCallback: SetMetadataOptions | MetadataCallback<FileMetadata>,
         cb: MetadataCallback<FileMetadata>,
       ) => {
-        Promise.resolve([apiResponse]).then(resp => cb(null, ...resp));
+        Promise.resolve([apiResponse])
+          .then(resp => cb(null, ...resp))
+          .catch(() => {});
       };
 
       file.makePrivate((err: Error, apiResponse_: {}) => {

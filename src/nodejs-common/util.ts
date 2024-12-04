@@ -666,12 +666,12 @@ export class Util {
       reqOpts: DecorateRequestOptions,
       callback?: BodyResponseCallback,
     ): void | Abortable;
-    function makeAuthenticatedRequest(
+    async function makeAuthenticatedRequest(
       reqOpts: DecorateRequestOptions,
       optionsOrCallback?:
         | MakeAuthenticatedRequestOptions
         | BodyResponseCallback,
-    ): void | Abortable | Duplexify {
+    ): Promise<void | Abortable | Duplexify> {
       let stream: Duplexify;
       let projectId: string;
       const reqConfig = {...config};
@@ -827,7 +827,7 @@ export class Util {
         }
       };
 
-      prepareRequest();
+      await prepareRequest();
 
       if (stream!) {
         return stream!;

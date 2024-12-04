@@ -455,15 +455,15 @@ export class Upload extends Writable {
 
     this.#gcclGcsCmd = cfg[GCCL_GCS_CMD_KEY];
 
-    this.once('writing', () => {
+    this.once('writing', async () => {
       if (this.uri) {
-        this.continueUploading();
+        await this.continueUploading();
       } else {
-        this.createURI(err => {
+        this.createURI(async err => {
           if (err) {
             return this.destroy(err);
           }
-          this.startUploading();
+          await this.startUploading();
           return;
         });
       }
@@ -956,7 +956,7 @@ export class Upload extends Writable {
       const err = e as ApiError;
 
       if (this.retryOptions.retryableErrorFn!(err)) {
-        this.attemptDelayedRetry({
+        await this.attemptDelayedRetry({
           status: NaN,
           data: err,
         });
@@ -1017,7 +1017,7 @@ export class Upload extends Writable {
       }
 
       // continue uploading next chunk
-      this.continueUploading();
+      await this.continueUploading();
     } else if (
       !this.isSuccessfulResponse(resp.status) &&
       !shouldContinueUploadInAnotherRequest
@@ -1119,7 +1119,7 @@ export class Upload extends Writable {
       const err = e as ApiError;
 
       if (this.retryOptions.retryableErrorFn!(err)) {
-        this.attemptDelayedRetry({
+        await this.attemptDelayedRetry({
           status: NaN,
           data: err,
         });
@@ -1190,7 +1190,7 @@ export class Upload extends Writable {
       },
     };
     const res = await this.authClient.request(combinedReqOpts);
-    const successfulRequest = this.onResponse(res);
+    const successfulRequest = await this.onResponse(res);
     this.removeListener('error', errorCallback);
 
     return successfulRequest ? res : null;
@@ -1199,7 +1199,7 @@ export class Upload extends Writable {
   /**
    * @return {bool} is the request good?
    */
-  private onResponse(resp: GaxiosResponse) {
+  private async onResponse(resp: GaxiosResponse) {
     if (
       resp.status !== 200 &&
       this.retryOptions.retryableErrorFn!({
@@ -1208,7 +1208,7 @@ export class Upload extends Writable {
         name: resp.statusText,
       })
     ) {
-      this.attemptDelayedRetry(resp);
+      await this.attemptDelayedRetry(resp);
       return false;
     }
 
@@ -1219,13 +1219,15 @@ export class Upload extends Writable {
   /**
    * @param resp GaxiosResponse object from previous attempt
    */
-  private attemptDelayedRetry(resp: Pick<GaxiosResponse, 'data' | 'status'>) {
+  private async attemptDelayedRetry(
+    resp: Pick<GaxiosResponse, 'data' | 'status'>,
+  ) {
     if (this.numRetries < this.retryOptions.maxRetries!) {
       if (
         resp.status === NOT_FOUND_STATUS_CODE &&
         this.numChunksReadInRequest === 0
       ) {
-        this.startUploading();
+        await this.startUploading();
       } else {
         const retryDelay = this.getRetryDelay();
 

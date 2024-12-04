@@ -584,7 +584,7 @@ describe('Transfer Manager', () => {
         fakeHelper.abortUpload.resolves();
         return fakeHelper;
       };
-      assert.rejects(
+      await assert.rejects(
         transferManager.uploadFileInChunks(
           filePath,
           {autoAbortFailure: false},

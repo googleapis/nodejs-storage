@@ -208,8 +208,8 @@ describe('signer', () => {
           const accessibleAt = accessibleAtNumber;
           const expires = accessibleAt - 86400000;
 
-          assert.throws(() => {
-            signer.getSignedUrl({
+          assert.throws(async () => {
+            await signer.getSignedUrl({
               version: 'v4',
               method: 'GET',
               accessibleAt,
@@ -260,8 +260,8 @@ describe('signer', () => {
           it('should throw if a date is invalid', () => {
             const accessibleAt = new Date('31-12-2019');
 
-            assert.throws(() => {
-              signer.getSignedUrl({
+            assert.throws(async () => {
+              await signer.getSignedUrl({
                 version: 'v4',
                 method: 'GET',
                 accessibleAt,
@@ -565,12 +565,12 @@ describe('signer', () => {
         });
       });
 
-      it('rejects with SigningError on signing Error', () => {
+      it('rejects with SigningError on signing Error', async () => {
         const err = new Error('my-err');
         err.stack = 'some-stack-trace';
         sandbox.stub(authClient, 'sign').rejects(err);
 
-        assert.rejects(() => signer['getSignedUrlV2'](CONFIG), {
+        await assert.rejects(() => signer['getSignedUrlV2'](CONFIG), {
           name: 'SigningError',
           message: 'my-err',
           stack: 'some-stack-trace',
@@ -596,8 +596,8 @@ describe('signer', () => {
         const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
         assert.throws(
-          () => {
-            signer['getSignedUrlV4'](CONFIG);
+          async () => {
+            await signer['getSignedUrlV4'](CONFIG);
           },
           {
             message: `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`,
@@ -722,8 +722,8 @@ describe('signer', () => {
             ...CONFIG,
           };
 
-          assert.throws(() => {
-            signer['getSignedUrlV4'](CONFIG),
+          assert.throws(async () => {
+            await signer['getSignedUrlV4'](CONFIG),
               SignerExceptionMessages.X_GOOG_CONTENT_SHA256;
           });
         });
@@ -885,12 +885,12 @@ describe('signer', () => {
         );
       });
 
-      it('rejects with SigningError on signing Error', () => {
+      it('rejects with SigningError on signing Error', async () => {
         const err = new Error('my-err');
         err.stack = 'some-stack-trace';
         sinon.stub(authClient, 'sign').rejects(err);
 
-        assert.rejects(() => signer['getSignedUrlV4'](CONFIG), {
+        await assert.rejects(() => signer['getSignedUrlV4'](CONFIG), {
           name: 'SigningError',
           message: 'my-err',
           stack: 'some-stack-trace',
