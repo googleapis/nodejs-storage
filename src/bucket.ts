@@ -1445,11 +1445,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * }, function(err, apiResponse) {});
    * ```
    */
-  async addLifecycleRule(
+  addLifecycleRule(
     rule: LifecycleRule | LifecycleRule[],
     optionsOrCallback?: AddLifecycleRuleOptions | SetBucketMetadataCallback,
     callback?: SetBucketMetadataCallback,
-  ): Promise<Promise<SetBucketMetadataResponse> | void> {
+  ): Promise<SetBucketMetadataResponse> | void {
     let options: AddLifecycleRuleOptions = {};
 
     if (typeof optionsOrCallback === 'function') {
@@ -1487,7 +1487,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     // The default behavior appends the previously-defined lifecycle rules with
     // the new ones just passed in by the user.
-    await this.getMetadata((err: ApiError | null, metadata: BucketMetadata) => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.getMetadata((err: ApiError | null, metadata: BucketMetadata) => {
       if (err) {
         callback!(err);
         return;
@@ -2111,10 +2112,10 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * bucket.deleteFiles().then(function() {});
    * ```
    */
-  async deleteFiles(
+  deleteFiles(
     queryOrCallback?: DeleteFilesOptions | DeleteFilesCallback,
     callback?: DeleteFilesCallback,
-  ): Promise<Promise<void> | void> {
+  ): Promise<void> | void {
     let query: DeleteFilesOptions = {};
     if (typeof queryOrCallback === 'function') {
       callback = queryOrCallback;
@@ -2135,7 +2136,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       });
     };
 
-    await (async () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    (async () => {
       try {
         let promises = [];
         const limit = pLimit(MAX_PARALLEL_LIMIT);
@@ -2425,10 +2427,10 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * });
    * ```
    */
-  async enableLogging(
+  enableLogging(
     config: EnableLoggingOptions,
     callback?: SetBucketMetadataCallback,
-  ): Promise<Promise<SetBucketMetadataResponse> | void> {
+  ): Promise<SetBucketMetadataResponse> | void {
     if (
       !config ||
       typeof config === 'function' ||
@@ -2453,7 +2455,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     if (config?.ifMetagenerationNotMatch) {
       options.ifMetagenerationNotMatch = config.ifMetagenerationNotMatch;
     }
-    await (async () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    (async () => {
       try {
         const [policy] = await this.iam.getPolicy();
         policy.bindings.push({
@@ -4300,11 +4303,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * region_tag:storage_upload_encrypted_file
    * Example of uploading an encrypted file:
    */
-  async upload(
+  upload(
     pathString: string,
     optionsOrCallback?: UploadOptions | UploadCallback,
     callback?: UploadCallback,
-  ): Promise<Promise<UploadResponse> | void> {
+  ): Promise<UploadResponse> | void {
     const upload = (numberOfRetries: number | undefined) => {
       const returnValue = AsyncRetry(
         async (bail: (err: Error) => void) => {
@@ -4412,7 +4415,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       });
     }
 
-    await upload(maxRetries);
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    upload(maxRetries);
   }
 
   makeAllFilesPublicPrivate_(

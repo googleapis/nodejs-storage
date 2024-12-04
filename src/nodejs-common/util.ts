@@ -666,12 +666,12 @@ export class Util {
       reqOpts: DecorateRequestOptions,
       callback?: BodyResponseCallback,
     ): void | Abortable;
-    async function makeAuthenticatedRequest(
+    function makeAuthenticatedRequest(
       reqOpts: DecorateRequestOptions,
       optionsOrCallback?:
         | MakeAuthenticatedRequestOptions
         | BodyResponseCallback,
-    ): Promise<void | Abortable | Duplexify> {
+    ): void | Abortable | Duplexify {
       let stream: Duplexify;
       let projectId: string;
       const reqConfig = {...config};
@@ -827,7 +827,8 @@ export class Util {
         }
       };
 
-      await prepareRequest();
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      prepareRequest();
 
       if (stream!) {
         return stream!;

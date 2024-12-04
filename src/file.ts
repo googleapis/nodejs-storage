@@ -2489,10 +2489,11 @@ class File extends ServiceObject<File, FileMetadata> {
    * });
    * ```
    */
-  async getExpirationDate(
+  getExpirationDate(
     callback?: GetExpirationDateCallback,
-  ): Promise<void | Promise<GetExpirationDateResponse>> {
-    await this.getMetadata(
+  ): void | Promise<GetExpirationDateResponse> {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.getMetadata(
       (err: ApiError | null, metadata: FileMetadata, apiResponse: unknown) => {
         if (err) {
           callback!(err, null, apiResponse);
