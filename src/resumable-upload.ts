@@ -1199,7 +1199,7 @@ export class Upload extends Writable {
   /**
    * @return {bool} is the request good?
    */
-  private async onResponse(resp: GaxiosResponse) {
+  private onResponse(resp: GaxiosResponse) {
     if (
       resp.status !== 200 &&
       this.retryOptions.retryableErrorFn!({
@@ -1208,7 +1208,7 @@ export class Upload extends Writable {
         name: resp.statusText,
       })
     ) {
-      await this.attemptDelayedRetry(resp);
+      void this.attemptDelayedRetry(resp);
       return false;
     }
 
