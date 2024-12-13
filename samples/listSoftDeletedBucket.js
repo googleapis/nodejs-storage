@@ -15,7 +15,7 @@
  */
 
 function main() {
-  // [START storage_list_buckets]
+  // [START storage_list_soft_deleted_buckets]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
 
@@ -36,7 +36,7 @@ function main() {
   }
 
   listSoftDeletedBuckets().catch(console.error);
-  // [END storage_list_buckets]
+  // [END storage_list_soft_deleted_buckets]
 }
 
 main(...process.argv.slice(2));

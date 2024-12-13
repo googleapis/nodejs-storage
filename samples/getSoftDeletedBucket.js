@@ -15,7 +15,7 @@
  */
 
 function main(bucketName = 'my-bucket', generation = 123456789) {
-  // [START storage_get_softDeleted_bucket]
+  // [START storage_get_soft_deleted_bucket]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -46,7 +46,7 @@ function main(bucketName = 'my-bucket', generation = 123456789) {
   }
 
   getSoftDeletedBucket().catch(console.error);
-  // [END storage_get_softDeleted_bucket]
+  // [END storage_get_soft_deleted_bucket]
 }
 
 main(...process.argv.slice(2));

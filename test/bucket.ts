@@ -2436,13 +2436,13 @@ describe('Bucket', () => {
         assert.deepStrictEqual(reqOpts, {
           method: 'POST',
           uri: '/restore',
-          qs: {generation: 123},
+          qs: {generation: 123456789},
         });
         assert.strictEqual(callback_, undefined);
         return [];
       };
 
-      await bucket.restore({generation: 123});
+      await bucket.restore({generation: 123456789});
     });
   });
 

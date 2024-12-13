@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-function main(bucketName = 'my-bucket', generation = 1) {
-  // [START storage_restore_bucket]
+function main(bucketName = 'my-bucket', generation = 123456789) {
+  // [START storage_restore_soft_deleted_bucket]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
   // The ID of your GCS bucket
   // const bucketName = 'your-unique-bucket-name';
 
-  // The version of your GCS bucket
-  // const generation = 'your-unique-bucket-generation-no';
+  // The generation of the bucket to restore
+  // const generation = 123456789;
 
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
@@ -42,7 +42,7 @@ function main(bucketName = 'my-bucket', generation = 1) {
   }
 
   restoreSoftDeletedBucket().catch(console.error);
-  // [END storage_restore_bucket]
+  // [END storage_restore_soft_deleted_bucket]
 }
 
 main(...process.argv.slice(2));

@@ -794,7 +794,7 @@ describe('storage', function () {
     describe('buckets', () => {
       let bucket: Bucket;
       const SOFT_DELETE_RETENTION_SECONDS = 7 * 24 * 60 * 60; //7 days in seconds;
-      let generation = 123;
+      let generation = 123456789;
 
       before(async () => {
         bucket = storage.bucket(generateName());
