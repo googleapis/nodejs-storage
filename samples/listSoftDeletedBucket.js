@@ -22,8 +22,12 @@ function main() {
   // Creates a client
   const storage = new Storage();
 
-  async function listBuckets() {
-    const [buckets] = await storage.getBuckets();
+  async function listSoftDeletedBuckets() {
+    const options = {
+      softDeleted: true,
+    };
+
+    const [buckets] = await storage.getBuckets(options);
 
     console.log('Buckets:');
     buckets.forEach(bucket => {
@@ -31,7 +35,7 @@ function main() {
     });
   }
 
-  listBuckets().catch(console.error);
+  listSoftDeletedBuckets().catch(console.error);
   // [END storage_list_buckets]
 }
 

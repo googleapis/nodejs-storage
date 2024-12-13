@@ -4577,7 +4577,7 @@ paginator.extend(Bucket, 'getFiles');
  * that a callback is omitted.
  */
 promisifyAll(Bucket, {
-  exclude: ['cloudStorageURI', 'request', 'file', 'notification'],
+  exclude: ['cloudStorageURI', 'request', 'file', 'notification', 'restore'],
 });
 
 /**
