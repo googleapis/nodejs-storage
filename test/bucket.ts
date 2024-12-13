@@ -124,6 +124,7 @@ const fakePromisify = {
       'request',
       'file',
       'notification',
+      'restore',
     ]);
   },
 };
