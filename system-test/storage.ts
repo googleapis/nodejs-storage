@@ -945,7 +945,9 @@ describe('storage', function () {
         await f2.delete();
         const [notSoftDeletedFiles] = await hnsBucket.getFiles();
         assert.strictEqual(notSoftDeletedFiles.length, 0);
-        const [softDeletedFiles] = await hnsBucket.getFiles({softDeleted: true});
+        const [softDeletedFiles] = await hnsBucket.getFiles({
+          softDeleted: true,
+        });
         assert.strictEqual(softDeletedFiles.length, 2);
         assert.notStrictEqual(
           softDeletedFiles![0].metadata.restoreToken,
