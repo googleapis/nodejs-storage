@@ -34,7 +34,6 @@ function main(bucketName = 'my-bucket', generation = 1) {
   async function restoreSoftDeletedBucket() {
     const options = {
       generation: generation,
-      softDeleted: true,
     };
 
     await storage.bucket(bucketName).restore(options);
