@@ -2426,6 +2426,26 @@ describe('Bucket', () => {
     });
   });
 
+  describe('restore', () => {
+    it('should pass options to underlying request call', async () => {
+      bucket.request = function (
+        reqOpts: DecorateRequestOptions,
+        callback_: Function
+      ) {
+        assert.strictEqual(this, bucket);
+        assert.deepStrictEqual(reqOpts, {
+          method: 'POST',
+          uri: '/restore',
+          qs: {generation: 123},
+        });
+        assert.strictEqual(callback_, undefined);
+        return [];
+      };
+
+      await bucket.restore({generation: 123});
+    });
+  });
+
   describe('request', () => {
     const USER_PROJECT = 'grape-spaceship-123';
 
