@@ -294,7 +294,7 @@ export interface GetLabelsCallback {
 }
 
 export interface RestoreOptions {
-  generation: number;
+  generation: string;
   projection?: 'full' | 'noAcl';
 }
 export interface BucketMetadata extends BaseMetadata {
@@ -339,6 +339,7 @@ export interface BucketMetadata extends BaseMetadata {
     logBucket?: string;
     logObjectPrefix?: string;
   };
+  generation?: string;
   metageneration?: string;
   name?: string;
   objectRetention?: {

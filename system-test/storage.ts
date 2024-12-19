@@ -794,7 +794,7 @@ describe('storage', function () {
     describe('buckets', () => {
       let bucket: Bucket;
       const SOFT_DELETE_RETENTION_SECONDS = 7 * 24 * 60 * 60; //7 days in seconds;
-      let generation = 123456789;
+      let generation: string;
 
       before(async () => {
         bucket = storage.bucket(generateName());
@@ -805,8 +805,8 @@ describe('storage', function () {
           },
         });
 
-        const metadata = await bucket.getMetadata();
-        generation = parseInt(metadata[0].generation?.toString() || '0');
+        const [metadata] = await bucket.getMetadata();
+        generation = metadata!.generation!;
         await bucket.delete();
       });
 
@@ -827,10 +827,12 @@ describe('storage', function () {
       });
 
       it('should GET a soft-deleted bucket', async () => {
-        const [softDeletedBucket] = await bucket.getMetadata({
-          softDeleted: true,
-          generation: generation,
-        });
+        const [softDeletedBucket] = await storage
+          .bucket(bucket.name)
+          .getMetadata({
+            softDeleted: true,
+            generation: generation,
+          });
         assert(softDeletedBucket);
         assert.strictEqual(softDeletedBucket.generation, generation);
         assert(softDeletedBucket.softDeleteTime);
@@ -838,7 +840,7 @@ describe('storage', function () {
       });
 
       it('should restore a soft-deleted bucket', async () => {
-        const restoredBucket = await bucket.restore({
+        const restoredBucket = await storage.bucket(bucket.name).restore({
           generation: generation,
         });
         assert(restoredBucket);
