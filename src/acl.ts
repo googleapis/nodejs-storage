@@ -35,7 +35,7 @@ export interface GetAclCallback {
   (
     err: Error | null,
     acl?: AccessControlObject | AccessControlObject[] | null,
-    apiResponse?: AclMetadata,
+    apiResponse?: AclMetadata
   ): void;
 }
 export interface GetAclOptions {
@@ -55,7 +55,7 @@ export interface UpdateAclCallback {
   (
     err: Error | null,
     acl?: AccessControlObject | null,
-    apiResponse?: AclMetadata,
+    apiResponse?: AclMetadata
   ): void;
 }
 
@@ -70,7 +70,7 @@ export interface AddAclCallback {
   (
     err: GaxiosError | null,
     acl?: AccessControlObject | null,
-    apiResponse?: AclMetadata,
+    apiResponse?: AclMetadata
   ): void;
 }
 export type RemoveAclResponse = [AclMetadata];
@@ -334,7 +334,7 @@ class AclRoleAccessorMethods {
         (acc as any)[method] = (
           entityId: string,
           options: {},
-          callback: Function | {},
+          callback: Function | {}
         ) => {
           let apiEntity;
 
@@ -358,7 +358,7 @@ class AclRoleAccessorMethods {
               entity: apiEntity,
               role,
             },
-            options,
+            options
           );
 
           const args = [options];
@@ -510,7 +510,7 @@ class Acl extends AclRoleAccessorMethods {
    */
   add(
     options: AddAclOptions,
-    callback?: AddAclCallback,
+    callback?: AddAclCallback
   ): void | Promise<AddAclResponse> {
     const query = {} as AclQuery;
 
@@ -627,7 +627,7 @@ class Acl extends AclRoleAccessorMethods {
    */
   delete(
     options: RemoveAclOptions,
-    callback?: RemoveAclCallback,
+    callback?: RemoveAclCallback
   ): void | Promise<RemoveAclResponse> {
     const query = {} as AclQuery;
 
@@ -751,7 +751,7 @@ class Acl extends AclRoleAccessorMethods {
    */
   get(
     optionsOrCallback?: GetAclOptions | GetAclCallback,
-    cb?: GetAclCallback,
+    cb?: GetAclCallback
   ): void | Promise<GetAclResponse> {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : null;
@@ -868,7 +868,7 @@ class Acl extends AclRoleAccessorMethods {
    */
   update(
     options: UpdateAclOptions,
-    callback?: UpdateAclCallback,
+    callback?: UpdateAclCallback
   ): void | Promise<UpdateAclResponse> {
     const query = {} as AclQuery;
 
@@ -919,7 +919,7 @@ class Acl extends AclRoleAccessorMethods {
    * @private
    */
   makeAclObject_(
-    accessControlObject: AccessControlObject,
+    accessControlObject: AccessControlObject
   ): AccessControlObject {
     const obj = {
       entity: accessControlObject.entity,

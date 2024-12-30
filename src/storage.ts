@@ -866,7 +866,7 @@ export class Storage {
 
   createBucket(
     name: string,
-    metadata?: CreateBucketRequest,
+    metadata?: CreateBucketRequest
   ): Promise<CreateBucketResponse>;
   createBucket(name: string, callback: BucketCallback): void;
   createBucket(
@@ -1036,14 +1036,14 @@ export class Storage {
       standard: 'STANDARD',
     } as const;
     const storageClassKeys = Object.keys(
-      storageClasses,
+      storageClasses
     ) as (keyof typeof storageClasses)[];
 
     for (const storageClass of storageClassKeys) {
       if (body[storageClass]) {
         if (metadata.storageClass && metadata.storageClass !== storageClass) {
           throw new Error(
-            `Both \`${storageClass}\` and \`storageClass\` were provided.`,
+            `Both \`${storageClass}\` and \`storageClass\` were provided.`
           );
         }
         body.storageClass = storageClasses[storageClass];
@@ -1114,7 +1114,7 @@ export class Storage {
 
   createHmacKey(
     serviceAccountEmail: string,
-    options?: CreateHmacKeyOptions,
+    options?: CreateHmacKeyOptions
   ): Promise<CreateHmacKeyResponse>;
   createHmacKey(
     serviceAccountEmail: string,
@@ -1339,7 +1339,7 @@ export class Storage {
   ): void | Promise<GetBucketsResponse> {
     const {options, callback} = normalize<GetBucketsRequest>(
       optionsOrCallback,
-      cb,
+      cb
     );
     options.project = options.project || this.projectId;
 
@@ -1506,10 +1506,10 @@ export class Storage {
   }
 
   getServiceAccount(
-    options?: GetServiceAccountOptions,
+    options?: GetServiceAccountOptions
   ): Promise<GetServiceAccountResponse>;
   getServiceAccount(
-    options?: GetServiceAccountOptions,
+    options?: GetServiceAccountOptions
   ): Promise<GetServiceAccountResponse>;
   getServiceAccount(
     options: GetServiceAccountOptions,
@@ -1570,7 +1570,7 @@ export class Storage {
   ): void | Promise<GetServiceAccountResponse> {
     const {options, callback} = normalize<GetServiceAccountOptions>(
       optionsOrCallback,
-      cb,
+      cb
     );
 
     this.storageTransport.makeRequest<ServiceAccount>(

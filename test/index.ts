@@ -321,7 +321,7 @@ describe('Storage', () => {
     it('should use `CRC32C_DEFAULT_VALIDATOR_GENERATOR` by default', () => {
       assert.strictEqual(
         storage.crc32cGenerator,
-        CRC32C_DEFAULT_VALIDATOR_GENERATOR,
+        CRC32C_DEFAULT_VALIDATOR_GENERATOR
       );
     });
 
@@ -595,7 +595,7 @@ describe('Storage', () => {
           assert.ifError(err);
           assert.strictEqual(apiResponse, response);
           done();
-        },
+        }
       );
     });
 
@@ -762,7 +762,7 @@ describe('Storage', () => {
         storage.createBucket(
           BUCKET_NAME,
           {storageClass, [storageClass]: true},
-          done,
+          done
         );
       });
     });
@@ -788,7 +788,7 @@ describe('Storage', () => {
             storageClass: 'nearline',
             coldline: true,
           },
-          assert.ifError,
+          assert.ifError
         );
       }, /Both `coldline` and `storageClass` were provided./);
     });
@@ -816,7 +816,7 @@ describe('Storage', () => {
       storage.createBucket(
         BUCKET_NAME,
         {hierarchicalNamespace: {enabled: true}},
-        done,
+        done
       );
     });
 
@@ -871,7 +871,7 @@ describe('Storage', () => {
           {
             multiRegional: true,
           },
-          assert.ifError,
+          assert.ifError
         );
       });
 

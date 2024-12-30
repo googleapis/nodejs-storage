@@ -644,7 +644,7 @@ describe('storage/AclRoleAccessorMethods', () => {
           entity: 'user-' + fakeUser,
           role: fakeRole,
         },
-        fakeOptions,
+        fakeOptions
       );
 
       aclEntity.add = (options: {}) => {

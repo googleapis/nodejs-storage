@@ -167,7 +167,7 @@ describe('Notification', () => {
           {},
           {
             maxResults: 5,
-          },
+          }
         );
 
         sandbox.stub(notification, 'get').callsFake(config_ => {

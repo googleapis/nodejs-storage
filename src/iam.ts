@@ -96,7 +96,7 @@ export interface TestIamPermissionsCallback {
   (
     err?: Error | null,
     acl?: {[key: string]: boolean} | null,
-    apiResponse?: unknown,
+    apiResponse?: unknown
   ): void;
 }
 
@@ -236,7 +236,7 @@ class Iam {
    */
   getPolicy(
     optionsOrCallback?: GetPolicyOptions | GetPolicyCallback,
-    callback?: GetPolicyCallback,
+    callback?: GetPolicyCallback
   ): Promise<GetPolicyResponse> | void {
     const {options, callback: cb} = normalize<
       GetPolicyOptions,
@@ -272,13 +272,13 @@ class Iam {
 
   setPolicy(
     policy: Policy,
-    options?: SetPolicyOptions,
+    options?: SetPolicyOptions
   ): Promise<SetPolicyResponse>;
   setPolicy(policy: Policy, callback: SetPolicyCallback): void;
   setPolicy(
     policy: Policy,
     options: SetPolicyOptions,
-    callback: SetPolicyCallback,
+    callback: SetPolicyCallback
   ): void;
   /**
    * Set the IAM policy.
@@ -331,7 +331,7 @@ class Iam {
   setPolicy(
     policy: Policy,
     optionsOrCallback?: SetPolicyOptions | SetPolicyCallback,
-    callback?: SetPolicyCallback,
+    callback?: SetPolicyCallback
   ): Promise<SetPolicyResponse> | void {
     if (policy === null || typeof policy !== 'object') {
       throw new Error(IAMExceptionMessages.POLICY_OBJECT_REQUIRED);
@@ -356,7 +356,7 @@ class Iam {
           {
             resourceId: this.resourceId_,
           },
-          policy,
+          policy
         ),
         queryParameters: options as unknown as StorageQueryParameters,
       },
@@ -372,16 +372,16 @@ class Iam {
 
   testPermissions(
     permissions: string | string[],
-    options?: TestIamPermissionsOptions,
+    options?: TestIamPermissionsOptions
   ): Promise<TestIamPermissionsResponse>;
   testPermissions(
     permissions: string | string[],
-    callback: TestIamPermissionsCallback,
+    callback: TestIamPermissionsCallback
   ): void;
   testPermissions(
     permissions: string | string[],
     options: TestIamPermissionsOptions,
-    callback: TestIamPermissionsCallback,
+    callback: TestIamPermissionsCallback
   ): void;
   /**
    * Test a set of permissions for a resource.
@@ -441,7 +441,7 @@ class Iam {
   testPermissions(
     permissions: string | string[],
     optionsOrCallback?: TestIamPermissionsOptions | TestIamPermissionsCallback,
-    callback?: TestIamPermissionsCallback,
+    callback?: TestIamPermissionsCallback
   ): Promise<TestIamPermissionsResponse> | void {
     if (!Array.isArray(permissions) && typeof permissions !== 'string') {
       throw new Error(IAMExceptionMessages.PERMISSIONS_REQUIRED);
@@ -460,7 +460,7 @@ class Iam {
       {
         permissions: permissionsArray,
       },
-      options,
+      options
     );
 
     this.storageTransport.makeRequest(
@@ -483,11 +483,11 @@ class Iam {
             acc[permission] = availablePermissions.indexOf(permission) > -1;
             return acc;
           },
-          {},
+          {}
         );
 
         cb!(null, permissionsHash, resp);
-      },
+      }
     );
   }
 }

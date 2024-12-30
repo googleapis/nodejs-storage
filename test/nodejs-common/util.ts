@@ -151,7 +151,7 @@ describe('common/util', () => {
       const callback = () => {};
       const [opts, cb] = util.maybeOptionsOrCallback(
         optionsOrCallback,
-        callback,
+        callback
       );
       assert.strictEqual(opts, optionsOrCallback);
       assert.strictEqual(cb, callback);
