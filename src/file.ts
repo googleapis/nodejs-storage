@@ -3794,7 +3794,7 @@ class File extends ServiceObject<File, FileMetadata> {
         encryptionKey: optionsOrCallback,
       };
     } else if (typeof optionsOrCallback === 'object') {
-      options = optionsOrCallback;
+      options = optionsOrCallback as EncryptionKeyOptions;
     }
 
     const newFile = this.bucket.file(this.id!, options);
