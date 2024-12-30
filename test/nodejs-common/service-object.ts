@@ -94,7 +94,7 @@ describe('ServiceObject', () => {
       function createMethod(
         id: string,
         options_: {},
-        callback: (err: Error | null, a: {}, b: {}) => void,
+        callback: (err: Error | null, a: {}, b: {}) => void
       ) {
         assert.strictEqual(id, config.id);
         assert.strictEqual(options_, options);
@@ -126,7 +126,7 @@ describe('ServiceObject', () => {
       function createMethod(
         id: string,
         options_: {},
-        callback: (err: Error | null, a: {}, b: {}) => void,
+        callback: (err: Error | null, a: {}, b: {}) => void
       ) {
         assert.strictEqual(id, config.id);
         assert.strictEqual(options_, options);
@@ -318,7 +318,7 @@ describe('ServiceObject', () => {
       serviceObject.exists(options, assert.ifError);
     });
 
-    it('should execute callback with false if 404', done => {
+    it('should execute callback with false if 404', async done => {
       const error = new GaxiosError('404', {});
       error.status = 404;
       sandbox.stub(serviceObject, 'get').callsArgWith(1, error);
@@ -329,7 +329,7 @@ describe('ServiceObject', () => {
       });
     });
 
-    it('should execute callback with error if not 404', done => {
+    it('should execute callback with error if not 404', async done => {
       const error = new GaxiosError('500', {});
       error.status = 500;
       sandbox.stub(serviceObject, 'get').callsArgWith(1, error);

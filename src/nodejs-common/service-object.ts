@@ -332,7 +332,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   exists(callback: ExistsCallback): void;
   exists(
     optionsOrCallback?: ExistsOptions | ExistsCallback,
-    cb?: ExistsCallback,
+    cb?: ExistsCallback
   ): void | Promise<[boolean]> {
     const [options, callback] = util.maybeOptionsOrCallback<
       ExistsOptions,
@@ -395,7 +395,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       callback!(null, instance);
     }
 
-    this.getMetadata(options, err => {
+    this.getMetadata(options, async err => {
       if (err) {
         if (err.status === 404 && autoCreate) {
           const args: Array<Function | GetOrCreateOptions> = [];

@@ -1353,13 +1353,8 @@ class File extends ServiceObject<File, FileMetadata> {
     if (query.destinationKmsKeyName) {
       this.kmsKeyName = query.destinationKmsKeyName;
 
-<<<<<<< HEAD
-      const keyIndex = this.interceptors.indexOf(
-        this.encryptionKeyInterceptor!,
-=======
       const keyIndex = this.storage.interceptors.indexOf(
         this.encryptionKeyInterceptor!
->>>>>>> b6aa18e (begin refactoring classes to use storage-transport)
       );
       if (keyIndex > -1) {
         this.storage.interceptors.splice(keyIndex, 1);
@@ -1382,19 +1377,11 @@ class File extends ServiceObject<File, FileMetadata> {
     this.storageTransport.makeRequest(
       {
         method: 'POST',
-<<<<<<< HEAD
-        uri: `/rewriteTo/b/${destBucket.name}/o/${encodeURIComponent(
-          newFile.name,
-        )}`,
-        qs: query,
-        json: options,
-=======
         url: `${this.baseUrl}/rewriteTo/b/${
           destBucket.name
         }/o/${encodeURIComponent(newFile.name)}`,
         queryParameters: query as unknown as StorageQueryParameters,
         body: options,
->>>>>>> b6aa18e (begin refactoring classes to use storage-transport)
         headers,
       },
       (err, data, resp) => {
@@ -2206,13 +2193,8 @@ class File extends ServiceObject<File, FileMetadata> {
   delete(callback: DeleteCallback): void;
   delete(
     optionsOrCallback?: DeleteOptions | DeleteCallback,
-<<<<<<< HEAD
-    cb?: DeleteCallback,
-  ): Promise<[r.Response]> | void {
-=======
     cb?: DeleteCallback
   ): Promise<[GaxiosResponse]> | void {
->>>>>>> b6aa18e (begin refactoring classes to use storage-transport)
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : cb;
@@ -3270,12 +3252,7 @@ class File extends ServiceObject<File, FileMetadata> {
         } else {
           callback!(err);
         }
-<<<<<<< HEAD
-      },
-    );
-=======
       });
->>>>>>> b6aa18e (begin refactoring classes to use storage-transport)
   }
 
   makePrivate(
@@ -3772,29 +3749,6 @@ class File extends ServiceObject<File, FileMetadata> {
     return file as File;
   }
 
-<<<<<<< HEAD
-  request(reqOpts: DecorateRequestOptions): Promise<RequestResponse>;
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback: BodyResponseCallback,
-  ): void;
-  /**
-   * Makes request and applies userProject query parameter if necessary.
-   *
-   * @private
-   *
-   * @param {object} reqOpts - The request options.
-   * @param {function} callback - The callback function.
-   */
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback?: BodyResponseCallback,
-  ): void | Promise<RequestResponse> {
-    return this.parent.request.call(this, reqOpts, callback!);
-  }
-
-=======
->>>>>>> b6aa18e (begin refactoring classes to use storage-transport)
   rotateEncryptionKey(
     options?: RotateEncryptionKeyOptions,
   ): Promise<RotateEncryptionKeyResponse>;
