@@ -298,6 +298,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       url = `${this.parent.baseUrl}/${this.parent.id}/${url}`;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'DELETE',
@@ -443,6 +444,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       url = `${this.parent.baseUrl}/${this.parent.id}/${url}`;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest<K>(
       {
         method: 'GET',
@@ -499,6 +501,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest<K>(
       {
         method: 'PATCH',

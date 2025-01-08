@@ -105,7 +105,7 @@ describe('ServiceObject', () => {
       serviceObject.create(options, done);
     });
 
-    it('should not require options', done => {
+    it('should not require options', async done => {
       const config = {...CONFIG, createMethod};
 
       function createMethod(id: string, options: Function, callback: Function) {
@@ -116,10 +116,10 @@ describe('ServiceObject', () => {
       }
 
       const serviceObject = new ServiceObject(config);
-      serviceObject.create(done);
+      await serviceObject.create(done);
     });
 
-    it('should update id with metadata id', done => {
+    it('should update id with metadata id', async () => {
       const config = {...CONFIG, createMethod};
       const options = {};
 
@@ -134,9 +134,8 @@ describe('ServiceObject', () => {
       }
 
       const serviceObject = new ServiceObject(config);
-      serviceObject.create(options);
+      await serviceObject.create(options);
       assert.strictEqual(serviceObject.id, 14);
-      done();
     });
 
     it('should pass error to callback', done => {
@@ -498,7 +497,7 @@ describe('ServiceObject', () => {
   });
 
   describe('getMetadata', () => {
-    it('should make the correct request', done => {
+    it('should make the correct request', async done => {
       sandbox
         .stub(serviceObject.storageTransport, 'makeRequest')
         .callsFake(function (
@@ -512,7 +511,7 @@ describe('ServiceObject', () => {
           callback!(null);
           return Promise.resolve();
         });
-      serviceObject.getMetadata(() => {});
+      await serviceObject.getMetadata(() => {});
     });
 
     it('should accept options', done => {
@@ -528,12 +527,12 @@ describe('ServiceObject', () => {
       serviceObject.getMetadata(options, assert.ifError);
     });
 
-    it('should execute callback with error & apiResponse', done => {
+    it('should execute callback with error & apiResponse', async done => {
       const error = new GaxiosError('ಠ_ಠ', {});
       sandbox
         .stub(serviceObject.storageTransport, 'makeRequest')
         .callsArgWith(1, error);
-      serviceObject.getMetadata((err: Error, metadata: {}) => {
+      await serviceObject.getMetadata((err: Error, metadata: {}) => {
         assert.strictEqual(err, error);
         assert.strictEqual(metadata, undefined);
         done();
@@ -584,7 +583,7 @@ describe('ServiceObject', () => {
           callback!(null);
           return Promise.resolve();
         });
-      serviceObject.setMetadata(metadata, () => {});
+      await serviceObject.setMetadata(metadata, () => {});
     });
 
     it('should accept options', done => {
@@ -606,7 +605,7 @@ describe('ServiceObject', () => {
       sandbox
         .stub(serviceObject.storageTransport, 'makeRequest')
         .callsArgWith(1, error);
-      serviceObject.setMetadata({}, (err: Error, apiResponse_: {}) => {
+      await serviceObject.setMetadata({}, (err: Error, apiResponse_: {}) => {
         assert.strictEqual(err, error);
         assert.strictEqual(apiResponse_, undefined);
         done();

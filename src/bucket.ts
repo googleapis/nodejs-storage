@@ -1489,6 +1489,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     // The default behavior appends the previously-defined lifecycle rules with
     // the new ones just passed in by the user.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.getMetadata((err: GaxiosError | null, metadata: BucketMetadata) => {
       if (err) {
         callback!(err);
@@ -1661,6 +1662,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
 
     // Make the request from the destination File object.
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     destinationFile.storageTransport.makeRequest(
       {
         method: 'POST',
@@ -1823,6 +1825,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options = optionsOrCallback;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'POST',
@@ -2006,6 +2009,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       delete body.userProject;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'POST',
@@ -2813,6 +2817,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
     query = Object.assign({}, query);
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         url: `${this.baseUrl}/${this.id}/o`,
@@ -3014,6 +3019,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options = optionsOrCallback;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         url: `${this.baseUrl}/notificationConfigs`,
@@ -3245,6 +3251,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       throw new Error(BucketExceptionMessages.METAGENERATION_NOT_PROVIDED);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'POST',

@@ -944,7 +944,7 @@ export class Upload extends Writable {
       }
     } catch (e) {
       if (this.retryOptions.retryableErrorFn!(e as GaxiosError)) {
-        this.attemptDelayedRetry({
+        await this.attemptDelayedRetry({
           status: NaN,
           data: e,
         });
@@ -1105,7 +1105,7 @@ export class Upload extends Writable {
       this.offset = 0;
     } catch (e) {
       if (this.retryOptions.retryableErrorFn!(e as GaxiosError)) {
-        this.attemptDelayedRetry({
+        await this.attemptDelayedRetry({
           status: NaN,
           data: e,
         });

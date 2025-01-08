@@ -162,7 +162,7 @@ describe('Notification', () => {
         });
       });
 
-      it('should pass config to create if it was provided', done => {
+      it('should pass config to create if it was provided', async done => {
         const config = Object.assign(
           {},
           {
@@ -175,7 +175,7 @@ describe('Notification', () => {
           done();
         });
 
-        notification.get(config);
+        await notification.get(config);
       });
 
       describe('error', () => {
@@ -216,7 +216,7 @@ describe('Notification', () => {
       notification.getMetadata(options, assert.ifError);
     });
 
-    it('should optionally accept options', done => {
+    it('should optionally accept options', async done => {
       BUCKET.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake(reqOpts => {
@@ -225,10 +225,10 @@ describe('Notification', () => {
           return Promise.resolve();
         });
 
-      notification.getMetadata(assert.ifError);
+      await notification.getMetadata(assert.ifError);
     });
 
-    it('should return any errors to the callback', done => {
+    it('should return any errors to the callback', async done => {
       const error = new GaxiosError('err', {});
 
       BUCKET.storageTransport.makeRequest = sandbox
@@ -238,13 +238,13 @@ describe('Notification', () => {
           return Promise.resolve();
         });
 
-      notification.getMetadata((err: GaxiosError | null) => {
+      await notification.getMetadata((err: GaxiosError | null) => {
         assert.strictEqual(err, error);
         done();
       });
     });
 
-    it('should set and return the metadata', done => {
+    it('should set and return the metadata', async done => {
       const response = {};
 
       BUCKET.storageTransport.makeRequest = sandbox
@@ -255,7 +255,7 @@ describe('Notification', () => {
           return Promise.resolve();
         });
 
-      notification.getMetadata((err: Error, metadata: {}, resp: {}) => {
+      await notification.getMetadata((err: Error, metadata: {}, resp: {}) => {
         assert.ifError(err);
         assert.strictEqual(metadata, response);
         assert.strictEqual(notification.metadata, response);

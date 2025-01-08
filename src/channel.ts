@@ -83,6 +83,7 @@ class Channel extends ServiceObject<Channel, BaseMetadata> {
    */
   stop(callback?: StopCallback): Promise<unknown> | void {
     callback = callback || util.noop;
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'POST',

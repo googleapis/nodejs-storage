@@ -325,7 +325,7 @@ describe('storage', function () {
             setTimeout(resolve, BUCKET_METADATA_UPDATE_WAIT_TIME),
           );
           await bucket.makePrivate();
-          assert.rejects(bucket.acl.get({entity: 'allUsers'}), err => {
+          await assert.rejects(bucket.acl.get({entity: 'allUsers'}), err => {
             assert.strictEqual((err as GaxiosError).status, 404);
             assert.strictEqual((err as GaxiosError).message, 'notFound');
           });
@@ -1769,14 +1769,14 @@ describe('storage', function () {
 
       it('should block an overwrite request', async () => {
         const file = await createFile();
-        assert.rejects(file.save('new data'), (err: GaxiosError) => {
+        await assert.rejects(file.save('new data'), (err: GaxiosError) => {
           assert.strictEqual(err.code, 403);
         });
       });
 
       it('should block a delete request', async () => {
         const file = await createFile();
-        assert.rejects(file.delete(), (err: GaxiosError) => {
+        await assert.rejects(file.delete(), (err: GaxiosError) => {
           assert.strictEqual(err.code, 403);
         });
       });
@@ -2448,7 +2448,7 @@ describe('storage', function () {
 
     it('should handle non-network errors', async () => {
       const file = bucket.file('hi.jpg');
-      assert.rejects(file.download(), (err: GaxiosError) => {
+      await assert.rejects(file.download(), (err: GaxiosError) => {
         assert.strictEqual((err as GaxiosError).code, 404);
       });
     });
@@ -2622,8 +2622,8 @@ describe('storage', function () {
               .on('error', done)
               .pipe(fs.createWriteStream(tmpFilePath))
               .on('error', done)
-              .on('finish', () => {
-                file.delete((err: GaxiosError | null) => {
+              .on('finish', async () => {
+                await file.delete((err: GaxiosError | null) => {
                   assert.ifError(err);
 
                   fs.readFile(tmpFilePath, (err, data) => {
@@ -2660,7 +2660,7 @@ describe('storage', function () {
       });
 
       it('should not download from the unencrypted file', async () => {
-        assert.rejects(unencryptedFile.download(), (err: GaxiosError) => {
+        await assert.rejects(unencryptedFile.download(), (err: GaxiosError) => {
           assert(
             err!.message.indexOf(
               [
@@ -3107,7 +3107,7 @@ describe('storage', function () {
       // We can't actually create a channel. But we can test to see that we're
       // reaching the right endpoint with the API request.
       const channel = storage.channel('id', 'resource-id');
-      assert.rejects(channel.stop(), (err: GaxiosError) => {
+      await assert.rejects(channel.stop(), (err: GaxiosError) => {
         assert.strictEqual((err as GaxiosError).code, 404);
         assert.strictEqual(err!.message.indexOf("Channel 'id' not found"), 0);
       });

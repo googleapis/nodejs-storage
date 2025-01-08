@@ -255,6 +255,7 @@ class Iam {
       qs.optionsRequestedPolicyVersion = options.requestedPolicyVersion;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         url: '/iam',
@@ -347,6 +348,7 @@ class Iam {
       maxRetries = 0;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'PUT',
@@ -463,6 +465,7 @@ class Iam {
       options,
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         url: '/iam/testPermissions',

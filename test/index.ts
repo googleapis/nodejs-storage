@@ -507,20 +507,21 @@ describe('Storage', () => {
       storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, done);
     });
 
-    it('should throw without a serviceAccountEmail', () => {
-      assert.rejects(
+    it('should throw without a serviceAccountEmail', async () => {
+      await assert.rejects(
         storage.createHmacKey({} as unknown as string),
         (err: Error) => {
           assert.strictEqual(
             err.message,
             StorageExceptionMessages.HMAC_SERVICE_ACCOUNT,
           );
+          return true;
         },
       );
     });
 
-    it('should throw when first argument is not a string', () => {
-      assert.rejects(
+    it('should throw when first argument is not a string', async () => {
+      await assert.rejects(
         storage.createHmacKey({
           userProject: 'my-project',
         } as unknown as string),
@@ -529,6 +530,7 @@ describe('Storage', () => {
             err.message,
             StorageExceptionMessages.HMAC_SERVICE_ACCOUNT,
           );
+          return true;
         },
       );
     });
@@ -667,12 +669,13 @@ describe('Storage', () => {
       storage.createBucket(BUCKET_NAME, done);
     });
 
-    it('should throw if no name is provided', () => {
-      assert.rejects(storage.createBucket(''), (err: Error) => {
+    it('should throw if no name is provided', async () => {
+      await assert.rejects(storage.createBucket(''), (err: Error) => {
         assert.strictEqual(
           err.message,
           StorageExceptionMessages.BUCKET_NAME_REQUIRED_CREATE,
         );
+        return true;
       });
     });
 

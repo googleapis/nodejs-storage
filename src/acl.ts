@@ -532,6 +532,7 @@ class Acl extends AclRoleAccessorMethods {
       url = `${bucket.baseUrl}/${bucket.name}${url}`;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'POST',
@@ -649,6 +650,7 @@ class Acl extends AclRoleAccessorMethods {
       url = `${bucket.baseUrl}/${bucket.name}${url}`;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'DELETE',
@@ -780,6 +782,7 @@ class Acl extends AclRoleAccessorMethods {
       url = `${bucket.baseUrl}/${bucket.name}${url}`;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'GET',
@@ -890,6 +893,7 @@ class Acl extends AclRoleAccessorMethods {
       url = `${bucket.baseUrl}/${bucket.name}${url}`;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'PUT',

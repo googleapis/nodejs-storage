@@ -1087,6 +1087,7 @@ export class Storage {
       delete body.projection;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest<BucketMetadata>(
       {
         method: 'POST',
@@ -1215,6 +1216,7 @@ export class Storage {
     const projectId = query.projectId || this.projectId;
     delete query.projectId;
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest<HmacKeyResourceResponse>(
       {
         method: 'POST',
@@ -1343,6 +1345,7 @@ export class Storage {
     );
     options.project = options.project || this.projectId;
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest<{
       kind: string;
       nextPageToken?: string;
@@ -1471,6 +1474,7 @@ export class Storage {
     const projectId = query.projectId || this.projectId;
     delete query.projectId;
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest<{
       kind: string;
       nextPageToken?: string;
@@ -1573,6 +1577,7 @@ export class Storage {
       cb,
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest<ServiceAccount>(
       {
         method: 'GET',

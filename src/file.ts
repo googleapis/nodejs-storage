@@ -1373,6 +1373,7 @@ class File extends ServiceObject<File, FileMetadata> {
       delete options.preconditionOpts;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.storageTransport.makeRequest(
       {
         method: 'POST',
@@ -1679,13 +1680,16 @@ class File extends ServiceObject<File, FileMetadata> {
         reqOpts[GCCL_GCS_CMD_KEY] = options[GCCL_GCS_CMD_KEY];
       }
 
-      this.storageTransport.makeRequest(reqOpts, (err, stream, rawResponse) => {
-        (stream as Readable).on('error', err => {
-          throughStream.destroy(err);
-        });
-        throughStream.emit('response', rawResponse);
-        onResponse(err, rawResponse!, stream as Readable);
-      });
+      await this.storageTransport.makeRequest(
+        reqOpts,
+        async (err, stream, rawResponse) => {
+          (stream as Readable).on('error', err => {
+            throughStream.destroy(err);
+          });
+          throughStream.emit('response', rawResponse);
+          await onResponse(err, rawResponse!, stream as Readable);
+        },
+      );
     };
     throughStream.on('reading', makeRequest);
 
@@ -2122,11 +2126,11 @@ class File extends ServiceObject<File, FileMetadata> {
       fileWriteStreamMetadataReceived = true;
     });
 
-    writeStream.once('writing', () => {
+    writeStream.once('writing', async () => {
       if (options.resumable === false) {
-        this.startSimpleUpload_(fileWriteStream, options);
+        await this.startSimpleUpload_(fileWriteStream, options);
       } else {
-        this.startResumableUpload_(fileWriteStream, options);
+        await this.startResumableUpload_(fileWriteStream, options);
       }
 
       pipeline(
@@ -4199,10 +4203,10 @@ class File extends ServiceObject<File, FileMetadata> {
    *
    * @private
    */
-  startSimpleUpload_(
+  async startSimpleUpload_(
     dup: Duplexify,
     options: CreateWriteStreamOptions = {},
-  ): void {
+  ): Promise<void> {
     options.metadata ??= {};
 
     const apiEndpoint = this.storage.apiEndpoint;
@@ -4269,7 +4273,7 @@ class File extends ServiceObject<File, FileMetadata> {
       },
     ];
 
-    this.storageTransport.makeRequest(
+    await this.storageTransport.makeRequest(
       reqOpts as StorageRequestOptions,
       (err, body, resp) => {
         if (err) {

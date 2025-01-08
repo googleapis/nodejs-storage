@@ -87,7 +87,7 @@ describe('Channel', () => {
       });
     });
 
-    it('should not require a callback', () => {
+    it('should not require a callback', async () => {
       sandbox
         .stub(channel.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
@@ -95,7 +95,7 @@ describe('Channel', () => {
           return Promise.resolve();
         });
 
-      channel.stop();
+      await channel.stop();
     });
   });
 });
