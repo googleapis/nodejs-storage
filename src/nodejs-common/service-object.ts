@@ -31,7 +31,7 @@ export type MetadataResponse<K> = [K, GaxiosResponse];
 export type MetadataCallback<K> = (
   err: GaxiosError | null,
   metadata?: K,
-  apiResponse?: GaxiosResponse
+  apiResponse?: GaxiosResponse,
 ) => void;
 
 export type ExistsOptions = object;
@@ -92,7 +92,7 @@ export interface InstanceResponseCallback<T> {
   (
     err: GaxiosError | null,
     instance?: T | null,
-    apiResponse?: GaxiosResponse
+    apiResponse?: GaxiosResponse,
   ): void;
 }
 
@@ -235,7 +235,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   create(callback: CreateCallback<T>): void;
   create(
     optionsOrCallback?: CreateOptions | CreateCallback<T>,
-    callback?: CreateCallback<T>
+    callback?: CreateCallback<T>,
   ): void | Promise<CreateResponse<T>> {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
@@ -280,7 +280,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   delete(callback: DeleteCallback): void;
   delete(
     optionsOrCallback?: DeleteOptions | DeleteCallback,
-    cb?: DeleteCallback
+    cb?: DeleteCallback,
   ): Promise<[GaxiosResponse]> | void {
     const [options, callback] = util.maybeOptionsOrCallback<
       DeleteOptions,
@@ -316,7 +316,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
           }
         }
         callback(err, resp);
-      }
+      },
     );
   }
 
@@ -332,7 +332,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   exists(callback: ExistsCallback): void;
   exists(
     optionsOrCallback?: ExistsOptions | ExistsCallback,
-    cb?: ExistsCallback
+    cb?: ExistsCallback,
   ): void | Promise<[boolean]> {
     const [options, callback] = util.maybeOptionsOrCallback<
       ExistsOptions,
@@ -369,7 +369,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   get(options: GetOrCreateOptions, callback: InstanceResponseCallback<T>): void;
   get(
     optionsOrCallback?: GetOrCreateOptions | InstanceResponseCallback<T>,
-    cb?: InstanceResponseCallback<T>
+    cb?: InstanceResponseCallback<T>,
   ): Promise<GetResponse<T>> | void {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
@@ -426,7 +426,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   getMetadata(callback: MetadataCallback<K>): void;
   getMetadata(
     optionsOrCallback: GetMetadataOptions | MetadataCallback<K>,
-    cb?: MetadataCallback<K>
+    cb?: MetadataCallback<K>,
   ): Promise<MetadataResponse<K>> | void {
     const [options, callback] = util.maybeOptionsOrCallback<
       GetMetadataOptions,
@@ -457,7 +457,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       (err, data, resp) => {
         this.metadata = data!;
         callback(err, data!, resp);
-      }
+      },
     );
   }
 
@@ -472,18 +472,18 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
    */
   setMetadata(
     metadata: K,
-    options?: SetMetadataOptions
+    options?: SetMetadataOptions,
   ): Promise<SetMetadataResponse<K>>;
   setMetadata(metadata: K, callback: MetadataCallback<K>): void;
   setMetadata(
     metadata: K,
     options: SetMetadataOptions,
-    callback: MetadataCallback<K>
+    callback: MetadataCallback<K>,
   ): void;
   setMetadata(
     metadata: K,
     optionsOrCallback: SetMetadataOptions | MetadataCallback<K>,
-    cb?: MetadataCallback<K>
+    cb?: MetadataCallback<K>,
   ): Promise<SetMetadataResponse<K>> | void {
     const [options, callback] = util.maybeOptionsOrCallback<
       SetMetadataOptions,
@@ -517,7 +517,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       (err, data, resp) => {
         this.metadata = data!;
         callback(err, this.metadata, resp);
-      }
+      },
     );
   }
 }

@@ -47,7 +47,7 @@ export interface ConformanceTestOptions {
 /////////////////////////////////////////////////
 
 export async function addLifecycleRuleInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.bucket!.addLifecycleRule({
     action: {
@@ -72,7 +72,7 @@ export async function addLifecycleRule(options: ConformanceTestOptions) {
       },
       {
         ifMetagenerationMatch: 2,
-      }
+      },
     );
   } else {
     await options.bucket!.addLifecycleRule({
@@ -87,7 +87,7 @@ export async function addLifecycleRule(options: ConformanceTestOptions) {
 }
 
 export async function combineInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   const file1 = options.bucket!.file('file1.txt');
   const file2 = options.bucket!.file('file2.txt');
@@ -149,7 +149,7 @@ export async function deleteBucket(options: ConformanceTestOptions) {
 // Preconditions cannot be implemented with current setup.
 
 export async function deleteLabelsInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.bucket!.deleteLabels();
 }
@@ -165,7 +165,7 @@ export async function deleteLabels(options: ConformanceTestOptions) {
 }
 
 export async function disableRequesterPaysInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.bucket!.disableRequesterPays();
 }
@@ -181,7 +181,7 @@ export async function disableRequesterPays(options: ConformanceTestOptions) {
 }
 
 export async function enableLoggingInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   const config = {
     prefix: 'log',
@@ -205,7 +205,7 @@ export async function enableLogging(options: ConformanceTestOptions) {
 }
 
 export async function enableRequesterPaysInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.bucket!.enableRequesterPays();
 }
@@ -256,7 +256,7 @@ export async function lock(options: ConformanceTestOptions) {
 }
 
 export async function bucketMakePrivateInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.bucket!.makePrivate();
 }
@@ -276,7 +276,7 @@ export async function bucketMakePublic(options: ConformanceTestOptions) {
 }
 
 export async function removeRetentionPeriodInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.bucket!.removeRetentionPeriod();
 }
@@ -292,7 +292,7 @@ export async function removeRetentionPeriod(options: ConformanceTestOptions) {
 }
 
 export async function setCorsConfigurationInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   const corsConfiguration = [{maxAgeSeconds: 3600}]; // 1 hour
   await options.bucket!.setCorsConfiguration(corsConfiguration);
@@ -310,7 +310,7 @@ export async function setCorsConfiguration(options: ConformanceTestOptions) {
 }
 
 export async function setLabelsInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   const labels = {
     labelone: 'labelonevalue',
@@ -334,7 +334,7 @@ export async function setLabels(options: ConformanceTestOptions) {
 }
 
 export async function bucketSetMetadataInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   const metadata = {
     website: {
@@ -362,7 +362,7 @@ export async function bucketSetMetadata(options: ConformanceTestOptions) {
 }
 
 export async function setRetentionPeriodInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   const DURATION_SECONDS = 15780000; // 6 months.
   await options.bucket!.setRetentionPeriod(DURATION_SECONDS);
@@ -380,7 +380,7 @@ export async function setRetentionPeriod(options: ConformanceTestOptions) {
 }
 
 export async function bucketSetStorageClassInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.bucket!.setStorageClass('nearline');
 }
@@ -396,11 +396,11 @@ export async function bucketSetStorageClass(options: ConformanceTestOptions) {
 }
 
 export async function bucketUploadResumableInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   const filePath = path.join(
     getDirName(),
-    `../conformance-test/test-data/tmp-${uuid.v4()}.txt`
+    `../conformance-test/test-data/tmp-${uuid.v4()}.txt`,
   );
   createTestFileFromBuffer(FILE_SIZE_BYTES, filePath);
   if (options.bucket!.instancePreconditionOpts) {
@@ -418,7 +418,7 @@ export async function bucketUploadResumableInstancePrecondition(
 export async function bucketUploadResumable(options: ConformanceTestOptions) {
   const filePath = path.join(
     getDirName(),
-    `../conformance-test/test-data/tmp-${uuid.v4()}.txt`
+    `../conformance-test/test-data/tmp-${uuid.v4()}.txt`,
   );
   createTestFileFromBuffer(FILE_SIZE_BYTES, filePath);
   if (options.preconditionRequired) {
@@ -439,7 +439,7 @@ export async function bucketUploadResumable(options: ConformanceTestOptions) {
 }
 
 export async function bucketUploadMultipartInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   if (options.bucket!.instancePreconditionOpts) {
     delete options.bucket!.instancePreconditionOpts.ifMetagenerationMatch;
@@ -448,9 +448,9 @@ export async function bucketUploadMultipartInstancePrecondition(
   await options.bucket!.upload(
     path.join(
       getDirName(),
-      '../../../conformance-test/test-data/retryStrategyTestData.json'
+      '../../../conformance-test/test-data/retryStrategyTestData.json',
     ),
-    {resumable: false}
+    {resumable: false},
   );
 }
 
@@ -463,17 +463,17 @@ export async function bucketUploadMultipart(options: ConformanceTestOptions) {
     await options.bucket!.upload(
       path.join(
         getDirName(),
-        '../../../conformance-test/test-data/retryStrategyTestData.json'
+        '../../../conformance-test/test-data/retryStrategyTestData.json',
       ),
-      {resumable: false, preconditionOpts: {ifGenerationMatch: 0}}
+      {resumable: false, preconditionOpts: {ifGenerationMatch: 0}},
     );
   } else {
     await options.bucket!.upload(
       path.join(
         getDirName(),
-        '../../../conformance-test/test-data/retryStrategyTestData.json'
+        '../../../conformance-test/test-data/retryStrategyTestData.json',
       ),
-      {resumable: false}
+      {resumable: false},
     );
   }
 }
@@ -508,7 +508,7 @@ export async function createReadStream(options: ConformanceTestOptions) {
 }
 
 export async function createResumableUploadInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.file!.createResumableUpload();
 }
@@ -524,7 +524,7 @@ export async function createResumableUpload(options: ConformanceTestOptions) {
 }
 
 export async function fileDeleteInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.file!.delete();
 }
@@ -564,7 +564,7 @@ export async function isPublic(options: ConformanceTestOptions) {
 }
 
 export async function fileMakePrivateInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.file!.makePrivate();
 }
@@ -622,7 +622,7 @@ export async function rotateEncryptionKey(options: ConformanceTestOptions) {
 }
 
 export async function saveResumableInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   const buf = createTestBuffer(FILE_SIZE_BYTES);
   await options.file!.save(buf, {
@@ -654,7 +654,7 @@ export async function saveResumable(options: ConformanceTestOptions) {
 }
 
 export async function saveMultipartInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   await options.file!.save('testdata', {resumable: false});
 }
@@ -675,7 +675,7 @@ export async function saveMultipart(options: ConformanceTestOptions) {
 }
 
 export async function setMetadataInstancePrecondition(
-  options: ConformanceTestOptions
+  options: ConformanceTestOptions,
 ) {
   const metadata = {
     contentType: 'application/x-font-ttf',

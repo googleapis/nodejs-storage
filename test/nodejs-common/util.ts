@@ -69,7 +69,7 @@ describe('common/util', () => {
     it('should detect rateLimitExceeded reason', () => {
       const rateLimitError = new GaxiosError(
         'Rate limit error without code.',
-        {}
+        {},
       );
       rateLimitError.code = 'rateLimitExceeded';
       assert.strictEqual(util.shouldRetryRequest(rateLimitError), true);
@@ -78,7 +78,7 @@ describe('common/util', () => {
     it('should detect userRateLimitExceeded reason', () => {
       const rateLimitError = new GaxiosError(
         'Rate limit error without code.',
-        {}
+        {},
       );
       rateLimitError.code = 'userRateLimitExceeded';
       assert.strictEqual(util.shouldRetryRequest(rateLimitError), true);
@@ -151,7 +151,7 @@ describe('common/util', () => {
       const callback = () => {};
       const [opts, cb] = util.maybeOptionsOrCallback(
         optionsOrCallback,
-        callback
+        callback,
       );
       assert.strictEqual(opts, optionsOrCallback);
       assert.strictEqual(cb, callback);

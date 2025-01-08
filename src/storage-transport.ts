@@ -87,7 +87,7 @@ export interface StorageTransportCallback<T> {
   (
     err: GaxiosError | null,
     data?: T | null,
-    fullResponse?: GaxiosResponse
+    fullResponse?: GaxiosResponse,
   ): void;
 }
 
@@ -120,7 +120,7 @@ export class StorageTransport {
 
   makeRequest<T>(
     reqOpts: StorageRequestOptions,
-    callback?: StorageTransportCallback<T>
+    callback?: StorageTransportCallback<T>,
   ): Promise<T> | Promise<void> {
     const headers = this.#buildRequestHeaders(reqOpts.headers);
     if (reqOpts[GCCL_GCS_CMD_KEY]) {
@@ -191,7 +191,7 @@ export class StorageTransport {
 
   #buildRequestQueryParams(queryParameters: StorageQueryParameters): string {
     const qp = new URLSearchParams(
-      queryParameters as unknown as Record<string, string>
+      queryParameters as unknown as Record<string, string>,
     );
 
     return qp.toString();

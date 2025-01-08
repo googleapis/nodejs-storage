@@ -141,7 +141,7 @@ describe('signer', () => {
           assert.strictEqual(v2arg.contentType, CONFIG.contentType);
           assert.deepStrictEqual(
             v2arg.extensionHeaders,
-            CONFIG.extensionHeaders
+            CONFIG.extensionHeaders,
           );
         });
 
@@ -169,7 +169,7 @@ describe('signer', () => {
           assert.strictEqual(v4arg.contentType, CONFIG.contentType);
           assert.deepStrictEqual(
             v4arg.extensionHeaders,
-            CONFIG.extensionHeaders
+            CONFIG.extensionHeaders,
           );
         });
 
@@ -179,7 +179,7 @@ describe('signer', () => {
 
           assert.throws(
             () => signer.getSignedUrl(CONFIG),
-            /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./
+            /Invalid signed URL version: v42\. Supported versions are 'v2' and 'v4'\./,
           );
         });
       });
@@ -292,7 +292,7 @@ describe('signer', () => {
 
           assert(
             (v2.getCall(0).args[0] as SignedUrlArgs).expiration,
-            expiresInSeconds
+            expiresInSeconds,
           );
         });
       });
@@ -383,8 +383,8 @@ describe('signer', () => {
               qsStringify({
                 ...query,
                 ...CONFIG.queryParams,
-              })
-            )
+              }),
+            ),
           );
         });
       });
@@ -422,8 +422,8 @@ describe('signer', () => {
         const signedUrl = await signer.getSignedUrl(CONFIG);
         assert(
           signedUrl.startsWith(
-            `https://${bucket.name}.storage.googleapis.com/${file.name}`
-          )
+            `https://${bucket.name}.storage.googleapis.com/${file.name}`,
+          ),
         );
       });
 
@@ -553,7 +553,7 @@ describe('signer', () => {
               '',
               CONFIG.expiration,
               'canonical-headers' + '/resource/path',
-            ].join('\n')
+            ].join('\n'),
           );
         });
       });
@@ -604,7 +604,7 @@ describe('signer', () => {
           },
           {
             message: `Max allowed expiration is seven days (${SEVEN_DAYS} seconds).`,
-          }
+          },
         );
       });
 
@@ -625,10 +625,10 @@ describe('signer', () => {
             assert(err instanceof Error);
             assert.strictEqual(
               err.message,
-              `Max allowed expiration is seven days (${SEVEN_DAYS_IN_SECONDS.toString()} seconds).`
+              `Max allowed expiration is seven days (${SEVEN_DAYS_IN_SECONDS.toString()} seconds).`,
             );
             return true;
-          }
+          },
         );
       });
 
@@ -642,7 +642,7 @@ describe('signer', () => {
           const arg = getCanonicalHeaders.getCall(0).args[0];
           assert.strictEqual(
             arg.host,
-            PATH_STYLED_HOST.replace('https://', '')
+            PATH_STYLED_HOST.replace('https://', ''),
           );
         });
 
@@ -790,11 +790,11 @@ describe('signer', () => {
 
           assert.strictEqual(
             arg['X-Goog-SignedHeaders'],
-            'host;x-foo;x-goog-acl'
+            'host;x-foo;x-goog-acl',
           );
           assert.strictEqual(
             query['X-Goog-SignedHeaders'],
-            'host;x-foo;x-goog-acl'
+            'host;x-foo;x-goog-acl',
           );
         });
 
@@ -884,8 +884,8 @@ describe('signer', () => {
 
         assert(
           blobToSign.startsWith(
-            ['GOOG4-RSA-SHA256', dateISO, credentialScope].join('\n')
-          )
+            ['GOOG4-RSA-SHA256', dateISO, credentialScope].join('\n'),
+          ),
         );
       });
 
@@ -908,7 +908,7 @@ describe('signer', () => {
 
         const query = (await signer['getSignedUrlV4'](CONFIG)) as Query;
         const signatureInHex = Buffer.from('signature', 'base64').toString(
-          'hex'
+          'hex',
         );
         assert.strictEqual(query['X-Goog-Signature'], signatureInHex);
       });
@@ -982,7 +982,7 @@ describe('signer', () => {
           'query',
           'headers',
           'signedHeaders',
-          SHA
+          SHA,
         );
 
         const EXPECTED = [

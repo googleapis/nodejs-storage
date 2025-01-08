@@ -57,7 +57,7 @@ describe('Notification', () => {
           assert.strictEqual(reqOpts.method, 'DELETE');
           assert.strictEqual(
             reqOpts.url,
-            '/test-bucket/notificationConfigs/123'
+            '/test-bucket/notificationConfigs/123',
           );
           assert.deepStrictEqual(reqOpts.queryParameters, options);
           callback!(null); // the done fn
@@ -167,7 +167,7 @@ describe('Notification', () => {
           {},
           {
             maxResults: 5,
-          }
+          },
         );
 
         sandbox.stub(notification, 'get').callsFake(config_ => {
@@ -206,7 +206,7 @@ describe('Notification', () => {
         .callsFake(reqOpts => {
           assert.strictEqual(
             reqOpts.url,
-            '/test-bucket/notificationConfigs/123'
+            '/test-bucket/notificationConfigs/123',
           );
           assert.deepStrictEqual(reqOpts.queryParameters, options);
           done();

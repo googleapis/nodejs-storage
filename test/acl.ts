@@ -80,7 +80,7 @@ describe('storage/acl', () => {
       sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.generation,
-          options.generation
+          options.generation,
         );
         return Promise.resolve();
       });
@@ -98,7 +98,7 @@ describe('storage/acl', () => {
       sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.userProject,
-          options.userProject
+          options.userProject,
         );
         return Promise.resolve();
       });
@@ -186,7 +186,7 @@ describe('storage/acl', () => {
       sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.generation,
-          options.generation
+          options.generation,
         );
         return Promise.resolve();
       });
@@ -204,7 +204,7 @@ describe('storage/acl', () => {
       sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.userProject,
-          options.userProject
+          options.userProject,
         );
         return Promise.resolve();
       });
@@ -330,7 +330,7 @@ describe('storage/acl', () => {
         sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
           assert.strictEqual(
             reqOpts.queryParameters!.userProject,
-            options.userProject
+            options.userProject,
           );
           return Promise.resolve();
         });
@@ -428,7 +428,7 @@ describe('storage/acl', () => {
       sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.generation,
-          options.generation
+          options.generation,
         );
         return Promise.resolve();
       });
@@ -446,7 +446,7 @@ describe('storage/acl', () => {
       sandbox.stub(acl.storageTransport, 'makeRequest').callsFake(reqOpts => {
         assert.strictEqual(
           reqOpts.queryParameters!.userProject,
-          options.userProject
+          options.userProject,
         );
         return Promise.resolve();
       });
@@ -644,7 +644,7 @@ describe('storage/AclRoleAccessorMethods', () => {
           entity: 'user-' + fakeUser,
           role: fakeRole,
         },
-        fakeOptions
+        fakeOptions,
       );
 
       aclEntity.add = (options: {}) => {

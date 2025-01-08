@@ -122,7 +122,7 @@ describe('Storage', () => {
       });
       assert.strictEqual(
         storage.retryOptions.retryDelayMultiplier,
-        retryDelayMultiplier
+        retryDelayMultiplier,
       );
     });
 
@@ -157,15 +157,15 @@ describe('Storage', () => {
       assert.strictEqual(storage.retryOptions.maxRetries, maxRetryDefault);
       assert.strictEqual(
         storage.retryOptions.retryDelayMultiplier,
-        retryDelayMultiplierDefault
+        retryDelayMultiplierDefault,
       );
       assert.strictEqual(
         storage.retryOptions.totalTimeout,
-        totalTimeoutDefault
+        totalTimeoutDefault,
       );
       assert.strictEqual(
         storage.retryOptions.maxRetryDelay,
-        maxRetryDelayDefault
+        maxRetryDelayDefault,
       );
     });
 
@@ -283,11 +283,11 @@ describe('Storage', () => {
       });
       assert.strictEqual(
         storage.baseUrl,
-        `https://${protocollessApiEndpoint}/storage/v1`
+        `https://${protocollessApiEndpoint}/storage/v1`,
       );
       assert.strictEqual(
         storage.apiEndpoint,
-        `https://${protocollessApiEndpoint}`
+        `https://${protocollessApiEndpoint}`,
       );
     });
 
@@ -321,7 +321,7 @@ describe('Storage', () => {
     it('should use `CRC32C_DEFAULT_VALIDATOR_GENERATOR` by default', () => {
       assert.strictEqual(
         storage.crc32cGenerator,
-        CRC32C_DEFAULT_VALIDATOR_GENERATOR
+        CRC32C_DEFAULT_VALIDATOR_GENERATOR,
       );
     });
 
@@ -352,7 +352,7 @@ describe('Storage', () => {
         assert.strictEqual(storage.baseUrl, EMULATOR_HOST);
         assert.strictEqual(
           storage.apiEndpoint,
-          'https://internal.benchmark.com/path'
+          'https://internal.benchmark.com/path',
         );
       });
 
@@ -377,7 +377,7 @@ describe('Storage', () => {
         assert.strictEqual(storage.baseUrl, EMULATOR_HOST);
         assert.strictEqual(
           storage.apiEndpoint,
-          'https://internal.benchmark.com/path'
+          'https://internal.benchmark.com/path',
         );
       });
 
@@ -493,11 +493,11 @@ describe('Storage', () => {
           assert.strictEqual(reqOpts.method, 'POST');
           assert.strictEqual(
             reqOpts.url,
-            `/projects/${storage.projectId}/hmacKeys`
+            `/projects/${storage.projectId}/hmacKeys`,
           );
           assert.strictEqual(
             reqOpts.queryParameters!.serviceAccountEmail,
-            SERVICE_ACCOUNT_EMAIL
+            SERVICE_ACCOUNT_EMAIL,
           );
 
           callback(null, response);
@@ -513,9 +513,9 @@ describe('Storage', () => {
         (err: Error) => {
           assert.strictEqual(
             err.message,
-            StorageExceptionMessages.HMAC_SERVICE_ACCOUNT
+            StorageExceptionMessages.HMAC_SERVICE_ACCOUNT,
           );
-        }
+        },
       );
     });
 
@@ -527,9 +527,9 @@ describe('Storage', () => {
         (err: Error) => {
           assert.strictEqual(
             err.message,
-            StorageExceptionMessages.HMAC_SERVICE_ACCOUNT
+            StorageExceptionMessages.HMAC_SERVICE_ACCOUNT,
           );
-        }
+        },
       );
     });
 
@@ -595,7 +595,7 @@ describe('Storage', () => {
           assert.ifError(err);
           assert.strictEqual(apiResponse, response);
           done();
-        }
+        },
       );
     });
 
@@ -627,7 +627,7 @@ describe('Storage', () => {
           assert.strictEqual(reqOpts.url, '/b');
           assert.strictEqual(
             reqOpts.queryParameters!.project,
-            storage.projectId
+            storage.projectId,
           );
           assert.strictEqual(body.name, BUCKET_NAME);
 
@@ -644,7 +644,7 @@ describe('Storage', () => {
           const body = JSON.parse(reqOpts.body);
           assert.deepStrictEqual(
             body,
-            Object.assign(METADATA, {name: BUCKET_NAME})
+            Object.assign(METADATA, {name: BUCKET_NAME}),
           );
           callback(null, METADATA);
         });
@@ -671,7 +671,7 @@ describe('Storage', () => {
       assert.rejects(storage.createBucket(''), (err: Error) => {
         assert.strictEqual(
           err.message,
-          StorageExceptionMessages.BUCKET_NAME_REQUIRED_CREATE
+          StorageExceptionMessages.BUCKET_NAME_REQUIRED_CREATE,
         );
       });
     });
@@ -686,7 +686,7 @@ describe('Storage', () => {
         .callsFake(reqOpts => {
           assert.strictEqual(
             reqOpts.queryParameters!.userProject,
-            options.userProject
+            options.userProject,
           );
           done();
         });
@@ -763,7 +763,7 @@ describe('Storage', () => {
         storage.createBucket(
           BUCKET_NAME,
           {storageClass, [storageClass]: true},
-          done
+          done,
         );
       });
     });
@@ -790,7 +790,7 @@ describe('Storage', () => {
             storageClass: 'nearline',
             coldline: true,
           },
-          assert.ifError
+          assert.ifError,
         );
       }, /Both `coldline` and `storageClass` were provided./);
     });
@@ -801,7 +801,7 @@ describe('Storage', () => {
         .callsFake((reqOpts, callback) => {
           assert.strictEqual(
             reqOpts.queryParameters!.enableObjectRetention,
-            true
+            true,
           );
           callback();
         });
@@ -819,7 +819,7 @@ describe('Storage', () => {
       storage.createBucket(
         BUCKET_NAME,
         {hierarchicalNamespace: {enabled: true}},
-        done
+        done,
       );
     });
 
@@ -855,7 +855,7 @@ describe('Storage', () => {
             const body = JSON.parse(reqOpts.body);
             assert.strictEqual(
               body.storageClass,
-              'DURABLE_REDUCED_AVAILABILITY'
+              'DURABLE_REDUCED_AVAILABILITY',
             );
             done();
           });
@@ -877,7 +877,7 @@ describe('Storage', () => {
           {
             multiRegional: true,
           },
-          assert.ifError
+          assert.ifError,
         );
       });
 
@@ -1089,7 +1089,7 @@ describe('Storage', () => {
         .callsFake((opts, callback) => {
           assert.strictEqual(
             opts.uri,
-            `/projects/${storage.projectId}/hmacKeys`
+            `/projects/${storage.projectId}/hmacKeys`,
           );
           assert.deepStrictEqual(opts.queryParameters, {});
           callback(null);
@@ -1112,7 +1112,7 @@ describe('Storage', () => {
         .callsFake((opts, callback) => {
           assert.strictEqual(
             opts.url,
-            `/projects/${storage.projectId}/hmacKeys`
+            `/projects/${storage.projectId}/hmacKeys`,
           );
           assert.deepStrictEqual(opts.queryParameters, query);
           callback(null);
@@ -1171,7 +1171,7 @@ describe('Storage', () => {
           assert.ifError(err);
           assert.strictEqual(nextQuery, null);
           done();
-        }
+        },
       );
     });
 
@@ -1217,7 +1217,7 @@ describe('Storage', () => {
         .callsFake(reqOpts => {
           assert.strictEqual(
             reqOpts.url,
-            `/projects/${storage.projectId}/serviceAccount`
+            `/projects/${storage.projectId}/serviceAccount`,
           );
           assert.deepStrictEqual(reqOpts.queryParameters, {});
           done();
