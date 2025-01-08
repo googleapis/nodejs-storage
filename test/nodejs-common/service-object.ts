@@ -214,7 +214,7 @@ describe('ServiceObject', () => {
         .stub(serviceObject.storageTransport, 'makeRequest')
         .callsFake((reqOpts, callback) => {
           assert.strictEqual(reqOpts.method, 'DELETE');
-          assert.strictEqual(reqOpts.url, 'base-url/undefined');
+          assert.strictEqual(reqOpts.url, 'base-url/id');
           done();
           callback!(null);
           return Promise.resolve();
@@ -507,7 +507,7 @@ describe('ServiceObject', () => {
           callback
         ) {
           assert.strictEqual(this, serviceObject.storageTransport);
-          assert.strictEqual(reqOpts.url, 'base-url/undefined');
+          assert.strictEqual(reqOpts.url, 'base-url/id');
           done();
           callback!(null);
           return Promise.resolve();

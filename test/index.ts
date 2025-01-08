@@ -622,13 +622,14 @@ describe('Storage', () => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, callback) => {
+          const body = JSON.parse(reqOpts.body);
           assert.strictEqual(reqOpts.method, 'POST');
           assert.strictEqual(reqOpts.url, '/b');
           assert.strictEqual(
             reqOpts.queryParameters!.project,
             storage.projectId
           );
-          assert.strictEqual(reqOpts.body.name, BUCKET_NAME);
+          assert.strictEqual(body.name, BUCKET_NAME);
 
           callback();
         });
@@ -640,8 +641,9 @@ describe('Storage', () => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, callback) => {
+          const body = JSON.parse(reqOpts.body);
           assert.deepStrictEqual(
-            reqOpts.body,
+            body,
             Object.assign(METADATA, {name: BUCKET_NAME})
           );
           callback(null, METADATA);
@@ -740,7 +742,8 @@ describe('Storage', () => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, callback) => {
-          assert.strictEqual(reqOpts.body.storageClass, storageClass);
+          const body = JSON.parse(reqOpts.body);
+          assert.strictEqual(body.storageClass, storageClass);
           callback(); // done
         });
       storage.createBucket(BUCKET_NAME, {storageClass}, done);
@@ -751,10 +754,8 @@ describe('Storage', () => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, callback) => {
-          assert.strictEqual(
-            reqOpts.body.storageClass,
-            storageClass.toUpperCase()
-          );
+          const body = JSON.parse(reqOpts.body);
+          assert.strictEqual(body.storageClass, storageClass.toUpperCase());
           callback(); // done
         });
 
@@ -773,8 +774,9 @@ describe('Storage', () => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, callback) => {
-          assert.strictEqual(reqOpts.body.location, location);
-          assert.strictEqual(reqOpts.body.rpo, rpo);
+          const body = JSON.parse(reqOpts.body);
+          assert.strictEqual(body.location, location);
+          assert.strictEqual(body.rpo, rpo);
           callback();
         });
       storage.createBucket(BUCKET_NAME, {location, rpo}, done);
@@ -810,7 +812,8 @@ describe('Storage', () => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, callback) => {
-          assert.strictEqual(reqOpts.body.hierarchicalNamespace.enabled, true);
+          const body = JSON.parse(reqOpts.body);
+          assert.strictEqual(body.hierarchicalNamespace.enabled, true);
           callback();
         });
       storage.createBucket(
@@ -825,7 +828,8 @@ describe('Storage', () => {
         storage.storageTransport.makeRequest = sandbox
           .stub()
           .callsFake(reqOpts => {
-            assert.strictEqual(reqOpts.body.storageClass, 'ARCHIVE');
+            const body = JSON.parse(reqOpts.body);
+            assert.strictEqual(body.storageClass, 'ARCHIVE');
             done();
           });
 
@@ -836,7 +840,8 @@ describe('Storage', () => {
         storage.storageTransport.makeRequest = sandbox
           .stub()
           .callsFake(reqOpts => {
-            assert.strictEqual(reqOpts.body.storageClass, 'COLDLINE');
+            const body = JSON.parse(reqOpts.body);
+            assert.strictEqual(body.storageClass, 'COLDLINE');
             done();
           });
 
@@ -847,7 +852,7 @@ describe('Storage', () => {
         storage.storageTransport.makeRequest = sandbox
           .stub()
           .callsFake(reqOpts => {
-            const body = reqOpts.body;
+            const body = JSON.parse(reqOpts.body);
             assert.strictEqual(
               body.storageClass,
               'DURABLE_REDUCED_AVAILABILITY'
@@ -862,7 +867,8 @@ describe('Storage', () => {
         storage.storageTransport.makeRequest = sandbox
           .stub()
           .callsFake(reqOpts => {
-            assert.strictEqual(reqOpts.body.storageClass, 'MULTI_REGIONAL');
+            const body = JSON.parse(reqOpts.body);
+            assert.strictEqual(body.storageClass, 'MULTI_REGIONAL');
             done();
           });
 
@@ -879,7 +885,8 @@ describe('Storage', () => {
         storage.storageTransport.makeRequest = sandbox
           .stub()
           .callsFake(reqOpts => {
-            assert.strictEqual(reqOpts.body.storageClass, 'NEARLINE');
+            const body = JSON.parse(reqOpts.body);
+            assert.strictEqual(body.storageClass, 'NEARLINE');
             done();
           });
 
@@ -890,7 +897,8 @@ describe('Storage', () => {
         storage.storageTransport.makeRequest = sandbox
           .stub()
           .callsFake(reqOpts => {
-            assert.strictEqual(reqOpts.body.storageClass, 'REGIONAL');
+            const body = JSON.parse(reqOpts.body);
+            assert.strictEqual(body.storageClass, 'REGIONAL');
             done();
           });
 
@@ -901,7 +909,8 @@ describe('Storage', () => {
         storage.storageTransport.makeRequest = sandbox
           .stub()
           .callsFake(reqOpts => {
-            assert.strictEqual(reqOpts.body.storageClass, 'STANDARD');
+            const body = JSON.parse(reqOpts.body);
+            assert.strictEqual(body.storageClass, 'STANDARD');
             done();
           });
 
@@ -917,8 +926,9 @@ describe('Storage', () => {
         storage.storageTransport.makeRequest = sandbox
           .stub()
           .callsFake(reqOpts => {
-            assert.deepStrictEqual(reqOpts.body.billing, options);
-            assert.strictEqual(reqOpts.body.requesterPays, undefined);
+            const body = JSON.parse(reqOpts.body);
+            assert.deepStrictEqual(body.billing, options);
+            assert.strictEqual(body.requesterPays, undefined);
             done();
           });
         storage.createBucket(BUCKET_NAME, options, assert.ifError);
