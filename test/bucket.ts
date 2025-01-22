@@ -1231,7 +1231,7 @@ describe('Bucket', () => {
     });
 
     it('should throw if config is a function', () => {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises, @typescript-eslint/no-explicit-any
       assert.rejects(bucket.enableLogging({} as any), (err: Error) => {
         assert.strictEqual(
           err.message,
