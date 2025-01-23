@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {ApiError, Service, ServiceOptions} from './nodejs-common/index.js';
+import {ServiceOptions} from './nodejs-common/index.js';
 import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import {Readable} from 'stream';
@@ -30,6 +30,8 @@ import {
   CRC32C_DEFAULT_VALIDATOR_GENERATOR,
 } from './crc32c.js';
 import {DEFAULT_UNIVERSE} from 'google-auth-library';
+import {StorageQueryParameters, StorageTransport} from './storage-transport.js';
+import {GaxiosError, GaxiosInterceptor, GaxiosOptions} from 'gaxios';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -37,6 +39,8 @@ export interface GetServiceAccountOptions {
 }
 export interface ServiceAccount {
   emailAddress?: string;
+  kind?: string;
+  [key: string]: string | undefined;
 }
 export type GetServiceAccountResponse = [ServiceAccount, unknown];
 export interface GetServiceAccountCallback {
@@ -79,7 +83,7 @@ export interface RetryOptions {
   maxRetryDelay?: number;
   autoRetry?: boolean;
   maxRetries?: number;
-  retryableErrorFn?: (err: ApiError) => boolean;
+  retryableErrorFn?: (err: GaxiosError) => boolean;
   idempotencyStrategy?: IdempotencyStrategy;
 }
 
@@ -168,7 +172,7 @@ export interface BucketCallback {
   (err: Error | null, bucket?: Bucket | null, apiResponse?: unknown): void;
 }
 
-export type GetBucketsResponse = [Bucket[], {}, unknown];
+export type GetBucketsResponse = [Bucket[], unknown];
 export interface GetBucketsCallback {
   (
     err: Error | null,
@@ -190,6 +194,7 @@ export interface GetBucketsRequest {
 export interface HmacKeyResourceResponse {
   metadata: HmacKeyMetadata;
   secret: string;
+  kind: string;
 }
 
 export type CreateHmacKeyResponse = [HmacKey, string, HmacKeyResourceResponse];
@@ -198,7 +203,6 @@ export interface CreateHmacKeyOptions {
   projectId?: string;
   userProject?: string;
 }
-
 export interface CreateHmacKeyCallback {
   (
     err: Error | null,
@@ -218,7 +222,6 @@ export interface GetHmacKeysOptions {
   pageToken?: string;
   userProject?: string;
 }
-
 export interface GetHmacKeysCallback {
   (
     err: Error | null,
@@ -295,7 +298,7 @@ const IDEMPOTENCY_STRATEGY_DEFAULT = IdempotencyStrategy.RetryConditional;
  * @param {error} err - The API error to check if it is appropriate to retry.
  * @return {boolean} True if the API request should be retried, false otherwise.
  */
-export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
+export const RETRYABLE_ERR_FN_DEFAULT = function (err?: GaxiosError) {
   const isConnectionProblem = (reason: string) => {
     return (
       reason.includes('eai_again') || // DNS lookup error
@@ -307,7 +310,7 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
   };
 
   if (err) {
-    if ([408, 429, 500, 502, 503, 504].indexOf(err.code!) !== -1) {
+    if ([408, 429, 500, 502, 503, 504].indexOf(err.status!) !== -1) {
       return true;
     }
 
@@ -321,12 +324,10 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
       }
     }
 
-    if (err.errors) {
-      for (const e of err.errors) {
-        const reason = e?.reason?.toString().toLowerCase();
-        if (reason && isConnectionProblem(reason)) {
-          return true;
-        }
+    if (err) {
+      const reason = err?.code?.toString().toLowerCase();
+      if (reason && isConnectionProblem(reason)) {
+        return true;
       }
     }
   }
@@ -472,7 +473,7 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: ApiError) {
  *
  * @class
  */
-export class Storage extends Service {
+export class Storage {
   /**
    * {@link Bucket} class.
    *
@@ -524,6 +525,15 @@ export class Storage extends Service {
   acl: typeof Storage.acl;
 
   crc32cGenerator: CRC32CValidatorGenerator;
+
+  projectId?: string;
+  apiEndpoint: string;
+  storageTransport: StorageTransport;
+  interceptors: GaxiosInterceptor<GaxiosOptions>[];
+  universeDomain: string;
+  customEndpoint = false;
+  name = '';
+  baseUrl = '';
 
   getBucketsStream(): Readable {
     // placeholder body, overwritten in constructor
@@ -721,24 +731,24 @@ export class Storage extends Service {
     const universe = options.universeDomain || DEFAULT_UNIVERSE;
 
     let apiEndpoint = `https://storage.${universe}`;
-    let customEndpoint = false;
+    this.projectId = options.projectId;
 
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
     const EMULATOR_HOST = process.env.STORAGE_EMULATOR_HOST;
     if (typeof EMULATOR_HOST === 'string') {
       apiEndpoint = Storage.sanitizeEndpoint(EMULATOR_HOST);
-      customEndpoint = true;
+      this.customEndpoint = true;
     }
 
     if (options.apiEndpoint && options.apiEndpoint !== apiEndpoint) {
       apiEndpoint = Storage.sanitizeEndpoint(options.apiEndpoint);
-      customEndpoint = true;
+      this.customEndpoint = true;
     }
 
     options = Object.assign({}, options, {apiEndpoint});
 
     // Note: EMULATOR_HOST is an experimental configuration variable. Use apiEndpoint instead.
-    const baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
+    this.baseUrl = EMULATOR_HOST || `${options.apiEndpoint}/storage/v1`;
 
     const config = {
       apiEndpoint: options.apiEndpoint!,
@@ -767,10 +777,9 @@ export class Storage extends Service {
             ? options.retryOptions?.idempotencyStrategy
             : IDEMPOTENCY_STRATEGY_DEFAULT,
       },
-      baseUrl,
-      customEndpoint,
+      baseUrl: this.baseUrl,
+      customEndpoint: this.customEndpoint,
       useAuthWithCustomEndpoint: options?.useAuthWithCustomEndpoint,
-      projectIdRequired: false,
       scopes: [
         'https://www.googleapis.com/auth/iam',
         'https://www.googleapis.com/auth/cloud-platform',
@@ -779,7 +788,7 @@ export class Storage extends Service {
       packageJson: getPackageJSON(),
     };
 
-    super(config, options);
+    this.apiEndpoint = options.apiEndpoint!;
 
     /**
      * Reference to {@link Storage.acl}.
@@ -792,6 +801,10 @@ export class Storage extends Service {
       options.crc32cGenerator || CRC32C_DEFAULT_VALIDATOR_GENERATOR;
 
     this.retryOptions = config.retryOptions;
+
+    this.storageTransport = new StorageTransport({...config, ...options});
+    this.interceptors = [];
+    this.universeDomain = options.universeDomain || DEFAULT_UNIVERSE;
 
     this.getBucketsStream = paginator.streamify('getBuckets');
     this.getHmacKeysStream = paginator.streamify('getHmacKeys');
@@ -1045,9 +1058,9 @@ export class Storage extends Service {
       delete body.requesterPays;
     }
 
-    const query = {
+    const query: StorageQueryParameters = {
       project: this.projectId,
-    } as CreateBucketQuery;
+    };
 
     if (body.userProject) {
       query.userProject = body.userProject as string;
@@ -1074,23 +1087,28 @@ export class Storage extends Service {
       delete body.projection;
     }
 
-    this.request(
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.storageTransport.makeRequest<BucketMetadata>(
       {
         method: 'POST',
-        uri: '/b',
-        qs: query,
-        json: body,
+        queryParameters: query,
+        body: JSON.stringify(body),
+        url: '/b',
+        responseType: 'json',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       },
-      (err, resp) => {
+      (err, data, rep) => {
         if (err) {
-          callback!(err, null, resp);
+          callback(err);
           return;
         }
 
         const bucket = this.bucket(name);
-        bucket.metadata = resp;
+        bucket.metadata = data!;
 
-        callback!(null, bucket, resp);
+        callback(null, bucket, rep);
       },
     );
   }
@@ -1198,26 +1216,33 @@ export class Storage extends Service {
     const projectId = query.projectId || this.projectId;
     delete query.projectId;
 
-    this.request(
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.storageTransport.makeRequest<HmacKeyResourceResponse>(
       {
         method: 'POST',
-        uri: `/projects/${projectId}/hmacKeys`,
-        qs: query,
-        maxRetries: 0, //explicitly set this value since this is a non-idempotent function
+        url: `/projects/${projectId}/hmacKeys`,
+        queryParameters: query as unknown as StorageQueryParameters,
+        retry: false,
+        responseType: 'json',
       },
-      (err, resp: HmacKeyResourceResponse) => {
+      (err, data, resp) => {
         if (err) {
-          callback!(err, null, null, resp);
+          callback(err);
           return;
         }
-
-        const metadata = resp.metadata;
-        const hmacKey = this.hmacKey(metadata.accessId!, {
-          projectId: metadata.projectId,
+        const hmacMetadata = data!.metadata;
+        const hmacKey = this.hmacKey(hmacMetadata.accessId!, {
+          projectId: hmacMetadata?.projectId,
         });
-        hmacKey.metadata = resp.metadata;
+        hmacKey.metadata = hmacMetadata;
+        hmacKey.secret = data?.secret;
 
-        callback!(null, hmacKey, resp.secret, resp);
+        callback(
+          null,
+          hmacKey,
+          hmacKey.secret,
+          resp as unknown as HmacKeyResourceResponse,
+        );
       },
     );
   }
@@ -1320,26 +1345,33 @@ export class Storage extends Service {
     );
     options.project = options.project || this.projectId;
 
-    this.request(
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.storageTransport.makeRequest<{
+      kind: string;
+      nextPageToken?: string;
+      items: BucketMetadata[];
+    }>(
       {
-        uri: '/b',
-        qs: options,
+        url: '/b',
+        method: 'GET',
+        queryParameters: options as unknown as StorageQueryParameters,
+        responseType: 'json',
       },
-      (err, resp) => {
+      (err, data, resp) => {
         if (err) {
           callback(err, null, null, resp);
           return;
         }
 
-        const itemsArray = resp.items ? resp.items : [];
-        const buckets = itemsArray.map((bucket: BucketMetadata) => {
+        const items = data?.items ? data.items : [];
+        const buckets = items.map((bucket: BucketMetadata) => {
           const bucketInstance = this.bucket(bucket.id!);
           bucketInstance.metadata = bucket;
           return bucketInstance;
         });
 
-        const nextQuery = resp.nextPageToken
-          ? Object.assign({}, options, {pageToken: resp.nextPageToken})
+        const nextQuery = data?.nextPageToken
+          ? Object.assign({}, options, {pageToken: data.nextPageToken})
           : null;
 
         callback(null, buckets, nextQuery, resp);
@@ -1442,18 +1474,24 @@ export class Storage extends Service {
     const projectId = query.projectId || this.projectId;
     delete query.projectId;
 
-    this.request(
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.storageTransport.makeRequest<{
+      kind: string;
+      nextPageToken?: string;
+      items: HmacKeyMetadata[];
+    }>(
       {
-        uri: `/projects/${projectId}/hmacKeys`,
-        qs: query,
+        url: `/projects/${projectId}/hmacKeys`,
+        responseType: 'json',
+        queryParameters: query as unknown as StorageQueryParameters,
+        method: 'GET',
       },
-      (err, resp) => {
+      (err, data, resp) => {
         if (err) {
           callback(err, null, null, resp);
           return;
         }
-
-        const itemsArray = resp.items ? resp.items : [];
+        const itemsArray = data?.items ? data.items : [];
         const hmacKeys = itemsArray.map((hmacKey: HmacKeyMetadata) => {
           const hmacKeyInstance = this.hmacKey(hmacKey.accessId!, {
             projectId: hmacKey.projectId,
@@ -1462,8 +1500,8 @@ export class Storage extends Service {
           return hmacKeyInstance;
         });
 
-        const nextQuery = resp.nextPageToken
-          ? Object.assign({}, options, {pageToken: resp.nextPageToken})
+        const nextQuery = data?.nextPageToken
+          ? Object.assign({}, options, {pageToken: data.nextPageToken})
           : null;
 
         callback(null, hmacKeys, nextQuery, resp);
@@ -1538,26 +1576,29 @@ export class Storage extends Service {
       optionsOrCallback,
       cb,
     );
-    this.request(
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.storageTransport.makeRequest<ServiceAccount>(
       {
-        uri: `/projects/${this.projectId}/serviceAccount`,
-        qs: options,
+        method: 'GET',
+        url: `/projects/${this.projectId}/serviceAccount`,
+        queryParameters: options as unknown as StorageQueryParameters,
+        responseType: 'json',
       },
-      (err, resp) => {
+      (err, data, resp) => {
         if (err) {
           callback(err, null, resp);
           return;
         }
-
         const camelCaseResponse = {} as {[index: string]: string};
 
-        for (const prop in resp) {
+        for (const prop in data) {
           // eslint-disable-next-line no-prototype-builtins
-          if (resp.hasOwnProperty(prop)) {
+          if (data.hasOwnProperty(prop)) {
             const camelCaseProp = prop.replace(/_(\w)/g, (_, match) =>
               match.toUpperCase(),
             );
-            camelCaseResponse[camelCaseProp] = resp[prop];
+            camelCaseResponse[camelCaseProp] = data![prop]!;
           }
         }
 
