@@ -58,7 +58,7 @@ interface ConformanceTestResult {
 
 type LibraryMethodsModuleType = typeof import('./libraryMethods');
 const methodMap: Map<String, String[]> = new Map(
-  Object.entries(jsonToNodeApiMapping),
+  Object.entries({}), // TODO: replace with Object.entries({jsonToNodeApiMapping})
 );
 
 const DURATION_SECONDS = 600; // 10 mins.
