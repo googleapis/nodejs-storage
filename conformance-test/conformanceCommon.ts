@@ -15,11 +15,20 @@
  */
 import * as jsonToNodeApiMapping from './test-data/retryInvocationMap.json';
 import * as libraryMethods from './libraryMethods';
-import {Bucket, File, HmacKey, Notification, Storage} from '../src/';
+import {
+  Bucket,
+  File,
+  GaxiosOptions,
+  HmacKey,
+  Notification,
+  Storage,
+} from '../src';
 import * as uuid from 'uuid';
 import * as assert from 'assert';
-import fetch from 'node-fetch';
-
+import {
+  StorageRequestOptions,
+  StorageTransport,
+} from '../src/storage-transport';
 interface RetryCase {
   instructions: String[];
 }
@@ -60,6 +69,25 @@ const CONF_TEST_PROJECT_ID = 'my-project-id';
 const TIMEOUT_FOR_INDIVIDUAL_TEST = 20000;
 const RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS = 0.01;
 
+const transport = new StorageTransport({
+  apiEndpoint: TESTBENCH_HOST,
+  authClient: undefined,
+  baseUrl: TESTBENCH_HOST,
+  packageJson: {name: 'test-pakage', version: '1.0.0'},
+  retryOptions: {
+    retryDelayMultiplier: RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS,
+    maxRetries: 3,
+    maxRetryDelay: 32,
+    totalTimeout: TIMEOUT_FOR_INDIVIDUAL_TEST,
+  },
+  scopes: ['http://www.googleapis.com/auth/devstorage.full_control'],
+  projectId: CONF_TEST_PROJECT_ID,
+  userAgent: 'retry-test',
+  useAuthWithCustomEndpoint: true,
+  customEndpoint: true,
+  timeout: DURATION_SECONDS,
+});
+
 export function executeScenario(testCase: RetryTestCase) {
   for (
     let instructionNumber = 0;
@@ -81,16 +109,32 @@ export function executeScenario(testCase: RetryTestCase) {
         let creationResult: {id: string};
         let storage: Storage;
         let hmacKey: HmacKey;
+        let storageTransport: StorageTransport;
 
         describe(`${storageMethodString}`, async () => {
           beforeEach(async () => {
+            storageTransport = new StorageTransport({
+              apiEndpoint: TESTBENCH_HOST,
+              projectId: CONF_TEST_PROJECT_ID,
+              retryOptions: {
+                retryDelayMultiplier: RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS,
+              },
+              scopes: [
+                'http://www.googleapis.com/auth/devstorage.full_control',
+              ],
+              baseUrl: TESTBENCH_HOST,
+              packageJson: {name: 'test-pakage', version: '1.0.0'},
+            });
+
             storage = new Storage({
               apiEndpoint: TESTBENCH_HOST,
               projectId: CONF_TEST_PROJECT_ID,
               retryOptions: {
                 retryDelayMultiplier: RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS,
               },
+              credentials: undefined,
             });
+
             creationResult = await createTestBenchRetryTest(
               instructionSet.instructions,
               jsonMethod?.name.toString(),
@@ -118,7 +162,7 @@ export function executeScenario(testCase: RetryTestCase) {
                 bucket,
               );
             }
-            notification = bucket.notification(`${TESTS_PREFIX}`);
+            notification = bucket.notification(TESTS_PREFIX);
             await notification.create();
 
             [hmacKey] = await storage.createHmacKey(
@@ -131,27 +175,35 @@ export function executeScenario(testCase: RetryTestCase) {
                 Object.assign(requestConfig.headers, {
                   'x-retry-test-id': creationResult.id,
                 });
-                return Promise.resolve(requestConfig);
+                return Promise.resolve(requestConfig as GaxiosOptions);
+              },
+              rejected: error => {
+                return Promise.reject(error);
               },
             });
           });
 
           it(`${instructionNumber}`, async () => {
             const methodParameters: libraryMethods.ConformanceTestOptions = {
+              storage: storage,
               bucket: bucket,
               file: file,
+              storageTransport: storageTransport,
               notification: notification,
-              storage: storage,
               hmacKey: hmacKey,
             };
             if (testCase.preconditionProvided) {
               methodParameters.preconditionRequired = true;
             }
+
             if (testCase.expectSuccess) {
               assert.ifError(await storageMethodObject(methodParameters));
             } else {
-              await assert.rejects(storageMethodObject(methodParameters));
+              await assert.rejects(async () => {
+                await storageMethodObject(methodParameters);
+              }, undefined);
             }
+
             const testBenchResult = await getTestBenchRetryTest(
               creationResult.id,
             );
@@ -211,22 +263,30 @@ async function createTestBenchRetryTest(
   methodName: string,
 ): Promise<ConformanceTestCreationResult> {
   const requestBody = {instructions: {[methodName]: instructions}};
-  const response = await fetch(`${TESTBENCH_HOST}retry_test`, {
+
+  const requestOptions: StorageRequestOptions = {
     method: 'POST',
+    url: 'retry_test',
     body: JSON.stringify(requestBody),
     headers: {'Content-Type': 'application/json'},
-  });
-  return response.json() as Promise<ConformanceTestCreationResult>;
+  };
+
+  const response = await transport.makeRequest(requestOptions);
+  return response as unknown as ConformanceTestCreationResult;
 }
 
 async function getTestBenchRetryTest(
   testId: string,
 ): Promise<ConformanceTestResult> {
-  const response = await fetch(`${TESTBENCH_HOST}retry_test/${testId}`, {
+  const response = await transport.makeRequest({
+    url: `retry_test/${testId}`,
     method: 'GET',
+    retry: true,
+    headers: {
+      'x-retry-test-id': testId,
+    },
   });
-
-  return response.json() as Promise<ConformanceTestResult>;
+  return response as unknown as ConformanceTestResult;
 }
 
 function shortUUID() {

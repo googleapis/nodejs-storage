@@ -29,6 +29,7 @@ import {
 } from './testBenchUtil';
 import * as uuid from 'uuid';
 import {getDirName} from '../src/util.js';
+import {StorageTransport} from '../src/storage-transport';
 
 const FILE_SIZE_BYTES = 9 * 1024 * 1024;
 const CHUNK_SIZE_BYTES = 2 * 1024 * 1024;
@@ -40,6 +41,7 @@ export interface ConformanceTestOptions {
   storage?: Storage;
   hmacKey?: HmacKey;
   preconditionRequired?: boolean;
+  storageTransport?: StorageTransport;
 }
 
 /////////////////////////////////////////////////
