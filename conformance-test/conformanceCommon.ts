@@ -58,7 +58,7 @@ interface ConformanceTestResult {
 
 type LibraryMethodsModuleType = typeof import('./libraryMethods');
 const methodMap: Map<String, String[]> = new Map(
-  Object.entries({}), // TODO: replace with Object.entries({jsonToNodeApiMapping})
+  Object.entries({}), // TODO: replace with Object.entries(jsonToNodeApiMapping)
 );
 
 const DURATION_SECONDS = 600; // 10 mins.
@@ -68,25 +68,6 @@ const TESTBENCH_HOST =
 const CONF_TEST_PROJECT_ID = 'my-project-id';
 const TIMEOUT_FOR_INDIVIDUAL_TEST = 20000;
 const RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS = 0.01;
-
-const transport = new StorageTransport({
-  apiEndpoint: TESTBENCH_HOST,
-  authClient: undefined,
-  baseUrl: TESTBENCH_HOST,
-  packageJson: {name: 'test-pakage', version: '1.0.0'},
-  retryOptions: {
-    retryDelayMultiplier: RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS,
-    maxRetries: 3,
-    maxRetryDelay: 32,
-    totalTimeout: TIMEOUT_FOR_INDIVIDUAL_TEST,
-  },
-  scopes: ['http://www.googleapis.com/auth/devstorage.full_control'],
-  projectId: CONF_TEST_PROJECT_ID,
-  userAgent: 'retry-test',
-  useAuthWithCustomEndpoint: true,
-  customEndpoint: true,
-  timeout: DURATION_SECONDS,
-});
 
 export function executeScenario(testCase: RetryTestCase) {
   for (
@@ -115,15 +96,23 @@ export function executeScenario(testCase: RetryTestCase) {
           beforeEach(async () => {
             storageTransport = new StorageTransport({
               apiEndpoint: TESTBENCH_HOST,
-              projectId: CONF_TEST_PROJECT_ID,
+              authClient: undefined,
+              baseUrl: TESTBENCH_HOST,
+              packageJson: {name: 'test-package', version: '1.0.0'},
               retryOptions: {
                 retryDelayMultiplier: RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS,
+                maxRetries: 3,
+                maxRetryDelay: 32,
+                totalTimeout: TIMEOUT_FOR_INDIVIDUAL_TEST,
               },
               scopes: [
                 'http://www.googleapis.com/auth/devstorage.full_control',
               ],
-              baseUrl: TESTBENCH_HOST,
-              packageJson: {name: 'test-pakage', version: '1.0.0'},
+              projectId: CONF_TEST_PROJECT_ID,
+              userAgent: 'retry-test',
+              useAuthWithCustomEndpoint: true,
+              customEndpoint: true,
+              timeout: DURATION_SECONDS,
             });
 
             storage = new Storage({
@@ -132,12 +121,12 @@ export function executeScenario(testCase: RetryTestCase) {
               retryOptions: {
                 retryDelayMultiplier: RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS,
               },
-              credentials: undefined,
             });
 
             creationResult = await createTestBenchRetryTest(
               instructionSet.instructions,
               jsonMethod?.name.toString(),
+              storageTransport,
             );
             if (storageMethodString.includes('InstancePrecondition')) {
               bucket = await createBucketForTest(
@@ -206,6 +195,7 @@ export function executeScenario(testCase: RetryTestCase) {
 
             const testBenchResult = await getTestBenchRetryTest(
               creationResult.id,
+              storageTransport,
             );
             assert.strictEqual(testBenchResult.completed, true);
           }).timeout(TIMEOUT_FOR_INDIVIDUAL_TEST);
@@ -261,6 +251,7 @@ function generateName(storageMethodString: String, bucketOrFile: string) {
 async function createTestBenchRetryTest(
   instructions: String[],
   methodName: string,
+  storageTransport: StorageTransport,
 ): Promise<ConformanceTestCreationResult> {
   const requestBody = {instructions: {[methodName]: instructions}};
 
@@ -271,14 +262,15 @@ async function createTestBenchRetryTest(
     headers: {'Content-Type': 'application/json'},
   };
 
-  const response = await transport.makeRequest(requestOptions);
+  const response = await storageTransport.makeRequest(requestOptions);
   return response as unknown as ConformanceTestCreationResult;
 }
 
 async function getTestBenchRetryTest(
   testId: string,
+  storageTransport: StorageTransport,
 ): Promise<ConformanceTestResult> {
-  const response = await transport.makeRequest({
+  const response = await storageTransport.makeRequest({
     url: `retry_test/${testId}`,
     method: 'GET',
     retry: true,

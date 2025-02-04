@@ -1545,9 +1545,6 @@ class File extends ServiceObject<File, FileMetadata> {
       if (err) {
         // There is an issue with node-fetch 2.x that if the stream errors the underlying socket connection is not closed.
         // This causes a memory leak, so cleanup the sockets manually here by destroying the agent.
-        //if (request?.agent) {
-        //  request.agent.destroy();
-        //}
         throughStream.destroy(err);
       }
     };
@@ -4207,10 +4204,10 @@ class File extends ServiceObject<File, FileMetadata> {
    *
    * @private
    */
-  async startSimpleUpload_(
+  startSimpleUpload_(
     dup: Duplexify,
     options: CreateWriteStreamOptions = {},
-  ): Promise<void> {
+  ): void {
     options.metadata ??= {};
 
     const apiEndpoint = this.storage.apiEndpoint;
@@ -4277,7 +4274,8 @@ class File extends ServiceObject<File, FileMetadata> {
       },
     ];
 
-    await this.storageTransport.makeRequest(
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    this.storageTransport.makeRequest(
       reqOpts as StorageRequestOptions,
       (err, body, resp) => {
         if (err) {

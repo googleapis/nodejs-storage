@@ -15,7 +15,10 @@
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
 import assert from 'assert';
 import {Bucket, CRC32C, File, GaxiosError, Storage} from '../src/index.js';
-import {StorageTransport} from '../src/storage-transport.js';
+import {
+  StorageRequestOptions,
+  StorageTransport,
+} from '../src/storage-transport.js';
 import sinon from 'sinon';
 import {
   FileExceptionMessages,
@@ -1684,7 +1687,6 @@ describe('File', () => {
       const options = {preconditionOpts: {ifGenerationMatch: undefined}};
 
       resumableUploadStub.callsFake((opts, callback) => {
-        console.log(opts);
         assert.strictEqual(opts.retryOptions.autoRetry, false);
         assert.deepEqual(opts.params, options.preconditionOpts);
         callback(null, 'https://example.com/resumable-upload-uri');
@@ -4304,7 +4306,10 @@ describe('File', () => {
       newFile.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake(reqOpts => {
-          assert.strictEqual(reqOpts.qs.overrideUnlockedRetention, true);
+          assert.strictEqual(
+            reqOpts.queryParameters.overrideUnlockedRetention,
+            true,
+          );
         });
 
       newFile.setMetadata(
@@ -4654,16 +4659,15 @@ describe('File', () => {
   });
 
   describe('startSimpleUpload_', () => {
-    it('should get a writable stream', done => {
+    it('should get a writable stream', async done => {
       file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
         done();
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      file.startSimpleUpload_(duplexify());
+      await file.startSimpleUpload_(duplexify());
     });
 
-    it('should pass the required arguments', () => {
+    it('should pass the required arguments', async () => {
       const options = {
         metadata: {},
         predefinedAcl: undefined,
@@ -4672,96 +4676,94 @@ describe('File', () => {
         timeout: 99,
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       file.storageTransport.makeRequest = sandbox
         .stub()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .callsFake((stream: {}, options_: any) => {
-          assert.deepStrictEqual(options_.metadata, options.metadata);
-          assert.deepStrictEqual(options_.request, {
-            [GCCL_GCS_CMD_KEY]: undefined,
-            queryParameters: {
-              name: file.name,
-              predefinedAcl: options.predefinedAcl,
-            },
-            timeout: options.timeout,
-            uri:
-              'https://storage.googleapis.com/upload/storage/v1/b/' +
+        .callsFake((options_: StorageRequestOptions) => {
+          assert.deepStrictEqual(options_.queryParameters, {
+            name: file.name,
+            predefinedAcl: 'private',
+            uploadType: 'multipart',
+          });
+          assert.strictEqual(options_.responseType, 'json');
+          assert.strictEqual(options_.method, 'POST');
+          assert.strictEqual(options_.timeout, options.timeout);
+          assert.strictEqual(
+            options_.url,
+            'https://storage.googleapis.com/upload/storage/v1/b/' +
               file.bucket.name +
               '/o',
-          });
+          );
         });
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      file.startSimpleUpload_(duplexify(), options);
+      await file.startSimpleUpload_(duplexify(), options);
     });
 
-    it('should set predefinedAcl when public: true', () => {
+    it('should set predefinedAcl when public: true', async () => {
       file.storageTransport.makeRequest = sandbox
         .stub()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .callsFake((stream: {}, options_: any) => {
-          assert.strictEqual(options_.request.qs.predefinedAcl, 'publicRead');
+        .callsFake((options_: StorageRequestOptions) => {
+          assert.strictEqual(
+            options_.queryParameters?.predefinedAcl,
+            'publicRead',
+          );
+          return Promise.resolve();
         });
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      file.startSimpleUpload_(duplexify(), {public: true});
+      await file.startSimpleUpload_(duplexify(), {public: true});
     });
 
-    it('should set predefinedAcl when private: true', () => {
+    it('should set predefinedAcl when private: true', async () => {
       file.storageTransport.makeRequest = sandbox
         .stub()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .callsFake((stream: {}, options_: any) => {
-          assert.strictEqual(options_.request.qs.predefinedAcl, 'private');
+        .callsFake((options_: StorageRequestOptions) => {
+          assert.strictEqual(
+            options_.queryParameters?.predefinedAcl,
+            'private',
+          );
         });
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      file.startSimpleUpload_(duplexify(), {private: true});
+      await file.startSimpleUpload_(duplexify(), {private: true});
     });
 
-    it('should send query.ifGenerationMatch if File has one', () => {
+    it('should send query.ifGenerationMatch if File has one', async () => {
       const versionedFile = new File(BUCKET, 'new-file.txt', {generation: 1});
       file.storageTransport.makeRequest = sandbox
         .stub()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .callsFake((stream: {}, options: any) => {
-          assert.strictEqual(options.request.qs.ifGenerationMatch, 1);
+        .callsFake((options: StorageRequestOptions) => {
+          assert.strictEqual(options.queryParameters?.ifGenerationMatch, 1);
         });
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      versionedFile.startSimpleUpload_(duplexify(), {});
+      await versionedFile.startSimpleUpload_(duplexify(), {});
     });
 
-    it('should send query.kmsKeyName if File has one', () => {
+    it('should send query.kmsKeyName if File has one', async () => {
       file.kmsKeyName = 'kms-key-name';
       file.storageTransport.makeRequest = sandbox
         .stub()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .callsFake((stream: {}, options: any) => {
-          assert.strictEqual(options.request.qs.kmsKeyName, file.kmsKeyName);
+        .callsFake((options: StorageRequestOptions) => {
+          assert.strictEqual(
+            options.queryParameters?.kmsKeyName,
+            file.kmsKeyName,
+          );
         });
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      file.startSimpleUpload_(duplexify(), {});
+      await file.startSimpleUpload_(duplexify(), {});
     });
 
-    it('should send userProject if set', () => {
+    it('should send userProject if set', async () => {
       const options = {
         userProject: 'user-project-id',
       };
       file.storageTransport.makeRequest = sandbox
         .stub()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .callsFake((stream: {}, options_: any) => {
+        .callsFake((options_: StorageRequestOptions) => {
           assert.strictEqual(
-            options_.request.queryParameters.userProject,
+            options_.queryParameters?.userProject,
             options.userProject,
           );
         });
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      file.startSimpleUpload_(duplexify(), options);
+      await file.startSimpleUpload_(duplexify(), options);
     });
 
     describe('request', () => {
