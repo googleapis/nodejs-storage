@@ -13,10 +13,7 @@
 // limitations under the License.
 
 import {
-  BodyResponseCallback,
-  DecorateRequestOptions,
   GetConfig,
-  Interceptor,
   MetadataCallback,
   ServiceObject,
   SetMetadataResponse,
@@ -28,7 +25,14 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import mime from 'mime';
 import * as resumableUpload from './resumable-upload.js';
-import {Writable, Readable, pipeline, Transform, PipelineSource} from 'stream';
+import {
+  Writable,
+  Readable,
+  pipeline,
+  Transform,
+  PipelineSource,
+  Stream,
+} from 'stream';
 import * as zlib from 'zlib';
 import * as http from 'http';
 
@@ -49,10 +53,9 @@ import {
   Query,
 } from './signer.js';
 import {
-  ResponseBody,
-  ApiError,
   Duplexify,
   GCCL_GCS_CMD_KEY,
+  ProgressStream,
 } from './nodejs-common/util.js';
 import duplexify from 'duplexify';
 import {
@@ -73,10 +76,20 @@ import {
   DeleteOptions,
   GetResponse,
   InstanceResponseCallback,
-  RequestResponse,
+  Methods,
   SetMetadataOptions,
 } from './nodejs-common/service-object.js';
-import * as r from 'teeny-request';
+import {
+  GaxiosError,
+  GaxiosInterceptor,
+  GaxiosOptions,
+  GaxiosResponse,
+} from 'gaxios';
+import {
+  StorageQueryParameters,
+  StorageRequestOptions,
+} from './storage-transport.js';
+import * as gaxios from 'gaxios';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -557,7 +570,7 @@ class File extends ServiceObject<File, FileMetadata> {
   private encryptionKey?: string | Buffer;
   private encryptionKeyBase64?: string;
   private encryptionKeyHash?: string;
-  private encryptionKeyInterceptor?: Interceptor;
+  private encryptionKeyInterceptor?: GaxiosInterceptor<GaxiosOptions>;
   private instanceRetryValue?: boolean;
   instancePreconditionOpts?: PreconditionOptions;
 
@@ -738,7 +751,7 @@ class File extends ServiceObject<File, FileMetadata> {
       requestQueryObject.userProject = userProject;
     }
 
-    const methods = {
+    const methods: Methods = {
       /**
        * @typedef {array} DeleteFileResponse
        * @property {object} 0 The full API response.
@@ -785,7 +798,7 @@ class File extends ServiceObject<File, FileMetadata> {
        */
       delete: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -827,7 +840,7 @@ class File extends ServiceObject<File, FileMetadata> {
        */
       exists: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -879,7 +892,7 @@ class File extends ServiceObject<File, FileMetadata> {
        */
       get: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -930,7 +943,7 @@ class File extends ServiceObject<File, FileMetadata> {
        */
       getMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
       /**
@@ -1023,12 +1036,13 @@ class File extends ServiceObject<File, FileMetadata> {
        */
       setMetadata: {
         reqOpts: {
-          qs: requestQueryObject,
+          queryParameters: requestQueryObject,
         },
       },
     };
 
     super({
+      storageTransport: bucket.storage.storageTransport,
       parent: bucket,
       baseUrl: '/o',
       id: encodeURIComponent(name),
@@ -1061,7 +1075,8 @@ class File extends ServiceObject<File, FileMetadata> {
     }
 
     this.acl = new Acl({
-      request: this.request.bind(this),
+      parent: this,
+      storageTransport: this.storageTransport,
       pathPrefix: '/acl',
     });
 
@@ -1344,11 +1359,11 @@ class File extends ServiceObject<File, FileMetadata> {
     if (query.destinationKmsKeyName) {
       this.kmsKeyName = query.destinationKmsKeyName;
 
-      const keyIndex = this.interceptors.indexOf(
+      const keyIndex = this.storage.interceptors.indexOf(
         this.encryptionKeyInterceptor!,
       );
       if (keyIndex > -1) {
-        this.interceptors.splice(keyIndex, 1);
+        this.storage.interceptors.splice(keyIndex, 1);
       }
     }
 
@@ -1365,26 +1380,23 @@ class File extends ServiceObject<File, FileMetadata> {
       delete options.preconditionOpts;
     }
 
-    this.request(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'POST',
-        uri: `/rewriteTo/b/${destBucket.name}/o/${encodeURIComponent(
-          newFile.name,
-        )}`,
-        qs: query,
-        json: options,
+        url: `${this.baseUrl}/rewriteTo/b/${
+          destBucket.name
+        }/o/${encodeURIComponent(newFile.name)}`,
+        queryParameters: query as unknown as StorageQueryParameters,
+        body: options,
         headers,
-      },
-      (err, resp) => {
+      })
+      .then(({data, resp}) => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-        if (err) {
-          callback!(err, null, resp);
-          return;
-        }
-
-        if (resp.rewriteToken) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((data as any).rewriteToken) {
           const options = {
-            token: resp.rewriteToken,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            token: (data as any).rewriteToken,
           } as CopyOptions;
 
           if (query.userProject) {
@@ -1400,8 +1412,10 @@ class File extends ServiceObject<File, FileMetadata> {
         }
 
         callback!(null, newFile, resp);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback!(err, null, resp);
+      });
   }
 
   /**
@@ -1502,8 +1516,6 @@ class File extends ServiceObject<File, FileMetadata> {
     const tailRequest = options.end! < 0;
 
     let validateStream: HashStreamValidator | undefined = undefined;
-    let request: r.Request | undefined = undefined;
-
     const throughStream = new PassThroughShim();
 
     let crc32c = true;
@@ -1536,9 +1548,6 @@ class File extends ServiceObject<File, FileMetadata> {
       if (err) {
         // There is an issue with node-fetch 2.x that if the stream errors the underlying socket connection is not closed.
         // This causes a memory leak, so cleanup the sockets manually here by destroying the agent.
-        if (request?.agent) {
-          request.agent.destroy();
-        }
         throughStream.destroy(err);
       }
     };
@@ -1554,8 +1563,8 @@ class File extends ServiceObject<File, FileMetadata> {
     //      applicable, to the user.
     const onResponse = async (
       err: Error | null,
-      _body: ResponseBody,
-      rawResponseStream: unknown,
+      response: GaxiosResponse,
+      rawResponseStream: Readable,
     ) => {
       if (err) {
         // Get error message from the body.
@@ -1569,8 +1578,7 @@ class File extends ServiceObject<File, FileMetadata> {
         return;
       }
 
-      request = (rawResponseStream as r.Response).request;
-      const headers = (rawResponseStream as ResponseBody).toJSON().headers;
+      const headers = response.headers;
       const isCompressed = headers['content-encoding'] === 'gzip';
       const hashes: {crc32c?: string; md5?: string} = {};
 
@@ -1661,25 +1669,29 @@ class File extends ServiceObject<File, FileMetadata> {
         headers.Range = `bytes=${tailRequest ? end : `${start}-${end}`}`;
       }
 
-      const reqOpts: DecorateRequestOptions = {
-        uri: '',
+      const reqOpts: StorageRequestOptions = {
+        url: `${this.bucket.baseUrl}/${this.bucket.name}${this.baseUrl}/${this.name}`,
         headers,
-        qs: query,
+        queryParameters: query as unknown as StorageQueryParameters,
+        responseType: 'stream',
       };
 
       if (options[GCCL_GCS_CMD_KEY]) {
         reqOpts[GCCL_GCS_CMD_KEY] = options[GCCL_GCS_CMD_KEY];
       }
 
-      this.requestStream(reqOpts)
-        .on('error', err => {
+      this.storageTransport
+        .makeRequest(reqOpts)
+        .then(async ({data: stream, resp: rawResponse}) => {
+          (stream as Readable).on('error', err => {
+            throughStream.destroy(err);
+          });
+          throughStream.emit('response', rawResponse);
+          await onResponse(null, rawResponse!, stream as Readable);
+        })
+        .catch(err => {
           throughStream.destroy(err);
-        })
-        .on('response', res => {
-          throughStream.emit('response', res);
-          util.handleResp(null, res, null, onResponse);
-        })
-        .resume();
+        });
     };
     throughStream.on('reading', makeRequest);
 
@@ -1803,13 +1815,9 @@ class File extends ServiceObject<File, FileMetadata> {
 
     resumableUpload.createURI(
       {
-        authClient: this.storage.authClient,
+        authClient: this.storage.storageTransport.authClient,
         apiEndpoint: this.storage.apiEndpoint,
         bucket: this.bucket.name,
-        customRequestOptions: this.getRequestInterceptors().reduce(
-          (reqOpts, interceptorFn) => interceptorFn(reqOpts),
-          {},
-        ),
         file: this.name,
         generation: this.generation,
         key: this.encryptionKey,
@@ -2120,11 +2128,11 @@ class File extends ServiceObject<File, FileMetadata> {
       fileWriteStreamMetadataReceived = true;
     });
 
-    writeStream.once('writing', () => {
+    writeStream.once('writing', async () => {
       if (options.resumable === false) {
-        this.startSimpleUpload_(fileWriteStream, options);
+        await this.startSimpleUpload_(fileWriteStream, options);
       } else {
-        this.startResumableUpload_(fileWriteStream, options);
+        await this.startResumableUpload_(fileWriteStream, options);
       }
 
       pipeline(
@@ -2185,13 +2193,13 @@ class File extends ServiceObject<File, FileMetadata> {
    * @param {?error} callback.err - An error returned while making this request.
    * @param {object} callback.apiResponse - The full API response.
    */
-  delete(options?: DeleteOptions): Promise<[r.Response]>;
+  delete(options?: DeleteOptions): Promise<[GaxiosResponse]>;
   delete(options: DeleteOptions, callback: DeleteCallback): void;
   delete(callback: DeleteCallback): void;
   delete(
     optionsOrCallback?: DeleteOptions | DeleteCallback,
     cb?: DeleteCallback,
-  ): Promise<[r.Response]> | void {
+  ): Promise<[GaxiosResponse]> | void {
     const options =
       typeof optionsOrCallback === 'object' ? optionsOrCallback : {};
     cb = typeof optionsOrCallback === 'function' ? optionsOrCallback : cb;
@@ -2312,8 +2320,12 @@ class File extends ServiceObject<File, FileMetadata> {
           writable.write(data);
           fileStream
             .pipe(writable)
-            .on('error', callback)
-            .on('finish', callback);
+            .on('error', (err: Error) => {
+              callback(err, Buffer.from(''));
+            })
+            .on('finish', () => {
+              callback(null, data);
+            });
         })
         .on('end', () => {
           // In the case of an empty file no data will be received before the end event fires
@@ -2392,13 +2404,13 @@ class File extends ServiceObject<File, FileMetadata> {
       .digest('base64');
 
     this.encryptionKeyInterceptor = {
-      request: reqOpts => {
+      resolved: reqOpts => {
         reqOpts.headers = reqOpts.headers || {};
         reqOpts.headers['x-goog-encryption-algorithm'] = 'AES256';
         reqOpts.headers['x-goog-encryption-key'] = this.encryptionKeyBase64;
         reqOpts.headers['x-goog-encryption-key-sha256'] =
           this.encryptionKeyHash;
-        return reqOpts as DecorateRequestOptions;
+        return Promise.resolve(reqOpts);
       },
     };
 
@@ -2494,7 +2506,11 @@ class File extends ServiceObject<File, FileMetadata> {
   ): void | Promise<GetExpirationDateResponse> {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     this.getMetadata(
-      (err: ApiError | null, metadata: FileMetadata, apiResponse: unknown) => {
+      (
+        err: GaxiosError | null,
+        metadata: FileMetadata,
+        apiResponse: unknown,
+      ) => {
         if (err) {
           callback!(err, null, apiResponse);
           return;
@@ -2706,18 +2722,20 @@ class File extends ServiceObject<File, FileMetadata> {
     const policyString = JSON.stringify(policy);
     const policyBase64 = Buffer.from(policyString).toString('base64');
 
-    this.storage.authClient.sign(policyBase64, options.signingEndpoint).then(
-      signature => {
-        callback(null, {
-          string: policyString,
-          base64: policyBase64,
-          signature,
-        });
-      },
-      err => {
-        callback(new SigningError(err.message));
-      },
-    );
+    this.storage.storageTransport.authClient
+      .sign(policyBase64, options.signingEndpoint)
+      .then(
+        signature => {
+          callback(null, {
+            string: policyString,
+            base64: policyBase64,
+            signature,
+          });
+        },
+        err => {
+          callback(new SigningError(err.message));
+        },
+      );
   }
 
   generateSignedPostPolicyV4(
@@ -2856,7 +2874,8 @@ class File extends ServiceObject<File, FileMetadata> {
     const todayISO = formatAsUTCISO(now);
 
     const sign = async () => {
-      const {client_email} = await this.storage.authClient.getCredentials();
+      const {client_email} =
+        await this.storage.storageTransport.authClient.getCredentials();
       const credential = `${client_email}/${todayISO}/auto/storage/goog4_request`;
 
       fields = {
@@ -2889,7 +2908,7 @@ class File extends ServiceObject<File, FileMetadata> {
       const policyBase64 = Buffer.from(policyString).toString('base64');
 
       try {
-        const signature = await this.storage.authClient.sign(
+        const signature = await this.storage.storageTransport.authClient.sign(
           policyBase64,
           options.signingEndpoint,
         );
@@ -3147,7 +3166,7 @@ class File extends ServiceObject<File, FileMetadata> {
 
     if (!this.signer) {
       this.signer = new URLSigner(
-        this.storage.authClient,
+        this.storage.storageTransport.authClient,
         this.bucket,
         this,
         this.storage,
@@ -3215,41 +3234,34 @@ class File extends ServiceObject<File, FileMetadata> {
     const storageInterceptors = this.storage?.interceptors || [];
     const fileInterceptors = this.interceptors || [];
     const allInterceptors = storageInterceptors.concat(fileInterceptors);
-    const headers = allInterceptors.reduce((acc, curInterceptor) => {
-      const currentHeaders = curInterceptor.request({
-        uri: `${this.storage.apiEndpoint}/${
-          this.bucket.name
-        }/${encodeURIComponent(this.name)}`,
-      });
 
-      Object.assign(acc, currentHeaders.headers);
-      return acc;
-    }, {});
+    for (const curInter of allInterceptors) {
+      gaxios.instance.interceptors.request.add(curInter);
+    }
 
-    util.makeRequest(
-      {
+    gaxios
+      .request({
         method: 'GET',
-        uri: `${this.storage.apiEndpoint}/${
+        url: `${this.storage.apiEndpoint}/${
           this.bucket.name
         }/${encodeURIComponent(this.name)}`,
-        headers,
-      },
-      {
-        retryOptions: this.storage.retryOptions,
-      },
-      (err: Error | ApiError | null) => {
-        if (err) {
-          const apiError = err as ApiError;
-          if (apiError.code === 403) {
-            callback!(null, false);
-          } else {
-            callback!(err);
-          }
+        retryConfig: {
+          retry: this.storage.retryOptions.maxRetries,
+          noResponseRetries: this.storage.retryOptions.maxRetries,
+          maxRetryDelay: this.storage.retryOptions.maxRetryDelay,
+          retryDelayMultiplier: this.storage.retryOptions.retryDelayMultiplier,
+          shouldRetry: this.storage.retryOptions.retryableErrorFn,
+          totalTimeout: this.storage.retryOptions.totalTimeout,
+        },
+      })
+      .then(() => callback!(null, true))
+      .catch(err => {
+        if (err.status === 403) {
+          callback!(null, false);
         } else {
-          callback!(null, true);
+          callback!(err);
         }
-      },
-    );
+      });
   }
 
   makePrivate(
@@ -3737,33 +3749,14 @@ class File extends ServiceObject<File, FileMetadata> {
    * @returns {Promise<File>}
    */
   async restore(options: RestoreOptions): Promise<File> {
-    const [file] = await this.request({
+    const response = await this.storageTransport.makeRequest<File>({
       method: 'POST',
-      uri: '/restore',
-      qs: options,
+      url: `${this.baseUrl}/restore`,
+      queryParameters: options as unknown as StorageQueryParameters,
     });
 
-    return file as File;
-  }
-
-  request(reqOpts: DecorateRequestOptions): Promise<RequestResponse>;
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback: BodyResponseCallback,
-  ): void;
-  /**
-   * Makes request and applies userProject query parameter if necessary.
-   *
-   * @private
-   *
-   * @param {object} reqOpts - The request options.
-   * @param {function} callback - The callback function.
-   */
-  request(
-    reqOpts: DecorateRequestOptions,
-    callback?: BodyResponseCallback,
-  ): void | Promise<RequestResponse> {
-    return this.parent.request.call(this, reqOpts, callback!);
+    const file = response.data;
+    return file;
   }
 
   rotateEncryptionKey(
@@ -3921,10 +3914,10 @@ class File extends ServiceObject<File, FileMetadata> {
             writable.on('progress', options.onUploadProgress);
           }
 
-          const handleError = (err: Error) => {
+          const handleError = (err: GaxiosError | Error) => {
             if (
               this.storage.retryOptions.autoRetry &&
-              this.storage.retryOptions.retryableErrorFn!(err)
+              this.storage.retryOptions.retryableErrorFn!(err as GaxiosError)
             ) {
               return reject(err);
             }
@@ -4154,13 +4147,9 @@ class File extends ServiceObject<File, FileMetadata> {
       retryOptions.autoRetry = false;
     }
     const cfg = {
-      authClient: this.storage.authClient,
+      authClient: this.storage.storageTransport.authClient,
       apiEndpoint: this.storage.apiEndpoint,
       bucket: this.bucket.name,
-      customRequestOptions: this.getRequestInterceptors().reduce(
-        (reqOpts, interceptorFn) => interceptorFn(reqOpts),
-        {},
-      ),
       file: this.name,
       generation: this.generation,
       isPartialUpload: options.isPartialUpload,
@@ -4229,22 +4218,25 @@ class File extends ServiceObject<File, FileMetadata> {
 
     const apiEndpoint = this.storage.apiEndpoint;
     const bucketName = this.bucket.name;
-    const uri = `${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
+    const url = `${apiEndpoint}/upload/storage/v1/b/${bucketName}/o`;
 
-    const reqOpts: DecorateRequestOptions = {
-      qs: {
+    const reqOpts: StorageRequestOptions = {
+      queryParameters: {
         name: this.name,
+        uploadType: 'multipart',
       },
-      uri: uri,
+      url,
       [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
+      method: 'POST',
+      responseType: 'json',
     };
 
     if (this.generation !== undefined) {
-      reqOpts.qs.ifGenerationMatch = this.generation;
+      reqOpts.queryParameters!.ifGenerationMatch = this.generation;
     }
 
     if (this.kmsKeyName !== undefined) {
-      reqOpts.qs.kmsKeyName = this.kmsKeyName;
+      reqOpts.queryParameters!.kmsKeyName = this.kmsKeyName;
     }
 
     if (typeof options.timeout === 'number') {
@@ -4252,40 +4244,53 @@ class File extends ServiceObject<File, FileMetadata> {
     }
 
     if (options.userProject || this.userProject) {
-      reqOpts.qs.userProject = options.userProject || this.userProject;
+      reqOpts.queryParameters!.userProject =
+        options.userProject || this.userProject;
     }
 
     if (options.predefinedAcl) {
-      reqOpts.qs.predefinedAcl = options.predefinedAcl;
+      reqOpts.queryParameters!.predefinedAcl = options.predefinedAcl;
     } else if (options.private) {
-      reqOpts.qs.predefinedAcl = 'private';
+      reqOpts.queryParameters!.predefinedAcl = 'private';
     } else if (options.public) {
-      reqOpts.qs.predefinedAcl = 'publicRead';
+      reqOpts.queryParameters!.predefinedAcl = 'publicRead';
     }
 
     Object.assign(
-      reqOpts.qs,
+      reqOpts.queryParameters!,
       this.instancePreconditionOpts,
       options.preconditionOpts,
     );
 
-    util.makeWritableStream(dup, {
-      makeAuthenticatedRequest: (reqOpts: object) => {
-        this.request(reqOpts as DecorateRequestOptions, (err, body, resp) => {
-          if (err) {
-            dup.destroy(err);
-            return;
-          }
+    const writeStream = new ProgressStream();
+    writeStream.on('progress', evt => dup.emit('progress', evt));
+    dup.setWritable(writeStream);
 
-          this.metadata = body;
-          dup.emit('metadata', body);
-          dup.emit('response', resp);
-          dup.emit('complete');
-        });
+    reqOpts.multipart = [
+      {
+        headers: {'Content-Type': 'application/json'},
+        content: JSON.stringify(options.metadata),
       },
-      metadata: options.metadata,
-      request: reqOpts,
-    });
+      {
+        headers: {
+          'Content-Type':
+            options.metadata.contentType || 'application/octet-stream',
+        },
+        content: writeStream,
+      },
+    ];
+
+    this.storageTransport
+      .makeRequest(reqOpts as StorageRequestOptions)
+      .then(({data, resp}) => {
+        this.metadata = data as FileMetadata;
+        dup.emit('metadata', data);
+        dup.emit('response', resp);
+        dup.emit('complete');
+      })
+      .catch(err => {
+        dup.destroy(err);
+      });
   }
 
   disableAutoRetryConditionallyIdempotent_(
