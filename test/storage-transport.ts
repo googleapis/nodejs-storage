@@ -76,25 +76,7 @@ describe('Storage Transport', () => {
     assert.ok(
       calledWith.headers['User-Agent'].includes('gcloud-node-storage/'),
     );
-    assert.deepStrictEqual(_response, response.data);
-  });
-
-  it('should pass errors to the callback if provided', async () => {
-    const error = new Error('Error.');
-    const requestStub = authClientStub.request as sinon.SinonStub;
-    requestStub.rejects(error);
-
-    const callback = sandbox.stub();
-    const reqOpts: StorageRequestOptions = {
-      url: 'invalid-url',
-      agent: undefined,
-    };
-    await transport.makeRequest(reqOpts, callback);
-
-    assert.strictEqual(callback.calledOnce, true);
-    const [err, data] = callback.getCall(0).args;
-    assert.strictEqual(err, error);
-    assert.strictEqual(data, null);
+    assert.deepStrictEqual(_response.data, response.data);
   });
 
   it('should handle retry options correctly', async () => {

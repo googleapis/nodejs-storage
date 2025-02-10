@@ -25,7 +25,14 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import mime from 'mime';
 import * as resumableUpload from './resumable-upload.js';
-import {Writable, Readable, pipeline, Transform, PipelineSource} from 'stream';
+import {
+  Writable,
+  Readable,
+  pipeline,
+  Transform,
+  PipelineSource,
+  Stream,
+} from 'stream';
 import * as zlib from 'zlib';
 import * as http from 'http';
 
@@ -1373,9 +1380,8 @@ class File extends ServiceObject<File, FileMetadata> {
       delete options.preconditionOpts;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'POST',
         url: `${this.baseUrl}/rewriteTo/b/${
           destBucket.name
@@ -1383,14 +1389,9 @@ class File extends ServiceObject<File, FileMetadata> {
         queryParameters: query as unknown as StorageQueryParameters,
         body: options,
         headers,
-      },
-      (err, data, resp) => {
+      })
+      .then(({data, resp}) => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-        if (err) {
-          callback!(err, null, resp);
-          return;
-        }
-
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((data as any).rewriteToken) {
           const options = {
@@ -1411,8 +1412,10 @@ class File extends ServiceObject<File, FileMetadata> {
         }
 
         callback!(null, newFile, resp);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback!(err, null, resp);
+      });
   }
 
   /**
@@ -1639,7 +1642,7 @@ class File extends ServiceObject<File, FileMetadata> {
 
     // Authenticate the request, then pipe the remote API request to the stream
     // returned to the user.
-    const makeRequest = async () => {
+    const makeRequest = () => {
       const query: FileQuery = {alt: 'media'};
 
       if (this.generation) {
@@ -1677,16 +1680,18 @@ class File extends ServiceObject<File, FileMetadata> {
         reqOpts[GCCL_GCS_CMD_KEY] = options[GCCL_GCS_CMD_KEY];
       }
 
-      await this.storageTransport.makeRequest(
-        reqOpts,
-        async (err, stream, rawResponse) => {
+      this.storageTransport
+        .makeRequest(reqOpts)
+        .then(async ({data: stream, resp: rawResponse}) => {
           (stream as Readable).on('error', err => {
             throughStream.destroy(err);
           });
           throughStream.emit('response', rawResponse);
-          await onResponse(err, rawResponse!, stream as Readable);
-        },
-      );
+          await onResponse(null, rawResponse!, stream as Readable);
+        })
+        .catch(err => {
+          throughStream.destroy(err);
+        });
     };
     throughStream.on('reading', makeRequest);
 
@@ -3744,13 +3749,14 @@ class File extends ServiceObject<File, FileMetadata> {
    * @returns {Promise<File>}
    */
   async restore(options: RestoreOptions): Promise<File> {
-    const file = await this.storageTransport.makeRequest<File>({
+    const response = await this.storageTransport.makeRequest<File>({
       method: 'POST',
       url: `${this.baseUrl}/restore`,
       queryParameters: options as unknown as StorageQueryParameters,
     });
 
-    return file as File;
+    const file = response.data;
+    return file;
   }
 
   rotateEncryptionKey(
@@ -4274,21 +4280,17 @@ class File extends ServiceObject<File, FileMetadata> {
       },
     ];
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      reqOpts as StorageRequestOptions,
-      (err, body, resp) => {
-        if (err) {
-          dup.destroy(err);
-          return;
-        }
-
-        this.metadata = body as FileMetadata;
-        dup.emit('metadata', body);
+    this.storageTransport
+      .makeRequest(reqOpts as StorageRequestOptions)
+      .then(({data, resp}) => {
+        this.metadata = data as FileMetadata;
+        dup.emit('metadata', data);
         dup.emit('response', resp);
         dup.emit('complete');
-      },
-    );
+      })
+      .catch(err => {
+        dup.destroy(err);
+      });
   }
 
   disableAutoRetryConditionallyIdempotent_(

@@ -92,183 +92,144 @@ describe('Bucket', () => {
     });
 
     describe('create', () => {
-      it('should make the correct request', done => {
+      it('should make the correct request', async () => {
         const options = {userProject: 'user-project'};
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'POST');
             assert.strictEqual(reqOpts.url, '/b');
             assert.deepStrictEqual(
               reqOpts.queryParameters!.userProject,
               options.userProject,
             );
-            callback!(null, {data: {}});
-            return Promise.resolve();
+            return Promise.resolve({data: {}});
           });
-        bucket.create(options, done);
+        await bucket.create(options);
       });
 
-      it('should return an error if the request fails', async done => {
+      it('should return an error if the request fails', async () => {
         const error = new GaxiosError('err', {});
 
-        STORAGE.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((_reqOpts, callback) => {
-            callback!(error);
-            return Promise.resolve();
-          });
+        STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await bucket.create((err: GaxiosError | null) => {
           assert.strictEqual(err, error);
-          done();
         });
       });
     });
 
     describe('delete', () => {
-      it('should make the correct request', done => {
+      it('should make the correct request', () => {
         const options = {userProject: 'user-project'};
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'DELETE');
             assert.strictEqual(reqOpts.url, '/b/test-bucket');
             assert.deepStrictEqual(
               reqOpts.queryParameters!.userProject,
               options.userProject,
             );
-            callback!(null);
             return Promise.resolve();
           });
         bucket.delete(options, err => {
           assert.ifError(err);
-          done();
         });
       });
 
-      it('should return an error if the request fails', async done => {
+      it('should return an error if the request fails', async () => {
         const error = new GaxiosError('err', {});
 
-        STORAGE.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((_reqOpts, callback) => {
-            callback!(error);
-            return Promise.resolve();
-          });
+        STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await bucket.delete((err: GaxiosError | null) => {
           assert.strictEqual(err, error);
-          done();
         });
       });
     });
 
     describe('exists', () => {
-      it('should make the correct request', done => {
+      it('should make the correct request', () => {
         const options = {userProject: 'user-project'};
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'GET');
             assert.strictEqual(reqOpts.url, '/b/test-bucket');
             assert.deepStrictEqual(
               reqOpts.queryParameters!.userProject,
               options.userProject,
             );
-            callback!(null);
             return Promise.resolve();
           });
         bucket.exists(options, err => {
           assert.ifError(err);
-          done();
         });
       });
 
-      it('should return an error if the request fails', async done => {
+      it('should return an error if the request fails', async () => {
         const error = new GaxiosError('err', {});
 
-        STORAGE.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((_reqOpts, callback) => {
-            callback!(error);
-            return Promise.resolve();
-          });
+        STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await bucket.exists((err: GaxiosError | null) => {
           assert.strictEqual(err, error);
-          done();
         });
       });
     });
 
     describe('get', () => {
-      it('should make the correct request', done => {
+      it('should make the correct request', () => {
         const options = {userProject: 'user-project'};
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'GET');
             assert.strictEqual(reqOpts.url, '/b/test-bucket');
             assert.deepStrictEqual(
               reqOpts.queryParameters!.userProject,
               options.userProject,
             );
-            callback!(null);
             return Promise.resolve();
           });
         bucket.get(options, err => {
           assert.ifError(err);
-          done();
         });
       });
 
-      it('should return an error if the request fails', done => {
+      it('should return an error if the request fails', () => {
         const error = new GaxiosError('err', {});
 
-        STORAGE.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((_reqOpts, callback) => {
-            callback!(error);
-            return Promise.resolve();
-          });
+        STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         bucket.get((err: GaxiosError | null) => {
           assert.strictEqual(err, error);
-          done();
         });
       });
     });
 
     describe('getMetadata', () => {
-      it('should make the correct request', done => {
+      it('should make the correct request', () => {
         const options = {userProject: 'user-project'};
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'GET');
             assert.strictEqual(reqOpts.url, '/b/test-bucket');
             assert.deepStrictEqual(
               reqOpts.queryParameters!.userProject,
               options.userProject,
             );
-            callback!(null);
             return Promise.resolve();
           });
         bucket.getMetadata(options, err => {
           assert.ifError(err);
-          done();
         });
       });
 
-      it('should return an error if the request fails', async done => {
+      it('should return an error if the request fails', async () => {
         const error = new GaxiosError('err', {});
 
-        STORAGE.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((_reqOpts, callback) => {
-            callback!(error);
-            return Promise.resolve();
-          });
+        STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await bucket.getMetadata((err: GaxiosError | null) => {
           assert.strictEqual(err, error);
-          done();
         });
       });
     });
@@ -282,14 +243,13 @@ describe('Bucket', () => {
         };
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'PATCH');
             assert.strictEqual(reqOpts.url, '/b/test-bucket');
             assert.deepStrictEqual(
               reqOpts.queryParameters!.versioning,
               options.versioning,
             );
-            callback!(null);
             return Promise.resolve();
           });
         await bucket.setMetadata(options, assert.ifError);
@@ -602,22 +562,19 @@ describe('Bucket', () => {
           done();
         });
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       bucket.combine([file1, file2], destinationFileName, done);
     });
 
     it('should use content type from the destination metadata', async () => {
       const destination = bucket.file('destination.txt');
 
-      storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          assert.strictEqual(
-            reqOpts.body.destination.contentType,
-            mime.getType(destination.name),
-          );
-          callback!(null);
-        });
+      storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
+        assert.strictEqual(
+          reqOpts.body.destination.contentType,
+          mime.getType(destination.name),
+        );
+        return Promise.resolve({});
+      });
 
       await bucket.combine(['1', '2'], destination);
     });
@@ -626,15 +583,13 @@ describe('Bucket', () => {
       const destination = bucket.file('destination.txt');
       destination.metadata = {contentType: 'content-type'};
 
-      storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          assert.strictEqual(
-            reqOpts.body.destination.contentType,
-            destination.metadata.contentType,
-          );
-          callback!(null);
-        });
+      storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
+        assert.strictEqual(
+          reqOpts.body.destination.contentType,
+          destination.metadata.contentType,
+        );
+        return Promise.resolve({});
+      });
 
       await bucket.combine(['1', '2'], destination);
     });
@@ -642,15 +597,13 @@ describe('Bucket', () => {
     it('should detect dest content type if not in metadata', async () => {
       const destination = bucket.file('destination.txt');
 
-      storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          assert.strictEqual(
-            reqOpts.body.destination.contentType,
-            mime.getType(destination.name),
-          );
-          callback!(null);
-        });
+      storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
+        assert.strictEqual(
+          reqOpts.body.destination.contentType,
+          mime.getType(destination.name),
+        );
+        return Promise.resolve({});
+      });
 
       await bucket.combine(['1', '2'], destination);
     });
@@ -714,6 +667,7 @@ describe('Bucket', () => {
 
       storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
         assert.strictEqual(reqOpts.queryParameters, options);
+        return Promise.resolve({});
       });
 
       bucket.combine(sources, destination, options, assert.ifError);
@@ -747,56 +701,43 @@ describe('Bucket', () => {
           reqOpts.queryParameters.ifMetagenerationNotMatch,
           options.ifMetagenerationNotMatch,
         );
+        return Promise.resolve({});
       });
 
       bucket.combine(sources, destination, options, assert.ifError);
     });
 
-    it('should execute the callback', done => {
+    it('should execute the promise', done => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');
 
-      storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback();
-        });
+      storageTransport.makeRequest = sandbox.stub().resolves();
 
       bucket.combine(sources, destination, done);
     });
 
-    it('should execute the callback with an error', done => {
+    it('should reject with an error', () => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');
 
       const error = new GaxiosError('Error.', {});
 
-      storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(error);
-        });
+      storageTransport.makeRequest = sandbox.stub().rejects(error);
 
       bucket.combine(sources, destination, err => {
         assert.strictEqual(err, error);
-        done();
       });
     });
 
-    it('should execute the callback with apiResponse', done => {
+    it('should execute the promise with apiResponse', () => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');
       const resp = {success: true};
 
-      storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(resp);
-        });
+      storageTransport.makeRequest = sandbox.stub().resolves(resp);
 
       bucket.combine(sources, destination, apiResponse => {
         assert.strictEqual(resp, apiResponse);
-        done();
       });
     });
 
@@ -806,10 +747,10 @@ describe('Bucket', () => {
 
       storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
+        .callsFake(reqOpts => {
           assert.strictEqual(reqOpts.maxRetries, 0);
-          callback();
-        });
+        })
+        .resolves();
 
       bucket.combine(sources, destination, done);
     });
@@ -882,17 +823,14 @@ describe('Bucket', () => {
       beforeEach(() => {
         bucket.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
-            callback(error, null, apiResponse);
-          });
+          .rejects({error, apiResponse});
       });
 
-      it('should execute callback with error & API response', done => {
+      it('should execute callback with error & API response', () => {
         bucket.createChannel(ID, CONFIG, {}, (err, channel, apiResponse_) => {
           assert.strictEqual(err, error);
           assert.strictEqual(channel, null);
           assert.strictEqual(apiResponse_, apiResponse);
-          done();
         });
       });
     });
@@ -905,9 +843,7 @@ describe('Bucket', () => {
       beforeEach(() => {
         bucket.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
-            callback(null, apiResponse);
-          });
+          .resolves(apiResponse);
       });
 
       it('should exec a callback with Channel & API response', () => {
@@ -1041,34 +977,27 @@ describe('Bucket', () => {
       bucket.createNotification(TOPIC, options, assert.ifError);
     });
 
-    it('should return errors to the callback', done => {
+    it('should return errors to the callback', () => {
       const error = new GaxiosError('err', {});
       const response = {};
 
       bucket.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(error, null, response);
-        });
+        .rejects({error, response});
 
       bucket.createNotification(TOPIC, {}, (err, notification, resp) => {
         assert.strictEqual(err, error);
         assert.strictEqual(notification, null);
         assert.strictEqual(resp, response);
-        done();
       });
     });
 
-    it('should return a notification object', done => {
+    it('should return a notification object', () => {
       const fakeId = '123';
       const response = {id: fakeId};
       const fakeNotification = {};
 
-      bucket.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback!(null, response);
-        });
+      bucket.storageTransport.makeRequest = sandbox.stub().resolves(response);
 
       bucket.notification = sandbox.stub().callsFake(id => {
         assert.strictEqual(id, fakeId);
@@ -1079,7 +1008,6 @@ describe('Bucket', () => {
         assert.ifError(err);
         assert.strictEqual(notification, fakeNotification);
         assert.strictEqual(notification.metadata, response);
-        done();
       });
     });
   });
@@ -1094,16 +1022,13 @@ describe('Bucket', () => {
         bucket.deleteLabels(assert.ifError);
       });
 
-      it('should return an error from getLabels()', done => {
+      it('should return an error from getLabels()', () => {
         const error = new GaxiosError('Error.', {});
 
-        bucket.getLabels = sandbox.stub().callsFake(callback => {
-          callback(error);
-        });
+        bucket.getLabels = sandbox.stub().rejects(error);
 
         bucket.deleteLabels(err => {
           assert.strictEqual(err, error);
-          done();
         });
       });
 
@@ -1186,25 +1111,20 @@ describe('Bucket', () => {
         .stub()
         .callsFake(
           (metadata: {}, optionsOrCallback: {}, callback: Function) => {
-            assert.strictEqual(callback, undefined);
+            assert.equal(callback, undefined);
           },
         );
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      bucket.disableRequesterPays();
+      void bucket.disableRequesterPays();
     });
 
-    it('should set autoRetry to false when ifMetagenerationMatch is undefined', done => {
+    it('should set autoRetry to false when ifMetagenerationMatch is undefined', async done => {
       bucket.setMetadata = sandbox.stub().callsFake(() => {
-        Promise.resolve()
-          .then(() => {
-            assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
-            done();
-          })
-          .catch(() => {});
+        assert.strictEqual(bucket.storage.retryOptions.autoRetry, false);
+        done();
+        return Promise.resolve();
       });
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      bucket.disableRequesterPays();
+      await bucket.disableRequesterPays();
     });
   });
 
@@ -1415,8 +1335,7 @@ describe('Bucket', () => {
           },
         );
 
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      bucket.enableRequesterPays();
+      void bucket.enableRequesterPays();
     });
   });
 
@@ -1503,14 +1422,12 @@ describe('Bucket', () => {
       const token = 'next-page-token';
       const nextQuery_ = {maxResults: 5, pageToken: token};
 
-      bucket.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(null, {
-            nextPageToken: token,
-            items: [],
-          });
+      bucket.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
+        return Promise.resolve({
+          nextPageToken: token,
+          items: [],
         });
+      });
 
       bucket.getFiles(
         {maxResults: 5, pageToken: token},
@@ -1522,11 +1439,11 @@ describe('Bucket', () => {
     });
 
     it('should return null nextQuery if there are no more results', () => {
-      bucket.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(null, {items: []});
+      bucket.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
+        return Promise.resolve({
+          items: [],
         });
+      });
       bucket.getFiles({maxResults: 5}, (err, results, nextQuery) => {
         assert.strictEqual(nextQuery, null);
       });
@@ -1535,11 +1452,7 @@ describe('Bucket', () => {
     it('should return File objects', () => {
       bucket.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(null, {
-            items: [{name: 'fake-file-name', generation: 1}],
-          });
-        });
+        .resolves({items: [{name: 'fake-file-name', generation: 1}]});
       bucket.getFiles((err, files) => {
         assert.ifError(err);
         assert(files instanceof File);
@@ -1550,11 +1463,7 @@ describe('Bucket', () => {
     it('should return versioned Files if queried for versions', () => {
       bucket.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(null, {
-            items: [{name: 'fake-file-name', generation: 1}],
-          });
-        });
+        .resolves({items: [{name: 'fake-file-name', generation: 1}]});
 
       bucket.getFiles({versions: true}, (err, files) => {
         assert.ifError(err);
@@ -1564,13 +1473,9 @@ describe('Bucket', () => {
     });
 
     it('should return Files with specified values if queried for fields', () => {
-      bucket.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(null, {
-            items: [{name: 'fake-file-name'}],
-          });
-        });
+      bucket.storageTransport.makeRequest = sandbox.stub().resolves({
+        items: [{name: 'fake-file-name'}],
+      });
 
       bucket.getFiles({fields: 'items(name)'}, (err, files) => {
         assert.ifError(err);
@@ -1581,13 +1486,9 @@ describe('Bucket', () => {
 
     it('should return soft-deleted Files if queried for softDeleted', () => {
       const softDeletedTime = new Date('1/1/2024').toISOString();
-      bucket.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(null, {
-            items: [{name: 'fake-file-name', generation: 1, softDeletedTime}],
-          });
-        });
+      bucket.storageTransport.makeRequest = sandbox.stub().resolves({
+        items: [{name: 'fake-file-name', generation: 1, softDeletedTime}],
+      });
 
       bucket.getFiles({softDeleted: true}, (err, files) => {
         assert.ifError(err);
@@ -1599,13 +1500,9 @@ describe('Bucket', () => {
     it('should set kmsKeyName on file', () => {
       const kmsKeyName = 'kms-key-name';
 
-      bucket.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(null, {
-            items: [{name: 'fake-file-name', kmsKeyName}],
-          });
-        });
+      bucket.storageTransport.makeRequest = sandbox.stub().resolves({
+        items: [{name: 'fake-file-name', kmsKeyName}],
+      });
 
       bucket.getFiles({versions: true}, (err, files) => {
         assert.ifError(err);
@@ -1616,11 +1513,7 @@ describe('Bucket', () => {
 
     it('should return apiResponse in callback', () => {
       const resp = {items: [{name: 'fake-file-name'}]};
-      bucket.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(null, resp);
-        });
+      bucket.storageTransport.makeRequest = sandbox.stub().resolves(resp);
       bucket.getFiles((err, files, nextQuery, apiResponse) => {
         assert.deepStrictEqual(resp, apiResponse);
       });
@@ -1632,9 +1525,7 @@ describe('Bucket', () => {
 
       bucket.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(error, apiResponse);
-        });
+        .rejects({error, apiResponse});
 
       bucket.getFiles((err, files, nextQuery, apiResponse_) => {
         assert.strictEqual(err, error);
@@ -1654,9 +1545,7 @@ describe('Bucket', () => {
       };
       bucket.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(null, {items: [fileMetadata]});
-        });
+        .resolves({items: [fileMetadata]});
       bucket.getFiles((err, files) => {
         assert.ifError(err);
         assert(files instanceof File);
@@ -1763,21 +1652,18 @@ describe('Bucket', () => {
       bucket.getNotifications(assert.ifError);
     });
 
-    it('should return any errors to the callback', done => {
+    it('should return any errors to the callback', () => {
       const error = new GaxiosError('err', {});
       const response = {};
 
       bucket.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(error, null, response);
-        });
+        .rejects({error, response});
 
       bucket.getNotifications((err, notifications, resp) => {
         assert.strictEqual(err, error);
         assert.strictEqual(notifications, null);
         assert.strictEqual(resp, response);
-        done();
       });
     });
 
@@ -1785,11 +1671,7 @@ describe('Bucket', () => {
       const fakeItems = [{id: '1'}, {id: '2'}, {id: '3'}];
       const response = {items: fakeItems};
 
-      bucket.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(null, response);
-        });
+      bucket.storageTransport.makeRequest = sandbox.stub().resolves(response);
 
       let callCount = 0;
       const fakeNotifications = [{}, {}, {}];
@@ -1897,7 +1779,7 @@ describe('Bucket', () => {
 
       bucket.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
+        .callsFake(reqOpts => {
           assert.deepStrictEqual(reqOpts, {
             method: 'POST',
             url: '/b/lockRetentionPolicy',
@@ -1905,8 +1787,7 @@ describe('Bucket', () => {
               ifMetagenerationMatch: metageneration,
             },
           });
-
-          callback();
+          return Promise.resolve({});
         });
 
       bucket.lock(metageneration, done);

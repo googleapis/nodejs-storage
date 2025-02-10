@@ -532,9 +532,8 @@ class Acl extends AclRoleAccessorMethods {
       url = `${bucket.baseUrl}/${bucket.name}${url}`;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'POST',
         url,
         queryParameters: query as unknown as StorageQueryParameters,
@@ -543,23 +542,21 @@ class Acl extends AclRoleAccessorMethods {
           entity: options.entity,
           role: options.role.toUpperCase(),
         },
-      },
-      (err, data, resp) => {
-        if (err) {
-          callback!(
-            err,
-            data as unknown as AccessControlObject,
-            resp as unknown as AclMetadata,
-          );
-          return;
-        }
+      })
+      .then(({data}) => {
         callback!(
           null,
           this.makeAclObject_(data as unknown as AccessControlObject),
           data as unknown as AclMetadata,
         );
-      },
-    );
+      })
+      .catch(({err, data, resp}) => {
+        callback!(
+          err,
+          data as unknown as AccessControlObject,
+          resp as unknown as AclMetadata,
+        );
+      });
   }
 
   delete(options: RemoveAclOptions): Promise<RemoveAclResponse>;
@@ -650,17 +647,16 @@ class Acl extends AclRoleAccessorMethods {
       url = `${bucket.baseUrl}/${bucket.name}${url}`;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'DELETE',
         url,
         queryParameters: query as unknown as StorageQueryParameters,
-      },
-      (err, data) => {
+      })
+      .then()
+      .catch(({err, data}) => {
         callback!(err, data as unknown as AclMetadata);
-      },
-    );
+      });
   }
 
   get(options?: GetAclOptions): Promise<GetAclResponse>;
@@ -782,19 +778,13 @@ class Acl extends AclRoleAccessorMethods {
       url = `${bucket.baseUrl}/${bucket.name}${url}`;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'GET',
         url,
         queryParameters: query as unknown as StorageQueryParameters,
-      },
-      (err, data, resp) => {
-        if (err) {
-          callback!(err, null, resp as unknown as AclMetadata);
-          return;
-        }
-
+      })
+      .then(({data, resp}) => {
         let results;
 
         if ((data as any).items) {
@@ -804,8 +794,10 @@ class Acl extends AclRoleAccessorMethods {
         }
 
         callback!(null, results, resp as unknown as AclMetadata);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback!(err, null, resp as unknown as AclMetadata);
+      });
   }
 
   update(options: UpdateAclOptions): Promise<UpdateAclResponse>;
@@ -893,28 +885,25 @@ class Acl extends AclRoleAccessorMethods {
       url = `${bucket.baseUrl}/${bucket.name}${url}`;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'PUT',
         url,
         queryParameters: query as unknown as StorageQueryParameters,
         body: {
           role: options.role.toUpperCase(),
         },
-      },
-      (err, data, resp) => {
-        if (err) {
-          callback!(err, null, resp as unknown as AclMetadata);
-          return;
-        }
+      })
+      .then(data => {
         callback!(
           null,
           this.makeAclObject_(data as unknown as AccessControlObject),
           data as unknown as AclMetadata,
         );
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback!(err, null, resp as unknown as AclMetadata);
+      });
   }
 
   /**

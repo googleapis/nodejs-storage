@@ -1087,9 +1087,8 @@ export class Storage {
       delete body.projection;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest<BucketMetadata>(
-      {
+    this.storageTransport
+      .makeRequest<BucketMetadata>({
         method: 'POST',
         queryParameters: query,
         body: JSON.stringify(body),
@@ -1098,19 +1097,16 @@ export class Storage {
         headers: {
           'Content-Type': 'application/json',
         },
-      },
-      (err, data, rep) => {
-        if (err) {
-          callback(err);
-          return;
-        }
-
+      })
+      .then(({data, resp}) => {
         const bucket = this.bucket(name);
         bucket.metadata = data!;
 
-        callback(null, bucket, rep);
-      },
-    );
+        callback(null, bucket, resp);
+      })
+      .catch(err => {
+        callback(err);
+      });
   }
 
   createHmacKey(
@@ -1216,20 +1212,15 @@ export class Storage {
     const projectId = query.projectId || this.projectId;
     delete query.projectId;
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest<HmacKeyResourceResponse>(
-      {
+    this.storageTransport
+      .makeRequest<HmacKeyResourceResponse>({
         method: 'POST',
         url: `/projects/${projectId}/hmacKeys`,
         queryParameters: query as unknown as StorageQueryParameters,
         retry: false,
         responseType: 'json',
-      },
-      (err, data, resp) => {
-        if (err) {
-          callback(err);
-          return;
-        }
+      })
+      .then(({data, resp}) => {
         const hmacMetadata = data!.metadata;
         const hmacKey = this.hmacKey(hmacMetadata.accessId!, {
           projectId: hmacMetadata?.projectId,
@@ -1243,8 +1234,10 @@ export class Storage {
           hmacKey.secret,
           resp as unknown as HmacKeyResourceResponse,
         );
-      },
-    );
+      })
+      .catch(err => {
+        callback(err);
+      });
   }
 
   getBuckets(options?: GetBucketsRequest): Promise<GetBucketsResponse>;
@@ -1345,24 +1338,18 @@ export class Storage {
     );
     options.project = options.project || this.projectId;
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest<{
-      kind: string;
-      nextPageToken?: string;
-      items: BucketMetadata[];
-    }>(
-      {
+    this.storageTransport
+      .makeRequest<{
+        kind: string;
+        nextPageToken?: string;
+        items: BucketMetadata[];
+      }>({
         url: '/b',
         method: 'GET',
         queryParameters: options as unknown as StorageQueryParameters,
         responseType: 'json',
-      },
-      (err, data, resp) => {
-        if (err) {
-          callback(err, null, null, resp);
-          return;
-        }
-
+      })
+      .then(({data, resp}) => {
         const items = data?.items ? data.items : [];
         const buckets = items.map((bucket: BucketMetadata) => {
           const bucketInstance = this.bucket(bucket.id!);
@@ -1375,8 +1362,10 @@ export class Storage {
           : null;
 
         callback(null, buckets, nextQuery, resp);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback(err, null, null, resp);
+      });
   }
 
   /**
@@ -1474,23 +1463,18 @@ export class Storage {
     const projectId = query.projectId || this.projectId;
     delete query.projectId;
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest<{
-      kind: string;
-      nextPageToken?: string;
-      items: HmacKeyMetadata[];
-    }>(
-      {
+    this.storageTransport
+      .makeRequest<{
+        kind: string;
+        nextPageToken?: string;
+        items: HmacKeyMetadata[];
+      }>({
         url: `/projects/${projectId}/hmacKeys`,
         responseType: 'json',
         queryParameters: query as unknown as StorageQueryParameters,
         method: 'GET',
-      },
-      (err, data, resp) => {
-        if (err) {
-          callback(err, null, null, resp);
-          return;
-        }
+      })
+      .then(({data, resp}) => {
         const itemsArray = data?.items ? data.items : [];
         const hmacKeys = itemsArray.map((hmacKey: HmacKeyMetadata) => {
           const hmacKeyInstance = this.hmacKey(hmacKey.accessId!, {
@@ -1505,8 +1489,10 @@ export class Storage {
           : null;
 
         callback(null, hmacKeys, nextQuery, resp);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback(err, null, resp);
+      });
   }
 
   getServiceAccount(
@@ -1577,19 +1563,14 @@ export class Storage {
       cb,
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest<ServiceAccount>(
-      {
+    this.storageTransport
+      .makeRequest<ServiceAccount>({
         method: 'GET',
         url: `/projects/${this.projectId}/serviceAccount`,
         queryParameters: options as unknown as StorageQueryParameters,
         responseType: 'json',
-      },
-      (err, data, resp) => {
-        if (err) {
-          callback(err, null, resp);
-          return;
-        }
+      })
+      .then(({data, resp}) => {
         const camelCaseResponse = {} as {[index: string]: string};
 
         for (const prop in data) {
@@ -1603,8 +1584,10 @@ export class Storage {
         }
 
         callback(null, camelCaseResponse, resp);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback(err, null, resp);
+      });
   }
 
   /**

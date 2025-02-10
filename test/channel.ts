@@ -58,8 +58,8 @@ describe('Channel', () => {
 
   describe('stop', () => {
     it('should make the correct request', () => {
-      sandbox
-        .stub(channel.storageTransport, 'makeRequest')
+      channel.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake(reqOpts => {
           assert.strictEqual(reqOpts.method, 'POST');
           assert.strictEqual(reqOpts.url, '/channels/stop');
@@ -71,31 +71,16 @@ describe('Channel', () => {
       channel.stop(assert.ifError);
     });
 
-    it('should execute callback with error', done => {
+    it('should rejects with an error', () => {
       const error = {};
 
-      sandbox
-        .stub(channel.storageTransport, 'makeRequest')
-        .callsFake((reqOpts, callback) => {
-          callback!(error as GaxiosError);
-          return Promise.resolve();
-        });
+      channel.storageTransport.makeRequest = sandbox
+        .stub()
+        .rejects(error as GaxiosError);
 
       channel.stop(err => {
         assert.strictEqual(err, error);
-        done();
       });
-    });
-
-    it('should not require a callback', async () => {
-      sandbox
-        .stub(channel.storageTransport, 'makeRequest')
-        .callsFake((reqOpts, callback) => {
-          assert.doesNotThrow(() => callback!(null));
-          return Promise.resolve();
-        });
-
-      await channel.stop();
     });
   });
 });

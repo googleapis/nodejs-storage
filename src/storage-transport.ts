@@ -91,6 +91,11 @@ export interface StorageTransportCallback<T> {
   ): void;
 }
 
+export interface MakeRequestResponse<T> {
+  data: T;
+  resp: GaxiosResponse;
+}
+
 export class StorageTransport {
   authClient: GoogleAuth<AuthClient>;
   private providedUserAgent?: string;
@@ -120,8 +125,7 @@ export class StorageTransport {
 
   makeRequest<T>(
     reqOpts: StorageRequestOptions,
-    callback?: StorageTransportCallback<T>,
-  ): Promise<T> | Promise<void> {
+  ): Promise<MakeRequestResponse<T>> {
     const headers = this.#buildRequestHeaders(reqOpts.headers);
     if (reqOpts[GCCL_GCS_CMD_KEY]) {
       headers['x-goog-api-client'] +=
@@ -149,11 +153,7 @@ export class StorageTransport {
       timeout: this.timeout,
     });
 
-    return callback
-      ? requestPromise
-          .then(resp => callback(null, resp.data, resp))
-          .catch(err => callback(err, null, err.response))
-      : (requestPromise.then(resp => resp.data) as Promise<T>);
+    return requestPromise.then(resp => ({data: resp.data as T, resp}));
   }
 
   #buildUrl(pathUri = '', queryParameters: StorageQueryParameters = {}): URL {

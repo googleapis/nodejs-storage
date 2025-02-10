@@ -298,9 +298,8 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       url = `${this.parent.baseUrl}/${this.parent.id}/${url}`;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'DELETE',
         responseType: 'json',
         url,
@@ -309,16 +308,15 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
           ...methodConfig.reqOpts?.queryParameters,
           ...options,
         },
-      },
-      (err, data, resp) => {
+      })
+      .catch(({err, resp}) => {
         if (err) {
           if (err.status === 404 && ignoreNotFound) {
             err = null;
           }
         }
         callback(err, resp);
-      },
-    );
+      });
   }
 
   /**
@@ -444,9 +442,8 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       url = `${this.parent.baseUrl}/${this.parent.id}/${url}`;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest<K>(
-      {
+    this.storageTransport
+      .makeRequest<K>({
         method: 'GET',
         responseType: 'json',
         url,
@@ -455,12 +452,15 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
           ...methodConfig.reqOpts?.queryParameters,
           ...options,
         },
-      },
-      (err, data, resp) => {
+      })
+      .then(({data, resp}) => {
+        this.metadata = data!;
+        callback(null, data!, resp);
+      })
+      .catch(({err, data, resp}) => {
         this.metadata = data!;
         callback(err, data!, resp);
-      },
-    );
+      });
   }
 
   /**
@@ -501,9 +501,8 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest<K>(
-      {
+    this.storageTransport
+      .makeRequest<K>({
         method: 'PATCH',
         responseType: 'json',
         url,
@@ -516,12 +515,14 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
           ...methodConfig.reqOpts?.queryParameters,
           ...options,
         },
-      },
-      (err, data, resp) => {
+      })
+      .then(({data, resp}) => {
         this.metadata = data!;
-        callback(err, this.metadata, resp);
-      },
-    );
+        callback(null, this.metadata, resp);
+      })
+      .catch(({err, data, resp}) => {
+        callback(err, data!, resp);
+      });
   }
 }
 

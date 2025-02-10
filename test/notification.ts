@@ -53,15 +53,15 @@ describe('Notification', () => {
 
       BUCKET.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
+        .callsFake(reqOpts => {
           assert.strictEqual(reqOpts.method, 'DELETE');
           assert.strictEqual(
             reqOpts.url,
             '/test-bucket/notificationConfigs/123',
           );
           assert.deepStrictEqual(reqOpts.queryParameters, options);
-          callback!(null); // the done fn
-          return Promise.resolve();
+          done();
+          return Promise.resolve({data: {}, resp: {}});
         });
 
       notification.delete(options, done);
@@ -70,21 +70,10 @@ describe('Notification', () => {
     it('should optionally accept options', done => {
       BUCKET.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
+        .callsFake(reqOpts => {
           assert.deepStrictEqual(reqOpts.queryParameters, {});
-          callback!(null); // the done fn
-          return Promise.resolve();
-        });
-
-      notification.delete(done);
-    });
-
-    it('should optionally accept a callback', done => {
-      BUCKET.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((_reqOpts, callback) => {
-          callback!(null); // the done fn
-          return Promise.resolve();
+          done();
+          return Promise.resolve({data: {}, resp: {}});
         });
 
       notification.delete(done);
@@ -228,39 +217,28 @@ describe('Notification', () => {
       await notification.getMetadata(assert.ifError);
     });
 
-    it('should return any errors to the callback', async done => {
+    it('should return any errors', async () => {
       const error = new GaxiosError('err', {});
 
-      BUCKET.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake((_reqOpts, callback) => {
-          callback!(error);
-          return Promise.resolve();
-        });
+      BUCKET.storageTransport.makeRequest = sandbox.stub().rejects(error);
 
       await notification.getMetadata((err: GaxiosError | null) => {
         assert.strictEqual(err, error);
-        done();
       });
     });
 
-    it('should set and return the metadata', async done => {
+    it('should set and return the metadata', async () => {
       const response = {};
 
       BUCKET.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((_reqOpts, callback) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          callback!(null, response as any, response as any);
-          return Promise.resolve();
-        });
+        .resolves({data: {}, resp: {}});
 
       await notification.getMetadata((err: Error, metadata: {}, resp: {}) => {
         assert.ifError(err);
         assert.strictEqual(metadata, response);
         assert.strictEqual(notification.metadata, response);
         assert.strictEqual(resp, response);
-        done();
       });
     });
   });

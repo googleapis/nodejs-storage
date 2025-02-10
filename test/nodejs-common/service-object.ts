@@ -209,13 +209,12 @@ describe('ServiceObject', () => {
     });
 
     it('should make the correct request', done => {
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsFake((reqOpts, callback) => {
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake(reqOpts => {
           assert.strictEqual(reqOpts.method, 'DELETE');
           assert.strictEqual(reqOpts.url, 'base-url/id');
           done();
-          callback!(null);
           return Promise.resolve();
         });
       serviceObject.delete(assert.ifError);
@@ -223,12 +222,11 @@ describe('ServiceObject', () => {
 
     it('should accept options', done => {
       const options = {queryOptionProperty: true};
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsFake((reqOpts, callback) => {
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake(reqOpts => {
           assert.deepStrictEqual(reqOpts.queryParameters, options);
           done();
-          callback!(null);
           return Promise.resolve();
         });
       serviceObject.delete(options, assert.ifError);
@@ -238,9 +236,9 @@ describe('ServiceObject', () => {
       const options = {ignoreNotFound: true};
       const error = new GaxiosError('404', {});
       error.status = 404;
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsArgWith(1, error);
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .rejects(error);
       serviceObject.delete(options, (err, apiResponse_) => {
         assert.ifError(err);
         assert.strictEqual(apiResponse_, undefined);
@@ -248,55 +246,43 @@ describe('ServiceObject', () => {
       });
     });
 
-    it('should propagate other then 404 error', done => {
+    it('should propagate other then 404 error', () => {
       const options = {ignoreNotFound: true};
       const error = new GaxiosError('406', {});
       error.status = 406;
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsArgWith(1, error);
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .rejects(error);
       serviceObject.delete(options, (err, apiResponse_) => {
         assert.strictEqual(err, error);
         assert.strictEqual(apiResponse_, undefined);
-        done();
       });
     });
 
     it('should not pass ignoreNotFound to request', done => {
       const options = {ignoreNotFound: true};
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsFake((reqOpts, callback) => {
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake(reqOpts => {
           assert.strictEqual(
             reqOpts.queryParameters!.ignoreNotFound,
             undefined,
           );
           done();
-          callback!(null);
           return Promise.resolve();
         });
       serviceObject.delete(options, assert.ifError);
     });
 
-    it('should not require a callback', () => {
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsArgWith(1, null, null, {});
-      assert.doesNotThrow(async () => {
-        await serviceObject.delete();
-      });
-    });
-
-    it('should execute callback with correct arguments', done => {
+    it('should resolve with correct arguments', () => {
       const error = new Error('🦃');
       const serviceObject = new ServiceObject(CONFIG);
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsArgWith(1, error);
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .rejects(error);
       serviceObject.delete((err, apiResponse_) => {
         assert.strictEqual(err, error);
         assert.strictEqual(apiResponse_, undefined);
-        done();
       });
     });
   });
@@ -498,8 +484,8 @@ describe('ServiceObject', () => {
 
   describe('getMetadata', () => {
     it('should make the correct request', async done => {
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake(function (
           this: SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>,
           reqOpts,
@@ -516,51 +502,47 @@ describe('ServiceObject', () => {
 
     it('should accept options', done => {
       const options = {queryOptionProperty: true};
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsFake((reqOpts, callback) => {
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake(reqOpts => {
           assert.deepStrictEqual(reqOpts.queryParameters, options);
           done();
-          callback!(null);
           return Promise.resolve();
         });
       serviceObject.getMetadata(options, assert.ifError);
     });
 
-    it('should execute callback with error & apiResponse', async done => {
+    it('should reject with an error & apiResponse', async () => {
       const error = new GaxiosError('ಠ_ಠ', {});
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsArgWith(1, error);
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .rejects(error);
       await serviceObject.getMetadata((err: Error, metadata: {}) => {
         assert.strictEqual(err, error);
         assert.strictEqual(metadata, undefined);
-        done();
       });
     });
 
-    it('should update metadata', async done => {
+    it('should update metadata', async () => {
       const apiResponse = {};
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsArgWith(1, null, {}, apiResponse);
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .resolves(apiResponse);
       await serviceObject.getMetadata((err: Error) => {
         assert.ifError(err);
         assert.deepStrictEqual(serviceObject.metadata, apiResponse);
-        done();
       });
     });
 
-    it('should execute callback with metadata & API response', async done => {
+    it('should resolve with metadata & API response', async () => {
       const apiResponse = {};
       const requestResponse = {body: apiResponse};
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsArgWith(1, null, apiResponse, requestResponse);
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .resolves([apiResponse, requestResponse]);
       await serviceObject.getMetadata((err: Error, metadata: {}) => {
         assert.ifError(err);
         assert.strictEqual(metadata, apiResponse);
-        done();
       });
     });
   });
@@ -568,8 +550,8 @@ describe('ServiceObject', () => {
   describe('setMetadata', () => {
     it('should make the correct request', async done => {
       const metadata = {metadataProperty: true};
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
         .callsFake(function (
           this: SO.ServiceObject<FakeServiceObject, SO.BaseMetadata>,
           reqOpts,
@@ -589,51 +571,47 @@ describe('ServiceObject', () => {
     it('should accept options', done => {
       const metadata = {};
       const options = {queryOptionProperty: true};
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsFake((reqOpts, callback) => {
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake(reqOpts => {
           assert.deepStrictEqual(reqOpts.queryParameters, options);
           done();
-          callback!(null);
           return Promise.resolve();
         });
       serviceObject.setMetadata(metadata, options, () => {});
     });
 
-    it('should execute callback with error & apiResponse', async done => {
+    it('should reject with error & apiResponse', async () => {
       const error = new Error('Error.');
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsArgWith(1, error);
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .rejects(error);
       await serviceObject.setMetadata({}, (err: Error, apiResponse_: {}) => {
         assert.strictEqual(err, error);
         assert.strictEqual(apiResponse_, undefined);
-        done();
       });
     });
 
-    it('should update metadata', async done => {
+    it('should update metadata', async () => {
       const apiResponse = {};
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsArgWith(1, undefined, apiResponse);
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .resolves([undefined, apiResponse]);
       await serviceObject.setMetadata({}, (err: Error) => {
         assert.ifError(err);
         assert.strictEqual(serviceObject.metadata, apiResponse);
-        done();
       });
     });
 
-    it('should execute callback with metadata & API response', async done => {
+    it('should resolve with metadata & API response', async () => {
       const body = {};
       const apiResponse = {body};
-      sandbox
-        .stub(serviceObject.storageTransport, 'makeRequest')
-        .callsArgWith(1, null, body, apiResponse);
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .resolves([body, apiResponse]);
       await serviceObject.setMetadata({}, (err: Error, metadata: {}) => {
         assert.ifError(err);
         assert.strictEqual(metadata, body);
-        done();
       });
     });
   });

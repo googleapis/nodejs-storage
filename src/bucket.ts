@@ -1662,9 +1662,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
 
     // Make the request from the destination File object.
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    destinationFile.storageTransport.makeRequest(
-      {
+    destinationFile.storageTransport
+      .makeRequest({
         method: 'POST',
         url: '/compose',
         maxRetries,
@@ -1688,17 +1687,14 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
           }),
         },
         queryParameters: options as unknown as StorageQueryParameters,
-      },
-      (err, resp) => {
+      })
+      .then(resp => {
         this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-        if (err) {
-          callback!(err, null, resp);
-          return;
-        }
-
         callback!(null, destinationFile, resp);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback!(err, null, resp);
+      });
   }
 
   createChannel(
@@ -1825,9 +1821,8 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options = optionsOrCallback;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'POST',
         url: `${this.baseUrl}/o/watch`,
         body: Object.assign(
@@ -1838,20 +1833,17 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
           config,
         ),
         queryParameters: options as unknown as StorageQueryParameters,
-      },
-      (err, data, resp) => {
-        if (err) {
-          callback!(err, null, resp);
-          return;
-        }
-
+      })
+      .then(data => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const resourceId = (data as any).resourceId;
         const channel = this.storage.channel(id, resourceId);
 
         channel.metadata = data as unknown as BaseMetadata;
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback!(err, null, resp);
+      });
   }
 
   createNotification(
@@ -2009,28 +2001,24 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       delete body.userProject;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'POST',
         url: `${this.baseUrl}/notificationConfigs`,
         body: convertObjKeysToSnakeCase(body),
         queryParameters: query as unknown as StorageQueryParameters,
         retry: false,
-      },
-      (err, data, resp) => {
-        if (err) {
-          callback!(err, null, resp);
-          return;
-        }
-
+      })
+      .then(({data, resp}) => {
         const notification = this.notification(
           (data as NotificationMetadata).id!,
         );
         notification.metadata = data as NotificationMetadata;
         callback!(null, notification, resp);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback!(err, null, resp);
+      });
   }
 
   deleteFiles(query?: DeleteFilesOptions): Promise<void>;
@@ -2817,19 +2805,12 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
     query = Object.assign({}, query);
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         url: `${this.baseUrl}/${this.id}/o`,
         queryParameters: query as unknown as StorageQueryParameters,
-      },
-      (err, data, resp) => {
-        if (err) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (callback as any)(err, null, null, resp);
-          return;
-        }
-
+      })
+      .then(({data, resp}) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const itemsArray = (data as any).items ? (data as any).items : [];
         const files = itemsArray.map((file: FileMetadata) => {
@@ -2864,8 +2845,11 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (callback as any)(null, files, nextQuery, resp);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (callback as any)(err, null, null, resp);
+      });
   }
 
   getLabels(options?: GetLabelsOptions): Promise<GetLabelsResponse>;
@@ -3019,17 +3003,12 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       options = optionsOrCallback;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         url: `${this.baseUrl}/notificationConfigs`,
         queryParameters: options as unknown as StorageQueryParameters,
-      },
-      (err, data, resp) => {
-        if (err) {
-          callback!(err, null, resp);
-          return;
-        }
+      })
+      .then(({data, resp}) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const itemsArray = (data as any).items ? (data as any).items : [];
         const notifications = itemsArray.map(
@@ -3041,8 +3020,10 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         );
 
         callback!(null, notifications, resp);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        callback!(err, null, resp);
+      });
   }
 
   getSignedUrl(cfg: GetBucketSignedUrlConfig): Promise<GetSignedUrlResponse>;
@@ -3251,17 +3232,20 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       throw new Error(BucketExceptionMessages.METAGENERATION_NOT_PROVIDED);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'POST',
         url: `${this.baseUrl}/lockRetentionPolicy`,
         queryParameters: {
           ifMetagenerationMatch: metageneration,
         },
-      },
-      callback!,
-    );
+      })
+      .then(data => {
+        callback!(null, data);
+      })
+      .catch(error => {
+        callback!(error, null);
+      });
   }
 
   makePrivate(

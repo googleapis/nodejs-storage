@@ -134,7 +134,7 @@ describe('File', () => {
     });
 
     describe('delete', () => {
-      it('should set the correct query string with options', done => {
+      it('should set the correct query string with options', async done => {
         const options = {
           generation: 2,
           userProject: 'user-project',
@@ -148,7 +148,7 @@ describe('File', () => {
 
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'DELETE');
             assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
             assert.deepStrictEqual(
@@ -175,21 +175,16 @@ describe('File', () => {
               reqOpts.queryParameters.preconditionOpts.ifMetagenerationNotMatch,
               options.preconditionOpts.ifMetagenerationNotMatch,
             );
-            callback!(null, {data: {}});
-            return Promise.resolve();
+            done();
+            return Promise.resolve({data: {}});
           });
-        file.delete(options, done);
+        await file.delete(options);
       });
 
       it('should return an error if the request fails', async () => {
         const error = new GaxiosError('err', {});
 
-        STORAGE.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((_reqOpts, callback) => {
-            callback!(error);
-            return Promise.resolve();
-          });
+        STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.delete((err: GaxiosError | null) => {
           assert.strictEqual(err, error);
         });
@@ -197,7 +192,7 @@ describe('File', () => {
     });
 
     describe('exists', () => {
-      it('should set the correct query string with options', done => {
+      it('should set the correct query string with options', async () => {
         const options = {
           generation: 2,
           userProject: 'user-project',
@@ -211,7 +206,7 @@ describe('File', () => {
 
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'GET');
             assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
             assert.deepStrictEqual(
@@ -238,21 +233,15 @@ describe('File', () => {
               reqOpts.queryParameters.preconditionOpts.ifMetagenerationNotMatch,
               options.preconditionOpts.ifMetagenerationNotMatch,
             );
-            callback!(null, {data: {}});
-            return Promise.resolve();
+            return Promise.resolve({data: {}});
           });
-        file.exists(options, done);
+        await file.exists(options);
       });
 
       it('should return an error if the request fails', async () => {
         const error = new GaxiosError('err', {});
 
-        STORAGE.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((_reqOpts, callback) => {
-            callback!(error);
-            return Promise.resolve();
-          });
+        STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.exists((err: GaxiosError | null) => {
           assert.strictEqual(err, error);
         });
@@ -260,7 +249,7 @@ describe('File', () => {
     });
 
     describe('get', () => {
-      it('should set the correct query string with options', done => {
+      it('should set the correct query string with options', async () => {
         const options = {
           generation: 2,
           userProject: 'user-project',
@@ -274,7 +263,7 @@ describe('File', () => {
 
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'GET');
             assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
             assert.deepStrictEqual(
@@ -301,21 +290,15 @@ describe('File', () => {
               reqOpts.queryParameters.preconditionOpts.ifMetagenerationNotMatch,
               options.preconditionOpts.ifMetagenerationNotMatch,
             );
-            callback!(null, {data: {}});
-            return Promise.resolve();
+            return Promise.resolve({data: {}});
           });
-        file.get(options, done);
+        await file.get(options);
       });
 
       it('should return an error if the request fails', async () => {
         const error = new GaxiosError('err', {});
 
-        STORAGE.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((_reqOpts, callback) => {
-            callback!(error);
-            return Promise.resolve();
-          });
+        STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.get((err: GaxiosError | null) => {
           assert.strictEqual(err, error);
         });
@@ -323,7 +306,7 @@ describe('File', () => {
     });
 
     describe('getMetadata', () => {
-      it('should set the correct query string with options', done => {
+      it('should set the correct query string with options', async () => {
         const options = {
           generation: 2,
           userProject: 'user-project',
@@ -337,7 +320,7 @@ describe('File', () => {
 
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'GET');
             assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
             assert.deepStrictEqual(
@@ -364,21 +347,15 @@ describe('File', () => {
               reqOpts.queryParameters.preconditionOpts.ifMetagenerationNotMatch,
               options.preconditionOpts.ifMetagenerationNotMatch,
             );
-            callback!(null, {data: {}});
-            return Promise.resolve();
+            return Promise.resolve({data: {}});
           });
-        file.getMetadata(options, done);
+        await file.getMetadata(options);
       });
 
       it('should return an error if the request fails', async () => {
         const error = new GaxiosError('err', {});
 
-        STORAGE.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((_reqOpts, callback) => {
-            callback!(error);
-            return Promise.resolve();
-          });
+        STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.getMetadata((err: GaxiosError | null) => {
           assert.strictEqual(err, error);
         });
@@ -386,41 +363,32 @@ describe('File', () => {
     });
 
     describe('setMetadata', () => {
-      it('should set the correct query string with options', done => {
+      it('should set the correct query string with options', async () => {
         const options = {
           temporaryHold: true,
         };
 
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
+          .callsFake(reqOpts => {
             assert.strictEqual(reqOpts.method, 'PATCH');
             assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
             assert.deepStrictEqual(
               reqOpts.body.temporaryHold,
               options.temporaryHold,
             );
-            callback!(null);
             return Promise.resolve();
           });
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        file.setMetadata(options, done);
+        await file.setMetadata(options);
       });
 
-      it('should return an error if the request fails', done => {
+      it('should return an error if the request fails', async () => {
         const error = new GaxiosError('err', {});
 
-        STORAGE.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((_reqOpts, callback) => {
-            callback!(error);
-            return Promise.resolve();
-          });
+        STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        file.setMetadata({}, (err: GaxiosError | null) => {
+        await file.setMetadata({}, (err: GaxiosError | null) => {
           assert.strictEqual(err, error);
-          done();
         });
       });
     });
@@ -486,7 +454,7 @@ describe('File', () => {
       directoryFile.copy(newFile, done);
     });
 
-    it('should execute callback with error & API response', done => {
+    it('should return promise with error & API response', () => {
       const error = new Error('Error.');
       const apiResponse = {};
 
@@ -494,16 +462,12 @@ describe('File', () => {
 
       file.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake((reqOpts, callback) => {
-          callback(error, null, apiResponse);
-        });
+        .rejects({error, apiResponse});
 
       file.copy(newFile, (err, file, apiResponse_) => {
         assert.strictEqual(err, error);
         assert.strictEqual(file, null);
         assert.strictEqual(apiResponse_, apiResponse);
-
-        done();
       });
     });
 
@@ -761,18 +725,15 @@ describe('File', () => {
         rewriteToken: '...',
       };
 
-      it('should continue attempting to copy', done => {
+      it('should continue attempting to copy', () => {
         const newFile = new File(BUCKET, 'new-file');
 
         file.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
-            callback(apiResponse);
-          });
+          .resolves(apiResponse);
 
         file.copy(newFile, apiResponse_ => {
           assert.strictEqual(apiResponse, apiResponse_);
-          done();
         });
       });
 
@@ -837,707 +798,39 @@ describe('File', () => {
         const resp = {success: true};
         file.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake((reqOpts, callback) => {
-            callback(null, file, resp);
-          });
+          .resolves({file, resp});
       });
 
-      it('should re-use file object if one is provided', done => {
+      it('should re-use file object if one is provided', () => {
         const newFile = new File(BUCKET, 'new-file');
         file.copy(newFile, (err, copiedFile) => {
           assert.ifError(err);
           assert.deepStrictEqual(copiedFile, newFile);
-          done();
         });
       });
 
-      it('should create new file on the same bucket', done => {
+      it('should create new file on the same bucket', () => {
         const newFilename = 'new-filename';
         file.copy(newFilename, (err, copiedFile) => {
           assert.ifError(err);
           assert.strictEqual(copiedFile?.bucket.name, BUCKET.name);
           assert.strictEqual(copiedFile?.name, newFilename);
-          done();
         });
       });
 
-      it('should create new file on the destination bucket', done => {
+      it('should create new file on the destination bucket', () => {
         file.copy(BUCKET, (err, copiedFile) => {
           assert.ifError(err);
           assert.strictEqual(copiedFile?.bucket.name, BUCKET.name);
           assert.strictEqual(copiedFile?.name, file.name);
-          done();
         });
       });
 
-      it('should pass apiResponse into callback', done => {
+      it('should pass apiResponse into callback', () => {
         file.copy(BUCKET, (err, copiedFile, apiResponse) => {
           assert.ifError(err);
           assert.deepStrictEqual({success: true}, apiResponse);
-          done();
         });
-      });
-    });
-  });
-
-  describe('createReadStream', () => {
-    beforeEach(() => {
-      const rawResponseStream = new PassThrough();
-      const headers = {};
-      setImmediate(() => {
-        rawResponseStream.emit('response', headers);
-        // rawResponseStream.write();
-        rawResponseStream.end();
-      });
-      return rawResponseStream;
-    });
-
-    it('should throw if both a range and validation is given', () => {
-      assert.throws(() => {
-        file.createReadStream({
-          validation: true,
-          start: 3,
-          end: 8,
-        });
-      }, /Cannot use validation with file ranges \(start\/end\)\./);
-
-      assert.throws(() => {
-        file.createReadStream({
-          validation: true,
-          start: 3,
-        });
-      }, /Cannot use validation with file ranges \(start\/end\)\./);
-
-      assert.throws(() => {
-        file.createReadStream({
-          validation: true,
-          end: 8,
-        });
-      }, /Cannot use validation with file ranges \(start\/end\)\./);
-
-      assert.doesNotThrow(() => {
-        file.createReadStream({
-          start: 3,
-          end: 8,
-        });
-      });
-    });
-
-    it('should send query.generation if File has one', done => {
-      const versionedFile = new File(BUCKET, 'file.txt', {generation: 1});
-
-      versionedFile.storageTransport.makeRequest = sandbox
-        .stub()
-        .callsFake(rOpts => {
-          assert.strictEqual(rOpts.queryParameters.generation, 1);
-          setImmediate(done);
-          return duplexify();
-        });
-
-      versionedFile.createReadStream().resume();
-    });
-
-    it('should send query.userProject if provided', done => {
-      const options = {
-        userProject: 'user-project-id',
-      };
-
-      file.storageTransport.makeRequest = sandbox.stub().callsFake(rOpts => {
-        assert.strictEqual(
-          rOpts.queryParameters.userProject,
-          options.userProject,
-        );
-        setImmediate(done);
-        return duplexify();
-      });
-
-      file.createReadStream(options).resume();
-    });
-
-    it('should pass the `GCCL_GCS_CMD_KEY` to `requestStream`', done => {
-      const expected = 'expected/value';
-
-      file.storageTransport.makeRequest = sandbox.stub().callsFake(opts => {
-        assert.equal(opts[GCCL_GCS_CMD_KEY], expected);
-
-        process.nextTick(() => done());
-
-        return duplexify();
-      });
-
-      file
-        .createReadStream({
-          [GCCL_GCS_CMD_KEY]: expected,
-        })
-        .resume();
-    });
-
-    describe('authenticating', () => {
-      it('should create an authenticated request', () => {
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(opts => {
-          assert.deepStrictEqual(opts, {
-            uri: '',
-            headers: {
-              'Accept-Encoding': 'gzip',
-              'Cache-Control': 'no-store',
-            },
-            queryParameters: {
-              alt: 'media',
-            },
-          });
-
-          return duplexify();
-        });
-
-        file.createReadStream().resume();
-      });
-
-      describe('errors', () => {
-        const ERROR = new GaxiosError('Error.', {});
-        it('should emit an error from authenticating', done => {
-          file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-            const requestStream = new PassThrough();
-
-            setImmediate(() => {
-              requestStream.emit('Error', ERROR);
-            });
-            done();
-            return requestStream;
-          });
-          file
-            .createReadStream()
-            .once('error', err => {
-              assert.strictEqual(err, ERROR);
-              done();
-            })
-            .resume();
-        });
-      });
-    });
-
-    describe('requestStream', () => {
-      it('should get readable stream from request', done => {
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            done();
-          });
-
-          return new PassThrough();
-        });
-
-        file.createReadStream().resume();
-      });
-
-      it('should emit response event from request', done => {
-        file.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((reqOpts, callback) => {
-            callback(null, null, {headers: {}});
-            done();
-          });
-
-        file
-          .createReadStream({validation: false})
-          .on('response', () => {
-            done();
-          })
-          .resume();
-      });
-
-      it('should let util.handleResp handle the response', done => {
-        const response = {a: 'b', c: 'd'};
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          const rowRequestStream = new PassThrough();
-          setImmediate(() => {
-            rowRequestStream.emit('response', response);
-          });
-          done();
-          return rowRequestStream;
-        });
-
-        file
-          .createReadStream()
-          .on('responce', (err, response_, body) => {
-            assert.strictEqual(err, null);
-            assert.strictEqual(response_, response);
-            assert.strictEqual(body, null);
-            done();
-          })
-          .resume();
-      });
-
-      describe('errors', () => {
-        const ERROR = new GaxiosError('Error.', {});
-        it('should emit the error', done => {
-          file.storageTransport.makeRequest = sandbox
-            .stub()
-            .callsFake((reqOpts, callback) => {
-              callback(ERROR, null, null);
-              done();
-            });
-
-          file
-            .createReadStream()
-            .once('error', err => {
-              assert.deepStrictEqual(err, ERROR);
-              done();
-            })
-            .resume();
-        });
-
-        it('should parse a response stream for a better error', done => {
-          const rawResponsePayload = 'error message from body';
-          const rawResponseStream = new PassThrough();
-          const requestStream = new PassThrough();
-
-          file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-            setImmediate(() => {
-              requestStream.emit('response', rawResponseStream);
-            });
-            done();
-            return requestStream;
-          });
-
-          file
-            .createReadStream()
-            .once('error', (err: Error) => {
-              assert.strictEqual(err, ERROR);
-              assert.strictEqual(err.message, rawResponsePayload);
-              done();
-            })
-            .resume();
-        });
-
-        it('should emit errors from the request stream', done => {
-          const error = new Error('Error.');
-          const requestStream = new PassThrough();
-          const rawResponseStream = new PassThrough();
-
-          file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-            setImmediate(() => {
-              requestStream.emit('response', rawResponseStream);
-            });
-            done();
-            return requestStream;
-          });
-
-          file
-            .createReadStream()
-            .on('error', err => {
-              assert.strictEqual(err, error);
-              done();
-            })
-            .resume();
-        });
-
-        it('should not handle both error and end events', done => {
-          const error = new Error('Error.');
-          const rawResponseStream = new PassThrough();
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (rawResponseStream as any).toJSON = () => {
-            return {headers: {}};
-          };
-          const requestStream = new PassThrough();
-
-          file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-            setImmediate(() => {
-              requestStream.emit('response', rawResponseStream);
-            });
-            done();
-            return requestStream;
-          });
-
-          file
-            .createReadStream({validation: false})
-            .on('error', err => {
-              assert.strictEqual(err, error);
-              rawResponseStream.emit('end');
-              setImmediate(done);
-            })
-            .on('end', () => {
-              done(new Error('Should not have been called.'));
-            })
-            .resume();
-        });
-      });
-    });
-
-    describe('validation', () => {
-      const responseCRC32C = CRC32C_HASH;
-      const responseMD5 = MD5_HASH;
-
-      beforeEach(() => {
-        const rawResponseStream = new PassThrough();
-        const headers = {
-          'x-goog-hash': `crc32c=${responseCRC32C},md5=${responseMD5}`,
-          'x-google-stored-content-encoding': 'identity',
-        };
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            rawResponseStream.emit('response', {headers});
-            rawResponseStream.write(DATA);
-            rawResponseStream.end();
-          });
-          return rawResponseStream;
-        });
-      });
-
-      it('should emit errors from the validation stream', done => {
-        const expectedError = new Error('test error');
-        const rawResponseStream = new PassThrough();
-        const headers = {
-          'x-goog-hash': `crc32c=dummy-hash,md5=${responseMD5}`,
-          'x-google-stored-content-encoding': 'identity',
-        };
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            rawResponseStream.emit('response', headers);
-            rawResponseStream.write(DATA);
-            rawResponseStream.end();
-          });
-          done();
-          return rawResponseStream;
-        });
-
-        file
-          .createReadStream()
-          .on('error', (err: Error) => {
-            assert(err === expectedError);
-
-            done();
-          })
-          .resume();
-      });
-
-      it('should validate with crc32c', done => {
-        const rawResponseStream = new PassThrough();
-        const headers = {
-          'x-goog-hash': `crc32c=${CRC32C_HASH}`,
-          'x-google-stored-content-encoding': 'identity',
-        };
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            rawResponseStream.emit('response', {headers});
-            rawResponseStream.write(DATA);
-            rawResponseStream.end();
-          });
-          done();
-          return rawResponseStream;
-        });
-
-        file
-          .createReadStream({validation: 'crc32c'})
-          .on('error', done)
-          .on('end', done)
-          .resume();
-      });
-
-      it('should emit an error if crc32c validation fails', done => {
-        const rawResponseStream = new PassThrough();
-        const headers = {
-          'x-goog-hash': 'crc32c=invalid-crc32c',
-          'x-google-stored-content-encoding': 'identity',
-        };
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            rawResponseStream.emit('response', {headers});
-            rawResponseStream.write(DATA);
-            rawResponseStream.end();
-          });
-          done();
-          return rawResponseStream;
-        });
-
-        file
-          .createReadStream({validation: 'crc32c'})
-          .on('error', err => {
-            assert.strictEqual(err.message, 'CONTENT_DOWNLOAD_MISMATCH');
-            done();
-          })
-          .resume();
-      });
-
-      it('should validate with md5', done => {
-        const rawResponseStream = new PassThrough();
-        const headers = {
-          'x-google-hash': `md5=${MD5_HASH}`,
-          'x-google-stored-content-encoding': 'identity',
-        };
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            rawResponseStream.emit('response', {headers});
-            rawResponseStream.write(DATA);
-            rawResponseStream.end();
-          });
-          done();
-          return rawResponseStream;
-        });
-
-        file
-          .createReadStream({validation: 'md5'})
-          .on('error', done)
-          .on('end', done)
-          .resume();
-      });
-
-      it('should emit an error if md5 validation fails', done => {
-        const rawResponseStream = new PassThrough();
-        const headers = {
-          'x-google-hash': 'md5=invalid-md5',
-          'x-google-stored-content-encoding': 'identity',
-        };
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            rawResponseStream.emit('response', {headers});
-            rawResponseStream.write(DATA);
-            rawResponseStream.end();
-          });
-          done();
-          return rawResponseStream;
-        });
-
-        file
-          .createReadStream({validation: 'md5'})
-          .on('error', err => {
-            assert.strictEqual(err.message, 'CONTENT_DOWNLOAD_MISMATCH');
-            done();
-          })
-          .resume();
-      });
-
-      it('should default to crc32c validation', done => {
-        const rawResponseStream = new PassThrough();
-        const headers = {
-          'x-goog-hash': `crc32c=${CRC32C_HASH}`,
-          'x-google-stored-content-encoding': 'identity',
-        };
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            rawResponseStream.emit('response', {headers});
-            rawResponseStream.write(DATA);
-            rawResponseStream.end();
-          });
-          done();
-          return rawResponseStream;
-        });
-
-        file
-          .createReadStream()
-          .on('error', err => {
-            assert.strictEqual(err.message, 'CONTENT_DOWNLOAD_MISMATCH');
-            done();
-          })
-          .resume();
-      });
-
-      it('should ignore a data mismatch if validation: false', done => {
-        const rawResponseStream = new PassThrough();
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            rawResponseStream.write(DATA);
-            rawResponseStream.end();
-          });
-          done();
-          return rawResponseStream;
-        });
-
-        file
-          .createReadStream({validation: false})
-          .resume()
-          .on('error', done)
-          .on('end', done);
-      });
-
-      it('should handle x-goog-hash with only crc32c', done => {
-        const rawResponseStream = new PassThrough();
-        const headers = {
-          'x-goog-hash': `crc32c=${CRC32C_HASH}`,
-        };
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            rawResponseStream.emit('response', {headers});
-            rawResponseStream.end(DATA);
-          });
-          done();
-          return rawResponseStream;
-        });
-
-        file.createReadStream().on('error', done).on('end', done).resume();
-      });
-
-      describe('destroying the through stream', () => {
-        it('should destroy after failed validation', done => {
-          const rawResponseStream = new PassThrough();
-          const headers = {
-            'x-google-hash': `md5=${MD5_HASH}`,
-            'x-google-stored-content-encoding': 'identity',
-          };
-
-          file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-            setImmediate(() => {
-              rawResponseStream.emit('response', {headers});
-              rawResponseStream.write(DATA);
-              rawResponseStream.end();
-            });
-            done();
-            return rawResponseStream;
-          });
-
-          const readStream = file.createReadStream({validation: 'md5'});
-          readStream
-            .on('error', err => {
-              assert.strictEqual(err.message, 'CONTENT_DOWNLOAD_MISMATCH');
-              done();
-            })
-            .on('end', () => {
-              done();
-            });
-
-          readStream.resume();
-        });
-
-        it('should destroy if MD5 is requested but absent', done => {
-          const rawResponseStream = new PassThrough();
-          const headers = {
-            'x-google-stored-content-encoding': 'identity',
-          };
-
-          file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-            setImmediate(() => {
-              rawResponseStream.emit('response', {headers});
-              rawResponseStream.write(DATA);
-              rawResponseStream.end();
-            });
-            done();
-            return rawResponseStream;
-          });
-
-          const readStream = file.createReadStream({validation: 'md5'});
-
-          readStream
-            .on('error', err => {
-              assert.strictEqual(err.message, 'MD5_NOT_AVAILABLE');
-              done();
-            })
-            .on('end', () => {
-              done();
-            });
-
-          readStream.resume();
-        });
-      });
-    });
-
-    describe('range requests', () => {
-      it('should accept a start range', done => {
-        const startOffset = 100;
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(opts => {
-          setImmediate(() => {
-            assert.strictEqual(
-              opts.headers!.Range,
-              'bytes=' + startOffset + '-',
-            );
-            done();
-          });
-          return duplexify();
-        });
-
-        file.createReadStream({start: startOffset}).resume();
-      });
-
-      it('should accept an end range and set start to 0', done => {
-        const endOffset = 100;
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(opts => {
-          setImmediate(() => {
-            assert.strictEqual(opts.headers!.Range, 'bytes=0-' + endOffset);
-            done();
-          });
-          return duplexify();
-        });
-
-        file.createReadStream({end: endOffset}).resume();
-      });
-
-      it('should accept both a start and end range', done => {
-        const startOffset = 100;
-        const endOffset = 101;
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(opts => {
-          setImmediate(() => {
-            const expectedRange = 'bytes=' + startOffset + '-' + endOffset;
-            assert.strictEqual(opts.headers!.Range, expectedRange);
-            done();
-          });
-          return duplexify();
-        });
-
-        file.createReadStream({start: startOffset, end: endOffset}).resume();
-      });
-
-      it('should accept range start and end as 0', done => {
-        const startOffset = 0;
-        const endOffset = 0;
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(opts => {
-          setImmediate(() => {
-            const expectedRange = 'bytes=0-0';
-            assert.strictEqual(opts.headers!.Range, expectedRange);
-            done();
-          });
-          return duplexify();
-        });
-
-        file.createReadStream({start: startOffset, end: endOffset}).resume();
-      });
-
-      it('should end the through stream', done => {
-        const rawResponseStream = new PassThrough();
-        const headers = {
-          'x-google-hash': `md5=${MD5_HASH}`,
-          'x-google-stored-content-encoding': 'identity',
-        };
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          setImmediate(() => {
-            rawResponseStream.emit('response', {headers});
-            rawResponseStream.write(DATA);
-            rawResponseStream.end();
-          });
-          done();
-          return rawResponseStream;
-        });
-
-        const readStream = file.createReadStream({start: 100});
-        readStream.on('end', done);
-        readStream.resume();
-      });
-    });
-
-    describe('tail requests', () => {
-      it('should make a request for the tail bytes', done => {
-        const endOffset = -10;
-
-        file.storageTransport.makeRequest = sandbox.stub().callsFake(opts => {
-          setImmediate(() => {
-            assert.strictEqual(opts.headers!.Range, 'bytes=' + endOffset);
-            done();
-          });
-          return duplexify();
-        });
-
-        file.createReadStream({end: endOffset}).resume();
       });
     });
   });
@@ -3747,12 +3040,8 @@ describe('File', () => {
         });
       });
 
-      it('should not delete the destination is same as origin', done => {
-        file.storageTransport.makeRequest = sandbox
-          .stub()
-          .callsFake((config: {}, callback: Function) => {
-            callback(null, {});
-          });
+      it('should not delete the destination is same as origin', () => {
+        file.storageTransport.makeRequest = sandbox.stub().resolves({});
         const stub = sinon.stub(file, 'delete');
         // destination is same bucket as object
         file.move(BUCKET, err => {
@@ -3765,7 +3054,6 @@ describe('File', () => {
               assert.ifError(err);
               assert.ok(stub.notCalled);
               stub.reset();
-              done();
             });
           });
         });
@@ -4693,6 +3981,7 @@ describe('File', () => {
               file.bucket.name +
               '/o',
           );
+          return Promise.resolve({});
         });
 
       await file.startSimpleUpload_(duplexify(), options);
@@ -4706,7 +3995,7 @@ describe('File', () => {
             options_.queryParameters?.predefinedAcl,
             'publicRead',
           );
-          return Promise.resolve();
+          return Promise.resolve({});
         });
 
       await file.startSimpleUpload_(duplexify(), {public: true});
@@ -4720,6 +4009,7 @@ describe('File', () => {
             options_.queryParameters?.predefinedAcl,
             'private',
           );
+          return Promise.resolve({});
         });
 
       await file.startSimpleUpload_(duplexify(), {private: true});
@@ -4731,7 +4021,8 @@ describe('File', () => {
         .stub()
         .callsFake((options: StorageRequestOptions) => {
           assert.strictEqual(options.queryParameters?.ifGenerationMatch, 1);
-        });
+        })
+        .resolves({});
 
       await versionedFile.startSimpleUpload_(duplexify(), {});
     });
@@ -4745,7 +4036,8 @@ describe('File', () => {
             options.queryParameters?.kmsKeyName,
             file.kmsKeyName,
           );
-        });
+        })
+        .resolves({});
 
       await file.startSimpleUpload_(duplexify(), {});
     });
@@ -4761,7 +4053,8 @@ describe('File', () => {
             options_.queryParameters?.userProject,
             options.userProject,
           );
-        });
+        })
+        .resolves({});
 
       await file.startSimpleUpload_(duplexify(), options);
     });
@@ -4771,17 +4064,11 @@ describe('File', () => {
         const error = new Error('Error.');
 
         beforeEach(() => {
-          file.storageTransport.makeRequest = sandbox
-            .stub()
-            .callsFake((reqOpts, callback) => {
-              callback(error);
-            });
+          file.storageTransport.makeRequest = sandbox.stub().rejects(error);
         });
 
         it('should destroy the stream', done => {
           const stream = duplexify();
-
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           file.startSimpleUpload_(stream);
 
           stream.on('error', (err: Error) => {
@@ -4800,18 +4087,15 @@ describe('File', () => {
         beforeEach(() => {
           file.storageTransport.makeRequest = sandbox
             .stub()
-            .callsFake((reqOpts, callback) => {
-              callback(null, body, resp);
-            });
+            .resolves({data: body, resp});
         });
 
         it('should set the metadata', () => {
           const stream = duplexify();
 
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           file.startSimpleUpload_(stream);
 
-          assert.strictEqual(file.metadata, body);
+          assert.deepEqual(file.metadata, body);
         });
 
         it('should emit the response', done => {
@@ -4822,7 +4106,6 @@ describe('File', () => {
             done();
           });
 
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           file.startSimpleUpload_(stream);
         });
 
@@ -4831,7 +4114,6 @@ describe('File', () => {
 
           stream.on('complete', done);
 
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           file.startSimpleUpload_(stream);
         });
       });

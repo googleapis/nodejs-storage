@@ -255,20 +255,17 @@ class Iam {
       qs.optionsRequestedPolicyVersion = options.requestedPolicyVersion;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         url: '/iam',
         queryParameters: qs as unknown as StorageQueryParameters,
-      },
-      (err, data, resp) => {
-        if (err) {
-          cb(err);
-          return;
-        }
-        cb(null, data as Policy, resp);
-      },
-    );
+      })
+      .then(({data, resp}) => {
+        cb!(null, data as Policy, resp);
+      })
+      .catch(err => {
+        cb!(err);
+      });
   }
 
   setPolicy(
@@ -348,9 +345,8 @@ class Iam {
       maxRetries = 0;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    this.storageTransport
+      .makeRequest({
         method: 'PUT',
         url: '/iam',
         maxRetries,
@@ -361,15 +357,13 @@ class Iam {
           policy,
         ),
         queryParameters: options as unknown as StorageQueryParameters,
-      },
-      (err, data, resp) => {
-        if (err) {
-          cb!(err);
-          return;
-        }
+      })
+      .then(({data, resp}) => {
         cb!(null, data as Policy, resp);
-      },
-    );
+      })
+      .catch(error => {
+        cb!(error);
+      });
   }
 
   testPermissions(
@@ -465,18 +459,12 @@ class Iam {
       options,
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    this.storageTransport.makeRequest(
-      {
+    void this.storageTransport
+      .makeRequest({
         url: '/iam/testPermissions',
         queryParameters: req as unknown as StorageQueryParameters,
-      },
-      (err, data, resp) => {
-        if (err) {
-          cb!(err, null, resp);
-          return;
-        }
-
+      })
+      .then(({data, resp}) => {
         const availablePermissions = Array.isArray((data as any).permissions)
           ? (data as any).permissions
           : [];
@@ -490,8 +478,10 @@ class Iam {
         );
 
         cb!(null, permissionsHash, resp);
-      },
-    );
+      })
+      .catch(({err, resp}) => {
+        cb!(err, null, resp);
+      });
   }
 }
 
