@@ -108,6 +108,9 @@ export interface TestIamPermissionsCallback {
 export interface TestIamPermissionsOptions {
   userProject?: string;
 }
+interface TestPermissionsResponse {
+  permissions?: string[];
+}
 
 interface GetPolicyRequest {
   userProject?: string;
@@ -256,15 +259,21 @@ class Iam {
     }
 
     this.storageTransport
-      .makeRequest({
-        url: '/iam',
-        queryParameters: qs as unknown as StorageQueryParameters,
-      })
-      .then(({data, resp}) => {
-        cb!(null, data as Policy, resp);
-      })
+      .makeRequest(
+        {
+          url: '/iam',
+          queryParameters: qs as unknown as StorageQueryParameters,
+        },
+        (err, data, resp) => {
+          if (err) {
+            cb(err);
+            return;
+          }
+          cb(null, data as Policy, resp);
+        },
+      )
       .catch(err => {
-        cb!(err);
+        callback!(err);
       });
   }
 
@@ -346,24 +355,28 @@ class Iam {
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'PUT',
-        url: '/iam',
-        maxRetries,
-        body: Object.assign(
-          {
-            resourceId: this.resourceId_,
-          },
-          policy,
-        ),
-        queryParameters: options as unknown as StorageQueryParameters,
-      })
-      .then(({data, resp}) => {
-        cb!(null, data as Policy, resp);
-      })
-      .catch(error => {
-        cb!(error);
-      });
+      .makeRequest(
+        {
+          method: 'PUT',
+          url: '/iam',
+          maxRetries,
+          body: Object.assign(
+            {
+              resourceId: this.resourceId_,
+            },
+            policy,
+          ),
+          queryParameters: options as unknown as StorageQueryParameters,
+        },
+        (err, data, resp) => {
+          if (err) {
+            cb(err);
+            return;
+          }
+          cb(null, data as Policy, resp);
+        },
+      )
+      .catch(err => cb(err));
   }
 
   testPermissions(
@@ -459,29 +472,33 @@ class Iam {
       options,
     );
 
-    void this.storageTransport
-      .makeRequest({
-        url: '/iam/testPermissions',
-        queryParameters: req as unknown as StorageQueryParameters,
-      })
-      .then(({data, resp}) => {
-        const availablePermissions = Array.isArray((data as any).permissions)
-          ? (data as any).permissions
-          : [];
+    this.storageTransport
+      .makeRequest<TestPermissionsResponse>(
+        {
+          url: '/iam/testPermissions',
+          queryParameters: req as unknown as StorageQueryParameters,
+        },
+        (err, data, resp) => {
+          if (err) {
+            cb!(err, null, resp);
+            return;
+          }
+          const availablePermissions = Array.isArray(data?.permissions)
+            ? data?.permissions
+            : [];
 
-        const permissionsHash = permissionsArray.reduce(
-          (acc: {[index: string]: boolean}, permission) => {
-            acc[permission] = availablePermissions.indexOf(permission) > -1;
-            return acc;
-          },
-          {},
-        );
+          const permissionsHash = permissionsArray.reduce(
+            (acc: {[index: string]: boolean}, permission) => {
+              acc[permission] = availablePermissions.indexOf(permission) > -1;
+              return acc;
+            },
+            {},
+          );
 
-        cb!(null, permissionsHash, resp);
-      })
-      .catch(({err, resp}) => {
-        cb!(err, null, resp);
-      });
+          cb!(null, permissionsHash, resp);
+        },
+      )
+      .catch(err => cb!(err));
   }
 }
 

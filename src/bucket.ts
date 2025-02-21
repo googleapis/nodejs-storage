@@ -100,6 +100,11 @@ export interface GetFilesCallback {
   ): void;
 }
 
+interface GetFilesResponseData {
+  items?: FileMetadata[];
+  nextPageToken?: string;
+}
+
 interface WatchAllOptions {
   delimiter?: string;
   maxResults?: number;
@@ -200,6 +205,10 @@ export interface CreateChannelOptions {
 
 export type CreateChannelResponse = [Channel, unknown];
 
+export interface CreateChannel extends BaseMetadata {
+  resourceId?: string;
+}
+
 export interface CreateChannelCallback {
   (err: Error | null, channel: Channel | null, apiResponse: unknown): void;
 }
@@ -292,6 +301,12 @@ export interface GetLabelsCallback {
   (err: Error | null, labels: object | null): void;
 }
 
+export interface RestoreOptions {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+  generation: string;
+  projection?: 'full' | 'noAcl';
+}
 export interface BucketMetadata extends BaseMetadata {
   acl?: AclMetadata[] | null;
   autoclass?: {
@@ -334,6 +349,7 @@ export interface BucketMetadata extends BaseMetadata {
     logBucket?: string;
     logObjectPrefix?: string;
   };
+  generation?: string;
   metageneration?: string;
   name?: string;
   objectRetention?: {
@@ -350,6 +366,8 @@ export interface BucketMetadata extends BaseMetadata {
     retentionPeriod?: string | number;
   } | null;
   rpo?: string;
+  softDeleteTime?: string;
+  hardDeleteTime?: string;
   softDeletePolicy?: {
     retentionDurationSeconds?: string | number;
     readonly effectiveTime?: string;
@@ -414,6 +432,9 @@ export interface GetNotificationsCallback {
 
 export type GetNotificationsResponse = [Notification[], unknown];
 
+export interface GetNotificationsResponseData {
+  items?: NotificationMetadata[];
+}
 export interface MakeBucketPrivateOptions {
   includeFiles?: boolean;
   force?: boolean;
@@ -519,6 +540,7 @@ export enum BucketExceptionMessages {
   SPECIFY_FILE_NAME = 'A file name must be specified.',
   METAGENERATION_NOT_PROVIDED = 'A metageneration must be provided.',
   SUPPLY_NOTIFICATION_ID = 'You must supply a notification ID.',
+  INVAILD_CHANNEL_RESPONSE = 'Response data was null',
 }
 
 /**
@@ -1663,38 +1685,42 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     // Make the request from the destination File object.
     destinationFile.storageTransport
-      .makeRequest({
-        method: 'POST',
-        url: '/compose',
-        maxRetries,
-        body: {
-          destination: {
-            contentType: destinationFile.metadata.contentType,
-            contentEncoding: destinationFile.metadata.contentEncoding,
+      .makeRequest(
+        {
+          method: 'POST',
+          url: '/compose',
+          maxRetries,
+          body: {
+            destination: {
+              contentType: destinationFile.metadata.contentType,
+              contentEncoding: destinationFile.metadata.contentEncoding,
+            },
+            sourceObjects: (sources as File[]).map(source => {
+              const sourceObject = {
+                name: source.name,
+              } as SourceObject;
+
+              if (source.metadata && source.metadata.generation) {
+                sourceObject.generation = parseInt(
+                  source.metadata.generation.toString(),
+                );
+              }
+
+              return sourceObject;
+            }),
           },
-          sourceObjects: (sources as File[]).map(source => {
-            const sourceObject = {
-              name: source.name,
-            } as SourceObject;
-
-            if (source.metadata && source.metadata.generation) {
-              sourceObject.generation = parseInt(
-                source.metadata.generation.toString(),
-              );
-            }
-
-            return sourceObject;
-          }),
+          queryParameters: options as unknown as StorageQueryParameters,
         },
-        queryParameters: options as unknown as StorageQueryParameters,
-      })
-      .then(resp => {
-        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-        callback!(null, destinationFile, resp);
-      })
-      .catch(({err, resp}) => {
-        callback!(err, null, resp);
-      });
+        (err, resp) => {
+          this.storage.retryOptions.autoRetry = this.instanceRetryValue;
+          if (err) {
+            callback!(err, null, resp);
+            return;
+          }
+          callback!(null, destinationFile, resp);
+        },
+      )
+      .catch(err => callback!(err, null, null));
   }
 
   createChannel(
@@ -1822,28 +1848,41 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'POST',
-        url: `${this.baseUrl}/o/watch`,
-        body: Object.assign(
-          {
-            id,
-            type: 'web_hook',
-          },
-          config,
-        ),
-        queryParameters: options as unknown as StorageQueryParameters,
-      })
-      .then(data => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const resourceId = (data as any).resourceId;
-        const channel = this.storage.channel(id, resourceId);
+      .makeRequest<CreateChannel>(
+        {
+          method: 'POST',
+          url: `${this.baseUrl}/o/watch`,
+          body: Object.assign(
+            {
+              id,
+              type: 'web_hook',
+            },
+            config,
+          ),
+          queryParameters: options as unknown as StorageQueryParameters,
+        },
+        (err, data, resp) => {
+          if (err) {
+            callback!(err, null, resp);
+            return;
+          }
+          if (data && data.resourceId) {
+            const resourceId = data.resourceId;
+            const channel = this.storage.channel(id, resourceId);
 
-        channel.metadata = data as unknown as BaseMetadata;
-      })
-      .catch(({err, resp}) => {
-        callback!(err, null, resp);
-      });
+            channel.metadata = data as BaseMetadata;
+
+            callback!(null, channel, resp);
+            return;
+          }
+          callback!(
+            new Error(BucketExceptionMessages.INVAILD_CHANNEL_RESPONSE),
+            null,
+            resp,
+          );
+        },
+      )
+      .catch(err => callback!(err, null, null));
   }
 
   createNotification(
@@ -2002,23 +2041,28 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'POST',
-        url: `${this.baseUrl}/notificationConfigs`,
-        body: convertObjKeysToSnakeCase(body),
-        queryParameters: query as unknown as StorageQueryParameters,
-        retry: false,
-      })
-      .then(({data, resp}) => {
-        const notification = this.notification(
-          (data as NotificationMetadata).id!,
-        );
-        notification.metadata = data as NotificationMetadata;
-        callback!(null, notification, resp);
-      })
-      .catch(({err, resp}) => {
-        callback!(err, null, resp);
-      });
+      .makeRequest(
+        {
+          method: 'POST',
+          url: `${this.baseUrl}/notificationConfigs`,
+          body: convertObjKeysToSnakeCase(body),
+          queryParameters: query as unknown as StorageQueryParameters,
+          retry: false,
+        },
+        (err, data, resp) => {
+          if (err) {
+            callback!(err, null, resp);
+            return;
+          }
+
+          const notification = this.notification(
+            (data as NotificationMetadata).id!,
+          );
+          notification.metadata = data as NotificationMetadata;
+          callback!(null, notification, resp);
+        },
+      )
+      .catch(err => callback!(err, null, null));
   }
 
   deleteFiles(query?: DeleteFilesOptions): Promise<void>;
@@ -2804,52 +2848,60 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       callback = queryOrCallback as GetFilesCallback;
     }
     query = Object.assign({}, query);
+    if (
+      query.fields &&
+      query.autoPaginate &&
+      !query.fields.includes('nextPageToken')
+    ) {
+      query.fields = `${query.fields},nextPageToken`;
+    }
 
     this.storageTransport
-      .makeRequest({
-        url: `${this.baseUrl}/${this.id}/o`,
-        queryParameters: query as unknown as StorageQueryParameters,
-      })
-      .then(({data, resp}) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const itemsArray = (data as any).items ? (data as any).items : [];
-        const files = itemsArray.map((file: FileMetadata) => {
-          const options = {} as FileOptions;
-
-          if (query.fields) {
-            const fileInstance = file;
-            return fileInstance;
-          }
-
-          if (query.versions) {
-            options.generation = file.generation;
-          }
-
-          if (file.kmsKeyName) {
-            options.kmsKeyName = file.kmsKeyName;
-          }
-
-          const fileInstance = this.file(file.name!, options);
-          fileInstance.metadata = file;
-
-          return fileInstance;
-        });
-
-        let nextQuery: object | null = null;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((data as any).nextPageToken) {
-          nextQuery = Object.assign({}, query, {
+      .makeRequest<GetFilesResponseData>(
+        {
+          url: `${this.baseUrl}/${this.id}/o`,
+          queryParameters: query as unknown as StorageQueryParameters,
+        },
+        (err, data, resp) => {
+          if (err) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            pageToken: (data as any).nextPageToken,
+            (callback as any)(err, null, null, resp);
+            return;
+          }
+          const itemsArray = data?.items ?? [];
+          const files = itemsArray.map((file: FileMetadata) => {
+            const options = {} as FileOptions;
+
+            if (query.fields) {
+              const fileInstance = file;
+              return fileInstance;
+            }
+
+            if (query.versions) {
+              options.generation = file.generation;
+            }
+
+            if (file.kmsKeyName) {
+              options.kmsKeyName = file.kmsKeyName;
+            }
+
+            const fileInstance = this.file(file.name!, options);
+            fileInstance.metadata = file;
+
+            return fileInstance;
           });
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (callback as any)(null, files, nextQuery, resp);
-      })
-      .catch(({err, resp}) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (callback as any)(err, null, null, resp);
-      });
+
+          let nextQuery: object | null = null;
+          if (data?.nextPageToken) {
+            nextQuery = Object.assign({}, query, {
+              pageToken: data.nextPageToken,
+            });
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (callback as any)(null, files, nextQuery, resp);
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   getLabels(options?: GetLabelsOptions): Promise<GetLabelsResponse>;
@@ -3004,26 +3056,27 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
 
     this.storageTransport
-      .makeRequest({
-        url: `${this.baseUrl}/notificationConfigs`,
-        queryParameters: options as unknown as StorageQueryParameters,
-      })
-      .then(({data, resp}) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const itemsArray = (data as any).items ? (data as any).items : [];
-        const notifications = itemsArray.map(
-          (notification: NotificationMetadata) => {
+      .makeRequest<GetNotificationsResponseData>(
+        {
+          url: `${this.baseUrl}/notificationConfigs`,
+          queryParameters: options as unknown as StorageQueryParameters,
+        },
+        (err, data, resp) => {
+          if (err) {
+            callback!(err, null, resp);
+            return;
+          }
+          const itemsArray = data?.items ?? [];
+          const notifications = itemsArray.map(notification => {
             const notificationInstance = this.notification(notification.id!);
             notificationInstance.metadata = notification;
             return notificationInstance;
-          },
-        );
+          });
 
-        callback!(null, notifications, resp);
-      })
-      .catch(({err, resp}) => {
-        callback!(err, null, resp);
-      });
+          callback!(null, notifications, resp);
+        },
+      )
+      .catch(err => callback!(err, null, null));
   }
 
   getSignedUrl(cfg: GetBucketSignedUrlConfig): Promise<GetSignedUrlResponse>;
@@ -3233,19 +3286,38 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'POST',
-        url: `${this.baseUrl}/lockRetentionPolicy`,
-        queryParameters: {
-          ifMetagenerationMatch: metageneration,
+      .makeRequest(
+        {
+          method: 'POST',
+          url: `${this.baseUrl}/lockRetentionPolicy`,
+          queryParameters: {
+            ifMetagenerationMatch: metageneration,
+          },
         },
-      })
-      .then(data => {
-        callback!(null, data);
-      })
-      .catch(error => {
-        callback!(error, null);
-      });
+        callback!,
+      )
+      .catch(err => callback!(err));
+  }
+
+  /**
+   * @typedef {object} RestoreOptions Options for Bucket#restore(). See an
+   *     {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/restore#resource| Object resource}.
+   * @param {number} [generation] If present, selects a specific revision of this object.
+   * @param {string} [projection] Specifies the set of properties to return. If used, must be 'full' or 'noAcl'.
+   */
+  /**
+   * Restores a soft-deleted bucket
+   * @param {RestoreOptions} options Restore options.
+   * @returns {Promise<Bucket>}
+   */
+  async restore(options: RestoreOptions): Promise<Bucket> {
+    const bucket = await this.storageTransport.makeRequest<Bucket>({
+      method: 'POST',
+      url: `${this.baseUrl}/restore`,
+      queryParameters: options as unknown as StorageQueryParameters,
+    });
+
+    return bucket as Bucket;
   }
 
   makePrivate(
@@ -4493,7 +4565,6 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   disableAutoRetryConditionallyIdempotent_(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     coreOpts: any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     methodType: AvailableServiceObjectMethods,
     localPreconditionOptions?: PreconditionOptions,
   ): void {
@@ -4528,7 +4599,7 @@ paginator.extend(Bucket, 'getFiles');
  * that a callback is omitted.
  */
 promisifyAll(Bucket, {
-  exclude: ['cloudStorageURI', 'request', 'file', 'notification'],
+  exclude: ['cloudStorageURI', 'request', 'file', 'notification', 'restore'],
 });
 
 /**

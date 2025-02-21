@@ -274,7 +274,16 @@ describe('ServiceObject', () => {
       serviceObject.delete(options, assert.ifError);
     });
 
-    it('should resolve with correct arguments', () => {
+    it('should not require a callback', () => {
+      serviceObject.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsArgWith(1, null, null, {});
+      assert.doesNotThrow(async () => {
+        await serviceObject.delete();
+      });
+    });
+
+    it('should execute with correct arguments', () => {
       const error = new Error('🦃');
       const serviceObject = new ServiceObject(CONFIG);
       serviceObject.storageTransport.makeRequest = sandbox
@@ -360,16 +369,20 @@ describe('ServiceObject', () => {
       serviceObject.get(assert.ifError);
     });
 
-    it('should execute callback with error', done => {
+    it('should execute callback with error & metadata', done => {
       const error = new GaxiosError('Error.', {});
+      const metadata = {} as SO.BaseMetadata;
       sandbox
         .stub<any, any>(serviceObject, 'getMetadata')
         .callsFake((opts, callback) => {
-          (callback as SO.MetadataCallback<SO.BaseMetadata>)!(error);
+          (callback as SO.MetadataCallback<SO.BaseMetadata>)!(error, metadata);
+          done();
         });
 
-      serviceObject.get(err => {
+      serviceObject.get((err, instance, metadata_) => {
         assert.strictEqual(err, error);
+        assert.strictEqual(instance, null);
+        assert.strictEqual(metadata_, metadata);
         done();
       });
     });
@@ -512,11 +525,14 @@ describe('ServiceObject', () => {
       serviceObject.getMetadata(options, assert.ifError);
     });
 
-    it('should reject with an error & apiResponse', async () => {
+    it('should execute callback with error & apiResponse', async () => {
       const error = new GaxiosError('ಠ_ಠ', {});
       serviceObject.storageTransport.makeRequest = sandbox
         .stub()
-        .rejects(error);
+        .callsFake((reqOpts, callback) => {
+          callback(error);
+          return Promise.resolve();
+        });
       await serviceObject.getMetadata((err: Error, metadata: {}) => {
         assert.strictEqual(err, error);
         assert.strictEqual(metadata, undefined);
@@ -534,12 +550,15 @@ describe('ServiceObject', () => {
       });
     });
 
-    it('should resolve with metadata & API response', async () => {
+    it('should execute callback with metadata & API response', async () => {
       const apiResponse = {};
       const requestResponse = {body: apiResponse};
       serviceObject.storageTransport.makeRequest = sandbox
         .stub()
-        .resolves([apiResponse, requestResponse]);
+        .callsFake((reqOpts, callback) => {
+          callback(null, apiResponse, requestResponse);
+          return Promise.resolve();
+        });
       await serviceObject.getMetadata((err: Error, metadata: {}) => {
         assert.ifError(err);
         assert.strictEqual(metadata, apiResponse);
@@ -581,11 +600,14 @@ describe('ServiceObject', () => {
       serviceObject.setMetadata(metadata, options, () => {});
     });
 
-    it('should reject with error & apiResponse', async () => {
+    it('should execute callback with error & apiResponse', async () => {
       const error = new Error('Error.');
       serviceObject.storageTransport.makeRequest = sandbox
         .stub()
-        .rejects(error);
+        .callsFake((reqOpts, callback) => {
+          callback(error);
+          return Promise.resolve();
+        });
       await serviceObject.setMetadata({}, (err: Error, apiResponse_: {}) => {
         assert.strictEqual(err, error);
         assert.strictEqual(apiResponse_, undefined);
@@ -603,12 +625,15 @@ describe('ServiceObject', () => {
       });
     });
 
-    it('should resolve with metadata & API response', async () => {
+    it('should execute callback with metadata & API response', async () => {
       const body = {};
       const apiResponse = {body};
       serviceObject.storageTransport.makeRequest = sandbox
         .stub()
-        .resolves([body, apiResponse]);
+        .callsFake((reqOpts, callback) => {
+          callback(null, body, apiResponse);
+          return Promise.resolve();
+        });
       await serviceObject.setMetadata({}, (err: Error, metadata: {}) => {
         assert.ifError(err);
         assert.strictEqual(metadata, body);

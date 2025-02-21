@@ -106,7 +106,7 @@ describe('storage/acl', () => {
       acl.add(options, assert.ifError);
     });
 
-    it('should resolve with an ACL object', () => {
+    it('should execute the callback with an ACL object', () => {
       const apiResponse = {
         entity: ENTITY,
         role: ROLE,
@@ -131,19 +131,27 @@ describe('storage/acl', () => {
       });
     });
 
-    it('should reject with an error', () => {
+    it('should execute the callback with an error', () => {
       acl.storageTransport.makeRequest = sandbox
         .stub()
-        .rejects(ERROR as GaxiosError);
+        .callsFake((reqOpts, callback) => {
+          callback(ERROR as GaxiosError);
+          return Promise.resolve();
+        });
 
       acl.add({entity: ENTITY, role: ROLE}, err => {
         assert.deepStrictEqual(err, ERROR);
       });
     });
 
-    it('should resolve with apiResponse', () => {
+    it('should execute the callback with apiResponse', () => {
       const resp = {success: true};
-      acl.storageTransport.makeRequest = sandbox.stub().resolves(resp);
+      acl.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((resOpts, callback) => {
+          callback(null, resp);
+          return Promise.resolve();
+        });
 
       acl.add({entity: ENTITY, role: ROLE}, (err, acls, apiResponse) => {
         assert.deepStrictEqual(resp, apiResponse);
@@ -196,20 +204,28 @@ describe('storage/acl', () => {
       acl.delete(options, assert.ifError);
     });
 
-    it('should reject with an error', () => {
+    it('should execute the callback with an error', () => {
       acl.storageTransport.makeRequest = sandbox
         .stub()
-        .rejects(ERROR as GaxiosError);
+        .callsFake((reqOpts, callback) => {
+          callback(ERROR as GaxiosError);
+          return Promise.resolve();
+        });
 
       acl.delete({entity: ENTITY}, err => {
         assert.deepStrictEqual(err, ERROR);
       });
     });
 
-    it('should resolve with apiResponse', () => {
+    it('should execute the callback with apiResponse', () => {
       const resp = {success: true};
 
-      acl.storageTransport.makeRequest = sandbox.stub().resolves(resp);
+      acl.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(null, resp);
+          return Promise.resolve();
+        });
 
       acl.delete({entity: ENTITY}, (err, apiResponse) => {
         assert.deepStrictEqual(resp, apiResponse);
@@ -239,7 +255,7 @@ describe('storage/acl', () => {
         acl.get({generation, entity: ENTITY}, assert.ifError);
       });
 
-      it('should resolve with an array of ACL objects', () => {
+      it('should pass an array of acl objects to the callback', () => {
         const apiResponse = {
           items: [
             {entity: ENTITY, role: ROLE, projectTeam: PROJECT_TEAM},
@@ -259,7 +275,12 @@ describe('storage/acl', () => {
           return expectedAclObjects[index++];
         };
 
-        acl.storageTransport.makeRequest = sandbox.stub().resolves(apiResponse);
+        acl.storageTransport.makeRequest = sandbox
+          .stub()
+          .callsFake((reqOpts, callback) => {
+            callback(null, apiResponse);
+            return Promise.resolve();
+          });
 
         acl.get((err, aclObjects) => {
           assert.ifError(err);
@@ -306,7 +327,7 @@ describe('storage/acl', () => {
         acl.get(options, assert.ifError);
       });
 
-      it('should resolve with an ACL object', () => {
+      it('should pass an acl object to the callback', () => {
         const apiResponse = {entity: ENTITY, role: ROLE, projectTeam: ROLE};
         const expectedAclObject = {
           entity: ENTITY,
@@ -318,9 +339,12 @@ describe('storage/acl', () => {
           return expectedAclObject;
         };
 
-        acl.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-          return Promise.resolve(apiResponse);
-        });
+        acl.storageTransport.makeRequest = sandbox
+          .stub()
+          .callsFake((reqOpts, callback) => {
+            callback(null, apiResponse);
+            return Promise.resolve();
+          });
 
         acl.get({entity: ENTITY}, (err, aclObject) => {
           assert.ifError(err);
@@ -329,17 +353,20 @@ describe('storage/acl', () => {
       });
     });
 
-    it('should reject with an error', () => {
+    it('should execute the callback with an error', () => {
       acl.storageTransport.makeRequest = sandbox
         .stub()
-        .rejects(ERROR as GaxiosError);
+        .callsFake((reqOpts, callback) => {
+          callback(ERROR as GaxiosError);
+          return Promise.resolve();
+        });
 
       acl.get(err => {
         assert.deepStrictEqual(err, ERROR);
       });
     });
 
-    it('should resolve with apiResponse', () => {
+    it('should execute the callback with apiResponse', () => {
       const resp = {success: true};
       const gaxiosResponse: GaxiosResponse = {
         config: {},
@@ -354,7 +381,10 @@ describe('storage/acl', () => {
 
       acl.storageTransport.makeRequest = sandbox
         .stub()
-        .resolves({data: resp, gaxiosResponse});
+        .callsFake((reqOpts, callback) => {
+          callback(null, resp, gaxiosResponse);
+          return Promise.resolve();
+        });
 
       acl.get((err, acls, apiResponse) => {
         assert.deepStrictEqual(resp, apiResponse!.data);
@@ -410,7 +440,7 @@ describe('storage/acl', () => {
       acl.update(options, assert.ifError);
     });
 
-    it('should resolve with an acl object', done => {
+    it('should pass with an acl object to the callback', () => {
       const apiResponse = {
         entity: ENTITY,
         role: ROLE,
@@ -426,36 +456,45 @@ describe('storage/acl', () => {
         return expectedAclObject;
       };
 
-      acl.storageTransport.makeRequest = sandbox.stub().resolves(apiResponse);
+      acl.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(null, apiResponse);
+          return Promise.resolve();
+        });
 
       acl.update({entity: ENTITY, role: ROLE}, (err, aclObject) => {
         assert.ifError(err);
         assert.deepStrictEqual(aclObject, expectedAclObject);
-        done();
       });
     });
 
-    it('should reject with an error', () => {
+    it('should execute the callback with an error', () => {
       acl.storageTransport.makeRequest = sandbox
         .stub()
-        .rejects(ERROR as GaxiosError);
+        .callsFake((reqOpts, callback) => {
+          callback(ERROR as GaxiosError);
+          return Promise.resolve();
+        });
 
       acl.update({entity: ENTITY, role: ROLE}, err => {
         assert.deepStrictEqual(err, ERROR);
       });
     });
 
-    it('should resolve with apiResponse', done => {
+    it('should execute the callback with apiResponse', () => {
       const resp = {success: true};
 
-      acl.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
-        return Promise.resolve(resp);
-      });
+      acl.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(null, resp);
+          return Promise.resolve();
+        });
 
       const config = {entity: ENTITY, role: ROLE};
       acl.update(config, (err, acls, apiResponse) => {
         assert.deepStrictEqual(resp, apiResponse);
-        done();
       });
     });
   });

@@ -486,7 +486,7 @@ describe('Storage', () => {
     it('should make correct API request', async () => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake(reqOpts => {
+        .callsFake((reqOpts, callback) => {
           assert.strictEqual(reqOpts.method, 'POST');
           assert.strictEqual(
             reqOpts.url,
@@ -496,6 +496,7 @@ describe('Storage', () => {
             reqOpts.queryParameters!.serviceAccountEmail,
             SERVICE_ACCOUNT_EMAIL,
           );
+          callback(null, response);
           return Promise.resolve({data: response});
         });
 
@@ -533,11 +534,12 @@ describe('Storage', () => {
     it('should make request with method options as query parameter', async () => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake(_reqOpts => {
+        .callsFake((_reqOpts, callback) => {
           assert.deepStrictEqual(_reqOpts.queryParameters, {
             serviceAccountEmail: SERVICE_ACCOUNT_EMAIL,
             ...OPTIONS,
           });
+          callback(null, response);
           return Promise.resolve({data: response});
         });
 
@@ -554,8 +556,13 @@ describe('Storage', () => {
       });
     });
 
-    it('should invoke promise with a secret and an HmacKey instance', () => {
-      storage.storageTransport.makeRequest = sandbox.stub().resolves(response);
+    it('should invoke callback with a secret and an HmacKey instance', () => {
+      storage.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(null, response);
+          return Promise.resolve();
+        });
 
       storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, (err, hmacKey, secret) => {
         assert.ifError(err);
@@ -569,10 +576,13 @@ describe('Storage', () => {
       });
     });
 
-    it('should invoke promise with raw apiResponse', () => {
+    it('should invoke callback with raw apiResponse', () => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
-        .resolves({data: response, response});
+        .callsFake((reqOpts, callback) => {
+          callback(null, response, response);
+          return Promise.reject();
+        });
 
       storage.createHmacKey(
         SERVICE_ACCOUNT_EMAIL,
@@ -583,12 +593,15 @@ describe('Storage', () => {
       );
     });
 
-    it('should reject with request error', () => {
+    it('should execute callback with request error', () => {
       const error = new Error('Request error');
       const response = {success: false};
       storage.storageTransport.makeRequest = sandbox
         .stub()
-        .rejects({error, data: response});
+        .callsFake((reqOpts, callback) => {
+          callback(error, null, response);
+          return Promise.resolve();
+        });
 
       storage.createHmacKey(SERVICE_ACCOUNT_EMAIL, err => {
         assert.strictEqual(err, error);
@@ -602,7 +615,7 @@ describe('Storage', () => {
     it('should make correct API request', done => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake(reqOpts => {
+        .callsFake((reqOpts, callback) => {
           const body = JSON.parse(reqOpts.body);
           assert.strictEqual(reqOpts.method, 'POST');
           assert.strictEqual(reqOpts.url, '/b');
@@ -611,21 +624,23 @@ describe('Storage', () => {
             storage.projectId,
           );
           assert.strictEqual(body.name, BUCKET_NAME);
+          callback(null);
           return Promise.resolve({});
         });
 
       storage.createBucket(BUCKET_NAME, done);
     });
 
-    it('should accept a name and metadata', done => {
+    it('should accept a name, metadata and callback', done => {
       storage.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake(reqOpts => {
+        .callsFake((reqOpts, callback) => {
           const body = JSON.parse(reqOpts.body);
           assert.deepStrictEqual(
             body,
             Object.assign(METADATA, {name: BUCKET_NAME}),
           );
+          callback(null, METADATA);
           return Promise.resolve(METADATA);
         });
       storage.bucket = (name: string) => {
@@ -638,8 +653,13 @@ describe('Storage', () => {
       });
     });
 
-    it('should accept a name only', done => {
-      storage.storageTransport.makeRequest = sandbox.stub().resolves({});
+    it('should accept a name and callback only', done => {
+      storage.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(null);
+          return Promise.resolve();
+        });
       storage.createBucket(BUCKET_NAME, done);
     });
 
@@ -671,11 +691,16 @@ describe('Storage', () => {
       storage.createBucket(BUCKET_NAME, options, assert.ifError);
     });
 
-    it('should return promise with bucket', () => {
+    it('should execute callback with bucket', () => {
       storage.bucket = () => {
         return bucket;
       };
-      storage.storageTransport.makeRequest = sandbox.stub().resolves(METADATA);
+      storage.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(null, METADATA);
+          return Promise.resolve();
+        });
       storage.createBucket(BUCKET_NAME, (err, buck) => {
         assert.ifError(err);
         assert.deepStrictEqual(buck, bucket);
@@ -683,20 +708,28 @@ describe('Storage', () => {
       });
     });
 
-    it('should reject on error', done => {
+    it('should execute callback on error', done => {
       const error = new Error('Error.');
-      storage.storageTransport.makeRequest = sandbox.stub().rejects(error);
+      storage.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(error);
+          return Promise.resolve();
+        });
       storage.createBucket(BUCKET_NAME, err => {
         assert.strictEqual(err, error);
         done();
       });
     });
 
-    it('should return promise with apiResponse', () => {
+    it('should execute callback with apiResponse', () => {
       const resp = {success: true};
       storage.storageTransport.makeRequest = sandbox
         .stub()
-        .resolves({data: resp, resp});
+        .callsFake((reqOpts, callback) => {
+          callback(null, resp, resp);
+          return Promise.resolve();
+        });
       storage.createBucket(BUCKET_NAME, (err, bucket, apiResponse) => {
         assert.strictEqual(resp, apiResponse);
       });
@@ -930,13 +963,16 @@ describe('Storage', () => {
       storage.getBuckets({maxResults: 5, pageToken: token}, util.noop);
     });
 
-    it('should reject with error', () => {
+    it('should execute callback with error', () => {
       const error = new Error('Error.');
       const apiResponse = {};
 
       storage.storageTransport.makeRequest = sandbox
         .stub()
-        .rejects({error, apiResponse});
+        .callsFake((reqOpts, callback) => {
+          callback(error, apiResponse);
+          return Promise.resolve();
+        });
 
       storage.getBuckets({}, err => {
         assert.strictEqual(err, error);
@@ -1056,13 +1092,16 @@ describe('Storage', () => {
       });
     });
 
-    it('should reject with error', () => {
+    it('should execute callback with error', () => {
       const error = new Error('Error.');
       const apiResponse = {};
 
       storage.storageTransport.makeRequest = sandbox
         .stub()
-        .rejects({error, data: apiResponse});
+        .callsFake((reqOpts, callback) => {
+          callback(error, apiResponse);
+          return Promise.resolve();
+        });
 
       storage.getHmacKeys({}, err => {
         assert.strictEqual(err, error);

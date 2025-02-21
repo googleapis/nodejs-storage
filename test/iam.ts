@@ -49,12 +49,13 @@ describe('storage/iam', () => {
     it('should make the correct api request', done => {
       BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake(reqOpts => {
+        .callsFake((reqOpts, callback) => {
           assert.deepStrictEqual(reqOpts, {
             url: '/iam',
             queryParameters: {},
           });
-          return Promise.resolve({data: {}, resp: {}});
+          callback(null);
+          return Promise.resolve();
         });
 
       iam.getPolicy(done);
@@ -102,7 +103,7 @@ describe('storage/iam', () => {
 
       BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake(reqOpts => {
+        .callsFake((reqOpts, callback) => {
           assert.deepStrictEqual(reqOpts, {
             method: 'PUT',
             url: '/iam',
@@ -110,6 +111,7 @@ describe('storage/iam', () => {
             body: Object.assign(policy, {resourceId: `buckets/${id}`}),
             queryParameters: {},
           });
+          callback(null);
           return Promise.resolve({data: {}, resp: {}});
         });
 
@@ -168,7 +170,7 @@ describe('storage/iam', () => {
       });
     });
 
-    it('should pass back a hash of permissions the user has', done => {
+    it('should pass back a hash of permissions the user has', () => {
       const permissions = ['storage.bucket.list', 'storage.bucket.consume'];
       const apiResponse = {
         permissions: ['storage.bucket.consume'],
@@ -176,7 +178,10 @@ describe('storage/iam', () => {
 
       BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
         .stub()
-        .resolves({data: apiResponse, resp: apiResponse});
+        .callsFake((reqOpts, callback) => {
+          callback(null, apiResponse, apiResponse);
+          return Promise.resolve();
+        });
 
       iam.testPermissions(permissions, (err, permissionsResult, apiResp) => {
         assert.ifError(err);
@@ -185,8 +190,6 @@ describe('storage/iam', () => {
           'storage.bucket.consume': true,
         });
         assert.strictEqual(apiResp, apiResponse);
-
-        done();
       });
     });
 
@@ -196,7 +199,10 @@ describe('storage/iam', () => {
 
       BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
         .stub()
-        .resolves({data: apiResponse, resp: apiResponse});
+        .callsFake((reqOpts, callback) => {
+          callback(null, apiResponse, apiResponse);
+          return Promise.resolve();
+        });
 
       iam.testPermissions(permissions, (err, permissionsResult, apiResp) => {
         assert.ifError(err);

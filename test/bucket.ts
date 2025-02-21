@@ -96,13 +96,14 @@ describe('Bucket', () => {
         const options = {userProject: 'user-project'};
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake(reqOpts => {
+          .callsFake((reqOpts, callback) => {
             assert.strictEqual(reqOpts.method, 'POST');
             assert.strictEqual(reqOpts.url, '/b');
             assert.deepStrictEqual(
               reqOpts.queryParameters!.userProject,
               options.userProject,
             );
+            callback(null, {data: {}});
             return Promise.resolve({data: {}});
           });
         await bucket.create(options);
@@ -568,13 +569,16 @@ describe('Bucket', () => {
     it('should use content type from the destination metadata', async () => {
       const destination = bucket.file('destination.txt');
 
-      storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
-        assert.strictEqual(
-          reqOpts.body.destination.contentType,
-          mime.getType(destination.name),
-        );
-        return Promise.resolve({});
-      });
+      storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          assert.strictEqual(
+            reqOpts.body.destination.contentType,
+            mime.getType(destination.name),
+          );
+          callback(null, {});
+          return Promise.resolve({});
+        });
 
       await bucket.combine(['1', '2'], destination);
     });
@@ -583,13 +587,16 @@ describe('Bucket', () => {
       const destination = bucket.file('destination.txt');
       destination.metadata = {contentType: 'content-type'};
 
-      storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
-        assert.strictEqual(
-          reqOpts.body.destination.contentType,
-          destination.metadata.contentType,
-        );
-        return Promise.resolve({});
-      });
+      storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          assert.strictEqual(
+            reqOpts.body.destination.contentType,
+            destination.metadata.contentType,
+          );
+          callback(null, {});
+          return Promise.resolve({});
+        });
 
       await bucket.combine(['1', '2'], destination);
     });
@@ -597,13 +604,16 @@ describe('Bucket', () => {
     it('should detect dest content type if not in metadata', async () => {
       const destination = bucket.file('destination.txt');
 
-      storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
-        assert.strictEqual(
-          reqOpts.body.destination.contentType,
-          mime.getType(destination.name),
-        );
-        return Promise.resolve({});
-      });
+      storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          assert.strictEqual(
+            reqOpts.body.destination.contentType,
+            mime.getType(destination.name),
+          );
+          callback(null, {});
+          return Promise.resolve({});
+        });
 
       await bucket.combine(['1', '2'], destination);
     });
@@ -707,36 +717,51 @@ describe('Bucket', () => {
       bucket.combine(sources, destination, options, assert.ifError);
     });
 
-    it('should execute the promise', done => {
+    it('should execute the callback', async () => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');
 
-      storageTransport.makeRequest = sandbox.stub().resolves();
+      storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(null);
+          return Promise.resolve();
+        });
 
-      bucket.combine(sources, destination, done);
+      await bucket.combine(sources, destination);
     });
 
-    it('should reject with an error', () => {
+    it('should execute the callback with an error', () => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');
 
       const error = new GaxiosError('Error.', {});
 
-      storageTransport.makeRequest = sandbox.stub().rejects(error);
+      storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(error);
+          return Promise.resolve();
+        });
 
       bucket.combine(sources, destination, err => {
         assert.strictEqual(err, error);
       });
     });
 
-    it('should execute the promise with apiResponse', () => {
+    it('should execute the callback with apiResponse', () => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');
       const resp = {success: true};
 
-      storageTransport.makeRequest = sandbox.stub().resolves(resp);
+      storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(null, resp);
+          return Promise.resolve();
+        });
 
-      bucket.combine(sources, destination, apiResponse => {
+      bucket.combine(sources, destination, (err, obj, apiResponse) => {
         assert.strictEqual(resp, apiResponse);
       });
     });
@@ -747,10 +772,11 @@ describe('Bucket', () => {
 
       storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake(reqOpts => {
+        .callsFake((reqOpts, callback) => {
           assert.strictEqual(reqOpts.maxRetries, 0);
-        })
-        .resolves();
+          callback(null);
+          return Promise.resolve();
+        });
 
       bucket.combine(sources, destination, done);
     });
@@ -1011,6 +1037,219 @@ describe('Bucket', () => {
       });
     });
   });
+
+  /* describe('deleteFiles', () => {
+    let readCount: number;
+
+    beforeEach(() => {
+      readCount = 0;
+    });
+
+    it('should accept only a callback', done => {
+      const files = [bucket.file('1'), bucket.file('2')].map(file => {
+        file.delete = () => {
+          return Promise.resolve();
+        };
+        return file;
+      });
+
+      const readable = new stream.Readable({
+        objectMode: true,
+        read() {
+          if (readCount < 1) {
+            this.push(files[readCount]);
+            readCount++;
+          } else {
+            this.push(null);
+          }
+        },
+      });
+
+      bucket.getFilesStream = (query: {}) => {
+        assert.deepStrictEqual(query, {});
+        return readable;
+      };
+
+      bucket.deleteFiles(done);
+    });
+
+    it('should get files from the bucket', done => {
+      const query = {a: 'b', c: 'd'};
+
+      const files = [bucket.file('1'), bucket.file('2')].map(file => {
+        file.delete = () => {
+          return Promise.resolve();
+        };
+        return file;
+      });
+
+      const readable = new stream.Readable({
+        objectMode: true,
+        read() {
+          if (readCount < 1) {
+            this.push(files[readCount]);
+            readCount++;
+          } else {
+            this.push(null);
+          }
+        },
+      });
+
+      bucket.getFilesStream = (query_: {}) => {
+        assert.deepStrictEqual(query_, query);
+        return readable;
+      };
+
+      bucket.deleteFiles(query, done);
+    });
+
+    it('should process 10 files at a time', done => {
+      pLimitOverride = (limit: number) => {
+        assert.strictEqual(limit, 10);
+        setImmediate(done);
+        return () => {};
+      };
+
+      const files = [bucket.file('1'), bucket.file('2')].map(file => {
+        file.delete = () => {
+          return Promise.resolve();
+        };
+        return file;
+      });
+
+      const readable = new stream.Readable({
+        objectMode: true,
+        read() {
+          if (readCount < 1) {
+            this.push(files[readCount]);
+            readCount++;
+          } else {
+            this.push(null);
+          }
+        },
+      });
+
+      bucket.getFilesStream = () => readable;
+      bucket.deleteFiles({}, assert.ifError);
+    });
+
+    it('should delete the files', done => {
+      const query = {};
+      let timesCalled = 0;
+
+      const files = [bucket.file('1'), bucket.file('2')].map(file => {
+        file.delete = (query_: {}) => {
+          timesCalled++;
+          assert.strictEqual(query_, query);
+          return Promise.resolve();
+        };
+        return file;
+      });
+
+      const readable = new stream.Readable({
+        objectMode: true,
+        read() {
+          if (readCount < files.length) {
+            this.push(files[readCount]);
+            readCount++;
+          } else {
+            this.push(null);
+          }
+        },
+      });
+
+      bucket.getFilesStream = (query_: {}) => {
+        assert.strictEqual(query_, query);
+        return readable;
+      };
+
+      bucket.deleteFiles(query, (err: Error) => {
+        assert.ifError(err);
+        assert.strictEqual(timesCalled, files.length);
+        done();
+      });
+    });
+
+    it('should execute callback with error from getting files', done => {
+      const error = new Error('Error.');
+      const readable = new stream.Readable({
+        objectMode: true,
+        read() {
+          this.destroy(error);
+        },
+      });
+
+      bucket.getFilesStream = () => {
+        return readable;
+      };
+
+      bucket.deleteFiles({}, (err: Error) => {
+        assert.strictEqual(err, error);
+        done();
+      });
+    });
+
+    it('should execute callback with error from deleting file', done => {
+      const error = new Error('Error.');
+
+      const files = [bucket.file('1'), bucket.file('2')].map(file => {
+        file.delete = () => Promise.reject(error);
+        return file;
+      });
+
+      const readable = new stream.Readable({
+        objectMode: true,
+        read() {
+          if (readCount < files.length) {
+            this.push(files[readCount]);
+            readCount++;
+          } else {
+            this.push(null);
+          }
+        },
+      });
+
+      bucket.getFilesStream = () => {
+        return readable;
+      };
+
+      bucket.deleteFiles({}, (err: Error) => {
+        assert.strictEqual(err, error);
+        done();
+      });
+    });
+
+    it('should execute callback with queued errors', done => {
+      const error = new Error('Error.');
+
+      const files = [bucket.file('1'), bucket.file('2')].map(file => {
+        file.delete = () => Promise.reject(error);
+        return file;
+      });
+
+      const readable = new stream.Readable({
+        objectMode: true,
+        read() {
+          if (readCount < files.length) {
+            this.push(files[readCount]);
+            readCount++;
+          } else {
+            this.push(null);
+          }
+        },
+      });
+
+      bucket.getFilesStream = () => {
+        return readable;
+      };
+
+      bucket.deleteFiles({force: true}, (errs: Array<{}>) => {
+        assert.strictEqual(errs[0], error);
+        assert.strictEqual(errs[1], error);
+        done();
+      });
+    });
+  }); */
 
   describe('deleteLabels', () => {
     describe('all labels', () => {
@@ -1484,6 +1723,29 @@ describe('Bucket', () => {
       });
     });
 
+    /* it('should add nextPageToken to fields for autoPaginate', done => {
+      bucket.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function,
+      ) => {
+        assert.strictEqual(reqOpts.qs.fields, 'items(name),nextPageToken');
+        callback(null, {
+          items: [{name: 'fake-file-name'}],
+          nextPageToken: 'fake-page-token',
+        });
+      };
+
+      bucket.getFiles(
+        {fields: 'items(name)', autoPaginate: true},
+        (err: Error, files: FakeFile[], nextQuery: {pageToken: string}) => {
+          assert.ifError(err);
+          assert.strictEqual(files[0].name, 'fake-file-name');
+          assert.strictEqual(nextQuery.pageToken, 'fake-page-token');
+          done();
+        },
+      );
+    }); */
+
     it('should return soft-deleted Files if queried for softDeleted', () => {
       const softDeletedTime = new Date('1/1/2024').toISOString();
       bucket.storageTransport.makeRequest = sandbox.stub().resolves({
@@ -1671,7 +1933,12 @@ describe('Bucket', () => {
       const fakeItems = [{id: '1'}, {id: '2'}, {id: '3'}];
       const response = {items: fakeItems};
 
-      bucket.storageTransport.makeRequest = sandbox.stub().resolves(response);
+      bucket.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(null, response);
+          return Promise.resolve();
+        });
 
       let callCount = 0;
       const fakeNotifications = [{}, {}, {}];
@@ -1779,7 +2046,7 @@ describe('Bucket', () => {
 
       bucket.storageTransport.makeRequest = sandbox
         .stub()
-        .callsFake(reqOpts => {
+        .callsFake((reqOpts, callback) => {
           assert.deepStrictEqual(reqOpts, {
             method: 'POST',
             url: '/b/lockRetentionPolicy',
@@ -1787,6 +2054,7 @@ describe('Bucket', () => {
               ifMetagenerationMatch: metageneration,
             },
           });
+          callback(null, {});
           return Promise.resolve({});
         });
 
@@ -1994,6 +2262,95 @@ describe('Bucket', () => {
       bucket.removeRetentionPeriod(done);
     });
   });
+
+  describe('restore', () => {
+    it('should pass options to underlying request call', async () => {
+      bucket.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake(reqOpts => {
+          assert.deepStrictEqual(reqOpts, {
+            method: 'POST',
+            url: '/b/restore',
+            queryParameters: {generation: '123456789'},
+          });
+          return [];
+        });
+
+      await bucket.restore({generation: '123456789'});
+    });
+  });
+
+  /* describe('request', () => {
+    const USER_PROJECT = 'grape-spaceship-123';
+
+    beforeEach(() => {
+      bucket.userProject = USER_PROJECT;
+    });
+
+    it('should set the userProject if qs is undefined', done => {
+      FakeServiceObject.prototype.request = ((
+        reqOpts: DecorateRequestOptions,
+      ) => {
+        assert.strictEqual(reqOpts.qs.userProject, USER_PROJECT);
+        done();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }) as any;
+
+      bucket.request({}, assert.ifError);
+    });
+
+    it('should set the userProject if field is undefined', done => {
+      const options = {
+        qs: {
+          foo: 'bar',
+        },
+      };
+
+      FakeServiceObject.prototype.request = ((
+        reqOpts: DecorateRequestOptions,
+      ) => {
+        assert.strictEqual(reqOpts.qs.userProject, USER_PROJECT);
+        assert.strictEqual(reqOpts.qs, options.qs);
+        done();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }) as any;
+
+      bucket.request(options, assert.ifError);
+    });
+
+    it('should not overwrite the userProject', done => {
+      const fakeUserProject = 'not-grape-spaceship-123';
+      const options = {
+        qs: {
+          userProject: fakeUserProject,
+        },
+      };
+
+      FakeServiceObject.prototype.request = ((
+        reqOpts: DecorateRequestOptions,
+      ) => {
+        assert.strictEqual(reqOpts.qs.userProject, fakeUserProject);
+        done();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      }) as any;
+
+      bucket.request(options, assert.ifError);
+    });
+
+    it('should call ServiceObject#request correctly', done => {
+      const options = {};
+
+      Object.assign(FakeServiceObject.prototype, {
+        request(reqOpts: DecorateRequestOptions, callback: Function) {
+          assert.strictEqual(this, bucket);
+          assert.strictEqual(reqOpts, options);
+          callback(); // done fn
+        },
+      });
+
+      bucket.request(options, done);
+    });
+  }); */
 
   describe('setLabels', () => {
     it('should correctly call setMetadata', done => {

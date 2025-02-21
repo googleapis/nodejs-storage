@@ -150,7 +150,6 @@ export interface BaseMetadata {
  * shared behaviors. Note that any method can be overridden when the service
  * object requires specific behavior.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   metadata: K;
   baseUrl?: string;
@@ -443,24 +442,23 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
     }
 
     this.storageTransport
-      .makeRequest<K>({
-        method: 'GET',
-        responseType: 'json',
-        url,
-        ...methodConfig.reqOpts,
-        queryParameters: {
-          ...methodConfig.reqOpts?.queryParameters,
-          ...options,
+      .makeRequest<K>(
+        {
+          method: 'GET',
+          responseType: 'json',
+          url,
+          ...methodConfig.reqOpts,
+          queryParameters: {
+            ...methodConfig.reqOpts?.queryParameters,
+            ...options,
+          },
         },
-      })
-      .then(({data, resp}) => {
-        this.metadata = data!;
-        callback(null, data!, resp);
-      })
-      .catch(({err, data, resp}) => {
-        this.metadata = data!;
-        callback(err, data!, resp);
-      });
+        (err, data, resp) => {
+          this.metadata = data!;
+          callback(err, data!, resp);
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   /**
@@ -502,27 +500,27 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
     }
 
     this.storageTransport
-      .makeRequest<K>({
-        method: 'PATCH',
-        responseType: 'json',
-        url,
-        ...methodConfig.reqOpts,
-        body: {
-          ...methodConfig.reqOpts?.body,
-          ...metadata,
+      .makeRequest<K>(
+        {
+          method: 'PATCH',
+          responseType: 'json',
+          url,
+          ...methodConfig.reqOpts,
+          body: {
+            ...methodConfig.reqOpts?.body,
+            ...metadata,
+          },
+          queryParameters: {
+            ...methodConfig.reqOpts?.queryParameters,
+            ...options,
+          },
         },
-        queryParameters: {
-          ...methodConfig.reqOpts?.queryParameters,
-          ...options,
+        (err, data, resp) => {
+          this.metadata = data!;
+          callback(err, this.metadata, resp);
         },
-      })
-      .then(({data, resp}) => {
-        this.metadata = data!;
-        callback(null, this.metadata, resp);
-      })
-      .catch(({err, data, resp}) => {
-        callback(err, data!, resp);
-      });
+      )
+      .catch(err => callback(err));
   }
 }
 

@@ -109,6 +109,8 @@ export interface BucketOptions {
   kmsKeyName?: string;
   preconditionOpts?: PreconditionOptions;
   userProject?: string;
+  generation?: number;
+  softDeleted?: boolean;
 }
 
 export interface Cors {
@@ -189,6 +191,8 @@ export interface GetBucketsRequest {
   maxResults?: number;
   pageToken?: string;
   userProject?: string;
+  softDeleted?: boolean;
+  generation?: number;
 }
 
 export interface HmacKeyResourceResponse {
@@ -1088,25 +1092,29 @@ export class Storage {
     }
 
     this.storageTransport
-      .makeRequest<BucketMetadata>({
-        method: 'POST',
-        queryParameters: query,
-        body: JSON.stringify(body),
-        url: '/b',
-        responseType: 'json',
-        headers: {
-          'Content-Type': 'application/json',
+      .makeRequest<BucketMetadata>(
+        {
+          method: 'POST',
+          queryParameters: query,
+          body: JSON.stringify(body),
+          url: '/b',
+          responseType: 'json',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      })
-      .then(({data, resp}) => {
-        const bucket = this.bucket(name);
-        bucket.metadata = data!;
+        (err, data, resp) => {
+          if (err) {
+            callback(err);
+            return;
+          }
+          const bucket = this.bucket(name);
+          bucket.metadata = data!;
 
-        callback(null, bucket, resp);
-      })
-      .catch(err => {
-        callback(err);
-      });
+          callback(null, bucket, resp);
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   createHmacKey(
@@ -1213,31 +1221,35 @@ export class Storage {
     delete query.projectId;
 
     this.storageTransport
-      .makeRequest<HmacKeyResourceResponse>({
-        method: 'POST',
-        url: `/projects/${projectId}/hmacKeys`,
-        queryParameters: query as unknown as StorageQueryParameters,
-        retry: false,
-        responseType: 'json',
-      })
-      .then(({data, resp}) => {
-        const hmacMetadata = data!.metadata;
-        const hmacKey = this.hmacKey(hmacMetadata.accessId!, {
-          projectId: hmacMetadata?.projectId,
-        });
-        hmacKey.metadata = hmacMetadata;
-        hmacKey.secret = data?.secret;
+      .makeRequest<HmacKeyResourceResponse>(
+        {
+          method: 'POST',
+          url: `/projects/${projectId}/hmacKeys`,
+          queryParameters: query as unknown as StorageQueryParameters,
+          retry: false,
+          responseType: 'json',
+        },
+        (err, data, resp) => {
+          if (err) {
+            callback(err);
+            return;
+          }
+          const hmacMetadata = data!.metadata;
+          const hmacKey = this.hmacKey(hmacMetadata.accessId!, {
+            projectId: hmacMetadata?.projectId,
+          });
+          hmacKey.metadata = hmacMetadata;
+          hmacKey.secret = data?.secret;
 
-        callback(
-          null,
-          hmacKey,
-          hmacKey.secret,
-          resp as unknown as HmacKeyResourceResponse,
-        );
-      })
-      .catch(err => {
-        callback(err);
-      });
+          callback(
+            null,
+            hmacKey,
+            hmacKey.secret,
+            resp as unknown as HmacKeyResourceResponse,
+          );
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   getBuckets(options?: GetBucketsRequest): Promise<GetBucketsResponse>;
@@ -1260,6 +1272,8 @@ export class Storage {
    *     representing part of the larger set of results to view.
    * @property {string} [userProject] The ID of the project which will be billed
    *     for the request.
+   *  @param {boolean} [softDeleted] If true, returns the soft-deleted object.
+   *     Object `generation` is required if `softDeleted` is set to True.
    */
   /**
    * @typedef {array} GetBucketsResponse
@@ -1343,29 +1357,33 @@ export class Storage {
         kind: string;
         nextPageToken?: string;
         items: BucketMetadata[];
-      }>({
-        url: '/b',
-        method: 'GET',
-        queryParameters: options as unknown as StorageQueryParameters,
-        responseType: 'json',
-      })
-      .then(({data, resp}) => {
-        const items = data?.items ? data.items : [];
-        const buckets = items.map((bucket: BucketMetadata) => {
-          const bucketInstance = this.bucket(bucket.id!);
-          bucketInstance.metadata = bucket;
-          return bucketInstance;
-        });
+      }>(
+        {
+          url: '/b',
+          method: 'GET',
+          queryParameters: options as unknown as StorageQueryParameters,
+          responseType: 'json',
+        },
+        (err, data, resp) => {
+          if (err) {
+            callback(err, null, null, resp);
+            return;
+          }
+          const items = data?.items ? data.items : [];
+          const buckets = items.map((bucket: BucketMetadata) => {
+            const bucketInstance = this.bucket(bucket.id!);
+            bucketInstance.metadata = bucket;
+            return bucketInstance;
+          });
 
-        const nextQuery = data?.nextPageToken
-          ? Object.assign({}, options, {pageToken: data.nextPageToken})
-          : null;
+          const nextQuery = data?.nextPageToken
+            ? Object.assign({}, options, {pageToken: data.nextPageToken})
+            : null;
 
-        callback(null, buckets, nextQuery, resp);
-      })
-      .catch(({err, resp}) => {
-        callback(err, null, null, resp);
-      });
+          callback(null, buckets, nextQuery, resp);
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   /**
@@ -1468,31 +1486,35 @@ export class Storage {
         kind: string;
         nextPageToken?: string;
         items: HmacKeyMetadata[];
-      }>({
-        url: `/projects/${projectId}/hmacKeys`,
-        responseType: 'json',
-        queryParameters: query as unknown as StorageQueryParameters,
-        method: 'GET',
-      })
-      .then(({data, resp}) => {
-        const itemsArray = data?.items ? data.items : [];
-        const hmacKeys = itemsArray.map((hmacKey: HmacKeyMetadata) => {
-          const hmacKeyInstance = this.hmacKey(hmacKey.accessId!, {
-            projectId: hmacKey.projectId,
+      }>(
+        {
+          url: `/projects/${projectId}/hmacKeys`,
+          responseType: 'json',
+          queryParameters: query as unknown as StorageQueryParameters,
+          method: 'GET',
+        },
+        (err, data, resp) => {
+          if (err) {
+            callback(err, null, null, resp);
+            return;
+          }
+          const itemsArray = data?.items ? data.items : [];
+          const hmacKeys = itemsArray.map((hmacKey: HmacKeyMetadata) => {
+            const hmacKeyInstance = this.hmacKey(hmacKey.accessId!, {
+              projectId: hmacKey.projectId,
+            });
+            hmacKeyInstance.metadata = hmacKey;
+            return hmacKeyInstance;
           });
-          hmacKeyInstance.metadata = hmacKey;
-          return hmacKeyInstance;
-        });
 
-        const nextQuery = data?.nextPageToken
-          ? Object.assign({}, options, {pageToken: data.nextPageToken})
-          : null;
+          const nextQuery = data?.nextPageToken
+            ? Object.assign({}, options, {pageToken: data.nextPageToken})
+            : null;
 
-        callback(null, hmacKeys, nextQuery, resp);
-      })
-      .catch(({err, resp}) => {
-        callback(err, null, resp);
-      });
+          callback(null, hmacKeys, nextQuery, resp);
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   getServiceAccount(
@@ -1564,30 +1586,34 @@ export class Storage {
     );
 
     this.storageTransport
-      .makeRequest<ServiceAccount>({
-        method: 'GET',
-        url: `/projects/${this.projectId}/serviceAccount`,
-        queryParameters: options as unknown as StorageQueryParameters,
-        responseType: 'json',
-      })
-      .then(({data, resp}) => {
-        const camelCaseResponse = {} as {[index: string]: string};
-
-        for (const prop in data) {
-          // eslint-disable-next-line no-prototype-builtins
-          if (data.hasOwnProperty(prop)) {
-            const camelCaseProp = prop.replace(/_(\w)/g, (_, match) =>
-              match.toUpperCase(),
-            );
-            camelCaseResponse[camelCaseProp] = data![prop]!;
+      .makeRequest<ServiceAccount>(
+        {
+          method: 'GET',
+          url: `/projects/${this.projectId}/serviceAccount`,
+          queryParameters: options as unknown as StorageQueryParameters,
+          responseType: 'json',
+        },
+        (err, data, resp) => {
+          if (err) {
+            callback(err, null, resp);
+            return;
           }
-        }
+          const camelCaseResponse = {} as {[index: string]: string};
 
-        callback(null, camelCaseResponse, resp);
-      })
-      .catch(({err, resp}) => {
-        callback(err, null, resp);
-      });
+          for (const prop in data) {
+            // eslint-disable-next-line no-prototype-builtins
+            if (data.hasOwnProperty(prop)) {
+              const camelCaseProp = prop.replace(/_(\w)/g, (_, match) =>
+                match.toUpperCase(),
+              );
+              camelCaseResponse[camelCaseProp] = data![prop]!;
+            }
+          }
+
+          callback(null, camelCaseResponse, resp);
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   /**

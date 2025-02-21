@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // Copyright 2019 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -95,6 +94,9 @@ export interface AccessControlObject {
     projectNumber?: string;
     team?: 'editors' | 'owners' | 'viewers' | string;
   };
+}
+interface AccessControlList {
+  items: AccessControlObject[];
 }
 
 export interface AclMetadata extends BaseMetadata {
@@ -533,30 +535,35 @@ class Acl extends AclRoleAccessorMethods {
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'POST',
-        url,
-        queryParameters: query as unknown as StorageQueryParameters,
-        retry: false,
-        body: {
-          entity: options.entity,
-          role: options.role.toUpperCase(),
+      .makeRequest(
+        {
+          method: 'POST',
+          url,
+          queryParameters: query as unknown as StorageQueryParameters,
+          retry: false,
+          body: {
+            entity: options.entity,
+            role: options.role.toUpperCase(),
+          },
         },
-      })
-      .then(({data}) => {
-        callback!(
-          null,
-          this.makeAclObject_(data as unknown as AccessControlObject),
-          data as unknown as AclMetadata,
-        );
-      })
-      .catch(({err, data, resp}) => {
-        callback!(
-          err,
-          data as unknown as AccessControlObject,
-          resp as unknown as AclMetadata,
-        );
-      });
+        (err, data, resp) => {
+          if (err) {
+            callback!(
+              err,
+              data as AccessControlObject,
+              resp as unknown as AclMetadata,
+            );
+            return;
+          }
+
+          callback!(
+            null,
+            this.makeAclObject_(data as AccessControlObject),
+            data as AclMetadata,
+          );
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   delete(options: RemoveAclOptions): Promise<RemoveAclResponse>;
@@ -648,15 +655,17 @@ class Acl extends AclRoleAccessorMethods {
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'DELETE',
-        url,
-        queryParameters: query as unknown as StorageQueryParameters,
-      })
-      .then()
-      .catch(({err, data}) => {
-        callback!(err, data as unknown as AclMetadata);
-      });
+      .makeRequest(
+        {
+          method: 'DELETE',
+          url,
+          queryParameters: query as unknown as StorageQueryParameters,
+        },
+        (err, data) => {
+          callback!(err, data as AclMetadata);
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   get(options?: GetAclOptions): Promise<GetAclResponse>;
@@ -779,25 +788,29 @@ class Acl extends AclRoleAccessorMethods {
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'GET',
-        url,
-        queryParameters: query as unknown as StorageQueryParameters,
-      })
-      .then(({data, resp}) => {
-        let results;
+      .makeRequest<AccessControlList & AccessControlObject>(
+        {
+          method: 'GET',
+          url,
+          queryParameters: query as unknown as StorageQueryParameters,
+        },
+        (err, data, resp) => {
+          if (err) {
+            callback!(err, null, resp as unknown as AclMetadata);
+            return;
+          }
+          let results;
 
-        if ((data as any).items) {
-          results = (data as any).items.map(this.makeAclObject_);
-        } else {
-          results = this.makeAclObject_(data as AccessControlObject);
-        }
+          if (data?.items) {
+            results = data?.items.map(this.makeAclObject_);
+          } else {
+            results = this.makeAclObject_(data as AccessControlObject);
+          }
 
-        callback!(null, results, resp as unknown as AclMetadata);
-      })
-      .catch(({err, resp}) => {
-        callback!(err, null, resp as unknown as AclMetadata);
-      });
+          callback!(null, results, resp as unknown as AclMetadata);
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   update(options: UpdateAclOptions): Promise<UpdateAclResponse>;
@@ -886,24 +899,28 @@ class Acl extends AclRoleAccessorMethods {
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'PUT',
-        url,
-        queryParameters: query as unknown as StorageQueryParameters,
-        body: {
-          role: options.role.toUpperCase(),
+      .makeRequest(
+        {
+          method: 'PUT',
+          url,
+          queryParameters: query as unknown as StorageQueryParameters,
+          body: {
+            role: options.role.toUpperCase(),
+          },
         },
-      })
-      .then(data => {
-        callback!(
-          null,
-          this.makeAclObject_(data as unknown as AccessControlObject),
-          data as unknown as AclMetadata,
-        );
-      })
-      .catch(({err, resp}) => {
-        callback!(err, null, resp as unknown as AclMetadata);
-      });
+        (err, data, resp) => {
+          if (err) {
+            callback!(err, null, resp as unknown as AclMetadata);
+            return;
+          }
+          callback!(
+            null,
+            this.makeAclObject_(data as AccessControlObject),
+            data as AclMetadata,
+          );
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   /**

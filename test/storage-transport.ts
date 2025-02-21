@@ -76,7 +76,7 @@ describe('Storage Transport', () => {
     assert.ok(
       calledWith.headers['User-Agent'].includes('gcloud-node-storage/'),
     );
-    assert.deepStrictEqual(_response.data, response.data);
+    assert.deepStrictEqual(_response, response.data);
   });
 
   it('should handle retry options correctly', async () => {

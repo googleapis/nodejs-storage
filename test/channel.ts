@@ -71,12 +71,39 @@ describe('Channel', () => {
       channel.stop(assert.ifError);
     });
 
-    it('should rejects with an error', () => {
+    it('should execute callback with an error & API response', () => {
       const error = {};
+      const apiResponse = {};
 
       channel.storageTransport.makeRequest = sandbox
         .stub()
-        .rejects(error as GaxiosError);
+        .callsFake((reqOpts, callback) => {
+          callback(error as GaxiosError, null, apiResponse);
+          return Promise.resolve();
+        });
+
+      channel.stop((err, apiResponse_) => {
+        assert.strictEqual(err, error);
+        assert.strictEqual(apiResponse_, apiResponse);
+      });
+    });
+
+    it('should not require a callback', async () => {
+      channel.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          assert.doesNotThrow(() => callback());
+          return Promise.resolve();
+        });
+
+      await channel.stop();
+    });
+
+    it('should call the callback with an error if the promise rejects', () => {
+      const error = new Error('Promise rejection');
+      channel.storageTransport.makeRequest = sandbox
+        .stub()
+        .returns(Promise.reject(error));
 
       channel.stop(err => {
         assert.strictEqual(err, error);

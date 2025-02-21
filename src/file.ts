@@ -25,14 +25,7 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import mime from 'mime';
 import * as resumableUpload from './resumable-upload.js';
-import {
-  Writable,
-  Readable,
-  pipeline,
-  Transform,
-  PipelineSource,
-  Stream,
-} from 'stream';
+import {Writable, Readable, pipeline, Transform, PipelineSource} from 'stream';
 import * as zlib from 'zlib';
 import * as http from 'http';
 
@@ -519,6 +512,10 @@ export interface FileMetadata extends BaseMetadata {
 export class RequestError extends Error {
   code?: string;
   errors?: Error[];
+}
+
+export interface RewriteResponse {
+  rewriteToken?: string;
 }
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60;
@@ -1381,41 +1378,43 @@ class File extends ServiceObject<File, FileMetadata> {
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'POST',
-        url: `${this.baseUrl}/rewriteTo/b/${
-          destBucket.name
-        }/o/${encodeURIComponent(newFile.name)}`,
-        queryParameters: query as unknown as StorageQueryParameters,
-        body: options,
-        headers,
-      })
-      .then(({data, resp}) => {
-        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((data as any).rewriteToken) {
-          const options = {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            token: (data as any).rewriteToken,
-          } as CopyOptions;
+      .makeRequest<RewriteResponse>(
+        {
+          method: 'POST',
+          url: `${this.baseUrl}/rewriteTo/b/${
+            destBucket.name
+          }/o/${encodeURIComponent(newFile.name)}`,
+          queryParameters: query as unknown as StorageQueryParameters,
+          body: options,
+          headers,
+        },
+        (err, data, resp) => {
+          this.storage.retryOptions.autoRetry = this.instanceRetryValue;
+          if (err) {
+            callback!(err, null, resp);
+            return;
+          }
+          if (data && data.rewriteToken) {
+            const options = {
+              token: data.rewriteToken,
+            } as CopyOptions;
 
-          if (query.userProject) {
-            options.userProject = query.userProject;
+            if (query.userProject) {
+              options.userProject = query.userProject;
+            }
+
+            if (query.destinationKmsKeyName) {
+              options.destinationKmsKeyName = query.destinationKmsKeyName;
+            }
+
+            this.copy(newFile, options, callback!);
+            return;
           }
 
-          if (query.destinationKmsKeyName) {
-            options.destinationKmsKeyName = query.destinationKmsKeyName;
-          }
-
-          this.copy(newFile, options, callback!);
-          return;
-        }
-
-        callback!(null, newFile, resp);
-      })
-      .catch(({err, resp}) => {
-        callback!(err, null, resp);
-      });
+          callback!(null, newFile, resp);
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   /**
@@ -1681,17 +1680,14 @@ class File extends ServiceObject<File, FileMetadata> {
       }
 
       this.storageTransport
-        .makeRequest(reqOpts)
-        .then(async ({data: stream, resp: rawResponse}) => {
+        .makeRequest(reqOpts, async (err, stream, rawResponse) => {
           (stream as Readable).on('error', err => {
             throughStream.destroy(err);
           });
           throughStream.emit('response', rawResponse);
-          await onResponse(null, rawResponse!, stream as Readable);
+          await onResponse(err, rawResponse!, stream as Readable);
         })
-        .catch(err => {
-          throughStream.destroy(err);
-        });
+        .catch(err => throughStream.destroy(err));
     };
     throughStream.on('reading', makeRequest);
 
@@ -2002,7 +1998,6 @@ class File extends ServiceObject<File, FileMetadata> {
    * // later...
    * fs.createWriteStream({uri, resumeCRC32C});
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createWriteStream(options: CreateWriteStreamOptions = {}): Writable {
     options.metadata ??= {};
 
@@ -3749,14 +3744,14 @@ class File extends ServiceObject<File, FileMetadata> {
    * @returns {Promise<File>}
    */
   async restore(options: RestoreOptions): Promise<File> {
-    const response = await this.storageTransport.makeRequest<File>({
+    const file = await this.storageTransport.makeRequest<File>({
       method: 'POST',
       url: `${this.baseUrl}/restore`,
       queryParameters: options as unknown as StorageQueryParameters,
     });
 
-    const file = response.data;
-    return file;
+    // const file = response.data;
+    return file as File;
   }
 
   rotateEncryptionKey(
@@ -4281,16 +4276,18 @@ class File extends ServiceObject<File, FileMetadata> {
     ];
 
     this.storageTransport
-      .makeRequest(reqOpts as StorageRequestOptions)
-      .then(({data, resp}) => {
-        this.metadata = data as FileMetadata;
-        dup.emit('metadata', data);
+      .makeRequest(reqOpts as StorageRequestOptions, (err, body, resp) => {
+        if (err) {
+          dup.destroy(err);
+          return;
+        }
+
+        this.metadata = body as FileMetadata;
+        dup.emit('metadata', body);
         dup.emit('response', resp);
         dup.emit('complete');
       })
-      .catch(err => {
-        dup.destroy(err);
-      });
+      .catch(err => dup.destroy(err));
   }
 
   disableAutoRetryConditionallyIdempotent_(
