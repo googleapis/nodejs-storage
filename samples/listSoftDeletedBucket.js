@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Google LLC
+ * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ function main() {
   // [START storage_list_soft_deleted_buckets]
   // Imports the Google Cloud client library
   const {Storage} = require('@google-cloud/storage');
-  const projectId = 'storage-sdk-vendor';
+
   // Creates a client
-  const storage = new Storage({projectId});
+  const storage = new Storage();
 
   async function listSoftDeletedBuckets() {
     const options = {
