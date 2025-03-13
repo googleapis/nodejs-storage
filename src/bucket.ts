@@ -2024,7 +2024,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     const body = Object.assign({topic}, options);
 
     if (body.topic.indexOf('projects') !== 0) {
-      body.topic = 'projects/{{projectId}}/topics/' + body.topic;
+      body.topic = `projects/${this.storage.projectId}/topics/` + body.topic;
     }
 
     body.topic = `//pubsub.${this.storage.universeDomain}/` + body.topic;
@@ -3315,27 +3315,6 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       method: 'POST',
       url: `${this.baseUrl}/restore`,
       queryParameters: options as unknown as StorageQueryParameters,
-    });
-
-    return bucket as Bucket;
-  }
-
-  /**
-   * @typedef {object} RestoreOptions Options for Bucket#restore(). See an
-   *     {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/restore#resource| Object resource}.
-   * @param {number} [generation] If present, selects a specific revision of this object.
-   * @param {string} [projection] Specifies the set of properties to return. If used, must be 'full' or 'noAcl'.
-   */
-  /**
-   * Restores a soft-deleted bucket
-   * @param {RestoreOptions} options Restore options.
-   * @returns {Promise<Bucket>}
-   */
-  async restore(options: RestoreOptions): Promise<Bucket> {
-    const [bucket] = await this.request({
-      method: 'POST',
-      uri: '/restore',
-      qs: options,
     });
 
     return bucket as Bucket;
