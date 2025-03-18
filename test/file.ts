@@ -3996,6 +3996,200 @@ describe('File', () => {
     });
   });
 
+  describe('moveObj', () => {
+    function assertMoveObj(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file: any,
+      expectedDestination: string,
+      callback: Function
+    ) {
+      file.moveObj = (destination: string) => {
+        assert.strictEqual(destination, expectedDestination);
+        callback();
+      };
+    }
+
+    it('should throw if no destination is provided', () => {
+      assert.throws(() => {
+        file.moveObj();
+      }, /Destination file should have a name\./);
+    });
+
+    it('should URI encode file names', done => {
+      const newFile = new File(BUCKET, 'nested/file.jpg');
+
+      const expectedPath = `/moveTo/o/${encodeURIComponent(newFile.name)}`;
+
+      directoryFile.request = (reqOpts: DecorateRequestOptions) => {
+        assert.strictEqual(reqOpts.uri, expectedPath);
+        done();
+      };
+
+      directoryFile.moveObj(newFile);
+    });
+
+    it('should call moveObj with string', done => {
+      const newFileName = 'new-file-name.png';
+      assertMoveObj(file, newFileName, done);
+      file.moveObj(newFileName);
+    });
+
+    it('should call moveObj with File', done => {
+      const newFile = new File(BUCKET, 'new-file');
+      assertMoveObj(file, newFile, done);
+      file.moveObj(newFile);
+    });
+
+    it('should accept an options object', done => {
+      const newFile = new File(BUCKET, 'name');
+      const options = {};
+
+      file.moveObj = (destination: {}, options_: {}) => {
+        assert.strictEqual(options_, options);
+        done();
+      };
+
+      file.moveObj(newFile, options, assert.ifError);
+    });
+
+    it('should execute callback with error & API response', done => {
+      const error = new Error('Error.');
+      const apiResponse = {};
+
+      const newFile = new File(BUCKET, 'new-file');
+
+      file.request = (reqOpts: DecorateRequestOptions, callback: Function) => {
+        callback(error, apiResponse);
+      };
+
+      file.moveObj(newFile, (err: Error, file: {}, apiResponse_: {}) => {
+        assert.strictEqual(err, error);
+        assert.strictEqual(file, null);
+        assert.strictEqual(apiResponse_, apiResponse);
+
+        done();
+      });
+    });
+
+    it('should pass through userProject', done => {
+      const options = {
+        userProject: 'user-project',
+      };
+      const originalOptions = Object.assign({}, options);
+      const newFile = new File(BUCKET, 'new-file');
+
+      file.request = (reqOpts: DecorateRequestOptions) => {
+        assert.strictEqual(reqOpts.qs.userProject, options.userProject);
+        assert.strictEqual(reqOpts.json.userProject, undefined);
+        assert.deepStrictEqual(options, originalOptions);
+        done();
+      };
+
+      file.moveObj(newFile, options, assert.ifError);
+    });
+
+    it('should handle optionsOrCallback being the options', done => {
+      const options = {
+        preconditionOpts: {ifGenerationMatch: 123},
+      };
+      const originalOptions = Object.assign({}, options);
+      const newFile = new File(BUCKET, 'new-file');
+
+      file.request = (reqOpts: DecorateRequestOptions) => {
+        assert.strictEqual(
+          reqOpts.qs.ifGenerationMatch,
+          options.preconditionOpts.ifGenerationMatch
+        );
+        assert.strictEqual(reqOpts.json.userProject, undefined);
+        assert.deepStrictEqual(options, originalOptions);
+        done();
+      };
+
+      file.moveObj(newFile, options, assert.ifError);
+    });
+
+    describe('destination types', () => {
+      function assertPathEquals(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        file: any,
+        expectedPath: string,
+        callback: Function
+      ) {
+        file.request = (reqOpts: DecorateRequestOptions) => {
+          assert.strictEqual(reqOpts.uri, expectedPath);
+          callback();
+        };
+      }
+
+      it('should allow a string', done => {
+        const newFileName = 'new-file-name.png';
+        const newFile = new File(BUCKET, newFileName);
+        const expectedPath = `/moveTo/o/${newFile.name}`;
+        assertPathEquals(file, expectedPath, done);
+        file.moveObj(newFileName);
+      });
+
+      it('should allow a string with leading slash.', done => {
+        const newFileName = '/new-file-name.png';
+        const newFile = new File(BUCKET, newFileName);
+        const expectedPath = `/moveTo/o/${encodeURIComponent(newFile.name)}`;
+        assertPathEquals(file, expectedPath, done);
+        file.moveObj(newFileName);
+      });
+
+      it('should allow a "gs://..." string', done => {
+        const newFileName = 'gs://other-bucket/new-file-name.png';
+        const expectedPath = '/moveTo/o/new-file-name.png';
+        assertPathEquals(file, expectedPath, done);
+        file.moveObj(newFileName);
+      });
+
+      it('should allow a File', done => {
+        const newFile = new File(BUCKET, 'new-file');
+        const expectedPath = `/moveTo/o/${newFile.name}`;
+        assertPathEquals(file, expectedPath, done);
+        file.moveObj(newFile);
+      });
+
+      it('should throw if a destination cannot be parsed', () => {
+        assert.throws(() => {
+          file.moveObj(() => {});
+        }, /Destination file should have a name\./);
+      });
+    });
+
+    describe('returned File object', () => {
+      beforeEach(() => {
+        const resp = {success: true};
+        file.request = (
+          reqOpts: DecorateRequestOptions,
+          callback: Function
+        ) => {
+          callback(null, resp);
+        };
+      });
+
+      it('should re-use file object if one is provided', done => {
+        const newFile = new File(BUCKET, 'new-file');
+        file.moveObj(newFile, (err: Error, copiedFile: {}) => {
+          assert.ifError(err);
+          assert.deepStrictEqual(copiedFile, newFile);
+          done();
+        });
+      });
+
+      it('should create new file on the same bucket', done => {
+        const newFilename = 'new-filename';
+        file.moveObj(newFilename, (err: Error, copiedFile: File) => {
+          assert.ifError(err);
+          assert.strictEqual(copiedFile.bucket.name, BUCKET.name);
+          assert.strictEqual(copiedFile.name, newFilename);
+          done();
+        });
+      });
+    });
+  });
+
   describe('move', () => {
     describe('copy to destination', () => {
       function assertCopyFile(
