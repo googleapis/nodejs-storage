@@ -2229,6 +2229,7 @@ describe('storage', function () {
 
         it('file#moveObj', async () => {
           await requesterPaysDoubleTest(async options => {
+            console.log('MoveObject--->', options);
             const newFile = bucketNonAllowList.file(generateName());
 
             await file.moveObj(newFile, options);
@@ -2240,6 +2241,7 @@ describe('storage', function () {
 
         it('file#move', async () => {
           await requesterPaysDoubleTest(async options => {
+            console.log('Move--->', options);
             const newFile = bucketNonAllowList.file(generateName());
 
             await file.move(newFile, options);
