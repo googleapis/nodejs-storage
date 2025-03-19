@@ -223,9 +223,9 @@ describe('file', () => {
     fs.statSync(downloadFilePath);
   });
 
-  it('should move a object', async () => {
+  it('should move a file', async () => {
     const output = execSync(
-      `node moveObject.js ${bucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
+      `node moveFile.js ${bucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
     );
     assert.include(
       output,
