@@ -2227,6 +2227,17 @@ describe('storage', function () {
           });
         });
 
+        it('file#moveObj', async () => {
+          await requesterPaysDoubleTest(async options => {
+            const newFile = bucketNonAllowList.file(generateName());
+
+            await file.moveObj(newFile, options);
+
+            // Re-create the file. The tests need it.
+            await file.save('newcontent', options);
+          });
+        });
+
         it('file#move', async () => {
           await requesterPaysDoubleTest(async options => {
             const newFile = bucketNonAllowList.file(generateName());
