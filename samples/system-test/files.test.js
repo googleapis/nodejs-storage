@@ -223,18 +223,6 @@ describe('file', () => {
     fs.statSync(downloadFilePath);
   });
 
-  it('should move a file', async () => {
-    const output = execSync(
-      `node moveFile.js ${bucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
-    );
-    assert.include(
-      output,
-      `gs://${bucketName}/${fileName} moved to gs://${bucketName}/${movedFileName}`
-    );
-    const [exists] = await bucket.file(movedFileName).exists();
-    assert.strictEqual(exists, true);
-  });
-
   it('should move a object', async () => {
     const output = execSync(
       `node moveObject.js ${bucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
