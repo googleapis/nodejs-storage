@@ -604,6 +604,11 @@ describe('file', () => {
     before(async () => {
       await storage.createBucket(hnsBucketName, {
         hierarchicalNamespace: {enabled: true},
+        iamConfiguration: {
+          uniformBucketLevelAccess: {
+            enabled: true,
+          },
+        },
       });
     });
 
