@@ -622,7 +622,7 @@ describe('file', () => {
         output,
         `gs://${hnsBucketName}/${fileName} moved to gs://${hnsBucketName}/${movedFileName}`
       );
-      const [exists] = await bucket.file(movedFileName).exists();
+      const [exists] = await hnsBucket.file(movedFileName).exists();
       assert.strictEqual(exists, true);
     });
   });
