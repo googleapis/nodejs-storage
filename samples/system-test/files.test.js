@@ -227,7 +227,7 @@ describe('file', () => {
 
   it('should move a file', async () => {
     const output = execSync(
-      `node moveFileAtomic.js ${bucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
+      `node moveFile.js ${bucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
     );
     assert.include(
       output,
@@ -612,11 +612,11 @@ describe('file', () => {
       });
     });
 
-    it('should move a object', async () => {
+    it('should move a file', async () => {
       const file = hnsBucket.file(fileName);
       await file.save(fileName);
       const output = execSync(
-        `node moveObject.js ${hnsBucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
+        `node moveFileAtomic.js ${hnsBucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
       );
       assert.include(
         output,
