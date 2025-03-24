@@ -282,7 +282,7 @@ export interface MakeFilePublicCallback {
   (err?: Error | null, apiResponse?: unknown): void;
 }
 
-interface MoveQuery {
+interface MoveFileAtomicQuery {
   userProject?: string;
   ifGenerationMatch?: number | string;
   ifGenerationNotMatch?: number | string;
@@ -304,6 +304,10 @@ export interface MoveOptions {
   userProject?: string;
   preconditionOpts?: PreconditionOptions;
 }
+
+export type MoveFileAtomicOptions = MoveOptions;
+export type MoveFileAtomicCallback = MoveCallback;
+export type MoveFileAtomicResponse = MoveResponse;
 
 export type RenameOptions = MoveOptions;
 export type RenameResponse = MoveResponse;
@@ -3434,29 +3438,32 @@ class File extends ServiceObject<File, FileMetadata> {
     }/${encodeURIComponent(this.name)}`;
   }
 
-  moveObj(
+  moveFileAtomic(
     destination: string | File,
-    options?: MoveOptions
-  ): Promise<MoveResponse>;
-  moveObj(destination: string | File, callback: MoveCallback): void;
-  moveObj(
+    options?: MoveFileAtomicOptions
+  ): Promise<MoveFileAtomicResponse>;
+  moveFileAtomic(
     destination: string | File,
-    options: MoveOptions,
-    callback: MoveCallback
+    callback: MoveFileAtomicCallback
+  ): void;
+  moveFileAtomic(
+    destination: string | File,
+    options: MoveFileAtomicOptions,
+    callback: MoveFileAtomicCallback
   ): void;
   /**
-   * @typedef {array} MoveResponse
+   * @typedef {array} MoveFileAtomicResponse
    * @property {File} 0 The moved {@link File}.
    * @property {object} 1 The full API response.
    */
   /**
-   * @callback MoveCallback
+   * @callback MoveFileAtomicCallback
    * @param {?Error} err Request error, if any.
    * @param {File} movedFile The moved {@link File}.
    * @param {object} apiResponse The full API response.
    */
   /**
-   * @typedef {object} MoveOptions Configuration options for File#moveObj(). See an
+   * @typedef {object} MoveFileAtomicOptions Configuration options for File#moveFileAtomic(). See an
    *     {@link https://cloud.google.com/storage/docs/json_api/v1/objects#resource| Object resource}.
    * @property {string} [userProject] The ID of the project which will be
    *     billed for the request.
@@ -3476,9 +3483,9 @@ class File extends ServiceObject<File, FileMetadata> {
    * @throws {Error} If the destination file is not provided.
    *
    * @param {string|File} destination Destination file name or File object within the same bucket..
-   * @param {MoveOptions} [options] Configuration options. See an
-   * @param {MoveCallback} [callback] Callback function.
-   * @returns {Promise<MoveResponse>}
+   * @param {MoveFileAtomicOptions} [options] Configuration options. See an
+   * @param {MoveFileAtomicCallback} [callback] Callback function.
+   * @returns {Promise<MoveFileAtomicResponse>}
    *
    * @example
    * ```
@@ -3495,7 +3502,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * // If you pass in a string for the destination, the file is copied to its
    * // current bucket, under the new name provided.
    * //-
-   * file.moveObj('moved-image.png', function(err, movedFile, apiResponse) {
+   * file.moveFileAtomic('moved-image.png', function(err, movedFile, apiResponse) {
    *   // `my-hns-bucket` now contains:
    *   // - "moved-image.png"
    *
@@ -3506,7 +3513,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * //-
    * // Move the file to a subdirectory, creating parent folders if necessary.
    * //-
-   * file.moveObj('new-folder/subfolder/moved-image.png', function(err, movedFile, apiResponse) {
+   * file.moveFileAtomic('new-folder/subfolder/moved-image.png', function(err, movedFile, apiResponse) {
    * // `my-hns-bucket` now contains:
    * // - "new-folder/subfolder/moved-image.png"
    * });
@@ -3514,7 +3521,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * //-
    * // Prevent overwriting an existing destination object using preconditions.
    * //-
-   * file.moveObj('existing-destination.png', {
+   * file.moveFileAtomic('existing-destination.png', {
    * preconditionOpts: {
    * ifGenerationMatch: 0 // Fails if the destination object exists.
    * }
@@ -3529,7 +3536,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * //-
    * // If the callback is omitted, we'll return a Promise.
    * //-
-   * file.moveObj('moved-image.png).then(function(data) {
+   * file.moveFileAtomic('moved-image.png).then(function(data) {
    *   const newFile = data[0];
    *   const apiResponse = data[1];
    * });
@@ -3539,11 +3546,11 @@ class File extends ServiceObject<File, FileMetadata> {
    * region_tag:storage_move_file_hns
    * Another example:
    */
-  moveObj(
+  moveFileAtomic(
     destination: string | File,
-    optionsOrCallback?: MoveOptions | MoveCallback,
-    callback?: MoveCallback
-  ): Promise<MoveResponse> | void {
+    optionsOrCallback?: MoveFileAtomicOptions | MoveFileAtomicCallback,
+    callback?: MoveFileAtomicCallback
+  ): Promise<MoveFileAtomicResponse> | void {
     const noDestinationError = new Error(
       FileExceptionMessages.DESTINATION_NO_NAME
     );
@@ -3552,7 +3559,7 @@ class File extends ServiceObject<File, FileMetadata> {
       throw noDestinationError;
     }
 
-    let options: MoveOptions = {};
+    let options: MoveFileAtomicOptions = {};
     if (typeof optionsOrCallback === 'function') {
       callback = optionsOrCallback;
     } else if (optionsOrCallback) {
@@ -3587,7 +3594,7 @@ class File extends ServiceObject<File, FileMetadata> {
     ) {
       this.storage.retryOptions.autoRetry = false;
     }
-    const query = {} as MoveQuery;
+    const query = {} as MoveFileAtomicQuery;
     if (options.userProject !== undefined) {
       query.userProject = options.userProject;
       delete options.userProject;

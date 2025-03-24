@@ -24,9 +24,9 @@ function main(
   bucketName = 'my-bucket',
   srcFileName = 'test.txt',
   destFileName = 'test2.txt',
-  destinationGenerationMatchPrecondition = 1
+  destinationGenerationMatchPrecondition = 0
 ) {
-  // [START storage_move_object]
+  // [START storage_move_file_atomic]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -45,7 +45,7 @@ function main(
   // Creates a client
   const storage = new Storage();
 
-  async function moveObject() {
+  async function moveFileAtomic() {
     // Optional:
     // Set a generation-match precondition to avoid potential race conditions
     // and data corruptions. The request to copy is aborted if the object's
@@ -59,18 +59,18 @@ function main(
       },
     };
 
-    // Moves the file within the HNS enabled bucket
+    // Moves the file automatically within the HNS enabled bucket
     await storage
       .bucket(bucketName)
       .file(srcFileName)
-      .moveObj(destFileName, moveOptions);
+      .moveFileAtomic(destFileName, moveOptions);
 
     console.log(
       `gs://${bucketName}/${srcFileName} moved to gs://${bucketName}/${destFileName}`
     );
   }
 
-  moveObject().catch(console.error);
-  // [END storage_move_object]
+  moveFileAtomic().catch(console.error);
+  // [END storage_move_file_atomic]
 }
 main(...process.argv.slice(2));

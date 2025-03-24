@@ -227,7 +227,7 @@ describe('file', () => {
 
   it('should move a file', async () => {
     const output = execSync(
-      `node moveFile.js ${bucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
+      `node moveFileAtomic.js ${bucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
     );
     assert.include(
       output,

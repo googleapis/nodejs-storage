@@ -1694,7 +1694,7 @@ describe('storage', function () {
       assert.strictEqual(metadata.hierarchicalNamespace.enabled, true);
     });
 
-    describe('file#moveObj', async () => {
+    describe('file#moveFileAtomic', async () => {
       let hnsBucket: Bucket;
 
       afterEach(async () => {
@@ -1722,7 +1722,7 @@ describe('storage', function () {
         const [f1_metadata] = await f1.getMetadata();
 
         // Move the source file to a new destination name within the same bucket.
-        await f1.moveObj('move-dst-obj');
+        await f1.moveFileAtomic('move-dst-obj');
         const f2 = hnsBucket.file('move-dst-obj');
         assert(f2);
         const [f2_metadata] = await f2.getMetadata();

@@ -3996,14 +3996,14 @@ describe('File', () => {
     });
   });
 
-  describe('moveObj', () => {
-    function assertMoveObj(
+  describe('moveFileAtomic', () => {
+    function assertmoveFileAtomic(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       file: any,
       expectedDestination: string,
       callback: Function
     ) {
-      file.moveObj = (destination: string) => {
+      file.moveFileAtomic = (destination: string) => {
         assert.strictEqual(destination, expectedDestination);
         callback();
       };
@@ -4011,7 +4011,7 @@ describe('File', () => {
 
     it('should throw if no destination is provided', () => {
       assert.throws(() => {
-        file.moveObj();
+        file.moveFileAtomic();
       }, /Destination file should have a name\./);
     });
 
@@ -4025,31 +4025,31 @@ describe('File', () => {
         done();
       };
 
-      directoryFile.moveObj(newFile);
+      directoryFile.moveFileAtomic(newFile);
     });
 
-    it('should call moveObj with string', done => {
+    it('should call moveFileAtomic with string', done => {
       const newFileName = 'new-file-name.png';
-      assertMoveObj(file, newFileName, done);
-      file.moveObj(newFileName);
+      assertmoveFileAtomic(file, newFileName, done);
+      file.moveFileAtomic(newFileName);
     });
 
-    it('should call moveObj with File', done => {
+    it('should call moveFileAtomic with File', done => {
       const newFile = new File(BUCKET, 'new-file');
-      assertMoveObj(file, newFile, done);
-      file.moveObj(newFile);
+      assertmoveFileAtomic(file, newFile, done);
+      file.moveFileAtomic(newFile);
     });
 
     it('should accept an options object', done => {
       const newFile = new File(BUCKET, 'name');
       const options = {};
 
-      file.moveObj = (destination: {}, options_: {}) => {
+      file.moveFileAtomic = (destination: {}, options_: {}) => {
         assert.strictEqual(options_, options);
         done();
       };
 
-      file.moveObj(newFile, options, assert.ifError);
+      file.moveFileAtomic(newFile, options, assert.ifError);
     });
 
     it('should execute callback with error & API response', done => {
@@ -4062,7 +4062,7 @@ describe('File', () => {
         callback(error, apiResponse);
       };
 
-      file.moveObj(newFile, (err: Error, file: {}, apiResponse_: {}) => {
+      file.moveFileAtomic(newFile, (err: Error, file: {}, apiResponse_: {}) => {
         assert.strictEqual(err, error);
         assert.strictEqual(file, null);
         assert.strictEqual(apiResponse_, apiResponse);
@@ -4085,7 +4085,7 @@ describe('File', () => {
         done();
       };
 
-      file.moveObj(newFile, options, assert.ifError);
+      file.moveFileAtomic(newFile, options, assert.ifError);
     });
 
     it('should handle optionsOrCallback being the options', done => {
@@ -4105,7 +4105,7 @@ describe('File', () => {
         done();
       };
 
-      file.moveObj(newFile, options, assert.ifError);
+      file.moveFileAtomic(newFile, options, assert.ifError);
     });
 
     describe('destination types', () => {
@@ -4126,7 +4126,7 @@ describe('File', () => {
         const newFile = new File(BUCKET, newFileName);
         const expectedPath = `/moveTo/o/${newFile.name}`;
         assertPathEquals(file, expectedPath, done);
-        file.moveObj(newFileName);
+        file.moveFileAtomic(newFileName);
       });
 
       it('should allow a string with leading slash.', done => {
@@ -4134,26 +4134,26 @@ describe('File', () => {
         const newFile = new File(BUCKET, newFileName);
         const expectedPath = `/moveTo/o/${encodeURIComponent(newFile.name)}`;
         assertPathEquals(file, expectedPath, done);
-        file.moveObj(newFileName);
+        file.moveFileAtomic(newFileName);
       });
 
       it('should allow a "gs://..." string', done => {
         const newFileName = 'gs://other-bucket/new-file-name.png';
         const expectedPath = '/moveTo/o/new-file-name.png';
         assertPathEquals(file, expectedPath, done);
-        file.moveObj(newFileName);
+        file.moveFileAtomic(newFileName);
       });
 
       it('should allow a File', done => {
         const newFile = new File(BUCKET, 'new-file');
         const expectedPath = `/moveTo/o/${newFile.name}`;
         assertPathEquals(file, expectedPath, done);
-        file.moveObj(newFile);
+        file.moveFileAtomic(newFile);
       });
 
       it('should throw if a destination cannot be parsed', () => {
         assert.throws(() => {
-          file.moveObj(() => {});
+          file.moveFileAtomic(() => {});
         }, /Destination file should have a name\./);
       });
     });
@@ -4171,7 +4171,7 @@ describe('File', () => {
 
       it('should re-use file object if one is provided', done => {
         const newFile = new File(BUCKET, 'new-file');
-        file.moveObj(newFile, (err: Error, copiedFile: {}) => {
+        file.moveFileAtomic(newFile, (err: Error, copiedFile: {}) => {
           assert.ifError(err);
           assert.deepStrictEqual(copiedFile, newFile);
           done();
@@ -4180,7 +4180,7 @@ describe('File', () => {
 
       it('should create new file on the same bucket', done => {
         const newFilename = 'new-filename';
-        file.moveObj(newFilename, (err: Error, copiedFile: File) => {
+        file.moveFileAtomic(newFilename, (err: Error, copiedFile: File) => {
           assert.ifError(err);
           assert.strictEqual(copiedFile.bucket.name, BUCKET.name);
           assert.strictEqual(copiedFile.name, newFilename);
