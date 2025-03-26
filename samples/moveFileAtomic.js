@@ -26,7 +26,7 @@ function main(
   destFileName = 'test2.txt',
   destinationGenerationMatchPrecondition = 0
 ) {
-  // [START storage_move_file_atomic]
+  // [START storage_move_object]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -71,6 +71,6 @@ function main(
   }
 
   moveFileAtomic().catch(console.error);
-  // [END storage_move_file_atomic]
+  // [END storage_move_object]
 }
 main(...process.argv.slice(2));
