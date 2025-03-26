@@ -58,7 +58,7 @@ interface ConformanceTestResult {
 
 type LibraryMethodsModuleType = typeof import('./libraryMethods');
 const methodMap: Map<String, String[]> = new Map(
-  Object.entries({}), // TODO: replace with Object.entries(jsonToNodeApiMapping)
+  Object.entries(jsonToNodeApiMapping),
 );
 
 const DURATION_SECONDS = 600; // 10 mins.
@@ -197,6 +197,7 @@ export function executeScenario(testCase: RetryTestCase) {
               creationResult.id,
               storageTransport,
             );
+            console.log('testBenchResult', testBenchResult);
             assert.strictEqual(testBenchResult.completed, true);
           }).timeout(TIMEOUT_FOR_INDIVIDUAL_TEST);
         });
