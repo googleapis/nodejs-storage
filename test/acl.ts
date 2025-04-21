@@ -19,7 +19,7 @@ import {AccessControlObject, Acl, AclRoleAccessorMethods} from '../src/acl.js';
 import {StorageTransport} from '../src/storage-transport.js';
 import * as sinon from 'sinon';
 import {Bucket} from '../src/bucket.js';
-import {GaxiosError, GaxiosResponse} from 'gaxios';
+import {GaxiosError, GaxiosOptionsPrepared, GaxiosResponse} from 'gaxios';
 
 describe('storage/acl', () => {
   let acl: Acl;
@@ -369,14 +369,23 @@ describe('storage/acl', () => {
     it('should execute the callback with apiResponse', () => {
       const resp = {success: true};
       const gaxiosResponse: GaxiosResponse = {
-        config: {},
+        config: {} as GaxiosOptionsPrepared,
         data: resp,
         status: 0,
         statusText: '',
-        headers: [],
-        request: {
-          responseURL: '',
-        },
+        headers: [] as unknown as Headers,
+        ok: true,
+        type: 'default',
+        url: 'your-api-url',
+        redirected: false,
+        body: null,
+        bodyUsed: false,
+        arrayBuffer: async () => new ArrayBuffer(0),
+        text: async () => '',
+        json: async () => ({}),
+        clone: () => gaxiosResponse,
+        blob: async () => new Blob([]),
+        formData: async () => new FormData(),
       };
 
       acl.storageTransport.makeRequest = sandbox

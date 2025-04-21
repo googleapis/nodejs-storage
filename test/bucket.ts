@@ -23,6 +23,7 @@ import {
   Notification,
   IdempotencyStrategy,
   CreateWriteStreamOptions,
+  GaxiosOptionsPrepared,
 } from '../src/index.js';
 import sinon from 'sinon';
 import {StorageTransport} from '../src/storage-transport.js';
@@ -110,7 +111,7 @@ describe('Bucket', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await bucket.create((err: GaxiosError | null) => {
@@ -139,7 +140,7 @@ describe('Bucket', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await bucket.delete((err: GaxiosError | null) => {
@@ -168,7 +169,7 @@ describe('Bucket', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await bucket.exists((err: GaxiosError | null) => {
@@ -197,7 +198,7 @@ describe('Bucket', () => {
       });
 
       it('should return an error if the request fails', () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         bucket.get((err: GaxiosError | null) => {
@@ -226,7 +227,7 @@ describe('Bucket', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await bucket.getMetadata((err: GaxiosError | null) => {
@@ -390,7 +391,12 @@ describe('Bucket', () => {
       };
 
       bucket.getMetadata = sandbox.stub().callsFake(() => {
-        done(new GaxiosError('Metadata should not be refreshed.', {}));
+        done(
+          new GaxiosError(
+            'Metadata should not be refreshed.',
+            {} as GaxiosOptionsPrepared,
+          ),
+        );
       });
 
       bucket.setMetadata = sandbox
@@ -483,7 +489,10 @@ describe('Bucket', () => {
     });
 
     it('should pass error from getMetadata to callback', done => {
-      const error = new GaxiosError('from getMetadata', {});
+      const error = new GaxiosError(
+        'from getMetadata',
+        {} as GaxiosOptionsPrepared,
+      );
       const rule: LifecycleRule = {
         action: {
           type: 'Delete',
@@ -502,7 +511,10 @@ describe('Bucket', () => {
     });
 
     it('should pass error from setMetadata to callback', done => {
-      const error = new GaxiosError('from setMetadata', {});
+      const error = new GaxiosError(
+        'from setMetadata',
+        {} as GaxiosOptionsPrepared,
+      );
       const rule: LifecycleRule = {
         action: {
           type: 'Delete',
@@ -735,7 +747,7 @@ describe('Bucket', () => {
       const sources = [bucket.file('1.txt'), bucket.file('2.txt')];
       const destination = bucket.file('destination.txt');
 
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
 
       storageTransport.makeRequest = sandbox
         .stub()
@@ -843,7 +855,7 @@ describe('Bucket', () => {
     });
 
     describe('error', () => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
       const apiResponse = {};
 
       beforeEach(() => {
@@ -1004,7 +1016,7 @@ describe('Bucket', () => {
     });
 
     it('should return errors to the callback', () => {
-      const error = new GaxiosError('err', {});
+      const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
       const response = {};
 
       bucket.storageTransport.makeRequest = sandbox
@@ -1262,7 +1274,7 @@ describe('Bucket', () => {
       });
 
       it('should return an error from getLabels()', () => {
-        const error = new GaxiosError('Error.', {});
+        const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
 
         bucket.getLabels = sandbox.stub().rejects(error);
 
@@ -1434,7 +1446,7 @@ describe('Bucket', () => {
     });
 
     it('should return an error from getting the IAM policy', done => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
 
       bucket.iam.getPolicy = sandbox.stub().callsFake(() => {
         throw error;
@@ -1447,7 +1459,7 @@ describe('Bucket', () => {
     });
 
     it('should return an error from setting the IAM policy', done => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
 
       bucket.iam.setPolicy = sandbox.stub().callsFake(() => {
         throw error;
@@ -1532,7 +1544,7 @@ describe('Bucket', () => {
     });
 
     it('should return an error from the setMetadata call failing', done => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
 
       bucket.setMetadata = sandbox.stub().callsFake(() => {
         throw error;
@@ -1782,7 +1794,7 @@ describe('Bucket', () => {
     });
 
     it('should execute callback with error & API response', () => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
       const apiResponse = {};
 
       bucket.storageTransport.makeRequest = sandbox
@@ -1837,7 +1849,7 @@ describe('Bucket', () => {
     });
 
     it('should return error from getMetadata', done => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
 
       bucket.getMetadata = sandbox
         .stub()
@@ -1915,7 +1927,7 @@ describe('Bucket', () => {
     });
 
     it('should return any errors to the callback', () => {
-      const error = new GaxiosError('err', {});
+      const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
       const response = {};
 
       bucket.storageTransport.makeRequest = sandbox
@@ -2140,7 +2152,7 @@ describe('Bucket', () => {
     });
 
     it('should execute callback with error', done => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
 
       bucket.setMetadata = sandbox
         .stub()
@@ -2211,7 +2223,7 @@ describe('Bucket', () => {
     });
 
     it('should execute callback with error', done => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
       bucket.acl.add = sandbox.stub().callsFake(() => Promise.reject(error));
       bucket.makePublic(err => {
         assert.strictEqual(err, error);
@@ -2811,7 +2823,7 @@ describe('Bucket', () => {
     });
 
     it('should execute callback on error', done => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
       const fakeFile = new File(bucket, 'file-name');
       const options = {destination: fakeFile};
       fakeFile.createWriteStream = () => {
@@ -2923,7 +2935,7 @@ describe('Bucket', () => {
     });
 
     it('should execute callback with error from getting files', done => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
       bucket.getFiles = sandbox.stub().callsFake(() => Promise.reject(error));
       bucket.makeAllFilesPublicPrivate_({}, err => {
         assert.strictEqual(err, error);

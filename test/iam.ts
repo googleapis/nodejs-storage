@@ -17,7 +17,7 @@ import {describe, it, beforeEach} from 'mocha';
 import {Iam} from '../src/iam.js';
 import {Bucket} from '../src/bucket.js';
 import * as sinon from 'sinon';
-import {GaxiosError} from 'gaxios';
+import {GaxiosError, GaxiosOptionsPrepared} from 'gaxios';
 import {StorageTransport} from '../src/storage-transport.js';
 
 describe('storage/iam', () => {
@@ -159,7 +159,7 @@ describe('storage/iam', () => {
 
     it('should send an error back if the request fails', () => {
       const permissions = ['storage.bucket.list'];
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
 
       BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
         .stub()

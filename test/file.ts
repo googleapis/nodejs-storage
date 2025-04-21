@@ -14,7 +14,14 @@
 
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
 import assert from 'assert';
-import {Bucket, CRC32C, File, GaxiosError, Storage} from '../src/index.js';
+import {
+  Bucket,
+  CRC32C,
+  File,
+  GaxiosError,
+  GaxiosOptionsPrepared,
+  Storage,
+} from '../src/index.js';
 import {
   StorageRequestOptions,
   StorageTransport,
@@ -181,7 +188,7 @@ describe('File', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.delete((err: GaxiosError | null) => {
@@ -239,7 +246,7 @@ describe('File', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.exists((err: GaxiosError | null) => {
@@ -297,7 +304,7 @@ describe('File', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.get((err: GaxiosError | null) => {
@@ -355,7 +362,7 @@ describe('File', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.getMetadata((err: GaxiosError | null) => {
@@ -384,7 +391,7 @@ describe('File', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
 
@@ -969,7 +976,7 @@ describe('File', () => {
         file.createReadStream().resume();
       });
       describe('errors', () => {
-        const ERROR = new GaxiosError('Error.', {});
+        const ERROR = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
         it('should emit an error from authenticating', done => {
           file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
             const requestStream = new PassThrough();
@@ -1045,7 +1052,7 @@ describe('File', () => {
       });
 
       describe('errors', () => {
-        const ERROR = new GaxiosError('Error.', {});
+        const ERROR = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
         it('should emit the error', () => {
           file.storageTransport.makeRequest = sandbox.stub().rejects(ERROR);
 
@@ -3626,7 +3633,10 @@ describe('File', () => {
       file.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, config, callback) => {
-          const error = new GaxiosError('Permission Denied.', {});
+          const error = new GaxiosError(
+            'Permission Denied.',
+            {} as GaxiosOptionsPrepared,
+          );
           error.status = 403;
           callback(error);
         });
@@ -3637,7 +3647,7 @@ describe('File', () => {
     });
 
     it('should propagate non-403 errors to user', () => {
-      const error = new GaxiosError('400 Error.', {});
+      const error = new GaxiosError('400 Error.', {} as GaxiosOptionsPrepared);
       error.status = 400;
       file.storageTransport.makeRequest = sandbox
         .stub()
