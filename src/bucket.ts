@@ -1690,7 +1690,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
           method: 'POST',
           url: '/compose',
           maxRetries,
-          body: {
+          body: JSON.stringify({
             destination: {
               contentType: destinationFile.metadata.contentType,
               contentEncoding: destinationFile.metadata.contentEncoding,
@@ -1708,7 +1708,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
               return sourceObject;
             }),
-          },
+          }),
           queryParameters: options as unknown as StorageQueryParameters,
         },
         (err, resp) => {
@@ -1852,12 +1852,14 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         {
           method: 'POST',
           url: `${this.baseUrl}/o/watch`,
-          body: Object.assign(
-            {
-              id,
-              type: 'web_hook',
-            },
-            config,
+          body: JSON.stringify(
+            Object.assign(
+              {
+                id,
+                type: 'web_hook',
+              },
+              config,
+            ),
           ),
           queryParameters: options as unknown as StorageQueryParameters,
         },
@@ -2045,7 +2047,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         {
           method: 'POST',
           url: `${this.baseUrl}/notificationConfigs`,
-          body: convertObjKeysToSnakeCase(body),
+          body: JSON.stringify(convertObjKeysToSnakeCase(body)),
           queryParameters: query as unknown as StorageQueryParameters,
           retry: false,
         },

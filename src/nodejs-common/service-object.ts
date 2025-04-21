@@ -21,7 +21,7 @@ import {StorageRequestOptions, StorageTransport} from '../storage-transport.js';
 import {
   GaxiosError,
   GaxiosInterceptor,
-  GaxiosOptions,
+  GaxiosOptionsPrepared,
   GaxiosResponse,
 } from 'gaxios';
 
@@ -159,7 +159,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
   name?: string;
   private createMethod?: Function;
   protected methods: Methods;
-  interceptors: GaxiosInterceptor<GaxiosOptions>[];
+  interceptors: GaxiosInterceptor<GaxiosOptionsPrepared>[];
   projectId?: string;
 
   /*
@@ -499,6 +499,8 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
       url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
     }
 
+    const body = Object.assign({}, methodConfig.reqOpts?.body, metadata);
+
     this.storageTransport
       .makeRequest<K>(
         {
@@ -506,10 +508,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
           responseType: 'json',
           url,
           ...methodConfig.reqOpts,
-          body: JSON.stringify({
-            ...methodConfig.reqOpts?.body,
-            ...metadata,
-          }),
+          body: JSON.stringify(body),
           queryParameters: {
             ...methodConfig.reqOpts?.queryParameters,
             ...options,

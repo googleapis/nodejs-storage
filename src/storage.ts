@@ -31,7 +31,7 @@ import {
 } from './crc32c.js';
 import {DEFAULT_UNIVERSE} from 'google-auth-library';
 import {StorageQueryParameters, StorageTransport} from './storage-transport.js';
-import {GaxiosError, GaxiosInterceptor, GaxiosOptions} from 'gaxios';
+import {GaxiosError, GaxiosInterceptor, GaxiosOptionsPrepared} from 'gaxios';
 
 export interface GetServiceAccountOptions {
   userProject?: string;
@@ -533,7 +533,7 @@ export class Storage {
   projectId?: string;
   apiEndpoint: string;
   storageTransport: StorageTransport;
-  interceptors: GaxiosInterceptor<GaxiosOptions>[];
+  interceptors: GaxiosInterceptor<GaxiosOptionsPrepared>[];
   universeDomain: string;
   customEndpoint = false;
   name = '';

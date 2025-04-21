@@ -16,14 +16,14 @@ import {
   GaxiosError,
   GaxiosInterceptor,
   GaxiosOptions,
+  GaxiosOptionsPrepared,
   GaxiosResponse,
-  Headers,
 } from 'gaxios';
 import {
   AuthClient,
-  DefaultTransporter,
   GoogleAuth,
   GoogleAuthOptions,
+  gaxios,
 } from 'google-auth-library';
 import {
   getModuleFormat,
@@ -53,7 +53,7 @@ export interface StorageQueryParameters extends StandardStorageQueryParams {
 
 export interface StorageRequestOptions extends GaxiosOptions {
   [GCCL_GCS_CMD_KEY]?: string;
-  interceptors?: GaxiosInterceptor<GaxiosOptions>[];
+  interceptors?: GaxiosInterceptor<GaxiosOptionsPrepared>[];
   autoPaginate?: boolean;
   autoPaginateVal?: boolean;
   maxRetries?: number;
@@ -127,14 +127,16 @@ export class StorageTransport {
   ): Promise<T> | Promise<void> {
     const headers = this.#buildRequestHeaders(reqOpts.headers);
     if (reqOpts[GCCL_GCS_CMD_KEY]) {
-      headers['x-goog-api-client'] +=
-        ` gccl-gcs-cmd/${reqOpts[GCCL_GCS_CMD_KEY]}`;
+      headers.set(
+        'x-goog-api-client',
+        `${headers.get('x-goog-api-client')} gccl-gcs-cmd/${reqOpts[GCCL_GCS_CMD_KEY]}`,
+      );
     }
     if (reqOpts.interceptors) {
-      const transport = this.authClient.transporter as DefaultTransporter;
-      transport.instance.interceptors.request.clear();
+      const transport = new gaxios.Gaxios();
+      transport.interceptors.request.clear();
       for (const inter of reqOpts.interceptors) {
-        transport.instance.interceptors.request.add(inter);
+        transport.interceptors.request.add(inter);
       }
     }
     const prepareRequest = async () => {
@@ -207,14 +209,14 @@ export class StorageTransport {
     }
   }
 
-  #buildRequestHeaders(requestHeaders: Headers = {}) {
-    const headers = {
-      ...requestHeaders,
-      'User-Agent': this.#getUserAgentString(),
-      'x-goog-api-client': `${getRuntimeTrackingString()} gccl/${
-        this.packageJson.version
-      }-${getModuleFormat()} gccl-invocation-id/${randomUUID()}`,
-    };
+  #buildRequestHeaders(requestHeaders = {}) {
+    const headers = new Headers(requestHeaders);
+
+    headers.set('User-Agent', this.#getUserAgentString());
+    headers.set(
+      'x-goog-api-client',
+      `${getRuntimeTrackingString()} gccl/${this.packageJson.version}-${getModuleFormat()} gccl-invocation-id/${randomUUID()}`,
+    );
 
     return headers;
   }
