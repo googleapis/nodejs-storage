@@ -34,12 +34,22 @@ import {
   GetBucketSignedUrlConfig,
   LifecycleRule,
 } from '../src/bucket.js';
-import mime from 'mime';
+// import mime from 'mime';
 import {convertObjKeysToSnakeCase, getDirName} from '../src/util.js';
 import {util} from '../src/nodejs-common/index.js';
 import path from 'path';
 import * as stream from 'stream';
 import {Transform} from 'stream';
+
+const getFileType = async (filename: string) => {
+  try {
+    const mimeModule = (await import('mime')).default;
+    const mimeType = mimeModule.getType(filename);
+    return mimeType;
+  } catch (error) {
+    return null;
+  }
+};
 
 class HTTPError extends Error {
   code: number;
@@ -586,7 +596,7 @@ describe('Bucket', () => {
         .callsFake((reqOpts, callback) => {
           assert.strictEqual(
             reqOpts.body.destination.contentType,
-            mime.getType(destination.name),
+            getFileType(destination.name),
           );
           callback(null, {});
           return Promise.resolve({});
@@ -621,7 +631,7 @@ describe('Bucket', () => {
         .callsFake((reqOpts, callback) => {
           assert.strictEqual(
             reqOpts.body.destination.contentType,
-            mime.getType(destination.name),
+            getFileType(destination.name),
           );
           callback(null, {});
           return Promise.resolve({});
@@ -638,7 +648,7 @@ describe('Bucket', () => {
         assert.strictEqual(reqOpts.url, '/compose');
         assert.deepStrictEqual(reqOpts.body, {
           destination: {
-            contentType: mime.getType(destination.name) || undefined,
+            contentType: getFileType(destination.name) || undefined,
             contentEncoding: undefined,
           },
           sourceObjects: [{name: sources[0].name}, {name: sources[1].name}],

@@ -23,7 +23,6 @@ import {promisifyAll} from '@google-cloud/promisify';
 
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-import mime from 'mime';
 import * as resumableUpload from './resumable-upload.js';
 import {Writable, Readable, pipeline, Transform, PipelineSource} from 'stream';
 import * as zlib from 'zlib';
@@ -543,6 +542,16 @@ export enum FileExceptionMessages {
   MD5_RESUMED_UPLOAD = 'MD5 cannot be used with a continued resumable upload as MD5 cannot be extended from an existing value',
   MISSING_RESUME_CRC32C_FINAL_UPLOAD = 'The CRC32C is missing for the final portion of a resumed upload, which is required for validation. Please provide `resumeCRC32C` if validation is required, or disable `validation`.',
 }
+
+const getFileType = async (filename: string) => {
+  try {
+    const mimeModule = (await import('mime')).default;
+    const mimeType = mimeModule.getType(filename);
+    return mimeType;
+  } catch (error) {
+    return null;
+  }
+};
 
 /**
  * A File object is created from your {@link Bucket} object using
@@ -2016,10 +2025,11 @@ class File extends ServiceObject<File, FileMetadata> {
       !options!.metadata!.contentType ||
       options!.metadata!.contentType === 'auto'
     ) {
-      const detectedContentType = mime.getType(this.name);
-      if (detectedContentType) {
-        options!.metadata!.contentType = detectedContentType;
-      }
+      void getFileType(this.name).then(detectedContentType => {
+        if (detectedContentType) {
+          options!.metadata!.contentType = detectedContentType;
+        }
+      });
     }
 
     let gzip = options.gzip;

@@ -22,7 +22,6 @@ import {
   FileExceptionMessages,
   RequestError,
 } from './file.js';
-import pLimit from 'p-limit';
 import * as path from 'path';
 import {createReadStream, existsSync, promises as fsp} from 'fs';
 import {CRC32C} from './crc32c.js';
@@ -163,6 +162,11 @@ const defaultMultiPartGenerator: MultiPartHelperGenerator = (
   partsMap,
 ) => {
   return new XMLMultiPartUploadHelper(bucket, fileName, uploadId, partsMap);
+};
+
+const createLimit = async (concurrency: number) => {
+  const {default: pLimit} = await import('p-limit'); // dynamic import
+  return pLimit(concurrency);
 };
 
 export class MultiPartUploadError extends Error {
@@ -489,7 +493,7 @@ export class TransferManager {
       };
     }
 
-    const limit = pLimit(
+    const limit = createLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_UPLOAD_LIMIT,
     );
     const promises: Promise<UploadResponse>[] = [];
@@ -526,7 +530,7 @@ export class TransferManager {
       }
 
       promises.push(
-        limit(() =>
+        (await limit)(() =>
           this.bucket.upload(filePath, passThroughOptionsCopy as UploadOptions),
         ),
       );
@@ -585,7 +589,7 @@ export class TransferManager {
     filesOrFolder: File[] | string[] | string,
     options: DownloadManyFilesOptions = {},
   ): Promise<void | DownloadResponse[]> {
-    const limit = pLimit(
+    const limit = createLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_DOWNLOAD_LIMIT,
     );
     const promises: Promise<DownloadResponse>[] = [];
@@ -634,7 +638,7 @@ export class TransferManager {
       }
 
       promises.push(
-        limit(async () => {
+        (await limit)(async () => {
           const destination = passThroughOptionsCopy.destination;
           if (destination && destination.endsWith(path.sep)) {
             await fsp.mkdir(destination, {recursive: true});
@@ -690,7 +694,7 @@ export class TransferManager {
   ): Promise<void | DownloadResponse> {
     let chunkSize =
       options.chunkSizeBytes || DOWNLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE;
-    let limit = pLimit(
+    let limit = createLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_CHUNKED_DOWNLOAD_LIMIT,
     );
     const noReturnData = Boolean(options.noReturnData);
@@ -704,7 +708,7 @@ export class TransferManager {
     const size = parseInt(fileInfo[0].metadata.size!.toString());
     // If the file size does not meet the threshold download it as a single chunk.
     if (size < DOWNLOAD_IN_CHUNKS_FILE_SIZE_THRESHOLD) {
-      limit = pLimit(1);
+      limit = createLimit(1);
       chunkSize = size;
     }
 
@@ -716,7 +720,7 @@ export class TransferManager {
       let chunkEnd = start + chunkSize - 1;
       chunkEnd = chunkEnd > size ? size : chunkEnd;
       promises.push(
-        limit(async () => {
+        (await limit)(async () => {
           const resp = await file.download({
             start: chunkStart,
             end: chunkEnd,
@@ -808,7 +812,7 @@ export class TransferManager {
   ): Promise<GaxiosResponse | undefined> {
     const chunkSize =
       options.chunkSizeBytes || UPLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE;
-    const limit = pLimit(
+    const limit = createLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_CHUNKED_UPLOAD_LIMIT,
     );
     const maxQueueSize =
@@ -841,7 +845,7 @@ export class TransferManager {
           promises = [];
         }
         promises.push(
-          limit(() =>
+          (await limit)(() =>
             mpuHelper.uploadPart(partNumber++, curChunk, options.validation),
           ),
         );
