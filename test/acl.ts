@@ -63,7 +63,10 @@ describe('storage/acl', () => {
       acl.storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
         assert.strictEqual(reqOpts.method, 'POST');
         assert.strictEqual(reqOpts.url, '/bucket/acl');
-        assert.deepStrictEqual(reqOpts.body, {entity: ENTITY, role: ROLE});
+        assert.deepStrictEqual(JSON.parse(reqOpts.body), {
+          entity: ENTITY,
+          role: ROLE,
+        });
         return Promise.resolve();
       });
 
@@ -406,7 +409,7 @@ describe('storage/acl', () => {
       acl.storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
         assert.strictEqual(reqOpts.method, 'PUT');
         assert.strictEqual(reqOpts.url, `/bucket/acl/${ENTITY}`);
-        assert.deepStrictEqual(reqOpts.body, {role: ROLE});
+        assert.deepStrictEqual(JSON.parse(reqOpts.body), {role: ROLE});
         return Promise.resolve();
       });
 

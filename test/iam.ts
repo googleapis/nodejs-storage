@@ -104,6 +104,7 @@ describe('storage/iam', () => {
       BUCKET_INSTANCE.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, callback) => {
+          reqOpts.body = JSON.parse(reqOpts.body);
           assert.deepStrictEqual(reqOpts, {
             method: 'PUT',
             url: '/iam',

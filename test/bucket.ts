@@ -840,7 +840,7 @@ describe('Bucket', () => {
             id: ID,
             type: 'web_hook',
           });
-          assert.deepStrictEqual(reqOpts.body, expectedJson);
+          assert.deepStrictEqual(JSON.parse(reqOpts.body), expectedJson);
           assert.deepStrictEqual(config, originalConfig);
 
           done();
@@ -961,7 +961,7 @@ describe('Bucket', () => {
         .callsFake(reqOpts => {
           assert.strictEqual(reqOpts.method, 'POST');
           assert.strictEqual(reqOpts.url, '/b/notificationConfigs');
-          assert.deepStrictEqual(reqOpts.body, expectedJson);
+          assert.deepStrictEqual(JSON.parse(reqOpts.body), expectedJson);
           assert.notStrictEqual(reqOpts.body, options);
           done();
         });
@@ -1000,7 +1000,7 @@ describe('Bucket', () => {
       bucket.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake(reqOpts => {
-          assert.deepStrictEqual(reqOpts.body, expectedJson);
+          assert.deepStrictEqual(JSON.parse(reqOpts.body), expectedJson);
           done();
         });
 
@@ -2901,7 +2901,7 @@ describe('Bucket', () => {
       bucket.makeAllFilesPublicPrivate_({}, done);
     });
 
-    it('should make files public', done => {
+    it('should make files public', () => {
       let timesCalled = 0;
       const files = [bucket.file('1'), bucket.file('2')].map(file => {
         file.makePublic = sandbox.stub().callsFake(() => {
@@ -2916,11 +2916,10 @@ describe('Bucket', () => {
       bucket.makeAllFilesPublicPrivate_({public: true}, err => {
         assert.ifError(err);
         assert.strictEqual(timesCalled, files.length);
-        done();
       });
     });
 
-    it('should make files private', done => {
+    it('should make files private', () => {
       const options = {
         private: true,
       };
@@ -2940,7 +2939,6 @@ describe('Bucket', () => {
       bucket.makeAllFilesPublicPrivate_(options, err => {
         assert.ifError(err);
         assert.strictEqual(timesCalled, files.length);
-        done();
       });
     });
 
@@ -2953,7 +2951,7 @@ describe('Bucket', () => {
       });
     });
 
-    it('should execute callback with error from changing file', done => {
+    it('should execute callback with error from changing file', () => {
       const error = new Error('Error.');
       const files = [bucket.file('1'), bucket.file('2')].map(file => {
         file.makePublic = sandbox.stub().callsFake(() => Promise.reject(error));
@@ -2964,11 +2962,10 @@ describe('Bucket', () => {
         .callsFake(() => Promise.resolve([files]));
       bucket.makeAllFilesPublicPrivate_({public: true}, err => {
         assert.strictEqual(err, error);
-        done();
       });
     });
 
-    it('should execute callback with queued errors', done => {
+    it('should execute callback with queued errors', () => {
       const error = new Error('Error.');
       const files = [bucket.file('1'), bucket.file('2')].map(file => {
         file.makePublic = sandbox.stub().callsFake(() => Promise.reject(error));
@@ -2984,12 +2981,11 @@ describe('Bucket', () => {
         },
         errs => {
           assert.deepStrictEqual(errs, [error, error]);
-          done();
         },
       );
     });
 
-    it('should execute callback with files changed', done => {
+    it('should execute callback with files changed', () => {
       const error = new Error('Error.');
       const successFiles = [bucket.file('1'), bucket.file('2')].map(file => {
         file.makePublic = sandbox.stub().callsFake(() => Promise.resolve());
@@ -3013,7 +3009,6 @@ describe('Bucket', () => {
         (errs, files) => {
           assert.deepStrictEqual(errs, [error, error]);
           assert.deepStrictEqual(files, successFiles);
-          done();
         },
       );
     });

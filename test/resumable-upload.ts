@@ -944,28 +944,25 @@ describe('resumable-upload', () => {
         };
       });
 
-      it('should localize the uri', done => {
+      it('should localize the uri', () => {
         up.createURI((err: Error) => {
           assert.ifError(err);
           assert.strictEqual(up.uri, URI);
           assert.strictEqual(up.offset, 0);
-          done();
         });
       });
 
-      it('should default the offset to 0', done => {
+      it('should default the offset to 0', () => {
         up.createURI((err: Error) => {
           assert.ifError(err);
           assert.strictEqual(up.offset, 0);
-          done();
         });
       });
 
-      it('should exec callback with URI', done => {
+      it('should exec callback with URI', () => {
         up.createURI((err: Error, uri: string) => {
           assert.ifError(err);
           assert.strictEqual(uri, URI);
-          done();
         });
       });
 
@@ -1387,7 +1384,7 @@ describe('resumable-upload', () => {
       up.responseHandler(RESP);
     });
 
-    it('should continue with multi-chunk upload when incomplete', done => {
+    it('should continue with multi-chunk upload when incomplete', () => {
       const lastByteReceived = 9;
 
       const RESP = {
@@ -1403,14 +1400,12 @@ describe('resumable-upload', () => {
 
       up.continueUploading = () => {
         assert.equal(up.offset, lastByteReceived + 1);
-
-        done();
       };
 
       up.responseHandler(RESP);
     });
 
-    it('should not continue with multi-chunk upload when incomplete if a partial upload has finished', done => {
+    it('should not continue with multi-chunk upload when incomplete if a partial upload has finished', () => {
       const lastByteReceived = 9;
 
       const RESP = {
@@ -1425,12 +1420,12 @@ describe('resumable-upload', () => {
       up.upstreamEnded = true;
       up.isPartialUpload = true;
 
-      up.on('uploadFinished', done);
+      up.on('uploadFinished');
 
       up.responseHandler(RESP);
     });
 
-    it('should error when upload is incomplete and the upstream is not a partial upload', done => {
+    it('should error when upload is incomplete and the upstream is not a partial upload', () => {
       const lastByteReceived = 9;
 
       const RESP = {
@@ -1446,14 +1441,12 @@ describe('resumable-upload', () => {
 
       up.on('error', (e: Error) => {
         assert.match(e.message, /Upload failed/);
-
-        done();
       });
 
       up.responseHandler(RESP);
     });
 
-    it('should unshift missing data if server did not receive the entire chunk', done => {
+    it('should unshift missing data if server did not receive the entire chunk', () => {
       const NUM_BYTES_WRITTEN = 20;
       const LAST_CHUNK_LENGTH = 256;
       const UPSTREAM_BUFFER_LENGTH = 1024;
@@ -1494,8 +1487,6 @@ describe('resumable-upload', () => {
         // we should discard part of the last chunk, as we know what the server
         // has at this point.
         assert.deepEqual(up.localWriteCache, []);
-
-        done();
       };
 
       up.responseHandler(RESP);

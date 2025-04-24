@@ -507,8 +507,9 @@ describe('File', () => {
       };
 
       file.storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
-        assert.deepStrictEqual(reqOpts.body, options);
-        assert.strictEqual(reqOpts.body.metadata, METADATA);
+        const body = JSON.parse(reqOpts.body);
+        assert.deepStrictEqual(body, options);
+        assert.deepStrictEqual(body.metadata, METADATA);
         done();
       });
 
@@ -1839,26 +1840,24 @@ describe('File', () => {
       writable.write('data');
     });
 
-    it('should detect contentType with contentType:auto', done => {
+    it('should detect contentType with contentType:auto', () => {
       const writable = file.createWriteStream({contentType: 'auto'});
       file.startResumableUpload_ = sandbox
         .stub()
         .callsFake((stream, options) => {
           assert.strictEqual(options.metadata.contentType, 'image/png');
-          done();
         });
 
       writable.write('data');
     });
 
-    it('should detect contentType if not defined', done => {
+    it('should detect contentType if not defined', () => {
       const writable = file.createWriteStream();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       file.startResumableUpload_ = sandbox
         .stub()
         .callsFake((stream, options) => {
           assert.strictEqual(options.metadata.contentType, 'image/png');
-          done();
         });
 
       writable.write('data');
