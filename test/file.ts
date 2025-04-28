@@ -550,11 +550,14 @@ describe('File', () => {
       const newFile = new File(BUCKET, 'new-file');
 
       file.storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
-        assert.deepStrictEqual(reqOpts.headers, {
-          'x-goog-copy-source-encryption-algorithm': 'AES256',
-          'x-goog-copy-source-encryption-key': file.encryptionKeyBase64,
-          'x-goog-copy-source-encryption-key-sha256': file.encryptionKeyHash,
-        });
+        assert.deepStrictEqual(
+          Object.fromEntries((reqOpts.headers as Headers).entries()),
+          {
+            'x-goog-copy-source-encryption-algorithm': 'AES256',
+            'x-goog-copy-source-encryption-key': file.encryptionKeyBase64,
+            'x-goog-copy-source-encryption-key-sha256': file.encryptionKeyHash,
+          },
+        );
         done();
       });
 

@@ -974,6 +974,7 @@ export class Upload extends Writable {
       return;
     }
 
+    const respHeaders = new Headers(resp.headers);
     // At this point we can safely create a new id for the chunk
     this.currentInvocationId.chunk = uuid.v4();
 
@@ -982,7 +983,7 @@ export class Upload extends Writable {
     const shouldContinueWithNextMultiChunkRequest =
       this.chunkSize &&
       resp.status === RESUMABLE_INCOMPLETE_STATUS_CODE &&
-      resp.headers.get('range') &&
+      respHeaders.get('range') &&
       moreDataToUpload;
 
     /**
@@ -998,7 +999,7 @@ export class Upload extends Writable {
       // Use the upper value in this header to determine where to start the next chunk.
       // We should not assume that the server received all bytes sent in the request.
       // https://cloud.google.com/storage/docs/performing-resumable-uploads#chunked-upload
-      const range: string = resp.headers.get('range')!;
+      const range: string = respHeaders.get('range')!;
       this.offset = Number(range.split('-')[1]) + 1;
 
       // We should not assume that the server received all bytes sent in the request.
@@ -1108,8 +1109,9 @@ export class Upload extends Writable {
       const resp = await this.checkUploadStatus({retry: false});
 
       if (resp.status === RESUMABLE_INCOMPLETE_STATUS_CODE) {
-        if (typeof resp.headers.get('range') === 'string') {
-          this.offset = Number(resp.headers.get('range')!.split('-')[1]) + 1;
+        const respHeaders = new Headers(resp.headers);
+        if (typeof respHeaders.get('range') === 'string') {
+          this.offset = Number(respHeaders.get('range')!.split('-')[1]) + 1;
           return;
         }
       }

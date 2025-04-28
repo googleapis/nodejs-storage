@@ -326,7 +326,8 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
         if (res.data && res.data.error) {
           throw res.data.error;
         }
-        this.partsMap.set(partNumber, res.headers.get('etag')!);
+        const resHeaders = new Headers(res.headers);
+        this.partsMap.set(partNumber, resHeaders.get('etag')!);
       } catch (e) {
         this.#handleErrorResponse(e as Error, bail);
       }

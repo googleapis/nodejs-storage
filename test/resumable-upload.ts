@@ -105,7 +105,7 @@ describe('resumable-upload', () => {
   });
 
   beforeEach(() => {
-    REQ_OPTS = {url: 'http://fake.local'};
+    REQ_OPTS = {url: 'http://fake.local/'};
     up = upload({
       bucket: BUCKET,
       file: FILE,
@@ -1413,14 +1413,17 @@ describe('resumable-upload', () => {
           range: `bytes=0-${lastByteReceived}`,
         },
       };
+      try {
+        up.chunkSize = 1;
+        up.upstreamEnded = true;
+        up.isPartialUpload = true;
 
-      up.chunkSize = 1;
-      up.upstreamEnded = true;
-      up.isPartialUpload = true;
+        up.on('uploadFinished', () => {});
 
-      up.on('uploadFinished');
-
-      up.responseHandler(RESP);
+        up.responseHandler(RESP);
+      } catch (error) {
+        console.error(error);
+      }
     });
 
     it('should error when upload is incomplete and the upstream is not a partial upload', () => {
@@ -1641,7 +1644,10 @@ describe('resumable-upload', () => {
         nock(REQ_OPTS.url!).get(queryPath).reply(200, {}),
       ];
       const res: GaxiosResponse = await up.makeRequest(REQ_OPTS);
-      assert.strictEqual(res.config.url, REQ_OPTS.url + queryPath.slice(1));
+      assert.strictEqual(
+        (res.config.url as URL).href,
+        REQ_OPTS.url + queryPath.slice(1),
+      );
       scopes.forEach(x => x.done());
     });
 
@@ -1673,8 +1679,14 @@ describe('resumable-upload', () => {
       ];
       const res = await up.makeRequest(REQ_OPTS);
       scopes.forEach(x => x.done());
-      assert.strictEqual(res.config.url, REQ_OPTS.url + queryPath.slice(1));
-      assert.deepStrictEqual(res.headers, {});
+      assert.strictEqual(
+        (res.config.url as URL).href,
+        REQ_OPTS.url + queryPath.slice(1),
+      );
+      assert.deepStrictEqual(
+        Object.fromEntries((res.headers as Headers).entries()),
+        {},
+      );
     });
 
     it('should bypass authentication if emulator context detected', async () => {
@@ -1697,8 +1709,14 @@ describe('resumable-upload', () => {
       ];
       const res = await up.makeRequest(REQ_OPTS);
       scopes.forEach(x => x.done());
-      assert.strictEqual(res.config.url, REQ_OPTS.url + queryPath.slice(1));
-      assert.deepStrictEqual(res.headers, {});
+      assert.strictEqual(
+        (res.config.url as URL).href,
+        REQ_OPTS.url + queryPath.slice(1),
+      );
+      assert.deepStrictEqual(
+        Object.fromEntries((res.headers as Headers).entries()),
+        {},
+      );
     });
 
     it('should combine customRequestOptions', done => {

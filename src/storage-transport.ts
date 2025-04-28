@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import {
+  Gaxios,
   GaxiosError,
   GaxiosInterceptor,
   GaxiosOptions,
@@ -133,7 +134,7 @@ export class StorageTransport {
       );
     }
     if (reqOpts.interceptors) {
-      const transport = new gaxios.Gaxios();
+      const transport = new Gaxios();
       transport.interceptors.request.clear();
       for (const inter of reqOpts.interceptors) {
         transport.interceptors.request.add(inter);
