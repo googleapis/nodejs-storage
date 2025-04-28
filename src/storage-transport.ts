@@ -20,12 +20,7 @@ import {
   GaxiosOptionsPrepared,
   GaxiosResponse,
 } from 'gaxios';
-import {
-  AuthClient,
-  GoogleAuth,
-  GoogleAuthOptions,
-  gaxios,
-} from 'google-auth-library';
+import {AuthClient, GoogleAuth, GoogleAuthOptions} from 'google-auth-library';
 import {
   getModuleFormat,
   getRuntimeTrackingString,

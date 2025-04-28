@@ -21,6 +21,7 @@ import {GoogleAuth} from 'google-auth-library';
 import sinon from 'sinon';
 import assert from 'assert';
 import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util';
+import {Gaxios} from 'gaxios';
 
 describe('Storage Transport', () => {
   let sandbox: sinon.SinonSandbox;
@@ -129,7 +130,7 @@ describe('Storage Transport', () => {
     const clearStub = sandbox.stub();
     const addStub = sandbox.stub();
     (authClientStub.request as sinon.SinonStub).resolves({data: {}});
-    const transportInstance = new gaxios.Gaxios();
+    const transportInstance = new Gaxios();
     transportInstance.interceptors.request.clear = clearStub;
     transportInstance.interceptors.request.add = addStub;
 
