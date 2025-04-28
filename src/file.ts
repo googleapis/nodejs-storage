@@ -2417,7 +2417,7 @@ class File extends ServiceObject<File, FileMetadata> {
 
     this.encryptionKeyInterceptor = {
       resolved: reqOpts => {
-        reqOpts.headers = reqOpts.headers || {};
+        reqOpts.headers = reqOpts.headers || new Headers();
         reqOpts.headers.set('x-goog-encryption-algorithm', 'AES256');
         reqOpts.headers.set('x-goog-encryption-key', this.encryptionKeyBase64!);
         reqOpts.headers.set(

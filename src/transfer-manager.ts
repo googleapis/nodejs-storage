@@ -22,6 +22,7 @@ import {
   FileExceptionMessages,
   RequestError,
 } from './file.js';
+import pLimit from 'p-limit';
 import * as path from 'path';
 import {createReadStream, existsSync, promises as fsp} from 'fs';
 import {CRC32C} from './crc32c.js';
@@ -162,11 +163,6 @@ const defaultMultiPartGenerator: MultiPartHelperGenerator = (
   partsMap,
 ) => {
   return new XMLMultiPartUploadHelper(bucket, fileName, uploadId, partsMap);
-};
-
-const createLimit = async (concurrency: number) => {
-  const {default: pLimit} = await import('p-limit'); // dynamic import
-  return pLimit(concurrency);
 };
 
 export class MultiPartUploadError extends Error {
@@ -493,7 +489,7 @@ export class TransferManager {
       };
     }
 
-    const limit = createLimit(
+    const limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_UPLOAD_LIMIT,
     );
     const promises: Promise<UploadResponse>[] = [];
@@ -589,7 +585,7 @@ export class TransferManager {
     filesOrFolder: File[] | string[] | string,
     options: DownloadManyFilesOptions = {},
   ): Promise<void | DownloadResponse[]> {
-    const limit = createLimit(
+    const limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_DOWNLOAD_LIMIT,
     );
     const promises: Promise<DownloadResponse>[] = [];
@@ -694,7 +690,7 @@ export class TransferManager {
   ): Promise<void | DownloadResponse> {
     let chunkSize =
       options.chunkSizeBytes || DOWNLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE;
-    let limit = createLimit(
+    let limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_CHUNKED_DOWNLOAD_LIMIT,
     );
     const noReturnData = Boolean(options.noReturnData);
@@ -708,7 +704,7 @@ export class TransferManager {
     const size = parseInt(fileInfo[0].metadata.size!.toString());
     // If the file size does not meet the threshold download it as a single chunk.
     if (size < DOWNLOAD_IN_CHUNKS_FILE_SIZE_THRESHOLD) {
-      limit = createLimit(1);
+      limit = pLimit(1);
       chunkSize = size;
     }
 
@@ -812,7 +808,7 @@ export class TransferManager {
   ): Promise<GaxiosResponse | undefined> {
     const chunkSize =
       options.chunkSizeBytes || UPLOAD_IN_CHUNKS_DEFAULT_CHUNK_SIZE;
-    const limit = createLimit(
+    const limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_CHUNKED_UPLOAD_LIMIT,
     );
     const maxQueueSize =

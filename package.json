@@ -81,8 +81,8 @@
     "gaxios": "^7.0.0-rc.4",
     "google-auth-library": "^10.0.0-rc.1",
     "html-entities": "^2.6.0",
-    "mime": "^4.0.7",
-    "p-limit": "^6.2.0",
+    "mime": "3.0.0",
+    "p-limit": "3.1.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
@@ -93,7 +93,7 @@
     "@grpc/proto-loader": "^0.7.13",
     "@types/async-retry": "^1.4.9",
     "@types/duplexify": "^3.6.4",
-    "@types/mime": "^4.0.0",
+    "@types/mime": "3.0.0",
     "@types/mocha": "^10.0.10",
     "@types/mockery": "^1.4.33",
     "@types/node": "^22.14.0",

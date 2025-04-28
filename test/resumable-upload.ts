@@ -67,9 +67,7 @@ function mockAuthorizeRequest(
     access_token: 'abc123',
   },
 ) {
-  return nock('https://www.googleapis.com')
-    .post('/oauth2/v4/token')
-    .reply(code, data);
+  return nock('https://oauth2.googleapis.com').post('/token').reply(code, data);
 }
 
 describe('resumable-upload', () => {
@@ -1626,10 +1624,13 @@ describe('resumable-upload', () => {
       const res = await up.makeRequest(REQ_OPTS);
       scopes.forEach(x => x.done());
       const headers = res.config.headers;
-      assert.strictEqual(headers['x-goog-encryption-algorithm'], 'AES256');
-      assert.strictEqual(headers['x-goog-encryption-key'], up.encryption.key);
+      assert.strictEqual(headers.get('x-goog-encryption-algorithm'), 'AES256');
       assert.strictEqual(
-        headers['x-goog-encryption-key-sha256'],
+        headers.get('x-goog-encryption-key'),
+        up.encryption.key,
+      );
+      assert.strictEqual(
+        headers.get('x-goog-encryption-key-sha256'),
         up.encryption.hash,
       );
     });

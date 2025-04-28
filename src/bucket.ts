@@ -65,7 +65,8 @@ import {
 } from './nodejs-common/service-object.js';
 import {GaxiosError} from 'gaxios';
 import {StorageQueryParameters} from './storage-transport.js';
-
+import mime from 'mime';
+import pLimit from 'p-limit';
 interface SourceObject {
   name: string;
   generation?: number;
@@ -541,20 +542,10 @@ export enum BucketExceptionMessages {
   INVAILD_CHANNEL_RESPONSE = 'Response data was null',
 }
 
-const getFileType = async (filename: string) => {
-  try {
-    const mimeModule = (await import('mime')).default;
-    const mimeType = mimeModule.getType(filename);
-    return mimeType;
-  } catch (error) {
-    return null;
-  }
-};
-
-const createLimit = async (concurrency: number) => {
-  const {default: pLimit} = await import('p-limit'); // dynamic import
-  return pLimit(concurrency);
-};
+// const createLimit = async (concurrency: number) => {
+//   const {default: pLimit} = await import('p-limit'); // dynamic import
+//   return pLimit(concurrency);
+// };
 
 /**
  * @callback Crc32cGeneratorToStringCallback
@@ -1671,11 +1662,12 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     callback = callback || util.noop;
 
     if (!destinationFile.metadata.contentType) {
-      void getFileType(destinationFile.name).then(destinationContentType => {
-        if (destinationContentType) {
-          destinationFile.metadata.contentType = destinationContentType;
-        }
-      });
+      const destinationContentType =
+        mime.getType(destinationFile.name) || undefined;
+
+      if (destinationContentType) {
+        destinationFile.metadata.contentType = destinationContentType;
+      }
     }
 
     let maxRetries = this.storage.retryOptions.maxRetries;
@@ -2190,7 +2182,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     (async () => {
       try {
         let promises = [];
-        const limit = createLimit(MAX_PARALLEL_LIMIT);
+        const limit = pLimit(MAX_PARALLEL_LIMIT);
         const filesStream = this.getFilesStream(query);
 
         for await (const curFile of filesStream) {
@@ -4560,7 +4552,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
     this.getFiles(options)
       .then(([files]) => {
-        const limit = createLimit(MAX_PARALLEL_LIMIT);
+        const limit = pLimit(MAX_PARALLEL_LIMIT);
         const promises = files.map(async file => {
           return (await limit)(() => processFile(file));
         });

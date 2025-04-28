@@ -34,22 +34,12 @@ import {
   GetBucketSignedUrlConfig,
   LifecycleRule,
 } from '../src/bucket.js';
-// import mime from 'mime';
+import mime from 'mime';
 import {convertObjKeysToSnakeCase, getDirName} from '../src/util.js';
 import {util} from '../src/nodejs-common/index.js';
 import path from 'path';
 import * as stream from 'stream';
 import {Transform} from 'stream';
-
-const getFileType = async (filename: string) => {
-  try {
-    const mimeModule = (await import('mime')).default;
-    const mimeType = mimeModule.getType(filename);
-    return mimeType;
-  } catch (error) {
-    return null;
-  }
-};
 
 class HTTPError extends Error {
   code: number;
@@ -578,10 +568,11 @@ describe('Bucket', () => {
       bucket.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake(reqOpts => {
+          const body = JSON.parse(reqOpts.body);
           assert.strictEqual(reqOpts.method, 'POST');
           assert.strictEqual(reqOpts.url, '/compose');
-          assert.strictEqual(reqOpts.body.sourceObjects[0].name, file1.name);
-          assert.strictEqual(reqOpts.body.sourceObjects[1].name, file2.name);
+          assert.strictEqual(body.sourceObjects[0].name, file1.name);
+          assert.strictEqual(body.sourceObjects[1].name, file2.name);
           done();
         });
 
@@ -594,9 +585,10 @@ describe('Bucket', () => {
       storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, callback) => {
+          const body = JSON.parse(reqOpts.body);
           assert.strictEqual(
-            reqOpts.body.destination.contentType,
-            getFileType(destination.name),
+            body.destination.contentType,
+            mime.getType(destination.name),
           );
           callback(null, {});
           return Promise.resolve({});
@@ -612,8 +604,9 @@ describe('Bucket', () => {
       storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, callback) => {
+          const body = JSON.parse(reqOpts.body);
           assert.strictEqual(
-            reqOpts.body.destination.contentType,
+            body.destination.contentType,
             destination.metadata.contentType,
           );
           callback(null, {});
@@ -629,9 +622,10 @@ describe('Bucket', () => {
       storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, callback) => {
+          const body = JSON.parse(reqOpts.body);
           assert.strictEqual(
-            reqOpts.body.destination.contentType,
-            getFileType(destination.name),
+            body.destination.contentType,
+            mime.getType(destination.name),
           );
           callback(null, {});
           return Promise.resolve({});
@@ -645,12 +639,10 @@ describe('Bucket', () => {
       const destination = bucket.file('destination.foo');
 
       storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
+        const body = JSON.parse(reqOpts.body);
         assert.strictEqual(reqOpts.url, '/compose');
-        assert.deepStrictEqual(reqOpts.body, {
-          destination: {
-            contentType: getFileType(destination.name) || undefined,
-            contentEncoding: undefined,
-          },
+        assert.deepStrictEqual(body, {
+          destination: {},
           sourceObjects: [{name: sources[0].name}, {name: sources[1].name}],
         });
         done();
@@ -679,7 +671,8 @@ describe('Bucket', () => {
       const destination = bucket.file('destination.txt');
 
       storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
-        assert.deepStrictEqual(reqOpts.body.sourceObjects, [
+        const body = JSON.parse(reqOpts.body);
+        assert.deepStrictEqual(body.sourceObjects, [
           {name: sources[0].name, generation: sources[0].metadata.generation},
           {name: sources[1].name, generation: sources[1].metadata.generation},
         ]);
@@ -973,7 +966,8 @@ describe('Bucket', () => {
       bucket.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake(reqOpts => {
-          assert.strictEqual(reqOpts.body.topic, FULL_TOPIC_NAME);
+          const body = JSON.parse(reqOpts.body);
+          assert.strictEqual(body.topic, FULL_TOPIC_NAME);
           done();
         });
 
@@ -984,7 +978,8 @@ describe('Bucket', () => {
       bucket.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake(reqOpts => {
-          assert.strictEqual(reqOpts.body.payload_format, 'JSON_API_V1');
+          const body = JSON.parse(reqOpts.body);
+          assert.strictEqual(body.payload_format, 'JSON_API_V1');
           done();
         });
 
