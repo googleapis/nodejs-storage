@@ -3756,7 +3756,7 @@ describe('File', () => {
     });
 
     it('should execute callback with error & API response', async () => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
       const apiResponse = {};
 
       const newFile = new File(BUCKET, 'new-file');
