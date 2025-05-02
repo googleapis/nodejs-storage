@@ -3703,6 +3703,206 @@ describe('File', () => {
     });
   });
 
+  describe('moveFileAtomic', () => {
+    function assertmoveFileAtomic(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      file: any,
+      expectedDestination: string | File,
+      callback: Function,
+    ) {
+      file.moveFileAtomic = (destination: string | File) => {
+        assert.strictEqual(destination, expectedDestination);
+        callback();
+      };
+    }
+
+    it('should throw if no destination is provided', async () => {
+      try {
+        await file.moveFileAtomic(undefined as unknown as string);
+      } catch (error) {
+        assert.strictEqual(
+          (error as Error).message,
+          FileExceptionMessages.DESTINATION_NO_NAME,
+        );
+      }
+    });
+
+    it('should URI encode file names', async () => {
+      const newFile = new File(BUCKET, 'nested/file.jpg');
+
+      const expectedPath = `/o/moveTo/o/${encodeURIComponent(newFile.name)}`;
+
+      directoryFile.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake(reqOpts => {
+          assert.strictEqual(reqOpts.url, expectedPath);
+          return Promise.resolve();
+        });
+      await directoryFile.moveFileAtomic(newFile, err => {
+        assert.ifError(err);
+      });
+    });
+
+    it('should call moveFileAtomic with string', async done => {
+      const newFileName = 'new-file-name.png';
+      assertmoveFileAtomic(file, newFileName, done);
+      await file.moveFileAtomic(newFileName);
+    });
+
+    it('should call moveFileAtomic with File', async done => {
+      const newFile = new File(BUCKET, 'new-file');
+      assertmoveFileAtomic(file, newFile, done);
+      await file.moveFileAtomic(newFile);
+    });
+
+    it('should execute callback with error & API response', async () => {
+      const error = new GaxiosError('Error.', {});
+      const apiResponse = {};
+
+      const newFile = new File(BUCKET, 'new-file');
+
+      file.storageTransport.makeRequest = sandbox
+        .stub()
+        .callsFake((reqOpts, callback) => {
+          callback(error, null, apiResponse);
+          return Promise.resolve();
+        });
+
+      await file.moveFileAtomic(newFile, (err, file, apiResponse_) => {
+        assert.strictEqual(err, error);
+        assert.strictEqual(file, null);
+        assert.strictEqual(apiResponse_, apiResponse);
+      });
+    });
+
+    it('should pass through userProject', done => {
+      const options = {
+        userProject: 'user-project',
+      };
+      const originalOptions = Object.assign({}, options);
+      const newFile = new File(BUCKET, 'new-file');
+
+      file.storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.userProject,
+          options.userProject,
+        );
+        assert.strictEqual(reqOpts.body.userProject, undefined);
+        assert.deepStrictEqual(options, originalOptions);
+        done();
+      });
+
+      file.moveFileAtomic(newFile, options, assert.ifError);
+    });
+
+    it('should handle optionsOrCallback being the options', done => {
+      const options = {
+        preconditionOpts: {ifGenerationMatch: 123},
+      };
+      const originalOptions = Object.assign({}, options);
+      const newFile = new File(BUCKET, 'new-file');
+
+      file.storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
+        assert.strictEqual(
+          reqOpts.queryParameters?.ifGenerationMatch,
+          options.preconditionOpts.ifGenerationMatch,
+        );
+        assert.strictEqual(reqOpts.body?.userProject, undefined);
+        assert.deepStrictEqual(options, originalOptions);
+        done();
+      });
+
+      file.moveFileAtomic(newFile, options, assert.ifError);
+    });
+
+    describe('destination types', () => {
+      function assertPathEquals(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        file: any,
+        expectedPath: string,
+        callback: Function,
+      ) {
+        file.storageTransport.makeRequest = sandbox
+          .stub()
+          .callsFake(reqOpts => {
+            assert.strictEqual(reqOpts.url, expectedPath);
+            callback();
+          });
+      }
+
+      it('should allow a string', async done => {
+        const newFileName = 'new-file-name.png';
+        const newFile = new File(BUCKET, newFileName);
+        const expectedPath = `/o/moveTo/o/${newFile.name}`;
+        assertPathEquals(file, expectedPath, done);
+        await file.moveFileAtomic(newFileName);
+      });
+
+      it('should allow a string with leading slash.', async done => {
+        const newFileName = '/new-file-name.png';
+        const newFile = new File(BUCKET, newFileName);
+        const expectedPath = `/o/moveTo/o/${encodeURIComponent(newFile.name)}`;
+        assertPathEquals(file, expectedPath, done);
+        await file.moveFileAtomic(newFileName);
+      });
+
+      it('should allow a "gs://..." string', async done => {
+        const newFileName = 'gs://other-bucket/new-file-name.png';
+        const expectedPath = '/o/moveTo/o/new-file-name.png';
+        assertPathEquals(file, expectedPath, done);
+        await file.moveFileAtomic(newFileName);
+      });
+
+      it('should allow a File', async done => {
+        const newFile = new File(BUCKET, 'new-file');
+        const expectedPath = `/o/moveTo/o/${newFile.name}`;
+        assertPathEquals(file, expectedPath, done);
+        await file.moveFileAtomic(newFile);
+      });
+
+      it('should throw if a destination cannot be parsed', async () => {
+        try {
+          await file.moveFileAtomic(undefined as unknown as string);
+        } catch (error) {
+          assert.strictEqual(
+            (error as Error).message,
+            FileExceptionMessages.DESTINATION_NO_NAME,
+          );
+        }
+      });
+    });
+
+    describe('returned File object', () => {
+      beforeEach(() => {
+        const resp = {success: true};
+        file.storageTransport.makeRequest = sandbox
+          .stub()
+          .callsFake((reqOpts, callback) => {
+            callback(null, resp);
+          });
+      });
+
+      it('should re-use file object if one is provided', async done => {
+        const newFile = new File(BUCKET, 'new-file');
+        await file.moveFileAtomic(newFile, (err, copiedFile) => {
+          assert.ifError(err);
+          assert.deepStrictEqual(copiedFile, newFile);
+          done();
+        });
+      });
+
+      it('should create new file on the same bucket', async done => {
+        const newFilename = 'new-filename';
+        await file.moveFileAtomic(newFilename, (err, copiedFile) => {
+          assert.ifError(err);
+          assert.strictEqual(copiedFile?.bucket.name, BUCKET.name);
+          assert.strictEqual(copiedFile?.name, newFilename);
+          done();
+        });
+      });
+    });
+  });
+
   describe('move', () => {
     describe('copy to destination', () => {
       function assertCopyFile(
