@@ -278,8 +278,8 @@ class XMLMultiPartUploadHelper implements MultiPartUploadHelper {
           url,
         });
 
-        if (typeof res.data === 'object' && res.data.error) {
-          throw res.data.error;
+        if ((res?.data as MultiPartUploadErrorResponse)?.error) {
+          throw (res.data as MultiPartUploadErrorResponse).error;
         }
         if (typeof res.data === 'string') {
           const parsedXML = this.xmlParser.parse(res.data);
@@ -527,7 +527,7 @@ export class TransferManager {
       }
 
       promises.push(
-        (await limit)(() =>
+        limit(() =>
           this.bucket.upload(filePath, passThroughOptionsCopy as UploadOptions),
         ),
       );
@@ -635,7 +635,7 @@ export class TransferManager {
       }
 
       promises.push(
-        (await limit)(async () => {
+        limit(async () => {
           const destination = passThroughOptionsCopy.destination;
           if (destination && destination.endsWith(path.sep)) {
             await fsp.mkdir(destination, {recursive: true});
@@ -717,7 +717,7 @@ export class TransferManager {
       let chunkEnd = start + chunkSize - 1;
       chunkEnd = chunkEnd > size ? size : chunkEnd;
       promises.push(
-        (await limit)(async () => {
+        limit(async () => {
           const resp = await file.download({
             start: chunkStart,
             end: chunkEnd,
@@ -842,7 +842,7 @@ export class TransferManager {
           promises = [];
         }
         promises.push(
-          (await limit)(() =>
+          limit(() =>
             mpuHelper.uploadPart(partNumber++, curChunk, options.validation),
           ),
         );

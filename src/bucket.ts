@@ -542,11 +542,6 @@ export enum BucketExceptionMessages {
   INVAILD_CHANNEL_RESPONSE = 'Response data was null',
 }
 
-// const createLimit = async (concurrency: number) => {
-//   const {default: pLimit} = await import('p-limit'); // dynamic import
-//   return pLimit(concurrency);
-// };
-
 /**
  * @callback Crc32cGeneratorToStringCallback
  * A method returning the CRC32C as a base64-encoded string.
@@ -2191,7 +2186,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
             promises = [];
           }
           promises.push(
-            (await limit)(() => deleteFile(curFile)).catch(e => {
+            limit(() => deleteFile(curFile)).catch(e => {
               filesStream.destroy();
               throw e;
             }),
@@ -4554,7 +4549,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       .then(([files]) => {
         const limit = pLimit(MAX_PARALLEL_LIMIT);
         const promises = files.map(async file => {
-          return (await limit)(() => processFile(file));
+          return limit(() => processFile(file));
         });
         return Promise.all(promises);
       })
