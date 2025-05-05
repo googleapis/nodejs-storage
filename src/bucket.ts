@@ -25,9 +25,7 @@ import {paginator} from '@google-cloud/paginator';
 import {promisifyAll} from '@google-cloud/promisify';
 import * as fs from 'fs';
 import * as http from 'http';
-import mime from 'mime';
 import * as path from 'path';
-import pLimit from 'p-limit';
 import {promisify} from 'util';
 import AsyncRetry from 'async-retry';
 import {convertObjKeysToSnakeCase} from './util.js';
@@ -67,6 +65,8 @@ import {
 } from './nodejs-common/service-object.js';
 import {GaxiosError} from 'gaxios';
 import {StorageQueryParameters} from './storage-transport.js';
+import mime from 'mime';
+import pLimit from 'p-limit';
 
 interface SourceObject {
   name: string;
@@ -1690,7 +1690,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
           method: 'POST',
           url: '/compose',
           maxRetries,
-          body: {
+          body: JSON.stringify({
             destination: {
               contentType: destinationFile.metadata.contentType,
               contentEncoding: destinationFile.metadata.contentEncoding,
@@ -1708,7 +1708,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
 
               return sourceObject;
             }),
-          },
+          }),
           queryParameters: options as unknown as StorageQueryParameters,
         },
         (err, resp) => {
@@ -1852,12 +1852,14 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         {
           method: 'POST',
           url: `${this.baseUrl}/o/watch`,
-          body: Object.assign(
-            {
-              id,
-              type: 'web_hook',
-            },
-            config,
+          body: JSON.stringify(
+            Object.assign(
+              {
+                id,
+                type: 'web_hook',
+              },
+              config,
+            ),
           ),
           queryParameters: options as unknown as StorageQueryParameters,
         },
@@ -2045,7 +2047,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
         {
           method: 'POST',
           url: `${this.baseUrl}/notificationConfigs`,
-          body: convertObjKeysToSnakeCase(body),
+          body: JSON.stringify(convertObjKeysToSnakeCase(body)),
           queryParameters: query as unknown as StorageQueryParameters,
           retry: false,
         },
