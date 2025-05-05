@@ -67,6 +67,7 @@ import {GaxiosError} from 'gaxios';
 import {StorageQueryParameters} from './storage-transport.js';
 import mime from 'mime';
 import pLimit from 'p-limit';
+
 interface SourceObject {
   name: string;
   generation?: number;
@@ -4548,7 +4549,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     this.getFiles(options)
       .then(([files]) => {
         const limit = pLimit(MAX_PARALLEL_LIMIT);
-        const promises = files.map(async file => {
+        const promises = files.map(file => {
           return limit(() => processFile(file));
         });
         return Promise.all(promises);

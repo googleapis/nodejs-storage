@@ -117,10 +117,10 @@ export class StorageTransport {
     this.useAuthWithCustomEndpoint = options.useAuthWithCustomEndpoint;
   }
 
-  makeRequest<T>(
+  async makeRequest<T>(
     reqOpts: StorageRequestOptions,
     callback?: StorageTransportCallback<T>,
-  ): Promise<T> | Promise<void> {
+  ): Promise<void | T> {
     const headers = this.#buildRequestHeaders(reqOpts.headers);
     if (reqOpts[GCCL_GCS_CMD_KEY]) {
       headers.set(
@@ -135,26 +135,20 @@ export class StorageTransport {
         transport.interceptors.request.add(inter);
       }
     }
-    const prepareRequest = async () => {
-      try {
-        const getProjectId = async () => {
-          if (reqOpts.projectId) return reqOpts.projectId;
-          projectId = await this.authClient.getProjectId();
-          return projectId;
-        };
-        const _projectId = await getProjectId();
-        if (_projectId) {
-          projectId = _projectId;
-          this.projectId = projectId;
-        }
+
+    try {
+      const getProjectId = async () => {
+        if (reqOpts.projectId) return reqOpts.projectId;
+        projectId = await this.authClient.getProjectId();
         return projectId;
-      } catch (e) {
-        if (callback) return callback(e as GaxiosError);
-        throw e;
+      };
+      const _projectId = await getProjectId();
+      if (_projectId) {
+        projectId = _projectId;
+        this.projectId = projectId;
       }
-    };
-    const requestPromise = prepareRequest().then(() => {
-      return this.authClient.request<T>({
+
+      const requestPromise = this.authClient.request<T>({
         retryConfig: {
           retry: this.retryOptions.maxRetries,
           noResponseRetries: this.retryOptions.maxRetries,
@@ -168,13 +162,16 @@ export class StorageTransport {
         url: this.#buildUrl(reqOpts.url?.toString(), reqOpts.queryParameters),
         timeout: this.timeout,
       });
-    });
 
-    return callback
-      ? requestPromise
-          .then(resp => callback(null, resp.data, resp))
-          .catch(err => callback(err, null, err.response))
-      : (requestPromise.then(resp => resp.data) as Promise<T>);
+      return callback
+        ? requestPromise
+            .then(resp => callback(null, resp.data, resp))
+            .catch(err => callback(err, null, err.response))
+        : (requestPromise.then(resp => resp.data) as Promise<T>);
+    } catch (e) {
+      if (callback) return callback(e as GaxiosError);
+      throw e;
+    }
   }
 
   #buildUrl(pathUri = '', queryParameters: StorageQueryParameters = {}): URL {

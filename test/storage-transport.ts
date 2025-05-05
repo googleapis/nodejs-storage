@@ -119,6 +119,7 @@ describe('Storage Transport', () => {
     );
   });
 
+  // TODO: Undo this skip once the gaxios interceptor issue is resolved.
   it.skip('should clear and add interceptors if provided', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const interceptorStub: any = sandbox.stub();
