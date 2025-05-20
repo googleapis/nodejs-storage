@@ -14,7 +14,14 @@
 
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
 import assert from 'assert';
-import {Bucket, CRC32C, File, GaxiosError, Storage} from '../src/index.js';
+import {
+  Bucket,
+  CRC32C,
+  File,
+  GaxiosError,
+  GaxiosOptionsPrepared,
+  Storage,
+} from '../src/index.js';
 import {
   StorageRequestOptions,
   StorageTransport,
@@ -181,7 +188,7 @@ describe('File', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.delete((err: GaxiosError | null) => {
@@ -239,7 +246,7 @@ describe('File', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.exists((err: GaxiosError | null) => {
@@ -297,7 +304,7 @@ describe('File', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.get((err: GaxiosError | null) => {
@@ -355,7 +362,7 @@ describe('File', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
         await file.getMetadata((err: GaxiosError | null) => {
@@ -384,7 +391,7 @@ describe('File', () => {
       });
 
       it('should return an error if the request fails', async () => {
-        const error = new GaxiosError('err', {});
+        const error = new GaxiosError('err', {} as GaxiosOptionsPrepared);
 
         STORAGE.storageTransport.makeRequest = sandbox.stub().rejects(error);
 
@@ -441,7 +448,7 @@ describe('File', () => {
     it('should URI encode file names', done => {
       const newFile = new File(BUCKET, 'nested/file.jpg');
 
-      const expectedPath = `/o/rewriteTo/b/${
+      const expectedPath = `/b/${BUCKET.name}/o/${encodeURIComponent(directoryFile.name)}/rewriteTo/b/${
         file.bucket.name
       }/o/${encodeURIComponent(newFile.name)}`;
 
@@ -500,8 +507,9 @@ describe('File', () => {
       };
 
       file.storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
-        assert.deepStrictEqual(reqOpts.body, options);
-        assert.strictEqual(reqOpts.body.metadata, METADATA);
+        const body = JSON.parse(reqOpts.body);
+        assert.deepStrictEqual(body, options);
+        assert.deepStrictEqual(body.metadata, METADATA);
         done();
       });
 
@@ -542,11 +550,14 @@ describe('File', () => {
       const newFile = new File(BUCKET, 'new-file');
 
       file.storageTransport.makeRequest = sandbox.stub().callsFake(reqOpts => {
-        assert.deepStrictEqual(reqOpts.headers, {
-          'x-goog-copy-source-encryption-algorithm': 'AES256',
-          'x-goog-copy-source-encryption-key': file.encryptionKeyBase64,
-          'x-goog-copy-source-encryption-key-sha256': file.encryptionKeyHash,
-        });
+        assert.deepStrictEqual(
+          Object.fromEntries((reqOpts.headers as Headers).entries()),
+          {
+            'x-goog-copy-source-encryption-algorithm': 'AES256',
+            'x-goog-copy-source-encryption-key': file.encryptionKeyBase64,
+            'x-goog-copy-source-encryption-key-sha256': file.encryptionKeyHash,
+          },
+        );
         done();
       });
 
@@ -674,7 +685,7 @@ describe('File', () => {
       it('should allow a string', done => {
         const newFileName = 'new-file-name.png';
         const newFile = new File(BUCKET, newFileName);
-        const expectedPath = `/o/rewriteTo/b/${file.bucket.name}/o/${newFile.name}`;
+        const expectedPath = `/b/${BUCKET.name}/o/${encodeURIComponent(file.name)}/rewriteTo/b/${file.bucket.name}/o/${newFile.name}`;
         assertPathEquals(file, expectedPath, done);
         file.copy(newFileName, done);
       });
@@ -683,7 +694,7 @@ describe('File', () => {
         const newFileName = '/new-file-name.png';
         const newFile = new File(BUCKET, newFileName);
         // File uri encodes file name when calling this.request during copy
-        const expectedPath = `/o/rewriteTo/b/${
+        const expectedPath = `/b/${BUCKET.name}/o/${encodeURIComponent(file.name)}/rewriteTo/b/${
           file.bucket.name
         }/o/${encodeURIComponent(newFile.name)}`;
         assertPathEquals(file, expectedPath, done);
@@ -692,20 +703,20 @@ describe('File', () => {
 
       it('should allow a "gs://..." string', done => {
         const newFileName = 'gs://other-bucket/new-file-name.png';
-        const expectedPath = '/o/rewriteTo/b/other-bucket/o/new-file-name.png';
+        const expectedPath = `/b/${BUCKET.name}/o/${file.name}/rewriteTo/b/other-bucket/o/new-file-name.png`;
         assertPathEquals(file, expectedPath, done);
         file.copy(newFileName, done);
       });
 
       it('should allow a Bucket', done => {
-        const expectedPath = `/o/rewriteTo/b/${BUCKET.name}/o/${file.name}`;
+        const expectedPath = `/b/${BUCKET.name}/o/${file.name}/rewriteTo/b/${BUCKET.name}/o/${file.name}`;
         assertPathEquals(file, expectedPath, done);
         file.copy(BUCKET, done);
       });
 
       it('should allow a File', done => {
         const newFile = new File(BUCKET, 'new-file');
-        const expectedPath = `/o/rewriteTo/b/${BUCKET.name}/o/${newFile.name}`;
+        const expectedPath = `/b/${BUCKET.name}/o/${file.name}/rewriteTo/b/${BUCKET.name}/o/${newFile.name}`;
         assertPathEquals(file, expectedPath, done);
         file.copy(newFile, done);
       });
@@ -969,7 +980,7 @@ describe('File', () => {
         file.createReadStream().resume();
       });
       describe('errors', () => {
-        const ERROR = new GaxiosError('Error.', {});
+        const ERROR = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
         it('should emit an error from authenticating', done => {
           file.storageTransport.makeRequest = sandbox.stub().callsFake(() => {
             const requestStream = new PassThrough();
@@ -1045,7 +1056,7 @@ describe('File', () => {
       });
 
       describe('errors', () => {
-        const ERROR = new GaxiosError('Error.', {});
+        const ERROR = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
         it('should emit the error', () => {
           file.storageTransport.makeRequest = sandbox.stub().rejects(ERROR);
 
@@ -1832,26 +1843,24 @@ describe('File', () => {
       writable.write('data');
     });
 
-    it('should detect contentType with contentType:auto', done => {
+    it('should detect contentType with contentType:auto', () => {
       const writable = file.createWriteStream({contentType: 'auto'});
       file.startResumableUpload_ = sandbox
         .stub()
         .callsFake((stream, options) => {
           assert.strictEqual(options.metadata.contentType, 'image/png');
-          done();
         });
 
       writable.write('data');
     });
 
-    it('should detect contentType if not defined', done => {
+    it('should detect contentType if not defined', () => {
       const writable = file.createWriteStream();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       file.startResumableUpload_ = sandbox
         .stub()
         .callsFake((stream, options) => {
           assert.strictEqual(options.metadata.contentType, 'image/png');
-          done();
         });
 
       writable.write('data');
@@ -3626,7 +3635,10 @@ describe('File', () => {
       file.storageTransport.makeRequest = sandbox
         .stub()
         .callsFake((reqOpts, config, callback) => {
-          const error = new GaxiosError('Permission Denied.', {});
+          const error = new GaxiosError(
+            'Permission Denied.',
+            {} as GaxiosOptionsPrepared,
+          );
           error.status = 403;
           callback(error);
         });
@@ -3637,7 +3649,7 @@ describe('File', () => {
     });
 
     it('should propagate non-403 errors to user', () => {
-      const error = new GaxiosError('400 Error.', {});
+      const error = new GaxiosError('400 Error.', {} as GaxiosOptionsPrepared);
       error.status = 400;
       file.storageTransport.makeRequest = sandbox
         .stub()
@@ -3718,7 +3730,7 @@ describe('File', () => {
     it('should URI encode file names', async () => {
       const newFile = new File(BUCKET, 'nested/file.jpg');
 
-      const expectedPath = `/o/moveTo/o/${encodeURIComponent(newFile.name)}`;
+      const expectedPath = `/b/${BUCKET.id}/o/${directoryFile.id}/moveTo/o/${encodeURIComponent(newFile.name)}`;
 
       directoryFile.storageTransport.makeRequest = sandbox
         .stub()
@@ -3744,7 +3756,7 @@ describe('File', () => {
     });
 
     it('should execute callback with error & API response', async () => {
-      const error = new GaxiosError('Error.', {});
+      const error = new GaxiosError('Error.', {} as GaxiosOptionsPrepared);
       const apiResponse = {};
 
       const newFile = new File(BUCKET, 'new-file');
@@ -3821,7 +3833,7 @@ describe('File', () => {
       it('should allow a string', async done => {
         const newFileName = 'new-file-name.png';
         const newFile = new File(BUCKET, newFileName);
-        const expectedPath = `/o/moveTo/o/${newFile.name}`;
+        const expectedPath = `/b/${BUCKET.id}/o/${file.id}/moveTo/o/${newFile.name}`;
         assertPathEquals(file, expectedPath, done);
         await file.moveFileAtomic(newFileName);
       });
@@ -3829,21 +3841,21 @@ describe('File', () => {
       it('should allow a string with leading slash.', async done => {
         const newFileName = '/new-file-name.png';
         const newFile = new File(BUCKET, newFileName);
-        const expectedPath = `/o/moveTo/o/${encodeURIComponent(newFile.name)}`;
+        const expectedPath = `/b/${BUCKET.id}/o/${file.id}/moveTo/o/${encodeURIComponent(newFile.name)}`;
         assertPathEquals(file, expectedPath, done);
         await file.moveFileAtomic(newFileName);
       });
 
       it('should allow a "gs://..." string', async done => {
         const newFileName = 'gs://other-bucket/new-file-name.png';
-        const expectedPath = '/o/moveTo/o/new-file-name.png';
+        const expectedPath = `/b/${BUCKET.id}/o/${file.id}/moveTo/o/new-file-name.png`;
         assertPathEquals(file, expectedPath, done);
         await file.moveFileAtomic(newFileName);
       });
 
       it('should allow a File', async done => {
         const newFile = new File(BUCKET, 'new-file');
-        const expectedPath = `/o/moveTo/o/${newFile.name}`;
+        const expectedPath = `/b/${BUCKET.id}/o/${file.id}/moveTo/o/${newFile.name}`;
         assertPathEquals(file, expectedPath, done);
         await file.moveFileAtomic(newFile);
       });
@@ -4116,7 +4128,7 @@ describe('File', () => {
         .callsFake((reqOpts, callback_) => {
           assert.deepStrictEqual(reqOpts, {
             method: 'POST',
-            url: '/o/restore',
+            url: `/b/${file.bucket.name}/o/${encodeURIComponent(file.name)}/restore`,
             queryParameters: {generation: 123},
           });
           assert.strictEqual(callback_, undefined);

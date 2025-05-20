@@ -23,7 +23,6 @@ import {promisifyAll} from '@google-cloud/promisify';
 
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-import mime from 'mime';
 import * as resumableUpload from './resumable-upload.js';
 import {Writable, Readable, pipeline, Transform, PipelineSource} from 'stream';
 import * as zlib from 'zlib';
@@ -75,7 +74,7 @@ import {
 import {
   GaxiosError,
   GaxiosInterceptor,
-  GaxiosOptions,
+  GaxiosOptionsPrepared,
   GaxiosResponse,
 } from 'gaxios';
 import {
@@ -83,6 +82,7 @@ import {
   StorageRequestOptions,
 } from './storage-transport.js';
 import * as gaxios from 'gaxios';
+import mime from 'mime';
 
 export type GetExpirationDateResponse = [Date];
 export interface GetExpirationDateCallback {
@@ -579,7 +579,7 @@ class File extends ServiceObject<File, FileMetadata> {
   private encryptionKey?: string | Buffer;
   private encryptionKeyBase64?: string;
   private encryptionKeyHash?: string;
-  private encryptionKeyInterceptor?: GaxiosInterceptor<GaxiosOptions>;
+  private encryptionKeyInterceptor?: GaxiosInterceptor<GaxiosOptionsPrepared>;
   private instanceRetryValue?: boolean;
   instancePreconditionOpts?: PreconditionOptions;
 
@@ -1347,13 +1347,18 @@ class File extends ServiceObject<File, FileMetadata> {
 
     newFile = newFile! || destBucket.file(destName);
 
-    const headers: {[index: string]: string | undefined} = {};
+    const headers = new Headers();
 
     if (this.encryptionKey !== undefined) {
-      headers['x-goog-copy-source-encryption-algorithm'] = 'AES256';
-      headers['x-goog-copy-source-encryption-key'] = this.encryptionKeyBase64;
-      headers['x-goog-copy-source-encryption-key-sha256'] =
-        this.encryptionKeyHash;
+      headers.set('x-goog-copy-source-encryption-algorithm', 'AES256');
+      headers.set(
+        'x-goog-copy-source-encryption-key',
+        this.encryptionKeyBase64!,
+      );
+      headers.set(
+        'x-goog-copy-source-encryption-key-sha256',
+        this.encryptionKeyHash!,
+      );
     }
 
     if (newFile.encryptionKey !== undefined) {
@@ -1393,11 +1398,11 @@ class File extends ServiceObject<File, FileMetadata> {
       .makeRequest<RewriteResponse>(
         {
           method: 'POST',
-          url: `${this.baseUrl}/rewriteTo/b/${
+          url: `/b/${this.bucket.name}/o/${encodeURIComponent(this.name)}/rewriteTo/b/${
             destBucket.name
           }/o/${encodeURIComponent(newFile.name)}`,
           queryParameters: query as unknown as StorageQueryParameters,
-          body: options,
+          body: JSON.stringify(options),
           headers,
         },
         (err, data, resp) => {
@@ -1590,24 +1595,25 @@ class File extends ServiceObject<File, FileMetadata> {
       }
 
       const headers = response.headers;
-      const isCompressed = headers['content-encoding'] === 'gzip';
+      const isCompressed = headers.get('content-encoding') === 'gzip';
       const hashes: {crc32c?: string; md5?: string} = {};
 
       // The object is safe to validate if:
       // 1. It was stored gzip and returned to us gzip OR
       // 2. It was never stored as gzip
       const safeToValidate =
-        (headers['x-goog-stored-content-encoding'] === 'gzip' &&
+        (headers.get('x-goog-stored-content-encoding') === 'gzip' &&
           isCompressed) ||
-        headers['x-goog-stored-content-encoding'] === 'identity';
+        headers.get('x-goog-stored-content-encoding') === 'identity';
 
       const transformStreams: Transform[] = [];
 
       if (shouldRunValidation) {
         // The x-goog-hash header should be set with a crc32c and md5 hash.
-        // ex: headers['x-goog-hash'] = 'crc32c=xxxx,md5=xxxx'
-        if (typeof headers['x-goog-hash'] === 'string') {
-          headers['x-goog-hash']
+        // ex: headers.set('x-goog-hash', 'crc32c=xxxx,md5=xxxx')
+        if (typeof headers.get('x-goog-hash') === 'string') {
+          headers
+            .get('x-goog-hash')!
             .split(',')
             .forEach((hashKeyValPair: string) => {
               const delimiterIndex = hashKeyValPair.indexOf('=');
@@ -2412,11 +2418,13 @@ class File extends ServiceObject<File, FileMetadata> {
 
     this.encryptionKeyInterceptor = {
       resolved: reqOpts => {
-        reqOpts.headers = reqOpts.headers || {};
-        reqOpts.headers['x-goog-encryption-algorithm'] = 'AES256';
-        reqOpts.headers['x-goog-encryption-key'] = this.encryptionKeyBase64;
-        reqOpts.headers['x-goog-encryption-key-sha256'] =
-          this.encryptionKeyHash;
+        reqOpts.headers = new Headers(reqOpts.headers || {});
+        reqOpts.headers.set('x-goog-encryption-algorithm', 'AES256');
+        reqOpts.headers.set('x-goog-encryption-key', this.encryptionKeyBase64!);
+        reqOpts.headers.set(
+          'x-goog-encryption-key-sha256',
+          this.encryptionKeyHash!,
+        );
         return Promise.resolve(reqOpts);
       },
     };
@@ -3614,7 +3622,7 @@ class File extends ServiceObject<File, FileMetadata> {
       .makeRequest(
         {
           method: 'POST',
-          url: `${this.baseUrl}/moveTo/o/${encodeURIComponent(newFile.name)}`,
+          url: `/b/${this.bucket.name}/o/${encodeURIComponent(this.name)}/moveTo/o/${encodeURIComponent(newFile.name)}`,
           queryParameters: query as StorageQueryParameters,
           body: JSON.stringify(options),
         },
@@ -3945,11 +3953,9 @@ class File extends ServiceObject<File, FileMetadata> {
   async restore(options: RestoreOptions): Promise<File> {
     const file = await this.storageTransport.makeRequest<File>({
       method: 'POST',
-      url: `${this.baseUrl}/restore`,
+      url: `/b/${this.bucket.name}/o/${encodeURIComponent(this.name)}/restore`,
       queryParameters: options as unknown as StorageQueryParameters,
     });
-
-    // const file = response.data;
     return file as File;
   }
 
@@ -4462,14 +4468,14 @@ class File extends ServiceObject<File, FileMetadata> {
 
     reqOpts.multipart = [
       {
-        headers: {'Content-Type': 'application/json'},
+        headers: new Headers({'Content-Type': 'application/json'}),
         content: JSON.stringify(options.metadata),
       },
       {
-        headers: {
+        headers: new Headers({
           'Content-Type':
             options.metadata.contentType || 'application/octet-stream',
-        },
+        }),
         content: writeStream,
       },
     ];
