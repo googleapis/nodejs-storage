@@ -1398,7 +1398,7 @@ class File extends ServiceObject<File, FileMetadata> {
       .makeRequest<RewriteResponse>(
         {
           method: 'POST',
-          url: `${this.baseUrl}/rewriteTo/b/${
+          url: `/b/${this.bucket.name}/o/${encodeURIComponent(this.name)}/rewriteTo/b/${
             destBucket.name
           }/o/${encodeURIComponent(newFile.name)}`,
           queryParameters: query as unknown as StorageQueryParameters,
@@ -3622,7 +3622,7 @@ class File extends ServiceObject<File, FileMetadata> {
       .makeRequest(
         {
           method: 'POST',
-          url: `${this.baseUrl}/moveTo/o/${encodeURIComponent(newFile.name)}`,
+          url: `/b/${this.bucket.name}/o/${encodeURIComponent(this.name)}/moveTo/o/${encodeURIComponent(newFile.name)}`,
           queryParameters: query as StorageQueryParameters,
           body: JSON.stringify(options),
         },
@@ -3953,11 +3953,9 @@ class File extends ServiceObject<File, FileMetadata> {
   async restore(options: RestoreOptions): Promise<File> {
     const file = await this.storageTransport.makeRequest<File>({
       method: 'POST',
-      url: `${this.baseUrl}/restore`,
+      url: `/b/${this.bucket.name}/o/${encodeURIComponent(this.name)}/restore`,
       queryParameters: options as unknown as StorageQueryParameters,
     });
-
-    // const file = response.data;
     return file as File;
   }
 

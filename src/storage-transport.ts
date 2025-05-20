@@ -72,6 +72,7 @@ interface TransportParameters extends Omit<GoogleAuthOptions, 'authClient'> {
   token?: string;
   useAuthWithCustomEndpoint?: boolean;
   userAgent?: string;
+  gaxiosInstance?: Gaxios;
 }
 
 interface PackageJson {
@@ -97,8 +98,10 @@ export class StorageTransport {
   private timeout?: number;
   private projectId?: string;
   private useAuthWithCustomEndpoint?: boolean;
+  private gaxiosInstance: Gaxios;
 
   constructor(options: TransportParameters) {
+    this.gaxiosInstance = options.gaxiosInstance || new Gaxios();
     if (options.authClient instanceof GoogleAuth) {
       this.authClient = options.authClient;
     } else {
@@ -129,10 +132,9 @@ export class StorageTransport {
       );
     }
     if (reqOpts.interceptors) {
-      const transport = new Gaxios();
-      transport.interceptors.request.clear();
+      this.gaxiosInstance.interceptors.request.clear();
       for (const inter of reqOpts.interceptors) {
-        transport.interceptors.request.add(inter);
+        this.gaxiosInstance.interceptors.request.add(inter);
       }
     }
 

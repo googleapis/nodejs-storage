@@ -540,7 +540,7 @@ export enum BucketExceptionMessages {
   SPECIFY_FILE_NAME = 'A file name must be specified.',
   METAGENERATION_NOT_PROVIDED = 'A metageneration must be provided.',
   SUPPLY_NOTIFICATION_ID = 'You must supply a notification ID.',
-  INVAILD_CHANNEL_RESPONSE = 'Response data was null',
+  INVALID_CHANNEL_RESPONSE = 'Response data was null',
 }
 
 /**
@@ -1342,7 +1342,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    *     **Note**: For configuring a raw-formatted rule object to be passed as `action`
    *               please refer to the [examples]{@link https://cloud.google.com/storage/docs/managing-lifecycles#configexamples}.
    * @param {object} rule.condition Condition a bucket must meet before the
-   *     action occurson the bucket. Refer to followitn supported [conditions]{@link https://cloud.google.com/storage/docs/lifecycle#conditions}.
+   *     action occurs on the bucket. Refer to following supported [conditions]{@link https://cloud.google.com/storage/docs/lifecycle#conditions}.
    * @param {string} [rule.storageClass] When using the `setStorageClass`
    *     action, provide this option to dictate which storage class the object
    *     should update to.
@@ -1851,7 +1851,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       .makeRequest<CreateChannel>(
         {
           method: 'POST',
-          url: `${this.baseUrl}/o/watch`,
+          url: `${this.baseUrl}/${this.name}/o/watch`,
           body: JSON.stringify(
             Object.assign(
               {
@@ -1878,7 +1878,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
             return;
           }
           callback!(
-            new Error(BucketExceptionMessages.INVAILD_CHANNEL_RESPONSE),
+            new Error(BucketExceptionMessages.INVALID_CHANNEL_RESPONSE),
             null,
             resp,
           );
@@ -1980,7 +1980,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * myBucket.createNotification('my-topic', callback);
    *
    * //-
-   * // Configure the nofiication by providing Notification metadata.
+   * // Configure the notification by providing Notification metadata.
    * //-
    * const metadata = {
    *   objectNamePrefix: 'prefix-'
@@ -2046,7 +2046,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       .makeRequest(
         {
           method: 'POST',
-          url: `${this.baseUrl}/notificationConfigs`,
+          url: `${this.baseUrl}/${this.name}/notificationConfigs`,
           body: JSON.stringify(convertObjKeysToSnakeCase(body)),
           queryParameters: query as unknown as StorageQueryParameters,
           retry: false,
@@ -2861,7 +2861,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     this.storageTransport
       .makeRequest<GetFilesResponseData>(
         {
-          url: `${this.baseUrl}/${this.id}/o`,
+          url: `${this.baseUrl}/${this.name}/o`,
           queryParameters: query as unknown as StorageQueryParameters,
         },
         (err, data, resp) => {
@@ -3060,7 +3060,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
     this.storageTransport
       .makeRequest<GetNotificationsResponseData>(
         {
-          url: `${this.baseUrl}/notificationConfigs`,
+          url: `${this.baseUrl}/${this.name}/notificationConfigs`,
           queryParameters: options as unknown as StorageQueryParameters,
         },
         (err, data, resp) => {
@@ -3106,7 +3106,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * @property {boolean} [virtualHostedStyle=false] Use virtual hosted-style
    *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
    *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
-   *     should generally be preferred instaed of path-style URL.
+   *     should generally be preferred instead of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
    * @property {string} [cname] The cname for this bucket, i.e.,
@@ -3153,7 +3153,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
    *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
    *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
-   *     should generally be preferred instaed of path-style URL.
+   *     should generally be preferred instead of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
@@ -3257,7 +3257,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * @throws {Error} if a metageneration is not provided.
    *
    * @param {number|string} metageneration The bucket's metageneration. This is
-   *     accesssible from calling {@link File#getMetadata}.
+   *     accessible from calling {@link File#getMetadata}.
    * @param {BucketLockCallback} [callback] Callback function.
    * @returns {Promise<BucketLockResponse>}
    *
@@ -3291,7 +3291,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       .makeRequest(
         {
           method: 'POST',
-          url: `${this.baseUrl}/lockRetentionPolicy`,
+          url: `${this.baseUrl}/${this.name}/lockRetentionPolicy`,
           queryParameters: {
             ifMetagenerationMatch: metageneration,
           },
@@ -3315,7 +3315,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   async restore(options: RestoreOptions): Promise<Bucket> {
     const bucket = await this.storageTransport.makeRequest<Bucket>({
       method: 'POST',
-      url: `${this.baseUrl}/restore`,
+      url: `${this.baseUrl}/${this.name}/restore`,
       queryParameters: options as unknown as StorageQueryParameters,
     });
 
