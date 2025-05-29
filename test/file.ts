@@ -140,7 +140,7 @@ describe('File', () => {
     });
 
     describe('delete', () => {
-      it('should set the correct query string with options', async done => {
+      it('should set the correct query string with options', async () => {
         const options = {
           generation: 2,
           userProject: 'user-project',
@@ -154,9 +154,9 @@ describe('File', () => {
 
         STORAGE.storageTransport.makeRequest = sandbox
           .stub()
-          .callsFake(reqOpts => {
+          .callsFake((reqOpts, callback) => {
             assert.strictEqual(reqOpts.method, 'DELETE');
-            assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
+            assert.strictEqual(reqOpts.url, '/b/bucket-name/o/file-name.png');
             assert.deepStrictEqual(
               reqOpts.queryParameters.generation,
               options.generation,
@@ -181,7 +181,7 @@ describe('File', () => {
               reqOpts.queryParameters.preconditionOpts.ifMetagenerationNotMatch,
               options.preconditionOpts.ifMetagenerationNotMatch,
             );
-            done();
+            callback(null);
             return Promise.resolve({data: {}});
           });
         await file.delete(options);
@@ -214,7 +214,7 @@ describe('File', () => {
           .stub()
           .callsFake((reqOpts, callback) => {
             assert.strictEqual(reqOpts.method, 'GET');
-            assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
+            assert.strictEqual(reqOpts.url, '/b/bucket-name/o/file-name.png');
             assert.deepStrictEqual(
               reqOpts.queryParameters.generation,
               options.generation,
@@ -272,7 +272,7 @@ describe('File', () => {
           .stub()
           .callsFake((reqOpts, callback) => {
             assert.strictEqual(reqOpts.method, 'GET');
-            assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
+            assert.strictEqual(reqOpts.url, '/b/bucket-name/o/file-name.png');
             assert.deepStrictEqual(
               reqOpts.queryParameters.generation,
               options.generation,
@@ -330,7 +330,7 @@ describe('File', () => {
           .stub()
           .callsFake((reqOpts, callback) => {
             assert.strictEqual(reqOpts.method, 'GET');
-            assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
+            assert.strictEqual(reqOpts.url, '/b/bucket-name/o/file-name.png');
             assert.deepStrictEqual(
               reqOpts.queryParameters.generation,
               options.generation,
@@ -382,7 +382,7 @@ describe('File', () => {
           .callsFake((reqOpts, callback) => {
             const body = JSON.parse(reqOpts.body);
             assert.strictEqual(reqOpts.method, 'PATCH');
-            assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
+            assert.strictEqual(reqOpts.url, '/b/bucket-name/o/file-name.png');
             assert.deepStrictEqual(body.temporaryHold, options.temporaryHold);
             callback(null);
             return Promise.resolve();

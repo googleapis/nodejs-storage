@@ -294,20 +294,28 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
 
     let url = `${this.baseUrl}/${this.id}`;
     if (this.parent instanceof Bucket) {
-      url = `${this.parent.baseUrl}/${this.parent.id}/${url}`;
+      url = `${this.parent.baseUrl}/${this.parent.id}${url}`;
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'DELETE',
-        responseType: 'json',
-        url,
-        ...methodConfig.reqOpts,
-        queryParameters: {
-          ...methodConfig.reqOpts?.queryParameters,
-          ...options,
+      .makeRequest(
+        {
+          method: 'DELETE',
+          responseType: 'json',
+          url,
+          ...methodConfig.reqOpts,
+          queryParameters: {
+            ...methodConfig.reqOpts?.queryParameters,
+            ...options,
+          },
         },
-      })
+        (err, _, resp) => {
+          if (err && err.status === 404 && ignoreNotFound) {
+            err = null;
+          }
+          callback(err, resp);
+        },
+      )
       .catch(({err, resp}) => {
         if (err) {
           if (err.status === 404 && ignoreNotFound) {
@@ -438,7 +446,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
 
     let url = `${this.baseUrl}/${this.id}`;
     if (this.parent instanceof Bucket) {
-      url = `${this.parent.baseUrl}/${this.parent.id}/${url}`;
+      url = `${this.parent.baseUrl}/${this.parent.id}${url}`;
     }
 
     this.storageTransport
@@ -496,7 +504,7 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
 
     let url = `${this.baseUrl}/${this.name}`;
     if (this.parent instanceof Bucket) {
-      url = `${this.parent.baseUrl}/${this.parent.name}/${url}`;
+      url = `${this.parent.baseUrl}/${this.parent.name}${url}`;
     }
 
     const body = Object.assign({}, methodConfig.reqOpts?.body, metadata);
