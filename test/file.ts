@@ -156,7 +156,7 @@ describe('File', () => {
           .stub()
           .callsFake((reqOpts, callback) => {
             assert.strictEqual(reqOpts.method, 'DELETE');
-            assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
+            assert.strictEqual(reqOpts.url, '/b/bucket-name/o/file-name.png');
             assert.deepStrictEqual(
               reqOpts.queryParameters.generation,
               options.generation,
@@ -214,7 +214,7 @@ describe('File', () => {
           .stub()
           .callsFake((reqOpts, callback) => {
             assert.strictEqual(reqOpts.method, 'GET');
-            assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
+            assert.strictEqual(reqOpts.url, '/b/bucket-name/o/file-name.png');
             assert.deepStrictEqual(
               reqOpts.queryParameters.generation,
               options.generation,
@@ -272,7 +272,7 @@ describe('File', () => {
           .stub()
           .callsFake((reqOpts, callback) => {
             assert.strictEqual(reqOpts.method, 'GET');
-            assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
+            assert.strictEqual(reqOpts.url, '/b/bucket-name/o/file-name.png');
             assert.deepStrictEqual(
               reqOpts.queryParameters.generation,
               options.generation,
@@ -330,7 +330,7 @@ describe('File', () => {
           .stub()
           .callsFake((reqOpts, callback) => {
             assert.strictEqual(reqOpts.method, 'GET');
-            assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
+            assert.strictEqual(reqOpts.url, '/b/bucket-name/o/file-name.png');
             assert.deepStrictEqual(
               reqOpts.queryParameters.generation,
               options.generation,
@@ -382,7 +382,7 @@ describe('File', () => {
           .callsFake((reqOpts, callback) => {
             const body = JSON.parse(reqOpts.body);
             assert.strictEqual(reqOpts.method, 'PATCH');
-            assert.strictEqual(reqOpts.url, '/b/bucket-name//o/file-name.png');
+            assert.strictEqual(reqOpts.url, '/b/bucket-name/o/file-name.png');
             assert.deepStrictEqual(body.temporaryHold, options.temporaryHold);
             callback(null);
             return Promise.resolve();
