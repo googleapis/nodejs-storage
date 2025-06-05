@@ -1046,7 +1046,7 @@ describe('File', () => {
 
         file
           .createReadStream()
-          .on('responce', (err, response_, body) => {
+          .on('response', (err, response_, body) => {
             assert.strictEqual(err, null);
             assert.strictEqual(response_, response);
             assert.strictEqual(body, null);
@@ -2641,7 +2641,7 @@ describe('File', () => {
       });
     });
 
-    it('should add ACL condtion', done => {
+    it('should add ACL condition', done => {
       file.generateSignedPostPolicyV2(
         {
           expires: Date.now() + 2000,
@@ -2883,7 +2883,7 @@ describe('File', () => {
         );
       });
 
-      it('should throw if prexif condition is not an array', () => {
+      it('should throw if prefix condition is not an array', () => {
         assert.throws(() => {
           void (file.generateSignedPostPolicyV2(
             {
@@ -4229,7 +4229,7 @@ describe('File', () => {
       }
     }
 
-    describe('retry mulipart upload', () => {
+    describe('retry multipart upload', () => {
       it('should save a string with no errors', async () => {
         const options = {resumable: false};
         sandbox.stub(file, 'createWriteStream').callsFake(() => {
