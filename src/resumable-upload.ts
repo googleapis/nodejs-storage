@@ -757,7 +757,7 @@ export class Upload extends Writable {
           const res = await this.makeRequest(reqOpts);
           // We have successfully got a URI we can now create a new invocation id
           this.currentInvocationId.uri = uuid.v4();
-          return res.headers.location;
+          return res.headers.get('location');
         } catch (err) {
           const e = err as GaxiosError;
           const apiError = {
