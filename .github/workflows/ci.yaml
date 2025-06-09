@@ -58,4 +58,3 @@ jobs:
       - uses: JustinBeckwith/linkinator-action@v1
         with:
           paths: docs/
-          delay: 500
