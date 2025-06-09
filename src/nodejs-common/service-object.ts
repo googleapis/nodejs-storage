@@ -298,24 +298,27 @@ class ServiceObject<T, K extends BaseMetadata> extends EventEmitter {
     }
 
     this.storageTransport
-      .makeRequest({
-        method: 'DELETE',
-        responseType: 'json',
-        url,
-        ...methodConfig.reqOpts,
-        queryParameters: {
-          ...methodConfig.reqOpts?.queryParameters,
-          ...options,
+      .makeRequest(
+        {
+          method: 'DELETE',
+          responseType: 'json',
+          url,
+          ...methodConfig.reqOpts,
+          queryParameters: {
+            ...methodConfig.reqOpts?.queryParameters,
+            ...options,
+          },
         },
-      })
-      .catch(({err, resp}) => {
-        if (err) {
-          if (err.status === 404 && ignoreNotFound) {
-            err = null;
+        (err, data, resp) => {
+          if (err) {
+            if (err.status === 404 && ignoreNotFound) {
+              err = null;
+            }
           }
-        }
-        callback(err, resp);
-      });
+          callback(err, resp);
+        },
+      )
+      .catch(err => callback!(err));
   }
 
   /**

@@ -232,7 +232,7 @@ describe('ServiceObject', () => {
       serviceObject.delete(options, assert.ifError);
     });
 
-    it('should respect ignoreNotFound opion', done => {
+    it('should respect ignoreNotFound option', () => {
       const options = {ignoreNotFound: true};
       const error = new GaxiosError('404', {} as GaxiosOptionsPrepared);
       error.status = 404;
@@ -242,7 +242,6 @@ describe('ServiceObject', () => {
       serviceObject.delete(options, (err, apiResponse_) => {
         assert.ifError(err);
         assert.strictEqual(apiResponse_, undefined);
-        done();
       });
     });
 
