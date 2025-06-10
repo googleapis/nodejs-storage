@@ -554,6 +554,7 @@ export enum FileExceptionMessages {
     To be sure the content is the same, you should try uploading the file again.`,
   MD5_RESUMED_UPLOAD = 'MD5 cannot be used with a continued resumable upload as MD5 cannot be extended from an existing value',
   MISSING_RESUME_CRC32C_FINAL_UPLOAD = 'The CRC32C is missing for the final portion of a resumed upload, which is required for validation. Please provide `resumeCRC32C` if validation is required, or disable `validation`.',
+  STREAM_NOT_AVAILABLE = 'Stream was not provided.',
 }
 
 /**
@@ -1699,6 +1700,13 @@ class File extends ServiceObject<File, FileMetadata> {
 
       this.storageTransport
         .makeRequest(reqOpts, async (err, stream, rawResponse) => {
+          if (err || !stream) {
+            throughStream.destroy(
+              err || new Error(FileExceptionMessages.STREAM_NOT_AVAILABLE),
+            );
+            return;
+          }
+
           (stream as Readable).on('error', err => {
             throughStream.destroy(err);
           });

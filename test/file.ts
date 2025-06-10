@@ -1015,12 +1015,35 @@ describe('File', () => {
         file.createReadStream().resume();
       });
 
-      it('should emit response event from request', done => {
+      it('should destroy throughStream if stream is null', done => {
         file.storageTransport.makeRequest = sandbox
           .stub()
           .callsFake((reqOpts, callback) => {
             callback(null, null, {headers: {}});
+            return Promise.resolve();
+          });
+
+        file
+          .createReadStream({validation: false})
+          .on('response', () => {
+            done(new Error('Response event should not have been emitted.'));
+          })
+          .on('error', err => {
+            assert.strictEqual(
+              err?.message,
+              FileExceptionMessages.STREAM_NOT_AVAILABLE,
+            );
             done();
+          })
+          .resume();
+      });
+
+      it('should emit response event from request', done => {
+        file.storageTransport.makeRequest = sandbox
+          .stub()
+          .callsFake((reqOpts, callback) => {
+            const mockStream = new PassThrough();
+            callback(null, mockStream, {headers: {}});
             return Promise.resolve();
           });
 
@@ -1184,7 +1207,8 @@ describe('File', () => {
                 rawResponseStream.write(DATA);
                 rawResponseStream.end(DATA);
               });
-              callback(null, null, rawResponseStream);
+              const mockStream = new PassThrough();
+              callback(null, mockStream, rawResponseStream);
               done();
               return Promise.resolve(rawResponseStream);
             });
@@ -1215,7 +1239,8 @@ describe('File', () => {
               rawResponseStream.write(DATA);
               rawResponseStream.end(DATA);
             });
-            callback(null, null, rawResponseStream);
+            const mockStream = new PassThrough();
+            callback(null, mockStream, rawResponseStream);
             done();
             return Promise.resolve(rawResponseStream);
           });
