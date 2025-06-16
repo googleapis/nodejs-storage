@@ -8,7 +8,5 @@
     "CHANGELOG.md"
   ],
   "silent": true,
-  "concurrency": 10,
-  "timeout": 100,
-  "retry": true
+  "concurrency": 10
 }
