@@ -403,6 +403,7 @@ export type DownloadCallback = (
 
 export interface DownloadOptions extends CreateReadStreamOptions {
   destination?: string;
+  encryptionKey?: string | Buffer;
 }
 
 interface CopyQuery {
@@ -2308,6 +2309,11 @@ class File extends ServiceObject<File, FileMetadata> {
 
     const destination = options.destination;
     delete options.destination;
+
+    if (options.encryptionKey) {
+      this.setEncryptionKey(options.encryptionKey);
+      delete options.encryptionKey;
+    }
 
     const fileStream = this.createReadStream(options);
     let receivedData = false;
