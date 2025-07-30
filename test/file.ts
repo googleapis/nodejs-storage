@@ -237,7 +237,7 @@ describe('File', () => {
       retryOptions: {
         autoRetry: true,
         maxRetries: 3,
-        retryDelayMultipier: 2,
+        retryDelayMultiplier: 2,
         totalTimeout: 600,
         maxRetryDelay: 60,
         retryableErrorFn: (err: HTTPError) => {
@@ -282,7 +282,7 @@ describe('File', () => {
       assert.strictEqual(file.storage, BUCKET.storage);
     });
 
-    it('should set instanceRetryValue to the storage insance retryOptions.autoRetry value', () => {
+    it('should set instanceRetryValue to the storage instance retryOptions.autoRetry value', () => {
       assert.strictEqual(
         file.instanceRetryValue,
         STORAGE.retryOptions.autoRetry
@@ -1815,7 +1815,7 @@ describe('File', () => {
           autoRetry: true,
           maxRetries: 3,
           maxRetryDelay: 60,
-          retryDelayMultipier: 2,
+          retryDelayMultiplier: 2,
           totalTimeout: 600,
         },
         preconditionOpts: {
@@ -1860,8 +1860,8 @@ describe('File', () => {
             options.retryOptions.maxRetryDelay
           );
           assert.strictEqual(
-            opts.retryOptions.retryDelayMultipier,
-            options.retryOptions.retryDelayMultipier
+            opts.retryOptions.retryDelayMultiplier,
+            options.retryOptions.retryDelayMultiplier
           );
           assert.strictEqual(
             opts.retryOptions.totalTimeout,
@@ -1898,7 +1898,7 @@ describe('File', () => {
           autoRetry: true,
           maxRetries: 3,
           maxRetryDelay: 60,
-          retryDelayMultipier: 2,
+          retryDelayMultiplier: 2,
           totalTimeout: 600,
         },
       };
@@ -1939,8 +1939,8 @@ describe('File', () => {
             options.retryOptions.maxRetryDelay
           );
           assert.strictEqual(
-            opts.retryOptions.retryDelayMultipier,
-            options.retryOptions.retryDelayMultipier
+            opts.retryOptions.retryDelayMultiplier,
+            options.retryOptions.retryDelayMultiplier
           );
           assert.strictEqual(
             opts.retryOptions.totalTimeout,
@@ -1996,11 +1996,11 @@ describe('File', () => {
         'Cannot provide an `offset` without providing a `uri`'
       );
 
-      const opitons = {
+      const options = {
         offset: 1,
         isPartialUpload: true,
       };
-      const writable = file.createWriteStream(opitons);
+      const writable = file.createWriteStream(options);
 
       writable.on('error', (err: RangeError) => {
         assert.deepEqual(err, error);
@@ -2919,7 +2919,7 @@ describe('File', () => {
       );
     });
 
-    it('should add ACL condtion', done => {
+    it('should add ACL condition', done => {
       file.generateSignedPostPolicyV2(
         {
           expires: Date.now() + 2000,
@@ -3151,7 +3151,7 @@ describe('File', () => {
         );
       });
 
-      it('should throw if prexif condition is not an array', () => {
+      it('should throw if prefix condition is not an array', () => {
         assert.throws(() => {
           file.generateSignedPostPolicyV2(
             {
@@ -4558,7 +4558,7 @@ describe('File', () => {
       }
     }
 
-    describe('retry mulipart upload', () => {
+    describe('retry multipart upload', () => {
       it('should save a string with no errors', async () => {
         const options = {resumable: false};
         file.createWriteStream = () => {
