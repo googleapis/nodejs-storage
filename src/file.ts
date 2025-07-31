@@ -403,6 +403,7 @@ export type DownloadCallback = (
 
 export interface DownloadOptions extends CreateReadStreamOptions {
   destination?: string;
+  encryptionKey?: string | Buffer;
 }
 
 interface CopyQuery {
@@ -2309,6 +2310,11 @@ class File extends ServiceObject<File, FileMetadata> {
     const destination = options.destination;
     delete options.destination;
 
+    if (options.encryptionKey) {
+      this.setEncryptionKey(options.encryptionKey);
+      delete options.encryptionKey;
+    }
+
     const fileStream = this.createReadStream(options);
     let receivedData = false;
 
@@ -2976,7 +2982,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
    *     URLs (e.g. 'https://mybucket.storage.googleapis.com/...') instead of path-style
    *     (e.g. 'https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
-   *     should generally be preferred instaed of path-style URL.
+   *     should generally be preferred instead of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
