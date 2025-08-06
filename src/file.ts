@@ -2100,6 +2100,10 @@ class File extends ServiceObject<File, FileMetadata> {
 
     const emitStream = new PassThroughShim();
 
+    // If `writeStream` is destroyed before the `writing` event, `emitStream` will not have any listeners. This prevents an unhandled error.
+    const noop = () => {};
+    emitStream.on('error', noop);
+
     let hashCalculatingStream: HashStreamValidator | null = null;
 
     if (crc32c || md5) {
@@ -2137,6 +2141,9 @@ class File extends ServiceObject<File, FileMetadata> {
       } else {
         this.startResumableUpload_(fileWriteStream, options);
       }
+
+      // remove temporary noop listener as we now create a pipeline that handles the errors
+      emitStream.removeListener('error', noop);
 
       pipeline(
         emitStream,
