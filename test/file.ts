@@ -23,7 +23,14 @@ import {
 } from '../src/nodejs-common/index.js';
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
-import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
+import {
+  Readable,
+  PassThrough,
+  Stream,
+  Duplex,
+  Transform,
+  pipeline,
+} from 'stream';
 import assert from 'assert';
 import * as crypto from 'crypto';
 import duplexify from 'duplexify';
@@ -2279,6 +2286,67 @@ describe('File', () => {
       };
 
       writable.end('data');
+    });
+
+    it('should close upstream when pipeline fails', done => {
+      const writable: Stream.Writable = file.createWriteStream();
+      const error = new Error('My error');
+      const uploadStream = new PassThrough();
+
+      let receivedBytes = 0;
+      const validateStream = new PassThrough();
+      validateStream.on('data', (chunk: Buffer) => {
+        receivedBytes += chunk.length;
+        if (receivedBytes > 5) {
+          // this aborts the pipeline which should also close the internal pipeline within createWriteStream
+          pLine.destroy(error);
+        }
+      });
+
+      file.startResumableUpload_ = (dup: duplexify.Duplexify) => {
+        dup.setWritable(uploadStream);
+        // Emit an error so the pipeline's error-handling logic is triggered
+        uploadStream.emit('error', error);
+        // Explicitly destroy the stream so that the 'close' event is guaranteed to fire,
+        // even in Node v14 where autoDestroy defaults may prevent automatic closing
+        uploadStream.destroy();
+      };
+
+      let closed = false;
+      uploadStream.on('close', () => {
+        closed = true;
+      });
+
+      const pLine = pipeline(
+        (function* () {
+          yield 'foo'; // write some data
+          yield 'foo'; // write some data
+          yield 'foo'; // write some data
+        })(),
+        validateStream,
+        writable,
+        (e: Error | null) => {
+          assert.strictEqual(e, error);
+          assert.strictEqual(closed, true);
+          done();
+        }
+      );
+    });
+
+    it('should error pipeline if source stream emits error before any data', done => {
+      const writable = file.createWriteStream();
+      const error = new Error('Error before first chunk');
+      pipeline(
+        // eslint-disable-next-line require-yield
+        (function* () {
+          throw error;
+        })(),
+        writable,
+        (e: Error | null) => {
+          assert.strictEqual(e, error);
+          done();
+        }
+      );
     });
 
     describe('validation', () => {
