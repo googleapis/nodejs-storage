@@ -2305,7 +2305,11 @@ describe('File', () => {
 
       file.startResumableUpload_ = (dup: duplexify.Duplexify) => {
         dup.setWritable(uploadStream);
+        // Emit an error so the pipeline's error-handling logic is triggered
         uploadStream.emit('error', error);
+        // Explicitly destroy the stream so that the 'close' event is guaranteed to fire,
+        // even in Node v14 where autoDestroy defaults may prevent automatic closing
+        uploadStream.destroy();
       };
 
       let closed = false;
