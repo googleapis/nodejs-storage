@@ -2303,8 +2303,11 @@ describe('File', () => {
         }
       });
 
-      file.startResumableUpload_ = (dup: duplexify.Duplexify) =>
+      file.startResumableUpload_ = (dup: duplexify.Duplexify) => {
         dup.setWritable(uploadStream);
+        uploadStream.emit('error', error);
+      };
+
       let closed = false;
       uploadStream.on('close', () => {
         closed = true;
