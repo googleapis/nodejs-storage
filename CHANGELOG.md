@@ -4,6 +4,19 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [7.17.0](https://github.com/googleapis/nodejs-storage/compare/v7.16.0...v7.17.0) (2025-08-18)
+
+
+### Features
+
+* Add CSEK to download ([#2604](https://github.com/googleapis/nodejs-storage/issues/2604)) ([cacc0be](https://github.com/googleapis/nodejs-storage/commit/cacc0be49a4fe81c384180bdfd77820b6b3f3001))
+
+
+### Bug Fixes
+
+* Propagate errors when using pipelines ([#2560](https://github.com/googleapis/nodejs-storage/issues/2560)) ([#2624](https://github.com/googleapis/nodejs-storage/issues/2624)) ([a43b490](https://github.com/googleapis/nodejs-storage/commit/a43b4904ecf2ebacde22bc6efbdcf97ac886e28d))
+* Typo correction ([#2610](https://github.com/googleapis/nodejs-storage/issues/2610)) ([9cae69c](https://github.com/googleapis/nodejs-storage/commit/9cae69cc280227737b5a1a1476eae1b2612b162b))
+
 ## [7.16.0](https://github.com/googleapis/nodejs-storage/compare/v7.15.2...v7.16.0) (2025-03-31)
 
 
