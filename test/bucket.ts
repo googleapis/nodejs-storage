@@ -124,6 +124,7 @@ const fakePromisify = {
       'request',
       'file',
       'notification',
+      'restore',
     ]);
   },
 };
@@ -196,7 +197,7 @@ describe('Bucket', () => {
     retryOptions: {
       autoRetry: true,
       maxRetries: 3,
-      retryDelayMultipier: 2,
+      retryDelayMultiplier: 2,
       totalTimeout: 600,
       maxRetryDelay: 60,
       retryableErrorFn: (err: HTTPError) => {
@@ -1886,6 +1887,29 @@ describe('Bucket', () => {
       );
     });
 
+    it('should add nextPageToken to fields for autoPaginate', done => {
+      bucket.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        assert.strictEqual(reqOpts.qs.fields, 'items(name),nextPageToken');
+        callback(null, {
+          items: [{name: 'fake-file-name'}],
+          nextPageToken: 'fake-page-token',
+        });
+      };
+
+      bucket.getFiles(
+        {fields: 'items(name)', autoPaginate: true},
+        (err: Error, files: FakeFile[], nextQuery: {pageToken: string}) => {
+          assert.ifError(err);
+          assert.strictEqual(files[0].name, 'fake-file-name');
+          assert.strictEqual(nextQuery.pageToken, 'fake-page-token');
+          done();
+        }
+      );
+    });
+
     it('should return soft-deleted Files if queried for softDeleted', done => {
       const softDeletedTime = new Date('1/1/2024').toISOString();
       bucket.request = (
@@ -2425,6 +2449,26 @@ describe('Bucket', () => {
     });
   });
 
+  describe('restore', () => {
+    it('should pass options to underlying request call', async () => {
+      bucket.request = function (
+        reqOpts: DecorateRequestOptions,
+        callback_: Function
+      ) {
+        assert.strictEqual(this, bucket);
+        assert.deepStrictEqual(reqOpts, {
+          method: 'POST',
+          uri: '/restore',
+          qs: {generation: 123456789},
+        });
+        assert.strictEqual(callback_, undefined);
+        return [];
+      };
+
+      await bucket.restore({generation: 123456789});
+    });
+  });
+
   describe('request', () => {
     const USER_PROJECT = 'grape-spaceship-123';
 
@@ -2587,7 +2631,7 @@ describe('Bucket', () => {
       bucket.setStorageClass('hyphenated-class', OPTIONS, CALLBACK);
     });
 
-    it('should call setMetdata correctly', () => {
+    it('should call setMetadata correctly', () => {
       bucket.setMetadata = (
         metadata: BucketMetadata,
         options: {},
