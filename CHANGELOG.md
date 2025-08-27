@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [7.17.1](https://github.com/googleapis/nodejs-storage/compare/v7.17.0...v7.17.1) (2025-08-27)
+
+
+### Bug Fixes
+
+* Respect useAuthWithCustomEndpoint flag for resumable uploads ([#2637](https://github.com/googleapis/nodejs-storage/issues/2637)) ([707b4f2](https://github.com/googleapis/nodejs-storage/commit/707b4f2fe1d67878bcd8f1434e4cbb57c951994e))
+
 ## [7.17.0](https://github.com/googleapis/nodejs-storage/compare/v7.16.0...v7.17.0) (2025-08-18)
 
 
