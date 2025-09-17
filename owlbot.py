@@ -30,7 +30,8 @@ s.copy(templates, excludes=['.jsdoc.js',
                             '.kokoro/continuous/node14/system-test.cfg',
                             '.kokoro/presubmit/node14/system-test.cfg',
                             '.kokoro/release/publish.cfg',
-                            '.kokoro/system-test.sh'
+                            '.kokoro/system-test.sh',
+                            '.kokoro/samples-test.sh',
                             ])
 
 # Create .config directory under $HOME to get around permissions issues
