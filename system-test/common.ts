@@ -57,6 +57,9 @@ describe('Common', () => {
     });
 
     it('should retry a request', function (done) {
+      // We've increased the timeout to accommodate the retry backoff strategy.
+      // The test's retry attempts and the delay between them can exceed the default timeout,
+      // causing a false negative (test failure due to timeout instead of a logic error).
       this.timeout(90 * 1000);
 
       let numRequestAttempts = 0;
