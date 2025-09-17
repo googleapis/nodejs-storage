@@ -4,6 +4,54 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [7.17.1](https://github.com/googleapis/nodejs-storage/compare/v7.17.0...v7.17.1) (2025-08-27)
+
+
+### Bug Fixes
+
+* Respect useAuthWithCustomEndpoint flag for resumable uploads ([#2637](https://github.com/googleapis/nodejs-storage/issues/2637)) ([707b4f2](https://github.com/googleapis/nodejs-storage/commit/707b4f2fe1d67878bcd8f1434e4cbb57c951994e))
+
+## [7.17.0](https://github.com/googleapis/nodejs-storage/compare/v7.16.0...v7.17.0) (2025-08-18)
+
+
+### Features
+
+* Add CSEK to download ([#2604](https://github.com/googleapis/nodejs-storage/issues/2604)) ([cacc0be](https://github.com/googleapis/nodejs-storage/commit/cacc0be49a4fe81c384180bdfd77820b6b3f3001))
+
+
+### Bug Fixes
+
+* Propagate errors when using pipelines ([#2560](https://github.com/googleapis/nodejs-storage/issues/2560)) ([#2624](https://github.com/googleapis/nodejs-storage/issues/2624)) ([a43b490](https://github.com/googleapis/nodejs-storage/commit/a43b4904ecf2ebacde22bc6efbdcf97ac886e28d))
+* Typo correction ([#2610](https://github.com/googleapis/nodejs-storage/issues/2610)) ([9cae69c](https://github.com/googleapis/nodejs-storage/commit/9cae69cc280227737b5a1a1476eae1b2612b162b))
+
+## [7.16.0](https://github.com/googleapis/nodejs-storage/compare/v7.15.2...v7.16.0) (2025-03-31)
+
+
+### Features
+
+* Add moveFileAtomic method ([#2586](https://github.com/googleapis/nodejs-storage/issues/2586)) ([e25fb8c](https://github.com/googleapis/nodejs-storage/commit/e25fb8c659dbdf4a08c87fe2a929c8d62e6162e1))
+
+## [7.15.2](https://github.com/googleapis/nodejs-storage/compare/v7.15.1...v7.15.2) (2025-02-20)
+
+
+### Bug Fixes
+
+* Export SaveData type from index.ts ([#2580](https://github.com/googleapis/nodejs-storage/issues/2580)) ([dbf510c](https://github.com/googleapis/nodejs-storage/commit/dbf510c08f28c720ba66268eea6a62e139179ab4))
+
+## [7.15.1](https://github.com/googleapis/nodejs-storage/compare/v7.15.0...v7.15.1) (2025-02-11)
+
+
+### Bug Fixes
+
+* **getFiles:** Add nextPageToken to fields for autoPaginate ([#2570](https://github.com/googleapis/nodejs-storage/issues/2570)) ([75c309c](https://github.com/googleapis/nodejs-storage/commit/75c309c0761e4029dcd13024e748d8957052f766))
+
+## [7.15.0](https://github.com/googleapis/nodejs-storage/compare/v7.14.0...v7.15.0) (2024-12-20)
+
+
+### Features
+
+* Add ability to configure and utilize soft-delete and restore buckets ([#2566](https://github.com/googleapis/nodejs-storage/issues/2566)) ([25cdbb9](https://github.com/googleapis/nodejs-storage/commit/25cdbb918645362ce6994679e8a1c5e7cc666c87))
+
 ## [7.14.0](https://github.com/googleapis/nodejs-storage/compare/v7.13.0...v7.14.0) (2024-10-29)
 
 

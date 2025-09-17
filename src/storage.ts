@@ -105,6 +105,8 @@ export interface BucketOptions {
   kmsKeyName?: string;
   preconditionOpts?: PreconditionOptions;
   userProject?: string;
+  generation?: number;
+  softDeleted?: boolean;
 }
 
 export interface Cors {
@@ -185,6 +187,8 @@ export interface GetBucketsRequest {
   maxResults?: number;
   pageToken?: string;
   userProject?: string;
+  softDeleted?: boolean;
+  generation?: number;
 }
 
 export interface HmacKeyResourceResponse {
@@ -892,7 +896,7 @@ export class Storage extends Service {
    *     For more information, see {@link https://cloud.google.com/storage/docs/locations| Bucket Locations}.
    * @property {boolean} [dra=false] Specify the storage class as Durable Reduced
    *     Availability.
-   * @property {boolean} [enableObjectRetention=false] Specifiy whether or not object retention should be enabled on this bucket.
+   * @property {boolean} [enableObjectRetention=false] Specify whether or not object retention should be enabled on this bucket.
    * @property {object} [hierarchicalNamespace.enabled=false] Specify whether or not to enable hierarchical namespace on this bucket.
    * @property {string} [location] Specify the bucket's location. If specifying
    *     a dual-region, the `customPlacementConfig` property should be set in conjunction.
@@ -1242,6 +1246,8 @@ export class Storage extends Service {
    *     representing part of the larger set of results to view.
    * @property {string} [userProject] The ID of the project which will be billed
    *     for the request.
+   *  @param {boolean} [softDeleted] If true, returns the soft-deleted object.
+   *     Object `generation` is required if `softDeleted` is set to True.
    */
   /**
    * @typedef {array} GetBucketsResponse

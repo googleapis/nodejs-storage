@@ -80,6 +80,7 @@ objects to users via direct download.
   * [Get Requester Pays Status](#get-requester-pays-status)
   * [Get Retention Policy](#get-retention-policy)
   * [Storage Get Service Account.](#storage-get-service-account.)
+  * [Get Soft Deleted Bucket](#get-soft-deleted-bucket)
   * [Get Uniform Bucket Level Access](#get-uniform-bucket-level-access)
   * [Activate HMAC SA Key.](#activate-hmac-sa-key.)
   * [Create HMAC SA Key.](#create-hmac-sa-key.)
@@ -93,10 +94,12 @@ objects to users via direct download.
   * [List Files Paginate](#list-files-paginate)
   * [List Files with Old Versions.](#list-files-with-old-versions.)
   * [List Notifications](#list-notifications)
+  * [List Soft Deleted Bucket](#list-soft-deleted-bucket)
   * [Lock Retention Policy](#lock-retention-policy)
   * [Storage Make Bucket Public.](#storage-make-bucket-public.)
   * [Make Public](#make-public)
   * [Move File](#move-file)
+  * [Move File Atomic](#move-file-atomic)
   * [Print Bucket Acl](#print-bucket-acl)
   * [Print Bucket Acl For User](#print-bucket-acl-for-user)
   * [Print File Acl](#print-file-acl)
@@ -114,6 +117,7 @@ objects to users via direct download.
   * [Remove File Owner Acl](#remove-file-owner-acl)
   * [Remove Retention Policy](#remove-retention-policy)
   * [Rename File](#rename-file)
+  * [Restore Soft Deleted Bucket](#restore-soft-deleted-bucket)
   * [Rotate Encryption Key](#rotate-encryption-key)
   * [Set Autoclass](#set-autoclass)
   * [Set Client Endpoint](#set-client-endpoint)
@@ -1252,6 +1256,23 @@ __Usage:__
 
 
 
+### Get Soft Deleted Bucket
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getSoftDeletedBucket.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getSoftDeletedBucket.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/getSoftDeletedBucket.js`
+
+
+-----
+
+
+
+
 ### Get Uniform Bucket Level Access
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getUniformBucketLevelAccess.js).
@@ -1487,6 +1508,23 @@ __Usage:__
 
 
 
+### List Soft Deleted Bucket
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/listSoftDeletedBucket.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/listSoftDeletedBucket.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/listSoftDeletedBucket.js`
+
+
+-----
+
+
+
+
 ### Lock Retention Policy
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/lockRetentionPolicy.js).
@@ -1550,6 +1588,23 @@ __Usage:__
 
 
 `node samples/moveFile.js`
+
+
+-----
+
+
+
+
+### Move File Atomic
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/moveFileAtomic.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/moveFileAtomic.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/moveFileAtomic.js`
 
 
 -----
@@ -1845,6 +1900,23 @@ __Usage:__
 
 
 `node samples/renameFile.js`
+
+
+-----
+
+
+
+
+### Restore Soft Deleted Bucket
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/restoreSoftDeletedBucket.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/restoreSoftDeletedBucket.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/restoreSoftDeletedBucket.js`
 
 
 -----

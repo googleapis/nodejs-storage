@@ -164,7 +164,7 @@ describe('Transfer Manager', () => {
       await transferManager.uploadManyFiles(paths, {prefix: 'hello/world'});
     });
 
-    it('replaces OS specfic separator with posix separator when calling bucket.upload', async () => {
+    it('replaces OS specific separator with posix separator when calling bucket.upload', async () => {
       const filePath = ['a', 'b', 'c'].join(path.sep);
       const expected = ['a', 'b', 'c'].join(path.posix.sep);
 

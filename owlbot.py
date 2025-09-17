@@ -24,6 +24,7 @@ templates = common_templates.node_library(source_location='build/src')
 s.copy(templates, excludes=['.jsdoc.js',
                             '.github/release-please.yml',
                             '.github/sync-repo-settings.yaml',
+                            '.github/workflows/ci.yaml',
                             '.prettierrc.js',
                             '.mocharc.js',
                             '.kokoro/continuous/node14/system-test.cfg',

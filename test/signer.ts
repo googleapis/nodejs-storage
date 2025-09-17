@@ -189,10 +189,9 @@ describe('signer', () => {
         const expiresNumber = accessibleAtNumber + 86400000; //2020-02-18T16:00:00-08:00
 
         it('should set correct settings if accessibleAt provided', async () => {
-          const authClientSign: sinon.SinonStub<
-            [string],
-            Promise<string>
-          > = sandbox.stub(authClient, 'sign').resolves('signature');
+          const authClientSign = sandbox
+            .stub(authClient, 'sign')
+            .resolves('signature');
           const accessibleAt = new Date(accessibleAtNumber);
           await signer.getSignedUrl({
             version: 'v4',
@@ -372,7 +371,7 @@ describe('signer', () => {
             .resolves(query) as sinon.SinonStub;
         });
 
-        it('shuold insert user-provided queryParams', async () => {
+        it('should insert user-provided queryParams', async () => {
           CONFIG.queryParams = {key: 'AZ!*()*%/f'};
 
           const url = await signer.getSignedUrl(CONFIG);
@@ -461,10 +460,7 @@ describe('signer', () => {
       });
 
       describe('blobToSign', () => {
-        let authClientSign: sinon.SinonStub<
-          [blobToSign: string] & [data: string, endpoint?: string | undefined],
-          Promise<string>
-        >;
+        let authClientSign: sinon.SinonStub;
         beforeEach(() => {
           authClientSign = sandbox
             .stub<GoogleAuth | AuthClient, 'sign'>(authClient, 'sign')

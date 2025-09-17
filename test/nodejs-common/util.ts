@@ -105,7 +105,7 @@ describe('common/util', () => {
   let util: Util & {[index: string]: Function};
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function stub(method: keyof Util, meth: (...args: any[]) => void) {
+  function stub(method: keyof Util, meth: (...args: any[]) => any) {
     return sandbox.stub(util, method).callsFake(meth);
   }
 
@@ -412,22 +412,22 @@ describe('common/util', () => {
     });
 
     it('should handle non-JSON body', done => {
-      const unparseableBody = '<html>Unparseable body.</html>';
+      const unparsableBody = '<html>Unparsable body.</html>';
 
-      util.handleResp(null, null, unparseableBody, (err, body) => {
-        assert(body.includes(unparseableBody));
+      util.handleResp(null, null, unparsableBody, (err, body) => {
+        assert(body.includes(unparsableBody));
         done();
       });
     });
 
     it('should include the status code when the error body cannot be JSON-parsed', done => {
-      const unparseableBody = 'Bad gateway';
+      const unparsableBody = 'Bad gateway';
       const statusCode = 502;
 
       util.handleResp(
         null,
-        {body: unparseableBody, statusCode} as r.Response,
-        unparseableBody,
+        {body: unparsableBody, statusCode} as r.Response,
+        unparsableBody,
         err => {
           assert(err, 'there should be an error');
           const apiError = err! as ApiError;
@@ -437,7 +437,7 @@ describe('common/util', () => {
           if (!response) {
             assert.fail('there should be a response property on the error');
           } else {
-            assert.strictEqual(response.body, unparseableBody);
+            assert.strictEqual(response.body, unparsableBody);
           }
 
           done();
