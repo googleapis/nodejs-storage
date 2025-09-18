@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [7.17.2](https://github.com/googleapis/nodejs-storage/compare/v7.17.1...v7.17.2) (2025-09-18)
+
+
+### Bug Fixes
+
+* Common Service: should retry a request failed ([#2652](https://github.com/googleapis/nodejs-storage/issues/2652)) ([b38b5d2](https://github.com/googleapis/nodejs-storage/commit/b38b5d221f2cb72658c1eb4a726315ab395a542c))
+
 ## [7.17.1](https://github.com/googleapis/nodejs-storage/compare/v7.17.0...v7.17.1) (2025-08-27)
 
 
