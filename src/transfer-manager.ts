@@ -620,7 +620,8 @@ export class TransferManager {
 
       // Resolve the final path and perform the containment check
       let finalPath = path.resolve(baseDir, name);
-      if (!finalPath.startsWith(baseDir + path.sep) && finalPath !== baseDir) {
+      const relative = path.relative(baseDir, finalPath);
+      if (relative.startsWith('..') || path.isAbsolute(relative)) {
         const traversalError = new RequestError(
           FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE
         );
