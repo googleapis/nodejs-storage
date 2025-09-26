@@ -592,22 +592,64 @@ export class TransferManager {
       : EMPTY_REGEX;
     const regex = new RegExp(stripRegexString, 'g');
 
+    const cwd = process.cwd();
+    const baseDir = path.resolve(
+      options.passthroughOptions?.destination ?? cwd
+    );
+
+    const relativeBaseDir = path.relative(cwd, baseDir);
+
+    if (relativeBaseDir.startsWith('..') || path.isAbsolute(relativeBaseDir)) {
+      const traversalError = new RequestError(
+        FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE_DESTINATION
+      );
+      traversalError.code = 'SECURITY_PATH_TRAVERSAL_REJECTED';
+      throw traversalError;
+    }
+
     for (const file of files) {
+      let name = file.name;
+
+      // Apply stripPrefix first if requested
+      if (options.stripPrefix) {
+        name = name.replace(regex, '');
+      }
+
+      // This ensures the full intended relative path is validated.
+      if (options.prefix) {
+        name = path.join(options.prefix, name);
+      }
+
+      // Reject absolute paths and traversal sequences
+      if (path.isAbsolute(name)) {
+        const absolutePathError = new RequestError(
+          FileExceptionMessages.ABSOLUTE_FILE_NAME
+        );
+        absolutePathError.code = 'SECURITY_ABSOLUTE_PATH_REJECTED';
+        throw absolutePathError;
+      }
+
+      // Resolve the final path and perform the containment check
+      let finalPath = path.resolve(baseDir, name);
+      const relative = path.relative(baseDir, finalPath);
+      if (relative.startsWith('..') || path.isAbsolute(relative)) {
+        const traversalError = new RequestError(
+          FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE
+        );
+        traversalError.code = 'SECURITY_PATH_TRAVERSAL_REJECTED';
+        throw traversalError;
+      }
+
+      if (file.name.endsWith('/') && !finalPath.endsWith(path.sep)) {
+        finalPath = finalPath + path.sep;
+      }
+
       const passThroughOptionsCopy = {
         ...options.passthroughOptions,
+        destination: finalPath,
         [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_MANY,
       };
 
-      if (options.prefix || passThroughOptionsCopy.destination) {
-        passThroughOptionsCopy.destination = path.join(
-          options.prefix || '',
-          passThroughOptionsCopy.destination || '',
-          file.name
-        );
-      }
-      if (options.stripPrefix) {
-        passThroughOptionsCopy.destination = file.name.replace(regex, '');
-      }
       if (
         options.skipIfExists &&
         existsSync(passThroughOptionsCopy.destination || '')
