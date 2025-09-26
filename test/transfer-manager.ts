@@ -218,7 +218,10 @@ describe('Transfer Manager', () => {
     it('sets the destination correctly when provided a prefix', async () => {
       const prefix = 'test-prefix';
       const filename = 'first.txt';
-      const expectedDestination = path.normalize(`${prefix}/${filename}`);
+      const expectedDestination = path.resolve(
+        process.cwd(),
+        path.join(prefix, filename)
+      );
 
       const file = new File(bucket, filename);
       sandbox.stub(file, 'download').callsFake(options => {
@@ -233,7 +236,7 @@ describe('Transfer Manager', () => {
     it('sets the destination correctly when provided a strip prefix', async () => {
       const stripPrefix = 'should-be-removed/';
       const filename = 'should-be-removed/first.txt';
-      const expectedDestination = 'first.txt';
+      const expectedDestination = path.resolve(process.cwd(), 'first.txt');
 
       const file = new File(bucket, filename);
       sandbox.stub(file, 'download').callsFake(options => {
@@ -263,8 +266,10 @@ describe('Transfer Manager', () => {
         destination: 'test-destination',
       };
       const filename = 'first.txt';
-      const expectedDestination = path.normalize(
-        `${passthroughOptions.destination}/${filename}`
+      const expectedDestination = path.resolve(
+        process.cwd(),
+        passthroughOptions.destination,
+        filename
       );
       const download = (optionsOrCb?: DownloadOptions | DownloadCallback) => {
         if (typeof optionsOrCb === 'function') {
@@ -278,6 +283,30 @@ describe('Transfer Manager', () => {
       const file = new File(bucket, filename);
       file.download = download;
       await transferManager.downloadManyFiles([file], {passthroughOptions});
+    });
+
+    it('should throws an error for absolute file names', async () => {
+      const maliciousFilename = '/etc/passwd';
+      const file = new File(bucket, maliciousFilename);
+
+      await assert.rejects(() => transferManager.downloadManyFiles([file]), {
+        code: 'SECURITY_ABSOLUTE_PATH_REJECTED',
+      });
+    });
+
+    it('should throws an error for path traversal in destination or file name', async () => {
+      const passthroughOptions = {
+        destination: '../../test-destination',
+      };
+      const filename = '../../first.txt';
+
+      const file = new File(bucket, filename);
+      await assert.rejects(
+        transferManager.downloadManyFiles([file], {passthroughOptions}),
+        {
+          code: 'SECURITY_PATH_TRAVERSAL_REJECTED',
+        }
+      );
     });
 
     it('does not download files that already exist locally when skipIfExists is true', async () => {
@@ -301,14 +330,16 @@ describe('Transfer Manager', () => {
       await transferManager.downloadManyFiles(files, options);
     });
 
-    it('does not set the destination when prefix, strip prefix and passthroughOptions.destination are not provided', async () => {
+    it('sets the destination to CWD when prefix, strip prefix and passthroughOptions.destination are not provided', async () => {
       const options = {};
       const filename = 'first.txt';
+      const expectedDestination = path.resolve(process.cwd(), filename);
+
       const download = (optionsOrCb?: DownloadOptions | DownloadCallback) => {
         if (typeof optionsOrCb === 'function') {
           optionsOrCb(null, Buffer.alloc(0));
         } else if (optionsOrCb) {
-          assert.strictEqual(optionsOrCb.destination, undefined);
+          assert.strictEqual(optionsOrCb.destination, expectedDestination);
         }
         return Promise.resolve([Buffer.alloc(0)]) as Promise<DownloadResponse>;
       };
@@ -321,10 +352,16 @@ describe('Transfer Manager', () => {
     it('should recursively create directory and write file contents if destination path is nested', async () => {
       const prefix = 'text-prefix';
       const folder = 'nestedFolder/';
-      const file = 'first.txt';
-      const filesOrFolder = [folder, path.join(folder, file)];
-      const expectedFilePath = path.join(prefix, folder, file);
-      const expectedDir = path.join(prefix, folder);
+      const filename = 'first.txt';
+      const filesOrFolder = [folder, path.join(folder, filename)];
+      const dirNameWithPrefix = path.join(prefix, folder);
+      const normalizedDir = path.resolve(process.cwd(), dirNameWithPrefix);
+      const expectedDir = normalizedDir + path.sep;
+      const expectedFilePath = path.resolve(
+        process.cwd(),
+        path.join(prefix, folder, filename)
+      );
+
       const mkdirSpy = sandbox.spy(fsp, 'mkdir');
       const download = (optionsOrCb?: DownloadOptions | DownloadCallback) => {
         if (typeof optionsOrCb === 'function') {
@@ -335,9 +372,14 @@ describe('Transfer Manager', () => {
         return Promise.resolve([Buffer.alloc(0)]) as Promise<DownloadResponse>;
       };
 
-      sandbox.stub(bucket, 'file').callsFake(filename => {
-        const file = new File(bucket, filename);
-        file.download = download;
+      sandbox.stub(bucket, 'file').callsFake(objectName => {
+        const file = new File(bucket, objectName);
+        if (objectName === path.join(folder, filename)) {
+          file.download = download;
+        } else {
+          file.download = () =>
+            Promise.resolve([Buffer.alloc(0)]) as Promise<DownloadResponse>;
+        }
         return file;
       });
       await transferManager.downloadManyFiles(filesOrFolder, {
