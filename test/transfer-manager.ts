@@ -289,20 +289,37 @@ describe('Transfer Manager', () => {
       const maliciousFilename = '/etc/passwd';
       const file = new File(bucket, maliciousFilename);
 
-      await assert.rejects(() => transferManager.downloadManyFiles([file]), {
+      await assert.rejects(transferManager.downloadManyFiles([file]), {
         code: 'SECURITY_ABSOLUTE_PATH_REJECTED',
       });
     });
 
-    it('should throws an error for path traversal in destination or file name', async () => {
+    it('should throw an error for path traversal in destination', async () => {
       const passthroughOptions = {
-        destination: '../../test-destination',
+        destination: '../traversal-destination',
       };
-      const filename = '../../first.txt';
-
-      const file = new File(bucket, filename);
+      const file = new File(bucket, 'first.txt');
       await assert.rejects(
         transferManager.downloadManyFiles([file], {passthroughOptions}),
+        {
+          code: 'SECURITY_PATH_TRAVERSAL_REJECTED',
+        }
+      );
+    });
+
+    it('should throw an error for path traversal in file name', async () => {
+      const file = new File(bucket, '../traversal-filename.txt');
+      await assert.rejects(transferManager.downloadManyFiles([file]), {
+        code: 'SECURITY_PATH_TRAVERSAL_REJECTED',
+      });
+    });
+
+    it('should throw an error for path traversal using prefix', async () => {
+      const file = new File(bucket, 'first.txt');
+      await assert.rejects(
+        transferManager.downloadManyFiles([file], {
+          prefix: '../traversal-prefix',
+        }),
         {
           code: 'SECURITY_PATH_TRAVERSAL_REJECTED',
         }

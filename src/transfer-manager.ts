@@ -592,9 +592,20 @@ export class TransferManager {
       : EMPTY_REGEX;
     const regex = new RegExp(stripRegexString, 'g');
 
+    const cwd = process.cwd();
     const baseDir = path.resolve(
-      options.passthroughOptions?.destination ?? process.cwd()
+      options.passthroughOptions?.destination ?? cwd
     );
+
+    const relativeBaseDir = path.relative(cwd, baseDir);
+
+    if (relativeBaseDir.startsWith('..') || path.isAbsolute(relativeBaseDir)) {
+      const traversalError = new RequestError(
+        FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE_DESTINATION
+      );
+      traversalError.code = 'SECURITY_PATH_TRAVERSAL_REJECTED';
+      throw traversalError;
+    }
 
     for (const file of files) {
       let name = file.name;
