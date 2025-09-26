@@ -629,10 +629,7 @@ export class TransferManager {
         throw traversalError;
       }
 
-      const isDirectoryMarker =
-        file.name.endsWith('/') || file.name.endsWith(path.sep);
-
-      if (isDirectoryMarker && !finalPath.endsWith(path.sep)) {
+      if (file.name.endsWith('/') && !finalPath.endsWith(path.sep)) {
         finalPath = finalPath + path.sep;
       }
 
