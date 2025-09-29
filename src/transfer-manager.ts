@@ -614,6 +614,7 @@ export class TransferManager {
       throw traversalError;
     }
 
+    const createdDirectories = new Set<string>();
     for (const file of files) {
       let name = file.name;
 
@@ -638,8 +639,10 @@ export class TransferManager {
 
       // Resolve the final path and perform the containment check
       let finalPath = path.resolve(baseDir, name);
-      const relative = path.relative(baseDir, finalPath);
-      if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      const normalizedBaseDir = baseDir.endsWith(path.sep)
+        ? baseDir
+        : baseDir + path.sep;
+      if (finalPath !== baseDir && !finalPath.startsWith(normalizedBaseDir)) {
         const traversalError = new RequestError(
           FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE
         );
@@ -671,7 +674,11 @@ export class TransferManager {
       promises.push(
         limit(async () => {
           const destination = passThroughOptionsCopy.destination;
-          await fsp.mkdir(destinationDir, {recursive: true});
+          if (!createdDirectories.has(destinationDir)) {
+            // If not, create it and add it to the set for tracking
+            await fsp.mkdir(destinationDir, {recursive: true});
+            createdDirectories.add(destinationDir);
+          }
           if (destination && destination.endsWith(path.sep)) {
             return Promise.resolve([
               Buffer.alloc(0),
