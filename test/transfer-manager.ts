@@ -403,7 +403,7 @@ describe('Transfer Manager', () => {
         prefix: prefix,
       });
       assert.strictEqual(
-        mkdirSpy.calledOnceWith(expectedDir, {
+        mkdirSpy.calledWith(expectedDir, {
           recursive: true,
         }),
         true

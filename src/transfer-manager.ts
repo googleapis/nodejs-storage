@@ -497,9 +497,16 @@ export class TransferManager {
         [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.UPLOAD_MANY,
       };
 
-      passThroughOptionsCopy.destination = options.customDestinationBuilder
-        ? options.customDestinationBuilder(filePath, options)
-        : filePath.split(path.sep).join(path.posix.sep);
+      if (options.customDestinationBuilder) {
+        passThroughOptionsCopy.destination = options.customDestinationBuilder(
+          filePath,
+          options
+        );
+      } else {
+        let segments = filePath.split(path.sep);
+        segments = segments.filter(s => s !== '');
+        passThroughOptionsCopy.destination = path.posix.join(...segments);
+      }
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.posix.join(
           ...options.prefix.split(path.sep),
@@ -650,6 +657,10 @@ export class TransferManager {
         [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_MANY,
       };
 
+      const destinationDir = finalPath.endsWith(path.sep)
+        ? finalPath
+        : path.dirname(finalPath);
+
       if (
         options.skipIfExists &&
         existsSync(passThroughOptionsCopy.destination || '')
@@ -660,8 +671,8 @@ export class TransferManager {
       promises.push(
         limit(async () => {
           const destination = passThroughOptionsCopy.destination;
+          await fsp.mkdir(destinationDir, {recursive: true});
           if (destination && destination.endsWith(path.sep)) {
-            await fsp.mkdir(destination, {recursive: true});
             return Promise.resolve([
               Buffer.alloc(0),
             ]) as Promise<DownloadResponse>;
