@@ -594,7 +594,7 @@ export class TransferManager {
       });
     }
 
-    const baseDir = this._getValidatedBaseDirectory(options);
+    const baseDir = this._resolveAndValidateBaseDir(options);
 
     const stripRegexString = options.stripPrefix
       ? `^${options.stripPrefix}`
@@ -921,7 +921,7 @@ export class TransferManager {
    * @param options The download options, potentially containing passthroughOptions.destination.
    * @returns The absolute, validated base directory path (baseDir).
    */
-  private _getValidatedBaseDirectory(
+  private _resolveAndValidateBaseDir(
     options: DownloadManyFilesOptions
   ): string {
     const cwd = process.cwd();
