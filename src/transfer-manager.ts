@@ -594,25 +594,12 @@ export class TransferManager {
       });
     }
 
+    const baseDir = this._getValidatedBaseDirectory(options);
+
     const stripRegexString = options.stripPrefix
       ? `^${options.stripPrefix}`
       : EMPTY_REGEX;
     const regex = new RegExp(stripRegexString, 'g');
-
-    const cwd = process.cwd();
-    const baseDir = path.resolve(
-      options.passthroughOptions?.destination ?? cwd
-    );
-
-    const relativeBaseDir = path.relative(cwd, baseDir);
-
-    if (relativeBaseDir.startsWith('..') || path.isAbsolute(relativeBaseDir)) {
-      const traversalError = new RequestError(
-        FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE_DESTINATION
-      );
-      traversalError.code = 'SECURITY_PATH_TRAVERSAL_REJECTED';
-      throw traversalError;
-    }
 
     const createdDirectories = new Set<string>();
     for (const file of files) {
@@ -926,5 +913,36 @@ export class TransferManager {
         ? yield* this.getPathsFromDirectory(fullPath)
         : yield fullPath;
     }
+  }
+
+  /**
+   * Resolves the absolute base directory for downloads and validates it against
+   * the current working directory (CWD) to prevent path traversal outside the base destination.
+   * @param options The download options, potentially containing passthroughOptions.destination.
+   * @returns The absolute, validated base directory path (baseDir).
+   */
+  private _getValidatedBaseDirectory(
+    options: DownloadManyFilesOptions
+  ): string {
+    const cwd = process.cwd();
+
+    // Resolve baseDir, defaulting to CWD if no destination is provided
+    const baseDir = path.resolve(
+      options.passthroughOptions?.destination ?? cwd
+    );
+
+    // Check for path traversal: baseDir must be equal to or contained within cwd.
+    const relativeBaseDir = path.relative(cwd, baseDir);
+
+    // The condition checks for traversal ('..') or cross-drive traversal (absolute path on Windows)
+    if (relativeBaseDir.startsWith('..') || path.isAbsolute(relativeBaseDir)) {
+      const traversalError = new RequestError(
+        FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE_DESTINATION
+      );
+      traversalError.code = 'SECURITY_PATH_TRAVERSAL_REJECTED';
+      throw traversalError;
+    }
+
+    return baseDir;
   }
 }
