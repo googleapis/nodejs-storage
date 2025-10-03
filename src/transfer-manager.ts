@@ -620,7 +620,6 @@ export class TransferManager {
         const absolutePathError = new RequestError(
           FileExceptionMessages.ABSOLUTE_FILE_NAME
         );
-        absolutePathError.code = 'SECURITY_ABSOLUTE_PATH_REJECTED';
         throw absolutePathError;
       }
 
@@ -633,7 +632,6 @@ export class TransferManager {
         const traversalError = new RequestError(
           FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE
         );
-        traversalError.code = 'SECURITY_PATH_TRAVERSAL_REJECTED';
         throw traversalError;
       }
 
@@ -939,7 +937,6 @@ export class TransferManager {
       const traversalError = new RequestError(
         FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE_DESTINATION
       );
-      traversalError.code = 'SECURITY_PATH_TRAVERSAL_REJECTED';
       throw traversalError;
     }
 

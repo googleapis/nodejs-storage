@@ -41,6 +41,7 @@ import fs from 'fs';
 import {promises as fsp, Stats} from 'fs';
 
 import * as sinon from 'sinon';
+import {FileExceptionMessages, RequestError} from '../src/file.js';
 
 describe('Transfer Manager', () => {
   const BUCKET_NAME = 'test-bucket';
@@ -286,43 +287,53 @@ describe('Transfer Manager', () => {
     });
 
     it('should throws an error for absolute file names', async () => {
+      const expectedErr = new RequestError(
+        FileExceptionMessages.ABSOLUTE_FILE_NAME
+      );
       const maliciousFilename = '/etc/passwd';
       const file = new File(bucket, maliciousFilename);
 
-      await assert.rejects(transferManager.downloadManyFiles([file]), {
-        code: 'SECURITY_ABSOLUTE_PATH_REJECTED',
-      });
+      await assert.rejects(
+        transferManager.downloadManyFiles([file]),
+        expectedErr
+      );
     });
 
     it('should throw an error for path traversal in destination', async () => {
+      const expectedErr = new RequestError(
+        FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE_DESTINATION
+      );
       const passthroughOptions = {
         destination: '../traversal-destination',
       };
       const file = new File(bucket, 'first.txt');
       await assert.rejects(
         transferManager.downloadManyFiles([file], {passthroughOptions}),
-        {
-          code: 'SECURITY_PATH_TRAVERSAL_REJECTED',
-        }
+        expectedErr
       );
     });
 
     it('should throw an error for path traversal in file name', async () => {
+      const expectedErr = new RequestError(
+        FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE
+      );
       const file = new File(bucket, '../traversal-filename.txt');
-      await assert.rejects(transferManager.downloadManyFiles([file]), {
-        code: 'SECURITY_PATH_TRAVERSAL_REJECTED',
-      });
+      await assert.rejects(
+        transferManager.downloadManyFiles([file]),
+        expectedErr
+      );
     });
 
     it('should throw an error for path traversal using prefix', async () => {
+      const expectedErr = new RequestError(
+        FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE
+      );
       const file = new File(bucket, 'first.txt');
       await assert.rejects(
         transferManager.downloadManyFiles([file], {
           prefix: '../traversal-prefix',
         }),
-        {
-          code: 'SECURITY_PATH_TRAVERSAL_REJECTED',
-        }
+        expectedErr
       );
     });
 
