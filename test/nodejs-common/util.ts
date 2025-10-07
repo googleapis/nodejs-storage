@@ -49,7 +49,6 @@ import {
 } from '../../src/nodejs-common/util.js';
 import {DEFAULT_PROJECT_ID_TOKEN} from '../../src/nodejs-common/service.js';
 import duplexify from 'duplexify';
-import {EventEmitter, Writable} from 'stream';
 
 nock.disableNetConnect();
 
@@ -1986,6 +1985,7 @@ describe('common/util', () => {
     });
   });
 });
+
 function createMakeRequestStub(
   sandbox: sinon.SinonSandbox,
   networkError: Error,
@@ -2000,9 +2000,12 @@ function createMakeRequestStub(
   sandbox
     .stub(util, 'makeRequest')
     .callsFake((_authenticatedReqOpts, cfg, callback) => {
-      const mockRequestStream = new EventEmitter() as unknown as Writable & {
-        abort: () => void;
-      };
+      const mockRequestStream = new stream.Duplex({
+        write(_chunk, _encoding, callback) {
+          callback();
+        },
+        read() {},
+      }) as stream.Duplex & {abort: () => void};
       mockRequestStream.abort = () => {};
 
       if (!cfg.stream) {
