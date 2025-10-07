@@ -49,6 +49,7 @@ import {
 } from '../../src/nodejs-common/util.js';
 import {DEFAULT_PROJECT_ID_TOKEN} from '../../src/nodejs-common/service.js';
 import duplexify from 'duplexify';
+import {EventEmitter, Writable} from 'stream';
 
 nock.disableNetConnect();
 
@@ -1189,6 +1190,100 @@ describe('common/util', () => {
         });
       });
 
+      describe('TLS handshake errors', () => {
+        const error = new Error('🤮');
+
+        beforeEach(() => {
+          authClient.authorizeRequest = async () => {
+            throw error;
+          };
+        });
+
+        it('should transform raw ECONNRESET into TLS ApiError', done => {
+          const networkError = new Error('ECONNRESET');
+          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
+
+          createMakeRequestStub(sandbox, networkError, util, authClient);
+          const makeAuthenticatedRequest = util.makeAuthenticatedRequestFactory(
+            {}
+          );
+
+          makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
+            assert.ok(err);
+            assert.strictEqual((err as ApiError).code, 408);
+            assert.strictEqual(
+              (err as ApiError).message,
+              'TLS handshake timeout. This may be due to CPU starvation.'
+            );
+            done();
+          });
+        });
+
+        it('should transform raw "TLS handshake" into TLS ApiError', done => {
+          const networkError = new Error(
+            'Request failed due to TLS handshake timeout.'
+          );
+          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
+          createMakeRequestStub(sandbox, networkError, util, authClient);
+
+          const makeAuthenticatedRequest = util.makeAuthenticatedRequestFactory(
+            {}
+          );
+
+          makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
+            assert.ok(err);
+            assert.strictEqual((err as ApiError).code, 408);
+            assert.strictEqual(
+              (err as ApiError).message,
+              'TLS handshake timeout. This may be due to CPU starvation.'
+            );
+            done();
+          });
+        });
+
+        it('should transform raw generic "timed out" into TLS ApiError', done => {
+          const networkError = new Error('The request timed out.');
+          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
+          createMakeRequestStub(sandbox, networkError, util, authClient);
+
+          const makeAuthenticatedRequest = util.makeAuthenticatedRequestFactory(
+            {}
+          );
+
+          makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
+            assert.ok(err);
+            assert.strictEqual((err as ApiError).code, 408);
+            assert.strictEqual(
+              (err as ApiError).message,
+              'TLS handshake timeout. This may be due to CPU starvation.'
+            );
+            done();
+          });
+        });
+
+        it('should transform raw ETIMEDOUT into TLS ApiError', done => {
+          const networkError = new Error(
+            'Request failed with error: ETIMEDOUT'
+          );
+          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
+          createMakeRequestStub(sandbox, networkError, util, authClient);
+
+          const makeAuthenticatedRequest = util.makeAuthenticatedRequestFactory(
+            {}
+          );
+
+          makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
+            assert.ok(err);
+            assert.strictEqual((err as ApiError).code, 408);
+            assert.strictEqual(
+              (err as ApiError).message,
+              'TLS handshake timeout. This may be due to CPU starvation.'
+            );
+            done();
+          });
+        });
+      });
+
       describe('authentication success', () => {
         const reqOpts = fakeReqOpts;
         beforeEach(() => {
@@ -1891,3 +1986,52 @@ describe('common/util', () => {
     });
   });
 });
+function createMakeRequestStub(
+  sandbox: sinon.SinonSandbox,
+  networkError: Error,
+  util: Util & {[index: string]: Function},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  authClient: any
+) {
+  const authorizedReqOpts = {uri: 'test-uri'} as DecorateRequestOptions;
+  sandbox.stub(authClient, 'authorizeRequest').resolves(authorizedReqOpts);
+  sandbox.stub(authClient, 'getProjectId').resolves('test-project-id');
+
+  sandbox
+    .stub(util, 'makeRequest')
+    .callsFake((_authenticatedReqOpts, cfg, callback) => {
+      const mockRequestStream = new EventEmitter() as unknown as Writable & {
+        abort: () => void;
+      };
+      mockRequestStream.abort = () => {};
+
+      if (!cfg.stream) {
+        const retryCallback = (
+          err: Error | null,
+          response: {},
+          body: unknown
+        ) => {
+          if (
+            err &&
+            (err.message?.includes('TLS handshake') ||
+              err.message?.includes('timed out') ||
+              err.message?.includes('ETIMEDOUT') ||
+              err.message?.includes('ECONNRESET'))
+          ) {
+            const tlsTimeoutError = new ApiError({
+              code: 408,
+              message:
+                'TLS handshake timeout. This may be due to CPU starvation.',
+              response: response as r.Response,
+            });
+            err = tlsTimeoutError;
+          }
+          util.handleResp(err, response as r.Response, body, callback!);
+        };
+
+        retryCallback(networkError, {} as r.Response, null);
+      }
+
+      return mockRequestStream;
+    });
+}

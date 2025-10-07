@@ -912,6 +912,25 @@ export class Util {
         options,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (err: Error | null, response: {}, body: any) => {
+          // Check for a TLS handshake timeout.
+          // This is a conceptual check, the exact error format may vary.
+          if (
+            err &&
+            (err.message?.includes('TLS handshake') ||
+              err.message?.includes('timed out') ||
+              err.message?.includes('ETIMEDOUT') ||
+              err.message?.includes('ECONNRESET'))
+          ) {
+            // Create and use your custom error type.
+            const tlsTimeoutError = new ApiError({
+              code: 408,
+              message:
+                'TLS handshake timeout. This may be due to CPU starvation.',
+              response: response as r.Response,
+            });
+            // Replace the original error with the more descriptive one.
+            err = tlsTimeoutError;
+          }
           util.handleResp(err, response as {} as r.Response, body, callback!);
         }
       );
