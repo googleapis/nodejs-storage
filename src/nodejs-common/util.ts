@@ -916,16 +916,29 @@ export class Util {
           // This is a conceptual check, the exact error format may vary.
           if (
             err &&
-            (err.message?.includes('TLS handshake') ||
-              err.message?.includes('timed out') ||
-              err.message?.includes('ETIMEDOUT') ||
-              err.message?.includes('ECONNRESET'))
+            (err.message?.toLowerCase().includes('tls handshake') ||
+              err.message?.toLowerCase().includes('timed out') ||
+              err.message?.toLowerCase().includes('etimedout') ||
+              err.message?.toLowerCase().includes('econnreset'))
           ) {
+            let code: number;
+            let message: string;
+            if (err.message.toLowerCase().includes('econnreset')) {
+              // ECONNRESET (Connection reset by peer) implies temporary service unavailability
+              code = 503;
+              message =
+                'Connection reset by peer. This suggests the remote service is temporarily unavailable or overloaded.';
+            } else {
+              // TLS Handshake, ETIMEDOUT, or generic 'timed out'
+              // Mapped to 408 (Request Timeout) as a signal for retrying
+              code = 408;
+              message =
+                'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.';
+            }
             // Create and use your custom error type.
             const tlsTimeoutError = new ApiError({
-              code: 408,
-              message:
-                'TLS handshake timeout. This may be due to CPU starvation.',
+              code,
+              message,
               response: response as r.Response,
             });
             // Replace the original error with the more descriptive one.
