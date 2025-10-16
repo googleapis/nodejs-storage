@@ -1209,10 +1209,10 @@ describe('common/util', () => {
 
           makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
             assert.ok(err);
-            assert.strictEqual((err as ApiError).code, 408);
+            assert.strictEqual((err as ApiError).code, 503);
             assert.strictEqual(
               (err as ApiError).message,
-              'TLS handshake timeout. This may be due to CPU starvation.'
+              'Connection reset by peer. This suggests the remote service is temporarily unavailable or overloaded.'
             );
             done();
           });
@@ -1234,7 +1234,7 @@ describe('common/util', () => {
             assert.strictEqual((err as ApiError).code, 408);
             assert.strictEqual(
               (err as ApiError).message,
-              'TLS handshake timeout. This may be due to CPU starvation.'
+              'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
             );
             done();
           });
@@ -1254,7 +1254,7 @@ describe('common/util', () => {
             assert.strictEqual((err as ApiError).code, 408);
             assert.strictEqual(
               (err as ApiError).message,
-              'TLS handshake timeout. This may be due to CPU starvation.'
+              'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
             );
             done();
           });
@@ -1276,7 +1276,7 @@ describe('common/util', () => {
             assert.strictEqual((err as ApiError).code, 408);
             assert.strictEqual(
               (err as ApiError).message,
-              'TLS handshake timeout. This may be due to CPU starvation.'
+              'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
             );
             done();
           });
@@ -2016,15 +2016,25 @@ function createMakeRequestStub(
         ) => {
           if (
             err &&
-            (err.message?.includes('TLS handshake') ||
-              err.message?.includes('timed out') ||
-              err.message?.includes('ETIMEDOUT') ||
-              err.message?.includes('ECONNRESET'))
+            (err.message?.toLowerCase().includes('tls handshake') ||
+              err.message?.toLowerCase().includes('timed out') ||
+              err.message?.toLowerCase().includes('etimedout') ||
+              err.message?.toLowerCase().includes('econnreset'))
           ) {
+            let code: number;
+            let message: string;
+            if (err.message.toLowerCase().includes('econnreset')) {
+              code = 503;
+              message =
+                'Connection reset by peer. This suggests the remote service is temporarily unavailable or overloaded.';
+            } else {
+              code = 408;
+              message =
+                'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.';
+            }
             const tlsTimeoutError = new ApiError({
-              code: 408,
-              message:
-                'TLS handshake timeout. This may be due to CPU starvation.',
+              code,
+              message,
               response: response as r.Response,
             });
             err = tlsTimeoutError;
