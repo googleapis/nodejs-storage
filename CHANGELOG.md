@@ -4,6 +4,34 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [7.17.2](https://github.com/googleapis/nodejs-storage/compare/v7.17.1...v7.17.2) (2025-10-06)
+
+
+### Bug Fixes
+
+* Common Service: should retry a request failed ([#2652](https://github.com/googleapis/nodejs-storage/issues/2652)) ([b38b5d2](https://github.com/googleapis/nodejs-storage/commit/b38b5d221f2cb72658c1eb4a726315ab395a542c))
+* Implement path containment to prevent traversal attacks ([#2654](https://github.com/googleapis/nodejs-storage/issues/2654)) ([08d7abf](https://github.com/googleapis/nodejs-storage/commit/08d7abf32dd365b24ce34c66174be06c30bfce8f))
+
+## [7.17.1](https://github.com/googleapis/nodejs-storage/compare/v7.17.0...v7.17.1) (2025-08-27)
+
+
+### Bug Fixes
+
+* Respect useAuthWithCustomEndpoint flag for resumable uploads ([#2637](https://github.com/googleapis/nodejs-storage/issues/2637)) ([707b4f2](https://github.com/googleapis/nodejs-storage/commit/707b4f2fe1d67878bcd8f1434e4cbb57c951994e))
+
+## [7.17.0](https://github.com/googleapis/nodejs-storage/compare/v7.16.0...v7.17.0) (2025-08-18)
+
+
+### Features
+
+* Add CSEK to download ([#2604](https://github.com/googleapis/nodejs-storage/issues/2604)) ([cacc0be](https://github.com/googleapis/nodejs-storage/commit/cacc0be49a4fe81c384180bdfd77820b6b3f3001))
+
+
+### Bug Fixes
+
+* Propagate errors when using pipelines ([#2560](https://github.com/googleapis/nodejs-storage/issues/2560)) ([#2624](https://github.com/googleapis/nodejs-storage/issues/2624)) ([a43b490](https://github.com/googleapis/nodejs-storage/commit/a43b4904ecf2ebacde22bc6efbdcf97ac886e28d))
+* Typo correction ([#2610](https://github.com/googleapis/nodejs-storage/issues/2610)) ([9cae69c](https://github.com/googleapis/nodejs-storage/commit/9cae69cc280227737b5a1a1476eae1b2612b162b))
+
 ## [7.16.0](https://github.com/googleapis/nodejs-storage/compare/v7.15.2...v7.16.0) (2025-03-31)
 
 

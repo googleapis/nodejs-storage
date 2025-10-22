@@ -24,12 +24,14 @@ templates = common_templates.node_library(source_location='build/src')
 s.copy(templates, excludes=['.jsdoc.js',
                             '.github/release-please.yml',
                             '.github/sync-repo-settings.yaml',
+                            '.github/workflows/ci.yaml',
                             '.prettierrc.js',
                             '.mocharc.js',
                             '.kokoro/continuous/node14/system-test.cfg',
                             '.kokoro/presubmit/node14/system-test.cfg',
                             '.kokoro/release/publish.cfg',
-                            '.kokoro/system-test.sh'
+                            '.kokoro/system-test.sh',
+                            '.kokoro/samples-test.sh',
                             ])
 
 # Create .config directory under $HOME to get around permissions issues

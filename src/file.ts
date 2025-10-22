@@ -545,6 +545,9 @@ export enum FileExceptionMessages {
     To be sure the content is the same, you should try uploading the file again.`,
   MD5_RESUMED_UPLOAD = 'MD5 cannot be used with a continued resumable upload as MD5 cannot be extended from an existing value',
   MISSING_RESUME_CRC32C_FINAL_UPLOAD = 'The CRC32C is missing for the final portion of a resumed upload, which is required for validation. Please provide `resumeCRC32C` if validation is required, or disable `validation`.',
+  ABSOLUTE_FILE_NAME = 'Object name is an absolute path. Security block to prevent arbitrary file writes.',
+  TRAVERSAL_OUTSIDE_BASE = 'Path traversal detected. Security block to prevent writing outside the base directory.',
+  TRAVERSAL_OUTSIDE_BASE_DESTINATION = "The provided destination path is unsafe and attempts to traverse outside the application's base directory (current working directory).",
 }
 
 /**
@@ -1835,6 +1838,7 @@ class File extends ServiceObject<File, FileMetadata> {
         retryOptions: retryOptions,
         params: options?.preconditionOpts || this.instancePreconditionOpts,
         universeDomain: this.bucket.storage.universeDomain,
+        useAuthWithCustomEndpoint: this.storage.useAuthWithCustomEndpoint,
         [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
       },
       callback!
