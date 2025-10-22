@@ -337,7 +337,7 @@ describe('ServiceObject', () => {
       serviceObject.delete();
     });
 
-    it('should respect ignoreNotFound opion', done => {
+    it('should respect ignoreNotFound option', done => {
       const options = {ignoreNotFound: true};
       const error = new ApiError({code: 404, response: {} as r.Response});
       sandbox.stub(ServiceObject.prototype, 'request').callsArgWith(1, error);

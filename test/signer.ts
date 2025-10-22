@@ -371,7 +371,7 @@ describe('signer', () => {
             .resolves(query) as sinon.SinonStub;
         });
 
-        it('shuold insert user-provided queryParams', async () => {
+        it('should insert user-provided queryParams', async () => {
           CONFIG.queryParams = {key: 'AZ!*()*%/f'};
 
           const url = await signer.getSignedUrl(CONFIG);

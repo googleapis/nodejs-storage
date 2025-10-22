@@ -56,26 +56,37 @@ describe('transfer manager', () => {
     );
   });
 
-  it('should download mulitple files', async () => {
+  it('should download multiple files', async () => {
+    // Remove absolute path marker to prepare for joining/validation.
+    const expectedFirstFilePath = firstFilePath.startsWith('/')
+      ? firstFilePath.slice(1)
+      : firstFilePath;
+    const expectedSecondFilePath = secondFilePath.startsWith('/')
+      ? secondFilePath.slice(1)
+      : secondFilePath;
     const output = execSync(
-      `node downloadManyFilesWithTransferManager.js ${bucketName} ${firstFilePath} ${secondFilePath}`
+      `node downloadManyFilesWithTransferManager.js ${bucketName} ${expectedFirstFilePath} ${expectedSecondFilePath}`
     );
     assert.match(
       output,
       new RegExp(
-        `gs://${bucketName}/${firstFilePath} downloaded to ${firstFilePath}.\ngs://${bucketName}/${secondFilePath} downloaded to ${secondFilePath}.`
+        `gs://${bucketName}/${expectedFirstFilePath} downloaded to ${expectedFirstFilePath}.\ngs://${bucketName}/${expectedSecondFilePath} downloaded to ${expectedSecondFilePath}.`
       )
     );
   });
 
   it('should download a file utilizing chunked download', async () => {
+    // Remove absolute path marker to prepare for joining/validation.
+    const expectedFirstFilePath = firstFilePath.startsWith('/')
+      ? firstFilePath.slice(1)
+      : firstFilePath;
     const output = execSync(
-      `node downloadFileInChunksWithTransferManager.js ${bucketName} ${firstFilePath} ${downloadFilePath} ${chunkSize}`
+      `node downloadFileInChunksWithTransferManager.js ${bucketName} ${expectedFirstFilePath} ${downloadFilePath} ${chunkSize}`
     );
     assert.match(
       output,
       new RegExp(
-        `gs://${bucketName}/${firstFilePath} downloaded to ${downloadFilePath}.`
+        `gs://${bucketName}/${expectedFirstFilePath} downloaded to ${downloadFilePath}.`
       )
     );
   });

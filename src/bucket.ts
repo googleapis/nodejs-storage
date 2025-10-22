@@ -1325,7 +1325,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    *     **Note**: For configuring a raw-formatted rule object to be passed as `action`
    *               please refer to the [examples]{@link https://cloud.google.com/storage/docs/managing-lifecycles#configexamples}.
    * @param {object} rule.condition Condition a bucket must meet before the
-   *     action occurson the bucket. Refer to followitn supported [conditions]{@link https://cloud.google.com/storage/docs/lifecycle#conditions}.
+   *     action occurs on the bucket. Refer to following supported [conditions]{@link https://cloud.google.com/storage/docs/lifecycle#conditions}.
    * @param {string} [rule.storageClass] When using the `setStorageClass`
    *     action, provide this option to dictate which storage class the object
    *     should update to.
@@ -1950,7 +1950,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * myBucket.createNotification('my-topic', callback);
    *
    * //-
-   * // Configure the nofiication by providing Notification metadata.
+   * // Configure the notification by providing Notification metadata.
    * //-
    * const metadata = {
    *   objectNamePrefix: 'prefix-'
@@ -3071,7 +3071,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * @property {boolean} [virtualHostedStyle=false] Use virtual hosted-style
    *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
    *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
-   *     should generally be preferred instaed of path-style URL.
+   *     should generally be preferred instead of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
    * @property {string} [cname] The cname for this bucket, i.e.,
@@ -3118,7 +3118,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
    *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
    *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
-   *     should generally be preferred instaed of path-style URL.
+   *     should generally be preferred instead of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
@@ -3222,7 +3222,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * @throws {Error} if a metageneration is not provided.
    *
    * @param {number|string} metageneration The bucket's metageneration. This is
-   *     accesssible from calling {@link File#getMetadata}.
+   *     accessible from calling {@link File#getMetadata}.
    * @param {BucketLockCallback} [callback] Callback function.
    * @returns {Promise<BucketLockResponse>}
    *

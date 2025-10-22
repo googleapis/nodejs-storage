@@ -70,15 +70,18 @@ function main(
     );
 
     // To modify an existing policy on an unlocked file object, pass in the override parameter
-    const newRetentionDate = new Date();
-    retentionDate.setDate(retentionDate.getDate() + 9);
-    [metdata] = await file.setMetadata({
-      retention: {retainUntilTime: newRetentionDate},
+    const newRetentionDate = new Date(retentionDate.getDate());
+    newRetentionDate.setDate(newRetentionDate.getDate() + 9);
+    const [newMetadata] = await file.setMetadata({
+      retention: {
+        mode: 'Unlocked',
+        retainUntilTime: newRetentionDate,
+      },
       overrideUnlockedRetention: true,
     });
 
     console.log(
-      `Retention policy for file ${file.name} was updated to: ${metadata.retention.retainUntilTime}`
+      `Retention policy for file ${file.name} was updated to: ${newMetadata.retention.retainUntilTime}`
     );
   }
 
