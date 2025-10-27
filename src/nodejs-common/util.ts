@@ -920,9 +920,10 @@ export class Util {
               lowerCaseMessage.includes('etimedout') ||
               lowerCaseMessage.includes('econnreset');
             if (isTLsTimeoutOrConnReset) {
-              err = new Error(
+              const timeOutError = new Error(
                 'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
               );
+              err = timeOutError;
             }
           }
           util.handleResp(err, response as {} as r.Response, body, callback!);

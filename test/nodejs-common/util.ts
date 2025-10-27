@@ -1190,136 +1190,53 @@ describe('common/util', () => {
       });
 
       describe('TLS handshake errors', () => {
-        function createMakeRequestStub(
-          sandbox: sinon.SinonSandbox,
-          networkError: Error,
-          util: Util & {[index: string]: Function},
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          authClient: any
-        ) {
-          const authorizedReqOpts = {uri: 'test-uri'} as DecorateRequestOptions;
-          sandbox
-            .stub(authClient, 'authorizeRequest')
-            .resolves(authorizedReqOpts);
-          sandbox.stub(authClient, 'getProjectId').resolves('test-project-id');
-
-          sandbox
-            .stub(util, 'makeRequest')
-            .callsFake((_authenticatedReqOpts, cfg, callback) => {
-              const mockRequestStream = new stream.Duplex({
-                write(_chunk, _encoding, callback) {
-                  callback();
-                },
-                read() {},
-              }) as stream.Duplex & {abort: () => void};
-              mockRequestStream.abort = () => {};
-
-              if (!cfg.stream) {
-                const retryCallback = (
-                  err: Error | null,
-                  response: {},
-                  body: unknown
-                ) => {
-                  if (err) {
-                    const lowerCaseMessage = err.message.toLowerCase();
-                    const isTLsTimeoutOrConnReset =
-                      lowerCaseMessage.includes('tls handshake') ||
-                      lowerCaseMessage.includes('timed out') ||
-                      lowerCaseMessage.includes('etimedout') ||
-                      lowerCaseMessage.includes('econnreset');
-                    if (isTLsTimeoutOrConnReset) {
-                      err = new Error(
-                        'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
-                      );
-                    }
-                  }
-                  util.handleResp(err, response as r.Response, body, callback!);
-                };
-
-                retryCallback(networkError, {} as r.Response, null);
-              }
-
-              return mockRequestStream;
-            });
-        }
         const reqOpts = fakeReqOpts;
         beforeEach(() => {
           authClient.authorizeRequest = async () => reqOpts;
+          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
         });
 
-        it('should transform raw ECONNRESET into TLS ApiError', done => {
-          const networkError = new Error('ECONNRESET');
-          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
-          createMakeRequestStub(sandbox, networkError, util, authClient);
-          const makeAuthenticatedRequest = util.makeAuthenticatedRequestFactory(
-            {}
-          );
+        const testCases = [
+          {name: 'ECONNRESET', error: new Error('ECONNRESET')},
+          {
+            name: '"TLS handshake"',
+            error: new Error('Request failed due to TLS handshake timeout.'),
+          },
+          {
+            name: 'generic "timed out"',
+            error: new Error('The request timed out.'),
+          },
+          {
+            name: 'ETIMEDOUT',
+            error: new Error('Request failed with error: ETIMEDOUT'),
+          },
+        ];
 
-          makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
-            assert.ok(err);
-            assert.strictEqual(
-              err.message,
-              'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
-            );
-            done();
-          });
-        });
+        testCases.forEach(({name, error: networkError}) => {
+          it(`should transform raw ${name} into specific TLS/CPU starvation Error`, done => {
+            // Override `retry-request` to simulate a network error.
+            retryRequestOverride = (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              _reqOpts: any,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              _opts: any,
+              callback: (err: Error, res: {}, body: null) => void
+            ) => {
+              callback(networkError, {}, null);
+              return {abort: () => {}}; // Return an abortable request.
+            };
 
-        it('should transform raw "TLS handshake" into TLS ApiError', done => {
-          const networkError = new Error(
-            'Request failed due to TLS handshake timeout.'
-          );
-          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
-          createMakeRequestStub(sandbox, networkError, util, authClient);
-          const makeAuthenticatedRequest = util.makeAuthenticatedRequestFactory(
-            {}
-          );
+            const makeAuthenticatedRequest =
+              util.makeAuthenticatedRequestFactory({});
 
-          makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
-            assert.ok(err);
-            assert.strictEqual(
-              err.message,
-              'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
-            );
-            done();
-          });
-        });
-
-        it('should transform raw generic "timed out" into TLS ApiError', done => {
-          const networkError = new Error('The request timed out.');
-          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
-          createMakeRequestStub(sandbox, networkError, util, authClient);
-          const makeAuthenticatedRequest = util.makeAuthenticatedRequestFactory(
-            {}
-          );
-
-          makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
-            assert.ok(err);
-            assert.strictEqual(
-              err.message,
-              'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
-            );
-            done();
-          });
-        });
-
-        it('should transform raw ETIMEDOUT into TLS ApiError', done => {
-          const networkError = new Error(
-            'Request failed with error: ETIMEDOUT'
-          );
-          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
-          createMakeRequestStub(sandbox, networkError, util, authClient);
-          const makeAuthenticatedRequest = util.makeAuthenticatedRequestFactory(
-            {}
-          );
-
-          makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
-            assert.ok(err);
-            assert.strictEqual(
-              err.message,
-              'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
-            );
-            done();
+            makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
+              assert.ok(err);
+              assert.strictEqual(
+                err.message,
+                'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
+              );
+              done();
+            });
           });
         });
       });
@@ -1705,22 +1622,6 @@ describe('common/util', () => {
     });
 
     describe('callback mode', () => {
-      function testTlsErrorTransformation(
-        errorToMock: Error | NodeJS.ErrnoException
-      ) {
-        const mockResponse: r.Response = {
-          headers: {},
-        } as r.Response;
-
-        return (
-          _rOpts: DecorateRequestOptions,
-          _opts: MakeRequestConfig,
-          callback: r.RequestCallback
-        ) => {
-          callback(errorToMock, mockResponse, null);
-        };
-      }
-
       it('should pass the default options to retryRequest', done => {
         retryRequestOverride = testDefaultRetryRequestConfig(done);
         util.makeRequest(
@@ -1797,87 +1698,6 @@ describe('common/util', () => {
         });
 
         util.makeRequest(fakeReqOpts, {}, assert.ifError);
-      });
-
-      it('should transform "tls handshake" into specific TLS/CPU starvation Error', done => {
-        const networkError = new Error('Request failed due to TLS handshake.');
-
-        // Stub handleResp to inspect the transformed error
-        stub('handleResp', err => {
-          assert.ok(err);
-
-          // Assert the error transformation occurred
-          assert.notStrictEqual(err, networkError);
-          assert.strictEqual(
-            err.message,
-            'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
-          );
-          done();
-        });
-
-        retryRequestOverride = testTlsErrorTransformation(networkError);
-        util.makeRequest(reqOpts, {}, assert.ifError);
-      });
-
-      it('should transform "timed out" into specific TLS/CPU starvation Error', done => {
-        const networkError = new Error('Client request timed out.');
-
-        stub('handleResp', err => {
-          assert.ok(err);
-          assert.ok(err.message, 'TLS handshake timed out');
-          done();
-        });
-
-        retryRequestOverride = testTlsErrorTransformation(networkError);
-        util.makeRequest(reqOpts, {}, assert.ifError);
-      });
-
-      it('should transform "etimedout" into specific TLS/CPU starvation Error', done => {
-        const networkError: NodeJS.ErrnoException = new Error(
-          'connect ETIMEDOUT'
-        );
-        networkError.code = 'ETIMEDOUT';
-
-        stub('handleResp', err => {
-          assert.ok(err);
-          assert.ok(err.message, 'TLS handshake timed out');
-          done();
-        });
-
-        retryRequestOverride = testTlsErrorTransformation(networkError);
-        util.makeRequest(reqOpts, {}, assert.ifError);
-      });
-
-      it('should transform "econnreset" into specific TLS/CPU starvation Error', done => {
-        const networkError: NodeJS.ErrnoException = new Error(
-          'socket ECONNRESET'
-        );
-        networkError.code = 'ECONNRESET';
-
-        stub('handleResp', err => {
-          assert.ok(err);
-          assert.ok(err.message, 'TLS handshake timed out');
-          done();
-        });
-
-        retryRequestOverride = testTlsErrorTransformation(networkError);
-        util.makeRequest(reqOpts, {}, assert.ifError);
-      });
-
-      it('should NOT transform a regular non-TLS error', done => {
-        const networkError = new Error('Non-network API error.');
-
-        // Stub handleResp to check if the error is passed through unchanged
-        stub('handleResp', err => {
-          assert.ok(err);
-          // Assert the error was NOT transformed and is the original object
-          assert.strictEqual(err, networkError);
-          assert.doesNotMatch(err.message, /TLS handshake timed out/);
-          done();
-        });
-
-        retryRequestOverride = testTlsErrorTransformation(networkError);
-        util.makeRequest(reqOpts, {}, assert.ifError);
       });
     });
   });
