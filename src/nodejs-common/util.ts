@@ -912,37 +912,18 @@ export class Util {
         options,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (err: Error | null, response: {}, body: any) => {
-          // Check for a TLS handshake timeout.
-          // This is a conceptual check, the exact error format may vary.
-          if (
-            err &&
-            (err.message?.toLowerCase().includes('tls handshake') ||
-              err.message?.toLowerCase().includes('timed out') ||
-              err.message?.toLowerCase().includes('etimedout') ||
-              err.message?.toLowerCase().includes('econnreset'))
-          ) {
-            let code: number;
-            let message: string;
-            if (err.message.toLowerCase().includes('econnreset')) {
-              // ECONNRESET (Connection reset by peer) implies temporary service unavailability
-              code = 503;
-              message =
-                'Connection reset by peer. This suggests the remote service is temporarily unavailable or overloaded.';
-            } else {
-              // TLS Handshake, ETIMEDOUT, or generic 'timed out'
-              // Mapped to 408 (Request Timeout) as a signal for retrying
-              code = 408;
-              message =
-                'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.';
+          if (err) {
+            const lowerCaseMessage = err.message.toLowerCase();
+            const isTLsTimeoutOrConnReset =
+              lowerCaseMessage.includes('tls handshake') ||
+              lowerCaseMessage.includes('timed out') ||
+              lowerCaseMessage.includes('etimedout') ||
+              lowerCaseMessage.includes('econnreset');
+            if (isTLsTimeoutOrConnReset) {
+              err = new Error(
+                'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
+              );
             }
-            // Create and use your custom error type.
-            const tlsTimeoutError = new ApiError({
-              code,
-              message,
-              response: response as r.Response,
-            });
-            // Replace the original error with the more descriptive one.
-            err = tlsTimeoutError;
           }
           util.handleResp(err, response as {} as r.Response, body, callback!);
         }
