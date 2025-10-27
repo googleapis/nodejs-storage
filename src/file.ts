@@ -178,6 +178,7 @@ export interface GetFileMetadataCallback {
 export interface GetFileOptions extends GetConfig {
   userProject?: string;
   generation?: number;
+  restoreToken?: string;
   softDeleted?: boolean;
 }
 
@@ -281,6 +282,14 @@ export interface MakeFilePublicCallback {
   (err?: Error | null, apiResponse?: unknown): void;
 }
 
+interface MoveFileAtomicQuery {
+  userProject?: string;
+  ifGenerationMatch?: number | string;
+  ifGenerationNotMatch?: number | string;
+  ifMetagenerationMatch?: number | string;
+  ifMetagenerationNotMatch?: number | string;
+}
+
 export type MoveResponse = [unknown];
 
 export interface MoveCallback {
@@ -295,6 +304,10 @@ export interface MoveOptions {
   userProject?: string;
   preconditionOpts?: PreconditionOptions;
 }
+
+export type MoveFileAtomicOptions = MoveOptions;
+export type MoveFileAtomicCallback = MoveCallback;
+export type MoveFileAtomicResponse = MoveResponse;
 
 export type RenameOptions = MoveOptions;
 export type RenameResponse = MoveResponse;
@@ -354,6 +367,7 @@ export interface FileOptions {
   crc32cGenerator?: CRC32CValidatorGenerator;
   encryptionKey?: string | Buffer;
   generation?: number | string;
+  restoreToken?: string;
   kmsKeyName?: string;
   preconditionOpts?: PreconditionOptions;
   userProject?: string;
@@ -389,6 +403,7 @@ export type DownloadCallback = (
 
 export interface DownloadOptions extends CreateReadStreamOptions {
   destination?: string;
+  encryptionKey?: string | Buffer;
 }
 
 interface CopyQuery {
@@ -450,6 +465,7 @@ export interface SetStorageClassCallback {
 
 export interface RestoreOptions extends PreconditionOptions {
   generation: number;
+  restoreToken?: string;
   projection?: 'full' | 'noAcl';
 }
 
@@ -471,6 +487,7 @@ export interface FileMetadata extends BaseMetadata {
   eventBasedHold?: boolean | null;
   readonly eventBasedHoldReleaseTime?: string;
   generation?: string | number;
+  restoreToken?: string;
   hardDeleteTime?: string;
   kmsKeyName?: string;
   md5Hash?: string;
@@ -528,6 +545,9 @@ export enum FileExceptionMessages {
     To be sure the content is the same, you should try uploading the file again.`,
   MD5_RESUMED_UPLOAD = 'MD5 cannot be used with a continued resumable upload as MD5 cannot be extended from an existing value',
   MISSING_RESUME_CRC32C_FINAL_UPLOAD = 'The CRC32C is missing for the final portion of a resumed upload, which is required for validation. Please provide `resumeCRC32C` if validation is required, or disable `validation`.',
+  ABSOLUTE_FILE_NAME = 'Object name is an absolute path. Security block to prevent arbitrary file writes.',
+  TRAVERSAL_OUTSIDE_BASE = 'Path traversal detected. Security block to prevent writing outside the base directory.',
+  TRAVERSAL_OUTSIDE_BASE_DESTINATION = "The provided destination path is unsafe and attempts to traverse outside the application's base directory (current working directory).",
 }
 
 /**
@@ -547,6 +567,7 @@ class File extends ServiceObject<File, FileMetadata> {
   name: string;
 
   generation?: number;
+  restoreToken?: string;
   parent!: Bucket;
 
   private encryptionKey?: string | Buffer;
@@ -844,6 +865,8 @@ class File extends ServiceObject<File, FileMetadata> {
        * @param {string} [options.userProject] The ID of the project which will be
        *     billed for the request.
        * @param {number} [options.generation] The generation number to get
+       * @param {string} [options.restoreToken] If this is a soft-deleted object in an HNS-enabled bucket, returns the restore token which will
+       *    be necessary to restore it if there's a name conflict with another object.
        * @param {boolean} [options.softDeleted] If true, returns the soft-deleted object.
             Object `generation` is required if `softDeleted` is set to True.
        * @param {GetFileCallback} [callback] Callback function.
@@ -1815,6 +1838,7 @@ class File extends ServiceObject<File, FileMetadata> {
         retryOptions: retryOptions,
         params: options?.preconditionOpts || this.instancePreconditionOpts,
         universeDomain: this.bucket.storage.universeDomain,
+        useAuthWithCustomEndpoint: this.storage.useAuthWithCustomEndpoint,
         [GCCL_GCS_CMD_KEY]: options[GCCL_GCS_CMD_KEY],
       },
       callback!
@@ -2080,6 +2104,10 @@ class File extends ServiceObject<File, FileMetadata> {
 
     const emitStream = new PassThroughShim();
 
+    // If `writeStream` is destroyed before the `writing` event, `emitStream` will not have any listeners. This prevents an unhandled error.
+    const noop = () => {};
+    emitStream.on('error', noop);
+
     let hashCalculatingStream: HashStreamValidator | null = null;
 
     if (crc32c || md5) {
@@ -2117,6 +2145,9 @@ class File extends ServiceObject<File, FileMetadata> {
       } else {
         this.startResumableUpload_(fileWriteStream, options);
       }
+
+      // remove temporary noop listener as we now create a pipeline that handles the errors
+      emitStream.removeListener('error', noop);
 
       pipeline(
         emitStream,
@@ -2290,6 +2321,11 @@ class File extends ServiceObject<File, FileMetadata> {
     const destination = options.destination;
     delete options.destination;
 
+    if (options.encryptionKey) {
+      this.setEncryptionKey(options.encryptionKey);
+      delete options.encryptionKey;
+    }
+
     const fileStream = this.createReadStream(options);
     let receivedData = false;
 
@@ -2303,8 +2339,12 @@ class File extends ServiceObject<File, FileMetadata> {
           writable.write(data);
           fileStream
             .pipe(writable)
-            .on('error', callback)
-            .on('finish', callback);
+            .on('error', (err: Error) => {
+              callback(err, Buffer.from(''));
+            })
+            .on('finish', () => {
+              callback(null, data);
+            });
         })
         .on('end', () => {
           // In the case of an empty file no data will be received before the end event fires
@@ -2953,7 +2993,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
    *     URLs (e.g. 'https://mybucket.storage.googleapis.com/...') instead of path-style
    *     (e.g. 'https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
-   *     should generally be preferred instaed of path-style URL.
+   *     should generally be preferred instead of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
@@ -3415,6 +3455,191 @@ class File extends ServiceObject<File, FileMetadata> {
     }/${encodeURIComponent(this.name)}`;
   }
 
+  moveFileAtomic(
+    destination: string | File,
+    options?: MoveFileAtomicOptions
+  ): Promise<MoveFileAtomicResponse>;
+  moveFileAtomic(
+    destination: string | File,
+    callback: MoveFileAtomicCallback
+  ): void;
+  moveFileAtomic(
+    destination: string | File,
+    options: MoveFileAtomicOptions,
+    callback: MoveFileAtomicCallback
+  ): void;
+  /**
+   * @typedef {array} MoveFileAtomicResponse
+   * @property {File} 0 The moved {@link File}.
+   * @property {object} 1 The full API response.
+   */
+  /**
+   * @callback MoveFileAtomicCallback
+   * @param {?Error} err Request error, if any.
+   * @param {File} movedFile The moved {@link File}.
+   * @param {object} apiResponse The full API response.
+   */
+  /**
+   * @typedef {object} MoveFileAtomicOptions Configuration options for File#moveFileAtomic(). See an
+   *     {@link https://cloud.google.com/storage/docs/json_api/v1/objects#resource| Object resource}.
+   * @property {string} [userProject] The ID of the project which will be
+   *     billed for the request.
+   * @property {object} [preconditionOpts] Precondition options.
+   * @property {number} [preconditionOpts.ifGenerationMatch] Makes the operation conditional on whether the object's current generation matches the given value.
+   */
+  /**
+   * Move this file within the same HNS-enabled bucket.
+   * The source object must exist and be a live object.
+   * The source and destination object IDs must be different.
+   * Overwriting the destination object is allowed by default, but can be prevented
+   * using preconditions.
+   * If the destination path includes non-existent parent folders, they will be created.
+   *
+   * See {@link https://cloud.google.com/storage/docs/json_api/v1/objects/move| Objects: move API Documentation}
+   *
+   * @throws {Error} If the destination file is not provided.
+   *
+   * @param {string|File} destination Destination file name or File object within the same bucket..
+   * @param {MoveFileAtomicOptions} [options] Configuration options. See an
+   * @param {MoveFileAtomicCallback} [callback] Callback function.
+   * @returns {Promise<MoveFileAtomicResponse>}
+   *
+   * @example
+   * ```
+   * const {Storage} = require('@google-cloud/storage');
+   * const storage = new Storage();
+   *
+   * //-
+   * // Assume 'my-hns-bucket' is an HNS-enabled bucket.
+   * //-
+   * const bucket = storage.bucket('my-hns-bucket');
+   * const file = bucket.file('my-image.png');
+   *
+   * //-
+   * // If you pass in a string for the destination, the file is copied to its
+   * // current bucket, under the new name provided.
+   * //-
+   * file.moveFileAtomic('moved-image.png', function(err, movedFile, apiResponse) {
+   *   // `my-hns-bucket` now contains:
+   *   // - "moved-image.png"
+   *
+   *   // `movedFile` is an instance of a File object that refers to your new
+   *   // file.
+   * });
+   *
+   * //-
+   * // Move the file to a subdirectory, creating parent folders if necessary.
+   * //-
+   * file.moveFileAtomic('new-folder/subfolder/moved-image.png', function(err, movedFile, apiResponse) {
+   * // `my-hns-bucket` now contains:
+   * // - "new-folder/subfolder/moved-image.png"
+   * });
+   *
+   * //-
+   * // Prevent overwriting an existing destination object using preconditions.
+   * //-
+   * file.moveFileAtomic('existing-destination.png', {
+   * preconditionOpts: {
+   * ifGenerationMatch: 0 // Fails if the destination object exists.
+   * }
+   * }, function(err, movedFile, apiResponse) {
+   * if (err) {
+   * // Handle the error (e.g., the destination object already exists).
+   * } else {
+   * // Move successful.
+   * }
+   * });
+   *
+   * //-
+   * // If the callback is omitted, we'll return a Promise.
+   * //-
+   * file.moveFileAtomic('moved-image.png).then(function(data) {
+   *   const newFile = data[0];
+   *   const apiResponse = data[1];
+   * });
+   *
+   * ```
+   * @example <caption>include:samples/files.js</caption>
+   * region_tag:storage_move_file_hns
+   * Another example:
+   */
+  moveFileAtomic(
+    destination: string | File,
+    optionsOrCallback?: MoveFileAtomicOptions | MoveFileAtomicCallback,
+    callback?: MoveFileAtomicCallback
+  ): Promise<MoveFileAtomicResponse> | void {
+    const noDestinationError = new Error(
+      FileExceptionMessages.DESTINATION_NO_NAME
+    );
+
+    if (!destination) {
+      throw noDestinationError;
+    }
+
+    let options: MoveFileAtomicOptions = {};
+    if (typeof optionsOrCallback === 'function') {
+      callback = optionsOrCallback;
+    } else if (optionsOrCallback) {
+      options = {...optionsOrCallback};
+    }
+
+    callback = callback || util.noop;
+
+    let destName: string;
+    let newFile: File;
+
+    if (typeof destination === 'string') {
+      const parsedDestination = GS_URL_REGEXP.exec(destination);
+      if (parsedDestination !== null && parsedDestination.length === 3) {
+        destName = parsedDestination[2];
+      } else {
+        destName = destination;
+      }
+    } else if (destination instanceof File) {
+      destName = destination.name;
+      newFile = destination;
+    } else {
+      throw noDestinationError;
+    }
+
+    newFile = newFile! || this.bucket.file(destName);
+
+    if (
+      !this.shouldRetryBasedOnPreconditionAndIdempotencyStrat(
+        options?.preconditionOpts
+      )
+    ) {
+      this.storage.retryOptions.autoRetry = false;
+    }
+    const query = {} as MoveFileAtomicQuery;
+    if (options.userProject !== undefined) {
+      query.userProject = options.userProject;
+      delete options.userProject;
+    }
+    if (options.preconditionOpts?.ifGenerationMatch !== undefined) {
+      query.ifGenerationMatch = options.preconditionOpts?.ifGenerationMatch;
+      delete options.preconditionOpts;
+    }
+
+    this.request(
+      {
+        method: 'POST',
+        uri: `/moveTo/o/${encodeURIComponent(newFile.name)}`,
+        qs: query,
+        json: options,
+      },
+      (err, resp) => {
+        this.storage.retryOptions.autoRetry = this.instanceRetryValue;
+        if (err) {
+          callback!(err, null, resp);
+          return;
+        }
+
+        callback!(null, newFile, resp);
+      }
+    );
+  }
+
   move(
     destination: string | Bucket | File,
     options?: MoveOptions
@@ -3707,6 +3932,8 @@ class File extends ServiceObject<File, FileMetadata> {
    * @param {string} [userProject] The ID of the project which will be
    *     billed for the request.
    * @param {number} [generation] If present, selects a specific revision of this object.
+   * @param {string} [restoreToken] Returns an option that must be specified when getting a soft-deleted object from an HNS-enabled
+   *  bucket that has a naming and generation conflict with another object in the same bucket.
    * @param {string} [projection] Specifies the set of properties to return. If used, must be 'full' or 'noAcl'.
    * @param {string | number} [ifGenerationMatch] Request proceeds if the generation of the target resource
    *  matches the value used in the precondition.
@@ -3811,7 +4038,7 @@ class File extends ServiceObject<File, FileMetadata> {
         encryptionKey: optionsOrCallback,
       };
     } else if (typeof optionsOrCallback === 'object') {
-      options = optionsOrCallback;
+      options = optionsOrCallback as EncryptionKeyOptions;
     }
 
     const newFile = this.bucket.file(this.id!, options);

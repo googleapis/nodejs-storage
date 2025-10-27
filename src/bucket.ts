@@ -293,6 +293,10 @@ export interface GetLabelsCallback {
   (err: Error | null, labels: object | null): void;
 }
 
+export interface RestoreOptions {
+  generation: string;
+  projection?: 'full' | 'noAcl';
+}
 export interface BucketMetadata extends BaseMetadata {
   acl?: AclMetadata[] | null;
   autoclass?: {
@@ -335,6 +339,7 @@ export interface BucketMetadata extends BaseMetadata {
     logBucket?: string;
     logObjectPrefix?: string;
   };
+  generation?: string;
   metageneration?: string;
   name?: string;
   objectRetention?: {
@@ -351,6 +356,8 @@ export interface BucketMetadata extends BaseMetadata {
     retentionPeriod?: string | number;
   } | null;
   rpo?: string;
+  softDeleteTime?: string;
+  hardDeleteTime?: string;
   softDeletePolicy?: {
     retentionDurationSeconds?: string | number;
     readonly effectiveTime?: string;
@@ -1318,7 +1325,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    *     **Note**: For configuring a raw-formatted rule object to be passed as `action`
    *               please refer to the [examples]{@link https://cloud.google.com/storage/docs/managing-lifecycles#configexamples}.
    * @param {object} rule.condition Condition a bucket must meet before the
-   *     action occurson the bucket. Refer to followitn supported [conditions]{@link https://cloud.google.com/storage/docs/lifecycle#conditions}.
+   *     action occurs on the bucket. Refer to following supported [conditions]{@link https://cloud.google.com/storage/docs/lifecycle#conditions}.
    * @param {string} [rule.storageClass] When using the `setStorageClass`
    *     action, provide this option to dictate which storage class the object
    *     should update to.
@@ -1943,7 +1950,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * myBucket.createNotification('my-topic', callback);
    *
    * //-
-   * // Configure the nofiication by providing Notification metadata.
+   * // Configure the notification by providing Notification metadata.
    * //-
    * const metadata = {
    *   objectNamePrefix: 'prefix-'
@@ -2809,6 +2816,13 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       callback = queryOrCallback as GetFilesCallback;
     }
     query = Object.assign({}, query);
+    if (
+      query.fields &&
+      query.autoPaginate &&
+      !query.fields.includes('nextPageToken')
+    ) {
+      query.fields = `${query.fields},nextPageToken`;
+    }
 
     this.request(
       {
@@ -3057,7 +3071,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * @property {boolean} [virtualHostedStyle=false] Use virtual hosted-style
    *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
    *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
-   *     should generally be preferred instaed of path-style URL.
+   *     should generally be preferred instead of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
    * @property {string} [cname] The cname for this bucket, i.e.,
@@ -3104,7 +3118,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * @param {boolean} [config.virtualHostedStyle=false] Use virtual hosted-style
    *     URLs ('https://mybucket.storage.googleapis.com/...') instead of path-style
    *     ('https://storage.googleapis.com/mybucket/...'). Virtual hosted-style URLs
-   *     should generally be preferred instaed of path-style URL.
+   *     should generally be preferred instead of path-style URL.
    *     Currently defaults to `false` for path-style, although this may change in a
    *     future major-version release.
    * @param {string} [config.cname] The cname for this bucket, i.e.,
@@ -3208,7 +3222,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * @throws {Error} if a metageneration is not provided.
    *
    * @param {number|string} metageneration The bucket's metageneration. This is
-   *     accesssible from calling {@link File#getMetadata}.
+   *     accessible from calling {@link File#getMetadata}.
    * @param {BucketLockCallback} [callback] Callback function.
    * @returns {Promise<BucketLockResponse>}
    *
@@ -3248,6 +3262,27 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
       },
       callback!
     );
+  }
+
+  /**
+   * @typedef {object} RestoreOptions Options for Bucket#restore(). See an
+   *     {@link https://cloud.google.com/storage/docs/json_api/v1/buckets/restore#resource| Object resource}.
+   * @param {number} [generation] If present, selects a specific revision of this object.
+   * @param {string} [projection] Specifies the set of properties to return. If used, must be 'full' or 'noAcl'.
+   */
+  /**
+   * Restores a soft-deleted bucket
+   * @param {RestoreOptions} options Restore options.
+   * @returns {Promise<Bucket>}
+   */
+  async restore(options: RestoreOptions): Promise<Bucket> {
+    const [bucket] = await this.request({
+      method: 'POST',
+      uri: '/restore',
+      qs: options,
+    });
+
+    return bucket as Bucket;
   }
 
   makePrivate(
@@ -4550,7 +4585,7 @@ paginator.extend(Bucket, 'getFiles');
  * that a callback is omitted.
  */
 promisifyAll(Bucket, {
-  exclude: ['cloudStorageURI', 'request', 'file', 'notification'],
+  exclude: ['cloudStorageURI', 'request', 'file', 'notification', 'restore'],
 });
 
 /**

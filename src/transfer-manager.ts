@@ -416,7 +416,7 @@ export class TransferManager {
    * @typedef {object} UploadManyFilesOptions
    * @property {number} [concurrencyLimit] The number of concurrently executing promises
    * to use when uploading the files.
-   * @property {Function} [customDestinationBuilder] A fuction that will take the current path of a local file
+   * @property {Function} [customDestinationBuilder] A function that will take the current path of a local file
    * and return a string representing a custom path to be used to upload the file to GCS.
    * @property {boolean} [skipIfExists] Do not upload the file if it already exists in
    * the bucket. This will set the precondition ifGenerationMatch = 0.
@@ -497,9 +497,16 @@ export class TransferManager {
         [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.UPLOAD_MANY,
       };
 
-      passThroughOptionsCopy.destination = options.customDestinationBuilder
-        ? options.customDestinationBuilder(filePath, options)
-        : filePath.split(path.sep).join(path.posix.sep);
+      if (options.customDestinationBuilder) {
+        passThroughOptionsCopy.destination = options.customDestinationBuilder(
+          filePath,
+          options
+        );
+      } else {
+        let segments = filePath.split(path.sep);
+        segments = segments.filter(s => s !== '');
+        passThroughOptionsCopy.destination = path.posix.join(...segments);
+      }
       if (options.prefix) {
         passThroughOptionsCopy.destination = path.posix.join(
           ...options.prefix.split(path.sep),
@@ -587,27 +594,61 @@ export class TransferManager {
       });
     }
 
+    const baseDir = this._resolveAndValidateBaseDir(options);
+
     const stripRegexString = options.stripPrefix
       ? `^${options.stripPrefix}`
       : EMPTY_REGEX;
     const regex = new RegExp(stripRegexString, 'g');
 
+    const createdDirectories = new Set<string>();
     for (const file of files) {
+      let name = file.name;
+
+      // Apply stripPrefix first if requested
+      if (options.stripPrefix) {
+        name = name.replace(regex, '');
+      }
+
+      // This ensures the full intended relative path is validated.
+      if (options.prefix) {
+        name = path.join(options.prefix, name);
+      }
+
+      // Reject absolute paths and traversal sequences
+      if (path.isAbsolute(name)) {
+        const absolutePathError = new RequestError(
+          FileExceptionMessages.ABSOLUTE_FILE_NAME
+        );
+        throw absolutePathError;
+      }
+
+      // Resolve the final path and perform the containment check
+      let finalPath = path.resolve(baseDir, name);
+      const normalizedBaseDir = baseDir.endsWith(path.sep)
+        ? baseDir
+        : baseDir + path.sep;
+      if (finalPath !== baseDir && !finalPath.startsWith(normalizedBaseDir)) {
+        const traversalError = new RequestError(
+          FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE
+        );
+        throw traversalError;
+      }
+
+      if (file.name.endsWith('/') && !finalPath.endsWith(path.sep)) {
+        finalPath = finalPath + path.sep;
+      }
+
       const passThroughOptionsCopy = {
         ...options.passthroughOptions,
+        destination: finalPath,
         [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_MANY,
       };
 
-      if (options.prefix || passThroughOptionsCopy.destination) {
-        passThroughOptionsCopy.destination = path.join(
-          options.prefix || '',
-          passThroughOptionsCopy.destination || '',
-          file.name
-        );
-      }
-      if (options.stripPrefix) {
-        passThroughOptionsCopy.destination = file.name.replace(regex, '');
-      }
+      const destinationDir = finalPath.endsWith(path.sep)
+        ? finalPath
+        : path.dirname(finalPath);
+
       if (
         options.skipIfExists &&
         existsSync(passThroughOptionsCopy.destination || '')
@@ -618,8 +659,12 @@ export class TransferManager {
       promises.push(
         limit(async () => {
           const destination = passThroughOptionsCopy.destination;
+          if (!createdDirectories.has(destinationDir)) {
+            // If not, create it and add it to the set for tracking
+            await fsp.mkdir(destinationDir, {recursive: true});
+            createdDirectories.add(destinationDir);
+          }
           if (destination && destination.endsWith(path.sep)) {
-            await fsp.mkdir(destination, {recursive: true});
             return Promise.resolve([
               Buffer.alloc(0),
             ]) as Promise<DownloadResponse>;
@@ -744,7 +789,7 @@ export class TransferManager {
    * @property {number} [concurrencyLimit] The number of concurrently executing promises
    * to use when uploading the file.
    * @property {number} [chunkSizeBytes] The size in bytes of each chunk to be uploaded.
-   * @property {string} [uploadName] Name of the file when saving to GCS. If ommitted the name is taken from the file path.
+   * @property {string} [uploadName] Name of the file when saving to GCS. If omitted the name is taken from the file path.
    * @property {number} [maxQueueSize] The number of chunks to be uploaded to hold in memory concurrently. If not specified
    * defaults to the specified concurrency limit.
    * @property {string} [uploadId] If specified attempts to resume a previous upload.
@@ -757,14 +802,14 @@ export class TransferManager {
    *
    */
   /**
-   * Upload a large file in chunks utilizing parallel upload opertions. If the upload fails, an uploadId and
+   * Upload a large file in chunks utilizing parallel upload operations. If the upload fails, an uploadId and
    * map containing all the successfully uploaded parts will be returned to the caller. These arguments can be used to
    * resume the upload.
    *
    * @param {string} [filePath] The path of the file to be uploaded
    * @param {UploadFileInChunksOptions} [options] Configuration options.
    * @param {MultiPartHelperGenerator} [generator] A function that will return a type that implements the MPU interface. Most users will not need to use this.
-   * @returns {Promise<void>} If successful a promise resolving to void, otherwise a error containing the message, uploadid, and parts map.
+   * @returns {Promise<void>} If successful a promise resolving to void, otherwise a error containing the message, uploadId, and parts map.
    *
    * @example
    * ```
@@ -866,5 +911,35 @@ export class TransferManager {
         ? yield* this.getPathsFromDirectory(fullPath)
         : yield fullPath;
     }
+  }
+
+  /**
+   * Resolves the absolute base directory for downloads and validates it against
+   * the current working directory (CWD) to prevent path traversal outside the base destination.
+   * @param options The download options, potentially containing passthroughOptions.destination.
+   * @returns The absolute, validated base directory path (baseDir).
+   */
+  private _resolveAndValidateBaseDir(
+    options: DownloadManyFilesOptions
+  ): string {
+    const cwd = process.cwd();
+
+    // Resolve baseDir, defaulting to CWD if no destination is provided
+    const baseDir = path.resolve(
+      options.passthroughOptions?.destination ?? cwd
+    );
+
+    // Check for path traversal: baseDir must be equal to or contained within cwd.
+    const relativeBaseDir = path.relative(cwd, baseDir);
+
+    // The condition checks for traversal ('..') or cross-drive traversal (absolute path on Windows)
+    if (relativeBaseDir.startsWith('..') || path.isAbsolute(relativeBaseDir)) {
+      const traversalError = new RequestError(
+        FileExceptionMessages.TRAVERSAL_OUTSIDE_BASE_DESTINATION
+      );
+      throw traversalError;
+    }
+
+    return baseDir;
   }
 }
