@@ -245,8 +245,12 @@ describe('file', () => {
       output,
       `gs://${bucketName}/${fileName} moved to gs://${bucketName}/${movedFileName}`
     );
-    const [exists] = await bucket.file(movedFileName).exists();
-    assert.strictEqual(exists, true);
+    const [[destExists], [sourceExists]] = await Promise.all([
+      bucket.file(movedFileName).exists(),
+      bucket.file(fileName).exists(),
+    ]);
+    assert.strictEqual(destExists, true);
+    assert.strictEqual(sourceExists, false);
   });
 
   it('should copy a file', async () => {
