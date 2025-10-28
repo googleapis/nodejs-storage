@@ -915,14 +915,13 @@ export class Util {
           if (err) {
             const lowerCaseMessage = err.message.toLowerCase();
             const isTLsTimeoutOrConnReset =
-              lowerCaseMessage.includes('tls handshake') ||
-              lowerCaseMessage.includes('timed out') ||
-              lowerCaseMessage.includes('etimedout') ||
-              lowerCaseMessage.includes('econnreset');
-            if (isTLsTimeoutOrConnReset) {
-              const timeOutError = new Error(
-                'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
+              /tls handshake|timed out|etimedout|econnreset/.test(
+                lowerCaseMessage
               );
+            if (isTLsTimeoutOrConnReset) {
+              const TLS_TIMEOUT_ERROR_MESSAGE =
+                'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.';
+              const timeOutError = new Error(TLS_TIMEOUT_ERROR_MESSAGE);
               err = timeOutError;
             }
           }
