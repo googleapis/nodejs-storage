@@ -236,6 +236,7 @@ describe('file', () => {
   });
 
   it('should automatically move a file', async () => {
+    const movedFileName = 'test1.txt';
     const file = bucket.file(fileName);
     await file.save(fileName);
     const output = execSync(
