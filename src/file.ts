@@ -2309,7 +2309,7 @@ class File extends ServiceObject<File, FileMetadata> {
       cb = optionsOrCallback as DownloadCallback;
       options = {};
     } else {
-      options = optionsOrCallback as DownloadOptions;
+      options = Object.assign({}, optionsOrCallback);
     }
 
     let called = false;
