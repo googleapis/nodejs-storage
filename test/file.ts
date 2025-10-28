@@ -2596,11 +2596,22 @@ describe('File', () => {
       file.download({}, assert.ifError);
     });
 
+    it('should not mutate options object after use', done => {
+      const optionsObject = {destination: './unknown.jpg'};
+      fileReadStream._read = () => {
+        assert.strictEqual(optionsObject.destination, './unknown.jpg');
+        assert.deepStrictEqual(optionsObject, {destination: './unknown.jpg'});
+        done();
+      };
+      file.download(optionsObject, assert.ifError);
+    });
+
     it('should pass the provided options to createReadStream', done => {
-      const readOptions = {start: 100, end: 200};
+      const readOptions = {start: 100, end: 200, destination: './unknown.jpg'};
 
       file.createReadStream = (options: {}) => {
-        assert.deepStrictEqual(options, readOptions);
+        assert.deepStrictEqual(options, {start: 100, end: 200});
+        assert.deepStrictEqual(readOptions, {start: 100, end: 200, destination: './unknown.jpg'});
         done();
         return fileReadStream;
       };
