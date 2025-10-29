@@ -2611,7 +2611,11 @@ describe('File', () => {
 
       file.createReadStream = (options: {}) => {
         assert.deepStrictEqual(options, {start: 100, end: 200});
-        assert.deepStrictEqual(readOptions, {start: 100, end: 200, destination: './unknown.jpg'});
+        assert.deepStrictEqual(readOptions, {
+          start: 100,
+          end: 200,
+          destination: './unknown.jpg',
+        });
         done();
         return fileReadStream;
       };
