@@ -23,7 +23,14 @@ import {
 } from '../src/nodejs-common/index.js';
 import {describe, it, before, beforeEach, afterEach} from 'mocha';
 import {PromisifyAllOptions} from '@google-cloud/promisify';
-import {Readable, PassThrough, Stream, Duplex, Transform} from 'stream';
+import {
+  Readable,
+  PassThrough,
+  Stream,
+  Duplex,
+  Transform,
+  pipeline,
+} from 'stream';
 import assert from 'assert';
 import * as crypto from 'crypto';
 import duplexify from 'duplexify';
@@ -237,7 +244,7 @@ describe('File', () => {
       retryOptions: {
         autoRetry: true,
         maxRetries: 3,
-        retryDelayMultipier: 2,
+        retryDelayMultiplier: 2,
         totalTimeout: 600,
         maxRetryDelay: 60,
         retryableErrorFn: (err: HTTPError) => {
@@ -282,7 +289,7 @@ describe('File', () => {
       assert.strictEqual(file.storage, BUCKET.storage);
     });
 
-    it('should set instanceRetryValue to the storage insance retryOptions.autoRetry value', () => {
+    it('should set instanceRetryValue to the storage instance retryOptions.autoRetry value', () => {
       assert.strictEqual(
         file.instanceRetryValue,
         STORAGE.retryOptions.autoRetry
@@ -1815,7 +1822,7 @@ describe('File', () => {
           autoRetry: true,
           maxRetries: 3,
           maxRetryDelay: 60,
-          retryDelayMultipier: 2,
+          retryDelayMultiplier: 2,
           totalTimeout: 600,
         },
         preconditionOpts: {
@@ -1860,8 +1867,8 @@ describe('File', () => {
             options.retryOptions.maxRetryDelay
           );
           assert.strictEqual(
-            opts.retryOptions.retryDelayMultipier,
-            options.retryOptions.retryDelayMultipier
+            opts.retryOptions.retryDelayMultiplier,
+            options.retryOptions.retryDelayMultiplier
           );
           assert.strictEqual(
             opts.retryOptions.totalTimeout,
@@ -1898,7 +1905,7 @@ describe('File', () => {
           autoRetry: true,
           maxRetries: 3,
           maxRetryDelay: 60,
-          retryDelayMultipier: 2,
+          retryDelayMultiplier: 2,
           totalTimeout: 600,
         },
       };
@@ -1939,8 +1946,8 @@ describe('File', () => {
             options.retryOptions.maxRetryDelay
           );
           assert.strictEqual(
-            opts.retryOptions.retryDelayMultipier,
-            options.retryOptions.retryDelayMultipier
+            opts.retryOptions.retryDelayMultiplier,
+            options.retryOptions.retryDelayMultiplier
           );
           assert.strictEqual(
             opts.retryOptions.totalTimeout,
@@ -1996,11 +2003,11 @@ describe('File', () => {
         'Cannot provide an `offset` without providing a `uri`'
       );
 
-      const opitons = {
+      const options = {
         offset: 1,
         isPartialUpload: true,
       };
-      const writable = file.createWriteStream(opitons);
+      const writable = file.createWriteStream(options);
 
       writable.on('error', (err: RangeError) => {
         assert.deepEqual(err, error);
@@ -2281,6 +2288,67 @@ describe('File', () => {
       writable.end('data');
     });
 
+    it('should close upstream when pipeline fails', done => {
+      const writable: Stream.Writable = file.createWriteStream();
+      const error = new Error('My error');
+      const uploadStream = new PassThrough();
+
+      let receivedBytes = 0;
+      const validateStream = new PassThrough();
+      validateStream.on('data', (chunk: Buffer) => {
+        receivedBytes += chunk.length;
+        if (receivedBytes > 5) {
+          // this aborts the pipeline which should also close the internal pipeline within createWriteStream
+          pLine.destroy(error);
+        }
+      });
+
+      file.startResumableUpload_ = (dup: duplexify.Duplexify) => {
+        dup.setWritable(uploadStream);
+        // Emit an error so the pipeline's error-handling logic is triggered
+        uploadStream.emit('error', error);
+        // Explicitly destroy the stream so that the 'close' event is guaranteed to fire,
+        // even in Node v14 where autoDestroy defaults may prevent automatic closing
+        uploadStream.destroy();
+      };
+
+      let closed = false;
+      uploadStream.on('close', () => {
+        closed = true;
+      });
+
+      const pLine = pipeline(
+        (function* () {
+          yield 'foo'; // write some data
+          yield 'foo'; // write some data
+          yield 'foo'; // write some data
+        })(),
+        validateStream,
+        writable,
+        (e: Error | null) => {
+          assert.strictEqual(e, error);
+          assert.strictEqual(closed, true);
+          done();
+        }
+      );
+    });
+
+    it('should error pipeline if source stream emits error before any data', done => {
+      const writable = file.createWriteStream();
+      const error = new Error('Error before first chunk');
+      pipeline(
+        // eslint-disable-next-line require-yield
+        (function* () {
+          throw error;
+        })(),
+        writable,
+        (e: Error | null) => {
+          assert.strictEqual(e, error);
+          done();
+        }
+      );
+    });
+
     describe('validation', () => {
       const data = 'test';
 
@@ -2490,6 +2558,7 @@ describe('File', () => {
 
   describe('download', () => {
     let fileReadStream: Readable;
+    let originalSetEncryptionKey: Function;
 
     beforeEach(() => {
       fileReadStream = new Readable();
@@ -2502,6 +2571,13 @@ describe('File', () => {
       file.createReadStream = () => {
         return fileReadStream;
       };
+
+      originalSetEncryptionKey = file.setEncryptionKey;
+      file.setEncryptionKey = sinon.stub();
+    });
+
+    afterEach(() => {
+      file.setEncryptionKey = originalSetEncryptionKey;
     });
 
     it('should accept just a callback', done => {
@@ -2520,16 +2596,56 @@ describe('File', () => {
       file.download({}, assert.ifError);
     });
 
+    it('should not mutate options object after use', done => {
+      const optionsObject = {destination: './unknown.jpg'};
+      fileReadStream._read = () => {
+        assert.strictEqual(optionsObject.destination, './unknown.jpg');
+        assert.deepStrictEqual(optionsObject, {destination: './unknown.jpg'});
+        done();
+      };
+      file.download(optionsObject, assert.ifError);
+    });
+
     it('should pass the provided options to createReadStream', done => {
-      const readOptions = {start: 100, end: 200};
+      const readOptions = {start: 100, end: 200, destination: './unknown.jpg'};
 
       file.createReadStream = (options: {}) => {
-        assert.deepStrictEqual(options, readOptions);
+        assert.deepStrictEqual(options, {start: 100, end: 200});
+        assert.deepStrictEqual(readOptions, {
+          start: 100,
+          end: 200,
+          destination: './unknown.jpg',
+        });
         done();
         return fileReadStream;
       };
 
       file.download(readOptions, assert.ifError);
+    });
+
+    it('should call setEncryptionKey with the provided key and not pass it to createReadStream', done => {
+      const encryptionKey = Buffer.from('encryption-key');
+      const downloadOptions = {
+        encryptionKey: encryptionKey,
+        userProject: 'user-project-id',
+      };
+
+      file.createReadStream = (options: {}) => {
+        assert.deepStrictEqual(options, {userProject: 'user-project-id'});
+        return fileReadStream;
+      };
+
+      file.download(downloadOptions, (err: Error) => {
+        assert.ifError(err);
+        // Verify that setEncryptionKey was called with the correct key
+        assert.ok(
+          (file.setEncryptionKey as sinon.SinonStub).calledWith(encryptionKey)
+        );
+        done();
+      });
+
+      fileReadStream.push('some data');
+      fileReadStream.push(null);
     });
 
     it('should only execute callback once', done => {
@@ -2886,7 +3002,7 @@ describe('File', () => {
       );
     });
 
-    it('should add ACL condtion', done => {
+    it('should add ACL condition', done => {
       file.generateSignedPostPolicyV2(
         {
           expires: Date.now() + 2000,
@@ -3118,7 +3234,7 @@ describe('File', () => {
         );
       });
 
-      it('should throw if prexif condition is not an array', () => {
+      it('should throw if prefix condition is not an array', () => {
         assert.throws(() => {
           file.generateSignedPostPolicyV2(
             {
@@ -4525,7 +4641,7 @@ describe('File', () => {
       }
     }
 
-    describe('retry mulipart upload', () => {
+    describe('retry multipart upload', () => {
       it('should save a string with no errors', async () => {
         const options = {resumable: false};
         file.createWriteStream = () => {

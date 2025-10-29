@@ -500,7 +500,7 @@ describe('Storage', () => {
         );
       });
 
-      it('should be overriden by apiEndpoint', () => {
+      it('should be overridden by apiEndpoint', () => {
         const storage = new Storage({
           projectId: PROJECT_ID,
           apiEndpoint: 'https://some.api.com',
