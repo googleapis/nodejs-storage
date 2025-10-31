@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [7.17.3](https://github.com/googleapis/nodejs-storage/compare/v7.17.2...v7.17.3) (2025-10-31)
+
+
+### Bug Fixes
+
+* :bug: fix the issue 2667, do not mutate object given to options … ([#2668](https://github.com/googleapis/nodejs-storage/issues/2668)) ([8a9f259](https://github.com/googleapis/nodejs-storage/commit/8a9f25968a08dc5cdaeb056054104db738fe651b))
+
 ## [7.17.2](https://github.com/googleapis/nodejs-storage/compare/v7.17.1...v7.17.2) (2025-10-06)
 
 
