@@ -235,7 +235,7 @@ describe('file', () => {
     assert.strictEqual(exists, true);
   });
 
-  it('should automatically move a file', async () => {
+  it('should atomically move a file', async () => {
     const movedFileName = 'test1.txt';
     const file = bucket.file(fileName);
     await file.save(fileName);

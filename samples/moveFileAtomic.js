@@ -59,7 +59,7 @@ function main(
       },
     };
 
-    // Moves the file automatically within the bucket
+    // Moves the file atomically within the bucket
     await storage
       .bucket(bucketName)
       .file(srcFileName)
