@@ -1189,6 +1189,58 @@ describe('common/util', () => {
         });
       });
 
+      describe('TLS handshake errors', () => {
+        const reqOpts = fakeReqOpts;
+        beforeEach(() => {
+          authClient.authorizeRequest = async () => reqOpts;
+          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
+        });
+
+        const testCases = [
+          {name: 'ECONNRESET', error: new Error('ECONNRESET')},
+          {
+            name: '"TLS handshake"',
+            error: new Error('Request failed due to TLS handshake timeout.'),
+          },
+          {
+            name: 'generic "timed out"',
+            error: new Error('The request timed out.'),
+          },
+          {
+            name: 'ETIMEDOUT',
+            error: new Error('Request failed with error: ETIMEDOUT'),
+          },
+        ];
+
+        testCases.forEach(({name, error: networkError}) => {
+          it(`should transform raw ${name} into specific TLS/CPU starvation Error`, done => {
+            // Override `retry-request` to simulate a network error.
+            retryRequestOverride = (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              _reqOpts: any,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              _opts: any,
+              callback: (err: Error, res: {}, body: null) => void
+            ) => {
+              callback(networkError, {}, null);
+              return {abort: () => {}}; // Return an abortable request.
+            };
+
+            const makeAuthenticatedRequest =
+              util.makeAuthenticatedRequestFactory({});
+
+            makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
+              assert.ok(err);
+              assert.strictEqual(
+                err.message,
+                'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.'
+              );
+              done();
+            });
+          });
+        });
+      });
+
       describe('authentication success', () => {
         const reqOpts = fakeReqOpts;
         beforeEach(() => {
