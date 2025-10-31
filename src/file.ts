@@ -3485,7 +3485,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * @property {number} [preconditionOpts.ifGenerationMatch] Makes the operation conditional on whether the object's current generation matches the given value.
    */
   /**
-   * Move this file within the same HNS-enabled bucket.
+   * Move this file within the same bucket.
    * The source object must exist and be a live object.
    * The source and destination object IDs must be different.
    * Overwriting the destination object is allowed by default, but can be prevented
@@ -3507,9 +3507,9 @@ class File extends ServiceObject<File, FileMetadata> {
    * const storage = new Storage();
    *
    * //-
-   * // Assume 'my-hns-bucket' is an HNS-enabled bucket.
+   * // Assume 'my-bucket' is a bucket.
    * //-
-   * const bucket = storage.bucket('my-hns-bucket');
+   * const bucket = storage.bucket('my-bucket');
    * const file = bucket.file('my-image.png');
    *
    * //-
@@ -3517,7 +3517,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * // current bucket, under the new name provided.
    * //-
    * file.moveFileAtomic('moved-image.png', function(err, movedFile, apiResponse) {
-   *   // `my-hns-bucket` now contains:
+   *   // `my-bucket` now contains:
    *   // - "moved-image.png"
    *
    *   // `movedFile` is an instance of a File object that refers to your new
@@ -3528,7 +3528,7 @@ class File extends ServiceObject<File, FileMetadata> {
    * // Move the file to a subdirectory, creating parent folders if necessary.
    * //-
    * file.moveFileAtomic('new-folder/subfolder/moved-image.png', function(err, movedFile, apiResponse) {
-   * // `my-hns-bucket` now contains:
+   * // `my-bucket` now contains:
    * // - "new-folder/subfolder/moved-image.png"
    * });
    *
@@ -3557,7 +3557,7 @@ class File extends ServiceObject<File, FileMetadata> {
    *
    * ```
    * @example <caption>include:samples/files.js</caption>
-   * region_tag:storage_move_file_hns
+   * region_tag:storage_move_file
    * Another example:
    */
   moveFileAtomic(
