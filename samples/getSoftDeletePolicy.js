@@ -32,7 +32,11 @@ function main(bucketName = 'my-bucket') {
     const [metadata] = await storage.bucket(bucketName).getMetadata();
 
     const softDelete = metadata.softDeletePolicy;
-    if (softDelete.retentionDurationSeconds === '0') {
+    if (
+      !softDelete ||
+      !softDelete.retentionDurationSeconds ||
+      softDelete.retentionDurationSeconds === '0'
+    ) {
       console.log(`Bucket ${metadata.name} soft delete policy was disabled`);
     } else {
       console.log(`Soft delete policy for ${metadata.name}`);
