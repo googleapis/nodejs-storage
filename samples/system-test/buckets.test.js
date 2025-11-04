@@ -432,6 +432,34 @@ it('should create bucket with storage class and location', async () => {
   assert.strictEqual(metadata.location, 'ASIA');
 });
 
+it("should set a bucket's soft delete policy", async () => {
+  const output = execSync(`node setSoftDeletePolicy.js ${bucketName}`);
+  assert.include(
+    output,
+    `Bucket ${bucketName} soft delete policy set to 7 days`
+  );
+});
+
+it("should get a bucket's soft delete policy", async () => {
+  const output = execSync(`node getSoftDeletePolicy.js ${bucketName}`);
+  assert.include(output, `Soft delete policy for ${bucketName}`);
+  assert.include(output, 'Soft delete Period: 604800 seconds');
+  assert.match(output, new RegExp('Effective Time:'));
+});
+
+it("should disable a bucket's soft delete policy", async () => {
+  const output = execSync(`node disableSoftDelete.js ${bucketName}`);
+  assert.include(
+    output,
+    `Bucket ${bucketName} soft delete policy was disabled`
+  );
+  await bucket.getMetadata();
+  assert.strictEqual(
+    bucket.metadata.softDeletePolicy.retentionDurationSeconds,
+    '0'
+  );
+});
+
 it('should delete a bucket', async () => {
   const output = execSync(`node deleteBucket.js ${bucketName}`);
   assert.match(output, new RegExp(`Bucket ${bucketName} deleted`));
