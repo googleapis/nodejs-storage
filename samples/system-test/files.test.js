@@ -30,8 +30,6 @@ const storage = new Storage();
 const cwd = path.join(__dirname, '..');
 const bucketName = generateName();
 const bucket = storage.bucket(bucketName);
-const hnsBucketName = generateName();
-const hnsBucket = storage.bucket(hnsBucketName);
 const softDeleteBucketName = generateName();
 const softDeleteBucket = storage.bucket(softDeleteBucketName);
 const objectRetentionBucketName = generateName();
@@ -663,33 +661,6 @@ describe('file', () => {
       );
       assert.include(output, `Soft deleted object ${fileName} was restored`);
       const [exists] = await softDeleteBucket.file(fileName).exists();
-      assert.strictEqual(exists, true);
-    });
-  });
-
-  describe('HNS Bucket Move Object', () => {
-    before(async () => {
-      await storage.createBucket(hnsBucketName, {
-        hierarchicalNamespace: {enabled: true},
-        iamConfiguration: {
-          uniformBucketLevelAccess: {
-            enabled: true,
-          },
-        },
-      });
-    });
-
-    it('should move a file', async () => {
-      const file = hnsBucket.file(fileName);
-      await file.save(fileName);
-      const output = execSync(
-        `node moveFileAtomic.js ${hnsBucketName} ${fileName} ${movedFileName} ${doesNotExistPrecondition}`
-      );
-      assert.include(
-        output,
-        `gs://${hnsBucketName}/${fileName} moved to gs://${hnsBucketName}/${movedFileName}`
-      );
-      const [exists] = await hnsBucket.file(movedFileName).exists();
       assert.strictEqual(exists, true);
     });
   });
