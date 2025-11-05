@@ -48,6 +48,7 @@ objects to users via direct download.
   * [Storage Disable Bucket Versioning.](#storage-disable-bucket-versioning.)
   * [Disable Default Event Based Hold](#disable-default-event-based-hold)
   * [Disable Requester Pays](#disable-requester-pays)
+  * [Disable Soft Delete](#disable-soft-delete)
   * [Disable Uniform Bucket Level Access](#disable-uniform-bucket-level-access)
   * [Download Byte Range](#download-byte-range)
   * [Download Encrypted File](#download-encrypted-file)
@@ -80,6 +81,7 @@ objects to users via direct download.
   * [Get Requester Pays Status](#get-requester-pays-status)
   * [Get Retention Policy](#get-retention-policy)
   * [Storage Get Service Account.](#storage-get-service-account.)
+  * [Get Soft Delete Policy](#get-soft-delete-policy)
   * [Get Soft Deleted Bucket](#get-soft-deleted-bucket)
   * [Get Uniform Bucket Level Access](#get-uniform-bucket-level-access)
   * [Activate HMAC SA Key.](#activate-hmac-sa-key.)
@@ -95,6 +97,8 @@ objects to users via direct download.
   * [List Files with Old Versions.](#list-files-with-old-versions.)
   * [List Notifications](#list-notifications)
   * [List Soft Deleted Bucket](#list-soft-deleted-bucket)
+  * [List Soft Deleted Object Versions](#list-soft-deleted-object-versions)
+  * [List Soft Deleted Objects](#list-soft-deleted-objects)
   * [Lock Retention Policy](#lock-retention-policy)
   * [Storage Make Bucket Public.](#storage-make-bucket-public.)
   * [Make Public](#make-public)
@@ -118,6 +122,7 @@ objects to users via direct download.
   * [Remove Retention Policy](#remove-retention-policy)
   * [Rename File](#rename-file)
   * [Restore Soft Deleted Bucket](#restore-soft-deleted-bucket)
+  * [Restore Soft Deleted Object](#restore-soft-deleted-object)
   * [Rotate Encryption Key](#rotate-encryption-key)
   * [Set Autoclass](#set-autoclass)
   * [Set Client Endpoint](#set-client-endpoint)
@@ -128,6 +133,7 @@ objects to users via direct download.
   * [Set RPO Async Turbo](#set-rpo-async-turbo)
   * [Set RPO Default](#set-rpo-default)
   * [Set Retention Policy](#set-retention-policy)
+  * [Set Soft Delete Policy](#set-soft-delete-policy)
   * [Set Temporary Hold](#set-temporary-hold)
   * [Stream File Download](#stream-file-download)
   * [Stream File Upload](#stream-file-upload)
@@ -696,6 +702,23 @@ __Usage:__
 
 
 
+### Disable Soft Delete
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/disableSoftDelete.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/disableSoftDelete.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/disableSoftDelete.js`
+
+
+-----
+
+
+
+
 ### Disable Uniform Bucket Level Access
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/disableUniformBucketLevelAccess.js).
@@ -1256,6 +1279,23 @@ __Usage:__
 
 
 
+### Get Soft Delete Policy
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getSoftDeletePolicy.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getSoftDeletePolicy.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/getSoftDeletePolicy.js`
+
+
+-----
+
+
+
+
 ### Get Soft Deleted Bucket
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getSoftDeletedBucket.js).
@@ -1518,6 +1558,40 @@ __Usage:__
 
 
 `node samples/listSoftDeletedBucket.js`
+
+
+-----
+
+
+
+
+### List Soft Deleted Object Versions
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/listSoftDeletedObjectVersions.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/listSoftDeletedObjectVersions.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/listSoftDeletedObjectVersions.js`
+
+
+-----
+
+
+
+
+### List Soft Deleted Objects
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/listSoftDeletedObjects.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/listSoftDeletedObjects.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/listSoftDeletedObjects.js`
 
 
 -----
@@ -1924,6 +1998,23 @@ __Usage:__
 
 
 
+### Restore Soft Deleted Object
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/restoreSoftDeletedObject.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/restoreSoftDeletedObject.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/restoreSoftDeletedObject.js`
+
+
+-----
+
+
+
+
 ### Rotate Encryption Key
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/rotateEncryptionKey.js).
@@ -2089,6 +2180,23 @@ __Usage:__
 
 
 `node samples/setRetentionPolicy.js`
+
+
+-----
+
+
+
+
+### Set Soft Delete Policy
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setSoftDeletePolicy.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setSoftDeletePolicy.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/setSoftDeletePolicy.js`
 
 
 -----
