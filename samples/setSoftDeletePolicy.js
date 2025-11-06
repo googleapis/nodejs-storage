@@ -29,10 +29,9 @@ function main(bucketName = 'my-bucket') {
   const storage = new Storage();
 
   async function setSoftDeletePolicy() {
-    const SOFT_DELETE_RETENTION_SECONDS = 7 * 24 * 60 * 60;
     const options = {
       softDeletePolicy: {
-        retentionDurationSeconds: SOFT_DELETE_RETENTION_SECONDS,
+        retentionDurationSeconds: 604800, // 7 days (in seconds)
       },
     };
 

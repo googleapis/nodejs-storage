@@ -631,7 +631,7 @@ describe('file', () => {
       await file.save(fileName);
       const [metadata] = await softDeleteBucket.file(fileName).getMetadata();
       generation = metadata.generation;
-      file.delete();
+      await file.delete();
     });
 
     after(async () => {
@@ -652,7 +652,10 @@ describe('file', () => {
         `node listSoftDeletedObjectVersions.js ${softDeleteBucketName} ${fileName}`
       );
       assert.match(output, /Files:/);
-      assert.match(output, new RegExp(fileName));
+      assert.match(
+        output,
+        new RegExp(`Name: ${fileName}, Generation: ${generation}`)
+      );
     });
 
     it('should restore soft deleted object', async () => {

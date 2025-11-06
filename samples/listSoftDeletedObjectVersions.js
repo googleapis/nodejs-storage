@@ -41,7 +41,9 @@ function main(bucketName = 'my-bucket', fileName = 'test.txt') {
 
     console.log('Files:');
     files.forEach(file => {
-      console.log(file.name);
+      console.log(
+        `Name: ${file.name}, Generation: ${file.metadata.generation}`
+      );
     });
   }
 
