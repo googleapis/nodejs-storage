@@ -170,7 +170,9 @@ export interface BucketCallback {
   (err: Error | null, bucket?: Bucket | null, apiResponse?: unknown): void;
 }
 
-export type GetBucketsResponse = [Bucket[], {}, unknown, string[]];
+export type GetBucketsResponse =
+  | [Bucket[], {}, unknown]
+  | [Bucket[], {}, unknown, string[]];
 export interface GetBucketsCallback {
   (
     err: Error | null,
