@@ -1177,6 +1177,133 @@ describe('Storage', () => {
         done();
       });
     });
+
+    it('should return unreachable when returnPartialSuccess is true', done => {
+      const unreachableList = [
+        'projects/_/buckets/fail-bucket1',
+        'projects/_/buckets/fail-bucket2',
+      ];
+      const itemsList = [{id: 'fake-bucket-name'}];
+      const resp = {items: itemsList, unreachable: unreachableList};
+
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        assert.strictEqual(reqOpts.qs.returnPartialSuccess, true);
+        callback(null, resp);
+      };
+
+      storage.getBuckets(
+        {returnPartialSuccess: true},
+        (
+          err: Error,
+          buckets: Bucket[],
+          nextQuery: {},
+          apiResponse: {},
+          unreachable: string[]
+        ) => {
+          assert.ifError(err);
+          assert.strictEqual(buckets.length, 1);
+          assert.deepStrictEqual(unreachable, unreachableList);
+          assert.deepStrictEqual(apiResponse, resp);
+          done();
+        }
+      );
+    });
+
+    it('should not return unreachable when returnPartialSuccess is false and unreachable items exist', done => {
+      const unreachableList = ['projects/_/buckets/fail-bucket1'];
+      const itemsList = [{id: 'fake-bucket-name'}];
+      const resp = {items: itemsList, unreachable: unreachableList};
+
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        assert.strictEqual(reqOpts.qs.returnPartialSuccess, false);
+        callback(null, resp);
+      };
+
+      storage.getBuckets(
+        {returnPartialSuccess: false},
+        (
+          err: Error,
+          buckets: Bucket[],
+          nextQuery: {},
+          apiResponse: {},
+          unreachable: string[]
+        ) => {
+          assert.ifError(err);
+          assert.strictEqual(unreachable, undefined);
+          assert.deepStrictEqual(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (apiResponse as any).unreachable,
+            unreachableList
+          );
+          done();
+        }
+      );
+    });
+
+    it('should handle partial failure with zero reachable buckets', done => {
+      const unreachableList = ['projects/_/buckets/fail-bucket1'];
+      const resp = {items: [], unreachable: unreachableList};
+
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        callback(null, resp);
+      };
+
+      storage.getBuckets(
+        {returnPartialSuccess: true},
+        (
+          err: Error,
+          buckets: Bucket[],
+          nextQuery: {},
+          resp: unknown,
+          unreachable: string[]
+        ) => {
+          assert.ifError(err);
+          assert.strictEqual(buckets.length, 0);
+          assert.deepStrictEqual(unreachable, unreachableList);
+          done();
+        }
+      );
+    });
+
+    it('should handle API success where zero items and zero unreachable items are returned', done => {
+      const resp = {items: [], unreachable: []};
+
+      storage.request = (
+        reqOpts: DecorateRequestOptions,
+        callback: Function
+      ) => {
+        if (reqOpts.qs.returnPartialSuccess !== undefined) {
+          assert.strictEqual(reqOpts.qs.returnPartialSuccess, true);
+        }
+        callback(null, resp);
+      };
+
+      storage.getBuckets(
+        {returnPartialSuccess: true},
+        (
+          err: Error,
+          buckets: Bucket[],
+          nextQuery: {},
+          apiResponse: {},
+          unreachable: string[]
+        ) => {
+          assert.ifError(err);
+          assert.strictEqual(buckets.length, 0);
+          assert.strictEqual(unreachable, undefined);
+          assert.deepStrictEqual(apiResponse, resp);
+          done();
+        }
+      );
+    });
   });
 
   describe('getHmacKeys', () => {

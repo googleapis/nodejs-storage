@@ -170,13 +170,14 @@ export interface BucketCallback {
   (err: Error | null, bucket?: Bucket | null, apiResponse?: unknown): void;
 }
 
-export type GetBucketsResponse = [Bucket[], {}, unknown];
+export type GetBucketsResponse = [Bucket[], {}, unknown, string[]];
 export interface GetBucketsCallback {
   (
     err: Error | null,
     buckets: Bucket[],
     nextQuery?: {},
-    apiResponse?: unknown
+    apiResponse?: unknown,
+    unreachable?: string[]
   ): void;
 }
 export interface GetBucketsRequest {
@@ -189,6 +190,7 @@ export interface GetBucketsRequest {
   userProject?: string;
   softDeleted?: boolean;
   generation?: number;
+  returnPartialSuccess?: boolean;
 }
 
 export interface HmacKeyResourceResponse {
@@ -1325,6 +1327,7 @@ export class Storage extends Service {
       cb
     );
     options.project = options.project || this.projectId;
+    const returnPartialSuccess = options.returnPartialSuccess || false;
 
     this.request(
       {
@@ -1338,6 +1341,8 @@ export class Storage extends Service {
         }
 
         const itemsArray = resp.items ? resp.items : [];
+        const unreachableBuckets = resp.unreachable ? resp.unreachable : [];
+
         const buckets = itemsArray.map((bucket: BucketMetadata) => {
           const bucketInstance = this.bucket(bucket.id!);
           bucketInstance.metadata = bucket;
@@ -1348,6 +1353,10 @@ export class Storage extends Service {
           ? Object.assign({}, options, {pageToken: resp.nextPageToken})
           : null;
 
+        if (unreachableBuckets.length > 0 && returnPartialSuccess) {
+          callback(null, buckets, nextQuery, resp, unreachableBuckets);
+          return;
+        }
         callback(null, buckets, nextQuery, resp);
       }
     );
