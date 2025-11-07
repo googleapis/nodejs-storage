@@ -1355,7 +1355,7 @@ export class Storage extends Service {
           ? Object.assign({}, options, {pageToken: resp.nextPageToken})
           : null;
 
-        if (unreachableBuckets.length > 0 && returnPartialSuccess) {
+        if (returnPartialSuccess && unreachableBuckets.length > 0) {
           callback(null, buckets, nextQuery, resp, unreachableBuckets);
           return;
         }
