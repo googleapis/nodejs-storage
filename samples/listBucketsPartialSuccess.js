@@ -25,18 +25,31 @@ function main() {
   async function listBucketsPartialSuccess() {
     const option = {
       returnPartialSuccess: true,
+      maxResults: 5,
     };
-    const result = await storage.getBuckets(option);
-    const buckets = result[0]; // Extract the list of successfully retrieved Bucket objects.
-    const unreachable = result[3]; // Extract the list of unreachable buckets.
+    const [buckets, nextQuery, apiResponse, unreachable] =
+      await storage.getBuckets(option);
 
-    console.log('Buckets:');
+    if (apiResponse && Object.keys(apiResponse).length > 0) {
+      console.log('API Response:');
+      if (nextQuery && nextQuery.pageToken) {
+        console.log(`Next Page Token: ${nextQuery.pageToken}`);
+      }
+      console.log(`Buckets Found: ${apiResponse.items.length} total.`);
+      if (unreachable && unreachable.length > 0) {
+        console.log(
+          `Unreachable Buckets: ${apiResponse.unreachable.length} failed to retrieve.`
+        );
+      }
+    }
+
+    console.log('\nBuckets:');
     buckets.forEach(bucket => {
       console.log(bucket.name);
     });
 
     if (unreachable && unreachable.length > 0) {
-      console.log('Unreachable Buckets:');
+      console.log('\nUnreachable Buckets:');
       unreachable.forEach(item => {
         console.log(item);
       });
