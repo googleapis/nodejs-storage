@@ -30,6 +30,8 @@ const storage = new Storage();
 const cwd = path.join(__dirname, '..');
 const bucketName = generateName();
 const bucket = storage.bucket(bucketName);
+const softDeleteBucketName = generateName();
+const softDeleteBucket = storage.bucket(softDeleteBucketName);
 const objectRetentionBucketName = generateName();
 const objectRetentionBucket = storage.bucket(objectRetentionBucketName);
 const fileContents = 'these-are-my-contents';
@@ -614,6 +616,55 @@ describe('file', () => {
       const [metadata] = await file.getMetadata();
       assert(metadata.retention.retainUntilTime);
       assert(metadata.retention.mode.toUpperCase(), 'UNLOCKED');
+    });
+  });
+
+  describe('Object Soft Delete', () => {
+    let generation;
+    before(async () => {
+      await storage.createBucket(softDeleteBucketName, {
+        softDeletePolicy: {
+          retentionDurationSeconds: 604800,
+        },
+      });
+      const file = softDeleteBucket.file(fileName);
+      await file.save(fileName);
+      const [metadata] = await softDeleteBucket.file(fileName).getMetadata();
+      generation = metadata.generation;
+      await file.delete();
+    });
+
+    after(async () => {
+      await softDeleteBucket.deleteFiles();
+      await softDeleteBucket.delete();
+    });
+
+    it('should list soft deleted objects', async () => {
+      const output = await execSync(
+        `node listSoftDeletedObjects.js ${softDeleteBucketName}`
+      );
+      assert.match(output, /Files:/);
+      assert.match(output, new RegExp(fileName));
+    });
+
+    it('should list soft deleted object versions', async () => {
+      const output = await execSync(
+        `node listSoftDeletedObjectVersions.js ${softDeleteBucketName} ${fileName}`
+      );
+      assert.match(output, /Files:/);
+      assert.match(
+        output,
+        new RegExp(`Name: ${fileName}, Generation: ${generation}`)
+      );
+    });
+
+    it('should restore soft deleted object', async () => {
+      const output = await execSync(
+        `node restoreSoftDeletedObject.js ${softDeleteBucketName} ${fileName} ${generation}`
+      );
+      assert.include(output, `Soft deleted object ${fileName} was restored`);
+      const [exists] = await softDeleteBucket.file(fileName).exists();
+      assert.strictEqual(exists, true);
     });
   });
 });
