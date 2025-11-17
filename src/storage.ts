@@ -1361,8 +1361,8 @@ export class Storage extends Service {
             .map((fullPath: string) => {
               const name = fullPath.split('/').pop();
               if (!name) return null;
-              const exists = buckets.some(
-                (bucket: Bucket) => bucket.name === name
+              const exists = new Set(buckets.map((b: Bucket) => b.name)).has(
+                name
               );
               if (!exists) {
                 const placeholder = this.bucket(name);
@@ -1374,13 +1374,13 @@ export class Storage extends Service {
             })
             .filter(Boolean) as Bucket[];
         }
-        const allBuckets = [...buckets, ...unreachableBuckets];
+        const results = [...buckets, ...unreachableBuckets];
 
         const nextQuery = resp.nextPageToken
           ? Object.assign({}, options, {pageToken: resp.nextPageToken})
           : null;
 
-        callback(null, allBuckets, nextQuery, resp);
+        callback(null, results, nextQuery, resp);
       }
     );
   }
