@@ -1343,23 +1343,47 @@ export class Storage extends Service {
         }
 
         const itemsArray = resp.items ? resp.items : [];
-        const unreachableBuckets = resp.unreachable ? resp.unreachable : [];
+        const unreachableArray = resp.unreachable ? resp.unreachable : [];
 
         const buckets = itemsArray.map((bucket: BucketMetadata) => {
           const bucketInstance = this.bucket(bucket.id!);
           bucketInstance.metadata = bucket;
+
+          if (returnPartialSuccess) {
+            const unreachableBucketId = `projects/_/buckets/${bucket.id}`;
+            if (unreachableArray.includes(unreachableBucketId)) {
+              bucketInstance.unreachable = true;
+            }
+          }
           return bucketInstance;
         });
+
+        let unreachableBuckets: Bucket[] = [];
+        if (returnPartialSuccess && unreachableArray.length > 0) {
+          unreachableBuckets = unreachableArray
+            .map((fullPath: string) => {
+              const name = fullPath.split('/').pop();
+              if (!name) return null;
+              const exists = buckets.some(
+                (bucket: Bucket) => bucket.name === name
+              );
+              if (!exists) {
+                const placeholder = this.bucket(name);
+                placeholder.unreachable = true;
+                placeholder.metadata = {};
+                return placeholder;
+              }
+              return null;
+            })
+            .filter(Boolean) as Bucket[];
+        }
+        const allBuckets = [...buckets, ...unreachableBuckets];
 
         const nextQuery = resp.nextPageToken
           ? Object.assign({}, options, {pageToken: resp.nextPageToken})
           : null;
 
-        if (returnPartialSuccess && unreachableBuckets.length > 0) {
-          callback(null, buckets, nextQuery, resp, unreachableBuckets);
-          return;
-        }
-        callback(null, buckets, nextQuery, resp);
+        callback(null, allBuckets, nextQuery, resp);
       }
     );
   }

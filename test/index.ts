@@ -1179,10 +1179,7 @@ describe('Storage', () => {
     });
 
     it('should return unreachable when returnPartialSuccess is true', done => {
-      const unreachableList = [
-        'projects/_/buckets/fail-bucket1',
-        'projects/_/buckets/fail-bucket2',
-      ];
+      const unreachableList = ['projects/_/buckets/fail-bucket'];
       const itemsList = [{id: 'fake-bucket-name'}];
       const resp = {items: itemsList, unreachable: unreachableList};
 
@@ -1196,16 +1193,19 @@ describe('Storage', () => {
 
       storage.getBuckets(
         {returnPartialSuccess: true},
-        (
-          err: Error,
-          buckets: Bucket[],
-          nextQuery: {},
-          apiResponse: {},
-          unreachable: string[]
-        ) => {
+        (err: Error, buckets: Bucket[], nextQuery: {}, apiResponse: {}) => {
           assert.ifError(err);
-          assert.strictEqual(buckets.length, 1);
-          assert.deepStrictEqual(unreachable, unreachableList);
+          assert.strictEqual(buckets.length, 2);
+
+          const reachableBucket = buckets.find(
+            b => b.name === 'fake-bucket-name'
+          );
+          assert.ok(reachableBucket);
+          assert.strictEqual(reachableBucket!.unreachable, undefined);
+
+          const unreachableBucket = buckets.find(b => b.name === 'fail-bucket');
+          assert.ok(unreachableBucket);
+          assert.strictEqual(unreachableBucket!.unreachable, true);
           assert.deepStrictEqual(apiResponse, resp);
           done();
         }
@@ -1213,7 +1213,7 @@ describe('Storage', () => {
     });
 
     it('should not return unreachable when returnPartialSuccess is false and unreachable items exist', done => {
-      const unreachableList = ['projects/_/buckets/fail-bucket1'];
+      const unreachableList = ['projects/_/buckets/fail-bucket'];
       const itemsList = [{id: 'fake-bucket-name'}];
       const resp = {items: itemsList, unreachable: unreachableList};
 
@@ -1227,15 +1227,9 @@ describe('Storage', () => {
 
       storage.getBuckets(
         {returnPartialSuccess: false},
-        (
-          err: Error,
-          buckets: Bucket[],
-          nextQuery: {},
-          apiResponse: {},
-          unreachable: string[]
-        ) => {
+        (err: Error, buckets: Bucket[], nextQuery: {}, apiResponse: {}) => {
           assert.ifError(err);
-          assert.strictEqual(unreachable, undefined);
+          assert.strictEqual(buckets.length, itemsList.length);
           assert.deepStrictEqual(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (apiResponse as any).unreachable,
@@ -1247,7 +1241,7 @@ describe('Storage', () => {
     });
 
     it('should handle partial failure with zero reachable buckets', done => {
-      const unreachableList = ['projects/_/buckets/fail-bucket1'];
+      const unreachableList = ['projects/_/buckets/fail-bucket'];
       const resp = {items: [], unreachable: unreachableList};
 
       storage.request = (
@@ -1259,16 +1253,12 @@ describe('Storage', () => {
 
       storage.getBuckets(
         {returnPartialSuccess: true},
-        (
-          err: Error,
-          buckets: Bucket[],
-          nextQuery: {},
-          resp: unknown,
-          unreachable: string[]
-        ) => {
+        (err: Error, buckets: Bucket[]) => {
           assert.ifError(err);
-          assert.strictEqual(buckets.length, 0);
-          assert.deepStrictEqual(unreachable, unreachableList);
+          assert.strictEqual(buckets.length, 1);
+          assert.deepStrictEqual(buckets[0].name, 'fail-bucket');
+          assert.strictEqual(buckets[0].unreachable, true);
+          assert.deepStrictEqual(buckets[0].metadata, {});
           done();
         }
       );
@@ -1289,16 +1279,9 @@ describe('Storage', () => {
 
       storage.getBuckets(
         {returnPartialSuccess: true},
-        (
-          err: Error,
-          buckets: Bucket[],
-          nextQuery: {},
-          apiResponse: {},
-          unreachable: string[]
-        ) => {
+        (err: Error, buckets: Bucket[], nextQuery: {}, apiResponse: {}) => {
           assert.ifError(err);
           assert.strictEqual(buckets.length, 0);
-          assert.strictEqual(unreachable, undefined);
           assert.deepStrictEqual(apiResponse, resp);
           done();
         }
