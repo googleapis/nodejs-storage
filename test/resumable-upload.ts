@@ -45,14 +45,6 @@ import {getDirName} from '../src/util.js';
 
 nock.disableNetConnect();
 
-class AbortController {
-  aborted = false;
-  signal = this;
-  abort() {
-    this.aborted = true;
-  }
-}
-
 const RESUMABLE_INCOMPLETE_STATUS_CODE = 308;
 /** 256 KiB */
 const CHUNK_SIZE_MULTIPLE = 2 ** 18;
@@ -1816,11 +1808,10 @@ describe('resumable-upload', () => {
     it('should abort on an error', done => {
       up.on('error', () => {});
 
-      let abortController: AbortController;
+      let abortSignal: AbortSignal;
       up.authClient = {
         request: (reqOpts: GaxiosOptions) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          abortController = reqOpts.signal as any;
+          abortSignal = reqOpts.signal as AbortSignal;
         },
       };
 
@@ -1828,7 +1819,7 @@ describe('resumable-upload', () => {
       up.emit('error', new Error('Error.'));
 
       setImmediate(() => {
-        assert.strictEqual(abortController.aborted, true);
+        assert.strictEqual(abortSignal.aborted, true);
         done();
       });
     });
