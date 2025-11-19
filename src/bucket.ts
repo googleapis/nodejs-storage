@@ -843,7 +843,7 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
    * that the API failed to retrieve (unreachable) due to partial failure.
    * Consumers must check this flag before accessing other properties.
    */
-  unreachable = false;
+  unreachable?: boolean;
 
   constructor(storage: Storage, name: string, options?: BucketOptions) {
     options = options || {};

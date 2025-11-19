@@ -1326,6 +1326,7 @@ export class Storage extends Service {
       cb
     );
     options.project = options.project || this.projectId;
+    const returnPartialSuccess = options.returnPartialSuccess || false;
 
     this.request(
       {
@@ -1344,28 +1345,25 @@ export class Storage extends Service {
         const buckets = itemsArray.map((bucket: BucketMetadata) => {
           const bucketInstance = this.bucket(bucket.id!);
           bucketInstance.metadata = bucket;
-
+          bucketInstance.unreachable = false;
           return bucketInstance;
         });
 
-        let results: Bucket[] = buckets;
-        if (unreachableArray.length > 0) {
-          results = unreachableArray.reduce(
-            (acc: Bucket[], fullPath: string) => {
+        let unreachableBuckets: Bucket[] = [];
+        if (returnPartialSuccess && unreachableArray.length > 0) {
+          unreachableBuckets = unreachableArray
+            .map((fullPath: string) => {
               const name = fullPath.split('/').pop();
-
-              if (name) {
-                const placeholder = this.bucket(name);
-                placeholder.unreachable = true;
-                placeholder.metadata = {};
-                acc.push(placeholder);
-              }
-
-              return acc;
-            },
-            buckets
-          );
+              if (!name) return null;
+              const placeholder = this.bucket(name);
+              placeholder.unreachable = true;
+              placeholder.metadata = {};
+              return placeholder;
+            })
+            .filter(Boolean) as Bucket[];
         }
+        const results = [...buckets, ...unreachableBuckets];
+
         const nextQuery = resp.nextPageToken
           ? Object.assign({}, options, {pageToken: resp.nextPageToken})
           : null;
