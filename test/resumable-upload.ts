@@ -99,7 +99,6 @@ describe('resumable-upload', () => {
   const keyFile = path.join(getDirName(), '../../../test/fixtures/keys.json');
 
   before(() => {
-    mockery.registerMock('abort-controller', AbortController);
     mockery.enable({useCleanCache: true, warnOnUnregistered: false});
     upload = require('../src/resumable-upload').upload;
   });
@@ -1807,7 +1806,7 @@ describe('resumable-upload', () => {
     it('should pass a signal from the abort controller', done => {
       up.authClient = {
         request: (reqOpts: GaxiosOptions) => {
-          assert(reqOpts.signal instanceof AbortController);
+          assert(reqOpts.signal instanceof AbortSignal);
           done();
         },
       };
