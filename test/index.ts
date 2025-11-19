@@ -1201,7 +1201,7 @@ describe('Storage', () => {
             b => b.name === 'fake-bucket-name'
           );
           assert.ok(reachableBucket);
-          assert.strictEqual(reachableBucket!.unreachable, undefined);
+          assert.strictEqual(reachableBucket!.unreachable, false);
 
           const unreachableBucket = buckets.find(b => b.name === 'fail-bucket');
           assert.ok(unreachableBucket);

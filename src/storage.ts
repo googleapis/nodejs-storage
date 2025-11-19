@@ -1345,13 +1345,7 @@ export class Storage extends Service {
         const buckets = itemsArray.map((bucket: BucketMetadata) => {
           const bucketInstance = this.bucket(bucket.id!);
           bucketInstance.metadata = bucket;
-
-          if (returnPartialSuccess) {
-            const unreachableBucketId = `projects/_/buckets/${bucket.id}`;
-            if (unreachableArray.includes(unreachableBucketId)) {
-              bucketInstance.unreachable = true;
-            }
-          }
+          bucketInstance.unreachable = false;
           return bucketInstance;
         });
 
@@ -1361,16 +1355,10 @@ export class Storage extends Service {
             .map((fullPath: string) => {
               const name = fullPath.split('/').pop();
               if (!name) return null;
-              const exists = new Set(buckets.map((b: Bucket) => b.name)).has(
-                name
-              );
-              if (!exists) {
-                const placeholder = this.bucket(name);
-                placeholder.unreachable = true;
-                placeholder.metadata = {};
-                return placeholder;
-              }
-              return null;
+              const placeholder = this.bucket(name);
+              placeholder.unreachable = true;
+              placeholder.metadata = {};
+              return placeholder;
             })
             .filter(Boolean) as Bucket[];
         }
