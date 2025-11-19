@@ -35,7 +35,7 @@ function main() {
 
     console.log('\nBuckets:');
     buckets.forEach(bucket => {
-      if (bucket.unreachable === true) {
+      if (bucket.unreachable) {
         console.log(`${bucket.name} (unreachable: ${bucket.unreachable})`);
       } else {
         console.log(`${bucket.name}`);
