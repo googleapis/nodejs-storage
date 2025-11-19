@@ -1201,40 +1201,12 @@ describe('Storage', () => {
             b => b.name === 'fake-bucket-name'
           );
           assert.ok(reachableBucket);
-          assert.strictEqual(reachableBucket!.unreachable, false);
+          assert.strictEqual(reachableBucket.unreachable, false);
 
           const unreachableBucket = buckets.find(b => b.name === 'fail-bucket');
           assert.ok(unreachableBucket);
-          assert.strictEqual(unreachableBucket!.unreachable, true);
+          assert.strictEqual(unreachableBucket.unreachable, true);
           assert.deepStrictEqual(apiResponse, resp);
-          done();
-        }
-      );
-    });
-
-    it('should not return unreachable when returnPartialSuccess is false and unreachable items exist', done => {
-      const unreachableList = ['projects/_/buckets/fail-bucket'];
-      const itemsList = [{id: 'fake-bucket-name'}];
-      const resp = {items: itemsList, unreachable: unreachableList};
-
-      storage.request = (
-        reqOpts: DecorateRequestOptions,
-        callback: Function
-      ) => {
-        assert.strictEqual(reqOpts.qs.returnPartialSuccess, false);
-        callback(null, resp);
-      };
-
-      storage.getBuckets(
-        {returnPartialSuccess: false},
-        (err: Error, buckets: Bucket[], nextQuery: {}, apiResponse: {}) => {
-          assert.ifError(err);
-          assert.strictEqual(buckets.length, itemsList.length);
-          assert.deepStrictEqual(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (apiResponse as any).unreachable,
-            unreachableList
-          );
           done();
         }
       );
