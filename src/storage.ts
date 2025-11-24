@@ -1348,29 +1348,23 @@ export class Storage extends Service {
           return bucketInstance;
         });
 
-        let results: Bucket[] = buckets;
         if (unreachableArray.length > 0) {
-          results = unreachableArray.reduce(
-            (acc: Bucket[], fullPath: string) => {
-              const name = fullPath.split('/').pop();
-              if (name) {
-                const placeholder = this.bucket(name);
-                placeholder.unreachable = true;
-                placeholder.metadata = {};
-                acc.push(placeholder);
-              }
-
-              return acc;
-            },
-            buckets
-          );
+          unreachableArray.forEach((fullPath: string) => {
+            const name = fullPath.split('/').pop();
+            if (name) {
+              const placeholder = this.bucket(name);
+              placeholder.unreachable = true;
+              placeholder.metadata = {};
+              buckets.push(placeholder);
+            }
+          });
         }
 
         const nextQuery = resp.nextPageToken
           ? Object.assign({}, options, {pageToken: resp.nextPageToken})
           : null;
 
-        callback(null, results, nextQuery, resp);
+        callback(null, buckets, nextQuery, resp);
       }
     );
   }
