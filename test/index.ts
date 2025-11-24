@@ -1220,6 +1220,7 @@ describe('Storage', () => {
         reqOpts: DecorateRequestOptions,
         callback: Function
       ) => {
+        assert.strictEqual(reqOpts.qs.returnPartialSuccess, true);
         callback(null, resp);
       };
 
@@ -1243,9 +1244,7 @@ describe('Storage', () => {
         reqOpts: DecorateRequestOptions,
         callback: Function
       ) => {
-        if (reqOpts.qs.returnPartialSuccess !== undefined) {
-          assert.strictEqual(reqOpts.qs.returnPartialSuccess, true);
-        }
+        assert.strictEqual(reqOpts.qs.returnPartialSuccess, true);
         callback(null, resp);
       };
 
