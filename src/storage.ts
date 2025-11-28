@@ -189,6 +189,7 @@ export interface GetBucketsRequest {
   userProject?: string;
   softDeleted?: boolean;
   generation?: number;
+  returnPartialSuccess?: boolean;
 }
 
 export interface HmacKeyResourceResponse {
@@ -1338,11 +1339,26 @@ export class Storage extends Service {
         }
 
         const itemsArray = resp.items ? resp.items : [];
+        const unreachableArray = resp.unreachable ? resp.unreachable : [];
+
         const buckets = itemsArray.map((bucket: BucketMetadata) => {
           const bucketInstance = this.bucket(bucket.id!);
           bucketInstance.metadata = bucket;
+
           return bucketInstance;
         });
+
+        if (unreachableArray.length > 0) {
+          unreachableArray.forEach((fullPath: string) => {
+            const name = fullPath.split('/').pop();
+            if (name) {
+              const placeholder = this.bucket(name);
+              placeholder.unreachable = true;
+              placeholder.metadata = {};
+              buckets.push(placeholder);
+            }
+          });
+        }
 
         const nextQuery = resp.nextPageToken
           ? Object.assign({}, options, {pageToken: resp.nextPageToken})

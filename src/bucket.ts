@@ -838,6 +838,13 @@ class Bucket extends ServiceObject<Bucket, BucketMetadata> {
   private instanceRetryValue?: boolean;
   instancePreconditionOpts?: PreconditionOptions;
 
+  /**
+   * Indicates whether this Bucket object is a placeholder for an item
+   * that the API failed to retrieve (unreachable) due to partial failure.
+   * Consumers must check this flag before accessing other properties.
+   */
+  unreachable = false;
+
   constructor(storage: Storage, name: string, options?: BucketOptions) {
     options = options || {};
 

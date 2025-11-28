@@ -91,6 +91,7 @@ objects to users via direct download.
   * [Get HMAC SA Key Metadata.](#get-hmac-sa-key-metadata.)
   * [List HMAC SA Keys Metadata.](#list-hmac-sa-keys-metadata.)
   * [List Buckets](#list-buckets)
+  * [List Buckets Partial Success](#list-buckets-partial-success)
   * [List Files](#list-files)
   * [List Files By Prefix](#list-files-by-prefix)
   * [List Files Paginate](#list-files-paginate)
@@ -1454,6 +1455,23 @@ __Usage:__
 
 
 `node samples/listBuckets.js`
+
+
+-----
+
+
+
+
+### List Buckets Partial Success
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/listBucketsPartialSuccess.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/listBucketsPartialSuccess.js,samples/README.md)
+
+__Usage:__
+
+
+`node samples/listBucketsPartialSuccess.js`
 
 
 -----
