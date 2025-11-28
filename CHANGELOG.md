@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [7.18.0](https://github.com/googleapis/nodejs-storage/compare/v7.17.3...v7.18.0) (2025-11-28)
+
+
+### Features
+
+* **listBuckets:** Add support for returning partial success ([#2678](https://github.com/googleapis/nodejs-storage/issues/2678)) ([c7004da](https://github.com/googleapis/nodejs-storage/commit/c7004daae0b506eeefc5f4f241d9e3df3589b0e8))
+
 ## [7.17.3](https://github.com/googleapis/nodejs-storage/compare/v7.17.2...v7.17.3) (2025-11-03)
 
 
