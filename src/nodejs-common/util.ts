@@ -912,6 +912,19 @@ export class Util {
         options,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (err: Error | null, response: {}, body: any) => {
+          if (err) {
+            const lowerCaseMessage = err.message.toLowerCase();
+            const isTLsTimeoutOrConnReset =
+              /tls handshake|timed out|etimedout|econnreset/.test(
+                lowerCaseMessage
+              );
+            if (isTLsTimeoutOrConnReset) {
+              const TLS_TIMEOUT_ERROR_MESSAGE =
+                'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.';
+              const timeOutError = new Error(TLS_TIMEOUT_ERROR_MESSAGE);
+              err = timeOutError;
+            }
+          }
           util.handleResp(err, response as {} as r.Response, body, callback!);
         }
       );
