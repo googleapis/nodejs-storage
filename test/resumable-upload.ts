@@ -33,10 +33,12 @@ import {
   ApiError,
   CreateUriCallback,
   PROTOCOL_REGEX,
+  UploadConfig,
 } from '../src/resumable-upload.js';
 import {GaxiosOptions, GaxiosError, GaxiosResponse} from 'gaxios';
 import {GCCL_GCS_CMD_KEY} from '../src/nodejs-common/util.js';
 import {getDirName} from '../src/util.js';
+import {FileExceptionMessages} from '../src/file.js';
 
 nock.disableNetConnect();
 
@@ -55,6 +57,8 @@ const queryPath = '/?userProject=user-project-id';
 const X_GOOG_API_HEADER_REGEX =
   /^gl-node\/(?<nodeVersion>[^W]+) gccl\/(?<gccl>[^W]+) gccl-invocation-id\/(?<gcclInvocationId>[^W]+) gccl-gcs-cmd\/(?<gcclGcsCmd>[^W]+)$/;
 const USER_AGENT_REGEX = /^gcloud-node-storage\/(?<libVersion>[^W]+)$/;
+const CORRECT_CLIENT_CRC32C = 'Q2hlY2tzdW0h';
+const INCORRECT_SERVER_CRC32C = 'Q2hlY2tzdVUa';
 
 function mockAuthorizeRequest(
   code = 200,
@@ -1286,6 +1290,270 @@ describe('resumable-upload', () => {
         });
       });
     });
+
+    describe('X-Goog-Hash header injection', () => {
+      const CALCULATED_CRC32C = 'bzKmHw==';
+      const CALCULATED_MD5 = 'VpBzljOcorCZvRIkX5Nt3A==';
+      const DUMMY_CONTENT = Buffer.alloc(512, 'a');
+      const CHUNK_SIZE = 256;
+
+      let requestCount: number;
+
+      /**
+       * Creates a mocked HashValidator object with forced getters to return
+       * predefined hash values, bypassing internal stream calculation logic.
+       */
+      function createMockHashValidator(
+        crc32cEnabled: boolean,
+        md5Enabled: boolean
+      ) {
+        const mockValidator = {
+          crc32cEnabled: crc32cEnabled,
+          md5Enabled: md5Enabled,
+          end: () => {}, // Mock the end method
+          write: () => {},
+        };
+
+        Object.defineProperty(mockValidator, 'crc32c', {
+          get: () => CALCULATED_CRC32C,
+          configurable: true,
+        });
+        Object.defineProperty(mockValidator, 'md5Digest', {
+          get: () => CALCULATED_MD5,
+          configurable: true,
+        });
+        return mockValidator;
+      }
+
+      const MOCK_AUTH_CLIENT = {
+        // Mock the request method to return a dummy response
+        request: async (opts: GaxiosOptions) => {
+          return {
+            status: 200,
+            data: {},
+            headers: {},
+            config: opts,
+            statusText: 'OK',
+          } as GaxiosResponse;
+        },
+        // Mock getRequestHeaders, which is often called before request
+        getRequestHeaders: async () => ({}),
+        // Mock getRequestMetadata, which is also used for token retrieval
+        getRequestMetadata: async () => ({}),
+        // Mock getRequestMetadataAsync
+        getRequestMetadataAsync: async () => ({}),
+        // Mock getClient, as the library might call this internally
+        getClient: async () => MOCK_AUTH_CLIENT,
+        // Add any other properties your code uses (e.g., json, credentials)
+      };
+
+      /**
+       * Sets up the `up` instance for hash injection tests.
+       * @param configOptions Partial UploadConfig to apply.
+       */
+      function setupHashUploadInstance(
+        configOptions: Partial<UploadConfig> & {crc32c?: boolean; md5?: boolean}
+      ) {
+        up = upload({
+          bucket: BUCKET,
+          file: FILE,
+          authClient: MOCK_AUTH_CLIENT,
+          retryOptions: {...RETRY_OPTIONS, maxRetries: 0},
+          metadata: {
+            contentLength: DUMMY_CONTENT.byteLength,
+            contentType: 'text/plain',
+          },
+          ...configOptions,
+        });
+
+        // Manually inject the mock HashStreamValidator if needed
+        const calculateCrc32c =
+          !configOptions.clientCrc32c && configOptions.crc32c;
+        const calculateMd5 = !configOptions.clientMd5Hash && configOptions.md5;
+
+        if (calculateCrc32c || calculateMd5) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (up as any)['#hashValidator'] = createMockHashValidator(
+            !!calculateCrc32c,
+            !!calculateMd5
+          );
+        }
+      }
+
+      async function performUpload(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        uploadInstance: any,
+        data: Buffer,
+        isMultiChunk: boolean,
+        expectedCrc32c?: string,
+        expectedMd5?: string
+      ): Promise<GaxiosOptions[]> {
+        const capturedReqOpts: GaxiosOptions[] = [];
+        requestCount = 0;
+
+        uploadInstance.makeRequestStream = async (
+          requestOptions: GaxiosOptions
+        ) => {
+          requestCount++;
+          capturedReqOpts.push(requestOptions);
+
+          await new Promise<void>(resolve => {
+            requestOptions.body.on('data', () => {});
+            requestOptions.body.on('end', resolve);
+          });
+
+          const serverCrc32c = expectedCrc32c || CALCULATED_CRC32C;
+          const serverMd5 = expectedMd5 || CALCULATED_MD5;
+          if (
+            isMultiChunk &&
+            requestCount < Math.ceil(DUMMY_CONTENT.byteLength / CHUNK_SIZE)
+          ) {
+            const lastByteReceived = requestCount * CHUNK_SIZE - 1;
+            return {
+              data: '',
+              status: RESUMABLE_INCOMPLETE_STATUS_CODE,
+              headers: {range: `bytes=0-${lastByteReceived}`},
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any;
+          } else {
+            return {
+              status: 200,
+              data: {
+                crc32c: serverCrc32c,
+                md5Hash: serverMd5,
+                name: FILE,
+                bucket: BUCKET,
+                size: DUMMY_CONTENT.byteLength.toString(),
+              },
+              headers: {},
+              config: {},
+              statusText: 'OK',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any;
+          }
+        };
+
+        return new Promise((resolve, reject) => {
+          uploadInstance.on('error', reject);
+          uploadInstance.on('uploadFinished', () => {
+            resolve(capturedReqOpts);
+          });
+
+          const upstreamBuffer = new Readable({
+            read() {
+              this.push(data);
+              this.push(null);
+            },
+          });
+          upstreamBuffer.pipe(uploadInstance);
+        });
+      }
+
+      describe('single chunk', () => {
+        it('should include X-Goog-Hash header with crc32c when crc32c is enabled (via validator)', async () => {
+          setupHashUploadInstance({crc32c: true});
+          const reqOpts = await performUpload(up, DUMMY_CONTENT, false);
+          assert.strictEqual(reqOpts.length, 1);
+          assert.equal(
+            reqOpts[0].headers!['X-Goog-Hash'],
+            `crc32c=${CALCULATED_CRC32C}`
+          );
+        });
+
+        it('should include X-Goog-Hash header with md5 when md5 is enabled (via validator)', async () => {
+          setupHashUploadInstance({md5: true});
+          const reqOpts = await performUpload(up, DUMMY_CONTENT, false);
+          assert.strictEqual(reqOpts.length, 1);
+          assert.equal(
+            reqOpts[0].headers!['X-Goog-Hash'],
+            `md5=${CALCULATED_MD5}`
+          );
+        });
+
+        it('should include both crc32c and md5 in X-Goog-Hash when both are enabled (via validator)', async () => {
+          setupHashUploadInstance({crc32c: true, md5: true});
+          const reqOpts = await performUpload(up, DUMMY_CONTENT, false);
+          assert.strictEqual(reqOpts.length, 1);
+          const xGoogHash = reqOpts[0].headers!['X-Goog-Hash'];
+          assert.ok(xGoogHash);
+          const expectedHashes = [
+            `crc32c=${CALCULATED_CRC32C}`,
+            `md5=${CALCULATED_MD5}`,
+          ];
+          const actualHashes = xGoogHash
+            .split(',')
+            .map((s: string) => s.trim());
+          assert.deepStrictEqual(actualHashes.sort(), expectedHashes.sort());
+        });
+
+        it('should use clientCrc32c if provided (pre-calculated hash)', async () => {
+          const customCrc32c = 'CUSTOMCRC';
+          setupHashUploadInstance({crc32c: true, clientCrc32c: customCrc32c});
+          const reqOpts = await performUpload(
+            up,
+            DUMMY_CONTENT,
+            false,
+            customCrc32c
+          );
+          assert.strictEqual(reqOpts.length, 1);
+          assert.strictEqual(
+            reqOpts[0].headers!['X-Goog-Hash'],
+            `crc32c=${customCrc32c}`
+          );
+        });
+
+        it('should use clientMd5Hash if provided (pre-calculated hash)', async () => {
+          const customMd5 = 'CUSTOMMD5';
+          setupHashUploadInstance({md5: true, clientMd5Hash: customMd5});
+          const reqOpts = await performUpload(
+            up,
+            DUMMY_CONTENT,
+            false,
+            undefined,
+            customMd5
+          );
+          assert.strictEqual(reqOpts.length, 1);
+          assert.strictEqual(
+            reqOpts[0].headers!['X-Goog-Hash'],
+            `md5=${customMd5}`
+          );
+        });
+
+        it('should not include X-Goog-Hash if neither crc32c nor md5 are enabled', async () => {
+          setupHashUploadInstance({});
+          const reqOpts = await performUpload(up, DUMMY_CONTENT, false);
+          assert.strictEqual(reqOpts.length, 1);
+          assert.strictEqual(reqOpts[0].headers!['X-Goog-Hash'], undefined);
+        });
+      });
+
+      describe('multiple chunk', () => {
+        beforeEach(() => {
+          setupHashUploadInstance({
+            crc32c: true,
+            md5: true,
+            chunkSize: CHUNK_SIZE,
+          });
+        });
+
+        it('should NOT include X-Goog-Hash header on intermediate multi-chunk requests', async () => {
+          const reqOpts = await performUpload(up, DUMMY_CONTENT, true);
+          assert.strictEqual(reqOpts.length, 2);
+
+          assert.strictEqual(reqOpts[0].headers!['Content-Length'], CHUNK_SIZE);
+          assert.strictEqual(reqOpts[0].headers!['X-Goog-Hash'], undefined);
+        });
+
+        it('should include X-Goog-Hash header ONLY on the final multi-chunk request', async () => {
+          const expectedHashHeader = `crc32c=${CALCULATED_CRC32C},md5=${CALCULATED_MD5}`;
+          const reqOpts = await performUpload(up, DUMMY_CONTENT, true);
+          assert.strictEqual(reqOpts.length, 2);
+
+          assert.strictEqual(reqOpts[1].headers!['Content-Length'], CHUNK_SIZE);
+          assert.equal(reqOpts[1].headers!['X-Goog-Hash'], expectedHashHeader);
+        });
+      });
+    });
   });
 
   describe('#responseHandler', () => {
@@ -1337,6 +1605,63 @@ describe('resumable-upload', () => {
         done();
       };
       up.upstreamEnded = true;
+      up.responseHandler(RESP);
+    });
+
+    it('should destroy the stream on CRC32C checksum mismatch', done => {
+      const CLIENT_CRC = 'client_hash';
+      const SERVER_CRC = 'server_hash';
+      const RESP = {
+        data: {
+          crc32c: SERVER_CRC,
+          md5Hash: 'md5_match',
+          size: '100',
+        },
+        status: 200,
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (up as any)['#hashValidator'] = {
+        crc32cEnabled: true,
+        md5Enabled: true,
+        crc32c: CLIENT_CRC,
+        md5Digest: 'md5_match',
+      };
+      up.upstreamEnded = true;
+
+      up.destroy = (err: Error) => {
+        assert.strictEqual(err.message, FileExceptionMessages.UPLOAD_MISMATCH);
+        done();
+      };
+
+      up.responseHandler(RESP);
+    });
+
+    it('should destroy the stream on MD5 checksum mismatch', done => {
+      const CLIENT_MD5 = 'client_md5';
+      const SERVER_MD5 = 'server_md5';
+      const RESP = {
+        data: {
+          crc32c: 'crc32c_match',
+          md5Hash: SERVER_MD5,
+          size: '100',
+        },
+        status: 200,
+      };
+
+      up.md5 = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (up as any)['#hashValidator'] = {
+        crc32c: 'crc32c_match',
+        md5Digest: CLIENT_MD5,
+      };
+      up.upstreamEnded = true;
+
+      up.destroy = (err: Error) => {
+        assert.strictEqual(err.message, FileExceptionMessages.UPLOAD_MISMATCH);
+        done();
+      };
+
       up.responseHandler(RESP);
     });
 
@@ -2697,6 +3022,73 @@ describe('resumable-upload', () => {
         // init the request
         upstreamBuffer.pipe(up);
       });
+    });
+  });
+
+  describe('Explicit Client-Side Checksum Validation', () => {
+    const DUMMY_CONTENT = Buffer.alloc(CHUNK_SIZE_MULTIPLE * 2);
+    let URI = '';
+    beforeEach(() => {
+      up.contentLength = DUMMY_CONTENT.byteLength;
+      up.clientCrc32c = CORRECT_CLIENT_CRC32C;
+      URI = 'uri';
+      up.createURI = (callback: (error: Error | null, uri: string) => void) => {
+        up.uri = URI;
+        up.offset = 0;
+        callback(null, URI);
+      };
+    });
+
+    it('should fail and destroy the stream if server-reported CRC32C mismatches client CRC32C', done => {
+      const EXPECTED_ERROR_MESSAGE_PART = 'CRC32C checksum mismatch.';
+
+      up.makeRequestStream = async (opts: GaxiosOptions) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        let dataReceived = 0;
+
+        await new Promise<void>(resolve => {
+          opts.body.on('data', (data: Buffer) => {
+            dataReceived += data.byteLength;
+          });
+          opts.body.on('end', resolve);
+        });
+
+        return {
+          status: 200,
+          data: {
+            crc32c: INCORRECT_SERVER_CRC32C,
+            name: up.file,
+            bucket: up.bucket,
+          },
+        };
+      };
+
+      up.on('error', (err: Error) => {
+        assert.ok(
+          err.message.includes(EXPECTED_ERROR_MESSAGE_PART),
+          'Error message must indicate CRC32C mismatch.'
+        );
+        assert.strictEqual(up.uri, URI, 'URI should have been set.');
+
+        done();
+      });
+
+      up.on('finish', () => {
+        done(
+          new Error(
+            'Upload should have failed due to checksum mismatch, but succeeded.'
+          )
+        );
+      });
+
+      const upstreamBuffer = new Readable({
+        read() {
+          this.push(DUMMY_CONTENT);
+          this.push(null);
+        },
+      });
+
+      upstreamBuffer.pipe(up);
     });
   });
 });
