@@ -1066,7 +1066,7 @@ export class Upload extends Writable {
       // In single chunk mode, if contentLength is set, the entire upload is the final chunk.
       const isSingleFinalUpload = typeof this.contentLength === 'number';
 
-      if (isSingleFinalUpload) {
+      if (isSingleFinalUpload && this.upstreamEnded) {
         if (this.#hashValidator) {
           this.#hashValidator.end();
         }
@@ -1168,6 +1168,10 @@ export class Upload extends Writable {
     } else if (this.isSuccessfulResponse(resp.status)) {
       const serverCrc32c = resp.data.crc32c;
       const serverMd5 = resp.data.md5Hash;
+
+      if (this.#hashValidator) {
+        this.#hashValidator.end();
+      }
 
       const clientCrc32cToValidate =
         this.#hashValidator?.crc32c || this.#clientCrc32c;
