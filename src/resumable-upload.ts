@@ -1066,7 +1066,7 @@ export class Upload extends Writable {
       // In single chunk mode, if contentLength is set, the entire upload is the final chunk.
       const isSingleFinalUpload = typeof this.contentLength === 'number';
 
-      if (isSingleFinalUpload && this.upstreamEnded) {
+      if (isSingleFinalUpload) {
         if (this.#hashValidator) {
           this.#hashValidator.end();
         }

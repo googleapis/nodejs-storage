@@ -93,7 +93,7 @@ class HashStreamValidator extends Transform {
 
   _flush(callback: (error?: Error | null | undefined) => void) {
     if (this.#md5Hash && !this.#md5Digest) {
-      void this.#md5Digest;
+      this.#md5Digest = this.#md5Hash.digest('base64');
     }
 
     if (this.updateHashesOnly) {
