@@ -620,20 +620,16 @@ export class Upload extends Writable {
   #applyChecksumHeaders(headers: GaxiosOptions['headers']) {
     const checksums: string[] = [];
 
-    if (this.#hashValidator) {
-      if (this.#hashValidator.crc32cEnabled) {
-        checksums.push(`crc32c=${this.#hashValidator.crc32c!}`);
-      }
-      if (this.#hashValidator.md5Enabled) {
-        checksums.push(`md5=${this.#hashValidator.md5Digest!}`);
-      }
-    } else {
-      if (this.#clientCrc32c) {
-        checksums.push(`crc32c=${this.#clientCrc32c}`);
-      }
-      if (this.#clientMd5Hash) {
-        checksums.push(`md5=${this.#clientMd5Hash}`);
-      }
+    if (this.#hashValidator?.crc32cEnabled) {
+      checksums.push(`crc32c=${this.#hashValidator.crc32c!}`);
+    } else if (this.#clientCrc32c) {
+      checksums.push(`crc32c=${this.#clientCrc32c}`);
+    }
+
+    if (this.#hashValidator?.md5Enabled) {
+      checksums.push(`md5=${this.#hashValidator.md5Digest!}`);
+    } else if (this.#clientMd5Hash) {
+      checksums.push(`md5=${this.#clientMd5Hash}`);
     }
 
     if (checksums.length > 0) {
@@ -1070,11 +1066,10 @@ export class Upload extends Writable {
       // In single chunk mode, if contentLength is set, the entire upload is the final chunk.
       const isSingleFinalUpload = typeof this.contentLength === 'number';
 
-      if (isSingleFinalUpload && this.#hashValidator) {
-        this.#hashValidator.end();
-      }
-
       if (isSingleFinalUpload) {
+        if (this.#hashValidator) {
+          this.#hashValidator.end();
+        }
         this.#applyChecksumHeaders(headers);
       }
     }
