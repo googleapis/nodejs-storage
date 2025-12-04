@@ -59,6 +59,8 @@ const X_GOOG_API_HEADER_REGEX =
 const USER_AGENT_REGEX = /^gcloud-node-storage\/(?<libVersion>[^W]+)$/;
 const CORRECT_CLIENT_CRC32C = 'Q2hlY2tzdW0h';
 const INCORRECT_SERVER_CRC32C = 'Q2hlY2tzdVUa';
+const CORRECT_CLIENT_MD5 = 'CorrectMD5Hash';
+const INCORRECT_SERVER_MD5 = 'IncorrectMD5Hash';
 
 function mockAuthorizeRequest(
   code = 200,
@@ -122,6 +124,7 @@ describe('resumable-upload', () => {
       retryOptions: {...RETRY_OPTIONS},
       [GCCL_GCS_CMD_KEY]: 'sample.command',
       clientCrc32c: CORRECT_CLIENT_CRC32C,
+      clientMd5Hash: CORRECT_CLIENT_MD5,
     });
   });
 
@@ -3026,7 +3029,6 @@ describe('resumable-upload', () => {
     let URI = '';
     beforeEach(() => {
       up.contentLength = DUMMY_CONTENT.byteLength;
-      up.clientCrc32c = CORRECT_CLIENT_CRC32C;
       URI = 'uri';
       up.createURI = (callback: (error: Error | null, uri: string) => void) => {
         up.uri = URI;
@@ -3034,60 +3036,103 @@ describe('resumable-upload', () => {
         callback(null, URI);
       };
     });
+    const checksumScenarios = [
+      {
+        type: 'CRC32C',
+        match: true,
+        desc: 'successfully finish the upload if server-reported CRC32C matches client CRC32C',
+        serverCrc: CORRECT_CLIENT_CRC32C,
+        serverMd5: CORRECT_CLIENT_MD5,
+      },
+      {
+        type: 'CRC32C',
+        match: false,
+        desc: 'fail and destroy the stream if server-reported CRC32C mismatches client CRC32C',
+        serverCrc: INCORRECT_SERVER_CRC32C,
+        serverMd5: CORRECT_CLIENT_MD5,
+        errorPart: 'CRC32C checksum mismatch.',
+      },
+      {
+        type: 'MD5',
+        match: true,
+        desc: 'successfully finish the upload if server-reported MD5 matches client MD5',
+        serverCrc: CORRECT_CLIENT_CRC32C,
+        serverMd5: CORRECT_CLIENT_MD5,
+      },
+      {
+        type: 'MD5',
+        match: false,
+        desc: 'fail and destroy the stream if server-reported MD5 mismatches client MD5',
+        serverCrc: CORRECT_CLIENT_CRC32C,
+        serverMd5: INCORRECT_SERVER_MD5,
+        errorPart: 'MD5 checksum mismatch.',
+      },
+    ];
 
-    it('should fail and destroy the stream if server-reported CRC32C mismatches client CRC32C', done => {
-      const EXPECTED_ERROR_MESSAGE_PART = 'CRC32C checksum mismatch.';
+    checksumScenarios.forEach(scenario => {
+      it(`should ${scenario.desc}`, done => {
+        up.makeRequestStream = async (opts: GaxiosOptions) => {
+          await new Promise<void>(resolve => {
+            opts.body.on('data', () => {});
+            opts.body.on('end', resolve);
+          });
 
-      up.makeRequestStream = async (opts: GaxiosOptions) => {
-        await new Promise<void>(resolve => {
-          opts.body.on('data', () => {});
-          opts.body.on('end', resolve);
-        });
-
-        return {
-          status: 200,
-          data: {
-            crc32c: INCORRECT_SERVER_CRC32C,
-            name: up.file,
-            bucket: up.bucket,
-            size: DUMMY_CONTENT.byteLength.toString(),
-          },
-          headers: {},
-          config: opts,
-          statusText: 'OK',
+          return {
+            status: 200,
+            data: {
+              crc32c: scenario.serverCrc,
+              md5Hash: scenario.serverMd5,
+              name: up.file,
+              bucket: up.bucket,
+              size: DUMMY_CONTENT.byteLength.toString(),
+            },
+            headers: {},
+            config: opts,
+            statusText: 'OK',
+          };
         };
-      };
 
-      // Expect an error to be emitted.
-      up.on('error', (err: Error) => {
-        assert.strictEqual(err.message, FileExceptionMessages.UPLOAD_MISMATCH);
-        assert.ok(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (err as any).errors &&
+        if (scenario.match) {
+          up.on('error', (err: Error) => {
+            done(new Error(`Upload failed unexpectedly: ${err.message}`));
+          });
+          up.on('finish', () => {
+            done();
+          });
+        } else {
+          up.on('error', (err: Error) => {
+            assert.strictEqual(
+              err.message,
+              FileExceptionMessages.UPLOAD_MISMATCH
+            );
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (err as any).errors[0].message.includes(EXPECTED_ERROR_MESSAGE_PART)
-        );
-        assert.strictEqual(up.uri, 'uri');
-        done();
-      });
+            const detailError = (err as any).errors && (err as any).errors[0];
+            assert.ok(
+              detailError && detailError.message.includes(scenario.errorPart!),
+              `Error message should contain: ${scenario.errorPart}`
+            );
+            assert.strictEqual(up.uri, URI);
+            done();
+          });
 
-      // Ensure the 'finish' event is NOT called.
-      up.on('finish', () => {
-        done(
-          new Error(
-            'Upload should have failed due to checksum mismatch, but emitted finish.'
-          )
-        );
-      });
+          up.on('finish', () => {
+            done(
+              new Error(
+                `Upload should have failed due to ${scenario.type} mismatch, but emitted finish.`
+              )
+            );
+          });
+        }
 
-      // Start the upload by piping data to the new instance.
-      const upstreamBuffer = new Readable({
-        read() {
-          this.push(DUMMY_CONTENT);
-          this.push(null);
-        },
+        const upstreamBuffer = new Readable({
+          read() {
+            this.push(DUMMY_CONTENT);
+            this.push(null);
+          },
+        });
+        upstreamBuffer.pipe(up);
       });
-      upstreamBuffer.pipe(up);
     });
   });
 });
