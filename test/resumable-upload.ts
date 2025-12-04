@@ -121,6 +121,7 @@ describe('resumable-upload', () => {
       apiEndpoint: API_ENDPOINT,
       retryOptions: {...RETRY_OPTIONS},
       [GCCL_GCS_CMD_KEY]: 'sample.command',
+      clientCrc32c: CORRECT_CLIENT_CRC32C,
     });
   });
 
@@ -1336,15 +1337,10 @@ describe('resumable-upload', () => {
             statusText: 'OK',
           } as GaxiosResponse;
         },
-        // Mock getRequestHeaders, which is often called before request
         getRequestHeaders: async () => ({}),
-        // Mock getRequestMetadata, which is also used for token retrieval
         getRequestMetadata: async () => ({}),
-        // Mock getRequestMetadataAsync
         getRequestMetadataAsync: async () => ({}),
-        // Mock getClient, as the library might call this internally
         getClient: async () => MOCK_AUTH_CLIENT,
-        // Add any other properties your code uses (e.g., json, credentials)
       };
 
       /**
@@ -3025,7 +3021,7 @@ describe('resumable-upload', () => {
     });
   });
 
-  describe('Explicit Client-Side Checksum Validation', () => {
+  describe('Validation of Client Checksums Against Server Response', () => {
     const DUMMY_CONTENT = Buffer.alloc(CHUNK_SIZE_MULTIPLE * 2);
     let URI = '';
     beforeEach(() => {
@@ -3043,13 +3039,8 @@ describe('resumable-upload', () => {
       const EXPECTED_ERROR_MESSAGE_PART = 'CRC32C checksum mismatch.';
 
       up.makeRequestStream = async (opts: GaxiosOptions) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        let dataReceived = 0;
-
         await new Promise<void>(resolve => {
-          opts.body.on('data', (data: Buffer) => {
-            dataReceived += data.byteLength;
-          });
+          opts.body.on('data', () => {});
           opts.body.on('end', resolve);
         });
 
@@ -3059,35 +3050,43 @@ describe('resumable-upload', () => {
             crc32c: INCORRECT_SERVER_CRC32C,
             name: up.file,
             bucket: up.bucket,
+            size: DUMMY_CONTENT.byteLength.toString(),
           },
+          headers: {},
+          config: opts,
+          statusText: 'OK',
         };
       };
 
+      // Expect an error to be emitted.
       up.on('error', (err: Error) => {
+        assert.strictEqual(err.message, FileExceptionMessages.UPLOAD_MISMATCH);
         assert.ok(
-          err.message.includes(EXPECTED_ERROR_MESSAGE_PART),
-          'Error message must indicate CRC32C mismatch.'
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (err as any).errors &&
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (err as any).errors[0].message.includes(EXPECTED_ERROR_MESSAGE_PART)
         );
-        assert.strictEqual(up.uri, URI, 'URI should have been set.');
-
+        assert.strictEqual(up.uri, 'uri');
         done();
       });
 
+      // Ensure the 'finish' event is NOT called.
       up.on('finish', () => {
         done(
           new Error(
-            'Upload should have failed due to checksum mismatch, but succeeded.'
+            'Upload should have failed due to checksum mismatch, but emitted finish.'
           )
         );
       });
 
+      // Start the upload by piping data to the new instance.
       const upstreamBuffer = new Readable({
         read() {
           this.push(DUMMY_CONTENT);
           this.push(null);
         },
       });
-
       upstreamBuffer.pipe(up);
     });
   });

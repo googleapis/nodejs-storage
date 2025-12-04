@@ -1068,7 +1068,7 @@ export class Upload extends Writable {
       headers['Content-Range'] = `bytes ${this.offset}-*/${this.contentLength}`;
 
       // In single chunk mode, if contentLength is set, the entire upload is the final chunk.
-      const isSingleFinalUpload = !!this.contentLength;
+      const isSingleFinalUpload = typeof this.contentLength === 'number';
 
       if (isSingleFinalUpload && this.#hashValidator) {
         this.#hashValidator.end();
@@ -1170,7 +1170,7 @@ export class Upload extends Writable {
       }
 
       this.destroy(err);
-    } else {
+    } else if (this.isSuccessfulResponse(resp.status)) {
       const serverCrc32c = resp.data.crc32c;
       const serverMd5 = resp.data.md5Hash;
 
@@ -1178,14 +1178,14 @@ export class Upload extends Writable {
         this.#hashValidator?.crc32c || this.#clientCrc32c;
       const clientMd5HashToValidate =
         this.#hashValidator?.md5Digest || this.#clientMd5Hash;
-
       if (
-        this.#validateChecksum(clientCrc32cToValidate, serverCrc32c, 'CRC32C')
+        this.#validateChecksum(
+          clientCrc32cToValidate,
+          serverCrc32c,
+          'CRC32C'
+        ) ||
+        this.#validateChecksum(clientMd5HashToValidate, serverMd5, 'MD5')
       ) {
-        return;
-      }
-
-      if (this.#validateChecksum(clientMd5HashToValidate, serverMd5, 'MD5')) {
         return;
       }
 
@@ -1199,6 +1199,11 @@ export class Upload extends Writable {
 
       // Allow the object (Upload) to continue naturally so the user's
       // "finish" event fires.
+      this.emit('uploadFinished');
+    } else {
+      // Handles the case where shouldContinueUploadInAnotherRequest is true
+      // and the response is not successful (e.g., 308 for a partial upload).
+      // This is the expected behavior for partial uploads that have finished their chunk.
       this.emit('uploadFinished');
     }
   }
