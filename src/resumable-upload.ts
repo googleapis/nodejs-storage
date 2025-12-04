@@ -611,6 +611,37 @@ export class Upload extends Writable {
   }
 
   /**
+   * Builds and applies the X-Goog-Hash header to the request options
+   * using either calculated hashes from #hashValidator or pre-calculated
+   * client-side hashes. This should only be called on the final request.
+   *
+   * @param headers The headers object to modify.
+   */
+  #applyChecksumHeaders(headers: GaxiosOptions['headers']) {
+    const checksums: string[] = [];
+
+    if (this.#hashValidator) {
+      if (this.#hashValidator.crc32cEnabled) {
+        checksums.push(`crc32c=${this.#hashValidator.crc32c!}`);
+      }
+      if (this.#hashValidator.md5Enabled) {
+        checksums.push(`md5=${this.#hashValidator.md5Digest!}`);
+      }
+    } else {
+      if (this.#clientCrc32c) {
+        checksums.push(`crc32c=${this.#clientCrc32c}`);
+      }
+      if (this.#clientMd5Hash) {
+        checksums.push(`md5=${this.#clientMd5Hash}`);
+      }
+    }
+
+    if (checksums.length > 0) {
+      headers!['X-Goog-Hash'] = checksums.join(',');
+    }
+  }
+
+  /**
    * Prepends the local buffer to write buffer and resets it.
    *
    * @param keepLastBytes number of bytes to keep from the end of the local buffer.
@@ -1031,29 +1062,7 @@ export class Upload extends Writable {
 
       // Apply X-Goog-Hash header ONLY on the final chunk (WriteObject call)
       if (isLastChunkOfUpload) {
-        const checksums: string[] = [];
-
-        if (this.#hashValidator) {
-          if (this.#hashValidator.crc32cEnabled) {
-            // CRC32C value is final after all updates
-            checksums.push(`crc32c=${this.#hashValidator.crc32c!}`);
-          }
-          if (this.#hashValidator.md5Enabled) {
-            // MD5 digest is either ready on _flush (if stream is ending) or can be accessed now via getter
-            checksums.push(`md5=${this.#hashValidator.md5Digest!}`);
-          }
-        } else {
-          if (this.#clientCrc32c) {
-            checksums.push(`crc32c=${this.#clientCrc32c}`);
-          }
-          if (this.#clientMd5Hash) {
-            checksums.push(`md5=${this.#clientMd5Hash}`);
-          }
-        }
-
-        if (checksums.length > 0) {
-          headers['X-Goog-Hash'] = checksums.join(',');
-        }
+        this.#applyChecksumHeaders(headers);
       }
     } else {
       headers['Content-Range'] = `bytes ${this.offset}-*/${this.contentLength}`;
@@ -1066,27 +1075,7 @@ export class Upload extends Writable {
       }
 
       if (isSingleFinalUpload) {
-        const checksums: string[] = [];
-
-        if (this.#hashValidator) {
-          if (this.#hashValidator.crc32cEnabled) {
-            checksums.push(`crc32c=${this.#hashValidator.crc32c!}`);
-          }
-          if (this.#hashValidator.md5Enabled) {
-            checksums.push(`md5=${this.#hashValidator.md5Digest!}`);
-          }
-        } else {
-          if (this.#clientCrc32c) {
-            checksums.push(`crc32c=${this.#clientCrc32c}`);
-          }
-          if (this.#clientMd5Hash) {
-            checksums.push(`md5=${this.#clientMd5Hash}`);
-          }
-        }
-
-        if (checksums.length > 0) {
-          headers['X-Goog-Hash'] = checksums.join(',');
-        }
+        this.#applyChecksumHeaders(headers);
       }
     }
 
