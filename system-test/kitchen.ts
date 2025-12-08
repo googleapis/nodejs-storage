@@ -305,4 +305,85 @@ describe('resumable-upload', () => {
     );
     assert.equal(results.size, FILE_SIZE);
   });
+
+  const INTEGRITY_FILE_SIZE = 1024 * 512;
+  const KNOWN_CRC32C_OF_ZEROS = 'rthIWA==';
+  describe('Validation of Client Checksums Against Server Response (Integration)', () => {
+    let integrityFilePath: string;
+    let integrityFileBuffer: Buffer;
+
+    before(async () => {
+      integrityFilePath = path.join(os.tmpdir(), '512KB_rand.dat');
+      integrityFileBuffer = crypto.randomBytes(INTEGRITY_FILE_SIZE);
+      await fs.promises.writeFile(integrityFilePath, integrityFileBuffer);
+    });
+
+    after(async () => {
+      await fs.promises.rm(integrityFilePath, {force: true});
+    });
+
+    it('should upload successfully when crc32c calculation is enabled', done => {
+      let uploadSucceeded = false;
+
+      fs.createReadStream(integrityFilePath)
+        .on('error', done)
+        .pipe(
+          upload({
+            bucket: bucketName,
+            file: integrityFilePath,
+            crc32c: true,
+            retryOptions: retryOptions,
+            userProject: 'storage-sdk-vendor',
+          })
+        )
+        .on('error', err => {
+          done(new Error(`Upload failed unexpectedly on success path: ${err}`));
+        })
+        .on('response', resp => {
+          uploadSucceeded = resp.status === 200;
+        })
+        .on('finish', () => {
+          assert.strictEqual(uploadSucceeded, true);
+          done();
+        });
+    });
+
+    it('should destroy the stream on a checksum mismatch (client-provided hash mismatch)', done => {
+      const EXPECTED_ERROR_MESSAGE_PART = 'checksum mismatch';
+
+      fs.createReadStream(integrityFilePath)
+        .on('error', done)
+        .pipe(
+          upload({
+            bucket: bucketName,
+            file: integrityFilePath,
+            // ⚠️ Force a mismatch by providing a known incorrect hash for the file content
+            clientCrc32c: KNOWN_CRC32C_OF_ZEROS,
+            retryOptions: retryOptions,
+            userProject: 'storage-sdk-vendor',
+          })
+        )
+        .on('response', () => {
+          done(
+            new Error(
+              'Upload succeeded when it should have failed due to checksum mismatch.'
+            )
+          );
+        })
+        .on('finish', () => {
+          done(
+            new Error(
+              'Upload finished successfully when it should have failed.'
+            )
+          );
+        })
+        .on('error', (err: Error) => {
+          assert.ok(
+            err.message.includes(EXPECTED_ERROR_MESSAGE_PART),
+            `Expected error message part "${EXPECTED_ERROR_MESSAGE_PART}" not found in: ${err.message}`
+          );
+          done();
+        });
+    });
+  });
 });
