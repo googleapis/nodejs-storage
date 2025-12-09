@@ -1063,12 +1063,6 @@ export class Upload extends Writable {
     } else {
       headers['Content-Range'] = `bytes ${this.offset}-*/${this.contentLength}`;
 
-      // Buffer the entire upload to calculate the hash before sending.
-      for await (const chunk of this.upstreamIterator(expectedUploadSize)) {
-        this.#addLocalBufferCache(chunk);
-      }
-      this.prependLocalBufferToUpstream();
-
       if (this.#hashValidator) {
         this.#hashValidator.end();
       }
