@@ -37,7 +37,7 @@ import {
 } from '../src/storage.js';
 import {CRC32C} from '../src/crc32c.js';
 
-const bucketName = process.env.BUCKET_NAME || 'gcs-resumable-upload-test';
+const bucketName = process.env.BUCKET_NAME || 'gcs-resumable-upload-test-121';
 
 /**
  * The known multiple chunk upload size, in bytes
@@ -59,6 +59,7 @@ describe('resumable-upload', () => {
   let filePath: string;
 
   before(async () => {
+    await bucket.create();
     tmp.setGracefulCleanup();
     filePath = path.join(os.tmpdir(), '20MB.zip');
 
