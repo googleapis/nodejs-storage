@@ -1063,15 +1063,16 @@ export class Upload extends Writable {
     } else {
       headers['Content-Range'] = `bytes ${this.offset}-*/${this.contentLength}`;
 
-      // In single chunk mode, if contentLength is set, the entire upload is the final chunk.
-      const isSingleFinalUpload = typeof this.contentLength === 'number';
-
-      if (isSingleFinalUpload) {
-        if (this.#hashValidator) {
-          this.#hashValidator.end();
-        }
-        this.#applyChecksumHeaders(headers);
+      // Buffer the entire upload to calculate the hash before sending.
+      for await (const chunk of this.upstreamIterator(expectedUploadSize)) {
+        this.#addLocalBufferCache(chunk);
       }
+      this.prependLocalBufferToUpstream();
+
+      if (this.#hashValidator) {
+        this.#hashValidator.end();
+      }
+      this.#applyChecksumHeaders(headers);
     }
 
     const reqOpts: GaxiosOptions = {
