@@ -256,6 +256,12 @@ export interface ParsedHttpResponseBody {
   err?: Error;
 }
 
+export enum UtilExceptionMessages {
+  TLS_TIMEOUT_ERROR_MESSAGE = 'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.',
+  ETIMEDOUT_ERROR_MESSAGE = 'Connection timed out. This suggests a network issue or the server took too long to respond.',
+  ECONNRESET_ERROR_MESSAGE = 'Connection reset by peer. The connection was closed unexpectedly, possibly by a firewall or network issue.',
+}
+
 /**
  * Custom error type for API errors.
  *
@@ -914,15 +920,29 @@ export class Util {
         (err: Error | null, response: {}, body: any) => {
           if (err) {
             const lowerCaseMessage = err.message.toLowerCase();
-            const isTLsTimeoutOrConnReset =
-              /tls handshake|timed out|etimedout|econnreset/.test(
-                lowerCaseMessage
+            let newError: Error | undefined;
+
+            if (lowerCaseMessage.includes('tls handshake')) {
+              newError = new Error(
+                UtilExceptionMessages.TLS_TIMEOUT_ERROR_MESSAGE
               );
-            if (isTLsTimeoutOrConnReset) {
-              const TLS_TIMEOUT_ERROR_MESSAGE =
-                'Request or TLS handshake timed out. This may be due to CPU starvation or a temporary network issue.';
-              const timeOutError = new Error(TLS_TIMEOUT_ERROR_MESSAGE);
-              err = timeOutError;
+            } else if (
+              lowerCaseMessage.includes('etimedout') ||
+              lowerCaseMessage.includes('timed out')
+            ) {
+              newError = new Error(
+                UtilExceptionMessages.ETIMEDOUT_ERROR_MESSAGE
+              );
+            } else if (lowerCaseMessage.includes('econnreset')) {
+              newError = new Error(
+                UtilExceptionMessages.ECONNRESET_ERROR_MESSAGE
+              );
+            }
+
+            if (newError) {
+              // Preserve the original stack trace for better debugging
+              newError.stack = err.stack;
+              err = newError;
             }
           }
           util.handleResp(err, response as {} as r.Response, body, callback!);
