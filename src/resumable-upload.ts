@@ -596,11 +596,9 @@ export class Upload extends Writable {
     if (clientHash && serverHash) {
       if (clientHash !== serverHash) {
         const detailMessage = `${hashType} checksum mismatch. Client calculated: ${clientHash}, Server returned: ${serverHash}`;
-        const code = 'FILE_NO_UPLOAD';
-        const primaryMessage = FileExceptionMessages.UPLOAD_MISMATCH;
         const detailError = new Error(detailMessage);
-        const error = new RequestError(primaryMessage);
-        error.code = code;
+        const error = new RequestError(FileExceptionMessages.UPLOAD_MISMATCH);
+        error.code = 'FILE_NO_UPLOAD';
         error.errors = [detailError];
 
         this.destroy(error);
