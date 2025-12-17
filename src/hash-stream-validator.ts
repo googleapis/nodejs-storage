@@ -92,9 +92,8 @@ class HashStreamValidator extends Transform {
   }
 
   _flush(callback: (error?: Error | null | undefined) => void) {
-    if (this.#md5Hash && !this.#md5Digest) {
-      this.#md5Digest = this.#md5Hash.digest('base64');
-    }
+    // Triggers the getter logic to finalize and cache the MD5 digest
+    this.md5Digest;
 
     if (this.updateHashesOnly) {
       callback();
