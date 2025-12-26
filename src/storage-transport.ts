@@ -159,17 +159,32 @@ export class StorageTransport {
           shouldRetry: this.retryOptions.retryableErrorFn,
           totalTimeout: this.retryOptions.totalTimeout,
         },
+        params: reqOpts.queryParameters,
         ...reqOpts,
         headers,
         url: this.#buildUrl(reqOpts.url?.toString(), reqOpts.queryParameters),
         timeout: this.timeout,
+        validateStatus: status => status >= 200 && status < 300,
       });
-
       return callback
         ? requestPromise
             .then(resp => callback(null, resp.data, resp))
             .catch(err => callback(err, null, err.response))
-        : (requestPromise.then(resp => resp.data) as Promise<T>);
+        : (requestPromise
+            .then(resp => resp.data)
+            .catch(error => {
+              if (error instanceof GaxiosError) {
+                console.error(
+                  '  GaxiosError details:',
+                  error.code,
+                  'Status:',
+                  error.response?.status,
+                );
+              } else {
+                console.error('  Error type:', typeof error);
+              }
+              throw error;
+            }) as Promise<T>);
     } catch (e) {
       if (callback) return callback(e as GaxiosError);
       throw e;
