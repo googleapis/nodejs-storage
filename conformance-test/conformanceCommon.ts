@@ -18,6 +18,7 @@ import * as libraryMethods from './libraryMethods';
 import {
   Bucket,
   File,
+  GaxiosError,
   GaxiosOptions,
   GaxiosOptionsPrepared,
   HmacKey,
@@ -29,6 +30,7 @@ import * as assert from 'assert';
 import {
   StorageRequestOptions,
   StorageTransport,
+  StorageTransportCallback,
 } from '../src/storage-transport';
 interface RetryCase {
   instructions: String[];
@@ -59,7 +61,7 @@ interface ConformanceTestResult {
 
 type LibraryMethodsModuleType = typeof import('./libraryMethods');
 const methodMap: Map<String, String[]> = new Map(
-  Object.entries({}), // TODO: replace with Object.entries(jsonToNodeApiMapping)
+  Object.entries(jsonToNodeApiMapping),
 );
 
 const DURATION_SECONDS = 600; // 10 mins.
@@ -88,14 +90,14 @@ export function executeScenario(testCase: RetryTestCase) {
         let bucket: Bucket;
         let file: File;
         let notification: Notification;
-        let creationResult: {id: string};
+        let creationResult: ConformanceTestCreationResult;
         let storage: Storage;
         let hmacKey: HmacKey;
         let storageTransport: StorageTransport;
 
         describe(`${storageMethodString}`, async () => {
           beforeEach(async () => {
-            storageTransport = new StorageTransport({
+            const rawStorageTransport = new StorageTransport({
               apiEndpoint: TESTBENCH_HOST,
               authClient: undefined,
               baseUrl: TESTBENCH_HOST,
@@ -116,6 +118,50 @@ export function executeScenario(testCase: RetryTestCase) {
               timeout: DURATION_SECONDS,
             });
 
+            creationResult = await createTestBenchRetryTest(
+              instructionSet.instructions,
+              jsonMethod?.name.toString(),
+              rawStorageTransport,
+            );
+
+            storageTransport = new Proxy(rawStorageTransport, {
+              get(target, prop, receiver) {
+                if (prop === 'makeRequest') {
+                  return async <T>(
+                    reqOpts: StorageRequestOptions,
+                    callback?: StorageTransportCallback<T>,
+                  ): Promise<void | T> => {
+                    const config = reqOpts;
+                    config.headers = config.headers || {};
+
+                    if (creationResult && creationResult.id) {
+                      const retryId = creationResult.id;
+                      const headersObj: {[key: string]: string | string[]} =
+                        typeof config.headers === 'object' &&
+                        !Array.isArray(config.headers) &&
+                        !(config.headers instanceof Headers)
+                          ? (config.headers as {
+                              [key: string]: string | string[];
+                            })
+                          : {};
+                      headersObj['x-retry-test-id'] = retryId;
+                      config.headers = headersObj;
+                    } else {
+                      console.warn(
+                        'creationResult.id not available in Proxy intercept.',
+                      );
+                    }
+                    return Reflect.apply(
+                      rawStorageTransport.makeRequest,
+                      rawStorageTransport,
+                      [config, callback],
+                    );
+                  };
+                }
+                return Reflect.get(target, prop, receiver);
+              },
+            });
+
             storage = new Storage({
               apiEndpoint: TESTBENCH_HOST,
               projectId: CONF_TEST_PROJECT_ID,
@@ -124,11 +170,6 @@ export function executeScenario(testCase: RetryTestCase) {
               },
             });
 
-            creationResult = await createTestBenchRetryTest(
-              instructionSet.instructions,
-              jsonMethod?.name.toString(),
-              storageTransport,
-            );
             if (storageMethodString.includes('InstancePrecondition')) {
               bucket = await createBucketForTest(
                 storage,
@@ -158,22 +199,6 @@ export function executeScenario(testCase: RetryTestCase) {
             [hmacKey] = await storage.createHmacKey(
               `${TESTS_PREFIX}@email.com`,
             );
-
-            storage.interceptors.push({
-              resolved: (
-                requestConfig: GaxiosOptionsPrepared,
-              ): Promise<GaxiosOptionsPrepared> => {
-                const config = requestConfig as GaxiosOptions;
-                config.headers = config.headers || {};
-                Object.assign(config.headers, {
-                  'x-retry-test-id': creationResult.id,
-                });
-                return Promise.resolve(config as GaxiosOptionsPrepared);
-              },
-              rejected: error => {
-                return Promise.reject(error);
-              },
-            });
           });
 
           it(`${instructionNumber}`, async () => {
@@ -184,24 +209,30 @@ export function executeScenario(testCase: RetryTestCase) {
               storageTransport: storageTransport,
               notification: notification,
               hmacKey: hmacKey,
+              projectId: CONF_TEST_PROJECT_ID,
             };
             if (testCase.preconditionProvided) {
               methodParameters.preconditionRequired = true;
             }
 
             if (testCase.expectSuccess) {
-              assert.ifError(await storageMethodObject(methodParameters));
+              try {
+                await storageMethodObject(methodParameters);
+                const testBenchResult = await getTestBenchRetryTest(
+                  creationResult.id,
+                  storageTransport,
+                );
+                assert.strictEqual(testBenchResult.completed, true);
+              } catch (error) {
+                assert.fail(
+                  `Expected method to succeed, but it rejected with: ${error}`,
+                );
+              }
             } else {
               await assert.rejects(async () => {
                 await storageMethodObject(methodParameters);
-              }, undefined);
+              });
             }
-
-            const testBenchResult = await getTestBenchRetryTest(
-              creationResult.id,
-              storageTransport,
-            );
-            assert.strictEqual(testBenchResult.completed, true);
           }).timeout(TIMEOUT_FOR_INDIVIDUAL_TEST);
         });
       });
@@ -261,27 +292,31 @@ async function createTestBenchRetryTest(
 
   const requestOptions: StorageRequestOptions = {
     method: 'POST',
-    url: 'retry_test',
+    url: '/retry_test',
     body: JSON.stringify(requestBody),
     headers: {'Content-Type': 'application/json'},
   };
-
-  const response = await storageTransport.makeRequest(requestOptions);
-  return response as unknown as ConformanceTestCreationResult;
+  try {
+    const response = await storageTransport.makeRequest(requestOptions);
+    return response as unknown as ConformanceTestCreationResult;
+  } catch (error) {
+    return false as unknown as ConformanceTestCreationResult;
+  }
 }
 
 async function getTestBenchRetryTest(
   testId: string,
   storageTransport: StorageTransport,
 ): Promise<ConformanceTestResult> {
-  const response = await storageTransport.makeRequest({
+  const requestOptions: StorageRequestOptions = {
     url: `retry_test/${testId}`,
     method: 'GET',
     retry: true,
     headers: {
       'x-retry-test-id': testId,
     },
-  });
+  };
+  const response = await storageTransport.makeRequest(requestOptions);
   return response as unknown as ConformanceTestResult;
 }
 
