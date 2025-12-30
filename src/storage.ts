@@ -307,6 +307,7 @@ export const RETRYABLE_ERR_FN_DEFAULT = function (err?: GaxiosError) {
     const reasons = reason.toLowerCase();
     return (
       reasons.includes('eai_again') || // DNS lookup error
+      reasons.includes('econnreset') ||
       reasons === 'econnreset' ||
       reasons === 'unexpected connection closure' ||
       reasons === 'epipe' ||
