@@ -131,12 +131,19 @@ export class StorageTransport {
         `${headers.get('x-goog-api-client')} gccl-gcs-cmd/${reqOpts[GCCL_GCS_CMD_KEY]}`,
       );
     }
-    if (reqOpts.interceptors) {
-      this.gaxiosInstance.interceptors.request.clear();
-      for (const inter of reqOpts.interceptors) {
-        this.gaxiosInstance.interceptors.request.add(inter);
-      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const retryId = (reqOpts.headers as any)?.['x-retry-test-id'];
+    if (retryId) {
+      headers.set('x-retry-test-id', retryId);
     }
+
+    const isDelete = reqOpts.method?.toUpperCase() === 'DELETE';
+    const urlString = reqOpts.url ? reqOpts.url.toString() : '';
+    const isAbsolute = urlString.startsWith('http');
+    const isResumable =
+      urlString.includes('uploadType=resumable') ||
+      urlString.includes('/upload/') ||
+      reqOpts.queryParameters?.uploadType === 'resumable';
 
     try {
       const getProjectId = async () => {
@@ -156,35 +163,205 @@ export class StorageTransport {
           noResponseRetries: this.retryOptions.maxRetries,
           maxRetryDelay: this.retryOptions.maxRetryDelay,
           retryDelayMultiplier: this.retryOptions.retryDelayMultiplier,
-          shouldRetry: this.retryOptions.retryableErrorFn,
           totalTimeout: this.retryOptions.totalTimeout,
+          // shouldRetry: this.retryOptions.retryableErrorFn,
+          shouldRetry: (err: GaxiosError) => {
+            const urlString = reqOpts.url?.toString() || '';
+            const status = err.response?.status;
+            const errorCode = err.code?.toString();
+            const retryableStatuses = [408, 429, 500, 502, 503, 504];
+
+            if (status && [401, 405, 412].includes(status)) return false;
+
+            const params = reqOpts.queryParameters || {};
+            const hasPrecondition =
+              params.ifGenerationMatch !== undefined ||
+              params.ifMetagenerationMatch !== undefined ||
+              params.ifSourceGenerationMatch !== undefined;
+
+            const isPost = reqOpts.method?.toUpperCase() === 'POST';
+            const isPatch = reqOpts.method?.toUpperCase() === 'PATCH';
+            const isPut = reqOpts.method?.toUpperCase() === 'PUT';
+            const isGet = reqOpts.method?.toUpperCase() === 'GET';
+            const isHead = reqOpts.method?.toUpperCase() === 'HEAD';
+            const isIdempotentMethod = isGet || isHead || isPut;
+
+            const isHmacRequest = urlString.includes('/hmacKeys');
+            const isAcl = urlString.includes('/acl');
+            const isNotificationRequest = urlString.includes(
+              '/notificationConfigs',
+            );
+
+            // 2. Logic for Mutations (POST, PATCH, DELETE)
+            if (isPost || isPatch || isDelete) {
+              if (isPost && (isHmacRequest || isAcl || isNotificationRequest))
+                return false;
+
+              const isBucketCreate =
+                isPost &&
+                urlString.includes('/v1/b') &&
+                !urlString.includes('/o');
+              const isSafeDelete = isDelete && !urlString.includes('/o/');
+
+              if (!hasPrecondition) {
+                if (!isBucketCreate && !isSafeDelete) {
+                  if (urlString.includes('uploadType=resumable') && isPost) {
+                    return !!status && retryableStatuses.includes(status);
+                  }
+                  return false;
+                }
+              }
+
+              if (status === undefined) {
+                const isResumable = urlString.includes('uploadType=resumable');
+
+                if (isResumable) return false;
+                return hasPrecondition || isBucketCreate || isSafeDelete;
+              }
+
+              return retryableStatuses.includes(status);
+            }
+
+            // 3. Logic for Idempotent Methods (GET, PUT, HEAD)
+            if (isIdempotentMethod) {
+              if (status === undefined) {
+                if (isPut && urlString.includes('upload_id=')) {
+                  return false;
+                }
+                return true;
+              }
+
+              return retryableStatuses.includes(status);
+            }
+
+            if (
+              isDelete &&
+              !hasPrecondition &&
+              !isNotificationRequest &&
+              !isHmacRequest
+            )
+              return false;
+
+            if (isPut) {
+              const url = err.config?.url.toString() || '';
+              if (isHmacRequest) {
+                try {
+                  const body =
+                    typeof reqOpts.body === 'string'
+                      ? JSON.parse(reqOpts.body)
+                      : reqOpts.body;
+
+                  if (!body || !body.etag) {
+                    return false;
+                  }
+                } catch (e) {
+                  return false;
+                }
+              } else if (url.includes('upload_id=')) {
+                if (!status || retryableStatuses.includes(status)) {
+                  return true;
+                }
+              }
+            }
+
+            const transientNetworkErrors = [
+              'ECONNRESET',
+              'ETIMEDOUT',
+              'EADDRINUSE',
+              'ECONNREFUSED',
+              'EPIPE',
+              'ENOTFOUND',
+              'ENETUNREACH',
+            ];
+            if (errorCode && transientNetworkErrors.includes(errorCode))
+              return true;
+
+            const data = err.response?.data;
+            if (data && data.error && Array.isArray(data.error.errors)) {
+              for (const e of data.error.errors) {
+                const reason = e.reason;
+                if (
+                  reason === 'rateLimitExceeded' ||
+                  reason === 'userRateLimitExceeded' ||
+                  (reason && reason.includes('EAI_AGAIN'))
+                ) {
+                  return true;
+                }
+              }
+            }
+            if (!status) return true;
+            return status ? retryableStatuses.includes(status) : false;
+          },
         },
-        params: reqOpts.queryParameters,
+        params: isAbsolute ? undefined : reqOpts.queryParameters,
         ...reqOpts,
         headers,
-        url: this.#buildUrl(reqOpts.url?.toString(), reqOpts.queryParameters),
+        url: isAbsolute
+          ? urlString
+          : this.#buildUrl(urlString, reqOpts.queryParameters),
         timeout: this.timeout,
-        validateStatus: status => status >= 200 && status < 300,
+        validateStatus: status =>
+          (status >= 200 && status < 300) || (isResumable && status === 308),
+        responseType:
+          isResumable || isDelete || reqOpts.responseType === 'text'
+            ? 'text'
+            : 'json',
       });
-      return callback
-        ? requestPromise
-            .then(resp => callback(null, resp.data, resp))
-            .catch(err => callback(err, null, err.response))
-        : (requestPromise
-            .then(resp => resp.data)
-            .catch(error => {
-              if (error instanceof GaxiosError) {
-                console.error(
-                  '  GaxiosError details:',
-                  error.code,
-                  'Status:',
-                  error.response?.status,
-                );
-              } else {
-                console.error('  Error type:', typeof error);
-              }
-              throw error;
-            }) as Promise<T>);
+      const finalPromise = requestPromise
+        .then(resp => {
+          let data = resp.data;
+
+          // 1. If the body is empty (common in resumable initiation),
+          // we must return an object so we can attach headers to it.
+          if (
+            data === undefined ||
+            data === null ||
+            (typeof data === 'string' && data.trim() === '')
+          ) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            data = {} as any;
+          }
+
+          // 2. CRITICAL: Attach the headers from the Gaxios response to the data object
+          // This allows bucketUploadResumable to access response.headers.location
+          if (data && typeof data === 'object') {
+            // Convert the Headers object/map to a plain POJO
+            const plainHeaders: Record<string, string> = {};
+
+            // resp.headers might be a Headers object (with .forEach) or a plain Map
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (typeof (resp.headers as any).forEach === 'function') {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (resp.headers as any).forEach((value: string, key: string) => {
+                plainHeaders[key.toLowerCase()] = value;
+              });
+            } else {
+              // Fallback for plain objects
+              Object.assign(plainHeaders, resp.headers);
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (data as any).headers = plainHeaders;
+          }
+
+          if (isDelete && (data === '' || data === undefined)) {
+            data = {} as T;
+          }
+          if (callback) {
+            callback(null, data, resp);
+          }
+          return data;
+        })
+        .catch(error => {
+          if (error.message?.includes('JSON')) {
+            error.message = `Server returned non-JSON response: ${error.response?.status}`;
+          }
+          if (callback) {
+            callback(error, null, error.response);
+          }
+          throw error;
+        });
+      return finalPromise;
     } catch (e) {
       if (callback) return callback(e as GaxiosError);
       throw e;

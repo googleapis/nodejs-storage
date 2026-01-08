@@ -5,13 +5,13 @@
       "description": "always_idempotent",
       "cases": [
         {
-          "instructions": ["return-503", "return-503", "return-200"]
+          "instructions": ["return-503", "return-503"]
         },
         {
-          "instructions": ["return-reset-connection", "return-reset-connection", "return-200"]
+          "instructions": ["return-reset-connection", "return-reset-connection"]
         },
         {
-          "instructions": ["return-reset-connection", "return-503", "return-200"]
+          "instructions": ["return-reset-connection", "return-503"]
         }
       ],
       "methods": [
