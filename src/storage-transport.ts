@@ -198,26 +198,8 @@ export class StorageTransport {
               '/notificationConfigs',
             );
 
-            // IAM SetPolicy (POST /iam) - Check for etag precondition.
-            if (isIam && isPost) {
-              let hasIamPrecondition = false;
-              try {
-                const bodyStr =
-                  typeof reqOpts.body === 'string'
-                    ? reqOpts.body
-                    : reqOpts.body instanceof Buffer
-                      ? reqOpts.body.toString()
-                      : '';
-                hasIamPrecondition = !!JSON.parse(bodyStr || '{}').etag;
-              } catch {
-                /* Ignore, malformed is handled earlier */
-              }
-              // If no precondition, do not retry IAM POSTs unless covered by general transient errors.
-              if (!hasIamPrecondition) return false;
-            }
-
             // 2. Logic for Mutations (POST, PATCH, DELETE)
-            if ((isPost || isPatch || isDelete) && !isIam) {
+            if (isPost || isPatch || isDelete) {
               const isRetryTest = urlString.includes('retry-test-id');
               if (isPost && isAcl) {
                 if (isRetryTest) {
@@ -273,18 +255,31 @@ export class StorageTransport {
                   return true;
                 }
                 return false;
+              } else if (isIam) {
+                try {
+                  let hasIamPrecondition = false;
+                  const bodyStr =
+                    typeof reqOpts.body === 'string'
+                      ? reqOpts.body
+                      : reqOpts.body instanceof Buffer
+                        ? reqOpts.body.toString()
+                        : '';
+                  hasIamPrecondition = !!JSON.parse(bodyStr || '{}').etag;
+                  if (!hasIamPrecondition) {
+                    return false;
+                  }
+                  return status === undefined || status === 503;
+                } catch (e) {
+                  return false;
+                }
               }
             }
 
             // 3. Logic for Idempotent Methods (GET, PUT, HEAD)
             if (isIdempotentMethod) {
               if (status === undefined) {
-                // if (isPut && urlString.includes('upload_id=')) {
-                //   return false;
-                // }
                 return true;
               }
-
               return retryableStatuses.includes(status);
             }
 
@@ -323,10 +318,6 @@ export class StorageTransport {
             }
             if (!status) return true;
             return status ? retryableStatuses.includes(status) : false;
-            // if (status && retryableStatuses.includes(status)) {
-            //   return true;
-            // }
-            // return false;
           },
         },
         params: isAbsolute ? undefined : reqOpts.queryParameters,
@@ -349,8 +340,6 @@ export class StorageTransport {
         .then(resp => {
           let data = resp.data;
 
-          // 1. If the body is empty (common in resumable initiation),
-          // we must return an object so we can attach headers to it.
           if (
             data === undefined ||
             data === null ||
@@ -360,13 +349,9 @@ export class StorageTransport {
             data = {} as any;
           }
 
-          // 2. CRITICAL: Attach the headers from the Gaxios response to the data object
-          // This allows bucketUploadResumable to access response.headers.location
           if (data && typeof data === 'object') {
-            // Convert the Headers object/map to a plain POJO
             const plainHeaders: Record<string, string> = {};
 
-            // resp.headers might be a Headers object (with .forEach) or a plain Map
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             if (typeof (resp.headers as any).forEach === 'function') {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -374,7 +359,6 @@ export class StorageTransport {
                 plainHeaders[key.toLowerCase()] = value;
               });
             } else {
-              // Fallback for plain objects
               Object.assign(plainHeaders, resp.headers);
             }
 

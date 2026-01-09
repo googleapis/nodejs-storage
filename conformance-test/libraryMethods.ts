@@ -1234,35 +1234,36 @@ export async function iamGetPolicy(options: ConformanceTestOptions) {
 }
 
 export async function iamSetPolicy(options: ConformanceTestOptions) {
-  try {
-    const body: Policy = {
-      bindings: [
-        {
-          role: 'roles/storage.admin',
-          members: [
-            'serviceAccount:myotherproject@appspot.gserviceaccount.com',
-          ],
-        },
-      ],
-    };
+  const body: Policy = {
+    bindings: [
+      {
+        role: 'roles/storage.admin',
+        members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com'],
+      },
+    ],
+  };
 
-    if (options.preconditionRequired) {
-      const injectedEtag = (options as any).instancePreconditionOpts?.etag;
-      if (injectedEtag) {
-        body.etag = injectedEtag;
-      }
-    }
-    return await options.storageTransport!.makeRequest({
-      method: 'POST',
+  if (options.preconditionRequired) {
+    const getResponse = await options.storageTransport!.makeRequest({
+      method: 'GET',
       url: `storage/v1/b/${encodeURIComponent(options.bucket!.name)}/iam`,
-      body: JSON.stringify(body),
-      headers: {'Content-Type': 'application/json'},
+      queryParameters: {optionsRequestedPolicyVersion: 1},
     });
-  } catch (error) {
-    // Log the error so you know WHY it didn't resolve successfully
-    console.error('DEBUG: iamSetPolicy failed:', error);
-    throw error; // Re-throw so the test runner sees the failure
+
+    const currentPolicy = getResponse as Policy;
+    const fetchedEtag = currentPolicy.etag;
+
+    if (fetchedEtag) {
+      body.etag = fetchedEtag;
+    }
   }
+
+  return await options.storageTransport!.makeRequest({
+    method: 'PUT',
+    url: `storage/v1/b/${encodeURIComponent(options.bucket!.name)}/iam`,
+    body: JSON.stringify(body),
+    headers: {'Content-Type': 'application/json'},
+  });
 }
 
 export async function iamTestPermissions(options: ConformanceTestOptions) {
