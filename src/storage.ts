@@ -304,50 +304,37 @@ const IDEMPOTENCY_STRATEGY_DEFAULT = IdempotencyStrategy.RetryConditional;
  */
 export const RETRYABLE_ERR_FN_DEFAULT = function (err?: GaxiosError) {
   const isConnectionProblem = (reason: string) => {
-    const reasons = reason.toLowerCase();
     return (
-      reasons.includes('eai_again') || // DNS lookup error
-      reasons.includes('econnreset') ||
-      reasons === 'econnreset' ||
-      reasons === 'unexpected connection closure' ||
-      reasons === 'epipe' ||
-      reasons === 'etimedout' ||
-      reasons === 'econnrefused' ||
-      reasons === 'socket connection timeout'
+      reason.includes('eai_again') || // DNS lookup error
+      reason === 'econnreset' ||
+      reason === 'unexpected connection closure' ||
+      reason === 'epipe' ||
+      reason === 'socket connection timeout'
     );
   };
 
-  if (!err) return false;
-
-  const status = err.response?.status || err.status;
-  if ([408, 429, 500, 502, 503, 504].indexOf(status!) !== -1) {
-    return true;
-  }
-
-  if (err.code) {
-    const codeStr = err.code.toString().toLowerCase();
-    if (['408', '429', '500', '502', '503', '504'].indexOf(codeStr) !== -1) {
+  if (err) {
+    if ([408, 429, 500, 502, 503, 504].indexOf(err.status!) !== -1) {
       return true;
     }
-    if (isConnectionProblem(codeStr)) {
-      return true;
-    }
-  }
 
-  const data = err.response?.data;
-  if (data?.error?.errors && Array.isArray(data.error.errors)) {
-    for (const e of data.error.errors) {
-      const reason = e.reason?.toLowerCase();
-      if (
-        reason === 'ratelimitexceeded' ||
-        reason === 'userratelimitexceeded' ||
-        (reason && reason.includes('eai_again'))
-      ) {
+    if (typeof err.code === 'string') {
+      if (['408', '429', '500', '502', '503', '504'].indexOf(err.code) !== -1) {
+        return true;
+      }
+      const reason = (err.code as string).toLowerCase();
+      if (isConnectionProblem(reason)) {
+        return true;
+      }
+    }
+
+    if (err) {
+      const reason = err?.code?.toString().toLowerCase();
+      if (reason && isConnectionProblem(reason)) {
         return true;
       }
     }
   }
-
   return false;
 };
 
