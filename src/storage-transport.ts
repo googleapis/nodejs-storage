@@ -138,7 +138,7 @@ export class StorageTransport {
     }
 
     const isDelete = reqOpts.method?.toUpperCase() === 'DELETE';
-    const urlString = reqOpts.url ? reqOpts.url.toString() : '';
+    const urlString = reqOpts.url?.toString() || '';
     const isAbsolute = urlString.startsWith('http');
     const isResumable =
       urlString.includes('uploadType=resumable') ||
@@ -164,12 +164,11 @@ export class StorageTransport {
           maxRetryDelay: this.retryOptions.maxRetryDelay,
           retryDelayMultiplier: this.retryOptions.retryDelayMultiplier,
           totalTimeout: this.retryOptions.totalTimeout,
-          // shouldRetry: this.retryOptions.retryableErrorFn,
           shouldRetry: (err: GaxiosError) => {
-            const urlString = reqOpts.url?.toString() || '';
             const status = err.response?.status;
             const errorCode = err.code?.toString();
             const retryableStatuses = [408, 429, 500, 502, 503, 504];
+            const nonRetryableStatuses = [401, 405, 412];
 
             const isMalformedResponse =
               err.message?.includes('JSON') ||
@@ -177,7 +176,7 @@ export class StorageTransport {
               (err.stack && err.stack.includes('SyntaxError'));
             if (isMalformedResponse) return true;
 
-            if (status && [401, 405, 412].includes(status)) return false;
+            if (status && nonRetryableStatuses.includes(status)) return false;
 
             const params = reqOpts.queryParameters || {};
             const hasPrecondition =
@@ -190,7 +189,7 @@ export class StorageTransport {
             const isPut = reqOpts.method?.toUpperCase() === 'PUT';
             const isGet = reqOpts.method?.toUpperCase() === 'GET';
             const isHead = reqOpts.method?.toUpperCase() === 'HEAD';
-            const isIdempotentMethod = isGet || isHead || isPut;
+
             const isIam = urlString.includes('/iam');
             const isAcl = urlString.includes('/acl');
             const isHmacRequest = urlString.includes('/hmacKeys');
@@ -276,6 +275,7 @@ export class StorageTransport {
             }
 
             // Logic for Idempotent Methods (GET, PUT, HEAD)
+            const isIdempotentMethod = isGet || isHead || isPut;
             if (isIdempotentMethod) {
               if (status === undefined) {
                 return true;

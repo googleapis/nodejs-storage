@@ -21,23 +21,14 @@ import {
   Policy,
   GaxiosError,
 } from '../src';
-import * as path from 'path';
-import {
-  createTestBuffer,
-  createTestFileFromBuffer,
-  deleteTestFile,
-} from './testBenchUtil';
+import {createTestBuffer} from './testBenchUtil';
 import * as uuid from 'uuid';
-import {getDirName} from '../src/util.js';
 import {
   StorageTransport,
   StorageRequestOptions,
 } from '../src/storage-transport';
-import {PassThrough} from 'stream';
-import {pipeline} from 'stream/promises';
 
 const FILE_SIZE_BYTES = 9 * 1024 * 1024;
-const CHUNK_SIZE_BYTES = 2 * 1024 * 1024;
 
 export interface ConformanceTestOptions {
   bucket?: Bucket;
@@ -126,22 +117,12 @@ export async function create(options: ConformanceTestOptions) {
   }
   const bucketName = options.bucket.name;
   let bucketExists = false;
-  try {
-    const existsReq: StorageRequestOptions = {
-      method: 'GET',
-      url: `storage/v1/b/${bucketName}`,
-    };
-    await options.storageTransport.makeRequest(existsReq);
-    bucketExists = true;
-  } catch (error: unknown) {
-    const gaxiosError = error as GaxiosError;
-    if (gaxiosError.response?.status === 404) {
-      console.log(`Bucket ${bucketName} does not exist.`);
-    } else {
-      console.warn(`Error checking existence of ${bucketName}:`, gaxiosError);
-      throw error;
-    }
-  }
+  const existsReq: StorageRequestOptions = {
+    method: 'GET',
+    url: `storage/v1/b/${bucketName}`,
+  };
+  await options.storageTransport.makeRequest(existsReq);
+  bucketExists = true;
 
   if (bucketExists) {
     let pageToken: string | undefined = undefined;
@@ -151,45 +132,26 @@ export async function create(options: ConformanceTestOptions) {
         url: `storage/v1/b/${bucketName}/o`,
         queryParameters: pageToken ? {pageToken} : undefined,
       };
-      try {
-        const listResult = await options.storageTransport.makeRequest(listReq);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const objects = (listResult as any)?.items || [];
+      const listResult = await options.storageTransport.makeRequest(listReq);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const objects = (listResult as any)?.items || [];
 
-        for (const obj of objects) {
-          const deleteObjReq: StorageRequestOptions = {
-            method: 'DELETE',
-            url: `storage/v1/b/${bucketName}/o/${obj.name}`,
-          };
-          try {
-            await options.storageTransport.makeRequest(deleteObjReq);
-          } catch (deleteErr: unknown) {
-            console.warn(`Error deleting object ${obj.name}:`, deleteErr);
-          }
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        pageToken = (listResult as any)?.nextPageToken;
-      } catch (listErr: unknown) {
-        console.error(
-          `Error listing objects in bucket ${bucketName}:`,
-          listErr,
-        );
-        throw listErr;
+      for (const obj of objects) {
+        const deleteObjReq: StorageRequestOptions = {
+          method: 'DELETE',
+          url: `storage/v1/b/${bucketName}/o/${obj.name}`,
+        };
+        await options.storageTransport.makeRequest(deleteObjReq);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      pageToken = (listResult as any)?.nextPageToken;
     } while (pageToken);
 
     const deleteBucketReq: StorageRequestOptions = {
       method: 'DELETE',
       url: `storage/v1/b/${bucketName}`,
     };
-    try {
-      await options.storageTransport.makeRequest(deleteBucketReq);
-    } catch (deleteErr: unknown) {
-      const gaxiosError = deleteErr as GaxiosError;
-      if (gaxiosError.response?.status !== 404) {
-        throw deleteErr;
-      }
-    }
+    await options.storageTransport.makeRequest(deleteBucketReq);
   }
 
   const createRequest: StorageRequestOptions = {
@@ -217,6 +179,7 @@ export async function createNotification(options: ConformanceTestOptions) {
 export async function deleteBucket(options: ConformanceTestOptions) {
   try {
     await options.bucket!.deleteFiles();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     const message = err.message || '';
     if (!message.includes('does not exist') && err.code !== 404) {
@@ -441,6 +404,7 @@ export async function bucketMakePublic(options: ConformanceTestOptions) {
     }),
     headers: {
       'Content-Type': 'application/json',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'x-retry-test-id': (options as any).retryTestId,
     },
   };
@@ -690,6 +654,7 @@ export async function copy(options: ConformanceTestOptions) {
   };
 
   if (options.preconditionRequired) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const instanceOpts = (options.file as any)?.instancePreconditionOpts;
     const generation =
       instanceOpts?.ifGenerationMatch || options.file?.metadata?.generation;
@@ -734,10 +699,12 @@ export async function fileDeleteInstancePrecondition(
     url: `storage/v1/b/${encodeURIComponent(options.bucket!.name)}/o/${encodeURIComponent(options.file!.name)}`,
     queryParameters: {},
     headers: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'x-retry-test-id': (options as any).retryTestId,
     },
   };
   if (options.preconditionRequired) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const instanceOpts = (options.file as any)?.instancePreconditionOpts;
     const generation =
       instanceOpts?.ifGenerationMatch || options.file?.metadata?.generation;
@@ -753,11 +720,13 @@ export async function fileDelete(options: ConformanceTestOptions) {
     url: `storage/v1/b/${encodeURIComponent(options.bucket!.name)}/o/${encodeURIComponent(options.file!.name)}`,
     queryParameters: {},
     headers: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       'x-retry-test-id': (options as any).retryTestId,
     },
   };
 
   if (options.preconditionRequired) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const instanceOpts = (options.file as any)?.instancePreconditionOpts;
     const generation =
       instanceOpts?.ifGenerationMatch || options.file?.metadata?.generation;
@@ -774,6 +743,7 @@ export async function download(options: ConformanceTestOptions) {
     queryParameters: {alt: 'media'},
     responseType: 'stream',
     headers: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...(options as any).headers,
     },
   };
@@ -789,6 +759,7 @@ export async function exists(options: ConformanceTestOptions) {
   try {
     await options.storageTransport!.makeRequest(requestOptions);
     return true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     if (err.code === 404) return false;
     throw err;
@@ -830,8 +801,8 @@ export async function fileMakePrivateInstancePrecondition(
     body: JSON.stringify({acl: []}),
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const instanceOpts = (options.file as any)?.instancePreconditionOpts;
-
   if (instanceOpts?.ifGenerationMatch !== undefined) {
     requestOptions.queryParameters!.ifGenerationMatch =
       instanceOpts.ifGenerationMatch;
@@ -927,8 +898,7 @@ export async function rotateEncryptionKey(options: ConformanceTestOptions) {
   };
 
   if (options.preconditionRequired) {
-    // requestOptions.queryParameters!.ifGenerationMatch =
-    //   options.file!.metadata.generation;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const instanceOpts = (options.file as any)?.instancePreconditionOpts;
     const generation =
       instanceOpts?.ifGenerationMatch || options.file?.metadata?.generation;
@@ -1021,6 +991,7 @@ export async function saveMultipart(options: ConformanceTestOptions) {
     body: body,
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const instanceOpts = (options.file as any)?.instancePreconditionOpts;
   if (instanceOpts?.ifGenerationMatch !== undefined) {
     requestOptions.queryParameters!.ifGenerationMatch =
@@ -1047,6 +1018,7 @@ export async function setMetadataInstancePrecondition(
     body: JSON.stringify(metadata),
     headers: {'Content-Type': 'application/json'},
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const instanceOpts = (options.file as any)?.instancePreconditionOpts;
 
   if (instanceOpts?.ifGenerationMatch !== undefined) {
@@ -1078,6 +1050,7 @@ export async function setMetadata(options: ConformanceTestOptions) {
   };
 
   if (options.preconditionRequired) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const instanceOpts = (options.file as any)?.instancePreconditionOpts;
     const generation =
       instanceOpts?.ifGenerationMatch || options.file?.metadata?.generation;
@@ -1101,6 +1074,7 @@ export async function setStorageClass(options: ConformanceTestOptions) {
   };
 
   if (options.preconditionRequired) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const instanceOpts = (options.file as any)?.instancePreconditionOpts;
     const generation =
       instanceOpts?.ifGenerationMatch || options.file?.metadata?.generation;
@@ -1144,6 +1118,7 @@ export async function getMetadataHMAC(options: ConformanceTestOptions) {
 }
 
 export async function setMetadataHMAC(options: ConformanceTestOptions) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const body: any = {
     state: 'INACTIVE',
   };
@@ -1249,6 +1224,7 @@ export async function notificationExists(options: ConformanceTestOptions) {
   try {
     await options.storageTransport!.makeRequest(requestOptions);
     return true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     if (err.code === 404) return false;
     throw err;
@@ -1291,17 +1267,7 @@ export async function createBucket(options: ConformanceTestOptions) {
     headers: {'Content-Type': 'application/json'},
   };
 
-  // This call will be intercepted by the Proxy in conformanceCommon.ts
-  // and will have the 'x-retry-test-id' added automatically.
-  try {
-    return await options.storageTransport!.makeRequest(requestOptions);
-  } catch (err: any) {
-    console.error(
-      'DEBUG ERROR:',
-      JSON.stringify(err.response?.data || err, null, 2),
-    );
-    throw err;
-  }
+  return await options.storageTransport!.makeRequest(requestOptions);
 }
 
 export async function createHMACKey(options: ConformanceTestOptions) {
