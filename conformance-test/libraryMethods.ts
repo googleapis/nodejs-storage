@@ -153,6 +153,7 @@ export async function create(options: ConformanceTestOptions) {
       };
       try {
         const listResult = await options.storageTransport.makeRequest(listReq);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const objects = (listResult as any)?.items || [];
 
         for (const obj of objects) {
@@ -166,6 +167,7 @@ export async function create(options: ConformanceTestOptions) {
             console.warn(`Error deleting object ${obj.name}:`, deleteErr);
           }
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         pageToken = (listResult as any)?.nextPageToken;
       } catch (listErr: unknown) {
         console.error(
@@ -771,32 +773,11 @@ export async function download(options: ConformanceTestOptions) {
     url: `storage/v1/b/${encodeURIComponent(options.bucket!.name)}/o/${encodeURIComponent(options.file!.name)}`,
     queryParameters: {alt: 'media'},
     responseType: 'stream',
+    headers: {
+      ...(options as any).headers,
+    },
   };
-
-  // 1. Create a collector
-  const chunks: Buffer[] = [];
-  const collector = new PassThrough();
-
-  collector.on('data', chunk => chunks.push(chunk));
-
-  try {
-    const response =
-      await options.storageTransport!.makeRequest(requestOptions);
-
-    // 2. Extract the readable stream
-    const readableStream = (response as any).data || response;
-
-    // 3. Use pipeline with automatic cleanup
-    // This will resolve when the stream is fully consumed
-    await pipeline(readableStream, collector);
-
-    // 4. Return the full string
-    return Buffer.concat(chunks).toString();
-  } catch (err: any) {
-    // Explicitly destroy streams to prevent socket hangs that cause timeouts
-    collector.destroy();
-    throw err;
-  }
+  return await options.storageTransport!.makeRequest(requestOptions);
 }
 
 export async function exists(options: ConformanceTestOptions) {
@@ -966,7 +947,6 @@ export async function saveResumableInstancePrecondition(
 export async function saveResumable(options: ConformanceTestOptions) {
   const data = 'file-save-content';
   const dataBuffer = Buffer.from(data);
-
   const retryId = (options as any).headers?.['x-retry-test-id'];
 
   const initiateOptions: StorageRequestOptions = {
@@ -984,7 +964,6 @@ export async function saveResumable(options: ConformanceTestOptions) {
   };
 
   if (options.preconditionRequired) {
-    initiateOptions.queryParameters = initiateOptions.queryParameters || {};
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const instanceOpts = (options.file as any)?.instancePreconditionOpts;
     const generation =
@@ -1003,17 +982,76 @@ export async function saveResumable(options: ConformanceTestOptions) {
     );
   }
 
-  return await options.storageTransport!.makeRequest({
-    method: 'PUT',
-    url: sessionUri,
-    body: dataBuffer,
-    headers: {
-      'Content-Type': 'application/octet-stream',
-      'Content-Length': dataBuffer.length.toString(),
-      'Content-Range': `bytes 0-${dataBuffer.length - 1}/${dataBuffer.length}`,
-      'x-retry-test-id': retryId,
-    } as any,
-  });
+  const totalSize = dataBuffer.length;
+  const chunkSize = 256 * 1024;
+  let offset = 0;
+  let retryCount = 0;
+
+  while (offset < totalSize && retryCount < 10) {
+    const end = Math.min(offset + chunkSize, totalSize) - 1;
+    const chunk = dataBuffer.slice(offset, end + 1);
+
+    try {
+      const result = await options.storageTransport!.makeRequest({
+        method: 'PUT',
+        url: sessionUri,
+        body: chunk,
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': chunk.length.toString(),
+          'Content-Range': `bytes 0-${offset} - ${end}}/${totalSize}`,
+          ...(retryId ? {'x-retry-test-id': retryId} : {}),
+        } as any,
+      });
+      return result;
+    } catch (err: any) {
+      retryCount++;
+      const status = err.response?.status;
+
+      // Only probe if it's a retryable error (503, 408, or connection reset)
+      if (!status || status === 503 || status === 408) {
+        console.log(
+          `DEBUG: Scenario 7 - ${status} caught. Probing for offset...`,
+        );
+
+        // The probe itself might throw a 308, we must catch it to see the Range header
+        const probe: any = await options
+          .storageTransport!.makeRequest({
+            method: 'PUT',
+            url: sessionUri,
+            headers: {
+              'Content-Range': `bytes */${totalSize}`,
+              ...(retryId ? {'x-retry-test-id': retryId} : {}),
+            } as any,
+          })
+          .catch((e: any) => e.response || e);
+
+        const probeStatus = probe?.status || probe?.response?.status;
+        const range = probe?.headers?.range || probe?.headers?.Range;
+
+        if (range) {
+          const match = range.match(/bytes=0-(\d+)/);
+          if (match) {
+            offset = parseInt(match[1], 10) + 1;
+            console.log(
+              `DEBUG: Resuming from server-reported offset: ${offset}`,
+            );
+            continue;
+          }
+        }
+
+        // If server says 308 but no range, it means 0 bytes were saved
+        if (probeStatus === 308 || probeStatus === 200) {
+          continue;
+        }
+      }
+
+      // If we reach here, the error wasn't a 503 or the probe failed
+      if (retryCount >= 10)
+        throw new Error('Max retries reached in saveResumable');
+    }
+  }
+  throw new Error('Resumable upload failed unexpectedly.');
 }
 
 export async function saveMultipartInstancePrecondition(
@@ -1196,27 +1234,35 @@ export async function iamGetPolicy(options: ConformanceTestOptions) {
 }
 
 export async function iamSetPolicy(options: ConformanceTestOptions) {
-  const body: Policy = {
-    bindings: [
-      {
-        role: 'roles/storage.admin',
-        members: ['serviceAccount:myotherproject@appspot.gserviceaccount.com'],
-      },
-    ],
-  };
+  try {
+    const body: Policy = {
+      bindings: [
+        {
+          role: 'roles/storage.admin',
+          members: [
+            'serviceAccount:myotherproject@appspot.gserviceaccount.com',
+          ],
+        },
+      ],
+    };
 
-  if (options.preconditionRequired) {
-    const injectedEtag = (options as any).instancePreconditionOpts?.etag;
-    if (injectedEtag) {
-      body.etag = injectedEtag;
+    if (options.preconditionRequired) {
+      const injectedEtag = (options as any).instancePreconditionOpts?.etag;
+      if (injectedEtag) {
+        body.etag = injectedEtag;
+      }
     }
+    return await options.storageTransport!.makeRequest({
+      method: 'POST',
+      url: `storage/v1/b/${encodeURIComponent(options.bucket!.name)}/iam`,
+      body: JSON.stringify(body),
+      headers: {'Content-Type': 'application/json'},
+    });
+  } catch (error) {
+    // Log the error so you know WHY it didn't resolve successfully
+    console.error('DEBUG: iamSetPolicy failed:', error);
+    throw error; // Re-throw so the test runner sees the failure
   }
-  return await options.storageTransport!.makeRequest({
-    method: 'POST',
-    url: `storage/v1/b/${encodeURIComponent(options.bucket!.name)}/iam`,
-    body: JSON.stringify(body),
-    headers: {'Content-Type': 'application/json'},
-  });
 }
 
 export async function iamTestPermissions(options: ConformanceTestOptions) {

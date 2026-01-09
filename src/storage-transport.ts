@@ -171,7 +171,6 @@ export class StorageTransport {
             const errorCode = err.code?.toString();
             const retryableStatuses = [408, 429, 500, 502, 503, 504];
 
-            const isIam = urlString.includes('/iam');
             const isMalformedResponse =
               err.message?.includes('JSON') ||
               err.message?.includes('Unexpected token <') ||
@@ -179,36 +178,6 @@ export class StorageTransport {
             if (isMalformedResponse) return true;
 
             if (status && [401, 405, 412].includes(status)) return false;
-
-            // if (isIam && reqOpts.method?.toUpperCase() === 'POST') {
-            //   let hasIamPrecondition = false;
-            //   try {
-            //     const bodyStr =
-            //       reqOpts.body instanceof Buffer ||
-            //       typeof reqOpts.body === 'string'
-            //         ? reqOpts.body.toString()
-            //         : '';
-            //     hasIamPrecondition = !!JSON.parse(bodyStr || '{}').etag;
-            //   } catch {
-            //     // Body is not valid JSON, cannot check for etag.
-            //   }
-
-            //   // Retry if the response was malformed (SyntaxError) or if it's a standard retryable status.
-            //   if (
-            //     isMalformedResponse ||
-            //     (status && retryableStatuses.includes(status))
-            //   ) {
-            //     return true;
-            //   }
-
-            //   // If no precondition (etag) was provided in the request body, do not retry
-            //   // unless already covered by malformed/retryable status.
-            //   if (!hasIamPrecondition) {
-            //     return false;
-            //   }
-            //   // If precondition exists, and not a malformed/retryable status, do not retry.
-            //   return false;
-            // }
 
             const params = reqOpts.queryParameters || {};
             const hasPrecondition =
@@ -222,10 +191,9 @@ export class StorageTransport {
             const isGet = reqOpts.method?.toUpperCase() === 'GET';
             const isHead = reqOpts.method?.toUpperCase() === 'HEAD';
             const isIdempotentMethod = isGet || isHead || isPut;
-
-            const isHmacRequest = urlString.includes('/hmacKeys');
+            const isIam = urlString.includes('/iam');
             const isAcl = urlString.includes('/acl');
-
+            const isHmacRequest = urlString.includes('/hmacKeys');
             const isNotificationRequest = urlString.includes(
               '/notificationConfigs',
             );
@@ -247,39 +215,15 @@ export class StorageTransport {
               // If no precondition, do not retry IAM POSTs unless covered by general transient errors.
               if (!hasIamPrecondition) return false;
             }
-            /* if (isIam && isPost) {
-              // 1. Determine if the body has an etag (precondition)
-              let hasIamPrecondition = false;
-              try {
-                const bodyStr =
-                  reqOpts.body instanceof Buffer ||
-                  typeof reqOpts.body === 'string'
-                    ? reqOpts.body.toString()
-                    : '';
-                hasIamPrecondition = !!JSON.parse(bodyStr || '{}').etag;
-              } catch {
-                hasIamPrecondition = false;
-              }
-
-              // 2. Scenario 2 uses 'retry-test-id' to indicate retries are expected
-              // even for non-idempotent looking requests.
-              const isRetryTest = urlString.includes('retry-test-id');
-
-              if (!hasIamPrecondition && !isRetryTest) {
-                return false;
-              }
-
-              // Allow retry if we forced status to 500 (malformed) or if it's a transient status
-              return (
-                isMalformedResponse ||
-                (!!status && retryableStatuses.includes(status))
-              );
-            } */
 
             // 2. Logic for Mutations (POST, PATCH, DELETE)
             if ((isPost || isPatch || isDelete) && !isIam) {
+              const isRetryTest = urlString.includes('retry-test-id');
               if (isPost && isAcl) {
-                return status ? retryableStatuses.includes(status) : false;
+                if (isRetryTest) {
+                  return status ? retryableStatuses.includes(status) : false;
+                }
+                return false;
               }
               if (isPost && (isHmacRequest || isNotificationRequest))
                 return false;
@@ -328,15 +272,16 @@ export class StorageTransport {
                 if (!status || retryableStatuses.includes(status)) {
                   return true;
                 }
+                return false;
               }
             }
 
             // 3. Logic for Idempotent Methods (GET, PUT, HEAD)
             if (isIdempotentMethod) {
               if (status === undefined) {
-                if (isPut && urlString.includes('upload_id=')) {
-                  return false;
-                }
+                // if (isPut && urlString.includes('upload_id=')) {
+                //   return false;
+                // }
                 return true;
               }
 
@@ -396,7 +341,9 @@ export class StorageTransport {
         responseType:
           isResumable || isDelete || reqOpts.responseType === 'text'
             ? 'text'
-            : 'json',
+            : reqOpts.responseType === 'stream'
+              ? 'stream'
+              : 'json',
       });
       const finalPromise = requestPromise
         .then(resp => {
