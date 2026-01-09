@@ -945,8 +945,9 @@ export async function saveResumableInstancePrecondition(
 }
 
 export async function saveResumable(options: ConformanceTestOptions) {
-  const data = 'file-save-content';
+  const data = createTestBuffer(FILE_SIZE_BYTES);
   const dataBuffer = Buffer.from(data);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const retryId = (options as any).headers?.['x-retry-test-id'];
 
   const initiateOptions: StorageRequestOptions = {
@@ -970,88 +971,25 @@ export async function saveResumable(options: ConformanceTestOptions) {
       instanceOpts?.ifGenerationMatch || options.file?.metadata?.generation;
     initiateOptions.queryParameters!.ifGenerationMatch = generation;
   }
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response: any =
     await options.storageTransport!.makeRequest(initiateOptions);
-  const sessionUri = response.headers?.location;
+  const sessionUri = response.headers?.location || response.location;
 
-  if (!sessionUri) {
-    throw new Error(
-      'Failed to get session URI from resumable upload initiation.',
-    );
-  }
+  if (!sessionUri) throw new Error('Failed to get session URI');
 
-  const totalSize = dataBuffer.length;
-  const chunkSize = 256 * 1024;
-  let offset = 0;
-  let retryCount = 0;
-
-  while (offset < totalSize && retryCount < 10) {
-    const end = Math.min(offset + chunkSize, totalSize) - 1;
-    const chunk = dataBuffer.slice(offset, end + 1);
-
-    try {
-      const result = await options.storageTransport!.makeRequest({
-        method: 'PUT',
-        url: sessionUri,
-        body: chunk,
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'Content-Length': chunk.length.toString(),
-          'Content-Range': `bytes 0-${offset} - ${end}}/${totalSize}`,
-          ...(retryId ? {'x-retry-test-id': retryId} : {}),
-        } as any,
-      });
-      return result;
-    } catch (err: any) {
-      retryCount++;
-      const status = err.response?.status;
-
-      // Only probe if it's a retryable error (503, 408, or connection reset)
-      if (!status || status === 503 || status === 408) {
-        console.log(
-          `DEBUG: Scenario 7 - ${status} caught. Probing for offset...`,
-        );
-
-        // The probe itself might throw a 308, we must catch it to see the Range header
-        const probe: any = await options
-          .storageTransport!.makeRequest({
-            method: 'PUT',
-            url: sessionUri,
-            headers: {
-              'Content-Range': `bytes */${totalSize}`,
-              ...(retryId ? {'x-retry-test-id': retryId} : {}),
-            } as any,
-          })
-          .catch((e: any) => e.response || e);
-
-        const probeStatus = probe?.status || probe?.response?.status;
-        const range = probe?.headers?.range || probe?.headers?.Range;
-
-        if (range) {
-          const match = range.match(/bytes=0-(\d+)/);
-          if (match) {
-            offset = parseInt(match[1], 10) + 1;
-            console.log(
-              `DEBUG: Resuming from server-reported offset: ${offset}`,
-            );
-            continue;
-          }
-        }
-
-        // If server says 308 but no range, it means 0 bytes were saved
-        if (probeStatus === 308 || probeStatus === 200) {
-          continue;
-        }
-      }
-
-      // If we reach here, the error wasn't a 503 or the probe failed
-      if (retryCount >= 10)
-        throw new Error('Max retries reached in saveResumable');
-    }
-  }
-  throw new Error('Resumable upload failed unexpectedly.');
+  return await options.storageTransport!.makeRequest({
+    method: 'PUT',
+    url: sessionUri,
+    body: dataBuffer,
+    headers: {
+      'Content-Type': 'application/octet-stream',
+      'Content-Length': dataBuffer.length.toString(),
+      'Content-Range': `bytes 0-${dataBuffer.length - 1}/${dataBuffer.length}`,
+      'x-retry-test-id': retryId,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any,
+  });
 }
 
 export async function saveMultipartInstancePrecondition(

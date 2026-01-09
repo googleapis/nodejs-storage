@@ -198,7 +198,7 @@ export class StorageTransport {
               '/notificationConfigs',
             );
 
-            // 2. Logic for Mutations (POST, PATCH, DELETE)
+            // Logic for Mutations (POST, PATCH, DELETE)
             if (isPost || isPatch || isDelete) {
               const isRetryTest = urlString.includes('retry-test-id');
               if (isPost && isAcl) {
@@ -250,11 +250,6 @@ export class StorageTransport {
                 } catch (e) {
                   return false;
                 }
-              } else if (url.includes('upload_id=')) {
-                if (!status || retryableStatuses.includes(status)) {
-                  return true;
-                }
-                return false;
               } else if (isIam) {
                 try {
                   let hasIamPrecondition = false;
@@ -272,10 +267,15 @@ export class StorageTransport {
                 } catch (e) {
                   return false;
                 }
+              } else if (url.includes('upload_id=')) {
+                if (!status || retryableStatuses.includes(status)) {
+                  return true;
+                }
+                return false;
               }
             }
 
-            // 3. Logic for Idempotent Methods (GET, PUT, HEAD)
+            // Logic for Idempotent Methods (GET, PUT, HEAD)
             if (isIdempotentMethod) {
               if (status === undefined) {
                 return true;
