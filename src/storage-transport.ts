@@ -353,13 +353,22 @@ export class StorageTransport {
             const plainHeaders: Record<string, string> = {};
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if (typeof (resp.headers as any).forEach === 'function') {
+            if (
+              resp.headers &&
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              typeof (resp.headers as any).forEach === 'function'
+            ) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (resp.headers as any).forEach((value: string, key: string) => {
                 plainHeaders[key.toLowerCase()] = value;
               });
-            } else {
-              Object.assign(plainHeaders, resp.headers);
+            } else if (resp.headers) {
+              // If headers is a plain object, normalize keys to lowercase
+              for (const key of Object.keys(resp.headers)) {
+                plainHeaders[key.toLowerCase()] = (
+                  resp.headers as unknown as Record<string, string>
+                )[key];
+              }
             }
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

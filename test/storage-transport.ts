@@ -377,5 +377,26 @@ describe('Storage Transport', () => {
         true,
       );
     });
+
+    it('should lowercase header keys even when using the object fallback path', async () => {
+      const requestStub = authClientStub.request as sinon.SinonStub;
+
+      // Simulate a response with Mixed-Case headers and NO .forEach method
+      requestStub.resolves({
+        data: {},
+        headers: {
+          'X-Goog-Generation': '123',
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: any = await transport.makeRequest({url: '/test'});
+
+      // Verify keys were converted to lowercase
+      assert.strictEqual(result.headers['x-goog-generation'], '123');
+      assert.strictEqual(result.headers['content-type'], 'application/json');
+      assert.strictEqual(result.headers['X-Goog-Generation'], undefined);
+    });
   });
 });

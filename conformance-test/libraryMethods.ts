@@ -360,13 +360,25 @@ export async function getNotifications(options: ConformanceTestOptions) {
 }
 
 export async function lock(options: ConformanceTestOptions) {
-  const [metadata] = await options.bucket!.getMetadata();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const retryId = (options as any).headers?.['x-retry-test-id'];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const metadata: any = await options.storageTransport!.makeRequest({
+    method: 'GET',
+    url: `storage/v1/b/${encodeURIComponent(options.bucket!.name)}`,
+    headers: {...(retryId ? {'x-retry-test-id': retryId} : {})},
+  });
   const currentMetageneration = metadata.metageneration;
+
   const requestOptions: StorageRequestOptions = {
     method: 'POST',
     url: `storage/v1/b/${encodeURIComponent(options.bucket!.name)}/lockRetentionPolicy`,
     queryParameters: {
       ifMetagenerationMatch: currentMetageneration,
+    },
+    headers: {
+      ...(retryId ? {'x-retry-test-id': retryId} : {}),
     },
   };
 
@@ -1249,25 +1261,37 @@ export async function notificationGetMetadata(options: ConformanceTestOptions) {
 /////////////////////////////////////////////////
 
 export async function createBucket(options: ConformanceTestOptions) {
-  const bucketName = 'test-creating-bucket';
-  const bucket = options.storage!.bucket(bucketName);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const retryId = (options as any).headers?.['x-retry-test-id'];
+  const bucketName = options.bucket!.name;
 
-  const [exists] = await bucket.exists();
-  if (exists) {
-    await bucket.delete();
+  try {
+    return await options.storageTransport!.makeRequest({
+      method: 'POST',
+      url: 'storage/v1/b',
+      queryParameters: {project: options.projectId},
+      body: JSON.stringify({name: bucketName}),
+      headers: {
+        'Content-Type': 'application/json',
+        ...(retryId ? {'x-retry-test-id': retryId} : {}),
+      },
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    if (
+      err.response?.status === 409 ||
+      err.message?.includes('already exists')
+    ) {
+      return await options.storageTransport!.makeRequest({
+        method: 'GET',
+        url: `storage/v1/b/${encodeURIComponent(bucketName)}`,
+        headers: {
+          ...(retryId ? {'x-retry-test-id': retryId} : {}),
+        },
+      });
+    }
+    throw err;
   }
-  const requestBody = {
-    name: bucketName,
-  };
-
-  const requestOptions: StorageRequestOptions = {
-    method: 'POST',
-    url: `storage/v1/b?project=${options.projectId}`,
-    body: JSON.stringify(requestBody),
-    headers: {'Content-Type': 'application/json'},
-  };
-
-  return await options.storageTransport!.makeRequest(requestOptions);
 }
 
 export async function createHMACKey(options: ConformanceTestOptions) {
