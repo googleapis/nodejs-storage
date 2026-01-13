@@ -108,7 +108,8 @@ export function executeScenario(testCase: RetryTestCase) {
           beforeEach(async () => {
             const rawStorageTransport = new StorageTransport({
               apiEndpoint: TESTBENCH_HOST,
-              authClient: undefined,
+              authClient: authClient,
+              keyFilename: SERVICE_ACCOUNT,
               baseUrl: TESTBENCH_HOST,
               packageJson: {name: 'test-package', version: '1.0.0'},
               retryOptions: {
