@@ -15,7 +15,7 @@
  */
 import * as jsonToNodeApiMapping from './test-data/retryInvocationMap.json';
 import * as libraryMethods from './libraryMethods';
-import {Bucket, File, HmacKey, Notification, Storage} from '../src';
+import {Bucket, File, Gaxios, HmacKey, Notification, Storage} from '../src';
 import * as uuid from 'uuid';
 import * as assert from 'assert';
 import {
@@ -23,6 +23,9 @@ import {
   StorageTransport,
   StorageTransportCallback,
 } from '../src/storage-transport';
+import {getDirName} from '../src/util';
+import path from 'path';
+import {GoogleAuth} from 'google-auth-library';
 interface RetryCase {
   instructions: String[];
 }
@@ -59,9 +62,24 @@ const DURATION_SECONDS = 600; // 10 mins.
 const TESTS_PREFIX = `storage.retry.tests.${shortUUID()}.`;
 const TESTBENCH_HOST =
   process.env.STORAGE_EMULATOR_HOST || 'http://localhost:9000/';
-const CONF_TEST_PROJECT_ID = 'my-project-id';
+const CONF_TEST_PROJECT_ID = 'dummy-project-id';
 const TIMEOUT_FOR_INDIVIDUAL_TEST = 20000;
 const RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS = 0.01;
+const SERVICE_ACCOUNT = path.join(
+  getDirName(),
+  '../../../conformance-test/fixtures/signing-service-account.json',
+);
+
+const authClient = new GoogleAuth({
+  keyFilename: SERVICE_ACCOUNT,
+  scopes: ['https://www.googleapis.com/auth/devstorage.full_control'],
+}).fromJSON(require(SERVICE_ACCOUNT));
+
+authClient.getAccessToken = async () => ({token: 'unauthenticated-test-token'});
+authClient.request = async opts => {
+  const gaxios = new Gaxios();
+  return gaxios.request(opts);
+};
 
 export function executeScenario(testCase: RetryTestCase) {
   for (
@@ -162,6 +180,8 @@ export function executeScenario(testCase: RetryTestCase) {
             storage = new Storage({
               apiEndpoint: TESTBENCH_HOST,
               projectId: CONF_TEST_PROJECT_ID,
+              keyFilename: SERVICE_ACCOUNT,
+              authClient: authClient,
               retryOptions: {
                 retryDelayMultiplier: RETRY_MULTIPLIER_FOR_CONFORMANCE_TESTS,
               },
