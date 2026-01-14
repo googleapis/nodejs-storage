@@ -600,11 +600,6 @@ export async function bucketUploadResumable(options: ConformanceTestOptions) {
     );
   }
 
-  /**
-   * TODO: Restore chunk-based upload logic and manual status check.
-   * Single-shot PUT is a temporary workaround to isolate auth issues.
-   * Required for Scenario 7: mid-stream failure recovery (e.g., return-503-after-256K).
-   */
   return await options.storageTransport!.makeRequest({
     method: 'PUT',
     url: sessionUri,
@@ -965,11 +960,6 @@ export async function saveResumable(options: ConformanceTestOptions) {
 
   if (!sessionUri) throw new Error('Failed to get session URI');
 
-  /**
-   * TODO: Restore chunk-based upload logic and manual status check.
-   * Single-shot PUT is a temporary workaround to isolate auth issues.
-   * Required for Scenario 7: mid-stream failure recovery (e.g., return-503-after-256K).
-   */
   return await options.storageTransport!.makeRequest({
     method: 'PUT',
     url: sessionUri,
