@@ -59,7 +59,9 @@ function mockAuthorizeRequest(
     access_token: 'abc123',
   },
 ) {
-  return nock('https://oauth2.googleapis.com').post('/token').reply(code, data);
+  return nock('https://oauth2.googleapis.com')
+    .post('/token', () => true)
+    .reply(code, data);
 }
 
 describe('resumable-upload', () => {

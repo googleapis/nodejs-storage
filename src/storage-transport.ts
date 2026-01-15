@@ -125,6 +125,11 @@ export class StorageTransport {
     callback?: StorageTransportCallback<T>,
   ): Promise<void | T> {
     const headers = this.#buildRequestHeaders(reqOpts.headers);
+    if (reqOpts.headers) {
+      Object.entries(reqOpts.headers).forEach(([key, value]) => {
+        headers.set(key, value as string);
+      });
+    }
     if (reqOpts[GCCL_GCS_CMD_KEY]) {
       headers.set(
         'x-goog-api-client',
@@ -136,11 +141,6 @@ export class StorageTransport {
       for (const inter of reqOpts.interceptors) {
         this.gaxiosInstance.interceptors.request.add(inter);
       }
-    }
-    if (reqOpts.headers) {
-      Object.entries(reqOpts.headers).forEach(([key, value]) => {
-        headers.set(key, value as string);
-      });
     }
 
     const isDelete = reqOpts.method?.toUpperCase() === 'DELETE';
