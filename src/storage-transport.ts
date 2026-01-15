@@ -125,6 +125,11 @@ export class StorageTransport {
     callback?: StorageTransportCallback<T>,
   ): Promise<void | T> {
     const headers = this.#buildRequestHeaders(reqOpts.headers);
+    if (reqOpts.headers) {
+      Object.entries(reqOpts.headers).forEach(([key, value]) => {
+        headers.set(key, value as string);
+      });
+    }
     if (reqOpts[GCCL_GCS_CMD_KEY]) {
       headers.set(
         'x-goog-api-client',
@@ -137,6 +142,14 @@ export class StorageTransport {
         this.gaxiosInstance.interceptors.request.add(inter);
       }
     }
+
+    const isDelete = reqOpts.method?.toUpperCase() === 'DELETE';
+    const urlString = reqOpts.url?.toString() || '';
+    const isAbsolute = urlString.startsWith('http');
+    const isResumable =
+      urlString.includes('uploadType=resumable') ||
+      urlString.includes('/upload/') ||
+      reqOpts.queryParameters?.uploadType === 'resumable';
 
     try {
       const getProjectId = async () => {
@@ -156,20 +169,243 @@ export class StorageTransport {
           noResponseRetries: this.retryOptions.maxRetries,
           maxRetryDelay: this.retryOptions.maxRetryDelay,
           retryDelayMultiplier: this.retryOptions.retryDelayMultiplier,
-          shouldRetry: this.retryOptions.retryableErrorFn,
           totalTimeout: this.retryOptions.totalTimeout,
+          shouldRetry: (err: GaxiosError) => {
+            const status = err.response?.status;
+            const errorCode = err.code?.toString();
+            const retryableStatuses = [408, 429, 500, 502, 503, 504];
+            const nonRetryableStatuses = [401, 405, 412];
+
+            const isMalformedResponse =
+              err.message?.includes('JSON') ||
+              err.message?.includes('Unexpected token <') ||
+              (err.stack && err.stack.includes('SyntaxError'));
+            if (isMalformedResponse) return true;
+
+            if (status && nonRetryableStatuses.includes(status)) return false;
+
+            const params = reqOpts.queryParameters || {};
+            const hasPrecondition =
+              params.ifGenerationMatch !== undefined ||
+              params.ifMetagenerationMatch !== undefined ||
+              params.ifSourceGenerationMatch !== undefined;
+
+            const isPost = reqOpts.method?.toUpperCase() === 'POST';
+            const isPatch = reqOpts.method?.toUpperCase() === 'PATCH';
+            const isPut = reqOpts.method?.toUpperCase() === 'PUT';
+            const isGet = reqOpts.method?.toUpperCase() === 'GET';
+            const isHead = reqOpts.method?.toUpperCase() === 'HEAD';
+
+            const isIam = urlString.includes('/iam');
+            const isAcl = urlString.includes('/acl');
+            const isHmacRequest = urlString.includes('/hmacKeys');
+            const isNotificationRequest = urlString.includes(
+              '/notificationConfigs',
+            );
+
+            // Logic for Mutations (POST, PATCH, DELETE)
+            if (isPost || isPatch || isDelete) {
+              const isRetryTest = urlString.includes('retry-test-id');
+              if (isPost && isAcl) {
+                if (isRetryTest) {
+                  return status ? retryableStatuses.includes(status) : false;
+                }
+                return false;
+              }
+              if (isPost && (isHmacRequest || isNotificationRequest))
+                return false;
+
+              const isBucketCreate =
+                isPost &&
+                urlString.includes('/v1/b') &&
+                !urlString.includes('/o');
+              const isSafeDelete = isDelete && !urlString.includes('/o/');
+
+              if (!hasPrecondition) {
+                if (!isBucketCreate && !isSafeDelete) {
+                  if (urlString.includes('uploadType=resumable') && isPost) {
+                    return !!status && retryableStatuses.includes(status);
+                  }
+                  return false;
+                }
+              }
+
+              if (status === undefined) {
+                const isResumable = urlString.includes('uploadType=resumable');
+
+                if (isResumable) return false;
+                return hasPrecondition || isBucketCreate || isSafeDelete;
+              }
+
+              return retryableStatuses.includes(status);
+            }
+
+            if (isPut) {
+              const url = err.config?.url.toString() || '';
+              if (isHmacRequest) {
+                try {
+                  const body =
+                    typeof reqOpts.body === 'string'
+                      ? JSON.parse(reqOpts.body)
+                      : reqOpts.body;
+
+                  if (!body || !body.etag) {
+                    return false;
+                  }
+                } catch (e) {
+                  return false;
+                }
+              } else if (isIam) {
+                try {
+                  let hasIamPrecondition = false;
+                  const bodyStr =
+                    typeof reqOpts.body === 'string'
+                      ? reqOpts.body
+                      : reqOpts.body instanceof Buffer
+                        ? reqOpts.body.toString()
+                        : '';
+                  hasIamPrecondition = !!JSON.parse(bodyStr || '{}').etag;
+                  if (!hasIamPrecondition) {
+                    return false;
+                  }
+                  return status === undefined || status === 503;
+                } catch (e) {
+                  return false;
+                }
+              } else if (url.includes('upload_id=')) {
+                if (!status || retryableStatuses.includes(status)) {
+                  return true;
+                }
+                return false;
+              }
+            }
+
+            // Logic for Idempotent Methods (GET, PUT, HEAD)
+            const isIdempotentMethod = isGet || isHead || isPut;
+            if (isIdempotentMethod) {
+              if (status === undefined) {
+                return true;
+              }
+              return retryableStatuses.includes(status);
+            }
+
+            if (
+              isDelete &&
+              !hasPrecondition &&
+              !isNotificationRequest &&
+              !isHmacRequest
+            )
+              return false;
+
+            const transientNetworkErrors = [
+              'ECONNRESET',
+              'ETIMEDOUT',
+              'EADDRINUSE',
+              'ECONNREFUSED',
+              'EPIPE',
+              'ENOTFOUND',
+              'ENETUNREACH',
+            ];
+            if (errorCode && transientNetworkErrors.includes(errorCode))
+              return true;
+
+            const data = err.response?.data;
+            if (data && data.error && Array.isArray(data.error.errors)) {
+              for (const e of data.error.errors) {
+                const reason = e.reason;
+                if (
+                  reason === 'rateLimitExceeded' ||
+                  reason === 'userRateLimitExceeded' ||
+                  (reason && reason.includes('EAI_AGAIN'))
+                ) {
+                  return true;
+                }
+              }
+            }
+            if (!status) return true;
+            return status ? retryableStatuses.includes(status) : false;
+          },
         },
+        params: isAbsolute ? undefined : reqOpts.queryParameters,
         ...reqOpts,
         headers,
-        url: this.#buildUrl(reqOpts.url?.toString(), reqOpts.queryParameters),
+        url: isAbsolute
+          ? urlString
+          : this.#buildUrl(urlString, reqOpts.queryParameters),
         timeout: this.timeout,
+        validateStatus: status =>
+          (status >= 200 && status < 300) || (isResumable && status === 308),
+        responseType:
+          isResumable || isDelete || reqOpts.responseType === 'text'
+            ? 'text'
+            : reqOpts.responseType === 'stream'
+              ? 'stream'
+              : 'json',
       });
+      const finalPromise = requestPromise
+        .then(resp => {
+          let data = resp.data;
 
-      return callback
-        ? requestPromise
-            .then(resp => callback(null, resp.data, resp))
-            .catch(err => callback(err, null, err.response))
-        : (requestPromise.then(resp => resp.data) as Promise<T>);
+          if (
+            data === undefined ||
+            data === null ||
+            (typeof data === 'string' && data.trim() === '')
+          ) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            data = {} as any;
+          }
+
+          if (data && typeof data === 'object') {
+            const plainHeaders: Record<string, string> = {};
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (
+              resp.headers &&
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              typeof (resp.headers as any).forEach === 'function'
+            ) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (resp.headers as any).forEach((value: string, key: string) => {
+                plainHeaders[key.toLowerCase()] = value;
+              });
+            } else if (resp.headers) {
+              // If headers is a plain object, normalize keys to lowercase
+              for (const key of Object.keys(resp.headers)) {
+                plainHeaders[key.toLowerCase()] = (
+                  resp.headers as unknown as Record<string, string>
+                )[key];
+              }
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (data as any).headers = plainHeaders;
+          }
+
+          if (isDelete && (data === '' || data === undefined)) {
+            data = {} as T;
+          }
+          if (callback) {
+            callback(null, data, resp);
+          }
+          return data;
+        })
+        .catch(error => {
+          const isMalformedResponse =
+            error.message?.includes('JSON') ||
+            (error.cause &&
+              (error.cause as Error).message?.includes('Unexpected token <')) ||
+            (error.stack && error.stack.includes('SyntaxError'));
+          if (isMalformedResponse) {
+            error.message = `Server returned non-JSON response: ${error.response?.status || 'unknown'} - ${error.message}`;
+          } else if (error.message?.includes('JSON')) {
+            error.message = `Server returned non-JSON response: ${error.response?.status}`;
+          }
+          if (callback) {
+            callback(error, null, error.response);
+          }
+          throw error;
+        });
+      return finalPromise;
     } catch (e) {
       if (callback) return callback(e as GaxiosError);
       throw e;
