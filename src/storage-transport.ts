@@ -131,10 +131,16 @@ export class StorageTransport {
         `${headers.get('x-goog-api-client')} gccl-gcs-cmd/${reqOpts[GCCL_GCS_CMD_KEY]}`,
       );
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const retryId = (reqOpts.headers as any)?.['x-retry-test-id'];
-    if (retryId) {
-      headers.set('x-retry-test-id', retryId);
+    if (reqOpts.interceptors) {
+      this.gaxiosInstance.interceptors.request.clear();
+      for (const inter of reqOpts.interceptors) {
+        this.gaxiosInstance.interceptors.request.add(inter);
+      }
+    }
+    if (reqOpts.headers) {
+      Object.entries(reqOpts.headers).forEach(([key, value]) => {
+        headers.set(key, value as string);
+      });
     }
 
     const isDelete = reqOpts.method?.toUpperCase() === 'DELETE';

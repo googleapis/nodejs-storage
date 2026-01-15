@@ -49,7 +49,7 @@ export interface ConformanceTestOptions {
 export async function addLifecycleRuleInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return addLifecycleRule(options);
+  return await addLifecycleRule(options);
 }
 
 export async function addLifecycleRule(options: ConformanceTestOptions) {
@@ -61,7 +61,7 @@ export async function addLifecycleRule(options: ConformanceTestOptions) {
         rule: [
           {
             action: {type: 'Delete'},
-            condition: {age: 1095},
+            condition: {age: 1095}, // Specified in days.
           },
         ],
       },
@@ -79,7 +79,7 @@ export async function addLifecycleRule(options: ConformanceTestOptions) {
 export async function combineInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return combine(options);
+  return await combine(options);
 }
 
 export async function combine(options: ConformanceTestOptions) {
@@ -204,7 +204,7 @@ export async function deleteBucket(options: ConformanceTestOptions) {
 export async function deleteLabelsInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return deleteLabels(options);
+  return await deleteLabels(options);
 }
 
 export async function deleteLabels(options: ConformanceTestOptions) {
@@ -225,7 +225,7 @@ export async function deleteLabels(options: ConformanceTestOptions) {
 export async function disableRequesterPaysInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return disableRequesterPays(options);
+  return await disableRequesterPays(options);
 }
 
 export async function disableRequesterPays(options: ConformanceTestOptions) {
@@ -246,7 +246,7 @@ export async function disableRequesterPays(options: ConformanceTestOptions) {
 export async function enableLoggingInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return enableLogging(options);
+  return await enableLogging(options);
 }
 
 export async function enableLogging(options: ConformanceTestOptions) {
@@ -272,7 +272,7 @@ export async function enableLogging(options: ConformanceTestOptions) {
 export async function enableRequesterPaysInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return enableRequesterPays(options);
+  return await enableRequesterPays(options);
 }
 
 export async function enableRequesterPays(options: ConformanceTestOptions) {
@@ -388,7 +388,7 @@ export async function lock(options: ConformanceTestOptions) {
 export async function bucketMakePrivateInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return bucketMakePrivate(options);
+  return await bucketMakePrivate(options);
 }
 
 export async function bucketMakePrivate(options: ConformanceTestOptions) {
@@ -427,7 +427,7 @@ export async function bucketMakePublic(options: ConformanceTestOptions) {
 export async function removeRetentionPeriodInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return removeRetentionPeriod(options);
+  return await removeRetentionPeriod(options);
 }
 
 export async function removeRetentionPeriod(options: ConformanceTestOptions) {
@@ -448,7 +448,7 @@ export async function removeRetentionPeriod(options: ConformanceTestOptions) {
 export async function setCorsConfigurationInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return setCorsConfiguration(options);
+  return await setCorsConfiguration(options);
 }
 
 export async function setCorsConfiguration(options: ConformanceTestOptions) {
@@ -469,7 +469,7 @@ export async function setCorsConfiguration(options: ConformanceTestOptions) {
 export async function setLabelsInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return setLabels(options);
+  return await setLabels(options);
 }
 
 export async function setLabels(options: ConformanceTestOptions) {
@@ -492,7 +492,7 @@ export async function setLabels(options: ConformanceTestOptions) {
 export async function bucketSetMetadataInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return bucketSetMetadata(options);
+  return await bucketSetMetadata(options);
 }
 
 export async function bucketSetMetadata(options: ConformanceTestOptions) {
@@ -518,7 +518,7 @@ export async function bucketSetMetadata(options: ConformanceTestOptions) {
 export async function setRetentionPeriodInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return setRetentionPeriod(options);
+  return await setRetentionPeriod(options);
 }
 
 export async function setRetentionPeriod(options: ConformanceTestOptions) {
@@ -542,7 +542,7 @@ export async function setRetentionPeriod(options: ConformanceTestOptions) {
 export async function bucketSetStorageClassInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return bucketSetStorageClass(options);
+  return await bucketSetStorageClass(options);
 }
 
 export async function bucketSetStorageClass(options: ConformanceTestOptions) {
@@ -563,7 +563,7 @@ export async function bucketSetStorageClass(options: ConformanceTestOptions) {
 export async function bucketUploadResumableInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return bucketUploadResumable(options);
+  return await bucketUploadResumable(options);
 }
 
 export async function bucketUploadResumable(options: ConformanceTestOptions) {
@@ -615,7 +615,7 @@ export async function bucketUploadResumable(options: ConformanceTestOptions) {
 export async function bucketUploadMultipartInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return bucketUploadMultipart(options);
+  return await bucketUploadMultipart(options);
 }
 
 export async function bucketUploadMultipart(options: ConformanceTestOptions) {
@@ -677,13 +677,13 @@ export async function copy(options: ConformanceTestOptions) {
 }
 
 export async function createReadStream(options: ConformanceTestOptions) {
-  return download(options);
+  return await download(options);
 }
 
 export async function createResumableUploadInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return createResumableUpload(options);
+  return await createResumableUpload(options);
 }
 
 export async function createResumableUpload(options: ConformanceTestOptions) {
@@ -788,11 +788,11 @@ export async function get(options: ConformanceTestOptions) {
 }
 
 export async function getExpirationDate(options: ConformanceTestOptions) {
-  return get(options);
+  return await get(options);
 }
 
 export async function getMetadata(options: ConformanceTestOptions) {
-  return get(options);
+  return await get(options);
 }
 
 export async function isPublic(options: ConformanceTestOptions) {
@@ -923,7 +923,7 @@ export async function rotateEncryptionKey(options: ConformanceTestOptions) {
 export async function saveResumableInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return saveResumable(options);
+  return await saveResumable(options);
 }
 
 export async function saveResumable(options: ConformanceTestOptions) {
@@ -977,7 +977,7 @@ export async function saveResumable(options: ConformanceTestOptions) {
 export async function saveMultipartInstancePrecondition(
   options: ConformanceTestOptions,
 ) {
-  return saveMultipart(options);
+  return await saveMultipart(options);
 }
 
 export async function saveMultipart(options: ConformanceTestOptions) {
@@ -1253,7 +1253,7 @@ export async function notificationGet(options: ConformanceTestOptions) {
 }
 
 export async function notificationGetMetadata(options: ConformanceTestOptions) {
-  return notificationGet(options);
+  return await notificationGet(options);
 }
 
 /////////////////////////////////////////////////
@@ -1312,7 +1312,7 @@ export async function getBuckets(options: ConformanceTestOptions) {
 }
 
 export async function getBucketsStream(options: ConformanceTestOptions) {
-  return getBuckets(options);
+  return await getBuckets(options);
 }
 
 export async function getHMACKeyStream(options: ConformanceTestOptions) {
