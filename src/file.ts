@@ -2155,6 +2155,16 @@ class File extends ServiceObject<File, FileMetadata> {
             return pipelineCallback(e);
           }
 
+          // If this is a partial upload, we don't expect final metadata yet.
+          if (options.isPartialUpload) {
+            // Emit CRC32c for this completed chunk if hash validation is active.
+            if (hashCalculatingStream?.crc32c) {
+              writeStream.emit('crc32c', hashCalculatingStream.crc32c);
+            }
+            // Resolve the pipeline for this *partial chunk*.
+            return pipelineCallback();
+          }
+
           // We want to make sure we've received the metadata from the server in order
           // to properly validate the object's integrity. Depending on the type of upload,
           // the stream could close before the response is returned.
