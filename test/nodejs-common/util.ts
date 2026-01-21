@@ -46,6 +46,7 @@ import {
   MakeRequestConfig,
   ParsedHttpRespMessage,
   Util,
+  UtilExceptionMessages,
 } from '../../src/nodejs-common/util.js';
 import {DEFAULT_PROJECT_ID_TOKEN} from '../../src/nodejs-common/service.js';
 import duplexify from 'duplexify';
@@ -1183,6 +1184,62 @@ describe('common/util', () => {
             assert.strictEqual(err, error);
             setImmediate(() => {
               assert.strictEqual(stream.destroyed, true);
+              done();
+            });
+          });
+        });
+      });
+
+      describe('Handling of TLS Handshake, Timeout, and Connection Reset Errors in Authenticated Requests', () => {
+        const reqOpts = fakeReqOpts;
+        beforeEach(() => {
+          authClient.authorizeRequest = async () => reqOpts;
+          sandbox.stub(fakeGoogleAuth, 'GoogleAuth').returns(authClient);
+        });
+
+        const testCases = [
+          {
+            name: 'ECONNRESET',
+            error: new Error('ECONNRESET'),
+            expectedMessage: UtilExceptionMessages.ECONNRESET_ERROR_MESSAGE,
+          },
+          {
+            name: '"TLS handshake"',
+            error: new Error('Request failed due to TLS handshake timeout.'),
+            expectedMessage: UtilExceptionMessages.TLS_TIMEOUT_ERROR_MESSAGE,
+          },
+          {
+            name: 'generic "timed out"',
+            error: new Error('The request timed out.'),
+            expectedMessage: UtilExceptionMessages.ETIMEDOUT_ERROR_MESSAGE,
+          },
+          {
+            name: 'ETIMEDOUT',
+            error: new Error('Request failed with error: ETIMEDOUT'),
+            expectedMessage: UtilExceptionMessages.ETIMEDOUT_ERROR_MESSAGE,
+          },
+        ];
+
+        testCases.forEach(({name, error: networkError, expectedMessage}) => {
+          it(`should transform raw ${name} into specific network error`, done => {
+            // Override `retry-request` to simulate a network error.
+            retryRequestOverride = (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              _reqOpts: any,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              _opts: any,
+              callback: (err: Error, res: {}, body: null) => void
+            ) => {
+              callback(networkError, {}, null);
+              return {abort: () => {}}; // Return an abortable request.
+            };
+
+            const makeAuthenticatedRequest =
+              util.makeAuthenticatedRequestFactory({});
+
+            makeAuthenticatedRequest({} as DecorateRequestOptions, err => {
+              assert.ok(err);
+              assert.strictEqual(err!.message, expectedMessage);
               done();
             });
           });
