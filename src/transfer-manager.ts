@@ -624,8 +624,9 @@ export class TransferManager {
       const isAbsoluteAttempt = path.isAbsolute(relativePath);
 
       if (isOutside || isAbsoluteAttempt || file.name.includes(':')) {
-        let reason: SkipReason = SkipReason.ILLEGAL_CHARACTER;
+        let reason: SkipReason = SkipReason.DOWNLOAD_ERROR;
         if (isOutside) reason = SkipReason.PATH_TRAVERSAL;
+        else if (file.name.includes(':')) reason = SkipReason.ILLEGAL_CHARACTER;
         else if (isAbsoluteAttempt) reason = SkipReason.ABSOLUTE_PATH_BLOCKED;
 
         skippedFiles.push({
