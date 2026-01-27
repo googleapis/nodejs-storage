@@ -22,6 +22,8 @@ import {
   File,
   FileExceptionMessages,
   RequestError,
+  SkippedFileInfo,
+  SkipReason,
 } from './file.js';
 import pLimit from 'p-limit';
 import * as path from 'path';
@@ -572,11 +574,7 @@ export class TransferManager {
       options.concurrencyLimit || DEFAULT_PARALLEL_DOWNLOAD_LIMIT
     );
     const promises: Promise<DownloadResponse>[] = [];
-    const skippedFiles: Array<{
-      fileName: string;
-      localPath: string;
-      reason: string;
-    }> = [];
+    const skippedFiles: SkippedFileInfo[] = [];
     let files: File[] = [];
 
     const baseDestination = path.resolve(
@@ -622,14 +620,19 @@ export class TransferManager {
 
       const resolvedPath = path.resolve(dest || file.name);
       const relativePath = path.relative(baseDestination, resolvedPath);
-      const isOutside =
-        relativePath.startsWith('..') || path.isAbsolute(relativePath);
+      const isOutside = relativePath.startsWith('..');
+      const isAbsoluteAttempt = path.isAbsolute(relativePath);
 
-      if (isOutside || file.name.includes(':')) {
+      if (isOutside || isAbsoluteAttempt || file.name.includes(':')) {
+        let reason: SkipReason = SkipReason.ILLEGAL_CHARACTER;
+        if (isOutside) reason = SkipReason.PATH_TRAVERSAL;
+        else if (isAbsoluteAttempt) reason = SkipReason.ABSOLUTE_PATH_BLOCKED;
+
         skippedFiles.push({
           fileName: file.name,
           localPath: resolvedPath,
-          reason: 'Path Traversal Detected',
+          reason: reason,
+          message: `File ${file.name} was skipped due to path validation failure.`,
         });
         continue;
       }
@@ -644,15 +647,30 @@ export class TransferManager {
 
       promises.push(
         limit(async () => {
-          const destination = passThroughOptionsCopy.destination;
-          if (destination && destination.endsWith(path.sep)) {
-            await fsp.mkdir(destination, {recursive: true});
-            return Promise.resolve([
-              Buffer.alloc(0),
-            ]) as Promise<DownloadResponse>;
-          }
+          try {
+            const destination = passThroughOptionsCopy.destination;
+            if (
+              destination &&
+              (destination.endsWith(path.sep) || destination.endsWith('/'))
+            ) {
+              await fsp.mkdir(destination, {recursive: true});
+              return [Buffer.alloc(0)] as DownloadResponse;
+            }
 
-          return file.download(passThroughOptionsCopy);
+            return file.download(passThroughOptionsCopy);
+          } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err));
+            skippedFiles.push({
+              fileName: file.name,
+              localPath: path.resolve(
+                passThroughOptionsCopy.destination || file.name
+              ),
+              reason: SkipReason.DOWNLOAD_ERROR,
+              message: error.message,
+              error: error as Error,
+            });
+            return [Buffer.alloc(0)] as DownloadResponse;
+          }
         })
       );
     }

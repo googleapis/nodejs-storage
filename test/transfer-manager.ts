@@ -41,7 +41,7 @@ import fs from 'fs';
 import {promises as fsp, Stats} from 'fs';
 
 import * as sinon from 'sinon';
-import {DownloadManyFilesResult} from '../src/file.js';
+import {DownloadManyFilesResult, SkipReason} from '../src/file.js';
 
 describe('Transfer Manager', () => {
   const BUCKET_NAME = 'test-bucket';
@@ -378,7 +378,7 @@ describe('Transfer Manager', () => {
       assert.strictEqual(results.skippedFiles[0].fileName, maliciousFilename);
       assert.strictEqual(
         results.skippedFiles[0].reason,
-        'Path Traversal Detected'
+        SkipReason.PATH_TRAVERSAL
       );
     });
 
@@ -474,8 +474,39 @@ describe('Transfer Manager', () => {
       assert.strictEqual(results.skippedFiles.length, 1);
       assert.strictEqual(
         results.skippedFiles[0].reason,
-        'Path Traversal Detected'
+        SkipReason.ILLEGAL_CHARACTER
       );
+    });
+
+    it('should account for every input file (Parity Check)', async () => {
+      const prefix = './downloads';
+      const fileNames = [
+        'valid1.txt',
+        '../../traversal.txt', // Should be skipped
+        '/absolute/blocked.txt',
+        'c:/absolute/blocked.txt', // Should be skipped
+        'absolute/../valid2.txt',
+      ];
+
+      const files = fileNames.map(name => bucket.file(name));
+
+      sandbox.stub(File.prototype, 'download').resolves([Buffer.alloc(0)]);
+
+      const result = (await transferManager.downloadManyFiles(files, {
+        prefix,
+      })) as DownloadManyFilesResult;
+
+      const totalProcessed =
+        result.responses.length + result.skippedFiles.length;
+
+      assert.strictEqual(
+        totalProcessed,
+        fileNames.length,
+        `Parity Failure: Processed ${totalProcessed} files but input had ${fileNames.length}`
+      );
+
+      assert.strictEqual(result.responses.length, 3);
+      assert.strictEqual(result.skippedFiles.length, 2);
     });
   });
 

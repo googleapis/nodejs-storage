@@ -401,11 +401,19 @@ export interface DownloadManyFilesResult {
   skippedFiles: SkippedFileInfo[];
 }
 
+export enum SkipReason {
+  PATH_TRAVERSAL = 'PATH_TRAVERSAL',
+  ILLEGAL_CHARACTER = 'ILLEGAL_CHARACTER',
+  ABSOLUTE_PATH_BLOCKED = 'ABSOLUTE_PATH_BLOCKED',
+  ALREADY_EXISTS = 'ALREADY_EXISTS',
+  DOWNLOAD_ERROR = 'DOWNLOAD_ERROR',
+}
+
 export interface SkippedFileInfo {
   fileName: string;
   localPath: string;
   reason: string;
-  message?: string;
+  message: string;
   error?: Error;
 }
 

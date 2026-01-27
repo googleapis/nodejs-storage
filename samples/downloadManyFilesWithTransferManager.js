@@ -54,8 +54,9 @@ function main(
       secondFileName,
     ]);
 
+    const skippedFileNames = new Set(skippedFiles.map(f => f.fileName));
     for (const fileName of [firstFileName, secondFileName]) {
-      const isSkipped = skippedFiles.some(f => f.fileName === fileName);
+      const isSkipped = skippedFileNames.has(fileName);
       if (!isSkipped) {
         console.log(
           `gs://${bucketName}/${fileName} downloaded to ${fileName}.`
