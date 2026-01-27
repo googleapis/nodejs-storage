@@ -41,6 +41,7 @@ import fs from 'fs';
 import {promises as fsp, Stats} from 'fs';
 
 import * as sinon from 'sinon';
+import {DownloadManyFilesResult} from '../src/file.js';
 
 describe('Transfer Manager', () => {
   const BUCKET_NAME = 'test-bucket';
@@ -348,6 +349,132 @@ describe('Transfer Manager', () => {
           recursive: true,
         }),
         true
+      );
+    });
+
+    it('skips files that attempt path traversal via dot-segments (../) and returns them in skippedFiles', async () => {
+      const prefix = 'safe-directory';
+      const maliciousFilename = '../../etc/passwd';
+      const validFilename = 'valid.txt';
+
+      const maliciousFile = new File(bucket, maliciousFilename);
+      const validFile = new File(bucket, validFilename);
+
+      const downloadStub = sandbox
+        .stub(validFile, 'download')
+        .resolves([Buffer.alloc(0)]);
+      const maliciousDownloadStub = sandbox.stub(maliciousFile, 'download');
+
+      const result = await transferManager.downloadManyFiles(
+        [maliciousFile, validFile],
+        {prefix}
+      );
+
+      assert.strictEqual(maliciousDownloadStub.called, false);
+      assert.strictEqual(downloadStub.calledOnce, true);
+
+      const results = result as DownloadManyFilesResult;
+      assert.strictEqual(results.skippedFiles.length, 1);
+      assert.strictEqual(results.skippedFiles[0].fileName, maliciousFilename);
+      assert.strictEqual(
+        results.skippedFiles[0].reason,
+        'Path Traversal Detected'
+      );
+    });
+
+    it('allows files with relative segments that resolve within the target directory', async () => {
+      const prefix = 'safe-directory';
+      const filename = './subdir/../subdir/file.txt';
+      const file = new File(bucket, filename);
+
+      const downloadStub = sandbox
+        .stub(file, 'download')
+        .resolves([Buffer.alloc(0)]);
+
+      await transferManager.downloadManyFiles([file], {prefix});
+
+      assert.strictEqual(downloadStub.calledOnce, true);
+    });
+
+    it('prevents traversal when no prefix is provided', async () => {
+      const maliciousFilename = '../../../traversal.txt';
+      const file = new File(bucket, maliciousFilename);
+      const downloadStub = sandbox.stub(file, 'download');
+
+      const result = await transferManager.downloadManyFiles([file]);
+
+      assert.strictEqual(downloadStub.called, false);
+      const results = result as DownloadManyFilesResult;
+      assert.strictEqual(results.skippedFiles.length, 1);
+    });
+
+    it('jails absolute-looking paths with nested segments into the target directory', async () => {
+      const prefix = './downloads';
+      const filename = '/tmp/shady.txt';
+      const file = new File(bucket, filename);
+      const expectedDestination = path.join(prefix, filename);
+
+      const downloadStub = sandbox
+        .stub(file, 'download')
+        .resolves([Buffer.alloc(0)]);
+
+      const result = await transferManager.downloadManyFiles([file], {prefix});
+
+      assert.strictEqual(downloadStub.called, true);
+      const options = downloadStub.firstCall.args[0] as DownloadOptions;
+      assert.strictEqual(options.destination, expectedDestination);
+
+      const results = result as DownloadManyFilesResult;
+      assert.strictEqual(results.skippedFiles.length, 0);
+    });
+
+    it('jails absolute-looking Unix paths (e.g. /etc/passwd) into the target directory instead of skipping', async () => {
+      const prefix = 'downloads';
+      const filename = '/etc/passwd';
+      const expectedDestination = path.join(prefix, filename);
+
+      const file = new File(bucket, filename);
+      const downloadStub = sandbox
+        .stub(file, 'download')
+        .resolves([Buffer.alloc(0)]);
+
+      await transferManager.downloadManyFiles([file], {prefix});
+
+      assert.strictEqual(downloadStub.calledOnce, true);
+      const options = downloadStub.firstCall.args[0] as DownloadOptions;
+      assert.strictEqual(options.destination, expectedDestination);
+    });
+
+    it('correctly handles stripPrefix and verifies the resulting path is still safe', async () => {
+      const options = {
+        stripPrefix: 'secret/',
+        prefix: 'local-folder',
+      };
+      const filename = 'secret/../../escape.txt';
+      const file = new File(bucket, filename);
+
+      const downloadStub = sandbox.stub(file, 'download');
+
+      const result = await transferManager.downloadManyFiles([file], options);
+
+      assert.strictEqual(downloadStub.called, false);
+      const results = result as DownloadManyFilesResult;
+      assert.strictEqual(results.skippedFiles.length, 1);
+    });
+
+    it('should skips files containing Windows volume separators (:) to prevent drive-injection attacks', async () => {
+      const prefix = 'C:\\local\\target';
+      const maliciousFile = new File(bucket, 'C:\\system\\win32');
+
+      const result = await transferManager.downloadManyFiles([maliciousFile], {
+        prefix,
+      });
+
+      const results = result as DownloadManyFilesResult;
+      assert.strictEqual(results.skippedFiles.length, 1);
+      assert.strictEqual(
+        results.skippedFiles[0].reason,
+        'Path Traversal Detected'
       );
     });
   });

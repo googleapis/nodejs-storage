@@ -16,6 +16,7 @@
 
 import {Bucket, UploadOptions, UploadResponse} from './bucket.js';
 import {
+  DownloadManyFilesResult,
   DownloadOptions,
   DownloadResponse,
   File,
@@ -566,12 +567,21 @@ export class TransferManager {
   async downloadManyFiles(
     filesOrFolder: File[] | string[] | string,
     options: DownloadManyFilesOptions = {}
-  ): Promise<void | DownloadResponse[]> {
+  ): Promise<DownloadManyFilesResult | DownloadResponse[]> {
     const limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_DOWNLOAD_LIMIT
     );
     const promises: Promise<DownloadResponse>[] = [];
+    const skippedFiles: Array<{
+      fileName: string;
+      localPath: string;
+      reason: string;
+    }> = [];
     let files: File[] = [];
+
+    const baseDestination = path.resolve(
+      options.prefix || options.passthroughOptions?.destination || '.'
+    );
 
     if (!Array.isArray(filesOrFolder)) {
       const directoryFiles = await this.bucket.getFiles({
@@ -598,16 +608,33 @@ export class TransferManager {
         [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_MANY,
       };
 
+      let dest: string | undefined;
       if (options.prefix || passThroughOptionsCopy.destination) {
-        passThroughOptionsCopy.destination = path.join(
+        dest = path.join(
           options.prefix || '',
           passThroughOptionsCopy.destination || '',
           file.name
         );
       }
       if (options.stripPrefix) {
-        passThroughOptionsCopy.destination = file.name.replace(regex, '');
+        dest = file.name.replace(regex, '');
       }
+
+      const resolvedPath = path.resolve(dest || file.name);
+      const relativePath = path.relative(baseDestination, resolvedPath);
+      const isOutside =
+        relativePath.startsWith('..') || path.isAbsolute(relativePath);
+
+      if (isOutside || file.name.includes(':')) {
+        skippedFiles.push({
+          fileName: file.name,
+          localPath: resolvedPath,
+          reason: 'Path Traversal Detected',
+        });
+        continue;
+      }
+      passThroughOptionsCopy.destination = dest;
+
       if (
         options.skipIfExists &&
         existsSync(passThroughOptionsCopy.destination || '')
@@ -629,8 +656,12 @@ export class TransferManager {
         })
       );
     }
+    const results = await Promise.all(promises);
 
-    return Promise.all(promises);
+    return {
+      responses: results,
+      skippedFiles: skippedFiles,
+    };
   }
 
   /**

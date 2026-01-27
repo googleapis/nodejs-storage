@@ -49,10 +49,24 @@ function main(
 
   async function downloadManyFilesWithTransferManager() {
     // Downloads the files
-    await transferManager.downloadManyFiles([firstFileName, secondFileName]);
+    const {skippedFiles} = await transferManager.downloadManyFiles([
+      firstFileName,
+      secondFileName,
+    ]);
 
     for (const fileName of [firstFileName, secondFileName]) {
-      console.log(`gs://${bucketName}/${fileName} downloaded to ${fileName}.`);
+      const isSkipped = skippedFiles.some(f => f.fileName === fileName);
+      if (!isSkipped) {
+        console.log(
+          `gs://${bucketName}/${fileName} downloaded to ${fileName}.`
+        );
+      }
+    }
+
+    if (skippedFiles.length > 0) {
+      for (const skipped of skippedFiles) {
+        console.warn(`Skipped ${skipped.fileName}: ${skipped.reason}`);
+      }
     }
   }
 

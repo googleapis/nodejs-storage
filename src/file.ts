@@ -396,6 +396,19 @@ export interface CopyCallback {
 
 export type DownloadResponse = [Buffer];
 
+export interface DownloadManyFilesResult {
+  responses: DownloadResponse[];
+  skippedFiles: SkippedFileInfo[];
+}
+
+export interface SkippedFileInfo {
+  fileName: string;
+  localPath: string;
+  reason: string;
+  message?: string;
+  error?: Error;
+}
+
 export type DownloadCallback = (
   err: RequestError | null,
   contents: Buffer
