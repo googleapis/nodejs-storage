@@ -16,11 +16,14 @@
 
 import {Bucket, UploadOptions, UploadResponse} from './bucket.js';
 import {
+  DownloadManyFilesResult,
   DownloadOptions,
   DownloadResponse,
   File,
   FileExceptionMessages,
   RequestError,
+  SkippedFileInfo,
+  SkipReason,
 } from './file.js';
 import pLimit from 'p-limit';
 import * as path from 'path';
@@ -566,12 +569,17 @@ export class TransferManager {
   async downloadManyFiles(
     filesOrFolder: File[] | string[] | string,
     options: DownloadManyFilesOptions = {}
-  ): Promise<void | DownloadResponse[]> {
+  ): Promise<DownloadManyFilesResult | DownloadResponse[]> {
     const limit = pLimit(
       options.concurrencyLimit || DEFAULT_PARALLEL_DOWNLOAD_LIMIT
     );
     const promises: Promise<DownloadResponse>[] = [];
+    const skippedFiles: SkippedFileInfo[] = [];
     let files: File[] = [];
+
+    const baseDestination = path.resolve(
+      options.prefix || options.passthroughOptions?.destination || '.'
+    );
 
     if (!Array.isArray(filesOrFolder)) {
       const directoryFiles = await this.bucket.getFiles({
@@ -598,16 +606,39 @@ export class TransferManager {
         [GCCL_GCS_CMD_KEY]: GCCL_GCS_CMD_FEATURE.DOWNLOAD_MANY,
       };
 
+      let dest: string | undefined;
       if (options.prefix || passThroughOptionsCopy.destination) {
-        passThroughOptionsCopy.destination = path.join(
+        dest = path.join(
           options.prefix || '',
           passThroughOptionsCopy.destination || '',
           file.name
         );
       }
       if (options.stripPrefix) {
-        passThroughOptionsCopy.destination = file.name.replace(regex, '');
+        dest = file.name.replace(regex, '');
       }
+
+      const resolvedPath = path.resolve(dest || file.name);
+      const relativePath = path.relative(baseDestination, resolvedPath);
+      const isOutside = relativePath.startsWith('..');
+      const isAbsoluteAttempt = path.isAbsolute(relativePath);
+
+      if (isOutside || isAbsoluteAttempt || file.name.includes(':')) {
+        let reason: SkipReason = SkipReason.DOWNLOAD_ERROR;
+        if (isOutside) reason = SkipReason.PATH_TRAVERSAL;
+        else if (file.name.includes(':')) reason = SkipReason.ILLEGAL_CHARACTER;
+        else if (isAbsoluteAttempt) reason = SkipReason.ABSOLUTE_PATH_BLOCKED;
+
+        skippedFiles.push({
+          fileName: file.name,
+          localPath: resolvedPath,
+          reason: reason,
+          message: `File ${file.name} was skipped due to path validation failure.`,
+        });
+        continue;
+      }
+      passThroughOptionsCopy.destination = dest;
+
       if (
         options.skipIfExists &&
         existsSync(passThroughOptionsCopy.destination || '')
@@ -617,20 +648,39 @@ export class TransferManager {
 
       promises.push(
         limit(async () => {
-          const destination = passThroughOptionsCopy.destination;
-          if (destination && destination.endsWith(path.sep)) {
-            await fsp.mkdir(destination, {recursive: true});
-            return Promise.resolve([
-              Buffer.alloc(0),
-            ]) as Promise<DownloadResponse>;
-          }
+          try {
+            const destination = passThroughOptionsCopy.destination;
+            if (
+              destination &&
+              (destination.endsWith(path.sep) || destination.endsWith('/'))
+            ) {
+              await fsp.mkdir(destination, {recursive: true});
+              return [Buffer.alloc(0)] as DownloadResponse;
+            }
 
-          return file.download(passThroughOptionsCopy);
+            return file.download(passThroughOptionsCopy);
+          } catch (err) {
+            const error = err instanceof Error ? err : new Error(String(err));
+            skippedFiles.push({
+              fileName: file.name,
+              localPath: path.resolve(
+                passThroughOptionsCopy.destination || file.name
+              ),
+              reason: SkipReason.DOWNLOAD_ERROR,
+              message: error.message,
+              error: error as Error,
+            });
+            return [Buffer.alloc(0)] as DownloadResponse;
+          }
         })
       );
     }
+    const results = await Promise.all(promises);
 
-    return Promise.all(promises);
+    return {
+      responses: results,
+      skippedFiles: skippedFiles,
+    };
   }
 
   /**
