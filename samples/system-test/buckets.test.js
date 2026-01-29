@@ -366,7 +366,13 @@ it("should add a bucket's website configuration", async () => {
   });
 });
 
-it('should make bucket publicly readable', async () => {
+/**
+ * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
+ * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
+ * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
+ * IAM/ACL policies, causing 403 errors in system tests.
+ */
+it.skip('should make bucket publicly readable', async () => {
   const output = execSync(`node makeBucketPublic.js ${bucketName}`);
   assert.match(
     output,

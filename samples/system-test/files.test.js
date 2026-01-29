@@ -334,7 +334,13 @@ describe('file', () => {
       await bucket.file(publicFileName).delete();
     });
 
-    it('should make a file public', () => {
+    /**
+     * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
+     * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
+     * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
+     * IAM/ACL policies, causing 403 errors in system tests.
+     */
+    it.skip('should make a file public', () => {
       const output = execSync(
         `node makePublic.js ${bucketName} ${publicFileName}`
       );
