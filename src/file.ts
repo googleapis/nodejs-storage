@@ -396,6 +396,27 @@ export interface CopyCallback {
 
 export type DownloadResponse = [Buffer];
 
+export interface DownloadManyFilesResult {
+  responses: DownloadResponse[];
+  skippedFiles: SkippedFileInfo[];
+}
+
+export enum SkipReason {
+  PATH_TRAVERSAL = 'PATH_TRAVERSAL',
+  ILLEGAL_CHARACTER = 'ILLEGAL_CHARACTER',
+  ABSOLUTE_PATH_BLOCKED = 'ABSOLUTE_PATH_BLOCKED',
+  ALREADY_EXISTS = 'ALREADY_EXISTS',
+  DOWNLOAD_ERROR = 'DOWNLOAD_ERROR',
+}
+
+export interface SkippedFileInfo {
+  fileName: string;
+  localPath: string;
+  reason: string;
+  message: string;
+  error?: Error;
+}
+
 export type DownloadCallback = (
   err: RequestError | null,
   contents: Buffer
