@@ -74,6 +74,7 @@ it('should create a bucket', async () => {
       publicAccessPrevention: 'inherited',
     },
   });
+  await new Promise(res => setTimeout(res, 2000));
 });
 
 it('should list buckets', () => {

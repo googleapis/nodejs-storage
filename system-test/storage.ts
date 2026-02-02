@@ -114,11 +114,15 @@ describe('storage', function () {
   };
 
   before(async () => {
-    await bucket.create({
+    await bucket.create();
+    await bucket.setMetadata({
       iamConfiguration: {
         publicAccessPrevention: 'inherited',
       },
     });
+    await new Promise(resolve =>
+      setTimeout(resolve, BUCKET_METADATA_UPDATE_WAIT_TIME)
+    );
     const data = await pubsub.createTopic(generateName());
     topic = data[0];
     await topic.iam.setPolicy({
@@ -511,13 +515,17 @@ describe('storage', function () {
     describe('buckets', () => {
       let bucket: Bucket;
 
-      before(() => {
+      before(async () => {
         bucket = storage.bucket(generateName());
-        return bucket.create({
+        await bucket.create();
+        await bucket.setMetadata({
           iamConfiguration: {
             publicAccessPrevention: 'inherited',
           },
         });
+        await new Promise(resolve =>
+          setTimeout(resolve, BUCKET_METADATA_UPDATE_WAIT_TIME)
+        );
       });
 
       it('should get a policy', async () => {
@@ -1972,11 +1980,15 @@ describe('storage', function () {
       before(async () => {
         bucket = storage.bucket(generateName());
         bucketNonAllowList = storageNonAllowList.bucket(bucket.name);
-        await bucket.create({
+        await bucket.create();
+        await bucket.setMetadata({
           iamConfiguration: {
             publicAccessPrevention: 'inherited',
           },
         });
+        await new Promise(resolve =>
+          setTimeout(resolve, BUCKET_METADATA_UPDATE_WAIT_TIME)
+        );
       });
 
       it('should enable requesterPays', async () => {
