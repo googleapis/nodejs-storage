@@ -53,7 +53,11 @@ const fileContent = fs.readFileSync(filePath, 'utf-8');
 
 describe('file', () => {
   before(async () => {
-    await bucket.create();
+    await bucket.create({
+      iamConfiguration: {
+        publicAccessPrevention: 'inherited',
+      },
+    });
   });
 
   after(async () => {

@@ -114,7 +114,11 @@ describe('storage', function () {
   };
 
   before(async () => {
-    await bucket.create();
+    await bucket.create({
+      iamConfiguration: {
+        publicAccessPrevention: 'inherited',
+      },
+    });
     const data = await pubsub.createTopic(generateName());
     topic = data[0];
     await topic.iam.setPolicy({
@@ -509,7 +513,11 @@ describe('storage', function () {
 
       before(() => {
         bucket = storage.bucket(generateName());
-        return bucket.create();
+        return bucket.create({
+          iamConfiguration: {
+            publicAccessPrevention: 'inherited',
+          },
+        });
       });
 
       it('should get a policy', async () => {
@@ -1964,7 +1972,11 @@ describe('storage', function () {
       before(async () => {
         bucket = storage.bucket(generateName());
         bucketNonAllowList = storageNonAllowList.bucket(bucket.name);
-        await bucket.create();
+        await bucket.create({
+          iamConfiguration: {
+            publicAccessPrevention: 'inherited',
+          },
+        });
       });
 
       it('should enable requesterPays', async () => {

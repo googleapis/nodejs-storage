@@ -69,6 +69,11 @@ it('should create a bucket', async () => {
   assert.match(output, new RegExp(`Bucket ${bucketName} created`));
   const [exists] = await bucket.exists();
   assert.strictEqual(exists, true);
+  await bucket.setMetadata({
+    iamConfiguration: {
+      publicAccessPrevention: 'inherited',
+    },
+  });
 });
 
 it('should list buckets', () => {
