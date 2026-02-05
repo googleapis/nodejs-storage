@@ -334,7 +334,12 @@ describe('file', () => {
       await bucket.file(publicFileName).delete();
     });
 
-    it('should make a file public', () => {
+    /**
+     * TODO: Re-enable once the test environment allows public IAM roles.
+     * Currently disabled to avoid 403 errors when adding 'allUsers' or
+     * 'allAuthenticatedUsers' permissions.
+     */
+    it.skip('should make a file public', () => {
       const output = execSync(
         `node makePublic.js ${bucketName} ${publicFileName}`
       );
