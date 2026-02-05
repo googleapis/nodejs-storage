@@ -2937,7 +2937,11 @@ class File extends ServiceObject<File, FileMetadata> {
 
         let url: string;
 
-        if (this.storage.customEndpoint) {
+        const EMULATOR_HOST = process.env.STORAGE_EMULATOR_HOST;
+
+        if (this.storage.customEndpoint && typeof EMULATOR_HOST === 'string') {
+          url = `${this.storage.apiEndpoint}/${this.bucket.name}`;
+        } else if (this.storage.customEndpoint) {
           url = this.storage.apiEndpoint;
         } else if (options.virtualHostedStyle) {
           url = `https://${this.bucket.name}.storage.${universe}/`;

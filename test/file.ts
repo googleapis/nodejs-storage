@@ -3578,6 +3578,23 @@ describe('File', () => {
       );
     });
 
+    it('should append bucket name to the URL when using the emulator', done => {
+      const emulatorHost = 'http://127.0.0.1:9199';
+
+      process.env.STORAGE_EMULATOR_HOST = emulatorHost;
+      STORAGE.apiEndpoint = emulatorHost;
+      STORAGE.customEndpoint = true;
+
+      file.generateSignedPostPolicyV4(
+        CONFIG,
+        (err: Error, res: SignedPostPolicyV4Output) => {
+          assert.ifError(err);
+          assert.strictEqual(res.url, `${emulatorHost}/${BUCKET.name}`);
+          done();
+        }
+      );
+    });
+
     describe('expires', () => {
       it('should accept Date objects', done => {
         const expires = new Date(Date.now() + 1000 * 60);
