@@ -136,7 +136,7 @@ it('should set bucket encryption enforcement configuration', async () => {
 
   assert.include(
     output,
-    `Encryption enforcement updated for bucket ${bucketName}`
+    `Encryption enforcement configuration updated for bucket ${bucketName}.`
   );
 
   assert.include(output, `Default KMS Key: ${defaultKmsKeyName}`);
@@ -165,7 +165,10 @@ it('should get bucket encryption enforcement configuration', async () => {
     `node getBucketEncryptionEnforcementConfig.js ${bucketName}`
   );
 
-  assert.include(output, `Encryption configuration for bucket ${bucketName}:`);
+  assert.include(
+    output,
+    `Encryption enforcement configuration for bucket ${bucketName}.`
+  );
   assert.include(output, `Default KMS Key: ${defaultKmsKeyName}`);
 
   assert.include(output, 'Google Managed (GMEK) Enforcement:');
@@ -179,7 +182,7 @@ it('should remove all bucket encryption enforcement configuration', async () => 
   );
   assert.include(
     output,
-    `Encryption enforcement configuration removed form bucket ${bucketName}`
+    `Encryption enforcement configuration removed from bucket ${bucketName}`
   );
   await bucket.getMetadata();
   assert.ok(!bucket.metadata.encryption);

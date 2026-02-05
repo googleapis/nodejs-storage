@@ -48,7 +48,7 @@ function main(bucketName = 'my-bucket') {
     await storage.bucket(bucketName).setMetadata(options);
 
     console.log(
-      `Encryption enforcement configuration removed form bucket ${bucketName}.`
+      `Encryption enforcement configuration removed from bucket ${bucketName}.`
     );
   }
 
