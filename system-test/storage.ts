@@ -290,10 +290,9 @@ describe('storage', function () {
       });
 
       /**
-       * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
-       * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
-       * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
-       * IAM/ACL policies, causing 403 errors in system tests.
+       * TODO: Re-enable once the test environment allows public IAM roles.
+       * Currently disabled to avoid 403 errors when adding 'allUsers' or
+       * 'allAuthenticatedUsers' permissions.
        */
       it.skip('should make a bucket public', async () => {
         await bucket.makePublic();
@@ -309,10 +308,9 @@ describe('storage', function () {
       });
 
       /**
-       * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
-       * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
-       * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
-       * IAM/ACL policies, causing 403 errors in system tests.
+       * TODO: Re-enable once the test environment allows public IAM roles.
+       * Currently disabled to avoid 403 errors when adding 'allUsers' or
+       * 'allAuthenticatedUsers' permissions.
        */
       it.skip('should make files public', async () => {
         await Promise.all(
@@ -332,10 +330,9 @@ describe('storage', function () {
       });
 
       /**
-       * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
-       * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
-       * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
-       * IAM/ACL policies, causing 403 errors in system tests.
+       * TODO: Re-enable once the test environment allows public IAM roles.
+       * Currently disabled to avoid 403 errors when adding 'allUsers' or
+       * 'allAuthenticatedUsers' permissions.
        */
       it.skip('should make a bucket private', async () => {
         try {
@@ -423,10 +420,9 @@ describe('storage', function () {
       });
 
       /**
-       * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
-       * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
-       * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
-       * IAM/ACL policies, causing 403 errors in system tests.
+       * TODO: Re-enable once the test environment allows public IAM roles.
+       * Currently disabled to avoid 403 errors when adding 'allUsers' or
+       * 'allAuthenticatedUsers' permissions.
        */
       it.skip('should make a file public', async () => {
         await file.makePublic();
@@ -477,10 +473,9 @@ describe('storage', function () {
       });
 
       /**
-       * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
-       * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
-       * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
-       * IAM/ACL policies, causing 403 errors in system tests.
+       * TODO: Re-enable once the test environment allows public IAM roles.
+       * Currently disabled to avoid 403 errors when adding 'allUsers' or
+       * 'allAuthenticatedUsers' permissions.
        */
       it.skip('should make a file public during the upload', async () => {
         const [file] = await bucket.upload(FILES.big.path, {
@@ -496,10 +491,9 @@ describe('storage', function () {
       });
 
       /**
-       * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
-       * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
-       * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
-       * IAM/ACL policies, causing 403 errors in system tests.
+       * TODO: Re-enable once the test environment allows public IAM roles.
+       * Currently disabled to avoid 403 errors when adding 'allUsers' or
+       * 'allAuthenticatedUsers' permissions.
        */
       it.skip('should make a file public from a resumable upload', async () => {
         const [file] = await bucket.upload(FILES.big.path, {
@@ -566,10 +560,9 @@ describe('storage', function () {
       });
 
       /**
-       * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
-       * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
-       * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
-       * IAM/ACL policies, causing 403 errors in system tests.
+       * TODO: Re-enable once the test environment allows public IAM roles.
+       * Currently disabled to avoid 403 errors when adding 'allUsers' or
+       * 'allAuthenticatedUsers' permissions.
        */
       it.skip('should set a policy', async () => {
         const [policy] = await bucket.iam.getPolicy();
@@ -2348,10 +2341,9 @@ describe('storage', function () {
         });
 
         /**
-         * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
-         * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
-         * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
-         * IAM/ACL policies, causing 403 errors in system tests.
+         * TODO: Re-enable once the test environment allows public IAM roles.
+         * Currently disabled to avoid 403 errors when adding 'allUsers' or
+         * 'allAuthenticatedUsers' permissions.
          */
         it.skip('iam#setPolicy', async () => {
           await requesterPaysDoubleTest(async options => {
@@ -3053,10 +3045,9 @@ describe('storage', function () {
     });
 
     /**
-     * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
-     * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
-     * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
-     * IAM/ACL policies, causing 403 errors in system tests.
+     * TODO: Re-enable once the test environment allows public IAM roles.
+     * Currently disabled to avoid 403 errors when adding 'allUsers' or
+     * 'allAuthenticatedUsers' permissions.
      */
     it.skip('should respect predefined Acl at file#copy', async () => {
       const opts = {destination: 'CloudLogo'};

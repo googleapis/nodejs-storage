@@ -335,10 +335,9 @@ describe('file', () => {
     });
 
     /**
-     * TODO: (b/457800112)Re-enable once Org Policy allows PAP overrides on test buckets.
-     * REASON: Organization Policy "Public Access Prevention" (PAP) is enabled.
-     * This prevents 'allUsers' or 'allAuthenticatedUsers' from being added to
-     * IAM/ACL policies, causing 403 errors in system tests.
+     * TODO: Re-enable once the test environment allows public IAM roles.
+     * Currently disabled to avoid 403 errors when adding 'allUsers' or
+     * 'allAuthenticatedUsers' permissions.
      */
     it.skip('should make a file public', () => {
       const output = execSync(
