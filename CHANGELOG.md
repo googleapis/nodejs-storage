@@ -4,6 +4,18 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [7.19.0](https://github.com/googleapis/nodejs-storage/compare/v7.18.0...v7.19.0) (2026-02-05)
+
+
+### Features
+
+* Enable full object checksum validation on JSON path ([#2687](https://github.com/googleapis/nodejs-storage/issues/2687)) ([08a8962](https://github.com/googleapis/nodejs-storage/commit/08a896240e2ee110c13a5803ce5a2fbf38fbedc4))
+
+
+### Bug Fixes
+
+* **deps:** Update dependency fast-xml-parser to v5 [security] ([#2713](https://github.com/googleapis/nodejs-storage/issues/2713)) ([420935a](https://github.com/googleapis/nodejs-storage/commit/420935a0334b0723ec052bb4d6b8527dd2acffea))
+
 ## [7.18.0](https://github.com/googleapis/nodejs-storage/compare/v7.17.3...v7.18.0) (2025-11-28)
 
 
