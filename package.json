@@ -105,7 +105,7 @@
     "@types/request": "^2.48.4",
     "@types/sinon": "^17.0.0",
     "@types/tmp": "0.2.6",
-    "@types/uuid": "^8.0.0",
+    "@types/uuid": "^11.0.0",
     "@types/yargs": "^17.0.10",
     "c8": "^9.0.0",
     "form-data": "^4.0.4",
