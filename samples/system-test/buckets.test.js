@@ -129,9 +129,9 @@ it('should remove a buckets default KMS key', async () => {
   assert.ok(!metadata.encryption);
 });
 
-it('should set bucket encryption enforcement', async () => {
+it('should set bucket encryption enforcement configuration', async () => {
   const output = execSync(
-    `node setBucketEncryptionEnforcement.js ${bucketName} ${defaultKmsKeyName}`
+    `node setBucketEncryptionEnforcementConfig.js ${bucketName} ${defaultKmsKeyName}`
   );
 
   assert.include(
@@ -158,6 +158,31 @@ it('should set bucket encryption enforcement', async () => {
       .restrictionMode,
     'FullyRestricted'
   );
+});
+
+it('should get bucket encryption enforcement configuration', async () => {
+  const output = execSync(
+    `node getBucketEncryptionEnforcementConfig.js ${bucketName}`
+  );
+
+  assert.include(output, `Encryption configuration for bucket ${bucketName}:`);
+  assert.include(output, `Default KMS Key: ${defaultKmsKeyName}`);
+
+  assert.include(output, 'Google Managed (GMEK) Enforcement:');
+  assert.include(output, 'Mode: FullyRestricted');
+  assert.match(output, /Effective:/);
+});
+
+it('should remove all bucket encryption enforcement configuration', async () => {
+  const output = execSync(
+    `node removeAllBucketEncryptionEnforcementConfig.js ${bucketName}`
+  );
+  assert.include(
+    output,
+    `Encryption enforcement configuration removed form bucket ${bucketName}`
+  );
+  await bucket.getMetadata();
+  assert.ok(!bucket.metadata.encryption);
 });
 
 it("should enable a bucket's uniform bucket-level access", async () => {

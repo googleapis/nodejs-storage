@@ -17,13 +17,13 @@
 // sample-metadata:
 //   title: Set Bucket Encryption Enforcement
 //   description: Configures a bucket to enforce specific encryption types (e.g., CMEK-only).
-//   usage: node setBucketEncryptionEnforcement.js <BUCKET_NAME> <KMS_KEY_NAME>
+//   usage: node setBucketEncryptionEnforcementConfig.js <BUCKET_NAME> <KMS_KEY_NAME>
 
 function main(
   bucketName = 'my-bucket',
   defaultKmsKeyName = process.env.GOOGLE_CLOUD_KMS_KEY_ASIA
 ) {
-  // [START storage_set_bucket_encryption_enforcement]
+  // [START storage_set_encryption_enforcement_config]
   /**
    * TODO(developer): Uncomment the following lines before running the sample.
    */
@@ -39,7 +39,7 @@ function main(
   // Creates a client
   const storage = new Storage();
 
-  async function setBucketEncryptionEnforcement() {
+  async function setBucketEncryptionEnforcementConfig() {
     const options = {
       encryption: {
         defaultKmsKeyName: defaultKmsKeyName,
@@ -57,44 +57,37 @@ function main(
 
     const [metadata] = await storage.bucket(bucketName).setMetadata(options);
 
-    console.log(`Encryption enforcement updated for bucket ${bucketName}.`);
+    console.log(
+      `Encryption enforcement configuration updated for bucket ${bucketName}.`
+    );
     const enc = metadata.encryption;
     if (enc) {
       console.log(`Default KMS Key: ${enc.defaultKmsKeyName}`);
 
-      if (enc.googleManagedEncryptionEnforcementConfig) {
-        console.log('Google Managed (GMEK) Enforcement:');
-        console.log(
-          `  Mode: ${enc.googleManagedEncryptionEnforcementConfig.restrictionMode}`
-        );
-        console.log(
-          `  Effective: ${enc.googleManagedEncryptionEnforcementConfig.effectiveTime}`
-        );
-      }
+      const logEnforcement = (label, config) => {
+        if (config) {
+          console.log(`${label}:`);
+          console.log(`  Mode: ${config.restrictionMode}`);
+          console.log(`  Effective: ${config.effectiveTime}`);
+        }
+      };
 
-      if (enc.customerManagedEncryptionEnforcementConfig) {
-        console.log('Customer Managed (CMEK) Enforcement:');
-        console.log(
-          `  Mode: ${enc.customerManagedEncryptionEnforcementConfig.restrictionMode}`
-        );
-        console.log(
-          `  Effective: ${enc.customerManagedEncryptionEnforcementConfig.effectiveTime}`
-        );
-      }
-
-      if (enc.customerSuppliedEncryptionEnforcementConfig) {
-        console.log('Customer Supplied (CSEK) Enforcement:');
-        console.log(
-          `  Mode: ${enc.customerSuppliedEncryptionEnforcementConfig.restrictionMode}`
-        );
-        console.log(
-          `  Effective: ${enc.customerSuppliedEncryptionEnforcementConfig.effectiveTime}`
-        );
-      }
+      logEnforcement(
+        'Google Managed (GMEK) Enforcement',
+        enc.googleManagedEncryptionEnforcementConfig
+      );
+      logEnforcement(
+        'Customer Managed (CMEK) Enforcement',
+        enc.customerManagedEncryptionEnforcementConfig
+      );
+      logEnforcement(
+        'Customer Supplied (CSEK) Enforcement',
+        enc.customerSuppliedEncryptionEnforcementConfig
+      );
     }
   }
 
-  setBucketEncryptionEnforcement().catch(console.error);
-  // [END storage_set_bucket_encryption_enforcement]
+  setBucketEncryptionEnforcementConfig().catch(console.error);
+  // [END storage_set_encryption_enforcement_config]
 }
 main(...process.argv.slice(2));
