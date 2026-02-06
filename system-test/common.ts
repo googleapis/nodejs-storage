@@ -47,8 +47,7 @@ describe('Common', () => {
       // Listen on port 0 to allow the OS to assign a random available port.
       // This prevents "port already in use" errors if tests run in parallel.
       mockServer.listen(0, () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const port = (mockServer.address() as any).port;
+        const port = (mockServer.address() as import('net').AddressInfo).port;
 
         service.request(
           {
@@ -82,8 +81,7 @@ describe('Common', () => {
       });
 
       mockServer.listen(0, () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const port = (mockServer.address() as any).port;
+        const port = (mockServer.address() as import('net').AddressInfo).port;
 
         service.request(
           {
