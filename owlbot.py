@@ -33,6 +33,10 @@ s.copy(templates, excludes=['.jsdoc.js',
                             '.kokoro/system-test.sh',
                             '.kokoro/samples-test.sh',
                             ])
+node.owlbot_main(templates_excludes=[
+    '.kokoro/samples-test.sh'
+])
+
 
 # Create .config directory under $HOME to get around permissions issues
 # with resumable upload.
