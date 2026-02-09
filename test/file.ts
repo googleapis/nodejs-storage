@@ -3580,6 +3580,9 @@ describe('File', () => {
 
     it('should append bucket name to the URL when using the emulator', done => {
       const emulatorHost = 'http://127.0.0.1:9199';
+      const originalApiEndpoint = STORAGE.apiEndpoint;
+      const originalCustomEndpoint = STORAGE.customEndpoint;
+      const originalEnvHost = process.env.STORAGE_EMULATOR_HOST;
 
       process.env.STORAGE_EMULATOR_HOST = emulatorHost;
       STORAGE.apiEndpoint = emulatorHost;
@@ -3588,6 +3591,14 @@ describe('File', () => {
       file.generateSignedPostPolicyV4(
         CONFIG,
         (err: Error, res: SignedPostPolicyV4Output) => {
+          STORAGE.apiEndpoint = originalApiEndpoint;
+          STORAGE.customEndpoint = originalCustomEndpoint;
+          if (originalEnvHost) {
+            process.env.STORAGE_EMULATOR_HOST = originalEnvHost;
+          } else {
+            delete process.env.STORAGE_EMULATOR_HOST;
+          }
+
           assert.ifError(err);
           assert.strictEqual(res.url, `${emulatorHost}/${BUCKET.name}`);
           done();
