@@ -129,6 +129,65 @@ it('should remove a buckets default KMS key', async () => {
   assert.ok(!metadata.encryption);
 });
 
+it('should set bucket encryption enforcement configuration', async () => {
+  const output = execSync(
+    `node setBucketEncryptionEnforcementConfig.js ${bucketName} ${defaultKmsKeyName}`
+  );
+
+  assert.include(
+    output,
+    `Encryption enforcement configuration updated for bucket ${bucketName}.`
+  );
+
+  assert.include(output, `Default KMS Key: ${defaultKmsKeyName}`);
+
+  assert.include(output, 'Google Managed (GMEK) Enforcement:');
+  assert.include(output, 'Mode: FullyRestricted');
+
+  assert.include(output, 'Customer Managed (CMEK) Enforcement:');
+  assert.include(output, 'Mode: NotRestricted');
+
+  assert.include(output, 'Customer Supplied (CSEK) Enforcement:');
+  assert.include(output, 'Mode: FullyRestricted');
+
+  assert.match(output, new RegExp('Effective:'));
+
+  const [metadata] = await bucket.getMetadata();
+  assert.strictEqual(
+    metadata.encryption.googleManagedEncryptionEnforcementConfig
+      .restrictionMode,
+    'FullyRestricted'
+  );
+});
+
+it('should get bucket encryption enforcement configuration', async () => {
+  const output = execSync(
+    `node getBucketEncryptionEnforcementConfig.js ${bucketName}`
+  );
+
+  assert.include(
+    output,
+    `Encryption enforcement configuration for bucket ${bucketName}.`
+  );
+  assert.include(output, `Default KMS Key: ${defaultKmsKeyName}`);
+
+  assert.include(output, 'Google Managed (GMEK) Enforcement:');
+  assert.include(output, 'Mode: FullyRestricted');
+  assert.match(output, /Effective:/);
+});
+
+it('should remove all bucket encryption enforcement configuration', async () => {
+  const output = execSync(
+    `node removeAllBucketEncryptionEnforcementConfig.js ${bucketName}`
+  );
+  assert.include(
+    output,
+    `Encryption enforcement configuration removed from bucket ${bucketName}`
+  );
+  await bucket.getMetadata();
+  assert.ok(!bucket.metadata.encryption);
+});
+
 it("should enable a bucket's uniform bucket-level access", async () => {
   const output = execSync(
     `node enableUniformBucketLevelAccess.js ${bucketName}`
