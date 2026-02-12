@@ -86,7 +86,7 @@
     "p-limit": "^3.0.1",
     "retry-request": "^7.0.0",
     "teeny-request": "^9.0.0",
-    "uuid": "^8.0.0"
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.22.10",
