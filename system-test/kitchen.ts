@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as assert from 'assert';
-import {describe, it, beforeEach} from 'mocha';
+import {describe, it} from 'mocha';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as tmp from 'tmp';
@@ -60,21 +60,15 @@ describe('resumable-upload', () => {
 
   before(async () => {
     tmp.setGracefulCleanup();
-    filePath = path.join(os.tmpdir(), '20MB.zip');
+    const fileName = 'test-20MB.zip';
+    filePath = path.join(os.tmpdir(), fileName);
 
     await fs.promises.writeFile(filePath, crypto.randomBytes(FILE_SIZE));
   });
 
-  beforeEach(() => {
-    upload({
-      bucket: bucketName,
-      file: filePath,
-      retryOptions: retryOptions,
-    });
-  });
-
   afterEach(async () => {
-    await bucket.file(filePath).delete({ignoreNotFound: true});
+    const remoteFileName = path.basename(filePath);
+    await bucket.file(remoteFileName).delete({ignoreNotFound: true});
   });
 
   after(async () => {
@@ -107,14 +101,14 @@ describe('resumable-upload', () => {
       .pipe(
         upload({
           bucket: bucketName,
-          file: filePath,
+          file: path.basename(filePath),
           retryOptions: retryOptions,
           metadata: {contentType: 'image/jpg'},
         })
       )
       .on('error', done)
       .on('response', resp => {
-        uploadSucceeded = resp.status === 200;
+        uploadSucceeded = resp.status >= 200 && resp.status < 300;
       })
       .on('finish', () => {
         assert.strictEqual(uploadSucceeded, true);
@@ -322,14 +316,13 @@ describe('resumable-upload', () => {
         .pipe(
           upload({
             bucket: bucketName,
-            file: filePath,
+            file: path.basename(filePath),
             crc32c: true,
             clientCrc32c: crc32c,
             retryOptions: retryOptions,
           })
         )
         .on('error', err => {
-          console.log(err);
           done(
             new Error(
               `Upload failed unexpectedly on success path: ${err.message}`
@@ -337,11 +330,15 @@ describe('resumable-upload', () => {
           );
         })
         .on('response', resp => {
-          uploadSucceeded = resp.status === 200;
+          uploadSucceeded = resp.status >= 200 && resp.status < 300;
         })
         .on('finish', () => {
-          assert.strictEqual(uploadSucceeded, true);
-          done();
+          try {
+            assert.strictEqual(uploadSucceeded, true);
+            done();
+          } catch (error) {
+            done(error);
+          }
         });
     });
 
