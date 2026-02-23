@@ -4,6 +4,13 @@
 
 [1]: https://www.npmjs.com/package/@google-cloud/storage?activeTab=versions
 
+## [7.19.1](https://github.com/googleapis/nodejs-storage/compare/v7.19.0...v7.19.1) (2026-02-23)
+
+
+### Bug Fixes
+
+* Append bucket name to V4 policy URL in emulator mode ([#2716](https://github.com/googleapis/nodejs-storage/issues/2716)) ([7ed3119](https://github.com/googleapis/nodejs-storage/commit/7ed3119415eb60b40d4167d1d49b419aa8128dd7))
+
 ## [7.19.0](https://github.com/googleapis/nodejs-storage/compare/v7.18.0...v7.19.0) (2026-02-05)
 
 
