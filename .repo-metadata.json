@@ -10,7 +10,7 @@
   "distribution_name": "@google-cloud/storage",
   "api_id": "storage-api.googleapis.com",
   "requires_billing": true,
-  "codeowner_team": "@googleapis/gcs-team @googleapis/cloud-sdk-nodejs-team",
+  "codeowner_team": "@googleapis/gcs-team",
   "api_shortname": "storage",
   "library_type": "GAPIC_MANUAL"
 }
