@@ -73,6 +73,7 @@ objects to users via direct download.
   * [Generate V4 Signed Policy](#generate-v4-signed-policy)
   * [Generate V4 Upload Signed Url](#generate-v4-upload-signed-url)
   * [Get Autoclass](#get-autoclass)
+  * [Get Bucket Encryption Enforcement](#get-bucket-encryption-enforcement)
   * [Get Default Event Based Hold](#get-default-event-based-hold)
   * [Get Metadata](#get-metadata)
   * [Get Metadata Notifications](#get-metadata-notifications)
@@ -112,6 +113,7 @@ objects to users via direct download.
   * [Quickstart](#quickstart)
   * [Release Event Based Hold](#release-event-based-hold)
   * [Release Temporary Hold](#release-temporary-hold)
+  * [Remove All Bucket Encryption Enforcement](#remove-all-bucket-encryption-enforcement)
   * [Remove Bucket Conditional Binding](#remove-bucket-conditional-binding)
   * [Storage Remove Bucket Cors Configuration.](#storage-remove-bucket-cors-configuration.)
   * [Remove Bucket Default Owner](#remove-bucket-default-owner)
@@ -126,6 +128,7 @@ objects to users via direct download.
   * [Restore Soft Deleted Object](#restore-soft-deleted-object)
   * [Rotate Encryption Key](#rotate-encryption-key)
   * [Set Autoclass](#set-autoclass)
+  * [Set Bucket Encryption Enforcement](#set-bucket-encryption-enforcement)
   * [Set Client Endpoint](#set-client-endpoint)
   * [Set Event Based Hold](#set-event-based-hold)
   * [Set the object retention policy of a File.](#set-the-object-retention-policy-of-a-file.)
@@ -1142,6 +1145,25 @@ __Usage:__
 
 
 
+### Get Bucket Encryption Enforcement
+
+Retrieves the current encryption enforcement configurations for a bucket.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getBucketEncryptionEnforcementConfig.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/getBucketEncryptionEnforcementConfig.js,samples/README.md)
+
+__Usage:__
+
+
+`node getBucketEncryptionEnforcementConfig.js <BUCKET_NAME>`
+
+
+-----
+
+
+
+
 ### Get Default Event Based Hold
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/getDefaultEventBasedHold.js).
@@ -1823,6 +1845,25 @@ __Usage:__
 
 
 
+### Remove All Bucket Encryption Enforcement
+
+Removes all encryption enforcement configurations and resets to default behavior.
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/removeAllBucketEncryptionEnforcementConfig.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/removeAllBucketEncryptionEnforcementConfig.js,samples/README.md)
+
+__Usage:__
+
+
+`node removeAllBucketEncryptionEnforcementConfig.js <BUCKET_NAME>`
+
+
+-----
+
+
+
+
 ### Remove Bucket Conditional Binding
 
 View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/removeBucketConditionalBinding.js).
@@ -2060,6 +2101,25 @@ __Usage:__
 
 
 `node samples/setAutoclass.js`
+
+
+-----
+
+
+
+
+### Set Bucket Encryption Enforcement
+
+Configures a bucket to enforce specific encryption types (e.g., CMEK-only).
+
+View the [source code](https://github.com/googleapis/nodejs-storage/blob/main/samples/setBucketEncryptionEnforcementConfig.js).
+
+[![Open in Cloud Shell][shell_img]](https://console.cloud.google.com/cloudshell/open?git_repo=https://github.com/googleapis/nodejs-storage&page=editor&open_in_editor=samples/setBucketEncryptionEnforcementConfig.js,samples/README.md)
+
+__Usage:__
+
+
+`node setBucketEncryptionEnforcementConfig.js <BUCKET_NAME> <KMS_KEY_NAME>`
 
 
 -----
