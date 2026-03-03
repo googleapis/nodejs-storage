@@ -1,14 +1,9 @@
 branchProtectionRules:
-  - pattern: 4.x
-    isAdminEnforced: true
-    requiredApprovingReviewCount: 1
-    requiresCodeOwnerReviews: true
-    requiresStrictStatusChecks: false
   - pattern: main
     isAdminEnforced: true
     requiredApprovingReviewCount: 1
     requiresCodeOwnerReviews: true
-    requiresStrictStatusChecks: false
+    requiresStrictStatusChecks: true
     requiredStatusCheckContexts:
       - "ci/kokoro: Samples test"
       - "ci/kokoro: System test"
@@ -19,3 +14,6 @@ branchProtectionRules:
       - cla/google
       - windows
       - OwlBot Post Processor
+permissionRules:
+  - team: cloud-sdk-nodejs-team
+    permission: push

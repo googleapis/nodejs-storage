@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [14, 16, 18]
+        node: [14, 16, 18, 20]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
       - run: node --version
@@ -26,11 +26,25 @@ jobs:
       - run: npm test
         env:
           MOCHA_THROW_DEPRECATION: false
+  test-script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 18
+      - run: node --version
+      - run: npm install --engine-strict
+        working-directory: .github/scripts
+      - run: npm test
+        working-directory: .github/scripts
+        env:
+          MOCHA_THROW_DEPRECATION: false
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 18
       - run: npm install --engine-strict
@@ -40,9 +54,21 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
         with:
           node-version: 18
       - run: npm install
       - run: npm run lint
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 18
+      - run: npm install
+      - run: npm run docs
+      - uses: JustinBeckwith/linkinator-action@v1
+        with:
+          paths: docs/
